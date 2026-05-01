@@ -98,7 +98,7 @@ class Whatsapp::OneoffCampaignService
                     .first
 
     if existing
-      existing.update!(status: :open) unless existing.open?
+      existing.update!(status: :pending) if existing.resolved?
       return existing
     end
 
@@ -108,7 +108,7 @@ class Whatsapp::OneoffCampaignService
       contact_id: contact_inbox.contact_id,
       contact_inbox_id: contact_inbox.id,
       campaign_id: campaign.id,
-      status: :open
+      status: :pending
     )
   end
 
