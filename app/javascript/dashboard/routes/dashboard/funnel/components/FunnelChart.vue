@@ -122,8 +122,8 @@ const formatPct = value => `${Number(value).toFixed(1)}%`;
     >
       <defs>
         <linearGradient id="funnelGradient" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" :stop-color="FILL_COLOR" stop-opacity="0.55" />
-          <stop offset="100%" :stop-color="FILL_COLOR" stop-opacity="0.95" />
+          <stop offset="0%" :stop-color="FILL_COLOR" stop-opacity="0.45" />
+          <stop offset="100%" :stop-color="FILL_COLOR" stop-opacity="1.0" />
         </linearGradient>
       </defs>
 
@@ -155,16 +155,18 @@ const formatPct = value => `${Number(value).toFixed(1)}%`;
         </text>
       </g>
 
-      <!-- Vertical separators between stages -->
+      <!-- Vertical separators between stages — start 10px above the funnel
+           top so they read clearly without clipping the label text just
+           above them (pct baseline sits at y=100, font-size ~12px). -->
       <g>
         <line
           v-for="(pt, idx) in stagePoints"
           :key="`sep-${idx}`"
           :x1="pt.x"
-          y1="10"
+          :y1="FUNNEL_TOP - 10"
           :x2="pt.x"
           :y2="VIEWBOX_HEIGHT - 10"
-          stroke="#e5e7eb"
+          stroke="#d1d5db"
           stroke-width="1"
         />
       </g>
