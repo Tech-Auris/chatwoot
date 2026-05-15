@@ -35,15 +35,17 @@ RSpec.describe V2::Reports::FunnelConversionBuilder do
     context 'when there are no active stages' do
       before { FunnelStage.update_all(active: false) } # rubocop:disable Rails/SkipsModelValidations
 
-      it 'returns empty stages and zeroed KPIs' do
+      it 'returns empty stages, zeroed KPIs, and empty loss_reasons' do
         result = described_class.new(account: create(:account), params: params).build
         expect(result[:stages]).to eq([])
         expect(result[:kpis]).to eq(
           total_leads: 0,
           scheduling_count: 0, scheduling_rate: nil,
+          confirmation_count: 0, confirmation_rate: nil,
           attendance_count: 0, attendance_rate: nil,
           no_show_count: 0, no_show_rate: nil
         )
+        expect(result[:loss_reasons]).to eq([])
       end
     end
 
@@ -100,9 +102,13 @@ RSpec.describe V2::Reports::FunnelConversionBuilder do
         expect(lead_row[:drop_off_count]).to eq(1)
       end
 
-      it 'reports KPIs: total_leads + scheduling/attendance/no_show rates' do
+      # rubocop:disable RSpec/MultipleExpectations
+      it 'reports KPIs: total_leads + scheduling/confirmation/attendance/no_show rates' do
         # Point the KPI canon at the spec's random-named test stages so we can
         # exercise the math without relying on the seeder's canonical names.
+        # confirmation has no matching stage in this setup — it should land
+        # as zero count / nil rate so the data shape stays defined.
+        stub_const('V2::Reports::FunnelConversionBuilder::CONFIRMATION_STAGE_NAME', '__no_matching_stage__')
         stub_const('V2::Reports::FunnelConversionBuilder::ATTENDANCE_STAGE_NAME', stages[:won].name)
         stub_const('V2::Reports::FunnelConversionBuilder::NO_SHOW_STAGE_NAME', stages[:lost].name)
         stages[:qualified].update!(
@@ -112,16 +118,20 @@ RSpec.describe V2::Reports::FunnelConversionBuilder do
         kpis = builder.build[:kpis]
         # 3 entered lead (the first open stage = total_leads denominator).
         # 2 entered qualified → scheduling = 2 → 66.67%.
+        # 0 entered confirmation (no matching stage) → 0 / 0%.
         # 1 entered won → attendance = 1 → 33.33%.
         # 1 entered lost (stubbed as no-show) → no_show = 1 → 33.33%.
         expect(kpis[:total_leads]).to eq(3)
         expect(kpis[:scheduling_count]).to eq(2)
         expect(kpis[:scheduling_rate]).to be_within(0.01).of(66.67)
+        expect(kpis[:confirmation_count]).to eq(0)
+        expect(kpis[:confirmation_rate]).to eq(0.0)
         expect(kpis[:attendance_count]).to eq(1)
         expect(kpis[:attendance_rate]).to be_within(0.01).of(33.33)
         expect(kpis[:no_show_count]).to eq(1)
         expect(kpis[:no_show_rate]).to be_within(0.01).of(33.33)
       end
+      # rubocop:enable RSpec/MultipleExpectations
     end
 
     context 'when the next stage has more conversations than the current (entries from outside)' do
@@ -213,6 +223,40 @@ RSpec.describe V2::Reports::FunnelConversionBuilder do
         expect(merged).not_to be_nil
         expect(merged[:count]).to eq(2)
         expect(report[:stages].map { |row| row[:name] }).not_to include(agendamento_a.name, agendamento_b.name)
+      end
+    end
+
+    context 'with loss_reasons attached to transitions' do
+      let(:reason_price) { create(:loss_reason, name: "price_#{SecureRandom.hex(4)}") }
+      let(:reason_no_response) { create(:loss_reason, name: "no_response_#{SecureRandom.hex(4)}") }
+
+      before do
+        # 2 distinct convs lost to "price" (one re-entered with the same reason
+        # — should NOT double-count) and 1 lost to "no response".
+        conv_a = conversation_with_id
+        stage_change(conv_id: conv_a.id, new_stage: stages[:lost].name, loss_reason: reason_price)
+        stage_change(conv_id: conv_a.id, new_stage: stages[:lost].name, loss_reason: reason_price, created_at: 12.hours.ago)
+        conv_b = conversation_with_id
+        stage_change(conv_id: conv_b.id, new_stage: stages[:lost].name, loss_reason: reason_price)
+        conv_c = conversation_with_id
+        stage_change(conv_id: conv_c.id, new_stage: stages[:lost].name, loss_reason: reason_no_response)
+      end
+
+      it 'aggregates distinct conversations per loss reason sorted desc' do
+        rows = builder.build[:loss_reasons]
+
+        expect(rows.length).to eq(2)
+        expect(rows.first[:name]).to eq(reason_price.name)
+        expect(rows.first[:count]).to eq(2)
+        expect(rows.first[:percentage]).to be_within(0.01).of(66.67)
+        expect(rows.last[:name]).to eq(reason_no_response.name)
+        expect(rows.last[:count]).to eq(1)
+        expect(rows.last[:percentage]).to be_within(0.01).of(33.33)
+      end
+
+      it 'omits loss reasons with no entries in the period' do
+        unused = create(:loss_reason, name: "unused_#{SecureRandom.hex(4)}")
+        expect(builder.build[:loss_reasons].map { |r| r[:name] }).not_to include(unused.name)
       end
     end
   end

@@ -1,3 +1,7 @@
+# rubocop:disable Metrics/ClassLength — three orthogonal concerns (display
+# groups, KPI math, loss-reason aggregation) live here on purpose; extracting
+# either would mean threading account/params/range plumbing across builders
+# for a marginal LOC reduction.
 class V2::Reports::FunnelConversionBuilder
   include DateRangeHelper
 
@@ -7,6 +11,7 @@ class V2::Reports::FunnelConversionBuilder
   # canon (set/maintained by the chart-rules data migration); changing them
   # on FunnelStage means updating these constants in lockstep.
   SCHEDULING_CHART_GROUP = 'Agendamento'.freeze
+  CONFIRMATION_STAGE_NAME = 'Confirmado'.freeze
   ATTENDANCE_STAGE_NAME = 'Comparecimento ( ganho )'.freeze
   NO_SHOW_STAGE_NAME = 'No-Show'.freeze
 
@@ -19,7 +24,7 @@ class V2::Reports::FunnelConversionBuilder
 
   def build
     all_stages = FunnelStage.active.ordered.to_a
-    return { stages: [], kpis: empty_kpis } if all_stages.empty?
+    return { stages: [], kpis: empty_kpis, loss_reasons: [] } if all_stages.empty?
 
     # KPIs always look at the FULL set of active stages — visibility/merge
     # rules are presentation-only and shouldn't change "completed" or "won"
@@ -28,7 +33,11 @@ class V2::Reports::FunnelConversionBuilder
     group_counts = fetch_group_counts(display_groups)
     stage_rows = build_stage_rows(display_groups, group_counts)
 
-    { stages: stage_rows, kpis: build_kpis(all_stages) }
+    {
+      stages: stage_rows,
+      kpis: build_kpis(all_stages),
+      loss_reasons: build_loss_reasons_breakdown
+    }
   end
 
   private
@@ -163,12 +172,13 @@ class V2::Reports::FunnelConversionBuilder
     [from_count - to_count, 0].max
   end
 
-  # Three sales-funnel rates, all anchored on the same denominator (total
+  # Four sales-funnel rates, all anchored on the same denominator (total
   # leads entering the funnel in the period). Hidden stages still count —
   # `chart_visible` only controls the chart bars, not the KPI math.
   def build_kpis(all_stages)
     total_leads = first_open_stage_count(all_stages)
     scheduling_count = distinct_count_for(scheduling_member_names(all_stages))
+    confirmation_count = distinct_count_for([CONFIRMATION_STAGE_NAME])
     attendance_count = distinct_count_for([ATTENDANCE_STAGE_NAME])
     no_show_count = distinct_count_for([NO_SHOW_STAGE_NAME])
 
@@ -176,6 +186,8 @@ class V2::Reports::FunnelConversionBuilder
       total_leads: total_leads,
       scheduling_count: scheduling_count,
       scheduling_rate: rate(scheduling_count, total_leads),
+      confirmation_count: confirmation_count,
+      confirmation_rate: rate(confirmation_count, total_leads),
       attendance_count: attendance_count,
       attendance_rate: rate(attendance_count, total_leads),
       no_show_count: no_show_count,
@@ -208,12 +220,45 @@ class V2::Reports::FunnelConversionBuilder
     scope.distinct.count(:conversation_id)
   end
 
+  # Distinct conversations per loss reason in the period, sorted descending.
+  # A conversation that got lost with the same reason twice still counts once
+  # (mirrors how the funnel counts distinct convs per stage). Reasons with
+  # zero entries in the period are omitted — the donut shouldn't render
+  # empty slices.
+  def build_loss_reasons_breakdown
+    counts = fetch_loss_reason_counts
+    return [] if counts.empty?
+
+    total = counts.values.sum
+    counts.map { |(id, name), count| loss_reason_row(id, name, count, total) }
+          .sort_by { |row| -row[:count] }
+  end
+
+  def fetch_loss_reason_counts
+    scope = account.funnel_stage_changes.where.not(loss_reason_id: nil)
+    scope = scope.where(created_at: range) if range.present?
+    scope.joins(:loss_reason).distinct
+         .group('loss_reasons.id', 'loss_reasons.name')
+         .count(:conversation_id)
+  end
+
+  def loss_reason_row(id, name, count, total)
+    {
+      id: id,
+      name: name,
+      count: count,
+      percentage: total.zero? ? 0 : ((count.to_f / total) * 100).round(2)
+    }
+  end
+
   def empty_kpis
     {
       total_leads: 0,
       scheduling_count: 0, scheduling_rate: nil,
+      confirmation_count: 0, confirmation_rate: nil,
       attendance_count: 0, attendance_rate: nil,
       no_show_count: 0, no_show_rate: nil
     }
   end
 end
+# rubocop:enable Metrics/ClassLength
