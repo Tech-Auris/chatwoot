@@ -8,7 +8,6 @@ import { picoSearch } from '@scmmishra/pico-search';
 import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
 import SettingsLayout from '../SettingsLayout.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
-import Input from 'dashboard/components-next/input/Input.vue';
 import Spinner from 'shared/components/Spinner.vue';
 import StatusBadge from './components/StatusBadge.vue';
 import TemplateDetailDrawer from './components/TemplateDetailDrawer.vue';
@@ -217,17 +216,18 @@ onMounted(() => {
                 </option>
               </select>
             </label>
-            <!-- Wrap the Input in the same label pattern the neighbours use
-                 so the "Buscar" caption gets the identical font/color and
-                 the input sits on the same baseline as the three selects.
-                 Input's own `label` prop uses a different type-scale that
-                 broke the row alignment. -->
+            <!-- Native input with the exact same class shape used on the
+                 three selects. The Chatwoot `<Input>` component wraps
+                 itself in an extra flex container that adds spacing and
+                 pushes the field below the row baseline; the raw `<input>`
+                 with identical classes lines up pixel-for-pixel. -->
             <label class="flex flex-col gap-1 text-xs text-n-slate-11">
               {{ t('META_TEMPLATES.FILTERS.SEARCH') }}
-              <Input
+              <input
                 v-model="search"
+                type="text"
+                class="bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg px-3 h-10 text-sm text-n-slate-12 focus:outline-n-brand placeholder:text-n-slate-10 min-w-64"
                 :placeholder="t('META_TEMPLATES.FILTERS.SEARCH_PLACEHOLDER')"
-                class="min-w-64"
               />
             </label>
           </div>
