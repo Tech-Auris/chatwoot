@@ -55,6 +55,15 @@ class MetaTemplatesAPI extends ApiClient {
       { params: { inbox_id: inboxId } }
     );
   }
+
+  // Per-template send funnel over a rolling window (7d / 30d / 90d).
+  // Backend returns { period, period_days, funnel: { sent, accepted_by_meta,
+  // failed_sync, delivered, read, failed_after_accept } }.
+  analytics({ inboxId, templateId, period }) {
+    return axios.get(`${this.url}/${templateId}/analytics`, {
+      params: { inbox_id: inboxId, period },
+    });
+  }
 }
 
 export default new MetaTemplatesAPI();

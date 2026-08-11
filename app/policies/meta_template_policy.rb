@@ -17,6 +17,13 @@ class MetaTemplatePolicy < ApplicationPolicy
     index?
   end
 
+  # Same read audience as `index?`: analytics only exposes counts derived
+  # from the account's own outgoing messages — nothing an agent could not
+  # already reach through the reports pages.
+  def analytics?
+    index?
+  end
+
   # Reserved for the follow-up slices (Fatia 3+). Managers and
   # administrators can create/edit/delete; agents cannot.
   def create?

@@ -90,6 +90,23 @@ class Api::V2::Accounts::MetaTemplatesController < Api::V1::Accounts::BaseContro
     end
   end
 
+  # Per-template send funnel derived from our own outgoing messages: how
+  # many attempts, how many Meta accepted (source_id present), how many
+  # were later delivered / read / failed. The frontend renders this inside
+  # the detail drawer with a 7d / 30d / 90d switcher — invalid period
+  # values fall back to 30d in the service.
+  def analytics
+    template = find_template_or_render_404
+    return if template.nil?
+
+    render json: Whatsapp::TemplateAnalyticsService.new(
+      inbox: @inbox,
+      template_name: template['name'],
+      template_language: template['language'],
+      period: params[:period]
+    ).call
+  end
+
   # On-demand refresh. Runs inline instead of enqueueing the job so the
   # operator gets the fresh data in the same request — Meta's list call is
   # a single roundtrip (with paging) and takes a couple of seconds.
@@ -173,6 +190,15 @@ class Api::V2::Accounts::MetaTemplatesController < Api::V1::Accounts::BaseContro
     templates = @inbox.channel.message_templates || []
     match = templates.find { |t| t['id'].to_s == template_id.to_s }
     match&.dig('name')
+  end
+
+  def find_template_or_render_404
+    templates = @inbox.channel.message_templates || []
+    match = templates.find { |t| t['id'].to_s == params[:id].to_s }
+    return match if match
+
+    render json: { error: I18n.t('errors.meta_templates.template_not_found') }, status: :not_found
+    nil
   end
 
   # Whitelists the four top-level Meta fields and forwards the

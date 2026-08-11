@@ -55,6 +55,23 @@
       "DELETE": "Delete template",
       "EDIT": "Edit template"
     },
+    "ANALYTICS": {
+      "TITLE": "Usage",
+      "EMPTY": "No sends of this template in the selected period.",
+      "ERROR": "Could not load usage data.",
+      "PERIODS": {
+        "7d": "7 days",
+        "30d": "30 days",
+        "90d": "90 days"
+      },
+      "STEPS": {
+        "SENT": "Sent",
+        "ACCEPTED": "Reached Meta",
+        "DELIVERED": "Delivered",
+        "READ": "Read",
+        "FAILED_AFTER": "Failed after accept"
+      }
+    },
     "DELETE": {
       "TITLE": "Delete template",
       "DESCRIPTION": "Are you sure you want to delete \"{name}\" on Meta? This removes every language variant of this template and cannot be undone. If the template is used by an active campaign, Meta will refuse the deletion.",

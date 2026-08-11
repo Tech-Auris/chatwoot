@@ -334,4 +334,54 @@ RSpec.describe 'Meta Templates API', type: :request do
       expect(response).to have_http_status(:unauthorized)
     end
   end
+
+  describe 'GET /api/v2/accounts/{account_id}/meta_templates/:id/analytics' do
+    let(:conversation) { create(:conversation, inbox: cloud_inbox, account: account) }
+
+    before do
+      # Seed a small funnel so the service returns real counts instead of
+      # zero. The controller-level assertions only care about wiring
+      # (route → policy → service.call → JSON shape); numeric correctness
+      # is exercised in the service spec.
+      create(:message, inbox: cloud_inbox, account: account, conversation: conversation,
+                       message_type: :outgoing, status: :read, source_id: 'wamid.1',
+                       additional_attributes: { 'template_params' => { 'name' => 'confirmacao_agenda', 'language' => 'pt_BR' } })
+      create(:message, inbox: cloud_inbox, account: account, conversation: conversation,
+                       message_type: :outgoing, status: :failed, source_id: nil,
+                       additional_attributes: { 'template_params' => { 'name' => 'confirmacao_agenda', 'language' => 'pt_BR' } })
+    end
+
+    it 'returns the funnel payload for the template' do
+      get "/api/v2/accounts/#{account.id}/meta_templates/123/analytics",
+          params: { inbox_id: cloud_inbox.id, period: '30d' }, headers: admin.create_new_auth_token
+
+      expect(response).to have_http_status(:success)
+      body = response.parsed_body
+      expect(body['period']).to eq('30d')
+      expect(body['template_name']).to eq('confirmacao_agenda')
+      expect(body['funnel']).to include('sent' => 2, 'accepted_by_meta' => 1, 'failed_sync' => 1, 'read' => 1)
+    end
+
+    it 'is available to agents (read-only, same audience as index)' do
+      get "/api/v2/accounts/#{account.id}/meta_templates/123/analytics",
+          params: { inbox_id: cloud_inbox.id }, headers: agent.create_new_auth_token
+
+      expect(response).to have_http_status(:success)
+    end
+
+    it 'returns 404 when the template id is not in the cached list' do
+      get "/api/v2/accounts/#{account.id}/meta_templates/9999/analytics",
+          params: { inbox_id: cloud_inbox.id }, headers: admin.create_new_auth_token
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it 'falls back to 30d silently when an unknown period is passed' do
+      get "/api/v2/accounts/#{account.id}/meta_templates/123/analytics",
+          params: { inbox_id: cloud_inbox.id, period: 'lifetime' }, headers: admin.create_new_auth_token
+
+      expect(response).to have_http_status(:success)
+      expect(response.parsed_body['period']).to eq('30d')
+    end
+  end
 end
