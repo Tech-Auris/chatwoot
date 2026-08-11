@@ -2,14 +2,16 @@ import { frontendURL } from '../../../../helper/URLHelper';
 
 import SettingsWrapper from '../SettingsWrapper.vue';
 import Index from './Index.vue';
+import New from './New.vue';
 
-// Access is open to every non-portal role. Agents get the read-only list
-// (Fatia 2 renders the disabled action buttons for them); managers and
-// administrators can also create/edit/delete once Fatia 3+ ship.
-// The sidebar link itself is gated on the account having at least one
-// Cloud WhatsApp inbox (see Sidebar.vue), so agents on Baileys-only
-// accounts never see the menu even though the route would authorize them.
-const PERMISSIONS = ['administrator', 'agent', 'manager', 'custom_role'];
+// Read routes are open to every non-portal role (agent + manager +
+// administrator); the sidebar link is gated on the account having at
+// least one Cloud WhatsApp inbox (see Sidebar.vue). The create page is
+// restricted to manager and administrator to match the backend
+// MetaTemplatePolicy — agents that navigate directly land back on the
+// index via the router guard.
+const READ_PERMISSIONS = ['administrator', 'agent', 'manager', 'custom_role'];
+const WRITE_PERMISSIONS = ['administrator', 'manager', 'custom_role'];
 
 export default {
   routes: [
@@ -21,9 +23,17 @@ export default {
           path: '',
           name: 'meta_templates_index',
           meta: {
-            permissions: PERMISSIONS,
+            permissions: READ_PERMISSIONS,
           },
           component: Index,
+        },
+        {
+          path: 'new',
+          name: 'meta_templates_new',
+          meta: {
+            permissions: WRITE_PERMISSIONS,
+          },
+          component: New,
         },
       ],
     },
