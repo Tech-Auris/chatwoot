@@ -764,6 +764,14 @@
         "ACCOUNT_MODE": {
           "LABEL": "Modo da conta",
           "TOOLTIP": "Modo de operação atual da sua conta do WhatsApp"
+        },
+        "ACCOUNT_REVIEW_STATUS": {
+          "LABEL": "Status da conta",
+          "TOOLTIP": "Status de revisão da sua Conta do WhatsApp Business. Sinalizada, recusada, restrita ou desabilitada significa que a Meta limitou ou bloqueou esta conta."
+        },
+        "BUSINESS_VERIFICATION_STATUS": {
+          "LABEL": "Verificação da empresa",
+          "TOOLTIP": "Indica se a Meta verificou a empresa por trás desta conta"
         }
       },
       "VALUES": {
@@ -783,6 +791,22 @@
           "REJECTED": "Rejeitado",
           "DECLINED": "Sandbox",
           "NON_EXISTS": "Não existe"
+        },
+        "ACCOUNT_REVIEW_STATUSES": {
+          "APPROVED": "Aprovada",
+          "PENDING": "Em análise",
+          "FLAGGED": "Conta desabilitada",
+          "DECLINED": "Conta desabilitada",
+          "RESTRICTED": "Conta restrita",
+          "DISABLED": "Conta desabilitada"
+        },
+        "VERIFICATION_STATUSES": {
+          "verified": "Verificada",
+          "pending": "Em análise",
+          "pending_need_more_info": "Mais informações solicitadas",
+          "not_verified": "Não verificada",
+          "failed": "Verificação recusada",
+          "expired": "Verificação expirada"
         },
         "MODES": {
           "SANDBOX": "Sandbox",

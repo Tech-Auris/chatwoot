@@ -768,6 +768,14 @@
         "ACCOUNT_MODE": {
           "LABEL": "Account mode",
           "TOOLTIP": "Current operating mode of your WhatsApp account"
+        },
+        "ACCOUNT_REVIEW_STATUS": {
+          "LABEL": "Account status",
+          "TOOLTIP": "Review status of your WhatsApp Business Account. Flagged, declined, restricted or disabled means Meta has limited or blocked this account."
+        },
+        "BUSINESS_VERIFICATION_STATUS": {
+          "LABEL": "Business verification",
+          "TOOLTIP": "Whether Meta has verified the business behind this account"
         }
       },
       "VALUES": {
@@ -787,6 +795,22 @@
           "REJECTED": "Rejected",
           "DECLINED": "Declined",
           "NON_EXISTS": "Non exists"
+        },
+        "ACCOUNT_REVIEW_STATUSES": {
+          "APPROVED": "Approved",
+          "PENDING": "Under review",
+          "FLAGGED": "Account disabled",
+          "DECLINED": "Account disabled",
+          "RESTRICTED": "Account restricted",
+          "DISABLED": "Account disabled"
+        },
+        "VERIFICATION_STATUSES": {
+          "verified": "Verified",
+          "pending": "Under review",
+          "pending_need_more_info": "More info requested",
+          "not_verified": "Not verified",
+          "failed": "Verification failed",
+          "expired": "Verification expired"
         },
         "MODES": {
           "SANDBOX": "Sandbox",

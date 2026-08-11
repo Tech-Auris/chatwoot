@@ -40,6 +40,29 @@ const MODE_COLORS = {
   SANDBOX: 'text-n-slate-11',
 };
 
+// Meta returns WABA-level status on `account_review_status`. Values seen
+// in production: APPROVED (normal), PENDING (under review), FLAGGED /
+// DECLINED / RESTRICTED / DISABLED (Meta shows "Conta desabilitada" for
+// these in Business Manager). Anything not mapped falls back to neutral
+// so a new Meta value still renders instead of breaking the page.
+const ACCOUNT_STATUS_COLORS = {
+  APPROVED: 'text-n-teal-11',
+  PENDING: 'text-n-amber-11',
+  FLAGGED: 'text-n-ruby-9',
+  DECLINED: 'text-n-ruby-9',
+  RESTRICTED: 'text-n-ruby-9',
+  DISABLED: 'text-n-ruby-9',
+};
+
+const VERIFICATION_COLORS = {
+  verified: 'text-n-teal-11',
+  pending: 'text-n-amber-11',
+  pending_need_more_info: 'text-n-amber-11',
+  not_verified: 'text-n-slate-11',
+  failed: 'text-n-ruby-9',
+  expired: 'text-n-ruby-9',
+};
+
 const healthItems = computed(() => {
   if (!props.healthData) {
     return [];
@@ -52,6 +75,8 @@ const healthItems = computed(() => {
     quality_rating: qualityRating,
     messaging_limit_tier: messagingLimitTier,
     account_mode: accountMode,
+    account_review_status: accountReviewStatus,
+    business_verification_status: businessVerificationStatus,
   } = props.healthData;
 
   return [
@@ -107,7 +132,34 @@ const healthItems = computed(() => {
       show: true,
       type: 'mode',
     },
-  ];
+    // WABA-level cards. The service returns `undefined` when the WABA
+    // call fails or is skipped (no business_account_id, missing scope
+    // on the token). Only render them when we actually have data —
+    // showing "N/A" here would be misleading since the account might
+    // be fine and we just could not read the field.
+    {
+      key: 'accountReviewStatus',
+      label: t('INBOX_MGMT.ACCOUNT_HEALTH.FIELDS.ACCOUNT_REVIEW_STATUS.LABEL'),
+      value: accountReviewStatus,
+      tooltip: t(
+        'INBOX_MGMT.ACCOUNT_HEALTH.FIELDS.ACCOUNT_REVIEW_STATUS.TOOLTIP'
+      ),
+      show: !!accountReviewStatus,
+      type: 'account_status',
+    },
+    {
+      key: 'businessVerificationStatus',
+      label: t(
+        'INBOX_MGMT.ACCOUNT_HEALTH.FIELDS.BUSINESS_VERIFICATION_STATUS.LABEL'
+      ),
+      value: businessVerificationStatus,
+      tooltip: t(
+        'INBOX_MGMT.ACCOUNT_HEALTH.FIELDS.BUSINESS_VERIFICATION_STATUS.TOOLTIP'
+      ),
+      show: !!businessVerificationStatus,
+      type: 'verification',
+    },
+  ].filter(item => item.show);
 });
 
 const handleGoToSettings = () => {
@@ -139,6 +191,20 @@ const formatModeDisplay = mode =>
 const getModeStatusTextColor = mode => MODE_COLORS[mode] || 'text-n-slate-12';
 
 const getStatusTextColor = status => STATUS_COLORS[status] || 'text-n-slate-12';
+
+const getAccountStatusTextColor = status =>
+  ACCOUNT_STATUS_COLORS[status] || 'text-n-slate-12';
+
+const getVerificationTextColor = status =>
+  VERIFICATION_COLORS[status] || 'text-n-slate-12';
+
+const formatAccountStatusDisplay = status =>
+  t(`INBOX_MGMT.ACCOUNT_HEALTH.VALUES.ACCOUNT_REVIEW_STATUSES.${status}`) ||
+  status;
+
+const formatVerificationDisplay = status =>
+  t(`INBOX_MGMT.ACCOUNT_HEALTH.VALUES.VERIFICATION_STATUSES.${status}`) ||
+  status;
 
 const showWebhookSection = computed(
   () => props.healthData?.webhook_configuration !== undefined
@@ -233,6 +299,20 @@ const handleRegisterWebhook = () => {
               class="text-label text-n-slate-12"
             >
               {{ formatTierDisplay(item.value) }}
+            </span>
+            <span
+              v-else-if="item.type === 'account_status'"
+              class="inline-flex items-center px-2 py-0.5 min-h-6 text-label-small rounded-md bg-n-alpha-2"
+              :class="getAccountStatusTextColor(item.value)"
+            >
+              {{ formatAccountStatusDisplay(item.value) }}
+            </span>
+            <span
+              v-else-if="item.type === 'verification'"
+              class="inline-flex items-center px-2 py-0.5 min-h-6 text-label-small rounded-md bg-n-alpha-2"
+              :class="getVerificationTextColor(item.value)"
+            >
+              {{ formatVerificationDisplay(item.value) }}
             </span>
             <span v-else class="text-label text-n-slate-12">{{
               item.value
