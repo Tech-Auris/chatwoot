@@ -9,7 +9,16 @@ class Whatsapp::HealthService
 
   def fetch_health_status
     validate_channel!
-    fetch_phone_health_data
+    phone_data = fetch_phone_health_data
+    # WABA-level status (account_review_status, business_verification_status)
+    # lives on the business account object, not the phone number. Meta shows
+    # "Conta desabilitada" on their UI when the WABA has been flagged /
+    # declined / disabled by policy review, and the operator has no way to
+    # know from our health page today because we only queried the phone.
+    # Failures on this extra call must not break the page — the phone data
+    # is still useful even when Meta refuses to answer the business call
+    # (e.g. missing business_management scope on the token).
+    phone_data.merge(fetch_business_account_health_data)
   end
 
   private
@@ -35,6 +44,30 @@ class Whatsapp::HealthService
   rescue StandardError => e
     Rails.logger.error "[WHATSAPP HEALTH] Error fetching health data: #{e.message}"
     raise e
+  end
+
+  def fetch_business_account_health_data
+    waba_id = @channel.provider_config['business_account_id']
+    return {} if waba_id.blank?
+
+    response = HTTParty.get(
+      "#{BASE_URI}/#{@api_version}/#{waba_id}",
+      query: { fields: 'account_review_status,business_verification_status', access_token: @access_token }
+    )
+    return log_and_return_empty("WABA fetch failed: #{response.code} - #{response.body}") unless response.success?
+
+    data = response.parsed_response
+    {
+      account_review_status: data['account_review_status'],
+      business_verification_status: data['business_verification_status']
+    }
+  rescue StandardError => e
+    log_and_return_empty("WABA fetch errored: #{e.message}")
+  end
+
+  def log_and_return_empty(message)
+    Rails.logger.warn "[WHATSAPP HEALTH] #{message}"
+    {}
   end
 
   def health_fields
