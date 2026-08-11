@@ -1,16 +1,26 @@
 <script setup>
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useMapGetter } from 'dashboard/composables/store';
 import StatusBadge from './StatusBadge.vue';
+import Button from 'dashboard/components-next/button/Button.vue';
 
 const props = defineProps({
   template: { type: Object, default: null },
   open: { type: Boolean, default: false },
+  deleting: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['close']);
+const emit = defineEmits(['close', 'delete']);
 
 const { t } = useI18n();
+
+// Delete surface follows the backend policy: manager + admin only.
+// Agents see the full detail but no destructive action.
+const currentRole = useMapGetter('getCurrentRole');
+const canDelete = computed(() =>
+  ['administrator', 'manager'].includes(currentRole.value)
+);
 
 // Meta templates use a `components` array with typed entries. Pull each
 // section into its own computed so the template markup stays flat.
@@ -160,6 +170,20 @@ const rejectedReason = computed(() => props.template?.rejected_reason);
           </ul>
         </section>
       </div>
+
+      <footer
+        v-if="canDelete"
+        class="border-t border-n-weak p-4 flex items-center justify-end gap-2"
+      >
+        <Button
+          faded
+          ruby
+          sm
+          :disabled="deleting"
+          :label="t('META_TEMPLATES.DETAIL.DELETE')"
+          @click="emit('delete', template)"
+        />
+      </footer>
     </aside>
   </transition>
 </template>

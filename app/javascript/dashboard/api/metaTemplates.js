@@ -33,6 +33,16 @@ class MetaTemplatesAPI extends ApiClient {
       { params: { inbox_id: inboxId } }
     );
   }
+
+  // Deletes the template on Meta. Backend resolves `id` → template name
+  // from the cached list, so callers just pass the Meta template id.
+  // Returns the refreshed { templates, last_synced_at } payload so the
+  // list can update without a second GET.
+  delete({ inboxId, templateId }) {
+    return axios.delete(`${this.url}/${templateId}`, {
+      params: { inbox_id: inboxId },
+    });
+  }
 }
 
 export default new MetaTemplatesAPI();
