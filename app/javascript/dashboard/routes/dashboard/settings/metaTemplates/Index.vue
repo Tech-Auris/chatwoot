@@ -217,12 +217,19 @@ onMounted(() => {
                 </option>
               </select>
             </label>
-            <Input
-              v-model="search"
-              :label="t('META_TEMPLATES.FILTERS.SEARCH')"
-              :placeholder="t('META_TEMPLATES.FILTERS.SEARCH_PLACEHOLDER')"
-              class="min-w-64"
-            />
+            <!-- Wrap the Input in the same label pattern the neighbours use
+                 so the "Buscar" caption gets the identical font/color and
+                 the input sits on the same baseline as the three selects.
+                 Input's own `label` prop uses a different type-scale that
+                 broke the row alignment. -->
+            <label class="flex flex-col gap-1 text-xs text-n-slate-11">
+              {{ t('META_TEMPLATES.FILTERS.SEARCH') }}
+              <Input
+                v-model="search"
+                :placeholder="t('META_TEMPLATES.FILTERS.SEARCH_PLACEHOLDER')"
+                class="min-w-64"
+              />
+            </label>
           </div>
           <div class="flex items-center gap-2">
             <span v-if="lastSyncedAt" class="text-xs text-n-slate-11">
