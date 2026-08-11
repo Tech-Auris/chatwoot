@@ -174,14 +174,17 @@ onMounted(() => {
 
     <template #body>
       <div class="grid gap-4">
-        <!-- Inbox selector + sync -->
+        <!-- Filter row: match the styling used across settings/reports so
+             every field (selects and search input) sits on the same
+             baseline. Native selects get the same outline/rounded-lg/
+             bg-alpha treatment the design system uses elsewhere. -->
         <div class="flex flex-wrap items-end gap-3 justify-between">
           <div class="flex flex-wrap items-end gap-3">
             <label class="flex flex-col gap-1 text-xs text-n-slate-11">
               {{ t('META_TEMPLATES.FILTERS.INBOX') }}
               <select
                 v-model="selectedInboxId"
-                class="min-w-64 border border-n-weak rounded-md px-3 py-1.5 text-sm bg-n-solid-1 text-n-slate-12"
+                class="bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg pl-3 pr-9 h-10 text-sm text-n-slate-12 focus:outline-n-brand min-w-64"
               >
                 <option
                   v-for="inbox in cloudInboxes"
@@ -196,7 +199,7 @@ onMounted(() => {
               {{ t('META_TEMPLATES.FILTERS.STATUS') }}
               <select
                 v-model="statusFilter"
-                class="min-w-40 border border-n-weak rounded-md px-3 py-1.5 text-sm bg-n-solid-1 text-n-slate-12"
+                class="bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg pl-3 pr-9 h-10 text-sm text-n-slate-12 focus:outline-n-brand min-w-40"
               >
                 <option v-for="s in STATUS_OPTIONS" :key="s" :value="s">
                   {{ t(`META_TEMPLATES.STATUS.${s}`, s) }}
@@ -207,19 +210,19 @@ onMounted(() => {
               {{ t('META_TEMPLATES.FILTERS.CATEGORY') }}
               <select
                 v-model="categoryFilter"
-                class="min-w-40 border border-n-weak rounded-md px-3 py-1.5 text-sm bg-n-solid-1 text-n-slate-12"
+                class="bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg pl-3 pr-9 h-10 text-sm text-n-slate-12 focus:outline-n-brand min-w-44"
               >
                 <option v-for="c in CATEGORY_OPTIONS" :key="c" :value="c">
                   {{ t(`META_TEMPLATES.CATEGORY.${c}`, c) }}
                 </option>
               </select>
             </label>
-            <div class="min-w-64">
-              <Input
-                v-model="search"
-                :placeholder="t('META_TEMPLATES.FILTERS.SEARCH_PLACEHOLDER')"
-              />
-            </div>
+            <Input
+              v-model="search"
+              :label="t('META_TEMPLATES.FILTERS.SEARCH')"
+              :placeholder="t('META_TEMPLATES.FILTERS.SEARCH_PLACEHOLDER')"
+              class="min-w-64"
+            />
           </div>
           <div class="flex items-center gap-2">
             <span v-if="lastSyncedAt" class="text-xs text-n-slate-11">

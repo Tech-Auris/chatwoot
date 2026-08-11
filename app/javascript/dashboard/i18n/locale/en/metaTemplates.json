@@ -10,7 +10,8 @@
       "INBOX": "Inbox",
       "STATUS": "Status",
       "CATEGORY": "Category",
-      "SEARCH_PLACEHOLDER": "Search by template name or language"
+      "SEARCH": "Search",
+      "SEARCH_PLACEHOLDER": "Template name or language"
     },
     "STATUS": {
       "ALL": "All statuses",

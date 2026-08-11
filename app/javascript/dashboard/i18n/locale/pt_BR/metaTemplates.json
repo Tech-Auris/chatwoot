@@ -10,7 +10,8 @@
       "INBOX": "Caixa de entrada",
       "STATUS": "Status",
       "CATEGORY": "Categoria",
-      "SEARCH_PLACEHOLDER": "Buscar por nome do template ou idioma"
+      "SEARCH": "Buscar",
+      "SEARCH_PLACEHOLDER": "Nome do template ou idioma"
     },
     "STATUS": {
       "ALL": "Todos os status",
