@@ -40,6 +40,33 @@ class Whatsapp::Providers::WhatsappCloudService < Whatsapp::Providers::BaseServi
     whatsapp_channel.update!(message_templates: templates, message_templates_last_updated: Time.now.utc) if templates.present?
   end
 
+  # Updates an existing template on Meta. Only certain fields are
+  # editable and the rules depend on the template's current status
+  # (body/header/footer/buttons trigger reapproval; name/language/category
+  # are usually immutable). We forward whatever Meta receives and let it
+  # decide — surfacing the rejection message when it refuses is more
+  # honest than trying to mirror Meta's status→field matrix in the UI.
+  def update_template(template_id, payload)
+    response = HTTParty.post(
+      "#{api_base_path}/v14.0/#{template_id}",
+      headers: api_headers,
+      body: payload.to_json
+    )
+
+    if response.success?
+      { success: true, template: response.parsed_response }
+    else
+      Rails.logger.error "Meta template update failed: #{response.code} - #{response.body}"
+      error = response.parsed_response.is_a?(Hash) ? response.parsed_response['error'] : nil
+      {
+        success: false,
+        error_code: error&.dig('code'),
+        error_message: error&.dig('message') || response.body,
+        error_details: error&.dig('error_user_msg') || error&.dig('error_data', 'details')
+      }
+    end
+  end
+
   # Deletes a template from Meta. Meta identifies templates by name at
   # the WABA level, so a single call removes every language variant of
   # the template. Returns a normalised hash so the controller does not

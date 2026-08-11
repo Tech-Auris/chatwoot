@@ -52,7 +52,8 @@
       "URL_PREFIX": "URL:",
       "PHONE_PREFIX": "Telefone:",
       "REJECTED_REASON_LABEL": "Motivo do Meta:",
-      "DELETE": "Excluir template"
+      "DELETE": "Excluir template",
+      "EDIT": "Editar template"
     },
     "DELETE": {
       "TITLE": "Excluir template",
@@ -78,6 +79,7 @@
         "NAME": "Nome do template",
         "NAME_PLACEHOLDER": "ex: confirmacao_agenda",
         "NAME_HINT": "Só letras minúsculas, números e underline. Precisa ser único nesta caixa.",
+        "NAME_IMMUTABLE": "Nome, idioma e caixa não podem ser alterados após a criação (regra do Meta).",
         "LANGUAGE": "Idioma",
         "CATEGORY": "Categoria",
         "HEADER_TOGGLE": "Adicionar cabeçalho",
@@ -118,6 +120,14 @@
       "CANCEL": "Cancelar",
       "SUCCESS": "Template enviado ao Meta. Vai aparecer como Pendente até a aprovação.",
       "ERROR_GENERIC": "Não foi possível criar o template. Revise os campos e tente novamente."
+    },
+    "EDIT": {
+      "TITLE": "Editar Template Meta",
+      "DESCRIPTION": "Atualize um template já cadastrado no Meta. Alterar corpo / cabeçalho / rodapé / botões manda o template de volta pra Pendente até reaprovação. Nome, idioma e caixa não podem ser alterados.",
+      "SUBMIT": "Salvar alterações",
+      "SUCCESS": "Template atualizado no Meta. Se você alterou corpo / cabeçalho / rodapé / botões, ele fica Pendente até reaprovar.",
+      "ERROR_GENERIC": "Não foi possível atualizar o template. Revise os campos e tente novamente.",
+      "NOT_FOUND": "Este template não está mais disponível nesta caixa."
     },
     "PREVIEW": {
       "TITLE": "Pré-visualização",

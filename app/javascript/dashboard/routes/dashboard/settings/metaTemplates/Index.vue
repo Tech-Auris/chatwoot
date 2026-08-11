@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
 import { useAlert } from 'dashboard/composables';
 import { useMapGetter, useStore } from 'dashboard/composables/store';
 import { picoSearch } from '@scmmishra/pico-search';
@@ -17,6 +18,7 @@ import MetaTemplatesAPI from 'dashboard/api/metaTemplates';
 
 const { t } = useI18n();
 const store = useStore();
+const router = useRouter();
 
 // Only manager and administrator can create templates on Meta. Agents
 // stay on the read-only view — matches MetaTemplatePolicy#create?.
@@ -126,6 +128,18 @@ const openDetail = template => {
 const closeDetail = () => {
   drawerOpen.value = false;
   selectedTemplate.value = null;
+};
+
+// Edit flow: drawer emits `edit` → we push to the edit route with the
+// selected inbox in the query so the edit page knows which cache to
+// resolve the template against.
+const editTemplate = template => {
+  closeDetail();
+  router.push({
+    name: 'meta_templates_edit',
+    params: { id: template.id },
+    query: { inbox_id: selectedInboxId.value },
+  });
 };
 
 // Delete flow: drawer emits `delete` → we cache the target and open a
@@ -361,6 +375,7 @@ onMounted(() => {
         :deleting="deleting"
         @close="closeDetail"
         @delete="requestDelete"
+        @edit="editTemplate"
       />
 
       <Dialog

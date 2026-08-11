@@ -263,4 +263,75 @@ RSpec.describe 'Meta Templates API', type: :request do
       expect(response).to have_http_status(:unauthorized)
     end
   end
+
+  describe 'PATCH /api/v2/accounts/{account_id}/meta_templates/:id' do
+    let(:update_payload) do
+      {
+        inbox_id: cloud_inbox.id,
+        template: {
+          category: 'UTILITY',
+          components: [{ type: 'BODY', text: 'Novo texto' }]
+        }
+      }
+    end
+
+    it 'updates the template on Meta and refreshes the cache' do
+      # rubocop:disable RSpec/AnyInstance — see prior comments; controller
+      # reaches through Current.account.inboxes.find(...).channel and we
+      # do not have a boundary to intercept a specific instance yet.
+      provider = instance_double(Whatsapp::Providers::WhatsappCloudService)
+      allow_any_instance_of(Channel::Whatsapp).to receive(:provider_service).and_return(provider)
+      allow(provider).to receive(:update_template).with('123', anything).and_return(
+        success: true, template: { 'success' => true }
+      )
+      allow_any_instance_of(Channel::Whatsapp).to receive(:sync_templates) do
+        cloud_channel.update!(
+          message_templates: [{ 'id' => '123', 'name' => 'confirmacao_agenda',
+                                'status' => 'PENDING', 'category' => 'UTILITY', 'language' => 'pt_BR',
+                                'components' => [{ 'type' => 'BODY', 'text' => 'Novo texto' }] }],
+          message_templates_last_updated: Time.current
+        )
+      end
+      # rubocop:enable RSpec/AnyInstance
+
+      patch "/api/v2/accounts/#{account.id}/meta_templates/123",
+            params: update_payload, headers: admin.create_new_auth_token
+
+      expect(response).to have_http_status(:success)
+      expect(response.parsed_body['templates'].first['components'].first['text']).to eq('Novo texto')
+    end
+
+    it 'returns 404 when the id is not in the cached template list' do
+      patch "/api/v2/accounts/#{account.id}/meta_templates/999",
+            params: update_payload, headers: admin.create_new_auth_token
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it 'surfaces Meta refusal (e.g. editing an immutable field) as 422' do
+      provider = instance_double(Whatsapp::Providers::WhatsappCloudService)
+      allow_any_instance_of(Channel::Whatsapp).to receive(:provider_service).and_return(provider) # rubocop:disable RSpec/AnyInstance
+      allow(provider).to receive(:update_template).and_return(
+        success: false,
+        error_code: 100,
+        error_message: 'Cannot edit template in current status',
+        error_details: 'Template must be APPROVED or REJECTED to be edited.'
+      )
+
+      patch "/api/v2/accounts/#{account.id}/meta_templates/123",
+            params: update_payload, headers: admin.create_new_auth_token
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      body = response.parsed_body
+      expect(body['error']).to eq('Cannot edit template in current status')
+      expect(body['details']).to be_present
+    end
+
+    it 'forbids agents from updating templates' do
+      patch "/api/v2/accounts/#{account.id}/meta_templates/123",
+            params: update_payload, headers: agent.create_new_auth_token
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+  end
 end

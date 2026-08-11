@@ -45,6 +45,21 @@ class Api::V2::Accounts::MetaTemplatesController < Api::V1::Accounts::BaseContro
     end
   end
 
+  # Updates an existing template on Meta. The frontend passes the Meta
+  # template `id` in the URL and the same Meta-shaped payload the create
+  # flow uses. Meta refuses edits on some (status, field) combinations —
+  # we surface the rejection message as 422 instead of trying to mirror
+  # the rule matrix in this controller.
+  def update
+    if template_name_for(params[:id]).nil?
+      render json: { error: I18n.t('errors.meta_templates.template_not_found') }, status: :not_found
+      return
+    end
+
+    result = @inbox.channel.provider_service.update_template(params[:id], update_payload)
+    render_provider_write_result(result, fallback_key: 'meta_templates.update_failed')
+  end
+
   # Deletes a template from Meta by name. Meta scopes templates at the
   # WABA + name level, so a single call removes every language variant.
   # Resolves the name from the cached templates on the channel — the
@@ -125,6 +140,29 @@ class Api::V2::Accounts::MetaTemplatesController < Api::V1::Accounts::BaseContro
     }
   end
 
+  # Shared renderer for create/update responses: on success, refresh the
+  # local cache (Meta already accepted the write) and echo back the
+  # fresh list; on failure, surface Meta's error text + details + code
+  # so the operator sees exactly what was rejected instead of a generic
+  # "try again". Kept as a helper so #update stays compact — Rubocop
+  # was flagging the method length otherwise.
+  def render_provider_write_result(result, fallback_key:, success_status: :ok)
+    if result[:success]
+      @inbox.channel.sync_templates
+      render json: {
+        template: result[:template],
+        templates: @inbox.channel.reload.message_templates || [],
+        last_synced_at: @inbox.channel.message_templates_last_updated
+      }, status: success_status
+    else
+      render json: {
+        error: result[:error_message] || I18n.t("errors.#{fallback_key}"),
+        details: result[:error_details],
+        code: result[:error_code]
+      }, status: :unprocessable_entity
+    end
+  end
+
   # Looks up the template's name from the cached list on the channel.
   # We index the route by Meta template `id` (RESTful URL) but Meta's
   # DELETE endpoint accepts only `name` — this bridges the two without
@@ -147,5 +185,14 @@ class Api::V2::Accounts::MetaTemplatesController < Api::V1::Accounts::BaseContro
   def create_payload
     root = params.require(:template).to_unsafe_h.stringify_keys
     root.slice('name', 'language', 'category', 'components')
+  end
+
+  # Meta's update endpoint accepts `category` and `components` only;
+  # name and language are immutable once the template is created. Slice
+  # here so the frontend can send the full form shape without a special
+  # transformer, and we only forward what Meta allows.
+  def update_payload
+    root = params.require(:template).to_unsafe_h.stringify_keys
+    root.slice('category', 'components')
   end
 end
