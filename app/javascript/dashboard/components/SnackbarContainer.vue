@@ -29,7 +29,9 @@ const showPopover = () => {
 };
 
 const onNewToastMessage = ({ message: originalMessage, action }) => {
-  const message = action?.usei18n ? t(originalMessage) : originalMessage;
+  const message = action?.usei18n
+    ? t(originalMessage, action?.i18nParams || {})
+    : originalMessage;
   const duration = action?.duration || props.duration;
   const key = action?.key || Date.now();
 

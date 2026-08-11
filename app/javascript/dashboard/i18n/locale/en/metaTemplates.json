@@ -55,6 +55,9 @@
       "DELETE": "Delete template",
       "EDIT": "Edit template"
     },
+    "NOTIFICATIONS": {
+      "STATUS_CHANGED": "Meta updated the status of template \"{name}\" to {status}."
+    },
     "ANALYTICS": {
       "TITLE": "Usage",
       "EMPTY": "No sends of this template in the selected period.",

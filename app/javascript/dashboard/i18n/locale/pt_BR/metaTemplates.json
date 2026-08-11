@@ -55,6 +55,9 @@
       "DELETE": "Excluir template",
       "EDIT": "Editar template"
     },
+    "NOTIFICATIONS": {
+      "STATUS_CHANGED": "A Meta atualizou o status do template \"{name}\" para {status}."
+    },
     "ANALYTICS": {
       "TITLE": "Uso",
       "EMPTY": "Nenhum envio deste template no período.",
