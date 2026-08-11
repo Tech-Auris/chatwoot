@@ -37,8 +37,14 @@ const inboxIdFromQuery = computed(() =>
 );
 
 const template = ref(null);
-const loading = ref(false);
+// Start in loading so the very first paint shows the spinner instead of
+// an empty body. Without this the operator briefly sees blank content
+// before the async fetchTemplate ticks loading to true.
+const loading = ref(true);
 const submitting = ref(false);
+
+const findTemplateIn = list =>
+  (list || []).find(t2 => String(t2.id) === String(templateId.value));
 
 const fetchTemplate = async () => {
   if (!inboxIdFromQuery.value || !templateId.value) return;
@@ -47,9 +53,21 @@ const fetchTemplate = async () => {
     const { data } = await MetaTemplatesAPI.fetch({
       inboxId: inboxIdFromQuery.value,
     });
-    template.value = (data.templates || []).find(
-      t2 => String(t2.id) === String(templateId.value)
-    );
+    template.value = findTemplateIn(data.templates);
+
+    // Deep-links, refreshes and inboxes whose initial `after_create :
+    // sync_templates` never landed can leave the local cache empty or
+    // stale enough to miss the id in the URL. Instead of bouncing the
+    // operator back to the index, force a fresh Meta sync once and
+    // retry — matches the auto-sync behavior on the index page but
+    // scoped to the specific id we came here for.
+    if (!template.value) {
+      const { data: synced } = await MetaTemplatesAPI.sync({
+        inboxId: inboxIdFromQuery.value,
+      });
+      template.value = findTemplateIn(synced.templates);
+    }
+
     if (!template.value) {
       useAlert(t('META_TEMPLATES.EDIT.NOT_FOUND'));
       router.push({ name: 'meta_templates_index' });
