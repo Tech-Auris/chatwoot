@@ -60,6 +60,7 @@ class ActionCableConnector extends BaseActionCableConnector {
       'internal_chat.reaction.deleted': this.onInternalChatReactionDeleted,
       'internal_chat.poll.voted': this.onInternalChatPollVoted,
       'ticket.updated': this.onTicketUpdated,
+      'meta_template.status_updated': this.onMetaTemplateStatusUpdated,
     };
   }
 
@@ -166,6 +167,25 @@ class ActionCableConnector extends BaseActionCableConnector {
         action: { usei18n: true },
       });
     }
+  };
+
+  // Meta approved / rejected / paused / disabled a template. Fires an
+  // account-wide toast so operators see the transition without having to
+  // reload the templates page. The backend already patched the cached
+  // status (Fatia 4c); this only surfaces the change to any open UI.
+  // eslint-disable-next-line class-methods-use-this
+  onMetaTemplateStatusUpdated = data => {
+    if (!data?.template_name || !data?.new_status) return;
+    emitter.emit(BUS_EVENTS.SHOW_TOAST, {
+      message: 'META_TEMPLATES.NOTIFICATIONS.STATUS_CHANGED',
+      action: {
+        usei18n: true,
+        i18nParams: {
+          name: data.template_name,
+          status: data.new_status,
+        },
+      },
+    });
   };
 
   onScheduledMessageCreated = data => {

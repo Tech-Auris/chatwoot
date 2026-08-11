@@ -80,5 +80,52 @@ RSpec.describe Whatsapp::TemplateStatusUpdateService do
       described_class.new(channel, { 'event' => 'APPROVED' }).perform
       described_class.new(channel, { 'message_template_id' => 111 }).perform
     end
+
+    it 'broadcasts a meta_template.status_updated event on real transitions' do
+      # The frontend actionCable listener toasts the operator when this
+      # event fires; without it Fatia 5b's real-time notification is dead
+      # code. Assert both the channel name (per-account) and the payload
+      # shape the JS handler reads (`event`, `data.template_name`,
+      # `data.new_status`).
+      payload = {
+        'event' => 'APPROVED',
+        'message_template_id' => 111,
+        'message_template_name' => 'confirmacao_agenda',
+        'message_template_language' => 'pt_BR'
+      }
+
+      expect(ActionCable.server).to receive(:broadcast).with(
+        "account_#{channel.account_id}",
+        hash_including(
+          event: 'meta_template.status_updated',
+          data: hash_including(
+            account_id: channel.account_id,
+            inbox_id: channel.inbox.id,
+            template_id: '111',
+            template_name: 'confirmacao_agenda',
+            previous_status: 'PENDING',
+            new_status: 'APPROVED'
+          )
+        )
+      )
+
+      described_class.new(channel, payload).perform
+    end
+
+    it 'does not broadcast when Meta replays the same status (webhook retry)' do
+      # Cache already has PENDING for id=111; a re-delivered PENDING must
+      # not toast the operator again.
+      payload = {
+        'event' => 'PENDING',
+        'message_template_id' => 111,
+        'message_template_name' => 'confirmacao_agenda',
+        'message_template_language' => 'pt_BR'
+      }
+
+      expect(ActionCable.server).not_to receive(:broadcast)
+      expect(channel).not_to receive(:update!)
+
+      described_class.new(channel, payload).perform
+    end
   end
 end
