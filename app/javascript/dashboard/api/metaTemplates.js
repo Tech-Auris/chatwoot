@@ -64,6 +64,19 @@ class MetaTemplatesAPI extends ApiClient {
       params: { inbox_id: inboxId, period },
     });
   }
+
+  // Uploads a header image through our backend, which proxies the file
+  // to Meta's resumable upload endpoint and returns the `header_handle`
+  // Meta requires in the template payload. Sent as multipart because we
+  // forward the raw file bytes.
+  uploadHeaderMedia({ inboxId, file }) {
+    const form = new FormData();
+    form.append('file', file);
+    return axios.post(`${this.url}/upload_header_media`, form, {
+      params: { inbox_id: inboxId },
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  }
 }
 
 export default new MetaTemplatesAPI();

@@ -107,6 +107,38 @@ class Api::V2::Accounts::MetaTemplatesController < Api::V1::Accounts::BaseContro
     ).call
   end
 
+  # Proxies an operator-uploaded media file through Meta's resumable
+  # upload flow and returns just the `header_handle` — the frontend
+  # stashes it in the form state and includes it in `components[].example.
+  # header_handle` when submitting the template. We never persist the
+  # file on our side (see `Whatsapp::Providers::WhatsappCloudService#
+  # upload_template_header_media` for the two-step details).
+  # MVP: images only. Meta size limit for header images is 5 MB — we cap
+  # here so the request is rejected early instead of failing on Meta's
+  # side after a full body upload.
+  ALLOWED_HEADER_MEDIA_TYPES = %w[image/jpeg image/png].freeze
+  MAX_HEADER_MEDIA_BYTES = 5.megabytes
+
+  def upload_header_media
+    file = params[:file]
+    return render_upload_error(:unprocessable_entity, 'A file is required') if file.blank?
+
+    unless ALLOWED_HEADER_MEDIA_TYPES.include?(file.content_type)
+      return render_upload_error(:unprocessable_entity, "Unsupported file type: #{file.content_type}")
+    end
+    return render_upload_error(:unprocessable_entity, 'File exceeds the 5 MB limit') if file.size > MAX_HEADER_MEDIA_BYTES
+
+    result = @inbox.channel.provider_service.upload_template_header_media(
+      file_io: file.tempfile, file_name: file.original_filename, file_type: file.content_type, file_length: file.size
+    )
+
+    if result[:success]
+      render json: { handle: result[:handle] }
+    else
+      render_upload_error(:unprocessable_entity, result[:error_message], details: result[:error_details], code: result[:error_code])
+    end
+  end
+
   # On-demand refresh. Runs inline instead of enqueueing the job so the
   # operator gets the fresh data in the same request — Meta's list call is
   # a single roundtrip (with paging) and takes a couple of seconds.
@@ -190,6 +222,10 @@ class Api::V2::Accounts::MetaTemplatesController < Api::V1::Accounts::BaseContro
     templates = @inbox.channel.message_templates || []
     match = templates.find { |t| t['id'].to_s == template_id.to_s }
     match&.dig('name')
+  end
+
+  def render_upload_error(status, message, details: nil, code: nil)
+    render json: { error: message, details: details, code: code }.compact, status: status
   end
 
   def find_template_or_render_404

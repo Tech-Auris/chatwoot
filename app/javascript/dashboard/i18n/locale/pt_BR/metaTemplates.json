@@ -103,7 +103,14 @@
         "LANGUAGE": "Idioma",
         "CATEGORY": "Categoria",
         "HEADER_TOGGLE": "Adicionar cabeçalho",
-        "HEADER_TOGGLE_HINT": "Só texto por enquanto (mídia na próxima release).",
+        "HEADER_TOGGLE_HINT": "Texto (título curto) ou uma imagem (JPG/PNG até 5 MB).",
+        "HEADER_FORMAT_TEXT": "Texto",
+        "HEADER_FORMAT_IMAGE": "Imagem",
+        "HEADER_IMAGE_LABEL": "Imagem do cabeçalho (JPG ou PNG)",
+        "HEADER_IMAGE_HINT": "Até 5 MB. A Meta usa exatamente esta imagem em todos os envios do template.",
+        "HEADER_IMAGE_READY": "Enviada para a Meta",
+        "HEADER_IMAGE_TOO_LARGE": "A imagem precisa ter até 5 MB.",
+        "HEADER_IMAGE_UPLOAD_FAILED": "Não foi possível enviar a imagem para a Meta. Tente novamente em instantes.",
         "HEADER_TEXT": "Texto do cabeçalho",
         "HEADER_TEXT_PLACEHOLDER": "Título curto, com até uma variável {{1}}",
         "HEADER_HINT_WITH_COUNT": "Até 60 caracteres, no máximo uma variável. ({count}/{max})",
@@ -152,7 +159,8 @@
     "PREVIEW": {
       "TITLE": "Pré-visualização",
       "EMPTY_BODY": "O corpo aparecerá aqui.",
-      "BUTTON_PLACEHOLDER": "Rótulo do botão"
+      "BUTTON_PLACEHOLDER": "Rótulo do botão",
+      "HEADER_IMAGE_ALT": "Imagem do cabeçalho do template"
     },
     "COMING_SOON": {
       "MESSAGE": "O gerenciamento de templates Meta vai aparecer aqui em breve. Enquanto isso, continue usando o business.facebook.com."

@@ -37,4 +37,11 @@ class MetaTemplatePolicy < ApplicationPolicy
   def destroy?
     create?
   end
+
+  # Uploading header media is part of the create/edit workflow — same
+  # audience. Blocking agents keeps operators from burning our proxy on
+  # arbitrary file uploads.
+  def upload_header_media?
+    create?
+  end
 end

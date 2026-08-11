@@ -622,6 +622,7 @@ Rails.application.routes.draw do
           resources :meta_templates, only: %i[index create update destroy] do
             collection do
               post :sync
+              post :upload_header_media
             end
             member do
               get :analytics
