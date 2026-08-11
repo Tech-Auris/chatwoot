@@ -293,4 +293,66 @@ RSpec.describe Webhooks::WhatsappEventsJob do
       job.perform_now(wb_params)
     end
   end
+
+  context 'when message_template_status_update webhook' do
+    # Meta emits this webhook per-WABA when a template transitions status.
+    # The payload does NOT carry `metadata.display_phone_number`, so before
+    # this route existed the job hit the phone lookup, found nil, and logged
+    # "Inactive WhatsApp channel" while the operator kept seeing a stale
+    # status until they clicked Sync.
+    let(:waba_id) { channel.provider_config['business_account_id'] }
+    let(:template_payload) do
+      {
+        object: 'whatsapp_business_account',
+        entry: [{
+          id: waba_id,
+          time: 1_700_000_000,
+          changes: [{
+            field: 'message_template_status_update',
+            value: {
+              event: 'APPROVED',
+              message_template_id: 42,
+              message_template_name: 'confirmacao_agenda',
+              message_template_language: 'pt_BR',
+              reason: nil
+            }
+          }]
+        }]
+      }
+    end
+
+    it 'delegates to Whatsapp::TemplateStatusUpdateService for every channel on the WABA' do
+      service = instance_double(Whatsapp::TemplateStatusUpdateService, perform: true)
+      allow(Whatsapp::TemplateStatusUpdateService).to receive(:new).and_return(service)
+
+      job.perform_now(template_payload)
+
+      expect(Whatsapp::TemplateStatusUpdateService).to have_received(:new)
+        .with(channel, hash_including(event: 'APPROVED', message_template_id: 42))
+      expect(service).to have_received(:perform)
+    end
+
+    it 'skips the phone-number channel lookup entirely (no "Inactive WhatsApp channel" warning)' do
+      allow(Whatsapp::TemplateStatusUpdateService).to receive(:new)
+        .and_return(instance_double(Whatsapp::TemplateStatusUpdateService, perform: true))
+      allow(Rails.logger).to receive(:warn)
+
+      job.perform_now(template_payload)
+
+      expect(Rails.logger).not_to have_received(:warn).with(/Inactive WhatsApp channel/)
+    end
+
+    it 'logs a warning and skips when the WABA id does not match any channel' do
+      # Rebuild the payload with a bogus WABA id — array deep_merge replaces
+      # rather than merges, so we can't just swap the id in place.
+      unknown_payload = template_payload.deep_dup
+      unknown_payload[:entry][0][:id] = 'unknown-waba'
+      allow(Rails.logger).to receive(:warn)
+      expect(Whatsapp::TemplateStatusUpdateService).not_to receive(:new)
+
+      job.perform_now(unknown_payload)
+
+      expect(Rails.logger).to have_received(:warn).with(/unknown WABA id=unknown-waba/)
+    end
+  end
 end

@@ -34,6 +34,8 @@ class Webhooks::WhatsappEventsJob < MutexApplicationJob
   end
 
   def perform(params = {})
+    return handle_template_status_update(params) if template_status_update_event?(params)
+
     channel = find_channel_from_whatsapp_business_payload(params)
 
     if channel_is_inactive?(channel)
@@ -150,6 +152,38 @@ class Webhooks::WhatsappEventsJob < MutexApplicationJob
     return get_channel_from_wb_payload(params) if params[:object] == 'whatsapp_business_account'
 
     find_channel_by_url_param(params)
+  end
+
+  # `message_template_status_update` webhooks arrive per-WABA, not per-phone.
+  # They have no `metadata.display_phone_number`, so the regular channel
+  # lookup returns nil and the event would be silently dropped. Route them
+  # early to the dedicated service, matching every Cloud channel that shares
+  # this WABA id (a WABA can host multiple phones — each one keeps its own
+  # `message_templates` cache).
+  def template_status_update_event?(params)
+    return false unless params[:object].to_s == 'whatsapp_business_account'
+
+    params.dig(:entry, 0, :changes, 0, :field).to_s == 'message_template_status_update'
+  end
+
+  def handle_template_status_update(params)
+    waba_id = params.dig(:entry, 0, :id).to_s
+    event_value = params.dig(:entry, 0, :changes, 0, :value) || {}
+    channels = channels_by_waba_id(waba_id)
+
+    if channels.empty?
+      Rails.logger.warn("[whatsapp] template_status_update for unknown WABA id=#{waba_id}")
+      return
+    end
+
+    channels.each { |channel| Whatsapp::TemplateStatusUpdateService.new(channel, event_value).perform }
+  end
+
+  def channels_by_waba_id(waba_id)
+    return Channel::Whatsapp.none if waba_id.blank?
+
+    Channel::Whatsapp.where(provider: 'whatsapp_cloud')
+                     .where("provider_config ->> 'business_account_id' = ?", waba_id)
   end
 
   def get_channel_from_wb_payload(wb_params)
