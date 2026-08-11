@@ -130,4 +130,81 @@ RSpec.describe 'Meta Templates API', type: :request do
       expect(response.parsed_body['error']).to be_present
     end
   end
+
+  describe 'POST /api/v2/accounts/{account_id}/meta_templates' do
+    let(:valid_payload) do
+      {
+        inbox_id: cloud_inbox.id,
+        template: {
+          name: 'confirmacao_agenda',
+          language: 'pt_BR',
+          category: 'UTILITY',
+          components: [
+            {
+              type: 'BODY',
+              text: 'Olá {{1}}, seu agendamento é dia {{2}} às {{3}}.',
+              example: { body_text: [%w[Fabio 12/08/2026 10:00]] }
+            }
+          ]
+        }
+      }
+    end
+
+    it 'creates a template on Meta and refreshes the local cache' do
+      # rubocop:disable RSpec/AnyInstance — see comments above the sync
+      # examples: intercepting a specific channel instance would require
+      # re-plumbing the controller with a boundary that does not exist
+      # yet in this small slice.
+      provider = instance_double(Whatsapp::Providers::WhatsappCloudService)
+      allow_any_instance_of(Channel::Whatsapp).to receive(:provider_service).and_return(provider)
+      allow(provider).to receive(:create_template).and_return(
+        success: true,
+        template: { 'id' => '999', 'status' => 'PENDING', 'category' => 'UTILITY' }
+      )
+      allow_any_instance_of(Channel::Whatsapp).to receive(:sync_templates) do
+        cloud_channel.update!(
+          message_templates: sample_templates + [{ 'id' => '999', 'name' => 'confirmacao_agenda',
+                                                   'status' => 'PENDING', 'category' => 'UTILITY',
+                                                   'language' => 'pt_BR', 'components' => valid_payload[:template][:components] }],
+          message_templates_last_updated: Time.current
+        )
+      end
+      # rubocop:enable RSpec/AnyInstance
+
+      post "/api/v2/accounts/#{account.id}/meta_templates",
+           params: valid_payload, headers: admin.create_new_auth_token
+
+      expect(response).to have_http_status(:created)
+      body = response.parsed_body
+      expect(body['template']['id']).to eq('999')
+      expect(body['templates'].last['name']).to eq('confirmacao_agenda')
+    end
+
+    it 'surfaces Meta validation errors as 422 with the original message' do
+      provider = instance_double(Whatsapp::Providers::WhatsappCloudService)
+      allow_any_instance_of(Channel::Whatsapp).to receive(:provider_service).and_return(provider) # rubocop:disable RSpec/AnyInstance
+      allow(provider).to receive(:create_template).and_return(
+        success: false,
+        error_code: 100,
+        error_message: 'Invalid template name',
+        error_details: 'Template names must be lowercase.'
+      )
+
+      post "/api/v2/accounts/#{account.id}/meta_templates",
+           params: valid_payload, headers: admin.create_new_auth_token
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      body = response.parsed_body
+      expect(body['error']).to eq('Invalid template name')
+      expect(body['details']).to eq('Template names must be lowercase.')
+      expect(body['code']).to eq(100)
+    end
+
+    it 'forbids agents from creating templates' do
+      post "/api/v2/accounts/#{account.id}/meta_templates",
+           params: valid_payload, headers: agent.create_new_auth_token
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+  end
 end

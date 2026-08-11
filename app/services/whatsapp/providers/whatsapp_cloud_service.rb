@@ -40,6 +40,35 @@ class Whatsapp::Providers::WhatsappCloudService < Whatsapp::Providers::BaseServi
     whatsapp_channel.update!(message_templates: templates, message_templates_last_updated: Time.now.utc) if templates.present?
   end
 
+  # Submits a new template for Meta approval. `payload` is the raw Meta
+  # request body (matches https://developers.facebook.com/docs/whatsapp/business-management-api/message-templates)
+  # so a future frontend that composes header/footer/buttons doesn't
+  # need a translation layer — it forwards the shape Meta already
+  # documents. Returns a normalised hash so the controller can distinguish
+  # success (template goes into PENDING on the caller's WABA) from Meta
+  # validation errors (bad component shape, duplicate name, category
+  # policy, etc.) without parsing HTTP responses itself.
+  def create_template(payload)
+    response = HTTParty.post(
+      "#{business_account_path}/message_templates",
+      headers: api_headers,
+      body: payload.to_json
+    )
+
+    if response.success?
+      { success: true, template: response.parsed_response }
+    else
+      Rails.logger.error "Meta template create failed: #{response.code} - #{response.body}"
+      error = response.parsed_response.is_a?(Hash) ? response.parsed_response['error'] : nil
+      {
+        success: false,
+        error_code: error&.dig('code'),
+        error_message: error&.dig('message') || response.body,
+        error_details: error&.dig('error_user_msg') || error&.dig('error_data', 'details')
+      }
+    end
+  end
+
   def fetch_whatsapp_templates(url)
     response = HTTParty.get(url)
     return [] unless response.success?

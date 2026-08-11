@@ -61,6 +61,30 @@
     "ERRORS": {
       "FETCH_FAILED": "Could not load templates. Please try again."
     },
+    "NEW": {
+      "CTA": "New template",
+      "TITLE": "New Meta Template",
+      "DESCRIPTION": "Compose a new WhatsApp Business template and submit it to Meta for approval. Once submitted it appears in the list as Pending — approval usually takes minutes to a few hours.",
+      "FIELDS": {
+        "INBOX": "Inbox",
+        "NAME": "Template name",
+        "NAME_PLACEHOLDER": "e.g. confirmacao_agenda",
+        "NAME_HINT": "Lowercase letters, numbers and underscores only. Must be unique on this inbox.",
+        "LANGUAGE": "Language",
+        "CATEGORY": "Category",
+        "BODY": "Body text",
+        "BODY_PLACEHOLDER": "Hello {{1}}, your appointment is on {{2}} at {{3}}.",
+        "BODY_HINT": "Use {{1}}, {{2}}, ... for variables that will be filled at send time.",
+        "BODY_HINT_WITH_COUNT": "Use {{1}}, {{2}}, ... for variables that will be filled at send time. ({count}/{max})",
+        "SAMPLES_TITLE": "Sample values",
+        "SAMPLES_DESCRIPTION": "Meta requires a realistic example for each variable so reviewers can approve the template.",
+        "SAMPLE_FOR": "Value for {{'{{'}}{index}{{'}}'}}"
+      },
+      "SUBMIT": "Submit for approval",
+      "CANCEL": "Cancel",
+      "SUCCESS": "Template submitted to Meta. It will appear as Pending until Meta approves it.",
+      "ERROR_GENERIC": "Could not create the template. Please review the fields and try again."
+    },
     "COMING_SOON": {
       "MESSAGE": "Meta template management will land here soon. For now, keep using business.facebook.com."
     }

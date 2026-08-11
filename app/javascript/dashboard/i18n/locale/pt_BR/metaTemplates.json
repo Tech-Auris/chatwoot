@@ -61,6 +61,30 @@
     "ERRORS": {
       "FETCH_FAILED": "Não foi possível carregar os templates. Tente novamente."
     },
+    "NEW": {
+      "CTA": "Novo template",
+      "TITLE": "Novo Template Meta",
+      "DESCRIPTION": "Componha um novo template do WhatsApp Business e envie para aprovação do Meta. Ao enviar, ele aparece na lista como Pendente — a aprovação costuma sair em minutos ou poucas horas.",
+      "FIELDS": {
+        "INBOX": "Caixa de entrada",
+        "NAME": "Nome do template",
+        "NAME_PLACEHOLDER": "ex: confirmacao_agenda",
+        "NAME_HINT": "Só letras minúsculas, números e underline. Precisa ser único nesta caixa.",
+        "LANGUAGE": "Idioma",
+        "CATEGORY": "Categoria",
+        "BODY": "Texto do corpo",
+        "BODY_PLACEHOLDER": "Olá {{1}}, seu agendamento é dia {{2}} às {{3}}.",
+        "BODY_HINT": "Use {{1}}, {{2}}, ... para variáveis que serão preenchidas no envio.",
+        "BODY_HINT_WITH_COUNT": "Use {{1}}, {{2}}, ... para variáveis que serão preenchidas no envio. ({count}/{max})",
+        "SAMPLES_TITLE": "Valores de exemplo",
+        "SAMPLES_DESCRIPTION": "O Meta exige um exemplo realista para cada variável, para que a equipe de revisão possa aprovar o template.",
+        "SAMPLE_FOR": "Valor para {{'{{'}}{index}{{'}}'}}"
+      },
+      "SUBMIT": "Enviar para aprovação",
+      "CANCEL": "Cancelar",
+      "SUCCESS": "Template enviado ao Meta. Vai aparecer como Pendente até a aprovação.",
+      "ERROR_GENERIC": "Não foi possível criar o template. Revise os campos e tente novamente."
+    },
     "COMING_SOON": {
       "MESSAGE": "O gerenciamento de templates Meta vai aparecer aqui em breve. Enquanto isso, continue usando o business.facebook.com."
     }
