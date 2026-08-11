@@ -75,15 +75,26 @@ Rails.application.reloader.to_prepare do
   # bounced the sidekiq container. Loading from any process is safe:
   # Redis is shared, the operation is idempotent, and only sidekiq server
   # actually executes the crons.
+  #
+  # Boot contexts without Redis (assets:precompile inside the Docker image
+  # build, static analysis, some CI stages) must not fail — cron
+  # registration is a "when Redis happens to be here" concern, not a hard
+  # prerequisite for booting Rails. Rescue the connection errors and log
+  # a single warning so anyone reading the container logs sees why the
+  # step was skipped.
   if File.exist?(schedule_file)
-    schedule = YAML.load_file(schedule_file)
+    begin
+      schedule = YAML.load_file(schedule_file)
 
-    # Cron entries removed from schedule.yml but possibly still in Redis
-    # with source:'dynamic' (predating the source tag). load_from_hash!
-    # only cleans up source:'schedule' entries, so these need explicit removal.
-    # Remove names from this list once they've been through a deploy cycle.
-    %w[bulk_auto_assignment_job].each { |name| Sidekiq::Cron::Job.destroy(name) }
+      # Cron entries removed from schedule.yml but possibly still in Redis
+      # with source:'dynamic' (predating the source tag). load_from_hash!
+      # only cleans up source:'schedule' entries, so these need explicit removal.
+      # Remove names from this list once they've been through a deploy cycle.
+      %w[bulk_auto_assignment_job].each { |name| Sidekiq::Cron::Job.destroy(name) }
 
-    Sidekiq::Cron::Job.load_from_hash!(schedule, source: 'schedule')
+      Sidekiq::Cron::Job.load_from_hash!(schedule, source: 'schedule')
+    rescue Redis::CannotConnectError, RedisClient::CannotConnectError => e
+      Rails.logger.warn "[sidekiq-cron] Skipped cron registration on boot — Redis unreachable (#{e.class}: #{e.message})"
+    end
   end
 end

@@ -27,4 +27,14 @@ RSpec.describe 'config/initializers/sidekiq.rb' do # rubocop:disable RSpec/Descr
                              'Reintroducing the Sidekiq.server? guard leaves cron entries unregistered when only web ' \
                              'containers restart (see incident with super_admin_health_score_daily_snapshot_job).')
   end
+
+  it 'tolerates Redis being unreachable so `rake assets:precompile` in the Docker build does not crash' do
+    # Regression: v4.15.1-auris.1.41.22 (2026-08-11) failed to build the
+    # Docker image because the reloader-scoped cron loader hit Redis during
+    # `rake assets:precompile` in a container that has no Redis. Any boot
+    # path that doesn't need to execute crons must degrade gracefully when
+    # Redis is unavailable — asset precompile, static analysis, CI stages.
+    expect(reloader_block).to include('Redis::CannotConnectError')
+    expect(reloader_block).to include('RedisClient::CannotConnectError')
+  end
 end
