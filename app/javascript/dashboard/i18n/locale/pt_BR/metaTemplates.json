@@ -51,7 +51,15 @@
       "CLOSE": "Fechar",
       "URL_PREFIX": "URL:",
       "PHONE_PREFIX": "Telefone:",
-      "REJECTED_REASON_LABEL": "Motivo do Meta:"
+      "REJECTED_REASON_LABEL": "Motivo do Meta:",
+      "DELETE": "Excluir template"
+    },
+    "DELETE": {
+      "TITLE": "Excluir template",
+      "DESCRIPTION": "Tem certeza que quer excluir \"{name}\" no Meta? Isso remove todas as variantes de idioma deste template e não pode ser desfeito. Se o template estiver sendo usado por uma campanha ativa, o Meta recusará a exclusão.",
+      "CONFIRM": "Excluir no Meta",
+      "SUCCESS": "Template excluído do Meta.",
+      "FAILED": "Não foi possível excluir o template. Tente novamente em instantes."
     },
     "EMPTY": {
       "NO_CLOUD_INBOX": "Esta conta ainda não tem uma caixa WhatsApp Cloud conectada.",

@@ -207,4 +207,60 @@ RSpec.describe 'Meta Templates API', type: :request do
       expect(response).to have_http_status(:unauthorized)
     end
   end
+
+  describe 'DELETE /api/v2/accounts/{account_id}/meta_templates/:id' do
+    it 'deletes the template on Meta by name resolved from the cached id, then refreshes the local cache' do
+      # rubocop:disable RSpec/AnyInstance — same caveat as the create/sync
+      # examples above: the controller reaches through
+      # Current.account.inboxes.find(...).channel.provider_service and we do
+      # not have a boundary to intercept a specific instance yet.
+      provider = instance_double(Whatsapp::Providers::WhatsappCloudService)
+      allow_any_instance_of(Channel::Whatsapp).to receive(:provider_service).and_return(provider)
+      allow(provider).to receive(:delete_template).with('confirmacao_agenda').and_return(success: true)
+      allow_any_instance_of(Channel::Whatsapp).to receive(:sync_templates) do
+        cloud_channel.update!(message_templates: [], message_templates_last_updated: Time.current)
+      end
+      # rubocop:enable RSpec/AnyInstance
+
+      delete "/api/v2/accounts/#{account.id}/meta_templates/123",
+             params: { inbox_id: cloud_inbox.id }, headers: admin.create_new_auth_token
+
+      expect(response).to have_http_status(:success)
+      expect(response.parsed_body['templates']).to eq([])
+    end
+
+    it 'returns 404 when the id is not in the cached template list' do
+      delete "/api/v2/accounts/#{account.id}/meta_templates/999",
+             params: { inbox_id: cloud_inbox.id }, headers: admin.create_new_auth_token
+
+      expect(response).to have_http_status(:not_found)
+      expect(response.parsed_body['error']).to be_present
+    end
+
+    it 'surfaces Meta failure messages as 422' do
+      provider = instance_double(Whatsapp::Providers::WhatsappCloudService)
+      allow_any_instance_of(Channel::Whatsapp).to receive(:provider_service).and_return(provider) # rubocop:disable RSpec/AnyInstance
+      allow(provider).to receive(:delete_template).and_return(
+        success: false,
+        error_code: 100,
+        error_message: 'Template is in use by an active campaign',
+        error_details: 'Remove the template from the campaign before deleting.'
+      )
+
+      delete "/api/v2/accounts/#{account.id}/meta_templates/123",
+             params: { inbox_id: cloud_inbox.id }, headers: admin.create_new_auth_token
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      body = response.parsed_body
+      expect(body['error']).to eq('Template is in use by an active campaign')
+      expect(body['details']).to eq('Remove the template from the campaign before deleting.')
+    end
+
+    it 'forbids agents from deleting templates' do
+      delete "/api/v2/accounts/#{account.id}/meta_templates/123",
+             params: { inbox_id: cloud_inbox.id }, headers: agent.create_new_auth_token
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+  end
 end

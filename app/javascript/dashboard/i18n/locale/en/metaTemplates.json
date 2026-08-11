@@ -51,7 +51,15 @@
       "CLOSE": "Close",
       "URL_PREFIX": "URL:",
       "PHONE_PREFIX": "Phone:",
-      "REJECTED_REASON_LABEL": "Reason from Meta:"
+      "REJECTED_REASON_LABEL": "Reason from Meta:",
+      "DELETE": "Delete template"
+    },
+    "DELETE": {
+      "TITLE": "Delete template",
+      "DESCRIPTION": "Are you sure you want to delete \"{name}\" on Meta? This removes every language variant of this template and cannot be undone. If the template is used by an active campaign, Meta will refuse the deletion.",
+      "CONFIRM": "Delete on Meta",
+      "SUCCESS": "Template deleted from Meta.",
+      "FAILED": "Could not delete the template. Please try again shortly."
     },
     "EMPTY": {
       "NO_CLOUD_INBOX": "This account has no WhatsApp Cloud inbox connected yet.",

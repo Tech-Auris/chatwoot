@@ -619,7 +619,7 @@ Rails.application.routes.draw do
             end
           end
           resources :ia_human_distribution_reports, only: [:index]
-          resources :meta_templates, only: %i[index create] do
+          resources :meta_templates, only: %i[index create destroy] do
             collection do
               post :sync
             end

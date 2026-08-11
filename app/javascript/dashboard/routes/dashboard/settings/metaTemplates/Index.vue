@@ -8,6 +8,7 @@ import { picoSearch } from '@scmmishra/pico-search';
 import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
 import SettingsLayout from '../SettingsLayout.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
+import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
 import Spinner from 'shared/components/Spinner.vue';
 import StatusBadge from './components/StatusBadge.vue';
 import TemplateDetailDrawer from './components/TemplateDetailDrawer.vue';
@@ -125,6 +126,41 @@ const openDetail = template => {
 const closeDetail = () => {
   drawerOpen.value = false;
   selectedTemplate.value = null;
+};
+
+// Delete flow: drawer emits `delete` → we cache the target and open a
+// confirm dialog. The dialog's `confirm` calls the API, refreshes the
+// cached list from the response, and closes both surfaces.
+const deleteDialogRef = ref(null);
+const templateToDelete = ref(null);
+const deleting = ref(false);
+
+const requestDelete = template => {
+  templateToDelete.value = template;
+  deleteDialogRef.value?.open();
+};
+
+const confirmDelete = async () => {
+  if (!templateToDelete.value || deleting.value) return;
+  deleting.value = true;
+  try {
+    const { data } = await MetaTemplatesAPI.delete({
+      inboxId: selectedInboxId.value,
+      templateId: templateToDelete.value.id,
+    });
+    templates.value = data.templates || [];
+    lastSyncedAt.value = data.last_synced_at;
+    useAlert(t('META_TEMPLATES.DELETE.SUCCESS'));
+    closeDetail();
+    templateToDelete.value = null;
+  } catch (err) {
+    const data = err?.response?.data || {};
+    const details = data.details ? ` (${data.details})` : '';
+    useAlert((data.error || t('META_TEMPLATES.DELETE.FAILED')) + details);
+  } finally {
+    deleting.value = false;
+    deleteDialogRef.value?.close();
+  }
 };
 
 const formatDate = iso => {
@@ -322,7 +358,26 @@ onMounted(() => {
       <TemplateDetailDrawer
         :template="selectedTemplate"
         :open="drawerOpen"
+        :deleting="deleting"
         @close="closeDetail"
+        @delete="requestDelete"
+      />
+
+      <Dialog
+        ref="deleteDialogRef"
+        type="alert"
+        :title="t('META_TEMPLATES.DELETE.TITLE')"
+        :description="
+          templateToDelete
+            ? t('META_TEMPLATES.DELETE.DESCRIPTION', {
+                name: templateToDelete.name,
+              })
+            : ''
+        "
+        :confirm-button-label="t('META_TEMPLATES.DELETE.CONFIRM')"
+        :is-loading="deleting"
+        :disable-confirm-button="deleting"
+        @confirm="confirmDelete"
       />
     </template>
   </SettingsLayout>

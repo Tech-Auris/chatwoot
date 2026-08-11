@@ -45,6 +45,36 @@ class Api::V2::Accounts::MetaTemplatesController < Api::V1::Accounts::BaseContro
     end
   end
 
+  # Deletes a template from Meta by name. Meta scopes templates at the
+  # WABA + name level, so a single call removes every language variant.
+  # Resolves the name from the cached templates on the channel — the
+  # frontend passes the template `id` (Meta id) as `params[:id]`, keeping
+  # the RESTful URL shape without leaking the name in the path.
+  def destroy
+    template_name = template_name_for(params[:id])
+
+    if template_name.nil?
+      render json: { error: I18n.t('errors.meta_templates.template_not_found') }, status: :not_found
+      return
+    end
+
+    result = @inbox.channel.provider_service.delete_template(template_name)
+
+    if result[:success]
+      @inbox.channel.sync_templates
+      render json: {
+        templates: @inbox.channel.reload.message_templates || [],
+        last_synced_at: @inbox.channel.message_templates_last_updated
+      }
+    else
+      render json: {
+        error: result[:error_message] || I18n.t('errors.meta_templates.delete_failed'),
+        details: result[:error_details],
+        code: result[:error_code]
+      }, status: :unprocessable_entity
+    end
+  end
+
   # On-demand refresh. Runs inline instead of enqueueing the job so the
   # operator gets the fresh data in the same request — Meta's list call is
   # a single roundtrip (with paging) and takes a couple of seconds.
@@ -93,6 +123,18 @@ class Api::V2::Accounts::MetaTemplatesController < Api::V1::Accounts::BaseContro
       name: inbox.name,
       phone_number: channel.try(:phone_number)
     }
+  end
+
+  # Looks up the template's name from the cached list on the channel.
+  # We index the route by Meta template `id` (RESTful URL) but Meta's
+  # DELETE endpoint accepts only `name` — this bridges the two without
+  # exposing the name on the URL. Returns nil if the id is unknown, so
+  # `destroy` can 404 instead of firing a delete for a name we did not
+  # confirm we own.
+  def template_name_for(template_id)
+    templates = @inbox.channel.message_templates || []
+    match = templates.find { |t| t['id'].to_s == template_id.to_s }
+    match&.dig('name')
   end
 
   # Whitelists the four top-level Meta fields and forwards the

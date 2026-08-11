@@ -40,6 +40,33 @@ class Whatsapp::Providers::WhatsappCloudService < Whatsapp::Providers::BaseServi
     whatsapp_channel.update!(message_templates: templates, message_templates_last_updated: Time.now.utc) if templates.present?
   end
 
+  # Deletes a template from Meta. Meta identifies templates by name at
+  # the WABA level, so a single call removes every language variant of
+  # the template. Returns a normalised hash so the controller does not
+  # need to parse HTTP responses. Meta sometimes rejects deletion (e.g.
+  # template is referenced by an active campaign) — those show up as
+  # `success: false` with the original Meta error text so the operator
+  # sees exactly what happened.
+  def delete_template(template_name)
+    response = HTTParty.delete(
+      "#{business_account_path}/message_templates?name=#{CGI.escape(template_name)}",
+      headers: api_headers
+    )
+
+    if response.success?
+      { success: true }
+    else
+      Rails.logger.error "Meta template delete failed: #{response.code} - #{response.body}"
+      error = response.parsed_response.is_a?(Hash) ? response.parsed_response['error'] : nil
+      {
+        success: false,
+        error_code: error&.dig('code'),
+        error_message: error&.dig('message') || response.body,
+        error_details: error&.dig('error_user_msg') || error&.dig('error_data', 'details')
+      }
+    end
+  end
+
   # Submits a new template for Meta approval. `payload` is the raw Meta
   # request body (matches https://developers.facebook.com/docs/whatsapp/business-management-api/message-templates)
   # so a future frontend that composes header/footer/buttons doesn't
