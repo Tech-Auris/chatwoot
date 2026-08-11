@@ -371,6 +371,7 @@ onMounted(() => {
 
       <TemplateDetailDrawer
         :template="selectedTemplate"
+        :inbox-id="selectedInboxId"
         :open="drawerOpen"
         :deleting="deleting"
         @close="closeDetail"

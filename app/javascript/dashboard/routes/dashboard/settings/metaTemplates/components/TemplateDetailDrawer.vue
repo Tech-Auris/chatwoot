@@ -1,12 +1,15 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useMapGetter } from 'dashboard/composables/store';
 import StatusBadge from './StatusBadge.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
+import Spinner from 'shared/components/Spinner.vue';
+import MetaTemplatesAPI from 'dashboard/api/metaTemplates';
 
 const props = defineProps({
   template: { type: Object, default: null },
+  inboxId: { type: [Number, String], default: null },
   open: { type: Boolean, default: false },
   deleting: { type: Boolean, default: false },
 });
@@ -51,6 +54,81 @@ const headerFormat = computed(() =>
 const headerText = computed(() => header.value?.text || '');
 
 const rejectedReason = computed(() => props.template?.rejected_reason);
+
+// Usage funnel: fetched from the backend when the drawer opens on a
+// template. Keeps its own state so switching the period doesn't clobber
+// the (heavier) template data already in the drawer.
+const PERIOD_OPTIONS = ['7d', '30d', '90d'];
+const period = ref('30d');
+const analytics = ref(null);
+const analyticsLoading = ref(false);
+const analyticsError = ref(false);
+
+const funnelSteps = computed(() => {
+  const f = analytics.value?.funnel;
+  if (!f) return [];
+  const pct = (num, base) => (base > 0 ? Math.round((num / base) * 100) : null);
+  return [
+    { key: 'SENT', value: f.sent, ratio: null, tone: 'neutral' },
+    {
+      key: 'ACCEPTED',
+      value: f.accepted_by_meta,
+      ratio: pct(f.accepted_by_meta, f.sent),
+      tone: f.failed_sync > 0 && f.sent > 0 ? 'warn' : 'neutral',
+    },
+    {
+      key: 'DELIVERED',
+      value: f.delivered,
+      ratio: pct(f.delivered, f.accepted_by_meta),
+      tone: 'neutral',
+    },
+    {
+      key: 'READ',
+      value: f.read,
+      ratio: pct(f.read, f.delivered),
+      tone: 'neutral',
+    },
+    {
+      key: 'FAILED_AFTER',
+      value: f.failed_after_accept,
+      ratio: pct(f.failed_after_accept, f.accepted_by_meta),
+      tone: f.failed_after_accept > 0 ? 'warn' : 'neutral',
+    },
+  ];
+});
+
+const fetchAnalytics = async () => {
+  if (!props.template?.id || !props.inboxId) {
+    analytics.value = null;
+    return;
+  }
+  analyticsLoading.value = true;
+  analyticsError.value = false;
+  try {
+    const { data } = await MetaTemplatesAPI.analytics({
+      inboxId: props.inboxId,
+      templateId: props.template.id,
+      period: period.value,
+    });
+    analytics.value = data;
+  } catch (_err) {
+    analytics.value = null;
+    analyticsError.value = true;
+  } finally {
+    analyticsLoading.value = false;
+  }
+};
+
+// Refetch whenever the target template changes (opening a different row)
+// or the period changes. Only fires when the drawer is open — no point
+// hitting the API for a template the operator can't see.
+watch(
+  [() => props.template?.id, period, () => props.open],
+  ([id, , isOpen]) => {
+    if (isOpen && id) fetchAnalytics();
+  },
+  { immediate: true }
+);
 </script>
 
 <template>
@@ -166,6 +244,73 @@ const rejectedReason = computed(() => props.template?.rejected_reason);
                 {{ t('META_TEMPLATES.DETAIL.PHONE_PREFIX') }}
                 {{ button.phone_number }}
               </span>
+            </li>
+          </ul>
+        </section>
+
+        <section class="border border-n-weak rounded-lg p-3">
+          <div class="flex items-center justify-between mb-3">
+            <div class="text-xxs uppercase tracking-wide text-n-slate-11">
+              {{ t('META_TEMPLATES.ANALYTICS.TITLE') }}
+            </div>
+            <div class="flex items-center gap-1">
+              <button
+                v-for="option in PERIOD_OPTIONS"
+                :key="option"
+                type="button"
+                class="px-2 py-1 text-xs rounded-md"
+                :class="
+                  period === option
+                    ? 'bg-n-brand text-white'
+                    : 'text-n-slate-11 hover:bg-n-alpha-1'
+                "
+                @click="period = option"
+              >
+                {{ t(`META_TEMPLATES.ANALYTICS.PERIODS.${option}`) }}
+              </button>
+            </div>
+          </div>
+
+          <div
+            v-if="analyticsLoading"
+            class="flex items-center justify-center py-6"
+          >
+            <Spinner class="!w-5 !h-5 !p-0" />
+          </div>
+          <div v-else-if="analyticsError" class="text-sm text-n-ruby-11 py-3">
+            {{ t('META_TEMPLATES.ANALYTICS.ERROR') }}
+          </div>
+          <div
+            v-else-if="!analytics || analytics.funnel.sent === 0"
+            class="text-sm text-n-slate-11 py-3"
+          >
+            {{ t('META_TEMPLATES.ANALYTICS.EMPTY') }}
+          </div>
+          <ul v-else class="grid grid-cols-2 gap-2">
+            <li
+              v-for="step in funnelSteps"
+              :key="step.key"
+              class="px-3 py-2 rounded-md bg-n-alpha-1"
+            >
+              <div class="text-xxs uppercase tracking-wide text-n-slate-11">
+                {{ t(`META_TEMPLATES.ANALYTICS.STEPS.${step.key}`) }}
+              </div>
+              <div class="flex items-baseline gap-2">
+                <span
+                  class="text-lg font-semibold"
+                  :class="
+                    step.tone === 'warn' ? 'text-n-amber-11' : 'text-n-slate-12'
+                  "
+                >
+                  {{ step.value }}
+                </span>
+                <span
+                  v-if="step.ratio !== null"
+                  class="text-xs text-n-slate-11"
+                >
+                  {{ `${step.ratio}%` }}
+                </span>
+              </div>
             </li>
           </ul>
         </section>

@@ -623,6 +623,9 @@ Rails.application.routes.draw do
             collection do
               post :sync
             end
+            member do
+              get :analytics
+            end
           end
         end
       end

@@ -55,6 +55,23 @@
       "DELETE": "Excluir template",
       "EDIT": "Editar template"
     },
+    "ANALYTICS": {
+      "TITLE": "Uso",
+      "EMPTY": "Nenhum envio deste template no período.",
+      "ERROR": "Não foi possível carregar os dados de uso.",
+      "PERIODS": {
+        "7d": "7 dias",
+        "30d": "30 dias",
+        "90d": "90 dias"
+      },
+      "STEPS": {
+        "SENT": "Enviadas",
+        "ACCEPTED": "Chegaram à Meta",
+        "DELIVERED": "Entregues",
+        "READ": "Lidas",
+        "FAILED_AFTER": "Falha pós-envio"
+      }
+    },
     "DELETE": {
       "TITLE": "Excluir template",
       "DESCRIPTION": "Tem certeza que quer excluir \"{name}\" no Meta? Isso remove todas as variantes de idioma deste template e não pode ser desfeito. Se o template estiver sendo usado por uma campanha ativa, o Meta recusará a exclusão.",
