@@ -72,18 +72,49 @@
         "NAME_HINT": "Só letras minúsculas, números e underline. Precisa ser único nesta caixa.",
         "LANGUAGE": "Idioma",
         "CATEGORY": "Categoria",
+        "HEADER_TOGGLE": "Adicionar cabeçalho",
+        "HEADER_TOGGLE_HINT": "Só texto por enquanto (mídia na próxima release).",
+        "HEADER_TEXT": "Texto do cabeçalho",
+        "HEADER_TEXT_PLACEHOLDER": "Título curto, com até uma variável {{1}}",
+        "HEADER_HINT_WITH_COUNT": "Até 60 caracteres, no máximo uma variável. ({count}/{max})",
+        "HEADER_SAMPLE": "Valor de exemplo para a variável do cabeçalho",
         "BODY": "Texto do corpo",
         "BODY_PLACEHOLDER": "Olá {{1}}, seu agendamento é dia {{2}} às {{3}}.",
         "BODY_HINT": "Use {{1}}, {{2}}, ... para variáveis que serão preenchidas no envio.",
         "BODY_HINT_WITH_COUNT": "Use {{1}}, {{2}}, ... para variáveis que serão preenchidas no envio. ({count}/{max})",
         "SAMPLES_TITLE": "Valores de exemplo",
         "SAMPLES_DESCRIPTION": "O Meta exige um exemplo realista para cada variável, para que a equipe de revisão possa aprovar o template.",
-        "SAMPLE_FOR": "Valor para {{'{{'}}{index}{{'}}'}}"
+        "SAMPLE_FOR": "Valor para {{'{{'}}{index}{{'}}'}}",
+        "FOOTER_TOGGLE": "Adicionar rodapé",
+        "FOOTER_TOGGLE_HINT": "Texto curto abaixo do corpo, sem variáveis.",
+        "FOOTER_PLACEHOLDER": "ex: Responda SAIR para descadastrar",
+        "FOOTER_HINT_WITH_COUNT": "Até 60 caracteres, sem variáveis. ({count}/{max})",
+        "BUTTONS_TITLE": "Botões",
+        "BUTTONS_HINT": "Até 3 respostas rápidas OU até 2 URL + 1 telefone.",
+        "ADD_QUICK_REPLY": "Resposta rápida ({count}/{max})",
+        "ADD_URL": "URL ({count}/{max})",
+        "ADD_PHONE": "Telefone ({count}/{max})",
+        "REMOVE_BUTTON": "Remover",
+        "BUTTON_TEXT": "Rótulo do botão",
+        "BUTTON_URL": "URL",
+        "BUTTON_URL_PLACEHOLDER": "https://exemplo.com.br",
+        "BUTTON_PHONE": "Telefone (E.164, com código do país)",
+        "BUTTON_PHONE_PLACEHOLDER": "+5511999999999",
+        "BUTTON_TYPE": {
+          "QUICK_REPLY": "Resposta rápida",
+          "URL": "Botão URL",
+          "PHONE_NUMBER": "Botão telefone"
+        }
       },
       "SUBMIT": "Enviar para aprovação",
       "CANCEL": "Cancelar",
       "SUCCESS": "Template enviado ao Meta. Vai aparecer como Pendente até a aprovação.",
       "ERROR_GENERIC": "Não foi possível criar o template. Revise os campos e tente novamente."
+    },
+    "PREVIEW": {
+      "TITLE": "Pré-visualização",
+      "EMPTY_BODY": "O corpo aparecerá aqui.",
+      "BUTTON_PLACEHOLDER": "Rótulo do botão"
     },
     "COMING_SOON": {
       "MESSAGE": "O gerenciamento de templates Meta vai aparecer aqui em breve. Enquanto isso, continue usando o business.facebook.com."
