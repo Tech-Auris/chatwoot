@@ -187,6 +187,7 @@ en:
       non_cloud_inbox: This endpoint is only available for inboxes using the WhatsApp Cloud provider.
       sync_failed: Could not refresh templates from Meta. Please try again in a few seconds.
       create_failed: Could not create the template on Meta. Please review the form and try again.
+      update_failed: Could not update the template on Meta. Please review the form and try again.
       delete_failed: Could not delete the template on Meta. Please try again shortly.
       template_not_found: This template is no longer available on the inbox.
     custom_filters:

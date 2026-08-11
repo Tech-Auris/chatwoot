@@ -3,6 +3,7 @@ import { frontendURL } from '../../../../helper/URLHelper';
 import SettingsWrapper from '../SettingsWrapper.vue';
 import Index from './Index.vue';
 import New from './New.vue';
+import Edit from './Edit.vue';
 
 // Read routes are open to every non-portal role (agent + manager +
 // administrator); the sidebar link is gated on the account having at
@@ -34,6 +35,14 @@ export default {
             permissions: WRITE_PERMISSIONS,
           },
           component: New,
+        },
+        {
+          path: ':id/edit',
+          name: 'meta_templates_edit',
+          meta: {
+            permissions: WRITE_PERMISSIONS,
+          },
+          component: Edit,
         },
       ],
     },

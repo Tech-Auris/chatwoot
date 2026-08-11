@@ -52,7 +52,8 @@
       "URL_PREFIX": "URL:",
       "PHONE_PREFIX": "Phone:",
       "REJECTED_REASON_LABEL": "Reason from Meta:",
-      "DELETE": "Delete template"
+      "DELETE": "Delete template",
+      "EDIT": "Edit template"
     },
     "DELETE": {
       "TITLE": "Delete template",
@@ -78,6 +79,7 @@
         "NAME": "Template name",
         "NAME_PLACEHOLDER": "e.g. confirmacao_agenda",
         "NAME_HINT": "Lowercase letters, numbers and underscores only. Must be unique on this inbox.",
+        "NAME_IMMUTABLE": "Name, language and inbox cannot be changed after creation (Meta rule).",
         "LANGUAGE": "Language",
         "CATEGORY": "Category",
         "HEADER_TOGGLE": "Add a header",
@@ -118,6 +120,14 @@
       "CANCEL": "Cancel",
       "SUCCESS": "Template submitted to Meta. It will appear as Pending until Meta approves it.",
       "ERROR_GENERIC": "Could not create the template. Please review the fields and try again."
+    },
+    "EDIT": {
+      "TITLE": "Edit Meta Template",
+      "DESCRIPTION": "Update a template registered on Meta. Editing body / header / footer / buttons sends the template back to Pending for reapproval. Name, language and inbox cannot be changed.",
+      "SUBMIT": "Save changes",
+      "SUCCESS": "Template updated on Meta. If you changed body / header / footer / buttons, it will be Pending until reapproval.",
+      "ERROR_GENERIC": "Could not update the template. Please review the fields and try again.",
+      "NOT_FOUND": "This template is no longer available on this inbox."
     },
     "PREVIEW": {
       "TITLE": "Preview",

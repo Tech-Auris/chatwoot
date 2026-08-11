@@ -11,7 +11,7 @@ const props = defineProps({
   deleting: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['close', 'delete']);
+const emit = defineEmits(['close', 'delete', 'edit']);
 
 const { t } = useI18n();
 
@@ -175,6 +175,13 @@ const rejectedReason = computed(() => props.template?.rejected_reason);
         v-if="canDelete"
         class="border-t border-n-weak p-4 flex items-center justify-end gap-2"
       >
+        <Button
+          faded
+          slate
+          sm
+          :label="t('META_TEMPLATES.DETAIL.EDIT')"
+          @click="emit('edit', template)"
+        />
         <Button
           faded
           ruby

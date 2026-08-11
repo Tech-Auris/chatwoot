@@ -162,6 +162,7 @@ pt_BR:
       non_cloud_inbox: Este endpoint só está disponível para caixas de entrada que usam o provedor WhatsApp Cloud.
       sync_failed: Não foi possível atualizar os templates junto ao Meta. Tente novamente em alguns segundos.
       create_failed: Não foi possível criar o template no Meta. Revise o formulário e tente novamente.
+      update_failed: Não foi possível atualizar o template no Meta. Revise o formulário e tente novamente.
       delete_failed: Não foi possível excluir o template no Meta. Tente novamente em instantes.
       template_not_found: Este template não está mais disponível nesta caixa.
     custom_filters:

@@ -43,6 +43,18 @@ class MetaTemplatesAPI extends ApiClient {
       params: { inbox_id: inboxId },
     });
   }
+
+  // Updates a template on Meta. Backend only forwards category +
+  // components (name/language are immutable), but the form still sends
+  // the full template shape so a single component covers create and
+  // edit — the backend slice does the right thing.
+  update({ inboxId, templateId, template }) {
+    return axios.patch(
+      `${this.url}/${templateId}`,
+      { template },
+      { params: { inbox_id: inboxId } }
+    );
+  }
 }
 
 export default new MetaTemplatesAPI();
