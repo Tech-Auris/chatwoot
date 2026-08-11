@@ -103,7 +103,14 @@
         "LANGUAGE": "Language",
         "CATEGORY": "Category",
         "HEADER_TOGGLE": "Add a header",
-        "HEADER_TOGGLE_HINT": "Text only for now (media in the next release).",
+        "HEADER_TOGGLE_HINT": "Text (short heading) or an image (JPG/PNG up to 5 MB).",
+        "HEADER_FORMAT_TEXT": "Text",
+        "HEADER_FORMAT_IMAGE": "Image",
+        "HEADER_IMAGE_LABEL": "Header image (JPG or PNG)",
+        "HEADER_IMAGE_HINT": "Up to 5 MB. Meta uses this exact image on every send of the template.",
+        "HEADER_IMAGE_READY": "Uploaded to Meta",
+        "HEADER_IMAGE_TOO_LARGE": "The image must be 5 MB or less.",
+        "HEADER_IMAGE_UPLOAD_FAILED": "Could not upload the image to Meta. Try again in a moment.",
         "HEADER_TEXT": "Header text",
         "HEADER_TEXT_PLACEHOLDER": "Short heading, up to one {{1}} variable",
         "HEADER_HINT_WITH_COUNT": "Up to 60 characters, at most one variable. ({count}/{max})",
@@ -152,7 +159,8 @@
     "PREVIEW": {
       "TITLE": "Preview",
       "EMPTY_BODY": "Body preview will appear here.",
-      "BUTTON_PLACEHOLDER": "Button label"
+      "BUTTON_PLACEHOLDER": "Button label",
+      "HEADER_IMAGE_ALT": "Template header image"
     },
     "COMING_SOON": {
       "MESSAGE": "Meta template management will land here soon. For now, keep using business.facebook.com."

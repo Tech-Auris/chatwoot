@@ -598,6 +598,68 @@ describe Whatsapp::Providers::WhatsappCloudService do
     end
   end
 
+  describe '#upload_template_header_media' do
+    let(:app_id) { '1234567890' }
+    let(:session_id) { 'upload:abc123' }
+    let(:handle) { '4::aW1hZ2UvcG5n:ARZ...' }
+    let(:file_io) { StringIO.new('binary-image-bytes') }
+
+    before do
+      allow(GlobalConfigService).to receive(:load).with('WHATSAPP_APP_ID', nil).and_return(app_id)
+    end
+
+    it 'runs the two-step resumable upload and returns the header_handle' do
+      # Step 1: register the upload session — Meta returns a session id.
+      # Step 2: upload the raw bytes to the returned session — Meta hands
+      # back the `h` handle we forward to `create_template`.
+      # WebMock matches headers with "at least this" semantics, so passing
+      # only Authorization + file_offset suffices even if the client sets
+      # additional default headers.
+      stub_request(:post, "https://graph.facebook.com/v22.0/#{app_id}/uploads")
+        .with(query: { file_name: 'logo.png', file_length: '123', file_type: 'image/png', access_token: 'test_key' })
+        .to_return(status: 200, body: { id: session_id }.to_json, headers: response_headers)
+      stub_request(:post, "https://graph.facebook.com/v22.0/#{session_id}")
+        .with(headers: { 'Authorization' => 'OAuth test_key', 'file_offset' => '0' })
+        .to_return(status: 200, body: { h: handle }.to_json, headers: response_headers)
+
+      result = service.upload_template_header_media(file_io: file_io, file_name: 'logo.png', file_type: 'image/png', file_length: 123)
+
+      expect(result).to eq(success: true, handle: handle)
+    end
+
+    it 'returns success:false when WHATSAPP_APP_ID is not configured' do
+      allow(GlobalConfigService).to receive(:load).with('WHATSAPP_APP_ID', nil).and_return(nil)
+
+      result = service.upload_template_header_media(file_io: file_io, file_name: 'logo.png', file_type: 'image/png', file_length: 123)
+
+      expect(result[:success]).to be(false)
+      expect(result[:error_message]).to match(/WHATSAPP_APP_ID/)
+    end
+
+    it 'surfaces Meta failure on the session step without touching the upload step' do
+      stub_request(:post, %r{https://graph.facebook.com/v22.0/#{app_id}/uploads})
+        .to_return(status: 400,
+                   body: { error: { code: 100, message: 'file_type not supported', error_user_msg: 'Use JPG or PNG.' } }.to_json,
+                   headers: response_headers)
+
+      result = service.upload_template_header_media(file_io: file_io, file_name: 'logo.png', file_type: 'image/png', file_length: 123)
+
+      expect(result).to include(success: false, error_code: 100, error_message: 'file_type not supported', error_details: 'Use JPG or PNG.')
+      expect(WebMock).not_to have_requested(:post, %r{https://graph.facebook.com/v22.0/#{Regexp.escape(session_id)}})
+    end
+
+    it 'surfaces Meta failure on the upload step' do
+      stub_request(:post, %r{https://graph.facebook.com/v22.0/#{app_id}/uploads})
+        .to_return(status: 200, body: { id: session_id }.to_json, headers: response_headers)
+      stub_request(:post, %r{https://graph.facebook.com/v22.0/#{Regexp.escape(session_id)}})
+        .to_return(status: 500, body: { error: { code: 1, message: 'internal' } }.to_json, headers: response_headers)
+
+      result = service.upload_template_header_media(file_io: file_io, file_name: 'logo.png', file_type: 'image/png', file_length: 123)
+
+      expect(result).to include(success: false, error_code: 1, error_message: 'internal')
+    end
+  end
+
   describe '#send_reaction_message' do
     it 'calls messages endpoint to send reaction message' do
       message_with_reaction = create(:message, message_type: :outgoing, content: '👍', conversation: conversation,

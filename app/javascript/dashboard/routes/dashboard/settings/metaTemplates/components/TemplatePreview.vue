@@ -16,7 +16,10 @@ import { useI18n } from 'vue-i18n';
 const props = defineProps({
   header: {
     type: Object,
-    default: null, // { format: 'TEXT', text: 'Hello {{1}}' } — only TEXT supported in 3b
+    default: null,
+    // Shapes accepted:
+    //   { format: 'TEXT', text: 'Hello {{1}}' }             — 3b
+    //   { format: 'IMAGE', mediaPreviewUrl: 'blob:...' }    — 3c (create)
   },
   body: {
     type: String,
@@ -46,10 +49,16 @@ const renderPlaceholders = text => {
   });
 };
 
+const headerFormat = computed(() =>
+  (props.header?.format || 'TEXT').toUpperCase()
+);
 const renderedHeader = computed(() => {
   if (!props.header?.text) return '';
   return renderPlaceholders(props.header.text);
 });
+const headerImageUrl = computed(() =>
+  headerFormat.value === 'IMAGE' ? props.header?.mediaPreviewUrl : null
+);
 
 const renderedBody = computed(() => renderPlaceholders(props.body));
 </script>
@@ -66,6 +75,12 @@ const renderedBody = computed(() => renderPlaceholders(props.body));
       <div
         class="bg-white dark:bg-n-solid-2 rounded-lg p-3 shadow text-sm text-n-slate-12 max-w-full"
       >
+        <img
+          v-if="headerImageUrl"
+          :src="headerImageUrl"
+          :alt="t('META_TEMPLATES.PREVIEW.HEADER_IMAGE_ALT')"
+          class="w-full rounded-md object-cover mb-2 max-h-64"
+        />
         <div
           v-if="renderedHeader"
           class="font-semibold text-base leading-snug mb-2 whitespace-pre-wrap break-words"

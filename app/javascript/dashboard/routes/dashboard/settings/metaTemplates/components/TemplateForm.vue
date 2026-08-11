@@ -4,6 +4,8 @@ import { useI18n } from 'vue-i18n';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Spinner from 'shared/components/Spinner.vue';
 import TemplatePreview from './TemplatePreview.vue';
+import MetaTemplatesAPI from 'dashboard/api/metaTemplates';
+import { useAlert } from 'dashboard/composables';
 
 // Shared form used by both the create (New.vue) and edit (Edit.vue)
 // pages. Owns all the state, validation, payload building and the live
@@ -69,8 +71,21 @@ const language = ref('pt_BR');
 const category = ref('UTILITY');
 
 const headerEnabled = ref(false);
+// TEXT keeps the existing flow; IMAGE unlocks the file picker path.
+// EDIT mode intentionally sticks to TEXT — see comment on
+// `hydrateFromTemplate` for why we don't roundtrip IMAGE headers on
+// edit (Meta strips omitted components, and re-uploading every time
+// would surprise operators). Fatia 3c is create-only for IMAGE.
+const HEADER_MEDIA_MAX_BYTES = 5 * 1024 * 1024;
+const HEADER_MEDIA_ACCEPTED_TYPES = 'image/jpeg,image/png';
+const headerFormat = ref('TEXT');
 const headerText = ref('');
 const headerSample = ref('');
+const headerMediaHandle = ref(null);
+const headerMediaPreviewUrl = ref(null);
+const headerMediaFileName = ref('');
+const headerMediaUploading = ref(false);
+const headerFileInput = ref(null);
 
 const bodyText = ref('');
 const bodySamples = ref({});
@@ -115,9 +130,21 @@ const hydrateFromTemplate = template => {
     c => (c.type || '').toUpperCase() === 'BUTTONS'
   );
 
-  headerEnabled.value = !!header;
-  headerText.value = header?.text || '';
-  headerSample.value = header?.example?.header_text?.[0] || '';
+  // Only TEXT headers hydrate into the form. Non-TEXT (IMAGE/VIDEO/
+  // DOCUMENT) stays as-is on Meta and the form doesn't try to edit it —
+  // Meta doesn't return a fetchable URL for the current media, so
+  // requiring a re-upload silently on edit would break the operator's
+  // mental model ("I edited the body, why is my logo gone?"). Skipping
+  // hydration for MEDIA headers means the edit payload won't include a
+  // HEADER component (see buildPayload) and the current one is preserved.
+  const headerFormatOnMeta = (header?.format || 'TEXT').toUpperCase();
+  const isTextHeader = headerFormatOnMeta === 'TEXT';
+  headerEnabled.value = !!header && isTextHeader;
+  headerFormat.value = 'TEXT';
+  headerText.value = isTextHeader ? header?.text || '' : '';
+  headerSample.value = isTextHeader
+    ? header?.example?.header_text?.[0] || ''
+    : '';
 
   bodyText.value = body?.text || '';
   const bodyExample = body?.example?.body_text?.[0] || [];
@@ -185,6 +212,55 @@ const addButton = type => {
 
 const removeButton = idx => buttons.value.splice(idx, 1);
 
+// Object URL for the preview must be revoked or it leaks memory across
+// re-selections. Keep the previous URL around and revoke when we replace
+// or clear it.
+const clearHeaderMedia = () => {
+  if (headerMediaPreviewUrl.value) {
+    URL.revokeObjectURL(headerMediaPreviewUrl.value);
+  }
+  headerMediaHandle.value = null;
+  headerMediaPreviewUrl.value = null;
+  headerMediaFileName.value = '';
+  if (headerFileInput.value) headerFileInput.value.value = '';
+};
+
+const onHeaderFormatChange = value => {
+  headerFormat.value = value;
+  if (value === 'TEXT') clearHeaderMedia();
+};
+
+const onHeaderFileSelected = async event => {
+  const [file] = event.target.files || [];
+  if (!file) return;
+
+  if (file.size > HEADER_MEDIA_MAX_BYTES) {
+    useAlert(t('META_TEMPLATES.NEW.FIELDS.HEADER_IMAGE_TOO_LARGE'));
+    if (headerFileInput.value) headerFileInput.value.value = '';
+    return;
+  }
+
+  clearHeaderMedia();
+  headerMediaFileName.value = file.name;
+  headerMediaPreviewUrl.value = URL.createObjectURL(file);
+  headerMediaUploading.value = true;
+  try {
+    const { data } = await MetaTemplatesAPI.uploadHeaderMedia({
+      inboxId: selectedInboxId.value,
+      file,
+    });
+    headerMediaHandle.value = data.handle;
+  } catch (err) {
+    const message =
+      err?.response?.data?.error ||
+      t('META_TEMPLATES.NEW.FIELDS.HEADER_IMAGE_UPLOAD_FAILED');
+    useAlert(message);
+    clearHeaderMedia();
+  } finally {
+    headerMediaUploading.value = false;
+  }
+};
+
 const isValid = computed(() => {
   if (!selectedInboxId.value) return false;
   if (!/^[a-z0-9_]{1,512}$/.test(name.value)) return false;
@@ -196,9 +272,16 @@ const isValid = computed(() => {
   }
 
   if (headerEnabled.value) {
-    if (!headerText.value.trim()) return false;
-    if (headerText.value.length > HEADER_MAX) return false;
-    if (headerHasVariable.value && !headerSample.value.trim()) return false;
+    if (headerFormat.value === 'IMAGE') {
+      // Meta refuses an IMAGE header without example.header_handle, and
+      // an upload in-flight isn't a valid submission state.
+      if (!headerMediaHandle.value) return false;
+      if (headerMediaUploading.value) return false;
+    } else {
+      if (!headerText.value.trim()) return false;
+      if (headerText.value.length > HEADER_MAX) return false;
+      if (headerHasVariable.value && !headerSample.value.trim()) return false;
+    }
   }
 
   if (footerEnabled.value) {
@@ -220,11 +303,15 @@ const isValid = computed(() => {
   return true;
 });
 
-const previewHeader = computed(() =>
-  headerEnabled.value && headerText.value
-    ? { format: 'TEXT', text: headerText.value }
-    : null
-);
+const previewHeader = computed(() => {
+  if (!headerEnabled.value) return null;
+  if (headerFormat.value === 'IMAGE') {
+    return headerMediaPreviewUrl.value
+      ? { format: 'IMAGE', mediaPreviewUrl: headerMediaPreviewUrl.value }
+      : null;
+  }
+  return headerText.value ? { format: 'TEXT', text: headerText.value } : null;
+});
 const previewFooter = computed(() =>
   footerEnabled.value ? footerText.value : ''
 );
@@ -239,16 +326,24 @@ const previewBodySamples = computed(() => {
 const buildPayload = () => {
   const components = [];
 
-  if (headerEnabled.value && headerText.value.trim()) {
-    const headerComp = {
-      type: 'HEADER',
-      format: 'TEXT',
-      text: headerText.value,
-    };
-    if (headerHasVariable.value) {
-      headerComp.example = { header_text: [headerSample.value] };
+  if (headerEnabled.value) {
+    if (headerFormat.value === 'IMAGE' && headerMediaHandle.value) {
+      components.push({
+        type: 'HEADER',
+        format: 'IMAGE',
+        example: { header_handle: [headerMediaHandle.value] },
+      });
+    } else if (headerFormat.value === 'TEXT' && headerText.value.trim()) {
+      const headerComp = {
+        type: 'HEADER',
+        format: 'TEXT',
+        text: headerText.value,
+      };
+      if (headerHasVariable.value) {
+        headerComp.example = { header_text: [headerSample.value] };
+      }
+      components.push(headerComp);
     }
-    components.push(headerComp);
   }
 
   const bodyComp = { type: 'BODY', text: bodyText.value };
@@ -370,37 +465,94 @@ const cancel = () => emit('cancel');
           </span>
         </label>
         <template v-if="headerEnabled">
-          <label class="flex flex-col gap-1 text-xs text-n-slate-11">
-            {{ t('META_TEMPLATES.NEW.FIELDS.HEADER_TEXT') }}
-            <input
-              v-model="headerText"
-              type="text"
-              :maxlength="HEADER_MAX"
-              class="bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg px-3 h-10 text-sm text-n-slate-12 focus:outline-n-brand placeholder:text-n-slate-10"
-              :placeholder="
-                t('META_TEMPLATES.NEW.FIELDS.HEADER_TEXT_PLACEHOLDER')
-              "
-            />
-            <span class="text-xxs text-n-slate-10">
-              {{
-                t('META_TEMPLATES.NEW.FIELDS.HEADER_HINT_WITH_COUNT', {
-                  count: headerText.length,
-                  max: HEADER_MAX,
-                })
-              }}
+          <!-- Format switcher only in create — see hydrateFromTemplate:
+               editing a MEDIA header via this form would require a
+               re-upload each time, so we stick to TEXT on edit. -->
+          <div v-if="!isEdit" class="flex items-center gap-3 text-sm">
+            <label
+              class="flex items-center gap-1.5 text-n-slate-12 cursor-pointer"
+            >
+              <input
+                type="radio"
+                :checked="headerFormat === 'TEXT'"
+                @change="onHeaderFormatChange('TEXT')"
+              />
+              {{ t('META_TEMPLATES.NEW.FIELDS.HEADER_FORMAT_TEXT') }}
+            </label>
+            <label
+              class="flex items-center gap-1.5 text-n-slate-12 cursor-pointer"
+            >
+              <input
+                type="radio"
+                :checked="headerFormat === 'IMAGE'"
+                @change="onHeaderFormatChange('IMAGE')"
+              />
+              {{ t('META_TEMPLATES.NEW.FIELDS.HEADER_FORMAT_IMAGE') }}
+            </label>
+          </div>
+
+          <template v-if="headerFormat === 'TEXT'">
+            <label class="flex flex-col gap-1 text-xs text-n-slate-11">
+              {{ t('META_TEMPLATES.NEW.FIELDS.HEADER_TEXT') }}
+              <input
+                v-model="headerText"
+                type="text"
+                :maxlength="HEADER_MAX"
+                class="bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg px-3 h-10 text-sm text-n-slate-12 focus:outline-n-brand placeholder:text-n-slate-10"
+                :placeholder="
+                  t('META_TEMPLATES.NEW.FIELDS.HEADER_TEXT_PLACEHOLDER')
+                "
+              />
+              <span class="text-xxs text-n-slate-10">
+                {{
+                  t('META_TEMPLATES.NEW.FIELDS.HEADER_HINT_WITH_COUNT', {
+                    count: headerText.length,
+                    max: HEADER_MAX,
+                  })
+                }}
+              </span>
+            </label>
+            <label
+              v-if="headerHasVariable"
+              class="flex flex-col gap-1 text-xs text-n-slate-11"
+            >
+              {{ t('META_TEMPLATES.NEW.FIELDS.HEADER_SAMPLE') }}
+              <input
+                v-model="headerSample"
+                type="text"
+                class="bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg px-3 h-10 text-sm text-n-slate-12 focus:outline-n-brand"
+              />
+            </label>
+          </template>
+
+          <div v-else class="flex flex-col gap-2 text-xs text-n-slate-11">
+            <span>{{ t('META_TEMPLATES.NEW.FIELDS.HEADER_IMAGE_LABEL') }}</span>
+            <div class="flex items-center gap-3">
+              <input
+                ref="headerFileInput"
+                type="file"
+                :accept="HEADER_MEDIA_ACCEPTED_TYPES"
+                class="text-xs text-n-slate-12 file:mr-3 file:px-3 file:h-9 file:rounded-md file:border-0 file:bg-n-brand file:text-white file:cursor-pointer file:text-xs"
+                @change="onHeaderFileSelected"
+              />
+              <Spinner v-if="headerMediaUploading" class="!w-4 !h-4 !p-0" />
+              <span
+                v-else-if="headerMediaHandle"
+                class="text-xxs text-n-teal-11"
+              >
+                {{ t('META_TEMPLATES.NEW.FIELDS.HEADER_IMAGE_READY') }}
+              </span>
+            </div>
+            <span
+              v-if="headerMediaFileName"
+              class="text-xxs text-n-slate-10 truncate"
+            >
+              {{ headerMediaFileName }}
             </span>
-          </label>
-          <label
-            v-if="headerHasVariable"
-            class="flex flex-col gap-1 text-xs text-n-slate-11"
-          >
-            {{ t('META_TEMPLATES.NEW.FIELDS.HEADER_SAMPLE') }}
-            <input
-              v-model="headerSample"
-              type="text"
-              class="bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg px-3 h-10 text-sm text-n-slate-12 focus:outline-n-brand"
-            />
-          </label>
+            <span class="text-xxs text-n-slate-10">
+              {{ t('META_TEMPLATES.NEW.FIELDS.HEADER_IMAGE_HINT') }}
+            </span>
+          </div>
         </template>
       </section>
 

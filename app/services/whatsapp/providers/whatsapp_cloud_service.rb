@@ -123,6 +123,24 @@ class Whatsapp::Providers::WhatsappCloudService < Whatsapp::Providers::BaseServi
     end
   end
 
+  # Meta requires templates with IMAGE/VIDEO/DOCUMENT headers to reference
+  # a `header_handle` produced by the resumable upload flow — no direct
+  # URL upload is allowed. We proxy the operator's file through a two-step
+  # dance:
+  #   1) create an upload session against `/{APP_ID}/uploads` with metadata
+  #   2) POST the raw bytes to the returned session id, get the handle
+  # The handle is what we hand to `create_template` inside
+  # `components[].example.header_handle`; we never persist the file.
+  def upload_template_header_media(file_io:, file_name:, file_type:, file_length:)
+    app_id = GlobalConfigService.load('WHATSAPP_APP_ID', nil)
+    return { success: false, error_message: 'WHATSAPP_APP_ID is not configured' } if app_id.blank?
+
+    session_id = create_upload_session(app_id, file_name, file_type, file_length)
+    return session_id if session_id.is_a?(Hash) && session_id[:success] == false
+
+    upload_bytes_to_session(session_id, file_io)
+  end
+
   def fetch_whatsapp_templates(url)
     response = HTTParty.get(url)
     return [] unless response.success?
@@ -145,6 +163,49 @@ class Whatsapp::Providers::WhatsappCloudService < Whatsapp::Providers::BaseServi
 
   def api_headers
     { 'Authorization' => "Bearer #{whatsapp_channel.provider_config['api_key']}", 'Content-Type' => 'application/json' }
+  end
+
+  def create_upload_session(app_id, file_name, file_type, file_length)
+    response = HTTParty.post(
+      "#{api_base_path}/v22.0/#{app_id}/uploads",
+      query: {
+        file_name: file_name,
+        file_length: file_length,
+        file_type: file_type,
+        access_token: whatsapp_channel.provider_config['api_key']
+      }
+    )
+    return format_meta_upload_error('session', response) unless response.success?
+
+    response.parsed_response['id']
+  end
+
+  # Meta's upload endpoint expects the OAuth prefix and the raw bytes as
+  # body. Do NOT set Content-Type — it accepts any binary based on the
+  # `file_type` we already declared when opening the session.
+  def upload_bytes_to_session(session_id, file_io)
+    response = HTTParty.post(
+      "#{api_base_path}/v22.0/#{session_id}",
+      headers: {
+        'Authorization' => "OAuth #{whatsapp_channel.provider_config['api_key']}",
+        'file_offset' => '0'
+      },
+      body: file_io.read
+    )
+    return format_meta_upload_error('upload', response) unless response.success?
+
+    { success: true, handle: response.parsed_response['h'] }
+  end
+
+  def format_meta_upload_error(step, response)
+    Rails.logger.error "Meta media #{step} failed: #{response.code} - #{response.body}"
+    error = response.parsed_response.is_a?(Hash) ? response.parsed_response['error'] : nil
+    {
+      success: false,
+      error_code: error&.dig('code'),
+      error_message: error&.dig('message') || response.body,
+      error_details: error&.dig('error_user_msg') || error&.dig('error_data', 'details')
+    }
   end
 
   def create_csat_template(template_config)

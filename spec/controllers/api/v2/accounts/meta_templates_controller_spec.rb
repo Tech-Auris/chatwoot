@@ -384,4 +384,77 @@ RSpec.describe 'Meta Templates API', type: :request do
       expect(response.parsed_body['period']).to eq('30d')
     end
   end
+
+  describe 'POST /api/v2/accounts/{account_id}/meta_templates/upload_header_media' do
+    # 2×2 red PNG — minimum valid PNG, small enough to embed. Anything
+    # bigger would need a fixture file, and this test only cares that the
+    # request reaches provider_service.upload_template_header_media with
+    # the right shape — the actual Meta call is stubbed.
+    let(:png_bytes) do
+      Base64.decode64('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAF0lEQVR42mP8/5+hnoEIwDiqkL5KAQAxpQP1Yjg9OwAAAABJRU5ErkJggg==')
+    end
+    let(:file) { Rack::Test::UploadedFile.new(StringIO.new(png_bytes), 'image/png', original_filename: 'logo.png') }
+
+    it 'proxies the file to the provider and returns the Meta handle' do
+      # rubocop:disable RSpec/AnyInstance — controller resolves the channel
+      # through `Current.account.inboxes.find(...).channel.provider_service`;
+      # we don't have a boundary to intercept a specific channel instance.
+      provider = instance_double(Whatsapp::Providers::WhatsappCloudService)
+      allow_any_instance_of(Channel::Whatsapp).to receive(:provider_service).and_return(provider)
+      # rubocop:enable RSpec/AnyInstance
+      allow(provider).to receive(:upload_template_header_media)
+        .with(hash_including(file_name: 'logo.png', file_type: 'image/png'))
+        .and_return(success: true, handle: '4::abcdef')
+
+      post "/api/v2/accounts/#{account.id}/meta_templates/upload_header_media",
+           params: { inbox_id: cloud_inbox.id, file: file }, headers: admin.create_new_auth_token
+
+      expect(response).to have_http_status(:success)
+      expect(response.parsed_body['handle']).to eq('4::abcdef')
+    end
+
+    it 'returns 422 when the file mime type is not JPG/PNG' do
+      pdf = Rack::Test::UploadedFile.new(StringIO.new('%PDF-1.4'), 'application/pdf', original_filename: 'x.pdf')
+
+      post "/api/v2/accounts/#{account.id}/meta_templates/upload_header_media",
+           params: { inbox_id: cloud_inbox.id, file: pdf }, headers: admin.create_new_auth_token
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.parsed_body['error']).to match(/Unsupported file type/)
+    end
+
+    it 'returns 422 when the file is missing' do
+      post "/api/v2/accounts/#{account.id}/meta_templates/upload_header_media",
+           params: { inbox_id: cloud_inbox.id }, headers: admin.create_new_auth_token
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.parsed_body['error']).to eq('A file is required')
+    end
+
+    it 'forbids agents from uploading media' do
+      post "/api/v2/accounts/#{account.id}/meta_templates/upload_header_media",
+           params: { inbox_id: cloud_inbox.id, file: file }, headers: agent.create_new_auth_token
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it 'surfaces Meta failures as 422 with the original error text' do
+      # rubocop:disable RSpec/AnyInstance
+      provider = instance_double(Whatsapp::Providers::WhatsappCloudService)
+      allow_any_instance_of(Channel::Whatsapp).to receive(:provider_service).and_return(provider)
+      # rubocop:enable RSpec/AnyInstance
+      allow(provider).to receive(:upload_template_header_media).and_return(
+        success: false, error_code: 100, error_message: 'file_type not supported', error_details: 'Use JPG or PNG.'
+      )
+
+      post "/api/v2/accounts/#{account.id}/meta_templates/upload_header_media",
+           params: { inbox_id: cloud_inbox.id, file: file }, headers: admin.create_new_auth_token
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      body = response.parsed_body
+      expect(body['error']).to eq('file_type not supported')
+      expect(body['details']).to eq('Use JPG or PNG.')
+      expect(body['code']).to eq(100)
+    end
+  end
 end
