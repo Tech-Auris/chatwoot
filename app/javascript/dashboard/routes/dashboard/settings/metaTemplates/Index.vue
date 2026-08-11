@@ -84,6 +84,47 @@ const filteredTemplates = computed(() => {
   return list;
 });
 
+// Once per inbox per session we auto-fire a sync when the local cache
+// looks stale enough that the operator would land on an empty page
+// (never synced, or last sync older than 24h). The 5-min background
+// scheduler still handles fresh-enough inboxes; this only saves the
+// operator from watching an empty screen and clicking Sincronizar
+// themselves. Set-based so re-selecting the same inbox on the same
+// session doesn't retrigger — filters, drawer opens, etc. leave this
+// alone.
+const AUTO_SYNC_STALE_MS = 24 * 60 * 60 * 1000;
+const autoSyncedInboxes = ref(new Set());
+
+const shouldAutoSync = () => {
+  if (templates.value.length > 0) return false;
+  if (autoSyncedInboxes.value.has(selectedInboxId.value)) return false;
+  if (!lastSyncedAt.value) return true;
+  const lastSyncMs = new Date(lastSyncedAt.value).getTime();
+  if (Number.isNaN(lastSyncMs)) return true;
+  return Date.now() - lastSyncMs > AUTO_SYNC_STALE_MS;
+};
+
+const runSync = async ({ silent = false } = {}) => {
+  if (!selectedInboxId.value || syncing.value) return;
+  syncing.value = true;
+  try {
+    const { data } = await MetaTemplatesAPI.sync({
+      inboxId: selectedInboxId.value,
+    });
+    templates.value = data.templates || [];
+    lastSyncedAt.value = data.last_synced_at;
+    if (!silent) useAlert(t('META_TEMPLATES.SYNC.SUCCESS'));
+  } catch (err) {
+    // Auto-sync stays quiet on failure too — the 5-min background scheduler
+    // will retry, and the user can still hit Sincronizar to see the error.
+    if (!silent) {
+      useAlert(err?.response?.data?.error || t('META_TEMPLATES.SYNC.FAILED'));
+    }
+  } finally {
+    syncing.value = false;
+  }
+};
+
 const fetchTemplates = async () => {
   if (!selectedInboxId.value) return;
   loading.value = true;
@@ -101,22 +142,10 @@ const fetchTemplates = async () => {
   } finally {
     loading.value = false;
   }
-};
 
-const runSync = async () => {
-  if (!selectedInboxId.value || syncing.value) return;
-  syncing.value = true;
-  try {
-    const { data } = await MetaTemplatesAPI.sync({
-      inboxId: selectedInboxId.value,
-    });
-    templates.value = data.templates || [];
-    lastSyncedAt.value = data.last_synced_at;
-    useAlert(t('META_TEMPLATES.SYNC.SUCCESS'));
-  } catch (err) {
-    useAlert(err?.response?.data?.error || t('META_TEMPLATES.SYNC.FAILED'));
-  } finally {
-    syncing.value = false;
+  if (shouldAutoSync()) {
+    autoSyncedInboxes.value.add(selectedInboxId.value);
+    await runSync({ silent: true });
   }
 };
 
@@ -298,7 +327,7 @@ onMounted(() => {
               faded
               slate
               :disabled="syncing || !selectedInboxId"
-              @click="runSync"
+              @click="() => runSync()"
             >
               <Spinner v-if="syncing" class="!w-4 !h-4 !p-0" />
               <span v-else>{{ t('META_TEMPLATES.SYNC.BUTTON') }}</span>
