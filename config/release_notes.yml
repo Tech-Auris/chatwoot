@@ -1,4 +1,28 @@
 ---
+- tag: v4.15.1-auris.1.41.22
+  published_at: '2026-08-11T22:00:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.41.22
+  notes:
+    en: |-
+      ### ✨ What's new
+
+      - **New "Templates Meta" section.** You can now browse, create, edit and delete WhatsApp templates directly inside AurisChat, without opening Business Manager. Each template shows a usage summary for the last few days (how many were sent, delivered and read), and you get an on-screen notice the moment Meta approves or rejects a template.
+
+      ### 🐛 Fixes
+
+      - **Templates with a variable in the header work again.** Templates that had a variable in the header (like "Hi {{name}}") were failing to send. They now work normally.
+      - **Template messages in the history show everything the customer saw.** When you sent a template with a header or footer, the conversation history only showed the body. It now shows the whole thing, matching what the customer received on WhatsApp.
+      - **Fewer false "failed to send" alerts.** Brief WhatsApp hiccups used to instantly flag a message as failed. It now retries by itself before giving up.
+    pt_BR: |-
+      ### ✨ Novidades
+
+      - **Nova seção Templates Meta.** Agora dá pra ver, criar, editar e excluir os templates de WhatsApp direto pelo AurisChat, sem abrir o Business Manager. Cada template mostra um resumo de uso dos últimos dias (quantas foram enviadas, entregues e lidas), e você recebe um aviso na tela na hora que a Meta aprova ou rejeita um template.
+
+      ### 🐛 Correções
+
+      - **Template com variável no cabeçalho volta a funcionar.** Templates que tinham uma variável no cabeçalho (tipo "Olá {{nome}}") estavam falhando no envio. Agora funcionam normalmente.
+      - **Mensagem de template no histórico mostra tudo que o cliente viu.** Quando você enviava um template com cabeçalho ou rodapé, o histórico da conversa mostrava só o corpo. Agora aparece completo, igual ao que o cliente recebeu no WhatsApp.
+      - **Menos alertas de "falha ao enviar" falsos.** Erros passageiros do WhatsApp (uma travadinha momentânea) marcavam a mensagem como falha imediatamente. Agora ela tenta de novo sozinha antes de dizer que falhou.
 - tag: v4.15.1-auris.1.41.21
   published_at: '2026-08-06T14:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.41.21
@@ -255,23 +279,3 @@
       - **Nomes do menu voltaram ao normal.** A barra lateral estava mostrando textos técnicos ("SIDEBAR.CONVERSATIONS" etc.). Tudo aparece certo agora.
       - **Detalhes do ticket abrem completos.** Antes clicar num ticket abria uma janela quase vazia — só o cabeçalho. Agora aparece com todos os campos.
       - **Badge "Em análise" com fundo azul.**
-- tag: v4.15.1-auris.1.41.2
-  published_at: '2026-07-11T22:00:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.41.2
-  notes:
-    en: |-
-      ### ✨ What's new
-
-      - **My Tickets: track the feedback you sent and hear back from the team.** A new "My Tickets" item shows up in the sidebar with every feedback you opened. Each row shows the status; clicking one opens a panel with the team's response and a button to jump back to the message you flagged. When the team updates a ticket you see a notification right away.
-
-      ### ⚡ Improvements
-
-      - **Warmer wording on the feedback button.** The flag icon on messages now reads "Send feedback", and the modal focuses on helping your assistant get better instead of reporting a problem.
-    pt_BR: |-
-      ### ✨ Novidades
-
-      - **Meus Tickets: acompanhe seus feedbacks e o retorno do time.** Um novo item "Meus Tickets" aparece na barra lateral com a lista dos feedbacks que você abriu. Cada linha mostra o status; clicando abre um painel com o retorno do nosso time e um botão pra voltar direto pra mensagem que você comentou. Quando o time atualiza um ticket você recebe um aviso na hora.
-
-      ### ⚡ Melhorias
-
-      - **Textos mais leves ao dar feedback.** O botão de bandeirinha nas mensagens agora diz "Dar feedback" e o modal foca em ajudar a evoluir a sua secretária, não em reportar problema.
