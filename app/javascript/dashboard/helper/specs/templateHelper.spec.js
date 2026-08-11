@@ -1,6 +1,7 @@
 import {
   replaceTemplateVariables,
   buildTemplateParameters,
+  composeTemplateContent,
   processVariable,
   allKeysRequired,
 } from '../templateHelper';
@@ -251,6 +252,32 @@ describe('templateHelper', () => {
       });
     });
 
+    it('should create slots for TEXT header variables (bug fix: was skipping them entirely)', () => {
+      // Real customer case: template with `{{nome}}` in the header sent to
+      // Meta without header parameters → error 132000. Root cause was that
+      // buildTemplateParameters only scanned the body for {{var}}, so the
+      // parser UI never rendered an input for the header var.
+      const templateWithHeaderVar = {
+        components: [
+          { type: 'HEADER', format: 'TEXT', text: 'Olá {{nome}}' },
+          { type: 'BODY', text: 'Mensagem de teste' },
+        ],
+      };
+      const result = buildTemplateParameters(templateWithHeaderVar, false);
+      expect(result.header).toEqual({ nome: '' });
+    });
+
+    it('should not touch header slots when the TEXT header has no variables', () => {
+      const templateWithStaticHeader = {
+        components: [
+          { type: 'HEADER', format: 'TEXT', text: 'Olá cliente' },
+          { type: 'BODY', text: 'Mensagem' },
+        ],
+      };
+      const result = buildTemplateParameters(templateWithStaticHeader, false);
+      expect(result.header).toBeUndefined();
+    });
+
     it('should handle video header templates', () => {
       const videoTemplate = templates.find(t => t.name === 'training_video');
       const result = buildTemplateParameters(videoTemplate, true);
@@ -263,6 +290,69 @@ describe('templateHelper', () => {
         name: '',
         date: '',
       });
+    });
+  });
+
+  describe('composeTemplateContent', () => {
+    // Bug fix: the AurisChat panel used to render only the body for
+    // outgoing template messages, hiding the header + footer from the
+    // operator even though the recipient saw everything on WhatsApp.
+    // These tests lock in the "match what the customer sees" behavior.
+    it('joins header + body + footer with blank lines, resolving variables', () => {
+      const template = {
+        components: [
+          { type: 'HEADER', format: 'TEXT', text: 'Olá {{nome}}' },
+          { type: 'BODY', text: 'Mensagem de teste' },
+          { type: 'FOOTER', text: 'Caso não queira mais...' },
+        ],
+      };
+      const processedParams = {
+        header: { nome: 'Fabio' },
+        body: {},
+      };
+
+      const result = composeTemplateContent(template, processedParams);
+
+      expect(result).toBe(
+        'Olá Fabio\n\nMensagem de teste\n\nCaso não queira mais...'
+      );
+    });
+
+    it('renders body only when the template has no header or footer', () => {
+      const template = {
+        components: [{ type: 'BODY', text: 'Olá {{1}}' }],
+      };
+
+      expect(composeTemplateContent(template, { body: { 1: 'Fabio' } })).toBe(
+        'Olá Fabio'
+      );
+    });
+
+    it('skips media headers (recipient sees the image, not the text)', () => {
+      const template = {
+        components: [
+          { type: 'HEADER', format: 'IMAGE' },
+          { type: 'BODY', text: 'Olá {{1}}' },
+          { type: 'FOOTER', text: 'Reply STOP' },
+        ],
+      };
+
+      expect(composeTemplateContent(template, { body: { 1: 'Fabio' } })).toBe(
+        'Olá Fabio\n\nReply STOP'
+      );
+    });
+
+    it('preserves unresolved variables so the operator sees the gaps', () => {
+      const template = {
+        components: [
+          { type: 'HEADER', format: 'TEXT', text: 'Olá {{nome}}' },
+          { type: 'BODY', text: 'Mensagem' },
+        ],
+      };
+
+      expect(composeTemplateContent(template, {})).toBe(
+        'Olá {{nome}}\n\nMensagem'
+      );
     });
   });
 

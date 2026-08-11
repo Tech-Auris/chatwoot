@@ -18,7 +18,7 @@ import LiquidVariableInput from 'dashboard/components-next/whatsapp/LiquidVariab
 import {
   buildTemplateParameters,
   allKeysRequired,
-  replaceTemplateVariables,
+  composeTemplateContent,
   DEFAULT_LANGUAGE,
   DEFAULT_CATEGORY,
   COMPONENT_TYPES,
@@ -74,6 +74,16 @@ const bodyText = computed(() => {
   return bodyComponent.value?.text || '';
 });
 
+const headerText = computed(() => {
+  return headerComponent.value?.text || '';
+});
+
+const hasHeaderTextVariables = computed(() => {
+  if (!headerComponent.value) return false;
+  if (MEDIA_FORMATS.includes(headerComponent.value.format)) return false;
+  return /{{([^}]+)}}/.test(headerText.value);
+});
+
 const hasMediaHeader = computed(() =>
   MEDIA_FORMATS.includes(headerComponent.value?.format)
 );
@@ -92,14 +102,34 @@ const hasVariables = computed(() => {
 });
 
 const renderedTemplate = computed(() => {
-  return replaceTemplateVariables(bodyText.value, processedParams.value);
+  // Compose the whole template (header + body + footer) so the preview
+  // and the persisted message content match what the recipient sees on
+  // WhatsApp. Bug fix: previously only the body was rendered, which
+  // hid header/footer text from the Chatwoot side after send.
+  return composeTemplateContent(props.template, processedParams.value);
 });
 
 const isFormInvalid = computed(() => {
-  if (!hasVariables.value && !hasMediaHeader.value) return false;
+  if (
+    !hasVariables.value &&
+    !hasMediaHeader.value &&
+    !hasHeaderTextVariables.value
+  ) {
+    return false;
+  }
 
   if (hasMediaHeader.value && !processedParams.value.header?.media_url) {
     return true;
+  }
+
+  // Header text variables live under `header.<key>` alongside media_url/
+  // media_type/media_name. Only the plain text keys count for validation.
+  if (hasHeaderTextVariables.value && processedParams.value.header) {
+    const textEntries = Object.entries(processedParams.value.header).filter(
+      ([key]) => !['media_url', 'media_type', 'media_name'].includes(key)
+    );
+    const hasEmptyHeaderVariable = textEntries.some(([, value]) => !value);
+    if (hasEmptyHeaderVariable) return true;
   }
 
   if (hasVariables.value && processedParams.value.body) {
@@ -188,6 +218,7 @@ defineExpose({
   processedParams,
   hasVariables,
   hasMediaHeader,
+  hasHeaderTextVariables,
   isDocumentTemplate,
   headerComponent,
   renderedTemplate,
@@ -225,7 +256,7 @@ defineExpose({
       </div>
     </div>
 
-    <div v-if="hasVariables || hasMediaHeader">
+    <div v-if="hasVariables || hasMediaHeader || hasHeaderTextVariables">
       <div v-if="hasMediaHeader" class="mb-4">
         <p class="mb-2.5 text-sm font-semibold">
           {{
@@ -258,6 +289,32 @@ defineExpose({
             @update:model-value="updateMediaName"
           />
         </div>
+      </div>
+
+      <!-- Header Text Variables Section -->
+      <div v-if="hasHeaderTextVariables && processedParams.header" class="mb-4">
+        <p class="mb-2.5 text-sm font-semibold">
+          {{ $t('WHATSAPP_TEMPLATES.PARSER.HEADER_VARIABLES_LABEL') }}
+        </p>
+        <template
+          v-for="(_, key) in processedParams.header"
+          :key="`header-${key}`"
+        >
+          <div
+            v-if="!['media_url', 'media_type', 'media_name'].includes(key)"
+            class="flex items-center mb-2.5"
+          >
+            <LiquidVariableInput
+              v-model="processedParams.header[key]"
+              type="text"
+              :placeholder="
+                t('WHATSAPP_TEMPLATES.PARSER.VARIABLE_PLACEHOLDER', {
+                  variable: key,
+                })
+              "
+            />
+          </div>
+        </template>
       </div>
 
       <!-- Body Variables Section -->
