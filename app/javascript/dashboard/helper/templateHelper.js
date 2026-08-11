@@ -4,6 +4,7 @@ export const DEFAULT_CATEGORY = 'UTILITY';
 export const COMPONENT_TYPES = {
   HEADER: 'HEADER',
   BODY: 'BODY',
+  FOOTER: 'FOOTER',
   BUTTONS: 'BUTTONS',
 };
 export const MEDIA_FORMATS = ['IMAGE', 'VIDEO', 'DOCUMENT'];
@@ -20,11 +21,55 @@ export const allKeysRequired = value => {
   return keys.every(key => value[key]);
 };
 
-export const replaceTemplateVariables = (templateText, processedParams) => {
-  return templateText.replace(/{{([^}]+)}}/g, (match, variable) => {
-    const variableKey = processVariable(variable);
-    return processedParams.body?.[variableKey] || `{{${variable}}}`;
+// Substitute {{var}} placeholders in an arbitrary template string using
+// values from a component-scoped params bag (`body`, `header`, ...).
+// Unfilled placeholders survive verbatim so the operator sees where the
+// gaps are.
+export const replaceComponentVariables = (text, componentParams) => {
+  if (!text) return '';
+  return text.replace(/{{([^}]+)}}/g, (match, variable) => {
+    const key = processVariable(variable);
+    return componentParams?.[key] || `{{${variable}}}`;
   });
+};
+
+export const replaceTemplateVariables = (templateText, processedParams) => {
+  return replaceComponentVariables(templateText, processedParams.body);
+};
+
+// Full-shape rendering used both for the operator's live preview and
+// for the message content we persist in Chatwoot. Templates on Meta
+// are composed of HEADER + BODY + FOOTER; the recipient sees all three
+// on WhatsApp but we used to persist only the body, so the operator's
+// panel showed a stripped-down message that no longer matched what the
+// customer received. Join with blank lines for a plain-text render that
+// mirrors WhatsApp's visual layout.
+export const composeTemplateContent = (template, processedParams = {}) => {
+  const headerComponent = findComponentByType(template, COMPONENT_TYPES.HEADER);
+  const bodyComponent = findComponentByType(template, COMPONENT_TYPES.BODY);
+  const footerComponent = findComponentByType(template, COMPONENT_TYPES.FOOTER);
+
+  const parts = [];
+  // Media headers have no text to render — the recipient sees the image/
+  // video/document instead. Only include text-format headers here.
+  if (
+    headerComponent &&
+    (headerComponent.format || 'TEXT').toUpperCase() === 'TEXT' &&
+    headerComponent.text
+  ) {
+    parts.push(
+      replaceComponentVariables(headerComponent.text, processedParams.header)
+    );
+  }
+  if (bodyComponent?.text) {
+    parts.push(
+      replaceComponentVariables(bodyComponent.text, processedParams.body)
+    );
+  }
+  if (footerComponent?.text) {
+    parts.push(footerComponent.text);
+  }
+  return parts.join('\n\n');
 };
 
 export const buildTemplateParameters = (template, hasMediaHeaderValue) => {
@@ -59,6 +104,24 @@ export const buildTemplateParameters = (template, hasMediaHeaderValue) => {
     // For document templates, include media_name field for filename support
     if (headerComponent.format.toLowerCase() === 'document') {
       allVariables.header.media_name = '';
+    }
+  }
+
+  // TEXT headers can carry variables too (Meta allows up to one). If we
+  // don't create input slots for them the operator has no way to fill
+  // them in and Meta rejects the send with error 132000 ("Number of
+  // parameters does not match the expected number of params"). Extract
+  // any {{var}} placeholders the same way the body does.
+  if (
+    headerComponent &&
+    (headerComponent.format || 'TEXT').toUpperCase() === 'TEXT'
+  ) {
+    const headerVars = headerComponent.text?.match(/{{([^}]+)}}/g);
+    if (headerVars && headerVars.length > 0) {
+      if (!allVariables.header) allVariables.header = {};
+      headerVars.forEach(v => {
+        allVariables.header[processVariable(v)] = '';
+      });
     }
   }
 
