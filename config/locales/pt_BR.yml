@@ -161,6 +161,7 @@ pt_BR:
     meta_templates:
       non_cloud_inbox: Este endpoint só está disponível para caixas de entrada que usam o provedor WhatsApp Cloud.
       sync_failed: Não foi possível atualizar os templates junto ao Meta. Tente novamente em alguns segundos.
+      create_failed: Não foi possível criar o template no Meta. Revise o formulário e tente novamente.
     custom_filters:
       number_of_records: Limite atingido. O número máximo de filtros personalizados permitidos para um usuário por conta é de 1000.
       invalid_attribute: Chave de atributo inválido - [%{key}]. A chave deve ser uma das [%{allowed_keys}] ou um atributo personalizado definido na conta.

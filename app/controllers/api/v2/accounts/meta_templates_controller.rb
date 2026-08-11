@@ -19,6 +19,32 @@ class Api::V2::Accounts::MetaTemplatesController < Api::V1::Accounts::BaseContro
     }
   end
 
+  # Creates a new template on Meta. Body follows Meta's
+  # `/message_templates` shape verbatim (name, language, category,
+  # components) so the frontend can forward it without translation and
+  # a Fatia 3b that adds header / footer / buttons only touches the
+  # component builder on the client. On success we synchronously refresh
+  # the local cache so the caller sees the new (PENDING) row without
+  # a separate GET.
+  def create
+    result = @inbox.channel.provider_service.create_template(create_payload)
+
+    if result[:success]
+      @inbox.channel.sync_templates
+      render json: {
+        template: result[:template],
+        templates: @inbox.channel.reload.message_templates || [],
+        last_synced_at: @inbox.channel.message_templates_last_updated
+      }, status: :created
+    else
+      render json: {
+        error: result[:error_message] || I18n.t('errors.meta_templates.create_failed'),
+        details: result[:error_details],
+        code: result[:error_code]
+      }, status: :unprocessable_entity
+    end
+  end
+
   # On-demand refresh. Runs inline instead of enqueueing the job so the
   # operator gets the fresh data in the same request — Meta's list call is
   # a single roundtrip (with paging) and takes a couple of seconds.
@@ -67,5 +93,17 @@ class Api::V2::Accounts::MetaTemplatesController < Api::V1::Accounts::BaseContro
       name: inbox.name,
       phone_number: channel.try(:phone_number)
     }
+  end
+
+  # Whitelists the four top-level Meta fields and forwards the
+  # `components` array to Meta as-is. Strong-params can't cleanly model
+  # Meta's typed-and-nested component schema (BODY/HEADER/FOOTER/BUTTONS,
+  # each with their own keys), and enumerating every leaf would drift
+  # out of sync with their API. Using `to_unsafe_h` here is safe: we
+  # forward the shape to Meta (they validate and reject anything bad)
+  # and persist nothing from it directly.
+  def create_payload
+    root = params.require(:template).to_unsafe_h.stringify_keys
+    root.slice('name', 'language', 'category', 'components')
   end
 end

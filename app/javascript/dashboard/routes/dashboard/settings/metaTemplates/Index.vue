@@ -17,6 +17,13 @@ import MetaTemplatesAPI from 'dashboard/api/metaTemplates';
 const { t } = useI18n();
 const store = useStore();
 
+// Only manager and administrator can create templates on Meta. Agents
+// stay on the read-only view — matches MetaTemplatePolicy#create?.
+const currentRole = useMapGetter('getCurrentRole');
+const canCreateTemplate = computed(() =>
+  ['administrator', 'manager'].includes(currentRole.value)
+);
+
 // Cloud WhatsApp inbox universe. Comes from the already-hydrated
 // inboxes store — if a user reaches this page directly without inboxes
 // loaded (deep link), we dispatch once on mount.
@@ -246,6 +253,14 @@ onMounted(() => {
               <Spinner v-if="syncing" class="!w-4 !h-4 !p-0" />
               <span v-else>{{ t('META_TEMPLATES.SYNC.BUTTON') }}</span>
             </Button>
+            <Button
+              v-if="canCreateTemplate"
+              sm
+              solid
+              blue
+              :label="t('META_TEMPLATES.NEW.CTA')"
+              @click="$router.push({ name: 'meta_templates_new' })"
+            />
           </div>
         </div>
 

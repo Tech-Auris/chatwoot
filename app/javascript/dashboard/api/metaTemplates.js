@@ -21,6 +21,18 @@ class MetaTemplatesAPI extends ApiClient {
       { params: { inbox_id: inboxId } }
     );
   }
+
+  // Submits a new template for Meta approval. `template` matches Meta's
+  // `/message_templates` shape ({ name, language, category, components })
+  // so future slices that compose header/footer/buttons don't need a
+  // translation layer.
+  create({ inboxId, template }) {
+    return axios.post(
+      this.url,
+      { template },
+      { params: { inbox_id: inboxId } }
+    );
+  }
 }
 
 export default new MetaTemplatesAPI();
