@@ -72,18 +72,49 @@
         "NAME_HINT": "Lowercase letters, numbers and underscores only. Must be unique on this inbox.",
         "LANGUAGE": "Language",
         "CATEGORY": "Category",
+        "HEADER_TOGGLE": "Add a header",
+        "HEADER_TOGGLE_HINT": "Text only for now (media in the next release).",
+        "HEADER_TEXT": "Header text",
+        "HEADER_TEXT_PLACEHOLDER": "Short heading, up to one {{1}} variable",
+        "HEADER_HINT_WITH_COUNT": "Up to 60 characters, at most one variable. ({count}/{max})",
+        "HEADER_SAMPLE": "Sample value for the header variable",
         "BODY": "Body text",
         "BODY_PLACEHOLDER": "Hello {{1}}, your appointment is on {{2}} at {{3}}.",
         "BODY_HINT": "Use {{1}}, {{2}}, ... for variables that will be filled at send time.",
         "BODY_HINT_WITH_COUNT": "Use {{1}}, {{2}}, ... for variables that will be filled at send time. ({count}/{max})",
         "SAMPLES_TITLE": "Sample values",
         "SAMPLES_DESCRIPTION": "Meta requires a realistic example for each variable so reviewers can approve the template.",
-        "SAMPLE_FOR": "Value for {{'{{'}}{index}{{'}}'}}"
+        "SAMPLE_FOR": "Value for {{'{{'}}{index}{{'}}'}}",
+        "FOOTER_TOGGLE": "Add a footer",
+        "FOOTER_TOGGLE_HINT": "Short static text below the body, no variables.",
+        "FOOTER_PLACEHOLDER": "e.g. Reply STOP to opt out",
+        "FOOTER_HINT_WITH_COUNT": "Up to 60 characters, no variables. ({count}/{max})",
+        "BUTTONS_TITLE": "Buttons",
+        "BUTTONS_HINT": "Up to 3 quick replies OR up to 2 URL + 1 phone.",
+        "ADD_QUICK_REPLY": "Quick reply ({count}/{max})",
+        "ADD_URL": "URL ({count}/{max})",
+        "ADD_PHONE": "Phone ({count}/{max})",
+        "REMOVE_BUTTON": "Remove",
+        "BUTTON_TEXT": "Button label",
+        "BUTTON_URL": "URL",
+        "BUTTON_URL_PLACEHOLDER": "https://example.com",
+        "BUTTON_PHONE": "Phone number (E.164, with country code)",
+        "BUTTON_PHONE_PLACEHOLDER": "+5511999999999",
+        "BUTTON_TYPE": {
+          "QUICK_REPLY": "Quick reply",
+          "URL": "URL button",
+          "PHONE_NUMBER": "Phone button"
+        }
       },
       "SUBMIT": "Submit for approval",
       "CANCEL": "Cancel",
       "SUCCESS": "Template submitted to Meta. It will appear as Pending until Meta approves it.",
       "ERROR_GENERIC": "Could not create the template. Please review the fields and try again."
+    },
+    "PREVIEW": {
+      "TITLE": "Preview",
+      "EMPTY_BODY": "Body preview will appear here.",
+      "BUTTON_PLACEHOLDER": "Button label"
     },
     "COMING_SOON": {
       "MESSAGE": "Meta template management will land here soon. For now, keep using business.facebook.com."
