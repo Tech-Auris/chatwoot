@@ -53,7 +53,8 @@
       "PHONE_PREFIX": "Telefone:",
       "REJECTED_REASON_LABEL": "Motivo do Meta:",
       "DELETE": "Excluir template",
-      "EDIT": "Editar template"
+      "EDIT": "Editar template",
+      "EDIT_DISABLED_REASON": "Só templates APROVADOS podem ser editados (status atual: {status}). Exclua e crie um novo para alterar."
     },
     "NOTIFICATIONS": {
       "STATUS_CHANGED": "A Meta atualizou o status do template \"{name}\" para {status}."
@@ -154,7 +155,9 @@
       "SUBMIT": "Salvar alterações",
       "SUCCESS": "Template atualizado no Meta. Se você alterou corpo / cabeçalho / rodapé / botões, ele fica Pendente até reaprovar.",
       "ERROR_GENERIC": "Não foi possível atualizar o template. Revise os campos e tente novamente.",
-      "NOT_FOUND": "Este template não está mais disponível nesta caixa."
+      "NOT_FOUND": "Este template não está mais disponível nesta caixa.",
+      "NOT_EDITABLE": "A Meta só permite editar templates APROVADOS. Este está {status}, então não é possível editar por aqui — exclua e crie um novo para alterar.",
+      "BACK_TO_LIST": "Voltar para a lista"
     },
     "PREVIEW": {
       "TITLE": "Pré-visualização",

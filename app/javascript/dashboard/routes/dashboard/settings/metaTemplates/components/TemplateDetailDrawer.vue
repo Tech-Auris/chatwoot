@@ -25,6 +25,24 @@ const canDelete = computed(() =>
   ['administrator', 'manager'].includes(currentRole.value)
 );
 
+// Meta only accepts template edits when the template is APPROVED. Any
+// other status (PENDING, REJECTED, PAUSED, DISABLED, IN_APPEAL, FLAGGED)
+// makes the /message_templates edit endpoint fail with #100 "Invalid
+// parameter — status of this template cannot be changed". Rather than
+// letting the operator fill the form and only find out at submit,
+// disable the Edit button and explain why in a tooltip.
+const canEdit = computed(() => {
+  if (!canDelete.value) return false;
+  return (props.template?.status || '').toUpperCase() === 'APPROVED';
+});
+
+const editDisabledReason = computed(() => {
+  if (canEdit.value) return null;
+  return t('META_TEMPLATES.DETAIL.EDIT_DISABLED_REASON', {
+    status: (props.template?.status || 'UNKNOWN').toUpperCase(),
+  });
+});
+
 // Meta templates use a `components` array with typed entries. Pull each
 // section into its own computed so the template markup stays flat.
 // Header, footer and buttons are optional; body is mandatory in Meta's
@@ -318,23 +336,32 @@ watch(
 
       <footer
         v-if="canDelete"
-        class="border-t border-n-weak p-4 flex items-center justify-end gap-2"
+        class="border-t border-n-weak p-4 flex flex-col items-end gap-2"
       >
-        <Button
-          faded
-          slate
-          sm
-          :label="t('META_TEMPLATES.DETAIL.EDIT')"
-          @click="emit('edit', template)"
-        />
-        <Button
-          faded
-          ruby
-          sm
-          :disabled="deleting"
-          :label="t('META_TEMPLATES.DETAIL.DELETE')"
-          @click="emit('delete', template)"
-        />
+        <span
+          v-if="editDisabledReason"
+          class="text-xxs text-n-slate-11 max-w-full text-right"
+        >
+          {{ editDisabledReason }}
+        </span>
+        <div class="flex items-center gap-2">
+          <Button
+            faded
+            slate
+            sm
+            :disabled="!canEdit"
+            :label="t('META_TEMPLATES.DETAIL.EDIT')"
+            @click="emit('edit', template)"
+          />
+          <Button
+            faded
+            ruby
+            sm
+            :disabled="deleting"
+            :label="t('META_TEMPLATES.DETAIL.DELETE')"
+            @click="emit('delete', template)"
+          />
+        </div>
       </footer>
     </aside>
   </transition>

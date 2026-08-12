@@ -8,6 +8,7 @@ import { useMapGetter, useStore } from 'dashboard/composables/store';
 import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
 import SettingsLayout from '../SettingsLayout.vue';
 import TemplateForm from './components/TemplateForm.vue';
+import Button from 'dashboard/components-next/button/Button.vue';
 
 import MetaTemplatesAPI from 'dashboard/api/metaTemplates';
 
@@ -102,6 +103,21 @@ const handleSubmit = async ({ template: payload }) => {
 
 const handleCancel = () => router.push({ name: 'meta_templates_index' });
 
+// Meta only allows edits on APPROVED templates. When the operator deep-
+// links (or refreshes) an Edit URL for a template in another status,
+// we render an explanatory panel instead of the form — otherwise they
+// would fill it in and only find out Meta rejected the edit at submit.
+const isEditable = computed(
+  () => (template.value?.status || '').toUpperCase() === 'APPROVED'
+);
+
+const notEditableReason = computed(() => {
+  if (!template.value) return '';
+  return t('META_TEMPLATES.EDIT.NOT_EDITABLE', {
+    status: (template.value.status || 'UNKNOWN').toUpperCase(),
+  });
+});
+
 watch([templateId, inboxIdFromQuery], () => fetchTemplate(), {
   immediate: true,
 });
@@ -124,8 +140,21 @@ onMounted(() => {
     </template>
 
     <template #body>
+      <div
+        v-if="template && !isEditable"
+        class="rounded-lg border border-n-weak p-6 flex flex-col items-start gap-3 bg-n-alpha-1"
+      >
+        <p class="text-sm text-n-slate-12">{{ notEditableReason }}</p>
+        <Button
+          faded
+          slate
+          sm
+          :label="t('META_TEMPLATES.EDIT.BACK_TO_LIST')"
+          @click="handleCancel"
+        />
+      </div>
       <TemplateForm
-        v-if="template"
+        v-else-if="template"
         mode="edit"
         :inboxes="cloudInboxes"
         :initial-template="template"
