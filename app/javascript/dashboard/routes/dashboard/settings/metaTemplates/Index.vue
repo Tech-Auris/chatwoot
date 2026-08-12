@@ -42,8 +42,18 @@ const cloudInboxes = computed(() =>
 const selectedInboxId = ref(null);
 const templates = ref([]);
 const lastSyncedAt = ref(null);
-const loading = ref(false);
+// Start in loading so the initial paint (before we know whether
+// inboxes are populated) shows a spinner rather than briefly flashing
+// the "no Cloud inbox" empty state — which was persisting on hard
+// refreshes where inboxes hadn't been fetched yet.
+const loading = ref(true);
 const syncing = ref(false);
+// Tracks whether the inbox store has been resolved at least once in this
+// session. Without this we cannot tell "no Cloud inbox exists" apart
+// from "inbox store hasn't been fetched yet"; the empty state used to
+// render immediately on mount with `cloudInboxes.length === 0` and
+// stayed stuck if the store fetch happened later or failed silently.
+const inboxesResolved = ref(inboxes.value.length > 0);
 const search = ref('');
 const statusFilter = ref('ALL');
 const categoryFilter = ref('ALL');
@@ -230,22 +240,42 @@ watch(
   { immediate: true }
 );
 
+// The sidebar (or any other page mounted before us) may have already
+// hydrated the inbox store — treat that as "resolved" too, so we don't
+// wait on the onMounted dispatch just to flip the flag.
+watch(
+  () => inboxes.value.length,
+  count => {
+    if (count > 0) inboxesResolved.value = true;
+  },
+  { immediate: true }
+);
+
 watch(selectedInboxId, () => {
   templates.value = [];
   lastSyncedAt.value = null;
   fetchTemplates();
 });
 
-onMounted(() => {
+onMounted(async () => {
   if (!inboxes.value.length) {
-    store.dispatch('inboxes/get');
+    try {
+      await store.dispatch('inboxes/get');
+    } finally {
+      inboxesResolved.value = true;
+      // If the store fetch resolved with no inboxes at all, stop the
+      // initial loading spinner — otherwise fetchTemplates never fires
+      // (no selectedInboxId) and the operator stares at a spinner
+      // forever. The `no-records-found` branch takes over from here.
+      if (!inboxes.value.length) loading.value = false;
+    }
   }
 });
 </script>
 
 <template>
   <SettingsLayout
-    :no-records-found="!loading && cloudInboxes.length === 0"
+    :no-records-found="inboxesResolved && cloudInboxes.length === 0"
     :no-records-message="t('META_TEMPLATES.EMPTY.NO_CLOUD_INBOX')"
     :is-loading="loading && templates.length === 0"
     :loading-message="t('META_TEMPLATES.LOADING')"

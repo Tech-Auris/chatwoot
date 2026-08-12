@@ -273,7 +273,10 @@ RSpec.describe 'Meta Templates API', type: :request do
       # not have a boundary to intercept a specific instance yet.
       provider = instance_double(Whatsapp::Providers::WhatsappCloudService)
       allow_any_instance_of(Channel::Whatsapp).to receive(:provider_service).and_return(provider)
-      allow(provider).to receive(:delete_template).with('confirmacao_agenda').and_return(success: true)
+      # Controller now passes hsm_id (the template id) alongside the name
+      # so Meta accepts the surgical delete on tokens where the name-only
+      # broad delete would 100-permission-error out.
+      allow(provider).to receive(:delete_template).with('confirmacao_agenda', template_id: '123').and_return(success: true)
       allow_any_instance_of(Channel::Whatsapp).to receive(:sync_templates) do
         cloud_channel.update!(message_templates: [], message_templates_last_updated: Time.current)
       end
