@@ -15,6 +15,7 @@ import StatusBadge from './components/StatusBadge.vue';
 import TemplateDetailDrawer from './components/TemplateDetailDrawer.vue';
 
 import MetaTemplatesAPI from 'dashboard/api/metaTemplates';
+import { takeWriteSeed } from './writeSeed';
 
 const { t } = useI18n();
 const store = useStore();
@@ -137,18 +138,41 @@ const runSync = async ({ silent = false } = {}) => {
 
 const fetchTemplates = async () => {
   if (!selectedInboxId.value) return;
+
+  // If we just came back from New/Edit and the write response is
+  // still fresh, render its templates immediately — bypasses any
+  // race where the next GET would show a stale list (Meta's list
+  // endpoint is eventually consistent; a persist-then-read on our
+  // side can also lag in some setups). The subsequent fetch still
+  // runs in the background to reconcile with the server's view.
+  const seed = takeWriteSeed(selectedInboxId.value);
+  if (seed) {
+    templates.value = seed.templates || [];
+    lastSyncedAt.value = seed.lastSyncedAt;
+  }
+
   loading.value = true;
   try {
     const { data } = await MetaTemplatesAPI.fetch({
       inboxId: selectedInboxId.value,
     });
-    templates.value = data.templates || [];
-    lastSyncedAt.value = data.last_synced_at;
+    // Prefer the fresh server response when it is at least as complete
+    // as the seed. If the seed had entries and the server returned
+    // fewer (classic eventual-consistency stale response right after a
+    // write), keep what we have — the next fetch or the 5-min
+    // background scheduler will reconcile without regressing the UI.
+    const serverTemplates = data.templates || [];
+    if (!seed || serverTemplates.length >= templates.value.length) {
+      templates.value = serverTemplates;
+      lastSyncedAt.value = data.last_synced_at;
+    }
   } catch (err) {
-    useAlert(
-      err?.response?.data?.error || t('META_TEMPLATES.ERRORS.FETCH_FAILED')
-    );
-    templates.value = [];
+    if (!seed) {
+      useAlert(
+        err?.response?.data?.error || t('META_TEMPLATES.ERRORS.FETCH_FAILED')
+      );
+      templates.value = [];
+    }
   } finally {
     loading.value = false;
   }

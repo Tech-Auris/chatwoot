@@ -225,17 +225,26 @@ class Api::V2::Accounts::MetaTemplatesController < Api::V1::Accounts::BaseContro
   # documented rule: any edit to body / header / footer / buttons puts
   # the template back to Pending for reapproval, which is the update
   # payload our form always sends.
-  def force_edited_template_to_pending_in_cache(template_id)
-    templates = (@inbox.channel.reload.message_templates || []).map(&:deep_dup)
+  def force_edited_template_to_pending_in_cache(template_id) # rubocop:disable Metrics/AbcSize
+    raw = @inbox.channel.reload.message_templates || []
+    templates = (raw.is_a?(Array) ? raw : []).map(&:deep_dup)
     idx = templates.index { |t| t['id'].to_s == template_id.to_s }
-    return if idx.nil?
-    return if (templates[idx]['status'] || '').upcase == 'PENDING'
+    if idx.nil?
+      Rails.logger.warn "[meta-templates] force_pending: id=#{template_id} not in fresh cache (size=#{templates.size})"
+      return
+    end
+    if (templates[idx]['status'] || '').upcase == 'PENDING'
+      Rails.logger.info "[meta-templates] force_pending: id=#{template_id} already PENDING (sync got fresh), skip"
+      return
+    end
 
+    old_status = templates[idx]['status']
     templates[idx]['status'] = 'PENDING'
     @inbox.channel.update_columns( # rubocop:disable Rails/SkipsModelValidations
       message_templates: templates,
       message_templates_last_updated: Time.now.utc
     )
+    Rails.logger.info "[meta-templates] force_pending: id=#{template_id} flipped #{old_status.inspect}→PENDING in cache"
   end
 
   # Looks up the template's name from the cached list on the channel.
@@ -260,25 +269,24 @@ class Api::V2::Accounts::MetaTemplatesController < Api::V1::Accounts::BaseContro
   # the row has name/language/components alongside id/status/category)
   # if it isn't already in the cache. Idempotent when the sync did
   # include it.
-  def ensure_created_template_in_cache(created, payload)
-    return if created.blank?
+  def ensure_created_template_in_cache(created, payload) # rubocop:disable Metrics/AbcSize
+    return Rails.logger.warn('[meta-templates] ensure_created: created payload blank, skip') if created.blank?
 
-    templates = @inbox.channel.reload.message_templates || []
-    return if templates.any? { |t| t['id'].to_s == created['id'].to_s }
+    raw = @inbox.channel.reload.message_templates || []
+    templates = raw.is_a?(Array) ? raw : [] # jsonb default is {}
+    if templates.any? { |t| t['id'].to_s == created['id'].to_s }
+      Rails.logger.info "[meta-templates] ensure_created: id=#{created['id']} already in cache post-sync, skip"
+      return
+    end
 
-    merged = created.merge(
-      'name' => payload['name'],
-      'language' => payload['language'],
-      'components' => payload['components']
-    )
+    merged = created.merge('name' => payload['name'], 'language' => payload['language'], 'components' => payload['components'])
     # update_columns skips the `validate_provider_config` validator, which
-    # would otherwise call provider_service.validate_provider_config? on
-    # every cache write — an unnecessary network round-trip just to record
-    # a jsonb blob we already trust.
+    # would otherwise hit the network on every cache write.
     @inbox.channel.update_columns( # rubocop:disable Rails/SkipsModelValidations
       message_templates: [merged] + templates,
       message_templates_last_updated: Time.now.utc
     )
+    Rails.logger.info "[meta-templates] ensure_created: merged id=#{created['id']} (was #{templates.size}, now #{templates.size + 1})"
   end
 
   def render_upload_error(status, message, details: nil, code: nil)
