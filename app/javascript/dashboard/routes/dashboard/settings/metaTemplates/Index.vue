@@ -139,16 +139,21 @@ const runSync = async ({ silent = false } = {}) => {
 const fetchTemplates = async () => {
   if (!selectedInboxId.value) return;
 
-  // If we just came back from New/Edit and the write response is
-  // still fresh, render its templates immediately — bypasses any
-  // race where the next GET would show a stale list (Meta's list
-  // endpoint is eventually consistent; a persist-then-read on our
-  // side can also lag in some setups). The subsequent fetch still
-  // runs in the background to reconcile with the server's view.
+  // If we just came back from New/Edit, the write response is the most
+  // authoritative view of the list we have. Use it verbatim and SKIP
+  // the subsequent GET — in production we're seeing GETs return a
+  // pre-write snapshot even after the write persisted (Meta's list
+  // eventual consistency, a webhook-triggered background sync, some
+  // read-vs-write visibility quirk on the hmlg deploy). Trying to
+  // reconcile with a stale server response only regresses the UI.
+  // The next real fetch (switch inbox, click Sincronizar, revisit
+  // page) picks up whatever the server has by then.
   const seed = takeWriteSeed(selectedInboxId.value);
   if (seed) {
     templates.value = seed.templates || [];
     lastSyncedAt.value = seed.lastSyncedAt;
+    loading.value = false;
+    return;
   }
 
   loading.value = true;
@@ -156,23 +161,13 @@ const fetchTemplates = async () => {
     const { data } = await MetaTemplatesAPI.fetch({
       inboxId: selectedInboxId.value,
     });
-    // Prefer the fresh server response when it is at least as complete
-    // as the seed. If the seed had entries and the server returned
-    // fewer (classic eventual-consistency stale response right after a
-    // write), keep what we have — the next fetch or the 5-min
-    // background scheduler will reconcile without regressing the UI.
-    const serverTemplates = data.templates || [];
-    if (!seed || serverTemplates.length >= templates.value.length) {
-      templates.value = serverTemplates;
-      lastSyncedAt.value = data.last_synced_at;
-    }
+    templates.value = data.templates || [];
+    lastSyncedAt.value = data.last_synced_at;
   } catch (err) {
-    if (!seed) {
-      useAlert(
-        err?.response?.data?.error || t('META_TEMPLATES.ERRORS.FETCH_FAILED')
-      );
-      templates.value = [];
-    }
+    useAlert(
+      err?.response?.data?.error || t('META_TEMPLATES.ERRORS.FETCH_FAILED')
+    );
+    templates.value = [];
   } finally {
     loading.value = false;
   }
