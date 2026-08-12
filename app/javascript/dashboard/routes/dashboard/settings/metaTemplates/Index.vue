@@ -251,11 +251,22 @@ watch(
   { immediate: true }
 );
 
-watch(selectedInboxId, () => {
-  templates.value = [];
-  lastSyncedAt.value = null;
-  fetchTemplates();
-});
+// `immediate: true` — the cloudInboxes watcher above (also immediate)
+// can synchronously set selectedInboxId during setup when inboxes are
+// already hydrated (e.g. the sidebar loaded them). By the time THIS
+// watcher is created, selectedInboxId is no longer null but its "old"
+// value from this watcher's perspective is the current value — without
+// immediate, no callback ever fires and fetchTemplates never runs,
+// leaving the page stuck on the loading spinner.
+watch(
+  selectedInboxId,
+  () => {
+    templates.value = [];
+    lastSyncedAt.value = null;
+    fetchTemplates();
+  },
+  { immediate: true }
+);
 
 onMounted(async () => {
   if (!inboxes.value.length) {
