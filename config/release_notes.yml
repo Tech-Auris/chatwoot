@@ -1,4 +1,18 @@
 ---
+- tag: v4.15.1-auris.1.42.5
+  published_at: '2026-08-12T23:30:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.42.5
+  notes:
+    en: |-
+      ### 🐛 Fixes
+
+      - **A newly created or edited Meta template appears immediately on the list, always.** The previous release fixed some of the cases but not all — depending on timing, the list still sometimes came back showing pre-write data and you had to click Sincronizar. Now the list renders straight from the action's response, without a follow-up refresh that could regress it.
+      - **The "What's new" modal stops flooding the browser console with errors.** Every time a version note appeared, the console filled with "Maximum call stack size exceeded" caused by the modal calling its own close handler in a loop. Fixed.
+    pt_BR: |-
+      ### 🐛 Correções
+
+      - **Um template Meta recém-criado ou editado aparece imediatamente na lista, sem falha.** A release anterior corrigia alguns casos mas não todos — dependendo do timing, a lista às vezes voltava com dados de antes do save e você precisava clicar em Sincronizar. Agora a lista renderiza direto a partir da resposta da ação, sem um refresh subsequente que podia regredir.
+      - **O modal "Novidades" não enche mais o console de erros.** Toda vez que aparecia uma nota de versão nova, o console enchia de "Maximum call stack size exceeded" causado pelo modal chamando o próprio fechamento em loop. Corrigido.
 - tag: v4.15.1-auris.1.42.4
   published_at: '2026-08-12T21:25:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.42.4
@@ -249,23 +263,3 @@
       ### 🐛 Correções
 
       - **Aba "Não atribuídas" volta a carregar.** Em algumas contas a aba "Não atribuídas" às vezes não carregava. Agora carrega normalmente.
-- tag: v4.15.1-auris.1.41.9
-  published_at: '2026-07-13T18:00:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.41.9
-  notes:
-    en: |-
-      ### ✨ What's new
-
-      - **Feedback ticket detail is now a full conversation timeline.** Every reply from the support team and every extra note you add appears as a row with the date, who wrote it, and the message.
-
-      ### ⚡ Improvements
-
-      - **"What should have happened?" is required when opening a ticket.** Support always gets both sides of the story so investigation is faster.
-    pt_BR: |-
-      ### ✨ Novidades
-
-      - **Detalhes do ticket agora mostram a conversa completa.** Toda resposta do time e toda informação extra que você adiciona aparecem em linhas com data, quem escreveu e a mensagem.
-
-      ### ⚡ Melhorias
-
-      - **"Qual deveria ter sido a resposta?" virou obrigatório ao abrir o ticket.** O time de suporte sempre recebe os dois lados pra investigar mais rápido.
