@@ -10,6 +10,7 @@ import SettingsLayout from '../SettingsLayout.vue';
 import TemplateForm from './components/TemplateForm.vue';
 
 import MetaTemplatesAPI from 'dashboard/api/metaTemplates';
+import { stashWriteSeed } from './writeSeed';
 import { ref } from 'vue';
 
 const { t } = useI18n();
@@ -35,7 +36,18 @@ const submitting = ref(false);
 const handleSubmit = async ({ inboxId, template }) => {
   submitting.value = true;
   try {
-    await MetaTemplatesAPI.create({ inboxId, template });
+    const { data } = await MetaTemplatesAPI.create({ inboxId, template });
+    // Hand Index the fresh list we just got back from the server so it
+    // renders the new template on the very first paint after redirect.
+    // Without this, Index re-fetches on mount and — because Meta's list
+    // endpoint is eventually consistent — sometimes shows the pre-create
+    // list, leaving the operator to hit Sincronizar to see their own
+    // submission.
+    stashWriteSeed({
+      inboxId,
+      templates: data.templates,
+      lastSyncedAt: data.last_synced_at,
+    });
     useAlert(t('META_TEMPLATES.NEW.SUCCESS'));
     router.push({ name: 'meta_templates_index' });
   } catch (err) {

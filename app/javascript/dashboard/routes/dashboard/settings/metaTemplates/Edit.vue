@@ -11,6 +11,7 @@ import TemplateForm from './components/TemplateForm.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
 
 import MetaTemplatesAPI from 'dashboard/api/metaTemplates';
+import { stashWriteSeed } from './writeSeed';
 
 const { t } = useI18n();
 const route = useRoute();
@@ -85,10 +86,19 @@ const fetchTemplate = async () => {
 const handleSubmit = async ({ template: payload }) => {
   submitting.value = true;
   try {
-    await MetaTemplatesAPI.update({
+    const { data } = await MetaTemplatesAPI.update({
       inboxId: inboxIdFromQuery.value,
       templateId: templateId.value,
       template: payload,
+    });
+    // Same bridge trick as New.vue — hand Index the fresh list from the
+    // update response so it renders the just-flipped-to-PENDING template
+    // on the very first paint after redirect, without depending on the
+    // next GET seeing the write (see writeSeed.js).
+    stashWriteSeed({
+      inboxId: inboxIdFromQuery.value,
+      templates: data.templates,
+      lastSyncedAt: data.last_synced_at,
     });
     useAlert(t('META_TEMPLATES.EDIT.SUCCESS'));
     router.push({ name: 'meta_templates_index' });
