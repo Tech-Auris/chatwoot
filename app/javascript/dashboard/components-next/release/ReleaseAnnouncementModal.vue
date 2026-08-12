@@ -65,16 +65,24 @@ watch(featuredRelease, rel => {
 });
 
 const dismiss = async () => {
-  if (!unseenTag.value) {
-    dialogRef.value?.close();
-    return;
-  }
+  // Also serves as the Dialog's `@close` handler. When Dialog fires
+  // `@close` (X button, ESC, backdrop click), we run dismiss to mark
+  // the tag as read on the server — but the dialog is already closing,
+  // so calling `.close()` from here re-fires `@close`, which calls
+  // dismiss again, and so on until "Maximum call stack size exceeded".
+  // Only actively-triggered dismissals (button click, `goToAll`)
+  // need `.close()`; the `@close` path just needs the server mark.
+  if (!unseenTag.value) return;
   await store.dispatch('releases/dismiss', unseenTag.value);
+};
+
+const dismissAndClose = async () => {
+  await dismiss();
   dialogRef.value?.close();
 };
 
 const goToAll = async () => {
-  await dismiss();
+  await dismissAndClose();
   router.push({
     name: 'release_notes_index',
     params: { accountId: route.params.accountId },
@@ -124,7 +132,7 @@ onMounted(() => {
           :label="t('RELEASE_NOTES.DISMISS')"
           type="button"
           :is-loading="uiFlags.isDismissing"
-          @click="dismiss"
+          @click="dismissAndClose"
         />
       </div>
     </template>
