@@ -1,4 +1,16 @@
 ---
+- tag: v4.15.1-auris.1.42.4
+  published_at: '2026-08-12T21:25:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.42.4
+  notes:
+    en: |-
+      ### 🐛 Fixes
+
+      - **A newly created or edited Meta template appears immediately on the list.** Previously, after creating or editing a template, you were sent back to the list without your change reflected, and had to click Sincronizar to see it. The list now renders straight from the response of the action you just took, so what you did is visible right away.
+    pt_BR: |-
+      ### 🐛 Correções
+
+      - **Um template Meta recém-criado ou editado aparece imediatamente na lista.** Antes, ao criar ou editar um template, você era enviado de volta pra lista sem a sua mudança refletida e precisava clicar em Sincronizar pra ver. A lista agora renderiza direto a partir da resposta da ação que você acabou de fazer, então o que você fez fica visível na hora.
 - tag: v4.15.1-auris.1.42.3
   published_at: '2026-08-12T18:50:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.42.3
@@ -257,15 +269,3 @@
       ### ⚡ Melhorias
 
       - **"Qual deveria ter sido a resposta?" virou obrigatório ao abrir o ticket.** O time de suporte sempre recebe os dois lados pra investigar mais rápido.
-- tag: v4.15.1-auris.1.41.8
-  published_at: '2026-07-13T02:00:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.41.8
-  notes:
-    en: |-
-      ### 🐛 Fixes
-
-      - **Files you attach to a ticket now reach the support team.** Attachments sent with feedback tickets weren't showing up on the team's side — they were being rejected as invalid uploads. Now every file you attach makes it through.
-    pt_BR: |-
-      ### 🐛 Correções
-
-      - **Arquivos que você anexa ao ticket agora chegam para o time de suporte.** Anexos enviados junto do feedback não estavam aparecendo do lado do time — eram rejeitados como upload inválido. Agora todo arquivo anexado chega.
