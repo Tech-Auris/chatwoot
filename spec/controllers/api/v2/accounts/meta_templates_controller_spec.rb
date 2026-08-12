@@ -393,6 +393,38 @@ RSpec.describe 'Meta Templates API', type: :request do
 
       expect(response).to have_http_status(:unauthorized)
     end
+
+    it 'forces the edited template back to PENDING when the sync still shows the old APPROVED status' do
+      # Meta's list endpoint is eventually consistent — the sync GET
+      # fired immediately after the update POST can return the pre-edit
+      # APPROVED status even though Meta already queued the template
+      # for reapproval as PENDING. Without this fix the operator was
+      # bounced back to the list showing APPROVED and had to sync
+      # manually to see PENDING.
+      # rubocop:disable RSpec/AnyInstance
+      provider = instance_double(Whatsapp::Providers::WhatsappCloudService)
+      allow_any_instance_of(Channel::Whatsapp).to receive(:provider_service).and_return(provider)
+      allow(provider).to receive(:update_template).with('123', anything).and_return(
+        success: true, template: { 'success' => true }
+      )
+      # Sync returns the STALE APPROVED status (Meta not yet propagated).
+      allow_any_instance_of(Channel::Whatsapp).to receive(:sync_templates) do
+        cloud_channel.update!(
+          message_templates: [{ 'id' => '123', 'name' => 'confirmacao_agenda',
+                                'status' => 'APPROVED', 'category' => 'UTILITY', 'language' => 'pt_BR',
+                                'components' => [{ 'type' => 'BODY', 'text' => 'Novo texto' }] }],
+          message_templates_last_updated: Time.current
+        )
+      end
+      # rubocop:enable RSpec/AnyInstance
+
+      patch "/api/v2/accounts/#{account.id}/meta_templates/123",
+            params: update_payload, headers: admin.create_new_auth_token
+
+      expect(response).to have_http_status(:success)
+      row = response.parsed_body['templates'].find { |t| t['id'] == '123' }
+      expect(row['status']).to eq('PENDING')
+    end
   end
 
   describe 'GET /api/v2/accounts/{account_id}/meta_templates/:id/analytics' do

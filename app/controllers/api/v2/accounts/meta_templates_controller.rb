@@ -5,6 +5,10 @@
 #
 # The heavier CRUD (create / edit / delete / status webhook) lands in
 # Fatias 3-4 on top of this same controller shell.
+# rubocop:disable Metrics/ClassLength — this is the boundary controller
+# for the Meta Templates surface (index/create/update/destroy/sync/
+# analytics/upload_header_media plus the per-action Meta-race cache
+# reconciliation helpers). Splitting it earns nothing except indirection.
 class Api::V2::Accounts::MetaTemplatesController < Api::V1::Accounts::BaseController
   before_action :check_authorization
   before_action :fetch_inbox
@@ -58,7 +62,7 @@ class Api::V2::Accounts::MetaTemplatesController < Api::V1::Accounts::BaseContro
     end
 
     result = @inbox.channel.provider_service.update_template(params[:id], update_payload)
-    render_provider_write_result(result, fallback_key: 'meta_templates.update_failed')
+    result[:success] ? render_update_success(result) : render_update_failure(result)
   end
 
   # Deletes a template from Meta by name. Meta scopes templates at the
@@ -194,27 +198,44 @@ class Api::V2::Accounts::MetaTemplatesController < Api::V1::Accounts::BaseContro
     }
   end
 
-  # Shared renderer for create/update responses: on success, refresh the
-  # local cache (Meta already accepted the write) and echo back the
-  # fresh list; on failure, surface Meta's error text + details + code
-  # so the operator sees exactly what was rejected instead of a generic
-  # "try again". Kept as a helper so #update stays compact — Rubocop
-  # was flagging the method length otherwise.
-  def render_provider_write_result(result, fallback_key:, success_status: :ok)
-    if result[:success]
-      @inbox.channel.sync_templates
-      render json: {
-        template: result[:template],
-        templates: @inbox.channel.reload.message_templates || [],
-        last_synced_at: @inbox.channel.message_templates_last_updated
-      }, status: success_status
-    else
-      render json: {
-        error: result[:error_message] || I18n.t("errors.#{fallback_key}"),
-        details: result[:error_details],
-        code: result[:error_code]
-      }, status: :unprocessable_entity
-    end
+  def render_update_success(result)
+    @inbox.channel.sync_templates
+    force_edited_template_to_pending_in_cache(params[:id])
+    render json: {
+      template: result[:template],
+      templates: @inbox.channel.reload.message_templates || [],
+      last_synced_at: @inbox.channel.message_templates_last_updated
+    }
+  end
+
+  def render_update_failure(result)
+    render json: {
+      error: result[:error_message] || I18n.t('errors.meta_templates.update_failed'),
+      details: result[:error_details],
+      code: result[:error_code]
+    }, status: :unprocessable_entity
+  end
+
+  # Meta's list endpoint is eventually consistent — even when the update
+  # POST succeeded (Meta already queued the template for reapproval and
+  # flipped its internal status to PENDING), the sync GET fired right
+  # after can still return the pre-edit APPROVED status. Force PENDING
+  # in our cache after a successful edit so the operator lands back on
+  # the list and immediately sees the state Meta actually has. Meta's
+  # documented rule: any edit to body / header / footer / buttons puts
+  # the template back to Pending for reapproval, which is the update
+  # payload our form always sends.
+  def force_edited_template_to_pending_in_cache(template_id)
+    templates = (@inbox.channel.reload.message_templates || []).map(&:deep_dup)
+    idx = templates.index { |t| t['id'].to_s == template_id.to_s }
+    return if idx.nil?
+    return if (templates[idx]['status'] || '').upcase == 'PENDING'
+
+    templates[idx]['status'] = 'PENDING'
+    @inbox.channel.update_columns( # rubocop:disable Rails/SkipsModelValidations
+      message_templates: templates,
+      message_templates_last_updated: Time.now.utc
+    )
   end
 
   # Looks up the template's name from the cached list on the channel.
@@ -294,3 +315,4 @@ class Api::V2::Accounts::MetaTemplatesController < Api::V1::Accounts::BaseContro
     root.slice('category', 'components')
   end
 end
+# rubocop:enable Metrics/ClassLength
