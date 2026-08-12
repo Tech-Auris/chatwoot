@@ -1,4 +1,18 @@
 ---
+- tag: v4.15.1-auris.1.42.1
+  published_at: '2026-08-12T16:50:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.42.1
+  notes:
+    en: |-
+      ### 🐛 Fixes
+
+      - **Deleting a Meta template works again.** Meta was rejecting the delete with a permission error even for tokens that could create and send templates normally. The delete flow now uses Meta's more precise endpoint, which accepts the same permissions the rest of the template flow already uses.
+      - **Templates Meta stops flashing "no Cloud inbox connected" on hard refresh.** After a hard refresh (Ctrl+Shift+R) the screen used to briefly (and sometimes stubbornly) show "no Cloud inbox connected" while the inboxes were still loading. Now you see a spinner until the list is known, then the templates.
+    pt_BR: |-
+      ### 🐛 Correções
+
+      - **Excluir um template Meta volta a funcionar.** A Meta estava recusando a exclusão com erro de permissão mesmo em tokens que criam e enviam templates normalmente. A exclusão agora usa o endpoint mais preciso da Meta, que aceita o mesmo escopo já usado no resto do fluxo de templates.
+      - **Templates Meta não pisca mais "sem caixa Cloud conectada" no refresh forçado.** Depois de um Ctrl+Shift+R a tela mostrava brevemente (às vezes de forma persistente) "sem caixa Cloud conectada" enquanto as caixas ainda carregavam. Agora aparece um spinner até termos a lista, e depois os templates.
 - tag: v4.15.1-auris.1.42.0
   published_at: '2026-08-12T14:45:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.42.0
@@ -255,11 +269,3 @@
       ### 🐛 Correções
 
       - **Status do ticket agora atualiza quando o time muda.** Em Meus Tickets, o status estava travado em "Aberto" mesmo depois do nosso time avançar o ticket. Só o texto de "Atualização Auris" chegava. Agora o status e o texto atualizam sozinhos assim que o time muda o andamento.
-- tag: v4.15.1-auris.1.41.5
-  published_at: '2026-07-12T20:00:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.41.5
-  notes:
-    en: |-
-      Bug fixes and internal improvements.
-    pt_BR: |-
-      Correções de bugs e melhorias internas.
