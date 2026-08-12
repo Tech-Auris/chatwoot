@@ -1,4 +1,24 @@
 ---
+- tag: v4.15.1-auris.1.41.23
+  published_at: '2026-08-12T00:15:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.41.23
+  notes:
+    en: |-
+      ### 🐛 Fixes
+
+      - **The Meta Templates page opens again.** The "New template" and "Edit template" screens were opening blank right after the previous release. Both work normally now.
+
+      ### ⚡ Improvements
+
+      - **Templates load themselves when you open the page.** If the list is empty when you open Templates Meta on an inbox, AurisChat now syncs with Meta automatically instead of showing a blank list. The Sincronizar button still works the same.
+    pt_BR: |-
+      ### 🐛 Correções
+
+      - **A tela de Templates Meta volta a abrir.** As telas "Novo template" e "Editar template" estavam abrindo em branco desde a versão anterior. Voltam a funcionar normalmente agora.
+
+      ### ⚡ Melhorias
+
+      - **A lista de templates carrega sozinha ao abrir a página.** Se a lista estiver vazia quando você abrir Templates Meta numa caixa, o AurisChat agora sincroniza com a Meta automaticamente em vez de mostrar lista em branco. O botão Sincronizar continua funcionando igual.
 - tag: v4.15.1-auris.1.41.22
   published_at: '2026-08-11T22:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.41.22
@@ -243,39 +263,3 @@
       ### 🐛 Correções
 
       - **Botão "Enviar feedback" volta a ficar azul.** Na janela que abre quando você clica na bandeirinha ao lado de uma mensagem, o botão "Enviar feedback" estava aparecendo só com o contorno. Agora fica azul sólido igual aos outros botões principais.
-- tag: v4.15.1-auris.1.41.3
-  published_at: '2026-07-12T02:00:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.41.3
-  notes:
-    en: |-
-      ### ✨ What's new
-
-      - **"Hide closed" checkbox on My Tickets.** Check the box and closed tickets disappear from the list, leaving only what still needs follow-up.
-
-      ### ⚡ Improvements
-
-      - **My Tickets looks cleaner.** New "ID" column, ordered by ID (newest first), and the table matches the style of other list pages. Ticket detail shows the status with the same colored badge as the list.
-      - **Simpler status.** The panel used to show 7 ops-team categories. Now you see only 3: Open, In review, Closed.
-      - **"Add more information" hides when it makes sense.** Field disappears on closed tickets — no more sending comments nobody will read.
-
-      ### 🐛 Fixes
-
-      - **Menu labels back to normal.** Sidebar was showing technical text ("SIDEBAR.CONVERSATIONS" etc.) instead of the translated names. Everything reads correctly now.
-      - **Ticket details open with the full content.** Clicking a ticket used to open an almost-empty modal. Now it opens with every field.
-      - **"In review" badge has its blue background.**
-    pt_BR: |-
-      ### ✨ Novidades
-
-      - **Caixinha "Ocultar finalizadas" em Meus Tickets.** Marca a caixinha e os tickets encerrados somem da lista, deixando só o que ainda precisa acompanhamento.
-
-      ### ⚡ Melhorias
-
-      - **Meus Tickets ficou mais limpo.** Nova coluna "ID" no começo, ordenação por ID (do mais novo pro mais antigo) e a tabela ganhou o mesmo estilo do resto do painel. O detalhe do ticket também mostra o status com a mesma cor da lista.
-      - **Status simplificado.** Antes aparecia as 7 categorias que o time interno usa. Agora só 3: Aberto, Em análise e Encerrado.
-      - **"Adicionar mais informação" só quando faz sentido.** O campo some quando o ticket já foi encerrado — evita mandar comentário que ninguém vai olhar.
-
-      ### 🐛 Correções
-
-      - **Nomes do menu voltaram ao normal.** A barra lateral estava mostrando textos técnicos ("SIDEBAR.CONVERSATIONS" etc.). Tudo aparece certo agora.
-      - **Detalhes do ticket abrem completos.** Antes clicar num ticket abria uma janela quase vazia — só o cabeçalho. Agora aparece com todos os campos.
-      - **Badge "Em análise" com fundo azul.**
