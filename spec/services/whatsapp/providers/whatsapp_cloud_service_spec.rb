@@ -19,7 +19,7 @@ describe Whatsapp::Providers::WhatsappCloudService do
   let(:whatsapp_response) { { messages: [{ id: 'message_id' }] } }
 
   before do
-    stub_request(:get, 'https://graph.facebook.com/v14.0/123456789/message_templates?access_token=test_key')
+    stub_request(:get, 'https://graph.facebook.com/v22.0/123456789/message_templates?access_token=test_key')
   end
 
   describe '#send_message' do
@@ -272,20 +272,20 @@ describe Whatsapp::Providers::WhatsappCloudService do
   describe '#sync_templates' do
     context 'when called' do
       it 'updated the message templates' do
-        stub_request(:get, 'https://graph.facebook.com/v14.0/123456789/message_templates?access_token=test_key')
+        stub_request(:get, 'https://graph.facebook.com/v22.0/123456789/message_templates?access_token=test_key')
           .to_return(
             { status: 200, headers: response_headers,
               body: { data: [
                 { id: '123456789', name: 'test_template' }
-              ], paging: { next: 'https://graph.facebook.com/v14.0/123456789/message_templates?access_token=test_key' } }.to_json },
+              ], paging: { next: 'https://graph.facebook.com/v22.0/123456789/message_templates?access_token=test_key' } }.to_json },
             { status: 200, headers: response_headers,
               body: { data: [
                 { id: '123456789', name: 'next_template' }
-              ], paging: { next: 'https://graph.facebook.com/v14.0/123456789/message_templates?access_token=test_key' } }.to_json },
+              ], paging: { next: 'https://graph.facebook.com/v22.0/123456789/message_templates?access_token=test_key' } }.to_json },
             { status: 200, headers: response_headers,
               body: { data: [
                 { id: '123456789', name: 'last_template' }
-              ], paging: { prev: 'https://graph.facebook.com/v14.0/123456789/message_templates?access_token=test_key' } }.to_json }
+              ], paging: { prev: 'https://graph.facebook.com/v22.0/123456789/message_templates?access_token=test_key' } }.to_json }
           )
 
         timstamp = whatsapp_channel.reload.message_templates_last_updated
@@ -297,7 +297,7 @@ describe Whatsapp::Providers::WhatsappCloudService do
       end
 
       it 'updates message_templates_last_updated even when template request fails' do
-        stub_request(:get, 'https://graph.facebook.com/v14.0/123456789/message_templates?access_token=test_key')
+        stub_request(:get, 'https://graph.facebook.com/v22.0/123456789/message_templates?access_token=test_key')
           .to_return(status: 401)
 
         timstamp = whatsapp_channel.reload.message_templates_last_updated
@@ -310,13 +310,13 @@ describe Whatsapp::Providers::WhatsappCloudService do
   describe '#validate_provider_config' do
     context 'when called' do
       it 'returns true if valid' do
-        stub_request(:get, 'https://graph.facebook.com/v14.0/123456789/message_templates?access_token=test_key')
+        stub_request(:get, 'https://graph.facebook.com/v22.0/123456789/message_templates?access_token=test_key')
         expect(subject.validate_provider_config?).to be(true)
         expect(whatsapp_channel.errors.present?).to be(false)
       end
 
       it 'returns false if invalid' do
-        stub_request(:get, 'https://graph.facebook.com/v14.0/123456789/message_templates?access_token=test_key').to_return(status: 401)
+        stub_request(:get, 'https://graph.facebook.com/v22.0/123456789/message_templates?access_token=test_key').to_return(status: 401)
         expect(subject.validate_provider_config?).to be(false)
       end
     end
@@ -595,6 +595,44 @@ describe Whatsapp::Providers::WhatsappCloudService do
       service.read_messages([message])
 
       expect(Rails.logger).to have_received(:error)
+    end
+  end
+
+  describe '#delete_template' do
+    # WABA delete lives on v22 (bumped from long-deprecated v14) and,
+    # when a template id is provided, passes it as hsm_id so Meta
+    # accepts the surgical delete on tokens that reject the name-only
+    # broad delete with #100.
+    let(:delete_url) { 'https://graph.facebook.com/v22.0/123456789/message_templates' }
+
+    it 'sends both name and hsm_id when a template_id is provided' do
+      stub_request(:delete, delete_url).with(query: hash_including('name' => 'confirmacao_agenda', 'hsm_id' => '999')).to_return(status: 200,
+                                                                                                                                 body: '{}')
+
+      result = service.delete_template('confirmacao_agenda', template_id: '999')
+
+      expect(result).to eq(success: true)
+      expect(WebMock).to have_requested(:delete, delete_url)
+        .with(query: hash_including('name' => 'confirmacao_agenda', 'hsm_id' => '999'))
+    end
+
+    it 'falls back to name-only when template_id is not provided' do
+      stub_request(:delete, delete_url).with(query: { 'name' => 'confirmacao_agenda' }).to_return(status: 200, body: '{}')
+
+      result = service.delete_template('confirmacao_agenda')
+
+      expect(result).to eq(success: true)
+    end
+
+    it 'returns the Meta error text on permission failures' do
+      stub_request(:delete, %r{https://graph.facebook.com/v22.0/123456789/message_templates})
+        .to_return(status: 400,
+                   body: { error: { code: 100, message: 'Need permission on either WhatsApp Business Account or owner/shared business' } }.to_json,
+                   headers: response_headers)
+
+      result = service.delete_template('confirmacao_agenda', template_id: '999')
+
+      expect(result).to include(success: false, error_code: 100, error_message: /permission/)
     end
   end
 

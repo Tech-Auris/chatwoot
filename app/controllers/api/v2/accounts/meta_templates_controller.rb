@@ -74,7 +74,11 @@ class Api::V2::Accounts::MetaTemplatesController < Api::V1::Accounts::BaseContro
       return
     end
 
-    result = @inbox.channel.provider_service.delete_template(template_name)
+    # Pass the id as hsm_id — Meta accepts the surgical single-language
+    # delete with the same token scope used for send/create, while the
+    # name-only broad delete rejects on several tokens with #100
+    # "Need permission on either WhatsApp Business Account or owner/shared business".
+    result = @inbox.channel.provider_service.delete_template(template_name, template_id: params[:id])
 
     if result[:success]
       @inbox.channel.sync_templates

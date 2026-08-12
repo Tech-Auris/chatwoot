@@ -48,7 +48,7 @@ class Whatsapp::Providers::WhatsappCloudService < Whatsapp::Providers::BaseServi
   # honest than trying to mirror Meta's status→field matrix in the UI.
   def update_template(template_id, payload)
     response = HTTParty.post(
-      "#{api_base_path}/v14.0/#{template_id}",
+      "#{api_base_path}/v22.0/#{template_id}",
       headers: api_headers,
       body: payload.to_json
     )
@@ -67,16 +67,22 @@ class Whatsapp::Providers::WhatsappCloudService < Whatsapp::Providers::BaseServi
     end
   end
 
-  # Deletes a template from Meta. Meta identifies templates by name at
-  # the WABA level, so a single call removes every language variant of
-  # the template. Returns a normalised hash so the controller does not
-  # need to parse HTTP responses. Meta sometimes rejects deletion (e.g.
-  # template is referenced by an active campaign) — those show up as
+  # Deletes a template from Meta. When we know the template id we pass
+  # it as `hsm_id` alongside the name — Meta treats that as a surgical
+  # single-language-variant delete, which several tokens accept even when
+  # the name-only broad delete fails with #100 "Need permission on either
+  # WhatsApp Business Account or owner/shared business". Falling back to
+  # name-only preserves the old behavior for callers that don't have the
+  # id handy. Returns a normalised hash so the controller does not need
+  # to parse HTTP responses. Meta sometimes rejects deletion (template
+  # in use by an active campaign, permission gaps) — those show up as
   # `success: false` with the original Meta error text so the operator
   # sees exactly what happened.
-  def delete_template(template_name)
+  def delete_template(template_name, template_id: nil)
+    query = "name=#{CGI.escape(template_name)}"
+    query = "#{query}&hsm_id=#{CGI.escape(template_id.to_s)}" if template_id.present?
     response = HTTParty.delete(
-      "#{business_account_path}/message_templates?name=#{CGI.escape(template_name)}",
+      "#{business_account_path}/message_templates?#{query}",
       headers: api_headers
     )
 
@@ -279,7 +285,11 @@ class Whatsapp::Providers::WhatsappCloudService < Whatsapp::Providers::BaseServi
   end
 
   def business_account_path
-    "#{api_base_path}/v14.0/#{whatsapp_channel.provider_config['business_account_id']}"
+    # v14.0 is long-deprecated by Meta — several template management
+    # operations (specifically delete) behave differently on newer
+    # versions and interact better with the token scopes we use for
+    # send/upload. Bumped to v22.0 to align with `upload_template_header_media`.
+    "#{api_base_path}/v22.0/#{whatsapp_channel.provider_config['business_account_id']}"
   end
 
   def send_text_message(phone_number, message)
