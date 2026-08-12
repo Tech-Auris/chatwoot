@@ -1,4 +1,24 @@
 ---
+- tag: v4.15.1-auris.1.42.0
+  published_at: '2026-08-12T14:45:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.42.0
+  notes:
+    en: |-
+      ### ⚡ Improvements
+
+      - **The Edit button on a template respects Meta's rules.** Meta only accepts edits on templates whose status is Approved. On any other status the Edit button is now disabled with a short line explaining why — instead of letting you fill the form and only find out at save time.
+
+      ### 🐛 Fixes
+
+      - **A new template appears on the list right after you create it.** Creating a new template used to bounce you back to the list without it, and you had to refresh the page to see it. The list now includes the just-created template immediately.
+    pt_BR: |-
+      ### ⚡ Melhorias
+
+      - **O botão Editar de um template respeita as regras da Meta.** A Meta só aceita edições em templates com status Aprovado. Em qualquer outro status o botão Editar fica desabilitado com uma linha curta explicando o motivo — em vez de deixar você preencher o formulário e só descobrir na hora de salvar.
+
+      ### 🐛 Correções
+
+      - **Template novo aparece na lista logo após criar.** Ao criar um novo template você voltava pra lista e ele não estava lá — precisava dar refresh na página pra ver. A lista agora já mostra o template recém-criado na hora.
 - tag: v4.15.1-auris.1.41.23
   published_at: '2026-08-12T00:15:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.41.23
@@ -243,23 +263,3 @@
       Bug fixes and internal improvements.
     pt_BR: |-
       Correções de bugs e melhorias internas.
-- tag: v4.15.1-auris.1.41.4
-  published_at: '2026-07-12T18:00:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.41.4
-  notes:
-    en: |-
-      ### ⚡ Improvements
-
-      - **My Tickets updates in real time from our team.** The connection that carries our team's updates had an issue. Now, when someone on the team changes a ticket's status or writes a response, the list and the ticket window refresh live in your panel.
-
-      ### 🐛 Fixes
-
-      - **"Send feedback" button is blue again.** In the dialog that opens when you click the flag icon next to a message, the "Send feedback" button was showing only the outline. Now it's solid blue like the other primary buttons.
-    pt_BR: |-
-      ### ⚡ Melhorias
-
-      - **Meus Tickets atualiza em tempo real com o retorno do time.** A conexão que traz as atualizações do nosso time estava com problema. Agora, quando alguém do time muda o status de um ticket ou escreve uma resposta, a lista e a janela do ticket atualizam sozinhas no seu painel.
-
-      ### 🐛 Correções
-
-      - **Botão "Enviar feedback" volta a ficar azul.** Na janela que abre quando você clica na bandeirinha ao lado de uma mensagem, o botão "Enviar feedback" estava aparecendo só com o contorno. Agora fica azul sólido igual aos outros botões principais.
