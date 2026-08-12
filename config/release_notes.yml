@@ -1,4 +1,16 @@
 ---
+- tag: v4.15.1-auris.1.42.3
+  published_at: '2026-08-12T18:50:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.42.3
+  notes:
+    en: |-
+      ### 🐛 Fixes
+
+      - **An edited Meta template shows as Pending right after you save.** The templates page used to still show Approved after you saved an edit, and only flipped to Pending when you clicked Sincronizar manually. The template now shows Pending as soon as you're back on the list.
+    pt_BR: |-
+      ### 🐛 Correções
+
+      - **Um template Meta editado já aparece como Pendente logo após salvar.** A página de templates continuava mostrando Aprovado depois de salvar uma edição, e só virava Pendente ao clicar em Sincronizar manualmente. Agora o template já aparece como Pendente assim que você volta pra lista.
 - tag: v4.15.1-auris.1.42.2
   published_at: '2026-08-12T17:45:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.42.2
@@ -257,15 +269,3 @@
       ### 🐛 Correções
 
       - **Arquivos que você anexa ao ticket agora chegam para o time de suporte.** Anexos enviados junto do feedback não estavam aparecendo do lado do time — eram rejeitados como upload inválido. Agora todo arquivo anexado chega.
-- tag: v4.15.1-auris.1.41.7
-  published_at: '2026-07-13T00:00:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.41.7
-  notes:
-    en: |-
-      ### ⚡ Improvements
-
-      - **Feedback flag next to messages is easier to see.** The small flag icon that opens "Send feedback on this message" was hard to spot. Now it's a touch larger.
-    pt_BR: |-
-      ### ⚡ Melhorias
-
-      - **Bandeirinha de feedback nas mensagens ficou mais fácil de ver.** O iconezinho de bandeira que abre "Dar feedback nesta mensagem" estava pequeno demais. Agora está um pouco maior.
