@@ -239,6 +239,38 @@ RSpec.describe 'Meta Templates API', type: :request do
       expect(row['components']).to be_present
     end
 
+    it 'still returns the created template in the response even if the DB persist step silently fails' do
+      # Belt: response-time guarantee. In production we saw creates
+      # where the sync + cache-merge helpers should have persisted the
+      # new row but somehow the subsequent /meta_templates GET showed
+      # the pre-create list — the frontend then rendered without the
+      # new template. The controller now guarantees the response body
+      # contains the just-created row regardless of persist success.
+      # rubocop:disable RSpec/AnyInstance
+      provider = instance_double(Whatsapp::Providers::WhatsappCloudService)
+      allow_any_instance_of(Channel::Whatsapp).to receive(:provider_service).and_return(provider)
+      allow(provider).to receive(:create_template).and_return(
+        success: true,
+        template: { 'id' => 'new-999', 'status' => 'PENDING', 'category' => 'UTILITY' }
+      )
+      # Sync returns pre-create list AND simulate the ensure_created cache
+      # helper being a no-op (persist "silently failed"): message_templates
+      # on disk never grows.
+      allow_any_instance_of(Channel::Whatsapp).to receive(:sync_templates) do
+        cloud_channel.update!(message_templates: sample_templates, message_templates_last_updated: Time.current)
+      end
+      allow_any_instance_of(Api::V2::Accounts::MetaTemplatesController).to receive(:ensure_created_template_in_cache)
+      # rubocop:enable RSpec/AnyInstance
+
+      post "/api/v2/accounts/#{account.id}/meta_templates",
+           params: valid_payload, headers: admin.create_new_auth_token
+
+      expect(response).to have_http_status(:created)
+      row = response.parsed_body['templates'].find { |t| t['id'] == 'new-999' }
+      expect(row).to be_present
+      expect(row).to include('name' => 'confirmacao_agenda', 'language' => 'pt_BR', 'status' => 'PENDING', 'category' => 'UTILITY')
+    end
+
     it 'does not duplicate the created template when the sync already includes it' do
       # rubocop:disable RSpec/AnyInstance
       provider = instance_double(Whatsapp::Providers::WhatsappCloudService)
@@ -392,6 +424,37 @@ RSpec.describe 'Meta Templates API', type: :request do
             params: update_payload, headers: agent.create_new_auth_token
 
       expect(response).to have_http_status(:unauthorized)
+    end
+
+    it 'guarantees the edited template returns as PENDING in the response even if the DB persist step silently fails' do
+      # Belt: same idea as the create-side guarantee. Even if
+      # `force_edited_template_to_pending_in_cache` no-ops (silent
+      # persist failure), the response must show PENDING — Meta always
+      # flips edited templates to Pending for reapproval.
+      # rubocop:disable RSpec/AnyInstance
+      provider = instance_double(Whatsapp::Providers::WhatsappCloudService)
+      allow_any_instance_of(Channel::Whatsapp).to receive(:provider_service).and_return(provider)
+      allow(provider).to receive(:update_template).with('123', anything).and_return(
+        success: true, template: { 'success' => true }
+      )
+      allow_any_instance_of(Channel::Whatsapp).to receive(:sync_templates) do
+        cloud_channel.update!(
+          message_templates: [{ 'id' => '123', 'name' => 'confirmacao_agenda',
+                                'status' => 'APPROVED', 'category' => 'UTILITY', 'language' => 'pt_BR',
+                                'components' => [{ 'type' => 'BODY', 'text' => 'Novo texto' }] }],
+          message_templates_last_updated: Time.current
+        )
+      end
+      allow_any_instance_of(Api::V2::Accounts::MetaTemplatesController)
+        .to receive(:force_edited_template_to_pending_in_cache)
+      # rubocop:enable RSpec/AnyInstance
+
+      patch "/api/v2/accounts/#{account.id}/meta_templates/123",
+            params: update_payload, headers: admin.create_new_auth_token
+
+      expect(response).to have_http_status(:success)
+      row = response.parsed_body['templates'].find { |t| t['id'] == '123' }
+      expect(row['status']).to eq('PENDING')
     end
 
     it 'forces the edited template back to PENDING when the sync still shows the old APPROVED status' do

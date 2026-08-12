@@ -38,7 +38,7 @@ class Api::V2::Accounts::MetaTemplatesController < Api::V1::Accounts::BaseContro
       ensure_created_template_in_cache(result[:template], create_payload)
       render json: {
         template: result[:template],
-        templates: @inbox.channel.reload.message_templates || [],
+        templates: templates_with_created_guaranteed(result[:template]),
         last_synced_at: @inbox.channel.message_templates_last_updated
       }, status: :created
     else
@@ -203,7 +203,7 @@ class Api::V2::Accounts::MetaTemplatesController < Api::V1::Accounts::BaseContro
     force_edited_template_to_pending_in_cache(params[:id])
     render json: {
       template: result[:template],
-      templates: @inbox.channel.reload.message_templates || [],
+      templates: templates_with_edit_pending_guaranteed(params[:id]),
       last_synced_at: @inbox.channel.message_templates_last_updated
     }
   end
@@ -269,6 +269,43 @@ class Api::V2::Accounts::MetaTemplatesController < Api::V1::Accounts::BaseContro
   # the row has name/language/components alongside id/status/category)
   # if it isn't already in the cache. Idempotent when the sync did
   # include it.
+  # Render-time belt for update: guarantees the edited template is
+  # returned with status PENDING in the response, independent of
+  # whether `force_edited_template_to_pending_in_cache` actually
+  # persisted the flip to DB. Meta puts every edit to body / header /
+  # footer / buttons back to Pending — the update payload our form
+  # always sends — so this is the state the operator should see.
+  def templates_with_edit_pending_guaranteed(template_id)
+    raw = @inbox.channel.reload.message_templates || []
+    templates = (raw.is_a?(Array) ? raw : []).map(&:deep_dup)
+    idx = templates.index { |t| t['id'].to_s == template_id.to_s }
+    return templates if idx.nil?
+
+    if (templates[idx]['status'] || '').upcase != 'PENDING'
+      Rails.logger.info "[meta-templates] response-time guarantee: flipping id=#{template_id} to PENDING in response"
+      templates[idx]['status'] = 'PENDING'
+    end
+    templates
+  end
+
+  # Render-time belt: guarantees the just-created template is in the
+  # `templates` array of the create response, independent of whether
+  # `ensure_created_template_in_cache` succeeded in persisting to DB.
+  # If the DB persist failed silently for any reason (a jsonb write
+  # visibility quirk, a rescued exception, whatever) the operator still
+  # gets the fresh list back — the frontend's writeSeed then makes it
+  # visible on the list right after redirect.
+  def templates_with_created_guaranteed(created)
+    raw = @inbox.channel.reload.message_templates || []
+    templates = raw.is_a?(Array) ? raw : []
+    return templates if created.blank? || created['id'].blank?
+    return templates if templates.any? { |t| t['id'].to_s == created['id'].to_s }
+
+    merged = created.merge('name' => create_payload['name'], 'language' => create_payload['language'], 'components' => create_payload['components'])
+    Rails.logger.info "[meta-templates] response-time guarantee: injecting id=#{created['id']} into response templates"
+    [merged] + templates
+  end
+
   def ensure_created_template_in_cache(created, payload) # rubocop:disable Metrics/AbcSize
     return Rails.logger.warn('[meta-templates] ensure_created: created payload blank, skip') if created.blank?
 
