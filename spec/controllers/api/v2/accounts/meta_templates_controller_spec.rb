@@ -206,6 +206,63 @@ RSpec.describe 'Meta Templates API', type: :request do
 
       expect(response).to have_http_status(:unauthorized)
     end
+
+    it 'merges the created template into the cache when the follow-up sync misses it (Meta eventual consistency)' do
+      # Real production case: operator submits a new template, the POST to
+      # /message_templates succeeds and returns the new id, but the sync
+      # GET immediately afterward doesn't yet see it in Meta's list. The
+      # cache used to be updated only from the sync, so the operator
+      # returned to the index and had to hard-refresh to see their own
+      # template. The controller now falls back on the create response
+      # to guarantee the row is there.
+      # rubocop:disable RSpec/AnyInstance
+      provider = instance_double(Whatsapp::Providers::WhatsappCloudService)
+      allow_any_instance_of(Channel::Whatsapp).to receive(:provider_service).and_return(provider)
+      allow(provider).to receive(:create_template).and_return(
+        success: true,
+        template: { 'id' => 'new-999', 'status' => 'PENDING', 'category' => 'UTILITY' }
+      )
+      # Sync returns the PRE-create list (Meta not yet consistent).
+      allow_any_instance_of(Channel::Whatsapp).to receive(:sync_templates) do
+        cloud_channel.update!(message_templates: sample_templates, message_templates_last_updated: Time.current)
+      end
+      # rubocop:enable RSpec/AnyInstance
+
+      post "/api/v2/accounts/#{account.id}/meta_templates",
+           params: valid_payload, headers: admin.create_new_auth_token
+
+      expect(response).to have_http_status(:created)
+      body = response.parsed_body
+      row = body['templates'].find { |t| t['id'] == 'new-999' }
+      expect(row).to be_present
+      expect(row).to include('name' => 'confirmacao_agenda', 'language' => 'pt_BR', 'status' => 'PENDING', 'category' => 'UTILITY')
+      expect(row['components']).to be_present
+    end
+
+    it 'does not duplicate the created template when the sync already includes it' do
+      # rubocop:disable RSpec/AnyInstance
+      provider = instance_double(Whatsapp::Providers::WhatsappCloudService)
+      allow_any_instance_of(Channel::Whatsapp).to receive(:provider_service).and_return(provider)
+      allow(provider).to receive(:create_template).and_return(
+        success: true,
+        template: { 'id' => 'new-999', 'status' => 'PENDING', 'category' => 'UTILITY' }
+      )
+      allow_any_instance_of(Channel::Whatsapp).to receive(:sync_templates) do
+        cloud_channel.update!(
+          message_templates: sample_templates + [{ 'id' => 'new-999', 'name' => 'confirmacao_agenda',
+                                                   'status' => 'PENDING', 'category' => 'UTILITY',
+                                                   'language' => 'pt_BR', 'components' => valid_payload[:template][:components] }],
+          message_templates_last_updated: Time.current
+        )
+      end
+      # rubocop:enable RSpec/AnyInstance
+
+      post "/api/v2/accounts/#{account.id}/meta_templates",
+           params: valid_payload, headers: admin.create_new_auth_token
+
+      matching = response.parsed_body['templates'].select { |t| t['id'] == 'new-999' }
+      expect(matching.size).to eq(1)
+    end
   end
 
   describe 'DELETE /api/v2/accounts/{account_id}/meta_templates/:id' do

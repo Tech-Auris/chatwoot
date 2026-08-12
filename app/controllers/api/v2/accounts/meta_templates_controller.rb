@@ -31,6 +31,7 @@ class Api::V2::Accounts::MetaTemplatesController < Api::V1::Accounts::BaseContro
 
     if result[:success]
       @inbox.channel.sync_templates
+      ensure_created_template_in_cache(result[:template], create_payload)
       render json: {
         template: result[:template],
         templates: @inbox.channel.reload.message_templates || [],
@@ -222,6 +223,37 @@ class Api::V2::Accounts::MetaTemplatesController < Api::V1::Accounts::BaseContro
     templates = @inbox.channel.message_templates || []
     match = templates.find { |t| t['id'].to_s == template_id.to_s }
     match&.dig('name')
+  end
+
+  # Meta's `/message_templates` list endpoint is eventually consistent —
+  # a template we just POSTed appears on the create response with an id,
+  # but the immediately-following GET the sync fires can still return
+  # the pre-create list. Without this merge the operator submits a new
+  # template, gets redirected to the list, and doesn't see it there
+  # until the next background sync catches up. Prepend the just-created
+  # record (combining Meta's POST response with the payload we sent, so
+  # the row has name/language/components alongside id/status/category)
+  # if it isn't already in the cache. Idempotent when the sync did
+  # include it.
+  def ensure_created_template_in_cache(created, payload)
+    return if created.blank?
+
+    templates = @inbox.channel.reload.message_templates || []
+    return if templates.any? { |t| t['id'].to_s == created['id'].to_s }
+
+    merged = created.merge(
+      'name' => payload['name'],
+      'language' => payload['language'],
+      'components' => payload['components']
+    )
+    # update_columns skips the `validate_provider_config` validator, which
+    # would otherwise call provider_service.validate_provider_config? on
+    # every cache write — an unnecessary network round-trip just to record
+    # a jsonb blob we already trust.
+    @inbox.channel.update_columns( # rubocop:disable Rails/SkipsModelValidations
+      message_templates: [merged] + templates,
+      message_templates_last_updated: Time.now.utc
+    )
   end
 
   def render_upload_error(status, message, details: nil, code: nil)
