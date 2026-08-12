@@ -53,7 +53,8 @@
       "PHONE_PREFIX": "Phone:",
       "REJECTED_REASON_LABEL": "Reason from Meta:",
       "DELETE": "Delete template",
-      "EDIT": "Edit template"
+      "EDIT": "Edit template",
+      "EDIT_DISABLED_REASON": "Only APPROVED templates can be edited (current status: {status}). Delete and create a new one to change it."
     },
     "NOTIFICATIONS": {
       "STATUS_CHANGED": "Meta updated the status of template \"{name}\" to {status}."
@@ -154,7 +155,9 @@
       "SUBMIT": "Save changes",
       "SUCCESS": "Template updated on Meta. If you changed body / header / footer / buttons, it will be Pending until reapproval.",
       "ERROR_GENERIC": "Could not update the template. Please review the fields and try again.",
-      "NOT_FOUND": "This template is no longer available on this inbox."
+      "NOT_FOUND": "This template is no longer available on this inbox.",
+      "NOT_EDITABLE": "Meta only allows edits on APPROVED templates. This one is {status}, so it cannot be edited from here — delete it and create a new one to change it.",
+      "BACK_TO_LIST": "Back to templates"
     },
     "PREVIEW": {
       "TITLE": "Preview",
