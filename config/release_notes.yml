@@ -1,4 +1,16 @@
 ---
+- tag: v4.15.1-auris.1.42.2
+  published_at: '2026-08-12T17:45:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.42.2
+  notes:
+    en: |-
+      ### 🐛 Fixes
+
+      - **Templates Meta stops hanging on "Loading templates…".** After the previous release, opening Templates Meta from within a session that already had inboxes loaded (i.e. reaching it from any other page) would leave the page spinning forever. It now loads the list normally.
+    pt_BR: |-
+      ### 🐛 Correções
+
+      - **Templates Meta não trava mais em "Carregando templates…".** Depois da release anterior, abrir Templates Meta a partir de uma sessão que já tinha as caixas carregadas (ou seja, chegando pela sidebar depois de estar em outra tela) deixava a página girando pra sempre. Agora carrega a lista normalmente.
 - tag: v4.15.1-auris.1.42.1
   published_at: '2026-08-12T16:50:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.42.1
@@ -257,15 +269,3 @@
       ### ⚡ Melhorias
 
       - **Bandeirinha de feedback nas mensagens ficou mais fácil de ver.** O iconezinho de bandeira que abre "Dar feedback nesta mensagem" estava pequeno demais. Agora está um pouco maior.
-- tag: v4.15.1-auris.1.41.6
-  published_at: '2026-07-12T22:00:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.41.6
-  notes:
-    en: |-
-      ### 🐛 Fixes
-
-      - **Ticket status now updates when the team changes it.** In My Tickets, the status badge was staying stuck on "Open" even after our team moved the ticket forward. Only the "Auris update" text was refreshing. Now both the badge and the text refresh live as soon as the team changes the status.
-    pt_BR: |-
-      ### 🐛 Correções
-
-      - **Status do ticket agora atualiza quando o time muda.** Em Meus Tickets, o status estava travado em "Aberto" mesmo depois do nosso time avançar o ticket. Só o texto de "Atualização Auris" chegava. Agora o status e o texto atualizam sozinhos assim que o time muda o andamento.
