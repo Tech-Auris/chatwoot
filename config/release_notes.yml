@@ -1,4 +1,18 @@
 ---
+- tag: v4.15.1-auris.1.42.6
+  published_at: '2026-08-13T03:20:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.42.6
+  notes:
+    en: |-
+      ### 🐛 Fixes
+
+      - **Meta Templates page reflects the latest data every time you land on it.** After creating or editing a template, the list sometimes still showed the pre-change state because the page was reused from cache without refreshing. It now refreshes on every visit, so the change you just made is always visible right away.
+      - **The Templates page stops hanging on "Loading templates..." after a hard refresh.** In some cases the loading spinner never cleared. It now resolves whether inboxes finish loading or not.
+    pt_BR: |-
+      ### 🐛 Correções
+
+      - **A página Templates Meta reflete os dados mais recentes toda vez que você entra nela.** Depois de criar ou editar um template, a lista às vezes continuava mostrando o estado anterior porque a página era reaproveitada do cache sem atualizar. Agora ela recarrega em toda visita, então a mudança que você acabou de fazer aparece sempre na hora.
+      - **A página de Templates não trava mais em "Carregando templates..." após refresh forçado.** Em alguns casos o spinner não sumia. Agora ele resolve independente do carregamento das caixas terminar.
 - tag: v4.15.1-auris.1.42.5
   published_at: '2026-08-12T23:30:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.42.5
@@ -251,15 +265,3 @@
       ### ⚡ Melhorias
 
       - **Detalhe do ticket fecha depois de enviar "Adicionar mais informação".** Depois que você clica em "Enviar" na informação extra, a janela do ticket fecha sozinha.
-- tag: v4.15.1-auris.1.41.10
-  published_at: '2026-07-13T20:00:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.41.10
-  notes:
-    en: |-
-      ### 🐛 Fixes
-
-      - **"Unassigned" tab loads again.** On some accounts the "Unassigned" tab was intermittently failing to load. Now it loads normally.
-    pt_BR: |-
-      ### 🐛 Correções
-
-      - **Aba "Não atribuídas" volta a carregar.** Em algumas contas a aba "Não atribuídas" às vezes não carregava. Agora carrega normalmente.
