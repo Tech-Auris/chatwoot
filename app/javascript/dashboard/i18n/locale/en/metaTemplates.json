@@ -123,11 +123,16 @@
         "HEADER_SAMPLE": "Sample value for the header variable",
         "BODY": "Body text",
         "BODY_PLACEHOLDER": "Hello {'{{'}1{'}}'}, your appointment is on {'{{'}2{'}}'} at {'{{'}3{'}}'}.",
-        "BODY_HINT": "Use {'{{'}1{'}}'}, {'{{'}2{'}}'}, ... for variables that will be filled at send time.",
-        "BODY_HINT_WITH_COUNT": "Use {'{{'}1{'}}'}, {'{{'}2{'}}'}, ... for variables that will be filled at send time. ({count}/{max})",
+        "BODY_HINT": "Use numbered variables ({'{{'}1{'}}'}, {'{{'}2{'}}'}) or named ones ({'{{'}name{'}}'}, {'{{'}date{'}}'}). Do not mix both styles in the same template.",
+        "BODY_HINT_WITH_COUNT": "Use numbered variables ({'{{'}1{'}}'}, {'{{'}2{'}}'}) or named ones ({'{{'}name{'}}'}, {'{{'}date{'}}'}). Do not mix both styles in the same template. ({count}/{max})",
         "SAMPLES_TITLE": "Sample values",
         "SAMPLES_DESCRIPTION": "Meta requires a realistic example for each variable so reviewers can approve the template.",
         "SAMPLE_FOR": "Value for {'{{'}{index}{'}}'}",
+        "VAR_ISSUES": {
+          "BODY_MIXED": "The body text mixes numbered ({'{{'}1{'}}'}) and named ({'{{'}name{'}}'}) variables. Meta rejects templates that use both styles — pick one.",
+          "HEADER_MIXED": "The header text mixes numbered ({'{{'}1{'}}'}) and named ({'{{'}name{'}}'}) variables. Meta rejects templates that use both styles — pick one.",
+          "HEADER_BODY_MISMATCH": "Header and body are using different variable styles. Use numbered variables or named variables in both — not a mix."
+        },
         "FOOTER_TOGGLE": "Add a footer",
         "FOOTER_TOGGLE_HINT": "Short static text below the body, no variables.",
         "FOOTER_PLACEHOLDER": "e.g. Reply STOP to opt out",
