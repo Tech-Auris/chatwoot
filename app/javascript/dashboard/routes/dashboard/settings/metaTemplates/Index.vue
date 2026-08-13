@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onActivated, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { useAlert } from 'dashboard/composables';
@@ -43,11 +43,14 @@ const cloudInboxes = computed(() =>
 const selectedInboxId = ref(null);
 const templates = ref([]);
 const lastSyncedAt = ref(null);
-// Start in loading so the initial paint (before we know whether
-// inboxes are populated) shows a spinner rather than briefly flashing
-// the "no Cloud inbox" empty state — which was persisting on hard
-// refreshes where inboxes hadn't been fetched yet.
-const loading = ref(true);
+// Only flip to true while a template fetch is actually in flight.
+// The "waiting for inboxes to load" state is expressed by
+// `inboxesResolved` below and rolled into the `is-loading` prop —
+// coupling loading to the fetch flow means an early-return in
+// fetchTemplates (no selectedInboxId yet) can't leave the spinner
+// stuck forever, which is what happened on hard refreshes when the
+// initial value was `ref(true)`.
+const loading = ref(false);
 const syncing = ref(false);
 // Tracks whether the inbox store has been resolved at least once in this
 // session. Without this we cannot tell "no Cloud inbox exists" apart
@@ -137,7 +140,10 @@ const runSync = async ({ silent = false } = {}) => {
 };
 
 const fetchTemplates = async () => {
-  if (!selectedInboxId.value) return;
+  if (!selectedInboxId.value) {
+    loading.value = false;
+    return;
+  }
 
   // If we just came back from New/Edit, the write response is the most
   // authoritative view of the list we have. Use it verbatim and SKIP
@@ -301,13 +307,25 @@ onMounted(async () => {
     }
   }
 });
+
+// SettingsWrapper wraps its <router-view> in <keep-alive :key="route.
+// fullPath">. Same route.fullPath (e.g. /settings/meta-templates)
+// visited more than once REACTIVATES a cached instance instead of
+// re-running setup, so `takeWriteSeed` is never called on the return
+// trip from New/Edit and `templates.value` stays on whatever the
+// previous visit ended with. Explicitly re-fetch on activation so the
+// seed from the just-completed write lands, and so returning to the
+// page after time away picks up any background changes.
+onActivated(() => {
+  if (selectedInboxId.value) fetchTemplates();
+});
 </script>
 
 <template>
   <SettingsLayout
     :no-records-found="inboxesResolved && cloudInboxes.length === 0"
     :no-records-message="t('META_TEMPLATES.EMPTY.NO_CLOUD_INBOX')"
-    :is-loading="loading && templates.length === 0"
+    :is-loading="!inboxesResolved || (loading && templates.length === 0)"
     :loading-message="t('META_TEMPLATES.LOADING')"
   >
     <template #header>
