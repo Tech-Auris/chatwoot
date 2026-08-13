@@ -180,6 +180,60 @@ RSpec.describe 'Meta Templates API', type: :request do
       expect(body['templates'].last['name']).to eq('confirmacao_agenda')
     end
 
+    it 'forwards parameter_format=NAMED and named-params example to the provider unchanged' do
+      named_payload = {
+        inbox_id: cloud_inbox.id,
+        template: {
+          name: 'confirmacao_consulta',
+          language: 'pt_BR',
+          category: 'UTILITY',
+          parameter_format: 'NAMED',
+          components: [
+            {
+              type: 'BODY',
+              text: 'Olá {{nome}}, sua consulta é em {{dia}}.',
+              example: {
+                body_text_named_params: [
+                  { param_name: 'nome', example: 'Fabio' },
+                  { param_name: 'dia', example: '12/08/2026' }
+                ]
+              }
+            }
+          ]
+        }
+      }
+
+      provider = instance_double(Whatsapp::Providers::WhatsappCloudService)
+      allow_any_instance_of(Channel::Whatsapp).to receive(:provider_service).and_return(provider) # rubocop:disable RSpec/AnyInstance
+      allow_any_instance_of(Channel::Whatsapp).to receive(:sync_templates) # rubocop:disable RSpec/AnyInstance
+      allow(provider).to receive(:create_template).and_return(
+        success: true,
+        template: { 'id' => '1000', 'status' => 'PENDING', 'category' => 'UTILITY' }
+      )
+
+      post "/api/v2/accounts/#{account.id}/meta_templates",
+           params: named_payload, headers: admin.create_new_auth_token
+
+      expect(response).to have_http_status(:created)
+      expect(provider).to have_received(:create_template).with(
+        hash_including(
+          'parameter_format' => 'NAMED',
+          'components' => include(
+            hash_including(
+              'type' => 'BODY',
+              'text' => 'Olá {{nome}}, sua consulta é em {{dia}}.',
+              'example' => hash_including(
+                'body_text_named_params' => [
+                  { 'param_name' => 'nome', 'example' => 'Fabio' },
+                  { 'param_name' => 'dia', 'example' => '12/08/2026' }
+                ]
+              )
+            )
+          )
+        )
+      )
+    end
+
     it 'surfaces Meta validation errors as 422 with the original message' do
       provider = instance_double(Whatsapp::Providers::WhatsappCloudService)
       allow_any_instance_of(Channel::Whatsapp).to receive(:provider_service).and_return(provider) # rubocop:disable RSpec/AnyInstance
