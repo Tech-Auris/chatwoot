@@ -43,8 +43,11 @@ const { t } = useI18n();
 
 const renderPlaceholders = text => {
   if (!text) return '';
-  return text.replace(/\{\{(\d+)\}\}/g, (match, index) => {
-    const sample = props.bodySamples[index];
+  // Accept both {{1}} (positional) and {{name}} (named) — the samples map
+  // is keyed by the same token the placeholder uses, so a single lookup
+  // covers both flavors.
+  return text.replace(/\{\{\s*([A-Za-z0-9_]+)\s*\}\}/g, (match, token) => {
+    const sample = props.bodySamples[token];
     return sample?.trim() ? sample : match;
   });
 };

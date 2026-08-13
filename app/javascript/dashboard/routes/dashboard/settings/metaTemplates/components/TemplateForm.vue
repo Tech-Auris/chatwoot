@@ -98,13 +98,36 @@ const buttons = ref([]);
 // Function declaration (not const) so hydrateFromTemplate below can
 // reference it — hoisting lets us keep the reactive setup in reading
 // order without a forward-decl shuffle.
+//
+// Meta supports two placeholder styles: positional ({{1}}, {{2}}) and
+// named ({{name}}, {{order_id}}). Both are one-per-template — Meta
+// rejects a mix inside the same template body/header. Returns
+// { format, vars } so callers can both list slots to fill AND decide
+// which shape to send in the create payload (`parameter_format` +
+// `body_text_named_params` vs the default positional `body_text`).
+const POSITIONAL_VAR_REGEX = /\{\{\s*(\d+)\s*\}\}/g;
+const NAMED_VAR_REGEX = /\{\{\s*([A-Za-z_][A-Za-z0-9_]*)\s*\}\}/g;
+
+function extractVariables(text) {
+  const source = text || '';
+  const positional = [...source.matchAll(POSITIONAL_VAR_REGEX)].map(m => m[1]);
+  const named = [...source.matchAll(NAMED_VAR_REGEX)].map(m => m[1]);
+
+  if (positional.length && named.length) return { format: 'MIXED', vars: [] };
+  if (named.length) {
+    return { format: 'NAMED', vars: [...new Set(named)] };
+  }
+  if (positional.length) {
+    return {
+      format: 'POSITIONAL',
+      vars: [...new Set(positional)].sort((a, b) => Number(a) - Number(b)),
+    };
+  }
+  return { format: 'NONE', vars: [] };
+}
+
 function detectVariables(text) {
-  const matches = text.match(/\{\{(\d+)\}\}/g) || [];
-  return [...new Set(matches)]
-    .sort(
-      (a, b) => Number(a.replace(/[{}]/g, '')) - Number(b.replace(/[{}]/g, ''))
-    )
-    .map(m => m.replace(/[{}]/g, ''));
+  return extractVariables(text).vars;
 }
 
 // Hydrate the form fields from a template pulled off Meta. Runs on
@@ -142,17 +165,37 @@ const hydrateFromTemplate = template => {
   headerEnabled.value = !!header && isTextHeader;
   headerFormat.value = 'TEXT';
   headerText.value = isTextHeader ? header?.text || '' : '';
-  headerSample.value = isTextHeader
-    ? header?.example?.header_text?.[0] || ''
-    : '';
+  // Header samples come in one of two shapes depending on the template's
+  // parameter_format: header_text (positional) OR header_text_named_params
+  // (named). Pick whichever matches how the operator authored it.
+  if (isTextHeader) {
+    const namedHeaderExample =
+      header?.example?.header_text_named_params?.[0]?.example;
+    headerSample.value =
+      namedHeaderExample || header?.example?.header_text?.[0] || '';
+  } else {
+    headerSample.value = '';
+  }
 
   bodyText.value = body?.text || '';
-  const bodyExample = body?.example?.body_text?.[0] || [];
-  const detected = detectVariables(body?.text || '');
   bodySamples.value = {};
-  detected.forEach((v, idx) => {
-    if (bodyExample[idx] !== undefined) bodySamples.value[v] = bodyExample[idx];
-  });
+  // Named-var templates ship samples as [{param_name, example}]; positional
+  // ones as [[val1, val2, ...]]. Detect which shape is present and hydrate
+  // the sample map keyed by var token so the form re-uses it seamlessly.
+  const namedSamples = body?.example?.body_text_named_params;
+  if (Array.isArray(namedSamples) && namedSamples.length) {
+    namedSamples.forEach(({ param_name: paramName, example }) => {
+      if (paramName) bodySamples.value[paramName] = example ?? '';
+    });
+  } else {
+    const bodyExample = body?.example?.body_text?.[0] || [];
+    const detected = detectVariables(body?.text || '');
+    detected.forEach((v, idx) => {
+      if (bodyExample[idx] !== undefined) {
+        bodySamples.value[v] = bodyExample[idx];
+      }
+    });
+  }
 
   footerEnabled.value = !!footer;
   footerText.value = footer?.text || '';
@@ -187,10 +230,39 @@ watch(
   { immediate: true }
 );
 
-const bodyVariables = computed(() => detectVariables(bodyText.value));
-const headerHasVariable = computed(() =>
-  /\{\{1\}\}/.test(headerText.value || '')
-);
+const bodyExtracted = computed(() => extractVariables(bodyText.value));
+const headerExtracted = computed(() => extractVariables(headerText.value));
+const bodyVariables = computed(() => bodyExtracted.value.vars);
+const headerVariables = computed(() => headerExtracted.value.vars);
+const headerHasVariable = computed(() => headerVariables.value.length > 0);
+
+// Meta rejects a template that mixes {{1}} and {{name}}, and it also
+// rejects one where header and body use different styles. Compute the
+// single template-wide format (NAMED / POSITIONAL / NONE) and expose a
+// list of validation problems the UI surfaces inline. Any non-empty
+// problem list disables submit.
+const templateFormatIssues = computed(() => {
+  const issues = [];
+  if (bodyExtracted.value.format === 'MIXED') issues.push('BODY_MIXED');
+  if (headerEnabled.value && headerFormat.value === 'TEXT') {
+    if (headerExtracted.value.format === 'MIXED') issues.push('HEADER_MIXED');
+    const bodyFmt = bodyExtracted.value.format;
+    const headerFmt = headerExtracted.value.format;
+    const bothHaveVars = bodyFmt !== 'NONE' && headerFmt !== 'NONE';
+    if (bothHaveVars && bodyFmt !== headerFmt) {
+      issues.push('HEADER_BODY_MISMATCH');
+    }
+  }
+  return issues;
+});
+
+const templateParameterFormat = computed(() => {
+  if (bodyExtracted.value.format === 'NAMED') return 'NAMED';
+  if (headerEnabled.value && headerExtracted.value.format === 'NAMED') {
+    return 'NAMED';
+  }
+  return 'POSITIONAL';
+});
 
 const countByType = type => buttons.value.filter(b => b.type === type).length;
 const quickReplyCount = computed(() => countByType('QUICK_REPLY'));
@@ -265,6 +337,8 @@ const isValid = computed(() => {
   if (!selectedInboxId.value) return false;
   if (!/^[a-z0-9_]{1,512}$/.test(name.value)) return false;
 
+  if (templateFormatIssues.value.length > 0) return false;
+
   if (!bodyText.value.trim()) return false;
   if (bodyText.value.length > BODY_MAX) return false;
   if (!bodyVariables.value.every(v => (bodySamples.value[v] || '').trim())) {
@@ -318,13 +392,17 @@ const previewFooter = computed(() =>
 const previewBodySamples = computed(() => {
   const combined = { ...bodySamples.value };
   if (headerEnabled.value && headerHasVariable.value) {
-    combined['1'] = combined['1'] ?? headerSample.value;
+    const headerVar = headerVariables.value[0];
+    if (headerVar != null && combined[headerVar] == null) {
+      combined[headerVar] = headerSample.value;
+    }
   }
   return combined;
 });
 
 const buildPayload = () => {
   const components = [];
+  const useNamed = templateParameterFormat.value === 'NAMED';
 
   if (headerEnabled.value) {
     if (headerFormat.value === 'IMAGE' && headerMediaHandle.value) {
@@ -340,7 +418,14 @@ const buildPayload = () => {
         text: headerText.value,
       };
       if (headerHasVariable.value) {
-        headerComp.example = { header_text: [headerSample.value] };
+        const headerVar = headerVariables.value[0];
+        headerComp.example = useNamed
+          ? {
+              header_text_named_params: [
+                { param_name: headerVar, example: headerSample.value },
+              ],
+            }
+          : { header_text: [headerSample.value] };
       }
       components.push(headerComp);
     }
@@ -348,9 +433,14 @@ const buildPayload = () => {
 
   const bodyComp = { type: 'BODY', text: bodyText.value };
   if (bodyVariables.value.length > 0) {
-    bodyComp.example = {
-      body_text: [bodyVariables.value.map(v => bodySamples.value[v])],
-    };
+    bodyComp.example = useNamed
+      ? {
+          body_text_named_params: bodyVariables.value.map(v => ({
+            param_name: v,
+            example: bodySamples.value[v],
+          })),
+        }
+      : { body_text: [bodyVariables.value.map(v => bodySamples.value[v])] };
   }
   components.push(bodyComp);
 
@@ -370,14 +460,20 @@ const buildPayload = () => {
     });
   }
 
+  const template = {
+    name: name.value,
+    language: language.value,
+    category: category.value,
+    components,
+  };
+  // parameter_format is only meaningful when the template actually has
+  // NAMED placeholders; sending it as POSITIONAL when there are no vars
+  // is noisy and Meta already treats absence as positional by default.
+  if (useNamed) template.parameter_format = 'NAMED';
+
   return {
     inboxId: selectedInboxId.value,
-    template: {
-      name: name.value,
-      language: language.value,
-      category: category.value,
-      components,
-    },
+    template,
   };
 };
 
@@ -581,6 +677,15 @@ const cancel = () => emit('cancel');
           }}
         </span>
       </label>
+
+      <div
+        v-if="templateFormatIssues.length > 0"
+        class="border border-n-ruby-6 bg-n-ruby-2 text-n-ruby-11 rounded-lg px-3 py-2 text-xs leading-relaxed grid gap-1"
+      >
+        <p v-for="issue in templateFormatIssues" :key="issue">
+          {{ t(`META_TEMPLATES.NEW.FIELDS.VAR_ISSUES.${issue}`) }}
+        </p>
+      </div>
 
       <!-- Body sample values -->
       <fieldset

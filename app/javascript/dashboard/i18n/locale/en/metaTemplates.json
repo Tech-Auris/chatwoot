@@ -104,9 +104,9 @@
         "LANGUAGE": "Language",
         "CATEGORY": "Category",
         "CATEGORY_HINT": {
-          "MARKETING": "Use this template to send engaging marketing messages that promote your business, highlight new products or services, and share important information with your audience. Good for welcome messages, newsletters, offers, coupons, catalogs, and business hours.",
-          "UTILITY": "Use this template to send essential utility messages that facilitate transactions, manage accounts, and improve the customer experience. Examples include order confirmations, account updates, receipts, appointment reminders, and billing notifications.",
-          "AUTHENTICATION": "Use this template to send secure authentication messages that protect the integrity of customer transactions and logins. Examples include one-time passwords for login verification, account recovery codes, and other sensitive authentication requests."
+          "MARKETING": "Marketing: Use this template to send engaging marketing messages that promote your business, highlight new products or services, and share important information with your audience. Good for welcome messages, newsletters, offers, coupons, catalogs, and business hours.",
+          "UTILITY": "Utility: Use this template to send essential utility messages that facilitate transactions, manage accounts, and improve the customer experience. Examples include order confirmations, account updates, receipts, appointment reminders, and billing notifications.",
+          "AUTHENTICATION": "Authentication: Use this template to send secure authentication messages that protect the integrity of customer transactions and logins. Examples include one-time passwords for login verification, account recovery codes, and other sensitive authentication requests."
         },
         "HEADER_TOGGLE": "Add a header",
         "HEADER_TOGGLE_HINT": "Text (short heading) or an image (JPG/PNG up to 5 MB).",
@@ -123,11 +123,16 @@
         "HEADER_SAMPLE": "Sample value for the header variable",
         "BODY": "Body text",
         "BODY_PLACEHOLDER": "Hello {'{{'}1{'}}'}, your appointment is on {'{{'}2{'}}'} at {'{{'}3{'}}'}.",
-        "BODY_HINT": "Use {'{{'}1{'}}'}, {'{{'}2{'}}'}, ... for variables that will be filled at send time.",
-        "BODY_HINT_WITH_COUNT": "Use {'{{'}1{'}}'}, {'{{'}2{'}}'}, ... for variables that will be filled at send time. ({count}/{max})",
+        "BODY_HINT": "Use numbered variables ({'{{'}1{'}}'}, {'{{'}2{'}}'}) or named ones ({'{{'}name{'}}'}, {'{{'}date{'}}'}). Do not mix both styles in the same template.",
+        "BODY_HINT_WITH_COUNT": "Use numbered variables ({'{{'}1{'}}'}, {'{{'}2{'}}'}) or named ones ({'{{'}name{'}}'}, {'{{'}date{'}}'}). Do not mix both styles in the same template. ({count}/{max})",
         "SAMPLES_TITLE": "Sample values",
         "SAMPLES_DESCRIPTION": "Meta requires a realistic example for each variable so reviewers can approve the template.",
         "SAMPLE_FOR": "Value for {'{{'}{index}{'}}'}",
+        "VAR_ISSUES": {
+          "BODY_MIXED": "The body text mixes numbered ({'{{'}1{'}}'}) and named ({'{{'}name{'}}'}) variables. Meta rejects templates that use both styles — pick one.",
+          "HEADER_MIXED": "The header text mixes numbered ({'{{'}1{'}}'}) and named ({'{{'}name{'}}'}) variables. Meta rejects templates that use both styles — pick one.",
+          "HEADER_BODY_MISMATCH": "Header and body are using different variable styles. Use numbered variables or named variables in both — not a mix."
+        },
         "FOOTER_TOGGLE": "Add a footer",
         "FOOTER_TOGGLE_HINT": "Short static text below the body, no variables.",
         "FOOTER_PLACEHOLDER": "e.g. Reply STOP to opt out",

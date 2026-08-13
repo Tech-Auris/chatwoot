@@ -339,25 +339,28 @@ class Api::V2::Accounts::MetaTemplatesController < Api::V1::Accounts::BaseContro
     nil
   end
 
-  # Whitelists the four top-level Meta fields and forwards the
-  # `components` array to Meta as-is. Strong-params can't cleanly model
-  # Meta's typed-and-nested component schema (BODY/HEADER/FOOTER/BUTTONS,
-  # each with their own keys), and enumerating every leaf would drift
-  # out of sync with their API. Using `to_unsafe_h` here is safe: we
-  # forward the shape to Meta (they validate and reject anything bad)
-  # and persist nothing from it directly.
+  # Whitelists the top-level Meta fields and forwards the `components`
+  # array to Meta as-is. Strong-params can't cleanly model Meta's
+  # typed-and-nested component schema (BODY/HEADER/FOOTER/BUTTONS, each
+  # with their own keys), and enumerating every leaf would drift out of
+  # sync with their API. Using `to_unsafe_h` here is safe: we forward
+  # the shape to Meta (they validate and reject anything bad) and
+  # persist nothing from it directly. `parameter_format` is forwarded
+  # only when the frontend sends `NAMED` — Meta treats absence as
+  # POSITIONAL, so we don't have to send the default.
   def create_payload
     root = params.require(:template).to_unsafe_h.stringify_keys
-    root.slice('name', 'language', 'category', 'components')
+    root.slice('name', 'language', 'category', 'components', 'parameter_format')
   end
 
-  # Meta's update endpoint accepts `category` and `components` only;
-  # name and language are immutable once the template is created. Slice
-  # here so the frontend can send the full form shape without a special
-  # transformer, and we only forward what Meta allows.
+  # Meta's update endpoint accepts `category`, `components` and
+  # `parameter_format`; name and language are immutable once the
+  # template is created. Slice here so the frontend can send the full
+  # form shape without a special transformer, and we only forward what
+  # Meta allows.
   def update_payload
     root = params.require(:template).to_unsafe_h.stringify_keys
-    root.slice('category', 'components')
+    root.slice('category', 'components', 'parameter_format')
   end
 end
 # rubocop:enable Metrics/ClassLength

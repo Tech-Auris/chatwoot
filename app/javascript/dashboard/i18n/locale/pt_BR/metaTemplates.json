@@ -104,9 +104,9 @@
         "LANGUAGE": "Idioma",
         "CATEGORY": "Categoria",
         "CATEGORY_HINT": {
-          "MARKETING": "Use este modelo para enviar mensagens de marketing que promovam sua empresa, destaquem novos produtos ou serviços e compartilhem informações importantes com seu público. Indicado para mensagens de boas-vindas, boletins informativos, ofertas, cupons, catálogos e horários de atendimento.",
-          "UTILITY": "Use este modelo para enviar mensagens de utilidade essenciais que facilitem transações, gerenciem contas e melhorem a experiência dos clientes. Exemplos incluem confirmações de pedidos, atualizações da conta, recibos, lembretes de horários marcados e notificações de cobrança.",
-          "AUTHENTICATION": "Use este modelo para enviar mensagens de autenticação seguras que protejam a integridade das transações e dos logins dos clientes. Exemplos incluem senhas descartáveis para verificação de login, códigos de recuperação da conta e outros pedidos de autenticação sensível."
+          "MARKETING": "Marketing: Use este modelo para enviar mensagens de marketing que promovam sua empresa, destaquem novos produtos ou serviços e compartilhem informações importantes com seu público. Indicado para mensagens de boas-vindas, boletins informativos, ofertas, cupons, catálogos e horários de atendimento.",
+          "UTILITY": "Utilidade: Use este modelo para enviar mensagens de utilidade essenciais que facilitem transações, gerenciem contas e melhorem a experiência dos clientes. Exemplos incluem confirmações de pedidos, atualizações da conta, recibos, lembretes de horários marcados e notificações de cobrança.",
+          "AUTHENTICATION": "Autenticação: Use este modelo para enviar mensagens de autenticação seguras que protejam a integridade das transações e dos logins dos clientes. Exemplos incluem senhas descartáveis para verificação de login, códigos de recuperação da conta e outros pedidos de autenticação sensível."
         },
         "HEADER_TOGGLE": "Adicionar cabeçalho",
         "HEADER_TOGGLE_HINT": "Texto (título curto) ou uma imagem (JPG/PNG até 5 MB).",
@@ -123,11 +123,16 @@
         "HEADER_SAMPLE": "Valor de exemplo para a variável do cabeçalho",
         "BODY": "Texto do corpo",
         "BODY_PLACEHOLDER": "Olá {'{{'}1{'}}'}, seu agendamento é dia {'{{'}2{'}}'} às {'{{'}3{'}}'}.",
-        "BODY_HINT": "Use {'{{'}1{'}}'}, {'{{'}2{'}}'}, ... para variáveis que serão preenchidas no envio.",
-        "BODY_HINT_WITH_COUNT": "Use {'{{'}1{'}}'}, {'{{'}2{'}}'}, ... para variáveis que serão preenchidas no envio. ({count}/{max})",
+        "BODY_HINT": "Use variáveis numeradas ({'{{'}1{'}}'}, {'{{'}2{'}}'}) ou nomeadas ({'{{'}nome{'}}'}, {'{{'}data{'}}'}). Não misture os dois estilos no mesmo template.",
+        "BODY_HINT_WITH_COUNT": "Use variáveis numeradas ({'{{'}1{'}}'}, {'{{'}2{'}}'}) ou nomeadas ({'{{'}nome{'}}'}, {'{{'}data{'}}'}). Não misture os dois estilos no mesmo template. ({count}/{max})",
         "SAMPLES_TITLE": "Valores de exemplo",
         "SAMPLES_DESCRIPTION": "O Meta exige um exemplo realista para cada variável, para que a equipe de revisão possa aprovar o template.",
         "SAMPLE_FOR": "Valor para {'{{'}{index}{'}}'}",
+        "VAR_ISSUES": {
+          "BODY_MIXED": "O texto do corpo mistura variáveis numeradas ({'{{'}1{'}}'}) e nomeadas ({'{{'}nome{'}}'}). O Meta rejeita templates com os dois estilos — escolha um.",
+          "HEADER_MIXED": "O texto do cabeçalho mistura variáveis numeradas ({'{{'}1{'}}'}) e nomeadas ({'{{'}nome{'}}'}). O Meta rejeita templates com os dois estilos — escolha um.",
+          "HEADER_BODY_MISMATCH": "O cabeçalho e o corpo estão usando estilos de variável diferentes. Use variáveis numeradas ou variáveis nomeadas em ambos, mas não uma mistura."
+        },
         "FOOTER_TOGGLE": "Adicionar rodapé",
         "FOOTER_TOGGLE_HINT": "Texto curto abaixo do corpo, sem variáveis.",
         "FOOTER_PLACEHOLDER": "ex: Responda SAIR para descadastrar",
