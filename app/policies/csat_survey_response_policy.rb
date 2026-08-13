@@ -1,14 +1,23 @@
 class CsatSurveyResponsePolicy < ApplicationPolicy
+  # Aligns with ReportPolicy: managers own operations (inboxes, teams,
+  # agents) and need the CSAT report to steer coaching and quality —
+  # the frontend already grants them the route, so the API has to match.
   def index?
-    @account_user.administrator?
+    admin_or_manager?
   end
 
   def metrics?
-    @account_user.administrator?
+    admin_or_manager?
   end
 
   def download?
-    @account_user.administrator?
+    admin_or_manager?
+  end
+
+  private
+
+  def admin_or_manager?
+    @account_user.administrator? || @account_user.manager?
   end
 end
 
