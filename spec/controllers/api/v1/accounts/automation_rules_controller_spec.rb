@@ -3,6 +3,8 @@ require 'rails_helper'
 RSpec.describe 'Api::V1::Accounts::AutomationRulesController', type: :request do
   let(:account) { create(:account) }
   let(:administrator) { create(:user, account: account, role: :administrator) }
+  let(:manager) { create(:user, account: account, role: :manager) }
+  let(:agent) { create(:user, account: account, role: :agent) }
   let!(:inbox) { create(:inbox, account: account, enable_auto_assignment: false) }
   let!(:contact) { create(:contact, account: account) }
   let(:contact_inbox) { create(:contact_inbox, inbox_id: inbox.id, contact_id: contact.id) }
@@ -466,6 +468,49 @@ RSpec.describe 'Api::V1::Accounts::AutomationRulesController', type: :request do
         expect(account.automation_rules.count).to eq(0)
         expect(scheduled_message.reload.author_id).to be_nil
       end
+    end
+  end
+
+  describe 'role-based access' do
+    # Managers are operational owners of the account and configure
+    # automations alongside admins; agents remain excluded.
+    it 'allows managers to list rules' do
+      create(:automation_rule, account: account, name: 'Test')
+
+      get "/api/v1/accounts/#{account.id}/automation_rules",
+          headers: manager.create_new_auth_token
+
+      expect(response).to have_http_status(:success)
+    end
+
+    it 'allows managers to create rules' do
+      params = {
+        'name': 'Manager rule',
+        'description': 'Created by a manager',
+        'event_name': 'conversation_created',
+        'conditions': [{ 'attribute_key': 'browser_language', 'filter_operator': 'equal_to',
+                         'values': ['en'], 'query_operator': nil }],
+        'actions': [{ 'action_name': :add_label, 'action_params': ['support'] }]
+      }
+
+      post "/api/v1/accounts/#{account.id}/automation_rules",
+           headers: manager.create_new_auth_token, params: params
+
+      expect(response).to have_http_status(:success)
+    end
+
+    it 'still forbids agents from listing rules' do
+      get "/api/v1/accounts/#{account.id}/automation_rules",
+          headers: agent.create_new_auth_token
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it 'still forbids agents from creating rules' do
+      post "/api/v1/accounts/#{account.id}/automation_rules",
+           headers: agent.create_new_auth_token, params: { name: 'x' }
+
+      expect(response).to have_http_status(:unauthorized)
     end
   end
 end
