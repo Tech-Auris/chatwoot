@@ -104,9 +104,9 @@
         "LANGUAGE": "Idioma",
         "CATEGORY": "Categoria",
         "CATEGORY_HINT": {
-          "MARKETING": "Use este modelo para enviar mensagens de marketing que promovam sua empresa, destaquem novos produtos ou serviços e compartilhem informações importantes com seu público. Indicado para mensagens de boas-vindas, boletins informativos, ofertas, cupons, catálogos e horários de atendimento.",
-          "UTILITY": "Use este modelo para enviar mensagens de utilidade essenciais que facilitem transações, gerenciem contas e melhorem a experiência dos clientes. Exemplos incluem confirmações de pedidos, atualizações da conta, recibos, lembretes de horários marcados e notificações de cobrança.",
-          "AUTHENTICATION": "Use este modelo para enviar mensagens de autenticação seguras que protejam a integridade das transações e dos logins dos clientes. Exemplos incluem senhas descartáveis para verificação de login, códigos de recuperação da conta e outros pedidos de autenticação sensível."
+          "MARKETING": "Marketing: Use este modelo para enviar mensagens de marketing que promovam sua empresa, destaquem novos produtos ou serviços e compartilhem informações importantes com seu público. Indicado para mensagens de boas-vindas, boletins informativos, ofertas, cupons, catálogos e horários de atendimento.",
+          "UTILITY": "Utilidade: Use este modelo para enviar mensagens de utilidade essenciais que facilitem transações, gerenciem contas e melhorem a experiência dos clientes. Exemplos incluem confirmações de pedidos, atualizações da conta, recibos, lembretes de horários marcados e notificações de cobrança.",
+          "AUTHENTICATION": "Autenticação: Use este modelo para enviar mensagens de autenticação seguras que protejam a integridade das transações e dos logins dos clientes. Exemplos incluem senhas descartáveis para verificação de login, códigos de recuperação da conta e outros pedidos de autenticação sensível."
         },
         "HEADER_TOGGLE": "Adicionar cabeçalho",
         "HEADER_TOGGLE_HINT": "Texto (título curto) ou uma imagem (JPG/PNG até 5 MB).",
