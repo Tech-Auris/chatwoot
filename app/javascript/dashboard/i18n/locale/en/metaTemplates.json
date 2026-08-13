@@ -103,6 +103,11 @@
         "NAME_IMMUTABLE": "Name, language and inbox cannot be changed after creation (Meta rule).",
         "LANGUAGE": "Language",
         "CATEGORY": "Category",
+        "CATEGORY_HINT": {
+          "MARKETING": "Use this template to send engaging marketing messages that promote your business, highlight new products or services, and share important information with your audience. Good for welcome messages, newsletters, offers, coupons, catalogs, and business hours.",
+          "UTILITY": "Use this template to send essential utility messages that facilitate transactions, manage accounts, and improve the customer experience. Examples include order confirmations, account updates, receipts, appointment reminders, and billing notifications.",
+          "AUTHENTICATION": "Use this template to send secure authentication messages that protect the integrity of customer transactions and logins. Examples include one-time passwords for login verification, account recovery codes, and other sensitive authentication requests."
+        },
         "HEADER_TOGGLE": "Add a header",
         "HEADER_TOGGLE_HINT": "Text (short heading) or an image (JPG/PNG up to 5 MB).",
         "HEADER_FORMAT_TEXT": "Text",

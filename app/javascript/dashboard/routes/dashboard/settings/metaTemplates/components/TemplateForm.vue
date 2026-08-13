@@ -453,6 +453,12 @@ const cancel = () => emit('cancel');
         </label>
       </div>
 
+      <div
+        class="bg-n-alpha-1 border border-n-weak rounded-lg px-3 py-2 text-xs text-n-slate-11 leading-relaxed"
+      >
+        {{ t(`META_TEMPLATES.NEW.FIELDS.CATEGORY_HINT.${category}`) }}
+      </div>
+
       <!-- Header (optional) -->
       <section class="border border-n-weak rounded-lg p-4 grid gap-3">
         <label
