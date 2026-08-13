@@ -1,4 +1,24 @@
 ---
+- tag: v4.15.1-auris.1.43
+  published_at: '2026-08-13T22:40:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.43
+  notes:
+    en: |-
+      ### ✨ What's new
+
+      - **Managers get access to Automations and CSAT reports.** Team managers can now create automations and read the customer satisfaction report on their inboxes without needing an administrator.
+
+      ### 🐛 Fixes
+
+      - **WhatsApp templates using named variables ({{name}}) work.** The template creation form now accepts placeholders with a name — Meta was rejecting templates that used them.
+    pt_BR: |-
+      ### ✨ Novidades
+
+      - **Gerentes têm acesso às Automações e ao Relatório CSAT.** Gerentes de equipe agora criam automações e consultam o relatório de satisfação nas suas caixas sem depender de um administrador.
+
+      ### 🐛 Correções
+
+      - **Templates do WhatsApp com variáveis nomeadas ({{nome}}) funcionam.** O formulário de criação de templates passa a aceitar placeholders com nome — a Meta rejeitava templates que usavam essa forma.
 - tag: v4.15.1-auris.1.42.6
   published_at: '2026-08-13T03:20:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.42.6
@@ -253,15 +273,3 @@
       Bug fixes and internal improvements.
     pt_BR: |-
       Correções de bugs e melhorias internas.
-- tag: v4.15.1-auris.1.41.11
-  published_at: '2026-07-13T22:00:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.41.11
-  notes:
-    en: |-
-      ### ⚡ Improvements
-
-      - **Ticket detail closes after sending "Add more information".** After you hit "Send" on the extra context, the ticket window closes automatically instead of staying open.
-    pt_BR: |-
-      ### ⚡ Melhorias
-
-      - **Detalhe do ticket fecha depois de enviar "Adicionar mais informação".** Depois que você clica em "Enviar" na informação extra, a janela do ticket fecha sozinha.
