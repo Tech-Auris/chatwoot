@@ -63,7 +63,8 @@
       "CUSTOM_ATTRIBUTE_CHECKBOX": "Checkbox",
       "CREATED_AT": "Created at",
       "LAST_ACTIVITY": "Last activity",
-      "GROUP_TYPE": "Group type"
+      "GROUP_TYPE": "Group type",
+      "AI_ENABLED": "AI status"
     },
     "ERRORS": {
       "VALUE_REQUIRED": "Value is required",

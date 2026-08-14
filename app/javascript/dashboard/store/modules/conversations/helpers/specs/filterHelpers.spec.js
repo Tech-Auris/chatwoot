@@ -1601,6 +1601,33 @@ describe('filterHelpers', () => {
       expect(matchesFilters(conversation, filters)).toBe(false);
     });
 
+    // Test for ai_enabled in getValueFromConversation
+    it('should match conversation with equal_to operator for ai_enabled', () => {
+      const filters = [
+        {
+          attribute_key: 'ai_enabled',
+          filter_operator: 'equal_to',
+          values: { id: true, name: 'AI Enabled' },
+          query_operator: 'and',
+        },
+      ];
+      expect(matchesFilters({ ai_enabled: true }, filters)).toBe(true);
+      expect(matchesFilters({ ai_enabled: false }, filters)).toBe(false);
+    });
+
+    it('should match conversation with not_equal_to operator for ai_enabled', () => {
+      const filters = [
+        {
+          attribute_key: 'ai_enabled',
+          filter_operator: 'not_equal_to',
+          values: { id: true, name: 'AI Enabled' },
+          query_operator: 'and',
+        },
+      ];
+      expect(matchesFilters({ ai_enabled: false }, filters)).toBe(true);
+      expect(matchesFilters({ ai_enabled: true }, filters)).toBe(false);
+    });
+
     // Test for default case (returning null) in getValueFromConversation
     it('should not match conversation when attribute key is not recognized', () => {
       const conversation = { status: 'open' };

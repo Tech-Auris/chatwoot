@@ -15,6 +15,7 @@ export const CONVERSATION_ATTRIBUTES = {
   CREATED_AT: 'created_at',
   LAST_ACTIVITY_AT: 'last_activity_at',
   GROUP_TYPE: 'group_type',
+  AI_ENABLED: 'ai_enabled',
 };
 
 export const CONTACT_ATTRIBUTES = {

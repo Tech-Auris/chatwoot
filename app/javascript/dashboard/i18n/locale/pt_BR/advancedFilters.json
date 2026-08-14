@@ -63,7 +63,8 @@
       "CUSTOM_ATTRIBUTE_CHECKBOX": "Checkbox",
       "CREATED_AT": "Criado em",
       "LAST_ACTIVITY": "Última atividade",
-      "GROUP_TYPE": "Tipo de conversa"
+      "GROUP_TYPE": "Tipo de conversa",
+      "AI_ENABLED": "Status da IA"
     },
     "ERRORS": {
       "VALUE_REQUIRED": "Valor obrigatório",
