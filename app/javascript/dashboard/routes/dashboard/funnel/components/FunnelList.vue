@@ -31,16 +31,26 @@ const orderedStages = computed(() =>
 
 const cardsFor = stage => props.conversationsByStage[stage.name] || [];
 
+// Only prefix the summary with the projected sum when an average ticket
+// is actually configured — otherwise "R$ 0,00 · N conversas" reads as
+// broken data next to a stage that has real cards.
 const stageSummary = stage => {
   const count = stage.count || 0;
   const countLabel = t('FUNNEL.STAGE.COUNT_LABEL', count, { count });
+  if (!props.averageTicket) return countLabel;
   const sum = formatCurrency(count * props.averageTicket, props.locale);
   return `${sum} · ${countLabel}`;
 };
 
+const hasAverageTicket = computed(() => Number(props.averageTicket) > 0);
 const ticketLabel = computed(() =>
   formatCurrency(props.averageTicket, props.locale)
 );
+// The "Value" column disappears entirely when there's no ticket to show;
+// keep the empty-row colspan aligned with the visible column count so the
+// "no conversations" message stays centered instead of leaking outside
+// the table.
+const visibleColumnCount = computed(() => (hasAverageTicket.value ? 7 : 6));
 
 const elapsedLabelFor = conversation => {
   const createdAtSec = Number(conversation.created_at) || 0;
@@ -150,7 +160,7 @@ const goToContact = conversation => {
                   {{ t('FUNNEL.LIST.INBOX') }}
                 </th>
                 <th class="px-4 py-2 font-medium">{{ t('FUNNEL.LIST.AI') }}</th>
-                <th class="px-4 py-2 font-medium">
+                <th v-if="hasAverageTicket" class="px-4 py-2 font-medium">
                   {{ t('FUNNEL.LIST.VALUE') }}
                 </th>
                 <th class="px-4 py-2 font-medium">
@@ -182,7 +192,7 @@ const goToContact = conversation => {
                       :ai-enabled="conversation.ai_enabled !== false"
                     />
                   </td>
-                  <td class="px-4 py-2 text-n-slate-12">
+                  <td v-if="hasAverageTicket" class="px-4 py-2 text-n-slate-12">
                     {{ ticketLabel }}
                   </td>
                   <td class="px-4 py-2 text-n-slate-11">
@@ -225,7 +235,7 @@ const goToContact = conversation => {
                   v-if="isSummaryOpen(conversation) && hasSummary(conversation)"
                   class="border-t border-n-weak bg-n-slate-2 dark:bg-n-solid-2"
                 >
-                  <td colspan="7" class="px-4 py-3">
+                  <td :colspan="visibleColumnCount" class="px-4 py-3">
                     <div
                       class="flex items-start gap-2 px-3 py-2 rounded-md bg-n-slate-3 dark:bg-n-solid-3"
                     >
@@ -241,7 +251,7 @@ const goToContact = conversation => {
               </template>
               <tr v-if="cardsFor(stage).length === 0">
                 <td
-                  colspan="7"
+                  :colspan="visibleColumnCount"
                   class="px-4 py-6 text-center text-xs text-n-slate-11"
                 >
                   {{ t('FUNNEL.LIST.EMPTY') }}
