@@ -24,6 +24,11 @@ const accountLocale = computed(() => account.value?.locale || 'en');
 const accountAverageTicket = computed(
   () => Number(account.value?.average_ticket) || 0
 );
+// Only show the ticket line when the super-admin has actually set an
+// average ticket. A missing/0 value renders as "R$ 0,00" which reads
+// as broken data on the card — hide the whole span in that case and
+// let the inbox slide to the right where it already lived.
+const hasAverageTicket = computed(() => accountAverageTicket.value > 0);
 const ticketLabel = computed(() =>
   formatCurrency(accountAverageTicket.value, accountLocale.value)
 );
@@ -125,13 +130,16 @@ const toggleLossReason = () => {
         {{ phoneNumber }}
       </span>
       <div class="flex items-center justify-between gap-2 min-w-0">
-        <span class="text-xs font-medium text-n-slate-12">
+        <span
+          v-if="hasAverageTicket"
+          class="text-xs font-medium text-n-slate-12"
+        >
           {{ ticketLabel }}
         </span>
         <div
           v-if="conversation.inbox"
           :title="inboxName"
-          class="flex items-center gap-1 min-w-0 text-n-slate-11"
+          class="flex items-center gap-1 min-w-0 text-n-slate-11 ml-auto"
         >
           <ChannelIcon
             :inbox="conversation.inbox"
