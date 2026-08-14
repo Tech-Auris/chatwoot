@@ -23,6 +23,7 @@ module Integrations::Clickup::FieldMap
     chat_id: '01924c91-ab09-4b51-9781-43a7953c699e',
     comportamento_esperado: '9b7540cd-4861-4c88-8e14-3171614e5cc8',
     contexto: '84a863c5-50a1-4846-88fa-0befea67f9ae',
+    mensagem: 'e1a90b93-6415-492f-b4ea-69098eb313ee',
     user_id: '852296e1-a134-4818-9c5f-be1883c94270',
     user_name: 'de5fdd9f-fe9f-4467-847c-b6051f01224f',
     account_id: '79c64ab5-1de8-4418-bdac-7017b905c8a6',

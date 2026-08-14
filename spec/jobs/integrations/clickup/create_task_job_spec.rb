@@ -95,6 +95,26 @@ RSpec.describe Integrations::Clickup::CreateTaskJob do
         .to eq(Integrations::Clickup::FieldMap::CONTEXTO_OPTIONS[:mensagem])
     end
 
+    it 'sends the text of the message the feedback was opened from' do
+      captured = stub_capture_create_task
+      message.update!(content: 'Olá, posso ajudar em mais alguma coisa?')
+
+      described_class.new.perform(ticket.id)
+
+      mensagem_field = captured[:custom_fields].find { |f| f[:id] == Integrations::Clickup::FieldMap::FIELDS[:mensagem] }
+      expect(mensagem_field[:value]).to eq('Olá, posso ajudar em mais alguma coisa?')
+    end
+
+    it 'skips the message field when the context message has no text' do
+      captured = stub_capture_create_task
+      message.update!(content: nil)
+
+      described_class.new.perform(ticket.id)
+
+      expect(captured[:custom_fields].map { |f| f[:id] })
+        .not_to include(Integrations::Clickup::FieldMap::FIELDS[:mensagem])
+    end
+
     # ClickUp task description is intentionally blank now — ops asked us
     # to drop the duplicated `relatar_problema` (the title already carries
     # the truncated excerpt, and the "Relatar o Problema" custom field
