@@ -82,4 +82,33 @@ RSpec.describe AiStatusActivityMessageHandler do
         .with(conversation, hash_including(content: a_string_matching(/IA/)))
     end
   end
+
+  describe 'when an automation rule toggles the AI' do
+    let(:rule) { create(:automation_rule, account: account) }
+
+    before do
+      Current.user = nil
+      Current.executed_by = rule
+    end
+
+    after { Current.executed_by = nil }
+
+    it 'names the automation system in attribute mode' do
+      account.update!(ai_status_uses_attribute: true)
+      conversation.update!(ai_enabled: true)
+
+      expect { conversation.set_ai_status!(false) }
+        .to have_enqueued_job(Conversations::ActivityMessageJob)
+        .with(conversation, expected_params('Automation System turned the AI off'))
+    end
+
+    it 'names the automation system in legacy label mode' do
+      account.update!(ai_status_uses_attribute: false)
+      conversation.update!(label_list: %w[cliente agente-off])
+
+      expect { conversation.set_ai_status!(true) }
+        .to have_enqueued_job(Conversations::ActivityMessageJob)
+        .with(conversation, expected_params('Automation System turned the AI on'))
+    end
+  end
 end

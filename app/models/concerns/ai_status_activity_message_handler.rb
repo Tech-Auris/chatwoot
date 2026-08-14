@@ -42,10 +42,16 @@ module AiStatusActivityMessageHandler
 
   def ai_status_activity_content(new_state, user_name)
     key = new_state ? 'enabled' : 'disabled'
-    if user_name.present?
-      I18n.t("conversations.activity.ai_status.#{key}", user_name: user_name)
-    else
-      I18n.t("conversations.activity.ai_status.#{key}_system")
-    end
+    actor_name = user_name.presence || automation_actor_name
+    return I18n.t("conversations.activity.ai_status.#{key}_system") if actor_name.blank?
+
+    I18n.t("conversations.activity.ai_status.#{key}", user_name: actor_name)
+  end
+
+  # Automation rules run without a current user. The status change activity
+  # already names them through `automation.system_name`, so the AI status
+  # message keeps the same wording instead of dropping the actor.
+  def automation_actor_name
+    I18n.t('automation.system_name') if Current.executed_by.instance_of?(AutomationRule)
   end
 end
