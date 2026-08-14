@@ -90,6 +90,19 @@ const isInboxMenuEnabled = computed(
 const isHelpCenterMenuEnabled = computed(
   () => accountGetter.value(accountId.value)?.help_center_menu_enabled === true
 );
+const isCampaignsLiveChatMenuEnabled = computed(
+  () =>
+    accountGetter.value(accountId.value)?.campaigns_live_chat_menu_enabled ===
+    true
+);
+const isCampaignsSmsMenuEnabled = computed(
+  () =>
+    accountGetter.value(accountId.value)?.campaigns_sms_menu_enabled === true
+);
+const isSettingsMacrosMenuEnabled = computed(
+  () =>
+    accountGetter.value(accountId.value)?.settings_macros_menu_enabled === true
+);
 
 const hasConversationUnreadCounts = computed(() => {
   return isFeatureEnabledonAccount.value(
@@ -644,16 +657,24 @@ const menuItems = computed(() => {
       label: t('SIDEBAR.CAMPAIGNS'),
       icon: 'i-lucide-megaphone',
       children: [
-        {
-          name: 'Live chat',
-          label: t('SIDEBAR.LIVE_CHAT'),
-          to: accountScopedRoute('campaigns_livechat_index'),
-        },
-        {
-          name: 'SMS',
-          label: t('SIDEBAR.SMS'),
-          to: accountScopedRoute('campaigns_sms_index'),
-        },
+        ...(isCampaignsLiveChatMenuEnabled.value
+          ? [
+              {
+                name: 'Live chat',
+                label: t('SIDEBAR.LIVE_CHAT'),
+                to: accountScopedRoute('campaigns_livechat_index'),
+              },
+            ]
+          : []),
+        ...(isCampaignsSmsMenuEnabled.value
+          ? [
+              {
+                name: 'SMS',
+                label: t('SIDEBAR.SMS'),
+                to: accountScopedRoute('campaigns_sms_index'),
+              },
+            ]
+          : []),
         {
           name: 'WhatsApp',
           label: t('SIDEBAR.WHATSAPP'),
@@ -802,12 +823,16 @@ const menuItems = computed(() => {
           icon: 'i-lucide-repeat',
           to: accountScopedRoute('automation_list'),
         },
-        {
-          name: 'Settings Macros',
-          label: t('SIDEBAR.MACROS'),
-          icon: 'i-lucide-toy-brick',
-          to: accountScopedRoute('macros_wrapper'),
-        },
+        ...(isSettingsMacrosMenuEnabled.value
+          ? [
+              {
+                name: 'Settings Macros',
+                label: t('SIDEBAR.MACROS'),
+                icon: 'i-lucide-toy-brick',
+                to: accountScopedRoute('macros_wrapper'),
+              },
+            ]
+          : []),
         {
           name: 'Settings Canned Responses',
           label: t('SIDEBAR.CANNED_RESPONSES'),

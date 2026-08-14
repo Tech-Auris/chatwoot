@@ -2,28 +2,31 @@
 #
 # Table name: accounts
 #
-#  id                       :integer          not null, primary key
-#  ai_status_uses_attribute :boolean          default(FALSE), not null
-#  auto_resolve_duration    :integer
-#  average_ticket           :decimal(12, 2)
-#  custom_attributes        :jsonb
-#  domain                   :string(100)
-#  environment              :integer          default("test"), not null
-#  feature_flags            :bigint           default(0), not null
-#  funnel_enabled           :boolean          default(FALSE), not null
-#  help_center_menu_enabled :boolean          default(FALSE), not null
-#  inbox_view_menu_enabled  :boolean          default(FALSE), not null
-#  internal_attributes      :jsonb            not null
-#  limits                   :jsonb
-#  locale                   :integer          default("en")
-#  multi_language_ai        :boolean          default(FALSE), not null
-#  name                     :string           not null
-#  settings                 :jsonb
-#  status                   :integer          default("active")
-#  support_email            :string(100)
-#  created_at               :datetime         not null
-#  updated_at               :datetime         not null
-#  simulator_inbox_id       :bigint
+#  id                               :integer          not null, primary key
+#  ai_status_uses_attribute         :boolean          default(FALSE), not null
+#  auto_resolve_duration            :integer
+#  average_ticket                   :decimal(12, 2)
+#  campaigns_live_chat_menu_enabled :boolean          default(FALSE), not null
+#  campaigns_sms_menu_enabled       :boolean          default(FALSE), not null
+#  custom_attributes                :jsonb
+#  domain                           :string(100)
+#  environment                      :integer          default("test"), not null
+#  feature_flags                    :bigint           default(0), not null
+#  funnel_enabled                   :boolean          default(FALSE), not null
+#  help_center_menu_enabled         :boolean          default(FALSE), not null
+#  inbox_view_menu_enabled          :boolean          default(FALSE), not null
+#  internal_attributes              :jsonb            not null
+#  limits                           :jsonb
+#  locale                           :integer          default("en")
+#  multi_language_ai                :boolean          default(FALSE), not null
+#  name                             :string           not null
+#  settings                         :jsonb
+#  settings_macros_menu_enabled     :boolean          default(FALSE), not null
+#  status                           :integer          default("active")
+#  support_email                    :string(100)
+#  created_at                       :datetime         not null
+#  updated_at                       :datetime         not null
+#  simulator_inbox_id               :bigint
 #
 # Indexes
 #

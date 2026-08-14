@@ -31,6 +31,9 @@ json.ai_status_uses_attribute @account.ai_status_uses_attribute
 json.multi_language_ai @account.multi_language_ai
 json.inbox_view_menu_enabled @account.inbox_view_menu_enabled
 json.help_center_menu_enabled @account.help_center_menu_enabled
+json.campaigns_live_chat_menu_enabled @account.campaigns_live_chat_menu_enabled
+json.campaigns_sms_menu_enabled @account.campaigns_sms_menu_enabled
+json.settings_macros_menu_enabled @account.settings_macros_menu_enabled
 json.support_email @account.support_email
 json.status @account.status
 json.environment @account.environment

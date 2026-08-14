@@ -16,7 +16,16 @@ class AurisAccountMenusField < Administrate::Field::Base
         checked: resource.inbox_view_menu_enabled },
       { key: :help_center_menu_enabled,
         label: 'Central de Ajuda',
-        checked: resource.help_center_menu_enabled }
+        checked: resource.help_center_menu_enabled },
+      { key: :campaigns_live_chat_menu_enabled,
+        label: 'Campanhas / Chat ao vivo',
+        checked: resource.campaigns_live_chat_menu_enabled },
+      { key: :campaigns_sms_menu_enabled,
+        label: 'Campanhas / SMS',
+        checked: resource.campaigns_sms_menu_enabled },
+      { key: :settings_macros_menu_enabled,
+        label: 'Configurações / Macros',
+        checked: resource.settings_macros_menu_enabled }
     ]
   end
 end
