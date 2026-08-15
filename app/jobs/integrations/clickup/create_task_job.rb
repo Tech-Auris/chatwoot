@@ -94,10 +94,20 @@ class Integrations::Clickup::CreateTaskJob < ApplicationJob
                   value: ticket.comportamento_esperado }
     end
 
+    message_content = context_message_content(ticket)
+    fields << { id: Integrations::Clickup::FieldMap::FIELDS[:mensagem], value: message_content } if message_content.present?
+
     canal_option = Integrations::Clickup::FieldMap.canal_option_for(ticket.conversation&.inbox)
     fields << { id: Integrations::Clickup::FieldMap::FIELDS[:canal], value: canal_option } if canal_option.present?
 
     fields
+  end
+
+  # Text of the message the agent picked when opening the feedback, so the
+  # ops team reads what the AI actually said without opening AurisChat.
+  # Blank for attachment-only messages, in which case the field is skipped.
+  def context_message_content(ticket)
+    ticket.context&.content.to_s.strip
   end
 
   def base_custom_fields(ticket)
