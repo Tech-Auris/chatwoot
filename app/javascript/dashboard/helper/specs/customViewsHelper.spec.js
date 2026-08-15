@@ -186,6 +186,27 @@ describe('customViewsHelper', () => {
       ]);
     });
 
+    it('should return id and name if attribute_key is ai_enabled', () => {
+      const params = {
+        ai_enabled: [
+          { id: true, name: 'AI Enabled' },
+          { id: false, name: 'AI Disabled' },
+        ],
+      };
+      expect(
+        getValuesForFilter(
+          { attribute_key: 'ai_enabled', values: [false] },
+          params
+        )
+      ).toEqual({ id: false, name: 'AI Disabled' });
+      expect(
+        getValuesForFilter(
+          { attribute_key: 'ai_enabled', values: ['true'] },
+          params
+        )
+      ).toEqual({ id: true, name: 'AI Enabled' });
+    });
+
     it('should return id and name if attribute_key is country_code', () => {
       const filter = { attribute_key: 'country_code', values: ['IN'] };
       const params = { countries: [{ id: 'IN', name: 'India' }] };

@@ -116,6 +116,20 @@ export function useConversationFilterContext() {
       attributeModel: 'standard',
     },
     {
+      attributeKey: CONVERSATION_ATTRIBUTES.AI_ENABLED,
+      value: CONVERSATION_ATTRIBUTES.AI_ENABLED,
+      attributeName: t('FILTER.ATTRIBUTES.AI_ENABLED'),
+      label: t('FILTER.ATTRIBUTES.AI_ENABLED'),
+      inputType: 'searchSelect',
+      options: [
+        { id: true, name: t('AUTOMATION.AI_STATUS_TYPES.ENABLED') },
+        { id: false, name: t('AUTOMATION.AI_STATUS_TYPES.DISABLED') },
+      ],
+      dataType: 'text',
+      filterOperators: equalityOperators.value,
+      attributeModel: 'standard',
+    },
+    {
       attributeKey: CONVERSATION_ATTRIBUTES.ASSIGNEE_ID,
       value: CONVERSATION_ATTRIBUTES.ASSIGNEE_ID,
       attributeName: t('FILTER.ATTRIBUTES.ASSIGNEE_NAME'),

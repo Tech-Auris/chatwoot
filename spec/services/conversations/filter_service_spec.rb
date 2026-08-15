@@ -556,6 +556,62 @@ describe Conversations::FilterService do
     end
   end
 
+  describe '#perform on ai_enabled filter' do
+    let!(:account) { create(:account) }
+    let!(:admin) { create(:user, account: account, role: :administrator) }
+    let!(:inbox) { create(:inbox, account: account, enable_auto_assignment: false) }
+    let!(:ai_on_conversation) { create(:conversation, account: account, inbox: inbox) }
+    let!(:ai_off_conversation) { create(:conversation, account: account, inbox: inbox) }
+
+    # The controller hands the payload over as ActionController::Parameters, so
+    # the same type is used here to keep the service exercised as in production.
+    let(:params) do
+      {
+        payload: [
+          ActionController::Parameters.new(
+            attribute_key: 'ai_enabled', filter_operator: 'equal_to', values: [false], query_operator: nil
+          )
+        ],
+        page: 1
+      }
+    end
+
+    before { account.conversations.where.not(id: [ai_on_conversation.id, ai_off_conversation.id]).destroy_all }
+
+    context 'when the account stores the AI status on the attribute' do
+      before do
+        account.update!(ai_status_uses_attribute: true)
+        ai_off_conversation.update!(ai_enabled: false)
+      end
+
+      it 'returns the conversations with the AI disabled' do
+        result = filter_service.new(params, admin, account).perform
+        expect(result[:conversations].map(&:id)).to contain_exactly(ai_off_conversation.id)
+      end
+
+      it 'returns the conversations with the AI enabled for not_equal_to' do
+        params[:payload][0][:filter_operator] = 'not_equal_to'
+        result = filter_service.new(params, admin, account).perform
+        expect(result[:conversations].map(&:id)).to contain_exactly(ai_on_conversation.id)
+      end
+    end
+
+    context 'when the account still stores the AI status on the legacy label' do
+      before { ai_off_conversation.update!(label_list: ['agente-off']) }
+
+      it 'returns the conversations carrying the agente-off label' do
+        result = filter_service.new(params, admin, account).perform
+        expect(result[:conversations].map(&:id)).to contain_exactly(ai_off_conversation.id)
+      end
+
+      it 'returns the conversations without the agente-off label for not_equal_to' do
+        params[:payload][0][:filter_operator] = 'not_equal_to'
+        result = filter_service.new(params, admin, account).perform
+        expect(result[:conversations].map(&:id)).to contain_exactly(ai_on_conversation.id)
+      end
+    end
+  end
+
   describe '#base_relation' do
     let!(:account) { create(:account) }
     let!(:user_1) { create(:user, account: account, role: :agent) }

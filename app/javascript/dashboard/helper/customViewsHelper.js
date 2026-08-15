@@ -77,6 +77,12 @@ const getValuesForGroupType = (values, groupType) => {
   return groupType.filter(option => values.includes(option.id));
 };
 
+const getValuesForAiStatus = (values, aiStatus) => {
+  // Saved folders may hold the value as a boolean or as its string version.
+  const selected = values.map(value => String(value));
+  return aiStatus.find(option => selected.includes(String(option.id)));
+};
+
 export const getValuesForFilter = (filter, params) => {
   const { attribute_key, values } = filter;
   const {
@@ -89,6 +95,7 @@ export const getValuesForFilter = (filter, params) => {
     labels,
     priority,
     group_type: groupType = [],
+    ai_enabled: aiStatus = [],
   } = params;
   switch (attribute_key) {
     case 'status':
@@ -111,6 +118,8 @@ export const getValuesForFilter = (filter, params) => {
       return getValuesForCountries(values, countries);
     case 'group_type':
       return getValuesForGroupType(values, groupType);
+    case 'ai_enabled':
+      return getValuesForAiStatus(values, aiStatus);
     default:
       return { id: values[0], name: values[0] };
   }

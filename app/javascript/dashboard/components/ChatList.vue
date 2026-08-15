@@ -523,6 +523,10 @@ function setParamsForEditFolderModal() {
       { id: 'individual', name: t('GROUP.FILTER.INDIVIDUAL') },
       { id: 'group', name: t('GROUP.FILTER.GROUP') },
     ],
+    ai_enabled: [
+      { id: true, name: t('AUTOMATION.AI_STATUS_TYPES.ENABLED') },
+      { id: false, name: t('AUTOMATION.AI_STATUS_TYPES.DISABLED') },
+    ],
     filterTypes: advancedFilterTypes.value,
     allCustomAttributes: conversationCustomAttributes.value,
   };
