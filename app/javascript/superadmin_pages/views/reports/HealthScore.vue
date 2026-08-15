@@ -199,14 +199,20 @@ const lastFetchedLabel = computed(() => {
   return lastFetchedAt.value.toLocaleTimeString('pt-BR');
 });
 
-const computedAtLabel = computed(() => {
-  if (!computedAt.value) return '—';
-  try {
-    return new Date(computedAt.value).toLocaleDateString('pt-BR');
-  } catch (e) {
-    return computedAt.value;
-  }
-});
+// Backend serializes `captured_on` (a Date, no time component) as
+// "YYYY-MM-DD". Feeding that to `new Date()` parses it as UTC midnight —
+// in any timezone west of UTC, `toLocaleDateString('pt-BR')` then shifts
+// it back a day (Aug 14 → 13/08). Format the parts directly instead so
+// the header matches the date the backend actually stored.
+const formatBrDate = value => {
+  if (!value) return '—';
+  const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return value;
+  const [, year, month, day] = match;
+  return `${day}/${month}/${year}`;
+};
+
+const computedAtLabel = computed(() => formatBrDate(computedAt.value));
 
 const totalAccounts = computed(() => accounts.value.length);
 
@@ -560,7 +566,7 @@ const arrow = column => {
                   </span>
                 </td>
                 <td class="px-5 py-4 text-n-slate-11 text-xs">
-                  {{ row.captured_on || '—' }}
+                  {{ formatBrDate(row.captured_on) }}
                 </td>
               </tr>
               <!-- Expanded breakdown row -->
