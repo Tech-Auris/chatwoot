@@ -2,7 +2,7 @@
 import { vOnClickOutside } from '@vueuse/components';
 import Button from 'dashboard/components-next/button/Button.vue';
 
-defineProps({
+const props = defineProps({
   headerTitle: {
     type: String,
     default: '',
@@ -11,12 +11,22 @@ defineProps({
     type: String,
     default: '',
   },
+  // Long forms are easy to dismiss by accident, so a page can opt out and
+  // leave the close to the form's own cancel/submit buttons.
+  closeOnClickOutside: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 const emit = defineEmits(['click', 'close']);
 
 const handleButtonClick = () => {
   emit('click');
+};
+
+const handleClickOutside = () => {
+  if (props.closeOnClickOutside) emit('close');
 };
 </script>
 
@@ -30,7 +40,7 @@ const handleButtonClick = () => {
           </span>
           <div
             v-on-click-outside="[
-              () => emit('close'),
+              handleClickOutside,
               // This will prevent closing the modal when the editor Create link popup is open
               { ignore: ['dialog.ProseMirror-prompt-backdrop'] },
             ]"
