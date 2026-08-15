@@ -56,6 +56,9 @@ class AccountDashboard < Administrate::BaseDashboard
     ai_status_uses_attribute: Field::Boolean,
     inbox_view_menu_enabled: Field::Boolean,
     help_center_menu_enabled: Field::Boolean,
+    campaigns_live_chat_menu_enabled: Field::Boolean,
+    campaigns_sms_menu_enabled: Field::Boolean,
+    settings_macros_menu_enabled: Field::Boolean,
     account_users: Field::HasMany,
     custom_attributes: Field::String
   }.merge(enterprise_attribute_types).freeze

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_07_13_000000) do
+ActiveRecord::Schema[7.1].define(version: 2026_08_14_000000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -101,6 +101,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_13_000000) do
     t.boolean "help_center_menu_enabled", default: false, null: false
     t.integer "environment", default: 0, null: false
     t.bigint "simulator_inbox_id"
+    t.boolean "campaigns_live_chat_menu_enabled", default: false, null: false
+    t.boolean "campaigns_sms_menu_enabled", default: false, null: false
+    t.boolean "settings_macros_menu_enabled", default: false, null: false
     t.index ["status"], name: "index_accounts_on_status"
   end
 

@@ -101,9 +101,18 @@ class SuperAdmin::AccountsController < SuperAdmin::ApplicationController
   def merge_auris_menus(permitted_params)
     return if params[:auris_menus].blank?
 
-    menus = params.require(:auris_menus).permit(:inbox_view_menu_enabled, :help_center_menu_enabled)
+    menus = params.require(:auris_menus).permit(
+      :inbox_view_menu_enabled,
+      :help_center_menu_enabled,
+      :campaigns_live_chat_menu_enabled,
+      :campaigns_sms_menu_enabled,
+      :settings_macros_menu_enabled
+    )
     permitted_params[:inbox_view_menu_enabled] = menus[:inbox_view_menu_enabled] == '1'
     permitted_params[:help_center_menu_enabled] = menus[:help_center_menu_enabled] == '1'
+    permitted_params[:campaigns_live_chat_menu_enabled] = menus[:campaigns_live_chat_menu_enabled] == '1'
+    permitted_params[:campaigns_sms_menu_enabled] = menus[:campaigns_sms_menu_enabled] == '1'
+    permitted_params[:settings_macros_menu_enabled] = menus[:settings_macros_menu_enabled] == '1'
   end
 end
 
