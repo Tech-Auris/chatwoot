@@ -26,9 +26,13 @@ const orderedStages = computed(() =>
 
 const cardsFor = stage => props.conversationsByStage[stage.name] || [];
 
+// Only prefix the summary with the projected sum when an average ticket
+// is actually configured — otherwise "R$ 0,00 · N conversas" reads as
+// broken data next to a stage that has real cards.
 const stageSummary = stage => {
   const count = stage.count || 0;
   const countLabel = t('FUNNEL.STAGE.COUNT_LABEL', count, { count });
+  if (!props.averageTicket) return countLabel;
   const sum = formatCurrency(count * props.averageTicket, props.locale);
   return `${sum} · ${countLabel}`;
 };
