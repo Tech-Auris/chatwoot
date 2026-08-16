@@ -567,3 +567,12 @@
   locked: false
   type: secret
 ## ---- End of ClickUp integration ---- ##
+
+## ---- Stripe integration (Financeiro) ---- ##
+- name: STRIPE_SECRET_KEY
+  display_title: 'Stripe Secret Key'
+  description: 'Secret key from the Stripe dashboard (sk_live_… or sk_test_…). When set, the Financeiro section reads and manages products, prices, customers and subscriptions on that Stripe account. One key per installation — use the test key on homolog. Leave blank to disable.'
+  value: ''
+  locked: false
+  type: secret
+## ---- End of Stripe integration ---- ##

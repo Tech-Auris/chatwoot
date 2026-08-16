@@ -26,4 +26,14 @@ module SuperAdmin::NavigationHelper
       { label: 'Instance Health', url: super_admin_instance_status_url }
     ]
   end
+
+  def financial_open?
+    params[:controller].start_with?('super_admin/financial/')
+  end
+
+  def financial_pages
+    [
+      { label: 'Produtos', url: super_admin_financial_products_url }
+    ]
+  end
 end

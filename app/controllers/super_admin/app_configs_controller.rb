@@ -37,6 +37,21 @@ class SuperAdmin::AppConfigsController < SuperAdmin::ApplicationController
     @config = params[:config] || 'general'
   end
 
+  # Auris-only settings screens, kept apart from the upstream mapping so
+  # syncing chatwoot/chatwoot doesn't conflict on every new entry.
+  def auris_config_mapping
+    {
+      # Only the API key is user-editable; CLICKUP_WEBHOOK_ID and
+      # CLICKUP_WEBHOOK_SECRET are populated automatically by
+      # Integrations::Clickup::RegisterWebhookJob after the key is saved.
+      'clickup' => %w[CLICKUP_API_KEY],
+      # Stripe integration behind the Financeiro section. Single secret key per
+      # installation — every Financeiro screen reads it through
+      # Integrations::Stripe::Client.
+      'stripe' => %w[STRIPE_SECRET_KEY]
+    }
+  end
+
   def allowed_configs
     mapping = {
       'facebook' => %w[FB_APP_ID FB_VERIFY_TOKEN FB_APP_SECRET IG_VERIFY_TOKEN FACEBOOK_API_VERSION ENABLE_MESSENGER_CHANNEL_HUMAN_AGENT],
@@ -52,12 +67,8 @@ class SuperAdmin::AppConfigsController < SuperAdmin::ApplicationController
       'whatsapp_embedded' => %w[WHATSAPP_APP_ID WHATSAPP_APP_SECRET WHATSAPP_CONFIGURATION_ID WHATSAPP_API_VERSION],
       'notion' => %w[NOTION_CLIENT_ID NOTION_CLIENT_SECRET],
       'google' => %w[GOOGLE_OAUTH_CLIENT_ID GOOGLE_OAUTH_CLIENT_SECRET GOOGLE_OAUTH_REDIRECT_URI ENABLE_GOOGLE_OAUTH_LOGIN],
-      'captain' => %w[CAPTAIN_OPEN_AI_API_KEY CAPTAIN_OPEN_AI_MODEL CAPTAIN_OPEN_AI_ENDPOINT],
-      # ClickUp Feedback Tickets integration. Only the API key is user-editable;
-      # CLICKUP_WEBHOOK_ID and CLICKUP_WEBHOOK_SECRET are populated automatically
-      # by Integrations::Clickup::RegisterWebhookJob after the key is saved.
-      'clickup' => %w[CLICKUP_API_KEY]
-    }
+      'captain' => %w[CAPTAIN_OPEN_AI_API_KEY CAPTAIN_OPEN_AI_MODEL CAPTAIN_OPEN_AI_ENDPOINT]
+    }.merge(auris_config_mapping)
 
     @allowed_configs = mapping.fetch(
       @config,
