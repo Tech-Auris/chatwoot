@@ -1,0 +1,10 @@
+<% content_for(:title) do %>
+  Vínculos com o Stripe
+<% end %>
+
+<%= render_vue_component('FinancialCustomerLinksIndex', {
+  data_url: data_super_admin_financial_customer_links_url(format: :json),
+  links_url: super_admin_financial_customer_links_url(format: :json),
+  configured: Integrations::Stripe::Client.new.configured?,
+  settings_url: super_admin_app_config_path(config: 'stripe')
+}) %>
