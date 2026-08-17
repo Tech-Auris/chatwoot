@@ -33,7 +33,8 @@ module SuperAdmin::NavigationHelper
 
   def financial_pages
     [
-      { label: 'Produtos', url: super_admin_financial_products_url }
+      { label: 'Produtos', url: super_admin_financial_products_url },
+      { label: 'Vínculos', url: super_admin_financial_customer_links_url }
     ]
   end
 end

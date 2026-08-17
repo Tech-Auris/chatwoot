@@ -820,6 +820,17 @@ Rails.application.routes.draw do
             post :prices
           end
         end
+
+        # The link is keyed by the account it belongs to, so the account id is
+        # the member param instead of an id of its own.
+        resources :customer_links, only: [:index, :update, :destroy], param: :account_id, controller: 'customer_links' do
+          collection do
+            get :data
+          end
+          member do
+            post :customer
+          end
+        end
       end
 
       # order of resources affect the order of sidebar navigation in super admin

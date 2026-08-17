@@ -7,6 +7,7 @@ import DashboardIndex from '../superadmin_pages/views/dashboard/Index.vue';
 import InboxStatusIndex from '../superadmin_pages/views/reports/InboxStatus.vue';
 import HealthScoreIndex from '../superadmin_pages/views/reports/HealthScore.vue';
 import FinancialProductsIndex from '../superadmin_pages/views/financial/Products.vue';
+import FinancialCustomerLinksIndex from '../superadmin_pages/views/financial/CustomerLinks.vue';
 
 const ComponentMapping = {
   PlaygroundIndex: PlaygroundIndex,
@@ -14,6 +15,7 @@ const ComponentMapping = {
   InboxStatusIndex: InboxStatusIndex,
   HealthScoreIndex: HealthScoreIndex,
   FinancialProductsIndex: FinancialProductsIndex,
+  FinancialCustomerLinksIndex: FinancialCustomerLinksIndex,
 };
 
 const renderComponent = (componentName, props) => {
