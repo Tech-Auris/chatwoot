@@ -110,9 +110,14 @@ export const hasValidAvatarUrl = avatarUrl => {
   }
 };
 
-export const timeStampAppendedURL = dataUrl => {
+export const timeStampAppendedURL = (dataUrl, timestamp) => {
   const url = new URL(dataUrl);
-  if (!url.searchParams.has('t')) {
+  // An explicit timestamp is a deliberate cache bust — retrying a media file
+  // whose cached URL resolved to an expired target — so it replaces whatever
+  // is already there instead of being ignored.
+  if (timestamp !== undefined) {
+    url.searchParams.set('t', timestamp);
+  } else if (!url.searchParams.has('t')) {
     url.searchParams.append('t', Date.now());
   }
 

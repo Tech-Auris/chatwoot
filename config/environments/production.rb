@@ -42,6 +42,13 @@ Rails.application.configure do
   # Store uploaded files on the local file system (see config/storage.yml for options)
   config.active_storage.service = ENV.fetch('ACTIVE_STORAGE_SERVICE', 'local').to_sym
 
+  # Rails defaults these URLs to 5 minutes. An <audio> element re-requests the
+  # file on every replay, and any HTTP cache in front of the app can hold the
+  # redirect long after its target died — the operator then sees "audio
+  # unavailable" until a full page reload. A few hours covers a working session
+  # without keeping the signed URL alive for days.
+  config.active_storage.service_urls_expire_in = ENV.fetch('ACTIVE_STORAGE_URL_EXPIRY_HOURS', '6').to_i.hours
+
   # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
   config.force_ssl = ActiveModel::Type::Boolean.new.cast(ENV.fetch('FORCE_SSL', false))
 

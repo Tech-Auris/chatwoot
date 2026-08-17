@@ -8,8 +8,13 @@ export const useLoadWithRetry = (config = {}) => {
   const isLoaded = ref(false);
   const hasError = ref(false);
 
-  const loadWithRetry = async url => {
+  // `source` is either a URL or a function returning one. The function form
+  // exists for media whose URL must differ per attempt: an ActiveStorage
+  // redirect that a cache already resolved to an expired target would fail
+  // every retry identically if the same URL were reused.
+  const loadWithRetry = async source => {
     const attemptLoad = async () => {
+      const url = typeof source === 'function' ? source() : source;
       return new Promise((resolve, reject) => {
         let media;
         if (type === 'image') {

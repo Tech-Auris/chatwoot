@@ -32,6 +32,9 @@ Rails.application.configure do
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = ENV.fetch('ACTIVE_STORAGE_SERVICE', 'local').to_sym
 
+  # Same expiry as production so media playback behaves the same in both.
+  config.active_storage.service_urls_expire_in = ENV.fetch('ACTIVE_STORAGE_URL_EXPIRY_HOURS', '6').to_i.hours
+
   config.active_job.queue_adapter = :sidekiq
 
   Rails.application.routes.default_url_options = { host: ENV['FRONTEND_URL'].to_s.chomp('/') }

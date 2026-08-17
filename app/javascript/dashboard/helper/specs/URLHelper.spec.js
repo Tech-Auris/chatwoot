@@ -232,6 +232,21 @@ describe('#URL Helpers', () => {
       expect(timeStampAppendedURL(input)).toBe(input);
     });
 
+    // Retrying an expired media URL depends on the new value winning, otherwise
+    // every attempt reuses the cached response that just failed.
+    it('should replace an existing timestamp when one is passed explicitly', () => {
+      const input = 'https://example.com/audio.mp3?t=9876543210';
+      expect(timeStampAppendedURL(input, 1111)).toBe(
+        'https://example.com/audio.mp3?t=1111'
+      );
+    });
+
+    it('should append an explicit timestamp to a URL without one', () => {
+      expect(timeStampAppendedURL('https://example.com/audio.mp3', 2222)).toBe(
+        'https://example.com/audio.mp3?t=2222'
+      );
+    });
+
     it('should handle URLs with hash fragments', () => {
       const input = 'https://example.com/audio.mp3#section1';
       const expected = `https://example.com/audio.mp3?t=${FIXED_TIMESTAMP}#section1`;
