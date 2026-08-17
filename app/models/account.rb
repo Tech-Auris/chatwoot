@@ -27,10 +27,12 @@
 #  created_at                       :datetime         not null
 #  updated_at                       :datetime         not null
 #  simulator_inbox_id               :bigint
+#  stripe_customer_id               :string
 #
 # Indexes
 #
-#  index_accounts_on_status  (status)
+#  index_accounts_on_status              (status)
+#  index_accounts_on_stripe_customer_id  (stripe_customer_id) UNIQUE WHERE (stripe_customer_id IS NOT NULL)
 #
 
 class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength

@@ -1,0 +1,10 @@
+<% content_for(:title) do %>
+  Assinaturas
+<% end %>
+
+<%= render_vue_component('FinancialSubscriptionsIndex', {
+  data_url: data_super_admin_financial_subscriptions_url(format: :json),
+  configured: Integrations::Stripe::Client.new.configured?,
+  settings_url: super_admin_app_config_path(config: 'stripe'),
+  links_url: super_admin_financial_customer_links_path
+}) %>

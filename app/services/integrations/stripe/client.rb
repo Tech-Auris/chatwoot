@@ -12,6 +12,9 @@
 class Integrations::Stripe::Client
   DEFAULT_TIMEOUT = 15
   PRODUCT_LIST_LIMIT = 100
+  # Reverse pointer stamped on the Stripe customer so the pairing is auditable
+  # from the Stripe dashboard, not only from our database.
+  ACCOUNT_METADATA_KEY = 'aurischat_account_id'.freeze
 
   class Error < StandardError; end
   class Unauthorized < Error; end
@@ -90,6 +93,45 @@ class Integrations::Stripe::Client
 
   def archive_price(price_id)
     with_error_handling { Stripe::Price.update(price_id, { active: false }, request_options) }
+  end
+
+  # Every customer on the account. `auto_paging_each` walks past the 100-item
+  # page cap, which matters as soon as the catalog outgrows a single page.
+  def list_customers
+    with_error_handling do
+      Stripe::Customer.list({ limit: PRODUCT_LIST_LIMIT }, request_options).auto_paging_each.to_a
+    end
+  end
+
+  # The account id rides on `metadata` so the link is readable from the Stripe
+  # dashboard and can be rebuilt from Stripe if our column is ever lost.
+  def create_customer(name:, email: nil, account_id: nil)
+    payload = { name: name, email: email.presence }.compact
+    payload[:metadata] = { ACCOUNT_METADATA_KEY => account_id.to_s } if account_id.present?
+
+    with_error_handling { Stripe::Customer.create(payload, request_options) }
+  end
+
+  def link_customer_to_account(customer_id, account_id)
+    with_error_handling do
+      Stripe::Customer.update(customer_id, { metadata: { ACCOUNT_METADATA_KEY => account_id.to_s } }, request_options)
+    end
+  end
+
+  # Clearing a metadata key on Stripe means sending it as an empty string.
+  def unlink_customer(customer_id)
+    with_error_handling do
+      Stripe::Customer.update(customer_id, { metadata: { ACCOUNT_METADATA_KEY => '' } }, request_options)
+    end
+  end
+
+  # Every subscription, in any state. `status: 'all'` is what surfaces the
+  # canceled and past_due ones — the default only returns the healthy ones,
+  # which are exactly the rows nobody needs to look at.
+  def list_subscriptions
+    with_error_handling do
+      Stripe::Subscription.list({ status: 'all', limit: PRODUCT_LIST_LIMIT }, request_options).auto_paging_each.to_a
+    end
   end
 
   private
