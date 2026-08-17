@@ -1,6 +1,7 @@
 <script setup>
 import {
   computed,
+  nextTick,
   onMounted,
   useTemplateRef,
   ref,
@@ -34,9 +35,23 @@ const { isLoaded, hasError, loadWithRetry } = useLoadWithRetry({
   type: 'audio',
 });
 
+// The audio URL is an ActiveStorage redirect whose target expires in five
+// minutes, while the redirect itself can sit in an HTTP cache far longer. Once
+// that happens the player keeps asking for a dead target and the operator sees
+// "áudio indisponível" until a full reload. Every load attempt therefore gets a
+// new `?t=`, which is a cache miss and forces a fresh redirect.
+const cacheBuster = ref(Date.now());
+const MAX_URL_REFRESHES = 2;
+const urlRefreshes = ref(0);
+
 const timeStampURL = computed(() => {
-  return timeStampAppendedURL(attachment.dataUrl);
+  return timeStampAppendedURL(attachment.dataUrl, cacheBuster.value);
 });
+
+const freshAudioURL = () => {
+  cacheBuster.value = Date.now();
+  return timeStampURL.value;
+};
 
 const audioPlayer = useTemplateRef('audioPlayer');
 
@@ -45,6 +60,19 @@ const isMuted = ref(false);
 const currentTime = ref(0);
 const duration = ref(0);
 const playbackSpeed = ref(1);
+
+// Fired when playback fails mid-session, typically on a replay after the
+// target expired. Bounded so a genuinely missing file doesn't loop forever.
+const onAudioError = async () => {
+  if (urlRefreshes.value >= MAX_URL_REFRESHES) return;
+
+  urlRefreshes.value += 1;
+  const wasPlaying = isPlaying.value;
+  cacheBuster.value = Date.now();
+  await nextTick();
+  audioPlayer.value?.load();
+  if (wasPlaying) audioPlayer.value?.play().catch(() => {});
+};
 
 const { uid } = getCurrentInstance();
 
@@ -61,7 +89,7 @@ const playbackSpeedLabel = computed(() => {
 
 onMounted(() => {
   if (attachment.dataUrl) {
-    loadWithRetry(attachment.dataUrl);
+    loadWithRetry(freshAudioURL);
   }
 });
 
@@ -152,8 +180,11 @@ const downloadAudio = async () => {
       @loadedmetadata="onLoadedMetadata"
       @timeupdate="onTimeUpdate"
       @ended="onEnd"
+      @error="onAudioError"
     >
-      <source :src="timeStampURL" />
+      <!-- The error listener sits on both elements: with a <source> child the
+           failure fires there and does not bubble to the media element. -->
+      <source :src="timeStampURL" @error="onAudioError" />
     </audio>
     <div
       v-bind="$attrs"
