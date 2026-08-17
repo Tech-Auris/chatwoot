@@ -831,6 +831,12 @@ Rails.application.routes.draw do
             post :customer
           end
         end
+
+        resources :subscriptions, only: [:index], controller: 'subscriptions' do
+          collection do
+            get :data
+          end
+        end
       end
 
       # order of resources affect the order of sidebar navigation in super admin

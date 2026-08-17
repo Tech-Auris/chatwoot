@@ -34,7 +34,8 @@ module SuperAdmin::NavigationHelper
   def financial_pages
     [
       { label: 'Produtos', url: super_admin_financial_products_url },
-      { label: 'Vínculos', url: super_admin_financial_customer_links_url }
+      { label: 'Vínculos', url: super_admin_financial_customer_links_url },
+      { label: 'Assinaturas', url: super_admin_financial_subscriptions_url }
     ]
   end
 end
