@@ -1,0 +1,36 @@
+<%
+  api_key = InstallationConfig.find_by(name: 'STRIPE_SECRET_KEY')&.value.presence
+%>
+
+<section class="main-content__body">
+  <hr class="my-8" />
+
+  <h2 class="text-lg font-medium mb-2">Conexão com o Stripe</h2>
+  <p class="text-sm text-slate-500 mb-4">
+    A chave acima é usada por toda a seção <strong>Financeiro</strong> para ler e gerenciar
+    produtos, preços, clientes e assinaturas. Uma chave por instalação — use a chave de teste
+    em homologação.
+  </p>
+
+  <% if api_key.blank? %>
+    <div class="mb-4 p-3 rounded border border-slate-100 bg-slate-25">
+      <p class="text-sm text-slate-600">
+        Salve a <strong>Stripe Secret Key</strong> acima para habilitar a seção Financeiro.
+      </p>
+    </div>
+  <% else %>
+    <div class="mb-4 p-3 rounded border border-slate-100 bg-slate-25">
+      <p class="text-sm text-slate-600">
+        Chave configurada. Use o botão abaixo para confirmar que ela é válida e ver se aponta
+        para o ambiente <strong>LIVE</strong> ou de <strong>TESTE</strong>.
+      </p>
+    </div>
+    <%= form_with url: test_connection_super_admin_integrations_stripe_path,
+                  method: :post,
+                  html: { class: 'form' } do |form| %>
+      <div class="form-actions">
+        <%= form.submit 'Testar conexão' %>
+      </div>
+    <% end %>
+  <% end %>
+</section>

@@ -150,3 +150,9 @@ clickup:
   enabled: true
   icon: 'icon-list-check-2'
   config_key: 'clickup'
+stripe:
+  name: 'Stripe'
+  description: 'Configuration for the Stripe integration behind the Financeiro section'
+  enabled: true
+  icon: 'icon-money-dollar-circle-line'
+  config_key: 'stripe'

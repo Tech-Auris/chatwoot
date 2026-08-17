@@ -80,6 +80,10 @@
   <%= render 'clickup_webhook_panel' %>
 <% end %>
 
+<% if @config == 'stripe' %>
+  <%= render 'stripe_connection_panel' %>
+<% end %>
+
 <% content_for :javascript do %>
   <script>
   document.addEventListener('DOMContentLoaded', () => {

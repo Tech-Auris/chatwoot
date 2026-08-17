@@ -801,6 +801,25 @@ Rails.application.routes.draw do
         resource :clickup, only: [], controller: 'clickup' do
           post :register_webhook
         end
+
+        # Stripe credential check behind Super Admin → Settings → Stripe. The
+        # key is saved by the shared app_configs form; this only validates it.
+        resource :stripe, only: [], controller: 'stripe' do
+          post :test_connection
+        end
+      end
+
+      # Financeiro: Stripe-backed screens for products, account links,
+      # subscriptions and invoices.
+      namespace :financial do
+        resources :products, only: [:index, :create, :update, :destroy], controller: 'products' do
+          collection do
+            get :data
+          end
+          member do
+            post :prices
+          end
+        end
       end
 
       # order of resources affect the order of sidebar navigation in super admin
