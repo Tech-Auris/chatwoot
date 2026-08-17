@@ -1,4 +1,16 @@
 ---
+- tag: v4.15.1-auris.1.45
+  published_at: '2026-08-17T17:10:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.45
+  notes:
+    en: |-
+      ### 🐛 Fixes
+
+      - **Replaying an audio works again.** Shortly after a voice message arrived, the player would show "audio unavailable" and only came back after reloading the page. Now you can listen as many times as you need.
+    pt_BR: |-
+      ### 🐛 Correções
+
+      - **Ouvir um áudio de novo voltou a funcionar.** Pouco depois de a mensagem de voz chegar, o player passava a mostrar "Áudio indisponível" e só voltava recarregando a página. Agora dá para ouvir quantas vezes precisar.
 - tag: v4.15.1-auris.1.44
   published_at: '2026-08-15T03:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.44
@@ -287,11 +299,3 @@
       ### ⚡ Melhorias
 
       - **Bandeirinha de feedback aparece em mensagens que falharam ao enviar.** As bolhas que deram erro no envio são justamente as que você quer mandar pro time de IA — agora a bandeirinha aparece nelas também.
-- tag: v4.15.1-auris.1.41.13
-  published_at: '2026-07-14T04:00:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.41.13
-  notes:
-    en: |-
-      Bug fixes and internal improvements.
-    pt_BR: |-
-      Correções de bugs e melhorias internas.
