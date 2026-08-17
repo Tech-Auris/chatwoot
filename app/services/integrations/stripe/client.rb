@@ -125,6 +125,15 @@ class Integrations::Stripe::Client
     end
   end
 
+  # Every subscription, in any state. `status: 'all'` is what surfaces the
+  # canceled and past_due ones — the default only returns the healthy ones,
+  # which are exactly the rows nobody needs to look at.
+  def list_subscriptions
+    with_error_handling do
+      Stripe::Subscription.list({ status: 'all', limit: PRODUCT_LIST_LIMIT }, request_options).auto_paging_each.to_a
+    end
+  end
+
   private
 
   def request_options
