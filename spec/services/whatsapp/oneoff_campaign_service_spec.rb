@@ -76,6 +76,38 @@ describe Whatsapp::OneoffCampaignService do
     end
 
     context 'when campaign is valid' do
+      # Audience uploaded as a CSV is stored as explicit contacts, not labels,
+      # so the campaign must target exactly those and ignore the label path.
+      it 'targets the contacts listed in the audience when they are given explicitly' do
+        tagged = create(:contact, :with_phone_number, account: account)
+        tagged.update_labels([label1.title])
+        chosen = create(:contact, :with_phone_number, account: account)
+        campaign.update!(audience: [{ 'type' => 'Contact', 'id' => chosen.id }])
+
+        described_class.new(campaign: campaign).perform
+
+        expect(Conversation.where(campaign_id: campaign.id).pluck(:contact_id)).to eq([chosen.id])
+      end
+
+      it 'tags the conversations when the campaign carries a label' do
+        contact = create(:contact, :with_phone_number, account: account)
+        campaign.update!(audience: [{ 'type' => 'Contact', 'id' => contact.id }], conversation_label: 'campanha-agosto')
+
+        described_class.new(campaign: campaign).perform
+
+        conversation = Conversation.find_by(campaign_id: campaign.id)
+        expect(conversation.label_list).to include('campanha-agosto')
+      end
+
+      it 'leaves conversations untagged when no label was chosen' do
+        contact = create(:contact, :with_phone_number, account: account)
+        campaign.update!(audience: [{ 'type' => 'Contact', 'id' => contact.id }])
+
+        described_class.new(campaign: campaign).perform
+
+        expect(Conversation.find_by(campaign_id: campaign.id).label_list).to be_empty
+      end
+
       # Without pacing the whole audience is enqueued at once, which puts a
       # campaign ahead of the replies agents are typing and bursts templates
       # at the number.

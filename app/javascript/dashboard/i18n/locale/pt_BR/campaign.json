@@ -187,6 +187,24 @@
             "PLACEHOLDER": "Selecionar etiquetas dos clientes",
             "ERROR": "Público é necessário"
           },
+          "AUDIENCE_SOURCE": {
+            "LABEL": "Público",
+            "LABELS": "Etiquetas dos clientes",
+            "FILE": "Via arquivo"
+          },
+          "AUDIENCE_FILE": {
+            "LABEL": "Arquivo CSV",
+            "INFO": "Colunas: id, name, email, phone_number. Contatos novos são criados; os que já existem são reaproveitados pelo telefone.",
+            "SAMPLE": "Baixar um exemplo de csv.",
+            "IMPORTING": "Lendo o arquivo…",
+            "SUMMARY": "{total} contato(s) prontos — {created} criados, {reused} já existentes.",
+            "INVALID": " {count} linha(s) ignorada(s).",
+            "ERROR": "Não foi possível ler o arquivo."
+          },
+          "CONVERSATION_LABEL": {
+            "TOGGLE": "Marcar as conversas desta campanha com uma etiqueta",
+            "PLACEHOLDER": "Selecione a etiqueta"
+          },
           "SCHEDULED_AT": {
             "LABEL": "Horário agendado",
             "PLACEHOLDER": "Por favor insira a hora",

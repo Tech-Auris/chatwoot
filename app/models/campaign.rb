@@ -7,6 +7,7 @@
 #  cadence_seconds                    :integer          default(10), not null
 #  campaign_status                    :integer          default("active"), not null
 #  campaign_type                      :integer          default("ongoing"), not null
+#  conversation_label                 :string
 #  description                        :text
 #  enabled                            :boolean          default(TRUE)
 #  message                            :text             not null

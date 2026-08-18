@@ -187,6 +187,24 @@
             "PLACEHOLDER": "Select the customer labels",
             "ERROR": "Audience is required"
           },
+          "AUDIENCE_SOURCE": {
+            "LABEL": "Audience",
+            "LABELS": "Customer labels",
+            "FILE": "From a file"
+          },
+          "AUDIENCE_FILE": {
+            "LABEL": "CSV file",
+            "INFO": "Columns: id, name, email, phone_number. New contacts are created; existing ones are matched by phone number.",
+            "SAMPLE": "Download a sample csv.",
+            "IMPORTING": "Reading the file…",
+            "SUMMARY": "{total} contact(s) ready — {created} created, {reused} already existed.",
+            "INVALID": " {count} row(s) skipped.",
+            "ERROR": "Could not read the file."
+          },
+          "CONVERSATION_LABEL": {
+            "TOGGLE": "Tag the conversations of this campaign with a label",
+            "PLACEHOLDER": "Select the label"
+          },
           "SCHEDULED_AT": {
             "LABEL": "Scheduled time",
             "PLACEHOLDER": "Please select the time",

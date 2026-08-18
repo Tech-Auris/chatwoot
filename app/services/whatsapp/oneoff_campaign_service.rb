@@ -5,7 +5,7 @@ class Whatsapp::OneoffCampaignService
     validate_campaign!
     # marks campaign completed so that other jobs won't pick it up
     campaign.completed!
-    process_audience(extract_audience_labels)
+    process_audience
   end
 
   private
@@ -41,8 +41,22 @@ class Whatsapp::OneoffCampaignService
   end
 
   def extract_audience_labels
-    audience_label_ids = campaign.audience.select { |audience| audience['type'] == 'Label' }.pluck('id')
+    audience_label_ids = audience_ids_for('Label')
     campaign.account.labels.where(id: audience_label_ids).pluck(:title)
+  end
+
+  def audience_ids_for(type)
+    campaign.audience.select { |audience| audience['type'] == type }.pluck('id')
+  end
+
+  # The audience is either a set of contact labels or an explicit list of
+  # contacts, the latter coming from the CSV the operator uploaded when
+  # creating the campaign.
+  def audience_contacts
+    contact_ids = audience_ids_for('Contact')
+    return campaign.account.contacts.where(id: contact_ids) if contact_ids.any?
+
+    campaign.account.contacts.tagged_with(extract_audience_labels, any: true)
   end
 
   def process_contact(contact)
@@ -56,12 +70,17 @@ class Whatsapp::OneoffCampaignService
     contact_inbox = ContactInboxBuilder.new(contact: contact, inbox: inbox).perform
     return log_skip(contact, 'failed to resolve contact inbox') if contact_inbox.blank?
 
-    conversation = build_campaign_conversation(contact_inbox)
-    build_outgoing_template_message(conversation, rendered_body, rendered_template_params)
+    dispatch_to(contact_inbox, rendered_body, rendered_template_params)
   rescue StandardError => e
     Rails.logger.error "Failed to dispatch campaign message to #{contact.name}: #{e.message}"
     Rails.logger.error "Backtrace: #{e.backtrace.first(5).join("\n")}"
     nil
+  end
+
+  def dispatch_to(contact_inbox, rendered_body, rendered_template_params)
+    conversation = build_campaign_conversation(contact_inbox)
+    apply_conversation_label(conversation)
+    build_outgoing_template_message(conversation, rendered_body, rendered_template_params)
   end
 
   def eligible_contact?(contact)
@@ -76,8 +95,8 @@ class Whatsapp::OneoffCampaignService
     nil
   end
 
-  def process_audience(audience_labels)
-    contacts = campaign.account.contacts.tagged_with(audience_labels, any: true)
+  def process_audience
+    contacts = audience_contacts
     Rails.logger.info "Processing #{contacts.count} contacts for campaign #{campaign.id}"
 
     contacts.each { |contact| process_contact(contact) }
@@ -125,6 +144,15 @@ class Whatsapp::OneoffCampaignService
       campaign_id: campaign.id,
       status: :pending
     )
+  end
+
+  # Optional tag chosen when the campaign was created, so the team can find
+  # later which conversations came from it. `add_labels` keeps whatever the
+  # conversation already had.
+  def apply_conversation_label(conversation)
+    return if campaign.conversation_label.blank?
+
+    conversation.add_labels(campaign.conversation_label)
   end
 
   def build_outgoing_template_message(conversation, content, template_params)
