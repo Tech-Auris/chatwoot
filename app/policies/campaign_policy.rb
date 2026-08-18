@@ -29,4 +29,8 @@ class CampaignPolicy < ApplicationPolicy
   def audience_preview?
     create?
   end
+
+  def report?
+    show?
+  end
 end

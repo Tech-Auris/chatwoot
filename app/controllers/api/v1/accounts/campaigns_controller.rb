@@ -1,5 +1,6 @@
 class Api::V1::Accounts::CampaignsController < Api::V1::Accounts::BaseController
   PREVIEW_PER_PAGE = 25
+  REPORT_PER_PAGE = 25
 
   before_action :campaign, except: [:index, :create, :import_audience, :audience_preview]
   before_action :check_authorization
@@ -34,6 +35,23 @@ class Api::V1::Accounts::CampaignsController < Api::V1::Accounts::BaseController
     render json: { error: e.message }, status: :unprocessable_entity
   end
 
+  # Delivery report of a campaign: the totals on top and one row per message,
+  # so the team can tell what actually reached each contact.
+  def report
+    messages = campaign_messages
+    page = messages.reorder(created_at: :desc).page(params[:page] || 1).per(REPORT_PER_PAGE)
+
+    render json: {
+      summary: report_summary(messages),
+      messages: page.map { |message| serialize_report_message(message) },
+      meta: {
+        current_page: page.current_page,
+        total_pages: page.total_pages,
+        total_count: page.total_count
+      }
+    }
+  end
+
   # Lists exactly who the campaign would reach, for either audience source, so
   # the operator can check the list before scheduling instead of after.
   def audience_preview
@@ -51,6 +69,47 @@ class Api::V1::Accounts::CampaignsController < Api::V1::Accounts::BaseController
   end
 
   private
+
+  # Messages carry the campaign id inside `additional_attributes`. The window
+  # on `created_at` keeps the lookup off a full scan of a very large table —
+  # nothing from this campaign can predate its own schedule.
+  def campaign_messages
+    Current.account.messages
+           .where('messages.created_at >= ?', (@campaign.scheduled_at || @campaign.created_at) - 1.hour)
+           .where("messages.additional_attributes ->> 'campaign_id' = ?", @campaign.id.to_s)
+  end
+
+  def report_summary(messages)
+    counts = messages.reorder(nil).group(:status).count
+    total = counts.values.sum
+    failed = counts['failed'].to_i
+    delivered = counts['delivered'].to_i + counts['read'].to_i
+
+    {
+      total: total,
+      accepted: total - failed,
+      failed: failed,
+      delivered: delivered,
+      read: counts['read'].to_i,
+      # Accepted by Meta over everything we tried to send. Delivery to the
+      # handset is reported separately, since it depends on the recipient.
+      success_rate: total.zero? ? 0 : ((total - failed).to_f / total * 100).round(1)
+    }
+  end
+
+  def serialize_report_message(message)
+    contact = message.conversation&.contact
+
+    {
+      id: message.id,
+      status: message.status,
+      created_at: message.created_at.to_i,
+      error: message.external_error,
+      contact_name: contact&.name,
+      contact_phone: contact&.phone_number,
+      conversation_id: message.conversation&.display_id
+    }
+  end
 
   # Mirrors Whatsapp::OneoffCampaignService: an explicit contact list wins,
   # otherwise the labels select the audience.

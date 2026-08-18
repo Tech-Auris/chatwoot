@@ -159,7 +159,8 @@
         "CADENCE_LABEL": "Cadência:",
         "CADENCE_SECONDS": "{count}s entre mensagens",
         "CADENCE_MINUTES": "{count}min entre mensagens",
-        "CONVERSATION_LABEL": "Etiqueta nas conversas:"
+        "CONVERSATION_LABEL": "Etiqueta nas conversas:",
+        "REPORT": "Relatório"
       },
       "CREATE": {
         "TITLE": "Criar campanha do WhatsApp",
@@ -247,6 +248,35 @@
             "SUCCESS_MESSAGE": "Campanha do WhatsApp criada com sucesso",
             "ERROR_MESSAGE": "Houve um erro. Por favor, tente novamente."
           }
+        }
+      },
+      "REPORT": {
+        "TITLE": "Relatório da campanha",
+        "BACK": "Voltar",
+        "LOADING": "Carregando…",
+        "EMPTY": "Esta campanha ainda não enviou mensagens.",
+        "ERROR": "Não foi possível carregar o relatório.",
+        "CONTACT": "Contato",
+        "STATUS_COLUMN": "Status",
+        "SENT_AT": "Envio",
+        "CONVERSATION": "Conversa",
+        "OPEN_CONVERSATION": "Abrir conversa",
+        "PREVIOUS": "Anterior",
+        "NEXT": "Próxima",
+        "PAGE": "Página {current} de {total}",
+        "SUMMARY": {
+          "TOTAL": "Mensagens",
+          "ACCEPTED": "Aceitas pela Meta",
+          "DELIVERED": "Entregues",
+          "READ": "Lidas",
+          "FAILED": "Falhas",
+          "SUCCESS_RATE": "% de sucesso"
+        },
+        "STATUS": {
+          "SENT": "Enviada",
+          "DELIVERED": "Entregue",
+          "READ": "Lida",
+          "FAILED": "Falhou"
         }
       }
     },

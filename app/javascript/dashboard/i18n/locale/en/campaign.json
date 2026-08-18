@@ -159,7 +159,8 @@
         "CADENCE_LABEL": "Cadence:",
         "CADENCE_SECONDS": "{count}s between messages",
         "CADENCE_MINUTES": "{count}min between messages",
-        "CONVERSATION_LABEL": "Conversation label:"
+        "CONVERSATION_LABEL": "Conversation label:",
+        "REPORT": "Report"
       },
       "CREATE": {
         "TITLE": "Create WhatsApp campaign",
@@ -247,6 +248,35 @@
             "SUCCESS_MESSAGE": "WhatsApp campaign created successfully",
             "ERROR_MESSAGE": "There was an error. Please try again."
           }
+        }
+      },
+      "REPORT": {
+        "TITLE": "Campaign report",
+        "BACK": "Back",
+        "LOADING": "Loading…",
+        "EMPTY": "This campaign hasn't sent any message yet.",
+        "ERROR": "Could not load the report.",
+        "CONTACT": "Contact",
+        "STATUS_COLUMN": "Status",
+        "SENT_AT": "Sent",
+        "CONVERSATION": "Conversation",
+        "OPEN_CONVERSATION": "Open conversation",
+        "PREVIOUS": "Previous",
+        "NEXT": "Next",
+        "PAGE": "Page {current} of {total}",
+        "SUMMARY": {
+          "TOTAL": "Messages",
+          "ACCEPTED": "Accepted by Meta",
+          "DELIVERED": "Delivered",
+          "READ": "Read",
+          "FAILED": "Failed",
+          "SUCCESS_RATE": "Success rate"
+        },
+        "STATUS": {
+          "SENT": "Sent",
+          "DELIVERED": "Delivered",
+          "READ": "Read",
+          "FAILED": "Failed"
         }
       }
     },

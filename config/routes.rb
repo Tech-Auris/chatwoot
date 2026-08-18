@@ -135,6 +135,9 @@ Rails.application.routes.draw do
               post :import_audience
               get :audience_preview
             end
+            member do
+              get :report
+            end
           end
           resources :funnel_stages, only: [:index, :show]
           resources :loss_reasons, only: [:index, :show]

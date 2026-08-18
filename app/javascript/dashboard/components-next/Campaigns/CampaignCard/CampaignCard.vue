@@ -65,7 +65,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['edit', 'delete']);
+const emit = defineEmits(['edit', 'delete', 'report']);
 
 const { t } = useI18n();
 
@@ -251,6 +251,15 @@ const hasCampaignDetails = computed(
         color="slate"
         icon="i-lucide-sliders-vertical"
         @click="emit('edit')"
+      />
+      <Button
+        v-if="!isLiveChatType"
+        variant="faded"
+        color="slate"
+        size="sm"
+        icon="i-lucide-chart-column"
+        :title="t('CAMPAIGN.WHATSAPP.CARD.REPORT')"
+        @click="emit('report')"
       />
       <Button
         variant="faded"

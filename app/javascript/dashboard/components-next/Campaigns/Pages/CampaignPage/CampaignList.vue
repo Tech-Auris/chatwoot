@@ -12,7 +12,7 @@ defineProps({
   },
 });
 
-const emit = defineEmits(['edit', 'delete']);
+const emit = defineEmits(['edit', 'delete', 'report']);
 
 const handleEdit = campaign => emit('edit', campaign);
 const handleDelete = campaign => emit('delete', campaign);
@@ -36,6 +36,7 @@ const handleDelete = campaign => emit('delete', campaign);
       :cadence-seconds="campaign.cadence_seconds"
       :conversation-label="campaign.conversation_label"
       :is-live-chat-type="isLiveChatType"
+      @report="emit('report', campaign)"
       @edit="handleEdit(campaign)"
       @delete="handleDelete(campaign)"
     />
