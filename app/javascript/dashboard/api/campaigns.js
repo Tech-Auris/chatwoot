@@ -1,4 +1,4 @@
-import axios from 'axios';
+/* global axios */
 import ApiClient from './ApiClient';
 
 class CampaignsAPI extends ApiClient {
@@ -13,6 +13,8 @@ class CampaignsAPI extends ApiClient {
     const formData = new FormData();
     formData.append('file', file);
 
+    // The global `axios` is the configured instance that carries the auth
+    // headers; the bare npm module does not, and every request 401s.
     return axios.post(`${this.url}/import_audience`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
