@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { useMapGetter } from 'dashboard/composables/store';
@@ -37,6 +37,7 @@ const STATUS_LABELS = {
 const fetchPage = async (page = 1) => {
   isLoading.value = true;
   error.value = '';
+
   try {
     const { data } = await CampaignsAPI.report(campaignId.value, page);
     summary.value = data.summary ?? summary.value;
@@ -50,6 +51,24 @@ const fetchPage = async (page = 1) => {
 };
 
 onMounted(() => fetchPage(1));
+
+// Vue reuses this component when only the route param changes, so mounting
+// alone doesn't cover moving between two campaign reports. The totals and rows
+// are cleared first, otherwise the previous campaign's numbers stay on screen
+// and read as the new one's.
+watch(campaignId, () => {
+  summary.value = {
+    total: 0,
+    accepted: 0,
+    failed: 0,
+    delivered: 0,
+    read: 0,
+    success_rate: 0,
+  };
+  messages.value = [];
+  meta.value = { current_page: 1, total_pages: 1, total_count: 0 };
+  fetchPage(1);
+});
 
 const bigNumbers = computed(() => [
   { key: 'TOTAL', value: summary.value.total },
