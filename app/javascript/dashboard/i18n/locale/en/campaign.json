@@ -210,6 +210,22 @@
             "TOGGLE": "Tag the conversations of this campaign with a label",
             "PLACEHOLDER": "Select the label"
           },
+          "AUDIENCE_PREVIEW": {
+            "BUTTON": "View audience",
+            "TITLE": "Campaign audience",
+            "CLOSE": "Close",
+            "LOADING": "Loading…",
+            "ERROR": "Could not load the audience.",
+            "SUMMARY": "{count} contact(s) in the audience.",
+            "WITHOUT_PHONE": " {count} without a phone number — they won't receive it.",
+            "NAME": "Name",
+            "PHONE": "Phone",
+            "EMAIL": "Email",
+            "NO_PHONE": "no phone number",
+            "PREVIOUS": "Previous",
+            "NEXT": "Next",
+            "PAGE": "Page {current} of {total}"
+          },
           "SCHEDULED_AT": {
             "LABEL": "Scheduled time",
             "PLACEHOLDER": "Please select the time",

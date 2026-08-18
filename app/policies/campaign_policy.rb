@@ -25,4 +25,8 @@ class CampaignPolicy < ApplicationPolicy
   def import_audience?
     create?
   end
+
+  def audience_preview?
+    create?
+  end
 end

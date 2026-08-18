@@ -11,6 +11,7 @@ import Button from 'dashboard/components-next/button/Button.vue';
 import ComboBox from 'dashboard/components-next/combobox/ComboBox.vue';
 import TagMultiSelectComboBox from 'dashboard/components-next/combobox/TagMultiSelectComboBox.vue';
 import WhatsAppTemplateParser from 'dashboard/components-next/whatsapp/WhatsAppTemplateParser.vue';
+import AudiencePreviewDialog from 'dashboard/components-next/Campaigns/Pages/CampaignPage/AudiencePreviewDialog.vue';
 
 const emit = defineEmits(['submit', 'cancel']);
 
@@ -180,6 +181,18 @@ const onCsvSelected = async event => {
     isImportingCsv.value = false;
   }
 };
+
+const audiencePreviewRef = ref(null);
+
+// Enabled only once there is an audience to look at, which is also the moment
+// the list stops being empty.
+const canPreviewAudience = computed(() =>
+  state.audienceSource === 'file'
+    ? state.audienceContactIds.length > 0
+    : (state.selectedAudience?.length ?? 0) > 0
+);
+
+const openAudiencePreview = () => audiencePreviewRef.value?.open();
 
 const audiencePayload = () =>
   state.audienceSource === 'file'
@@ -412,6 +425,28 @@ watch(
           }}
         </span>
       </p>
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <Button
+        type="button"
+        variant="faded"
+        color="slate"
+        size="sm"
+        class="self-start"
+        :disabled="!canPreviewAudience"
+        :label="t('CAMPAIGN.WHATSAPP.CREATE.FORM.AUDIENCE_PREVIEW.BUTTON')"
+        @click="openAudiencePreview"
+      />
+      <AudiencePreviewDialog
+        ref="audiencePreviewRef"
+        :label-ids="
+          state.audienceSource === 'labels' ? state.selectedAudience : []
+        "
+        :contact-ids="
+          state.audienceSource === 'file' ? state.audienceContactIds : []
+        "
+      />
     </div>
 
     <div class="flex flex-col gap-1">

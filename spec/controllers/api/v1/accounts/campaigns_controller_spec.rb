@@ -72,6 +72,63 @@ RSpec.describe 'Campaigns API', type: :request do
     end
   end
 
+  describe 'GET /api/v1/accounts/{account.id}/campaigns/audience_preview' do
+    let(:administrator) { create(:user, account: account, role: :administrator) }
+    let(:agent) { create(:user, account: account, role: :agent) }
+    let(:label) { create(:label, account: account) }
+
+    it 'returns unauthorized for agents' do
+      get "/api/v1/accounts/#{account.id}/campaigns/audience_preview", headers: agent.create_new_auth_token
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it 'lists the contacts behind the chosen labels' do
+      tagged = create(:contact, :with_phone_number, account: account, name: 'Maria')
+      tagged.update_labels([label.title])
+      create(:contact, :with_phone_number, account: account, name: 'Fora do publico')
+
+      get "/api/v1/accounts/#{account.id}/campaigns/audience_preview",
+          params: { label_ids: [label.id] }, headers: administrator.create_new_auth_token
+
+      expect(response.parsed_body['contacts'].pluck('name')).to eq(['Maria'])
+      expect(response.parsed_body['meta']).to include('total_count' => 1)
+    end
+
+    it 'lists an explicit contact list, as an imported file produces' do
+      chosen = create(:contact, :with_phone_number, account: account, name: 'Do arquivo')
+      create(:contact, :with_phone_number, account: account, name: 'Outro')
+
+      get "/api/v1/accounts/#{account.id}/campaigns/audience_preview",
+          params: { contact_ids: [chosen.id] }, headers: administrator.create_new_auth_token
+
+      expect(response.parsed_body['contacts'].pluck('name')).to eq(['Do arquivo'])
+    end
+
+    # The campaign skips contacts with no number, so the preview has to say so
+    # rather than promising a delivery that never happens.
+    it 'flags contacts that will not receive the campaign' do
+      no_phone = create(:contact, account: account, name: 'Sem telefone', phone_number: nil)
+      no_phone.update_labels([label.title])
+
+      get "/api/v1/accounts/#{account.id}/campaigns/audience_preview",
+          params: { label_ids: [label.id] }, headers: administrator.create_new_auth_token
+
+      expect(response.parsed_body['contacts'].first['will_receive']).to be false
+      expect(response.parsed_body['meta']['without_phone_count']).to eq(1)
+    end
+
+    it 'paginates the list' do
+      contacts = create_list(:contact, 3, :with_phone_number, account: account)
+      contacts.each { |contact| contact.update_labels([label.title]) }
+
+      get "/api/v1/accounts/#{account.id}/campaigns/audience_preview",
+          params: { label_ids: [label.id], page: 1 }, headers: administrator.create_new_auth_token
+
+      expect(response.parsed_body['meta']).to include('total_count' => 3, 'current_page' => 1)
+    end
+  end
+
   describe 'POST /api/v1/accounts/{account.id}/campaigns/import_audience' do
     let(:agent) { create(:user, account: account, role: :agent) }
     let(:administrator) { create(:user, account: account, role: :administrator) }

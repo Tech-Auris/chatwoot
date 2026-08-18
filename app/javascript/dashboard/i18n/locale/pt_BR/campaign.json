@@ -210,6 +210,22 @@
             "TOGGLE": "Marcar as conversas desta campanha com uma etiqueta",
             "PLACEHOLDER": "Selecione a etiqueta"
           },
+          "AUDIENCE_PREVIEW": {
+            "BUTTON": "Ver público",
+            "TITLE": "Público da campanha",
+            "CLOSE": "Fechar",
+            "LOADING": "Carregando…",
+            "ERROR": "Não foi possível carregar o público.",
+            "SUMMARY": "{count} contato(s) no público.",
+            "WITHOUT_PHONE": " {count} sem telefone — não vão receber.",
+            "NAME": "Nome",
+            "PHONE": "Telefone",
+            "EMAIL": "E-mail",
+            "NO_PHONE": "sem telefone",
+            "PREVIOUS": "Anterior",
+            "NEXT": "Próxima",
+            "PAGE": "Página {current} de {total}"
+          },
           "SCHEDULED_AT": {
             "LABEL": "Horário agendado",
             "PLACEHOLDER": "Por favor insira a hora",

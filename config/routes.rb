@@ -133,6 +133,7 @@ Rails.application.routes.draw do
           resources :campaigns, only: [:index, :create, :show, :update, :destroy] do
             collection do
               post :import_audience
+              get :audience_preview
             end
           end
           resources :funnel_stages, only: [:index, :show]
