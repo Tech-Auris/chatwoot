@@ -1,4 +1,26 @@
 ---
+- tag: v4.15.1-auris.1.46
+  published_at: '2026-08-18T22:00:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.46
+  notes:
+    en: |-
+      ### ✨ What's new
+
+      - **Quick replies can now belong to a single inbox.** When creating one you choose whether it shows up everywhere or only in one inbox. Typing "/" in a conversation offers the general ones plus that inbox's, so the list stops filling up with replies meant for another channel.
+      - **WhatsApp campaigns send at your pace.** You choose the interval between one message and the next, from 10 seconds up to 5 minutes, instead of everything leaving at once. Replies you are typing no longer wait in line behind a campaign.
+      - **Campaign audience from a spreadsheet.** Besides picking customer labels, you can upload a CSV with the contacts. New ones are created and the ones already in the system are matched by phone number. There is a sample file to download.
+      - **Check who will receive the campaign.** A "Ver público" button lists everyone before you schedule it, and points out who has no phone number and therefore won't receive it.
+      - **Campaign report.** Each campaign now has a report with the totals — sent, delivered, read and failed — and one line per contact, with the reason when something failed and a link that opens the conversation.
+      - **Tag the campaign conversations.** You can choose a label to be applied to every conversation the campaign touches, making them easy to find afterwards.
+    pt_BR: |-
+      ### ✨ Novidades
+
+      - **Respostas prontas agora podem ser de uma caixa de entrada só.** Ao criar, você escolhe se ela aparece em todas ou apenas em uma caixa. Digitando "/" na conversa aparecem as gerais mais as daquela caixa, então a lista para de encher com respostas de outro canal.
+      - **Campanhas de WhatsApp enviam no seu ritmo.** Você escolhe o intervalo entre uma mensagem e a próxima, de 10 segundos até 5 minutos, em vez de sair tudo de uma vez. As respostas que você está digitando deixam de ficar na fila atrás da campanha.
+      - **Público da campanha por planilha.** Além de escolher etiquetas dos clientes, dá para enviar um CSV com os contatos. Os novos são criados e os que já existem são reconhecidos pelo telefone. Tem um arquivo de exemplo para baixar.
+      - **Conferir quem vai receber a campanha.** O botão "Ver público" lista todo mundo antes de agendar, e avisa quem está sem telefone e por isso não vai receber.
+      - **Relatório da campanha.** Cada campanha passa a ter um relatório com os totais — enviadas, entregues, lidas e falhas — e uma linha por contato, com o motivo quando algo falhou e um link que abre a conversa.
+      - **Etiquetar as conversas da campanha.** Você pode escolher uma etiqueta para ser aplicada em todas as conversas que a campanha tocar, o que facilita encontrá-las depois.
 - tag: v4.15.1-auris.1.45
   published_at: '2026-08-17T17:10:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.45
@@ -287,15 +309,3 @@
       ### 🐛 Correções
 
       - **Gestores conseguem gerar o QR Code do WhatsApp de novo.** Só administradores estavam vendo o QR ao conectar um dispositivo WhatsApp. Agora gestores também recebem o QR, como funcionava antes.
-- tag: v4.15.1-auris.1.41.14
-  published_at: '2026-07-14T20:00:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.41.14
-  notes:
-    en: |-
-      ### ⚡ Improvements
-
-      - **Feedback flag now appears on messages that failed to send.** The bubbles that failed at delivery are exactly what you want to send to the AI team — the flag now shows on those too.
-    pt_BR: |-
-      ### ⚡ Melhorias
-
-      - **Bandeirinha de feedback aparece em mensagens que falharam ao enviar.** As bolhas que deram erro no envio são justamente as que você quer mandar pro time de IA — agora a bandeirinha aparece nelas também.
