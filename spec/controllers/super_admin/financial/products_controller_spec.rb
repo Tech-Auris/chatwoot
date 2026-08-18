@@ -40,6 +40,23 @@ RSpec.describe 'Super Admin Financial Products', type: :request do
       expect(response).to have_http_status(:success)
       expect(response.body).to include('FinancialProductsIndex')
     end
+
+    # Same trap as the customer links screen: the member URLs are built by
+    # appending the product id to `products_url`, so a `.json` suffix on the
+    # base would route nowhere on edit, archive and new price.
+    it 'hands the screen a base URL that still routes once an id is appended' do
+      sign_in(super_admin, scope: :super_admin)
+
+      get '/super_admin/financial/products'
+
+      props = JSON.parse(Nokogiri::HTML(response.body).at_css('#app')['data-props'])
+      member_path = URI.parse("#{props['products_url']}/prod_123").path
+
+      expect(Rails.application.routes.recognize_path(member_path, method: :patch))
+        .to include(controller: 'super_admin/financial/products', action: 'update')
+      expect(Rails.application.routes.recognize_path("#{member_path}/prices", method: :post))
+        .to include(controller: 'super_admin/financial/products', action: 'prices')
+    end
   end
 
   describe 'GET /super_admin/financial/products/data' do
