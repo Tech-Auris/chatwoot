@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_08_18_020000) do
+ActiveRecord::Schema[7.1].define(version: 2026_08_18_030000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -367,6 +367,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_08_18_020000) do
     t.text "content"
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
+    t.bigint "inbox_id"
+    t.index ["inbox_id"], name: "index_canned_responses_on_inbox_id"
   end
 
   create_table "captain_assistant_responses", force: :cascade do |t|
@@ -1791,6 +1793,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_08_18_020000) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "ai_assignment_attempts", "conversations", on_delete: :cascade
+  add_foreign_key "canned_responses", "inboxes"
   add_foreign_key "contacts", "languages"
   add_foreign_key "conversations", "funnel_stages", on_delete: :nullify
   add_foreign_key "funnel_stage_changes", "accounts", on_delete: :cascade

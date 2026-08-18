@@ -7,9 +7,16 @@ class CannedResponse extends ApiClient {
     super('canned_responses', { accountScoped: true });
   }
 
-  get({ searchKey }) {
-    const url = searchKey ? `${this.url}?search=${searchKey}` : this.url;
-    return axios.get(url);
+  // `inboxId` narrows the list to the global responses plus that inbox's,
+  // which is what the composer needs inside a conversation. Omitting it lists
+  // everything, as the settings screen does.
+  get({ searchKey, inboxId } = {}) {
+    return axios.get(this.url, {
+      params: {
+        search: searchKey || undefined,
+        inbox_id: inboxId || undefined,
+      },
+    });
   }
 }
 

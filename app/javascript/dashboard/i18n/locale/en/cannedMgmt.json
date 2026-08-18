@@ -29,6 +29,11 @@
           "PLACEHOLDER": "Please enter a short code.",
           "ERROR": "Short Code is required."
         },
+        "INBOX": {
+          "LABEL": "Available in",
+          "GLOBAL": "All inboxes (global)",
+          "HELP": "A response scoped to an inbox only shows up in that inbox's conversations."
+        },
         "CONTENT": {
           "LABEL": "Message",
           "PLACEHOLDER": "Please write the message you want to save as a template to use later.",

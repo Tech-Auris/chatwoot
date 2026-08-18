@@ -15,6 +15,7 @@ export default {
   },
   props: {
     id: { type: Number, default: null },
+    edinboxId: { type: Number, default: null },
     edcontent: { type: String, default: '' },
     edshortCode: { type: String, default: '' },
     onClose: { type: Function, default: () => {} },
@@ -30,6 +31,7 @@ export default {
       },
       shortCode: this.edshortCode,
       content: this.edcontent,
+      inboxId: this.edinboxId || '',
       show: true,
     };
   },
@@ -43,6 +45,9 @@ export default {
     },
   },
   computed: {
+    inboxes() {
+      return this.$store.getters['inboxes/getInboxes'];
+    },
     pageTitle() {
       return `${this.$t('CANNED_MGMT.EDIT.TITLE')} - ${this.edshortCode}`;
     },
@@ -67,6 +72,7 @@ export default {
           id: this.id,
           short_code: this.shortCode,
           content: this.content,
+          inbox_id: this.inboxId || null,
         })
         .then(() => {
           // Reset Form, Show success message
@@ -102,6 +108,24 @@ export default {
               :placeholder="$t('CANNED_MGMT.EDIT.FORM.SHORT_CODE.PLACEHOLDER')"
               @input="v$.shortCode.$touch"
             />
+          </label>
+        </div>
+
+        <div class="w-full">
+          <label>
+            {{ $t('CANNED_MGMT.ADD.FORM.INBOX.LABEL') }}
+            <select v-model="inboxId">
+              <option value="">
+                {{ $t('CANNED_MGMT.ADD.FORM.INBOX.GLOBAL') }}
+              </option>
+              <option
+                v-for="inbox in inboxes"
+                :key="inbox.id"
+                :value="inbox.id"
+              >
+                {{ inbox.name }}
+              </option>
+            </select>
           </label>
         </div>
 

@@ -29,6 +29,11 @@
           "PLACEHOLDER": "Por favor, insira um atalho.",
           "ERROR": "O atalho é obrigatório."
         },
+        "INBOX": {
+          "LABEL": "Disponível em",
+          "GLOBAL": "Todas as caixas de entrada (global)",
+          "HELP": "Uma resposta de uma caixa específica só aparece nas conversas daquela caixa."
+        },
         "CONTENT": {
           "LABEL": "Mensagem",
           "PLACEHOLDER": "Por favor, escreva a mensagem que deseja salvar como um modelo para usar posteriormente.",

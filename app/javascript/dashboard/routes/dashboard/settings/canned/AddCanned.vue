@@ -31,12 +31,20 @@ export default {
     return {
       shortCode: '',
       content: this.responseContent || '',
+      // Empty means global — the response shows up in every inbox, which is
+      // how canned responses behaved before scoping existed.
+      inboxId: '',
       addCanned: {
         showLoading: false,
         message: '',
       },
       show: true,
     };
+  },
+  computed: {
+    inboxes() {
+      return this.$store.getters['inboxes/getInboxes'];
+    },
   },
   validations: {
     shortCode: {
@@ -51,6 +59,7 @@ export default {
     resetForm() {
       this.shortCode = '';
       this.content = '';
+      this.inboxId = '';
       this.v$.shortCode.$reset();
       this.v$.content.$reset();
     },
@@ -62,6 +71,7 @@ export default {
         .dispatch('createCannedResponse', {
           short_code: this.shortCode,
           content: this.content,
+          inbox_id: this.inboxId || null,
         })
         .then(() => {
           // Reset Form, Show success message
@@ -99,6 +109,27 @@ export default {
               @blur="v$.shortCode.$touch"
             />
           </label>
+        </div>
+
+        <div class="w-full">
+          <label>
+            {{ $t('CANNED_MGMT.ADD.FORM.INBOX.LABEL') }}
+            <select v-model="inboxId">
+              <option value="">
+                {{ $t('CANNED_MGMT.ADD.FORM.INBOX.GLOBAL') }}
+              </option>
+              <option
+                v-for="inbox in inboxes"
+                :key="inbox.id"
+                :value="inbox.id"
+              >
+                {{ inbox.name }}
+              </option>
+            </select>
+          </label>
+          <p class="text-xs text-n-slate-11">
+            {{ $t('CANNED_MGMT.ADD.FORM.INBOX.HELP') }}
+          </p>
         </div>
 
         <div class="w-full">
