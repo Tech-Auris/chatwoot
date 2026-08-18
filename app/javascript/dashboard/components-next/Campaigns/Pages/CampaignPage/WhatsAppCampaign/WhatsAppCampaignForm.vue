@@ -37,8 +37,8 @@ const initialState = {
 // Messages go out spaced by this interval instead of all at once. The floor of
 // 10s mirrors the backend validation.
 const CADENCE_OPTIONS = {
-  seconds: [10, 20, 30],
-  minutes: [1, 2, 5, 10],
+  seconds: [10, 15, 30],
+  minutes: [1, 2, 5],
 };
 
 const state = reactive({ ...initialState });
