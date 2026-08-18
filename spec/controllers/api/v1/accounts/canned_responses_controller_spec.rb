@@ -49,6 +49,47 @@ RSpec.describe 'Canned Responses API', type: :request do
     end
   end
 
+  describe 'GET /api/v1/accounts/{account.id}/canned_responses with an inbox' do
+    let(:agent) { create(:user, account: account, role: :agent) }
+    let(:inbox) { create(:inbox, account: account) }
+    let(:other_inbox) { create(:inbox, account: account) }
+
+    # An agent typing "/" inside a conversation must not be offered a response
+    # written for a different inbox.
+    it 'returns the global responses plus the ones of that inbox' do
+      global = create(:canned_response, account: account, short_code: 'global')
+      mine = create(:canned_response, account: account, inbox: inbox, short_code: 'mine')
+      theirs = create(:canned_response, account: account, inbox: other_inbox, short_code: 'theirs')
+
+      get "/api/v1/accounts/#{account.id}/canned_responses",
+          params: { inbox_id: inbox.id }, headers: agent.create_new_auth_token
+
+      returned = response.parsed_body.pluck('id')
+      expect(returned).to include(global.id, mine.id)
+      expect(returned).not_to include(theirs.id)
+    end
+
+    it 'lists every response when no inbox is given, as the settings screen does' do
+      create(:canned_response, account: account, short_code: 'global')
+      create(:canned_response, account: account, inbox: inbox, short_code: 'mine')
+
+      get "/api/v1/accounts/#{account.id}/canned_responses", headers: agent.create_new_auth_token
+
+      # Plus the one the outer setup already created.
+      expect(response.parsed_body.size).to eq(3)
+    end
+
+    it 'keeps the inbox filter while searching' do
+      create(:canned_response, account: account, inbox: other_inbox, short_code: 'promo')
+      mine = create(:canned_response, account: account, inbox: inbox, short_code: 'promocao')
+
+      get "/api/v1/accounts/#{account.id}/canned_responses",
+          params: { inbox_id: inbox.id, search: 'promo' }, headers: agent.create_new_auth_token
+
+      expect(response.parsed_body.pluck('id')).to eq([mine.id])
+    end
+  end
+
   describe 'POST /api/v1/accounts/{account.id}/canned_responses' do
     context 'when it is an unauthenticated user' do
       it 'returns unauthorized' do

@@ -26,6 +26,11 @@ const getters = useStoreGetters();
 const store = useStore();
 const { t } = useI18n();
 
+// A scoped response is only offered inside its own inbox, so the list names
+// the inbox next to the shortcut instead of leaving them indistinguishable.
+const inboxName = inboxId =>
+  getters['inboxes/getInbox'].value(inboxId)?.name ?? '';
+
 const { getPlainText } = useMessageFormatter();
 
 const showAddPopup = ref(false);
@@ -214,6 +219,12 @@ const tableHeaders = computed(() => {
                 <div class="flex flex-col gap-2 min-w-0">
                   <span class="text-heading-3 text-n-slate-12 truncate block">
                     {{ cannedItem.short_code }}
+                    <span
+                      v-if="cannedItem.inbox_id"
+                      class="ml-2 px-1.5 py-0.5 text-xs rounded bg-n-alpha-2 text-n-slate-11"
+                    >
+                      {{ inboxName(cannedItem.inbox_id) }}
+                    </span>
                   </span>
                   <p class="text-body-main text-n-slate-11 line-clamp-5">
                     {{ getPlainText(cannedItem.content) }}
@@ -254,6 +265,7 @@ const tableHeaders = computed(() => {
       <EditCanned
         v-if="showEditPopup"
         :id="activeResponse.id"
+        :edinbox-id="activeResponse.inbox_id"
         :edshort-code="activeResponse.short_code"
         :edcontent="activeResponse.content"
         :on-close="hideEditPopup"
