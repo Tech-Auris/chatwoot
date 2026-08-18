@@ -51,6 +51,18 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  audienceFileName: {
+    type: String,
+    default: '',
+  },
+  cadenceSeconds: {
+    type: Number,
+    default: 0,
+  },
+  conversationLabel: {
+    type: String,
+    default: '',
+  },
 });
 
 const emit = defineEmits(['edit', 'delete']);
@@ -112,8 +124,24 @@ const audienceLabels = computed(() => {
   });
 });
 
+// A file audience keeps no labels, so the card names the file the operator
+// uploaded instead of leaving the audience line empty.
+const cadenceLabel = computed(() => {
+  const seconds = props.cadenceSeconds;
+  if (!seconds) return '';
+
+  return seconds % 60 === 0
+    ? t('CAMPAIGN.WHATSAPP.CARD.CADENCE_MINUTES', { count: seconds / 60 })
+    : t('CAMPAIGN.WHATSAPP.CARD.CADENCE_SECONDS', { count: seconds });
+});
+
 const hasCampaignDetails = computed(
-  () => templateName.value || audienceLabels.value.length
+  () =>
+    templateName.value ||
+    audienceLabels.value.length ||
+    props.audienceFileName ||
+    cadenceLabel.value ||
+    props.conversationLabel
 );
 </script>
 
@@ -166,6 +194,17 @@ const hasCampaignDetails = computed(
             {{ templateName }}
           </span>
         </div>
+        <div v-if="audienceFileName" class="flex items-center gap-1.5 min-w-0">
+          <span class="text-sm text-n-slate-11 whitespace-nowrap">
+            {{ t('CAMPAIGN.WHATSAPP.CARD.AUDIENCE_FILE_LABEL') }}
+          </span>
+          <span
+            class="text-sm font-medium truncate text-n-slate-12"
+            :title="audienceFileName"
+          >
+            {{ audienceFileName }}
+          </span>
+        </div>
         <div
           v-if="audienceLabels.length"
           class="flex flex-wrap items-center gap-1.5 min-w-0"
@@ -178,6 +217,25 @@ const hasCampaignDetails = computed(
             :key="label.id"
             :title="label.title"
             :color="label.color"
+            variant="smooth"
+            small
+            class="!mb-0"
+          />
+        </div>
+        <div v-if="cadenceLabel" class="flex items-center gap-1.5 min-w-0">
+          <span class="text-sm text-n-slate-11 whitespace-nowrap">
+            {{ t('CAMPAIGN.WHATSAPP.CARD.CADENCE_LABEL') }}
+          </span>
+          <span class="text-sm font-medium text-n-slate-12">
+            {{ cadenceLabel }}
+          </span>
+        </div>
+        <div v-if="conversationLabel" class="flex items-center gap-1.5 min-w-0">
+          <span class="text-sm text-n-slate-11 whitespace-nowrap">
+            {{ t('CAMPAIGN.WHATSAPP.CARD.CONVERSATION_LABEL') }}
+          </span>
+          <woot-label
+            :title="conversationLabel"
             variant="smooth"
             small
             class="!mb-0"

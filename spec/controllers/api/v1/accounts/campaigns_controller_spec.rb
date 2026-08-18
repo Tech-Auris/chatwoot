@@ -72,6 +72,54 @@ RSpec.describe 'Campaigns API', type: :request do
     end
   end
 
+  describe 'POST /api/v1/accounts/{account.id}/campaigns/import_audience' do
+    let(:agent) { create(:user, account: account, role: :agent) }
+    let(:administrator) { create(:user, account: account, role: :administrator) }
+    let(:csv) do
+      Rack::Test::UploadedFile.new(
+        StringIO.new("id,name,email,phone_number\n1,Maria,maria@exemplo.com,+5511987654321\n"),
+        'text/csv',
+        original_filename: 'audiencia.csv'
+      )
+    end
+
+    it 'returns unauthorized for an unauthenticated user' do
+      post "/api/v1/accounts/#{account.id}/campaigns/import_audience", params: { file: csv }
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it 'returns unauthorized for agents' do
+      post "/api/v1/accounts/#{account.id}/campaigns/import_audience",
+           params: { file: csv }, headers: agent.create_new_auth_token
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    # The shared `check_authorization` resolves a policy method named after the
+    # action, so a custom action without one blows up with a 500 that reaches
+    # the screen as a generic "could not read the file".
+    it 'turns the file into contacts for an administrator' do
+      post "/api/v1/accounts/#{account.id}/campaigns/import_audience",
+           params: { file: csv }, headers: administrator.create_new_auth_token
+
+      expect(response).to have_http_status(:success)
+      body = response.parsed_body
+      expect(body['created_count']).to eq(1)
+      expect(account.contacts.find(body['contact_ids'].first).phone_number).to eq('+5511987654321')
+    end
+
+    it 'answers with a readable message when the file is not usable' do
+      bad = Rack::Test::UploadedFile.new(StringIO.new("id,nome\n1,Maria\n"), 'text/csv', original_filename: 'ruim.csv')
+
+      post "/api/v1/accounts/#{account.id}/campaigns/import_audience",
+           params: { file: bad }, headers: administrator.create_new_auth_token
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.parsed_body['error']).to include('phone_number')
+    end
+  end
+
   describe 'POST /api/v1/accounts/{account.id}/campaigns' do
     let(:inbox) { create(:inbox, account: account) }
 

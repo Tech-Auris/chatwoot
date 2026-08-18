@@ -263,6 +263,8 @@ const prepareCampaignDetails = () => {
     conversation_label: state.shouldLabelConversations
       ? state.conversationLabel
       : null,
+    audience_file_name:
+      state.audienceSource === 'file' ? csvFileName.value : null,
   };
 };
 

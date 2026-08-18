@@ -4,6 +4,7 @@
 #
 #  id                                 :bigint           not null, primary key
 #  audience                           :jsonb
+#  audience_file_name                 :string
 #  cadence_seconds                    :integer          default(10), not null
 #  campaign_status                    :integer          default("active"), not null
 #  campaign_type                      :integer          default("ongoing"), not null

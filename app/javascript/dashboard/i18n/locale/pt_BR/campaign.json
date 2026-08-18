@@ -154,7 +154,12 @@
           "ON": "ativado"
         },
         "TEMPLATE_LABEL": "Modelo:",
-        "AUDIENCE_LABEL": "Público:"
+        "AUDIENCE_LABEL": "Público:",
+        "AUDIENCE_FILE_LABEL": "Arquivo:",
+        "CADENCE_LABEL": "Cadência:",
+        "CADENCE_SECONDS": "{count}s entre mensagens",
+        "CADENCE_MINUTES": "{count}min entre mensagens",
+        "CONVERSATION_LABEL": "Etiqueta nas conversas:"
       },
       "CREATE": {
         "TITLE": "Criar campanha do WhatsApp",

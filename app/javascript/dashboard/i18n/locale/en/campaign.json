@@ -154,7 +154,12 @@
           "ON": "on"
         },
         "TEMPLATE_LABEL": "Template:",
-        "AUDIENCE_LABEL": "Audience:"
+        "AUDIENCE_LABEL": "Audience:",
+        "AUDIENCE_FILE_LABEL": "File:",
+        "CADENCE_LABEL": "Cadence:",
+        "CADENCE_SECONDS": "{count}s between messages",
+        "CADENCE_MINUTES": "{count}min between messages",
+        "CONVERSATION_LABEL": "Conversation label:"
       },
       "CREATE": {
         "TITLE": "Create WhatsApp campaign",
