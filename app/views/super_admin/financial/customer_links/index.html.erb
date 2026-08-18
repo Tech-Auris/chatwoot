@@ -4,7 +4,10 @@
 
 <%= render_vue_component('FinancialCustomerLinksIndex', {
   data_url: data_super_admin_financial_customer_links_url(format: :json),
-  links_url: super_admin_financial_customer_links_url(format: :json),
+  # No `format: :json` here: the screen appends the account id to build the
+  # member URLs, and ".../customer_links.json/88" matches no route. The
+  # requests already ask for JSON through their Accept header.
+  links_url: super_admin_financial_customer_links_url,
   configured: Integrations::Stripe::Client.new.configured?,
   settings_url: super_admin_app_config_path(config: 'stripe')
 }) %>

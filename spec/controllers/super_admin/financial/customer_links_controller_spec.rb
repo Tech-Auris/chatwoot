@@ -36,6 +36,22 @@ RSpec.describe 'Super Admin Financial Customer Links', type: :request do
 
       expect(response).to have_http_status(:redirect)
     end
+
+    # The screen builds every member URL by appending the account id to
+    # `links_url`. A `.json` suffix on that base produces
+    # ".../customer_links.json/88", which routes nowhere and surfaced as a
+    # bare "Not Found" when an operator clicked Vincular.
+    it 'hands the screen a base URL that still routes once an id is appended' do
+      get '/super_admin/financial/customer_links'
+
+      props = JSON.parse(Nokogiri::HTML(response.body).at_css('#app')['data-props'])
+      member_path = URI.parse("#{props['links_url']}/#{pending_account.id}").path
+
+      expect(Rails.application.routes.recognize_path(member_path, method: :patch))
+        .to include(controller: 'super_admin/financial/customer_links', action: 'update')
+      expect(Rails.application.routes.recognize_path("#{member_path}/customer", method: :post))
+        .to include(controller: 'super_admin/financial/customer_links', action: 'customer')
+    end
   end
 
   describe 'GET /super_admin/financial/customer_links/data' do
