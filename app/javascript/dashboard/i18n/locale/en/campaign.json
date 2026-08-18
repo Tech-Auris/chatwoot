@@ -192,6 +192,14 @@
             "PLACEHOLDER": "Please select the time",
             "ERROR": "Scheduled time is required"
           },
+          "CADENCE": {
+            "LABEL": "Sending cadence",
+            "INFO": "Interval between one message and the next. Spacing the sends protects the number's reputation and keeps live replies from queueing behind the campaign.",
+            "UNITS": {
+              "SECONDS": "Seconds",
+              "MINUTES": "Minutes"
+            }
+          },
           "BUTTONS": {
             "CREATE": "Create",
             "CANCEL": "Cancel"

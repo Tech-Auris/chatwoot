@@ -76,6 +76,26 @@ describe Whatsapp::OneoffCampaignService do
     end
 
     context 'when campaign is valid' do
+      # Without pacing the whole audience is enqueued at once, which puts a
+      # campaign ahead of the replies agents are typing and bursts templates
+      # at the number.
+      it 'spaces the audience by the campaign cadence, on the campaign queue' do
+        campaign.update!(cadence_seconds: 30)
+        Redis::Alfred.delete("campaign_dispatch_position:#{campaign.id}")
+        create_list(:contact, 3, :with_phone_number, account: account)
+          .each { |contact| contact.update_labels([label1.title]) }
+
+        described_class.new(campaign: campaign).perform
+
+        waits = enqueued_jobs.select { |job| job['job_class'] == 'SendReplyJob' }
+                             .map { |job| job['scheduled_at'].present? ? (Time.zone.parse(job['scheduled_at'].to_s) - Time.current).round : 0 }
+        queues = enqueued_jobs.select { |job| job['job_class'] == 'SendReplyJob' }.pluck('queue_name').uniq
+
+        expect(queues).to eq(['campaign'])
+        expect(waits.sort).to all(be_between(0, 65))
+        expect(waits.sort.each_cons(2).map { |a, b| b - a }).to all(be_within(5).of(30))
+      end
+
       it 'marks campaign as completed' do
         described_class.new(campaign: campaign).perform
 

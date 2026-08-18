@@ -192,6 +192,14 @@
             "PLACEHOLDER": "Por favor insira a hora",
             "ERROR": "Horário agendado é necessário"
           },
+          "CADENCE": {
+            "LABEL": "Cadência de envio",
+            "INFO": "Intervalo entre uma mensagem e a próxima. Envios espaçados protegem a reputação do número e não atrasam as respostas do atendimento.",
+            "UNITS": {
+              "SECONDS": "Segundos",
+              "MINUTES": "Minutos"
+            }
+          },
           "BUTTONS": {
             "CREATE": "Criar",
             "CANCEL": "Cancelar"

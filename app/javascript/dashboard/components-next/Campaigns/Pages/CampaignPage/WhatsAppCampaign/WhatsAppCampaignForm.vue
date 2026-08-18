@@ -30,6 +30,15 @@ const initialState = {
   templateId: null,
   scheduledAt: null,
   selectedAudience: [],
+  cadenceUnit: 'seconds',
+  cadenceValue: 10,
+};
+
+// Messages go out spaced by this interval instead of all at once. The floor of
+// 10s mirrors the backend validation.
+const CADENCE_OPTIONS = {
+  seconds: [10, 20, 30],
+  minutes: [1, 2, 5, 10],
 };
 
 const state = reactive({ ...initialState });
@@ -41,6 +50,7 @@ const rules = {
   templateId: { required },
   scheduledAt: { required },
   selectedAudience: { required },
+  cadenceValue: { required },
 };
 
 const v$ = useVuelidate(rules, state);
@@ -108,6 +118,41 @@ const hasRequiredTemplateParams = computed(() => {
   return templateParserRef.value?.v$?.$invalid === false || true;
 });
 
+const cadenceUnitOptions = computed(() => [
+  {
+    value: 'seconds',
+    label: t('CAMPAIGN.WHATSAPP.CREATE.FORM.CADENCE.UNITS.SECONDS'),
+  },
+  {
+    value: 'minutes',
+    label: t('CAMPAIGN.WHATSAPP.CREATE.FORM.CADENCE.UNITS.MINUTES'),
+  },
+]);
+
+const cadenceValues = computed(
+  () => CADENCE_OPTIONS[state.cadenceUnit] ?? CADENCE_OPTIONS.seconds
+);
+
+const cadenceValueOptions = computed(() =>
+  cadenceValues.value.map(value => ({ value, label: String(value) }))
+);
+
+const cadenceSeconds = computed(() =>
+  state.cadenceUnit === 'minutes'
+    ? Number(state.cadenceValue) * 60
+    : Number(state.cadenceValue)
+);
+
+// Switching the unit keeps the field on a value that exists in the new list.
+watch(
+  () => state.cadenceUnit,
+  () => {
+    if (!cadenceValues.value.includes(Number(state.cadenceValue))) {
+      state.cadenceValue = cadenceValues.value[0];
+    }
+  }
+);
+
 const isSubmitDisabled = computed(
   () => v$.value.$invalid || !hasRequiredTemplateParams.value
 );
@@ -145,6 +190,7 @@ const prepareCampaignDetails = () => {
     template_params: templateParams,
     inbox_id: state.inboxId,
     scheduled_at: formatToUTCString(state.scheduledAt),
+    cadence_seconds: cadenceSeconds.value,
     audience: state.selectedAudience?.map(id => ({
       id,
       type: 'Label',
@@ -233,6 +279,29 @@ watch(
         :message="formErrors.audience"
         class="[&>div>button]:bg-n-alpha-black2"
       />
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label for="cadence" class="mb-0.5 text-sm font-medium text-n-slate-12">
+        {{ t('CAMPAIGN.WHATSAPP.CREATE.FORM.CADENCE.LABEL') }}
+      </label>
+      <div class="flex gap-2">
+        <ComboBox
+          id="cadence-unit"
+          v-model="state.cadenceUnit"
+          :options="cadenceUnitOptions"
+          class="w-1/2 [&>div>button]:bg-n-alpha-black2 [&>div>button:not(.focused)]:dark:outline-n-weak [&>div>button:not(.focused)]:hover:!outline-n-slate-6"
+        />
+        <ComboBox
+          id="cadence-value"
+          v-model="state.cadenceValue"
+          :options="cadenceValueOptions"
+          class="w-1/2 [&>div>button]:bg-n-alpha-black2 [&>div>button:not(.focused)]:dark:outline-n-weak [&>div>button:not(.focused)]:hover:!outline-n-slate-6"
+        />
+      </div>
+      <p class="mt-1 text-xs text-n-slate-11">
+        {{ t('CAMPAIGN.WHATSAPP.CREATE.FORM.CADENCE.INFO') }}
+      </p>
     </div>
 
     <Input
