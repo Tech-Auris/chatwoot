@@ -8,6 +8,26 @@ RSpec.describe Campaign do
     it { is_expected.to belong_to(:inbox) }
   end
 
+  describe 'cadence_seconds' do
+    # The floor exists so no path — form, API or console — can queue a campaign
+    # that bursts faster than the number's reputation tolerates.
+    it 'refuses anything below the ten second floor' do
+      campaign = build(:campaign, cadence_seconds: 5)
+
+      expect(campaign).not_to be_valid
+      expect(campaign.errors[:cadence_seconds]).to be_present
+    end
+
+    it 'accepts the floor and above' do
+      expect(build(:campaign, cadence_seconds: Campaign::MIN_CADENCE_SECONDS)).to be_valid
+      expect(build(:campaign, cadence_seconds: 600)).to be_valid
+    end
+
+    it 'defaults to the floor so existing flows keep a safe spacing' do
+      expect(create(:campaign).cadence_seconds).to eq(Campaign::MIN_CADENCE_SECONDS)
+    end
+  end
+
   describe '.before_create' do
     let(:account) { create(:account) }
     let(:website_channel) { create(:channel_widget, account: account) }

@@ -17,6 +17,9 @@
 :queues:
   - critical
   - high
+  # Campaign sends sit below live replies on purpose: a large campaign must
+  # never delay the message an agent just typed.
+  - campaign
   - medium
   - default
   - mailers

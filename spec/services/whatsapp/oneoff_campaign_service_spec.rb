@@ -76,6 +76,58 @@ describe Whatsapp::OneoffCampaignService do
     end
 
     context 'when campaign is valid' do
+      # Audience uploaded as a CSV is stored as explicit contacts, not labels,
+      # so the campaign must target exactly those and ignore the label path.
+      it 'targets the contacts listed in the audience when they are given explicitly' do
+        tagged = create(:contact, :with_phone_number, account: account)
+        tagged.update_labels([label1.title])
+        chosen = create(:contact, :with_phone_number, account: account)
+        campaign.update!(audience: [{ 'type' => 'Contact', 'id' => chosen.id }])
+
+        described_class.new(campaign: campaign).perform
+
+        expect(Conversation.where(campaign_id: campaign.id).pluck(:contact_id)).to eq([chosen.id])
+      end
+
+      it 'tags the conversations when the campaign carries a label' do
+        contact = create(:contact, :with_phone_number, account: account)
+        campaign.update!(audience: [{ 'type' => 'Contact', 'id' => contact.id }], conversation_label: 'campanha-agosto')
+
+        described_class.new(campaign: campaign).perform
+
+        conversation = Conversation.find_by(campaign_id: campaign.id)
+        expect(conversation.label_list).to include('campanha-agosto')
+      end
+
+      it 'leaves conversations untagged when no label was chosen' do
+        contact = create(:contact, :with_phone_number, account: account)
+        campaign.update!(audience: [{ 'type' => 'Contact', 'id' => contact.id }])
+
+        described_class.new(campaign: campaign).perform
+
+        expect(Conversation.find_by(campaign_id: campaign.id).label_list).to be_empty
+      end
+
+      # Without pacing the whole audience is enqueued at once, which puts a
+      # campaign ahead of the replies agents are typing and bursts templates
+      # at the number.
+      it 'spaces the audience by the campaign cadence, on the campaign queue' do
+        campaign.update!(cadence_seconds: 30)
+        Redis::Alfred.delete("campaign_dispatch_position:#{campaign.id}")
+        create_list(:contact, 3, :with_phone_number, account: account)
+          .each { |contact| contact.update_labels([label1.title]) }
+
+        described_class.new(campaign: campaign).perform
+
+        waits = enqueued_jobs.select { |job| job['job_class'] == 'SendReplyJob' }
+                             .map { |job| job['scheduled_at'].present? ? (Time.zone.parse(job['scheduled_at'].to_s) - Time.current).round : 0 }
+        queues = enqueued_jobs.select { |job| job['job_class'] == 'SendReplyJob' }.pluck('queue_name').uniq
+
+        expect(queues).to eq(['campaign'])
+        expect(waits.sort).to all(be_between(0, 65))
+        expect(waits.sort.each_cons(2).map { |a, b| b - a }).to all(be_within(5).of(30))
+      end
+
       it 'marks campaign as completed' do
         described_class.new(campaign: campaign).perform
 

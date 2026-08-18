@@ -4,8 +4,11 @@
 #
 #  id                                 :bigint           not null, primary key
 #  audience                           :jsonb
+#  audience_file_name                 :string
+#  cadence_seconds                    :integer          default(10), not null
 #  campaign_status                    :integer          default("active"), not null
 #  campaign_type                      :integer          default("ongoing"), not null
+#  conversation_label                 :string
 #  description                        :text
 #  enabled                            :boolean          default(TRUE)
 #  message                            :text             not null
@@ -31,10 +34,22 @@
 #
 class Campaign < ApplicationRecord
   include UrlHelper
+
+  MIN_CADENCE_SECONDS = 10
+
   validates :account_id, presence: true
   validates :inbox_id, presence: true
   validates :title, presence: true
   validates :message, presence: true
+  # Floor of 10s so nothing — form, API or console — can queue a campaign that
+  # bursts messages faster than the number's reputation tolerates.
+  #
+  # The value is validated for every campaign type, but only the one-off
+  # WhatsApp flow spaces its sends by it today (see
+  # Campaigns::PacedDispatchService). SMS campaigns still send inline, and
+  # ongoing live chat campaigns fire one message per visitor, where delaying
+  # would mean arriving after the visitor left the page.
+  validates :cadence_seconds, numericality: { only_integer: true, greater_than_or_equal_to: MIN_CADENCE_SECONDS }
   validate :validate_campaign_inbox
   validate :validate_url
   validate :prevent_completed_campaign_from_update, on: :update

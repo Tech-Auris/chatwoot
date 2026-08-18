@@ -2,14 +2,16 @@
 import { reactive, computed, watch, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useVuelidate } from '@vuelidate/core';
-import { required, minLength } from '@vuelidate/validators';
+import { required, requiredIf, minLength } from '@vuelidate/validators';
 import { useMapGetter } from 'dashboard/composables/store';
+import CampaignsAPI from 'dashboard/api/campaigns';
 
 import Input from 'dashboard/components-next/input/Input.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
 import ComboBox from 'dashboard/components-next/combobox/ComboBox.vue';
 import TagMultiSelectComboBox from 'dashboard/components-next/combobox/TagMultiSelectComboBox.vue';
 import WhatsAppTemplateParser from 'dashboard/components-next/whatsapp/WhatsAppTemplateParser.vue';
+import AudiencePreviewDialog from 'dashboard/components-next/Campaigns/Pages/CampaignPage/AudiencePreviewDialog.vue';
 
 const emit = defineEmits(['submit', 'cancel']);
 
@@ -30,9 +32,29 @@ const initialState = {
   templateId: null,
   scheduledAt: null,
   selectedAudience: [],
+  cadenceUnit: 'seconds',
+  cadenceValue: 10,
+  audienceSource: 'labels',
+  audienceContactIds: [],
+  shouldLabelConversations: false,
+  conversationLabel: null,
+};
+
+// Messages go out spaced by this interval instead of all at once. The floor of
+// 10s mirrors the backend validation.
+const CADENCE_OPTIONS = {
+  seconds: [10, 15, 30],
+  minutes: [1, 2, 5],
 };
 
 const state = reactive({ ...initialState });
+
+const AUDIENCE_SAMPLE_CSV = '/downloads/campaign-audience-sample.csv';
+
+const csvFileName = ref('');
+const csvSummary = ref(null);
+const csvError = ref('');
+const isImportingCsv = ref(false);
 const templateParserRef = ref(null);
 
 const rules = {
@@ -40,7 +62,15 @@ const rules = {
   inboxId: { required },
   templateId: { required },
   scheduledAt: { required },
-  selectedAudience: { required },
+  // Only the source in use is required: labels when picking tags, imported
+  // contacts when uploading a file.
+  selectedAudience: {
+    required: requiredIf(() => state.audienceSource === 'labels'),
+  },
+  audienceContactIds: {
+    required: requiredIf(() => state.audienceSource === 'file'),
+  },
+  cadenceValue: { required },
 };
 
 const v$ = useVuelidate(rules, state);
@@ -108,6 +138,102 @@ const hasRequiredTemplateParams = computed(() => {
   return templateParserRef.value?.v$?.$invalid === false || true;
 });
 
+const audienceSourceOptions = computed(() => [
+  {
+    value: 'labels',
+    label: t('CAMPAIGN.WHATSAPP.CREATE.FORM.AUDIENCE_SOURCE.LABELS'),
+  },
+  {
+    value: 'file',
+    label: t('CAMPAIGN.WHATSAPP.CREATE.FORM.AUDIENCE_SOURCE.FILE'),
+  },
+]);
+
+const labelOptions = computed(() =>
+  (formState.labels?.value ?? []).map(label => ({
+    value: label.title,
+    label: label.title,
+  }))
+);
+
+// The file is turned into contacts before the campaign is created, so the
+// operator sees what it produced and can fix the file instead of finding out
+// when the campaign fires.
+const onCsvSelected = async event => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  csvFileName.value = file.name;
+  csvError.value = '';
+  csvSummary.value = null;
+  state.audienceContactIds = [];
+  isImportingCsv.value = true;
+
+  try {
+    const { data } = await CampaignsAPI.importAudience(file);
+    state.audienceContactIds = data.contact_ids ?? [];
+    csvSummary.value = data;
+  } catch (error) {
+    csvError.value =
+      error?.response?.data?.error ??
+      t('CAMPAIGN.WHATSAPP.CREATE.FORM.AUDIENCE_FILE.ERROR');
+  } finally {
+    isImportingCsv.value = false;
+  }
+};
+
+const audiencePreviewRef = ref(null);
+
+// Enabled only once there is an audience to look at, which is also the moment
+// the list stops being empty.
+const canPreviewAudience = computed(() =>
+  state.audienceSource === 'file'
+    ? state.audienceContactIds.length > 0
+    : (state.selectedAudience?.length ?? 0) > 0
+);
+
+const openAudiencePreview = () => audiencePreviewRef.value?.open();
+
+const audiencePayload = () =>
+  state.audienceSource === 'file'
+    ? state.audienceContactIds.map(id => ({ id, type: 'Contact' }))
+    : state.selectedAudience?.map(id => ({ id, type: 'Label' }));
+
+const cadenceUnitOptions = computed(() => [
+  {
+    value: 'seconds',
+    label: t('CAMPAIGN.WHATSAPP.CREATE.FORM.CADENCE.UNITS.SECONDS'),
+  },
+  {
+    value: 'minutes',
+    label: t('CAMPAIGN.WHATSAPP.CREATE.FORM.CADENCE.UNITS.MINUTES'),
+  },
+]);
+
+const cadenceValues = computed(
+  () => CADENCE_OPTIONS[state.cadenceUnit] ?? CADENCE_OPTIONS.seconds
+);
+
+const cadenceValueOptions = computed(() =>
+  cadenceValues.value.map(value => ({ value, label: String(value) }))
+);
+
+const cadenceSeconds = computed(() =>
+  state.cadenceUnit === 'minutes'
+    ? Number(state.cadenceValue) * 60
+    : Number(state.cadenceValue)
+);
+
+// Switching the unit keeps the field on a value that exists in the new list.
+watch(
+  () => state.cadenceUnit,
+  () => {
+    if (!cadenceValues.value.includes(Number(state.cadenceValue))) {
+      state.cadenceValue = cadenceValues.value[0];
+    }
+  }
+);
+
 const isSubmitDisabled = computed(
   () => v$.value.$invalid || !hasRequiredTemplateParams.value
 );
@@ -145,10 +271,13 @@ const prepareCampaignDetails = () => {
     template_params: templateParams,
     inbox_id: state.inboxId,
     scheduled_at: formatToUTCString(state.scheduledAt),
-    audience: state.selectedAudience?.map(id => ({
-      id,
-      type: 'Label',
-    })),
+    cadence_seconds: cadenceSeconds.value,
+    audience: audiencePayload(),
+    conversation_label: state.shouldLabelConversations
+      ? state.conversationLabel
+      : null,
+    audience_file_name:
+      state.audienceSource === 'file' ? csvFileName.value : null,
   };
 };
 
@@ -221,6 +350,21 @@ watch(
     />
 
     <div class="flex flex-col gap-1">
+      <label
+        for="audience-source"
+        class="mb-0.5 text-sm font-medium text-n-slate-12"
+      >
+        {{ t('CAMPAIGN.WHATSAPP.CREATE.FORM.AUDIENCE_SOURCE.LABEL') }}
+      </label>
+      <ComboBox
+        id="audience-source"
+        v-model="state.audienceSource"
+        :options="audienceSourceOptions"
+        class="[&>div>button]:bg-n-alpha-black2 [&>div>button:not(.focused)]:dark:outline-n-weak [&>div>button:not(.focused)]:hover:!outline-n-slate-6"
+      />
+    </div>
+
+    <div v-if="state.audienceSource === 'labels'" class="flex flex-col gap-1">
       <label for="audience" class="mb-0.5 text-sm font-medium text-n-slate-12">
         {{ t('CAMPAIGN.WHATSAPP.CREATE.FORM.AUDIENCE.LABEL') }}
       </label>
@@ -233,6 +377,118 @@ watch(
         :message="formErrors.audience"
         class="[&>div>button]:bg-n-alpha-black2"
       />
+    </div>
+
+    <div v-else class="flex flex-col gap-1">
+      <label
+        for="audience-file"
+        class="mb-0.5 text-sm font-medium text-n-slate-12"
+      >
+        {{ t('CAMPAIGN.WHATSAPP.CREATE.FORM.AUDIENCE_FILE.LABEL') }}
+      </label>
+      <p class="mb-1 text-xs text-n-slate-11">
+        {{ t('CAMPAIGN.WHATSAPP.CREATE.FORM.AUDIENCE_FILE.INFO') }}
+        <a
+          :href="AUDIENCE_SAMPLE_CSV"
+          download="campaign-audience-sample.csv"
+          class="text-n-blue-text"
+        >
+          {{ t('CAMPAIGN.WHATSAPP.CREATE.FORM.AUDIENCE_FILE.SAMPLE') }}
+        </a>
+      </p>
+      <input
+        id="audience-file"
+        type="file"
+        accept=".csv,text/csv"
+        class="text-sm text-n-slate-12 file:mr-3 file:rounded-lg file:border-0 file:bg-n-alpha-2 file:px-3 file:py-1.5 file:text-sm file:text-n-slate-12"
+        @change="onCsvSelected"
+      />
+      <p v-if="isImportingCsv" class="mt-1 text-xs text-n-slate-11">
+        {{ t('CAMPAIGN.WHATSAPP.CREATE.FORM.AUDIENCE_FILE.IMPORTING') }}
+      </p>
+      <p v-else-if="csvError" class="mt-1 text-xs text-n-ruby-11">
+        {{ csvError }}
+      </p>
+      <p v-else-if="csvSummary" class="mt-1 text-xs text-n-slate-11">
+        {{
+          t('CAMPAIGN.WHATSAPP.CREATE.FORM.AUDIENCE_FILE.SUMMARY', {
+            total: state.audienceContactIds.length,
+            created: csvSummary.created_count,
+            reused: csvSummary.reused_count,
+          })
+        }}
+        <span v-if="csvSummary.invalid_rows?.length" class="text-n-ruby-11">
+          {{
+            t('CAMPAIGN.WHATSAPP.CREATE.FORM.AUDIENCE_FILE.INVALID', {
+              count: csvSummary.invalid_rows.length,
+            })
+          }}
+        </span>
+      </p>
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <Button
+        type="button"
+        variant="faded"
+        color="slate"
+        size="sm"
+        class="self-start"
+        :disabled="!canPreviewAudience"
+        :label="t('CAMPAIGN.WHATSAPP.CREATE.FORM.AUDIENCE_PREVIEW.BUTTON')"
+        @click="openAudiencePreview"
+      />
+      <AudiencePreviewDialog
+        ref="audiencePreviewRef"
+        :label-ids="
+          state.audienceSource === 'labels' ? state.selectedAudience : []
+        "
+        :contact-ids="
+          state.audienceSource === 'file' ? state.audienceContactIds : []
+        "
+      />
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label
+        class="flex items-center gap-2 text-sm font-medium text-n-slate-12"
+      >
+        <input v-model="state.shouldLabelConversations" type="checkbox" />
+        {{ t('CAMPAIGN.WHATSAPP.CREATE.FORM.CONVERSATION_LABEL.TOGGLE') }}
+      </label>
+      <ComboBox
+        v-if="state.shouldLabelConversations"
+        id="conversation-label"
+        v-model="state.conversationLabel"
+        :options="labelOptions"
+        :placeholder="
+          t('CAMPAIGN.WHATSAPP.CREATE.FORM.CONVERSATION_LABEL.PLACEHOLDER')
+        "
+        class="mt-1 [&>div>button]:bg-n-alpha-black2 [&>div>button:not(.focused)]:dark:outline-n-weak [&>div>button:not(.focused)]:hover:!outline-n-slate-6"
+      />
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label for="cadence" class="mb-0.5 text-sm font-medium text-n-slate-12">
+        {{ t('CAMPAIGN.WHATSAPP.CREATE.FORM.CADENCE.LABEL') }}
+      </label>
+      <div class="flex gap-2">
+        <ComboBox
+          id="cadence-unit"
+          v-model="state.cadenceUnit"
+          :options="cadenceUnitOptions"
+          class="w-1/2 [&>div>button]:bg-n-alpha-black2 [&>div>button:not(.focused)]:dark:outline-n-weak [&>div>button:not(.focused)]:hover:!outline-n-slate-6"
+        />
+        <ComboBox
+          id="cadence-value"
+          v-model="state.cadenceValue"
+          :options="cadenceValueOptions"
+          class="w-1/2 [&>div>button]:bg-n-alpha-black2 [&>div>button:not(.focused)]:dark:outline-n-weak [&>div>button:not(.focused)]:hover:!outline-n-slate-6"
+        />
+      </div>
+      <p class="mt-1 text-xs text-n-slate-11">
+        {{ t('CAMPAIGN.WHATSAPP.CREATE.FORM.CADENCE.INFO') }}
+      </p>
     </div>
 
     <Input

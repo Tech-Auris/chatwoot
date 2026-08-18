@@ -130,7 +130,15 @@ Rails.application.routes.draw do
               resources :inbox_limits, only: [:create, :update, :destroy]
             end
           end
-          resources :campaigns, only: [:index, :create, :show, :update, :destroy]
+          resources :campaigns, only: [:index, :create, :show, :update, :destroy] do
+            collection do
+              post :import_audience
+              get :audience_preview
+            end
+            member do
+              get :report
+            end
+          end
           resources :funnel_stages, only: [:index, :show]
           resources :loss_reasons, only: [:index, :show]
           resource :funnel, only: [:show], controller: 'funnel' do

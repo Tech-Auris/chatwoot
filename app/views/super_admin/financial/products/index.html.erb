@@ -4,7 +4,10 @@
 
 <%= render_vue_component('FinancialProductsIndex', {
   data_url: data_super_admin_financial_products_url(format: :json),
-  products_url: super_admin_financial_products_url(format: :json),
+  # No `format: :json` here: the screen appends the product id to build the
+  # member URLs, and ".../products.json/prod_1" matches no route. The requests
+  # already ask for JSON through their Accept header.
+  products_url: super_admin_financial_products_url,
   configured: Integrations::Stripe::Client.new.configured?,
   settings_url: super_admin_app_config_path(config: 'stripe')
 }) %>

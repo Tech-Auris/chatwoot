@@ -154,7 +154,13 @@
           "ON": "ativado"
         },
         "TEMPLATE_LABEL": "Modelo:",
-        "AUDIENCE_LABEL": "Público:"
+        "AUDIENCE_LABEL": "Público:",
+        "AUDIENCE_FILE_LABEL": "Arquivo:",
+        "CADENCE_LABEL": "Cadência:",
+        "CADENCE_SECONDS": "{count}s entre mensagens",
+        "CADENCE_MINUTES": "{count}min entre mensagens",
+        "CONVERSATION_LABEL": "Etiqueta nas conversas:",
+        "REPORT": "Relatório"
       },
       "CREATE": {
         "TITLE": "Criar campanha do WhatsApp",
@@ -187,10 +193,52 @@
             "PLACEHOLDER": "Selecionar etiquetas dos clientes",
             "ERROR": "Público é necessário"
           },
+          "AUDIENCE_SOURCE": {
+            "LABEL": "Público",
+            "LABELS": "Etiquetas dos clientes",
+            "FILE": "Via arquivo"
+          },
+          "AUDIENCE_FILE": {
+            "LABEL": "Arquivo CSV",
+            "INFO": "Colunas: id, name, email, phone_number. Contatos novos são criados; os que já existem são reaproveitados pelo telefone.",
+            "SAMPLE": "Baixar um exemplo de csv.",
+            "IMPORTING": "Lendo o arquivo…",
+            "SUMMARY": "{total} contato(s) prontos — {created} criados, {reused} já existentes.",
+            "INVALID": " {count} linha(s) ignorada(s).",
+            "ERROR": "Não foi possível ler o arquivo."
+          },
+          "CONVERSATION_LABEL": {
+            "TOGGLE": "Marcar as conversas desta campanha com uma etiqueta",
+            "PLACEHOLDER": "Selecione a etiqueta"
+          },
+          "AUDIENCE_PREVIEW": {
+            "BUTTON": "Ver público",
+            "TITLE": "Público da campanha",
+            "CLOSE": "Fechar",
+            "LOADING": "Carregando…",
+            "ERROR": "Não foi possível carregar o público.",
+            "SUMMARY": "{count} contato(s) no público.",
+            "WITHOUT_PHONE": " {count} sem telefone — não vão receber.",
+            "NAME": "Nome",
+            "PHONE": "Telefone",
+            "EMAIL": "E-mail",
+            "NO_PHONE": "sem telefone",
+            "PREVIOUS": "Anterior",
+            "NEXT": "Próxima",
+            "PAGE": "Página {current} de {total}"
+          },
           "SCHEDULED_AT": {
             "LABEL": "Horário agendado",
             "PLACEHOLDER": "Por favor insira a hora",
             "ERROR": "Horário agendado é necessário"
+          },
+          "CADENCE": {
+            "LABEL": "Cadência de envio",
+            "INFO": "Intervalo entre uma mensagem e a próxima. Envios espaçados protegem a reputação do número e não atrasam as respostas do atendimento.",
+            "UNITS": {
+              "SECONDS": "Segundos",
+              "MINUTES": "Minutos"
+            }
           },
           "BUTTONS": {
             "CREATE": "Criar",
@@ -200,6 +248,35 @@
             "SUCCESS_MESSAGE": "Campanha do WhatsApp criada com sucesso",
             "ERROR_MESSAGE": "Houve um erro. Por favor, tente novamente."
           }
+        }
+      },
+      "REPORT": {
+        "TITLE": "Relatório da campanha",
+        "BACK": "Voltar",
+        "LOADING": "Carregando…",
+        "EMPTY": "Esta campanha ainda não enviou mensagens.",
+        "ERROR": "Não foi possível carregar o relatório.",
+        "CONTACT": "Contato",
+        "STATUS_COLUMN": "Status",
+        "SENT_AT": "Envio",
+        "CONVERSATION": "Conversa",
+        "OPEN_CONVERSATION": "Abrir conversa",
+        "PREVIOUS": "Anterior",
+        "NEXT": "Próxima",
+        "PAGE": "Página {current} de {total}",
+        "SUMMARY": {
+          "TOTAL": "Mensagens",
+          "ACCEPTED": "Aceitas pela Meta",
+          "DELIVERED": "Entregues",
+          "READ": "Lidas",
+          "FAILED": "Falhas",
+          "SUCCESS_RATE": "% de sucesso"
+        },
+        "STATUS": {
+          "SENT": "Enviada",
+          "DELIVERED": "Entregue",
+          "READ": "Lida",
+          "FAILED": "Falhou"
         }
       }
     },
