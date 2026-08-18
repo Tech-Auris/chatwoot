@@ -154,7 +154,13 @@
           "ON": "on"
         },
         "TEMPLATE_LABEL": "Template:",
-        "AUDIENCE_LABEL": "Audience:"
+        "AUDIENCE_LABEL": "Audience:",
+        "AUDIENCE_FILE_LABEL": "File:",
+        "CADENCE_LABEL": "Cadence:",
+        "CADENCE_SECONDS": "{count}s between messages",
+        "CADENCE_MINUTES": "{count}min between messages",
+        "CONVERSATION_LABEL": "Conversation label:",
+        "REPORT": "Report"
       },
       "CREATE": {
         "TITLE": "Create WhatsApp campaign",
@@ -187,10 +193,52 @@
             "PLACEHOLDER": "Select the customer labels",
             "ERROR": "Audience is required"
           },
+          "AUDIENCE_SOURCE": {
+            "LABEL": "Audience",
+            "LABELS": "Customer labels",
+            "FILE": "From a file"
+          },
+          "AUDIENCE_FILE": {
+            "LABEL": "CSV file",
+            "INFO": "Columns: id, name, email, phone_number. New contacts are created; existing ones are matched by phone number.",
+            "SAMPLE": "Download a sample csv.",
+            "IMPORTING": "Reading the file…",
+            "SUMMARY": "{total} contact(s) ready — {created} created, {reused} already existed.",
+            "INVALID": " {count} row(s) skipped.",
+            "ERROR": "Could not read the file."
+          },
+          "CONVERSATION_LABEL": {
+            "TOGGLE": "Tag the conversations of this campaign with a label",
+            "PLACEHOLDER": "Select the label"
+          },
+          "AUDIENCE_PREVIEW": {
+            "BUTTON": "View audience",
+            "TITLE": "Campaign audience",
+            "CLOSE": "Close",
+            "LOADING": "Loading…",
+            "ERROR": "Could not load the audience.",
+            "SUMMARY": "{count} contact(s) in the audience.",
+            "WITHOUT_PHONE": " {count} without a phone number — they won't receive it.",
+            "NAME": "Name",
+            "PHONE": "Phone",
+            "EMAIL": "Email",
+            "NO_PHONE": "no phone number",
+            "PREVIOUS": "Previous",
+            "NEXT": "Next",
+            "PAGE": "Page {current} of {total}"
+          },
           "SCHEDULED_AT": {
             "LABEL": "Scheduled time",
             "PLACEHOLDER": "Please select the time",
             "ERROR": "Scheduled time is required"
+          },
+          "CADENCE": {
+            "LABEL": "Sending cadence",
+            "INFO": "Interval between one message and the next. Spacing the sends protects the number's reputation and keeps live replies from queueing behind the campaign.",
+            "UNITS": {
+              "SECONDS": "Seconds",
+              "MINUTES": "Minutes"
+            }
           },
           "BUTTONS": {
             "CREATE": "Create",
@@ -200,6 +248,35 @@
             "SUCCESS_MESSAGE": "WhatsApp campaign created successfully",
             "ERROR_MESSAGE": "There was an error. Please try again."
           }
+        }
+      },
+      "REPORT": {
+        "TITLE": "Campaign report",
+        "BACK": "Back",
+        "LOADING": "Loading…",
+        "EMPTY": "This campaign hasn't sent any message yet.",
+        "ERROR": "Could not load the report.",
+        "CONTACT": "Contact",
+        "STATUS_COLUMN": "Status",
+        "SENT_AT": "Sent",
+        "CONVERSATION": "Conversation",
+        "OPEN_CONVERSATION": "Open conversation",
+        "PREVIOUS": "Previous",
+        "NEXT": "Next",
+        "PAGE": "Page {current} of {total}",
+        "SUMMARY": {
+          "TOTAL": "Messages",
+          "ACCEPTED": "Accepted by Meta",
+          "DELIVERED": "Delivered",
+          "READ": "Read",
+          "FAILED": "Failed",
+          "SUCCESS_RATE": "Success rate"
+        },
+        "STATUS": {
+          "SENT": "Sent",
+          "DELIVERED": "Delivered",
+          "READ": "Read",
+          "FAILED": "Failed"
         }
       }
     },

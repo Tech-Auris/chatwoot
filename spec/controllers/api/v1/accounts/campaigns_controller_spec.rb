@@ -72,6 +72,186 @@ RSpec.describe 'Campaigns API', type: :request do
     end
   end
 
+  describe 'GET /api/v1/accounts/{account.id}/campaigns/:id/report' do
+    let(:administrator) { create(:user, account: account, role: :administrator) }
+    let(:agent) { create(:user, account: account, role: :agent) }
+    let(:inbox) { create(:inbox, account: account) }
+    let(:campaign) { create(:campaign, account: account, inbox: inbox) }
+    let(:conversation) { create(:conversation, account: account, inbox: inbox) }
+
+    def campaign_message(status:, campaign_id: campaign.id)
+      create(:message, account: account, inbox: inbox, conversation: conversation,
+                       status: status, additional_attributes: { 'campaign_id' => campaign_id })
+    end
+
+    it 'returns unauthorized for agents' do
+      get "/api/v1/accounts/#{account.id}/campaigns/#{campaign.display_id}/report",
+          headers: agent.create_new_auth_token
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it 'summarizes what happened to the campaign messages' do
+      campaign_message(status: :delivered)
+      campaign_message(status: :read)
+      campaign_message(status: :failed)
+
+      get "/api/v1/accounts/#{account.id}/campaigns/#{campaign.display_id}/report",
+          headers: administrator.create_new_auth_token
+
+      expect(response.parsed_body['summary']).to include(
+        'total' => 3, 'accepted' => 2, 'failed' => 1, 'delivered' => 2, 'read' => 1
+      )
+      expect(response.parsed_body['summary']['success_rate']).to be_within(0.1).of(66.7)
+    end
+
+    # A report that counted another campaign's messages would quietly overstate
+    # the reach of this one.
+    it 'counts only the messages of this campaign' do
+      campaign_message(status: :delivered)
+      other = create(:campaign, account: account, inbox: inbox)
+      campaign_message(status: :delivered, campaign_id: other.id)
+
+      get "/api/v1/accounts/#{account.id}/campaigns/#{campaign.display_id}/report",
+          headers: administrator.create_new_auth_token
+
+      expect(response.parsed_body['summary']['total']).to eq(1)
+    end
+
+    it 'lists each send with the contact and the conversation to open' do
+      message = campaign_message(status: :delivered)
+
+      get "/api/v1/accounts/#{account.id}/campaigns/#{campaign.display_id}/report",
+          headers: administrator.create_new_auth_token
+
+      row = response.parsed_body['messages'].first
+      expect(row).to include('id' => message.id, 'status' => 'delivered',
+                             'conversation_id' => conversation.display_id)
+      expect(row['contact_name']).to eq(conversation.contact.name)
+    end
+
+    it 'carries the failure reason so the row explains itself' do
+      campaign_message(status: :failed).update!(external_error: 'Template paused')
+
+      get "/api/v1/accounts/#{account.id}/campaigns/#{campaign.display_id}/report",
+          headers: administrator.create_new_auth_token
+
+      expect(response.parsed_body['messages'].first['error']).to eq('Template paused')
+    end
+
+    it 'reports zeroes for a campaign that never sent anything' do
+      get "/api/v1/accounts/#{account.id}/campaigns/#{campaign.display_id}/report",
+          headers: administrator.create_new_auth_token
+
+      expect(response.parsed_body['summary']).to include('total' => 0, 'success_rate' => 0)
+    end
+  end
+
+  describe 'GET /api/v1/accounts/{account.id}/campaigns/audience_preview' do
+    let(:administrator) { create(:user, account: account, role: :administrator) }
+    let(:agent) { create(:user, account: account, role: :agent) }
+    let(:label) { create(:label, account: account) }
+
+    it 'returns unauthorized for agents' do
+      get "/api/v1/accounts/#{account.id}/campaigns/audience_preview", headers: agent.create_new_auth_token
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it 'lists the contacts behind the chosen labels' do
+      tagged = create(:contact, :with_phone_number, account: account, name: 'Maria')
+      tagged.update_labels([label.title])
+      create(:contact, :with_phone_number, account: account, name: 'Fora do publico')
+
+      get "/api/v1/accounts/#{account.id}/campaigns/audience_preview",
+          params: { label_ids: [label.id] }, headers: administrator.create_new_auth_token
+
+      expect(response.parsed_body['contacts'].pluck('name')).to eq(['Maria'])
+      expect(response.parsed_body['meta']).to include('total_count' => 1)
+    end
+
+    it 'lists an explicit contact list, as an imported file produces' do
+      chosen = create(:contact, :with_phone_number, account: account, name: 'Do arquivo')
+      create(:contact, :with_phone_number, account: account, name: 'Outro')
+
+      get "/api/v1/accounts/#{account.id}/campaigns/audience_preview",
+          params: { contact_ids: [chosen.id] }, headers: administrator.create_new_auth_token
+
+      expect(response.parsed_body['contacts'].pluck('name')).to eq(['Do arquivo'])
+    end
+
+    # The campaign skips contacts with no number, so the preview has to say so
+    # rather than promising a delivery that never happens.
+    it 'flags contacts that will not receive the campaign' do
+      no_phone = create(:contact, account: account, name: 'Sem telefone', phone_number: nil)
+      no_phone.update_labels([label.title])
+
+      get "/api/v1/accounts/#{account.id}/campaigns/audience_preview",
+          params: { label_ids: [label.id] }, headers: administrator.create_new_auth_token
+
+      expect(response.parsed_body['contacts'].first['will_receive']).to be false
+      expect(response.parsed_body['meta']['without_phone_count']).to eq(1)
+    end
+
+    it 'paginates the list' do
+      contacts = create_list(:contact, 3, :with_phone_number, account: account)
+      contacts.each { |contact| contact.update_labels([label.title]) }
+
+      get "/api/v1/accounts/#{account.id}/campaigns/audience_preview",
+          params: { label_ids: [label.id], page: 1 }, headers: administrator.create_new_auth_token
+
+      expect(response.parsed_body['meta']).to include('total_count' => 3, 'current_page' => 1)
+    end
+  end
+
+  describe 'POST /api/v1/accounts/{account.id}/campaigns/import_audience' do
+    let(:agent) { create(:user, account: account, role: :agent) }
+    let(:administrator) { create(:user, account: account, role: :administrator) }
+    let(:csv) do
+      Rack::Test::UploadedFile.new(
+        StringIO.new("id,name,email,phone_number\n1,Maria,maria@exemplo.com,+5511987654321\n"),
+        'text/csv',
+        original_filename: 'audiencia.csv'
+      )
+    end
+
+    it 'returns unauthorized for an unauthenticated user' do
+      post "/api/v1/accounts/#{account.id}/campaigns/import_audience", params: { file: csv }
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it 'returns unauthorized for agents' do
+      post "/api/v1/accounts/#{account.id}/campaigns/import_audience",
+           params: { file: csv }, headers: agent.create_new_auth_token
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    # The shared `check_authorization` resolves a policy method named after the
+    # action, so a custom action without one blows up with a 500 that reaches
+    # the screen as a generic "could not read the file".
+    it 'turns the file into contacts for an administrator' do
+      post "/api/v1/accounts/#{account.id}/campaigns/import_audience",
+           params: { file: csv }, headers: administrator.create_new_auth_token
+
+      expect(response).to have_http_status(:success)
+      body = response.parsed_body
+      expect(body['created_count']).to eq(1)
+      expect(account.contacts.find(body['contact_ids'].first).phone_number).to eq('+5511987654321')
+    end
+
+    it 'answers with a readable message when the file is not usable' do
+      bad = Rack::Test::UploadedFile.new(StringIO.new("id,nome\n1,Maria\n"), 'text/csv', original_filename: 'ruim.csv')
+
+      post "/api/v1/accounts/#{account.id}/campaigns/import_audience",
+           params: { file: bad }, headers: administrator.create_new_auth_token
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.parsed_body['error']).to include('phone_number')
+    end
+  end
+
   describe 'POST /api/v1/accounts/{account.id}/campaigns' do
     let(:inbox) { create(:inbox, account: account) }
 

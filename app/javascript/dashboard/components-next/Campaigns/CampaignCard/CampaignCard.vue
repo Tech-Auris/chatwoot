@@ -51,9 +51,21 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  audienceFileName: {
+    type: String,
+    default: '',
+  },
+  cadenceSeconds: {
+    type: Number,
+    default: 0,
+  },
+  conversationLabel: {
+    type: String,
+    default: '',
+  },
 });
 
-const emit = defineEmits(['edit', 'delete']);
+const emit = defineEmits(['edit', 'delete', 'report']);
 
 const { t } = useI18n();
 
@@ -112,8 +124,24 @@ const audienceLabels = computed(() => {
   });
 });
 
+// A file audience keeps no labels, so the card names the file the operator
+// uploaded instead of leaving the audience line empty.
+const cadenceLabel = computed(() => {
+  const seconds = props.cadenceSeconds;
+  if (!seconds) return '';
+
+  return seconds % 60 === 0
+    ? t('CAMPAIGN.WHATSAPP.CARD.CADENCE_MINUTES', { count: seconds / 60 })
+    : t('CAMPAIGN.WHATSAPP.CARD.CADENCE_SECONDS', { count: seconds });
+});
+
 const hasCampaignDetails = computed(
-  () => templateName.value || audienceLabels.value.length
+  () =>
+    templateName.value ||
+    audienceLabels.value.length ||
+    props.audienceFileName ||
+    cadenceLabel.value ||
+    props.conversationLabel
 );
 </script>
 
@@ -166,6 +194,17 @@ const hasCampaignDetails = computed(
             {{ templateName }}
           </span>
         </div>
+        <div v-if="audienceFileName" class="flex items-center gap-1.5 min-w-0">
+          <span class="text-sm text-n-slate-11 whitespace-nowrap">
+            {{ t('CAMPAIGN.WHATSAPP.CARD.AUDIENCE_FILE_LABEL') }}
+          </span>
+          <span
+            class="text-sm font-medium truncate text-n-slate-12"
+            :title="audienceFileName"
+          >
+            {{ audienceFileName }}
+          </span>
+        </div>
         <div
           v-if="audienceLabels.length"
           class="flex flex-wrap items-center gap-1.5 min-w-0"
@@ -183,6 +222,25 @@ const hasCampaignDetails = computed(
             class="!mb-0"
           />
         </div>
+        <div v-if="cadenceLabel" class="flex items-center gap-1.5 min-w-0">
+          <span class="text-sm text-n-slate-11 whitespace-nowrap">
+            {{ t('CAMPAIGN.WHATSAPP.CARD.CADENCE_LABEL') }}
+          </span>
+          <span class="text-sm font-medium text-n-slate-12">
+            {{ cadenceLabel }}
+          </span>
+        </div>
+        <div v-if="conversationLabel" class="flex items-center gap-1.5 min-w-0">
+          <span class="text-sm text-n-slate-11 whitespace-nowrap">
+            {{ t('CAMPAIGN.WHATSAPP.CARD.CONVERSATION_LABEL') }}
+          </span>
+          <woot-label
+            :title="conversationLabel"
+            variant="smooth"
+            small
+            class="!mb-0"
+          />
+        </div>
       </div>
     </div>
     <div class="flex items-center justify-end w-20 gap-2">
@@ -193,6 +251,15 @@ const hasCampaignDetails = computed(
         color="slate"
         icon="i-lucide-sliders-vertical"
         @click="emit('edit')"
+      />
+      <Button
+        v-if="!isLiveChatType"
+        variant="faded"
+        color="slate"
+        size="sm"
+        icon="i-lucide-chart-column"
+        :title="t('CAMPAIGN.WHATSAPP.CARD.REPORT')"
+        @click="emit('report')"
       />
       <Button
         variant="faded"
