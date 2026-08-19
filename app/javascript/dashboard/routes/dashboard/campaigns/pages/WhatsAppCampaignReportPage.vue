@@ -180,7 +180,7 @@ const goBack = () =>
               </div>
             </td>
             <td class="py-2 text-n-slate-11">
-              {{ formatDate(row.created_at) }}
+              {{ formatDate(row.sent_at ?? row.created_at) }}
             </td>
             <td class="py-2 text-right">
               <a

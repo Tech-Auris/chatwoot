@@ -18,7 +18,9 @@ class Campaigns::PacedDispatchService
   def perform
     return false if campaign.blank? || cadence.zero?
 
-    ::SendReplyJob.set(job_options).perform_later(message.id)
+    options = job_options
+    stamp_dispatch_at(options[:wait].to_i)
+    ::SendReplyJob.set(options).perform_later(message.id)
     true
   end
 
@@ -31,6 +33,24 @@ class Campaigns::PacedDispatchService
     options = { queue: QUEUE }
     options[:wait] = seconds if seconds.positive?
     options
+  end
+
+  # When the message actually leaves. Messages of a campaign are all created
+  # in the same instant and only their dispatch is spaced out, so `created_at`
+  # tells the operator nothing about the send — the report needs this instead.
+  # `update_column` keeps the write out of the callback chain that is running
+  # right now.
+  def stamp_dispatch_at(wait_seconds)
+    return unless message.persisted?
+
+    # rubocop:disable Rails/SkipsModelValidations
+    # Deliberate: this runs inside the message's own after_create_commit, so a
+    # regular update would re-enter the callback chain that is still running.
+    message.update_column(
+      :additional_attributes,
+      message.additional_attributes.merge('campaign_dispatch_at' => (Time.current + wait_seconds).to_i)
+    )
+    # rubocop:enable Rails/SkipsModelValidations
   end
 
   def campaign

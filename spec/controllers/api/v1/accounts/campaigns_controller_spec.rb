@@ -118,6 +118,30 @@ RSpec.describe 'Campaigns API', type: :request do
       expect(response.parsed_body['summary']['total']).to eq(1)
     end
 
+    # The column reads "Envio", so it must not fall back to creation when the
+    # dispatch stamp exists — every message of a campaign is created at once.
+    it 'reports the dispatch time, not the creation time' do
+      message = campaign_message(status: :delivered)
+      stamped = message.additional_attributes.merge('campaign_dispatch_at' => message.created_at.to_i + 120)
+      message.update_columns(additional_attributes: stamped) # rubocop:disable Rails/SkipsModelValidations
+
+      get "/api/v1/accounts/#{account.id}/campaigns/#{campaign.display_id}/report",
+          headers: administrator.create_new_auth_token
+
+      row = response.parsed_body['messages'].first
+      expect(row['sent_at']).to eq(row['created_at'] + 120)
+    end
+
+    it 'falls back to creation for messages sent before the dispatch stamp existed' do
+      campaign_message(status: :delivered)
+
+      get "/api/v1/accounts/#{account.id}/campaigns/#{campaign.display_id}/report",
+          headers: administrator.create_new_auth_token
+
+      row = response.parsed_body['messages'].first
+      expect(row['sent_at']).to eq(row['created_at'])
+    end
+
     it 'lists each send with the contact and the conversation to open' do
       message = campaign_message(status: :delivered)
 

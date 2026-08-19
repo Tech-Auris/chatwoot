@@ -11,6 +11,11 @@ RSpec.describe Campaigns::PacedDispatchService do
                     additional_attributes: { 'campaign_id' => campaign_id })
   end
 
+  def persisted_campaign_message
+    create(:message, account: account, inbox: inbox, conversation: conversation,
+                     additional_attributes: { 'campaign_id' => campaign.id })
+  end
+
   before { Redis::Alfred.delete("campaign_dispatch_position:#{campaign.id}") }
 
   describe '#perform' do
@@ -38,6 +43,20 @@ RSpec.describe Campaigns::PacedDispatchService do
 
       expect { described_class.new(message: campaign_message(campaign_id: other.id)).perform }
         .to have_enqueued_job(SendReplyJob).on_queue('campaign').at(:no_wait)
+    end
+
+    # Every message of a campaign is created in the same instant and only the
+    # dispatch is spaced out, so `created_at` says nothing about the send and
+    # the report has nothing to show without this stamp. Exercised through
+    # message creation, which is the only path that reaches the service.
+    it 'stamps when each message is going to be dispatched' do
+      first = persisted_campaign_message
+      second = persisted_campaign_message
+
+      first_at = first.reload.additional_attributes['campaign_dispatch_at']
+      second_at = second.reload.additional_attributes['campaign_dispatch_at']
+      expect(first_at).to be_present
+      expect(second_at - first_at).to be_within(5).of(30)
     end
 
     it 'declines messages that do not belong to a campaign' do

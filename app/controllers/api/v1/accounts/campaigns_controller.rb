@@ -103,6 +103,10 @@ class Api::V1::Accounts::CampaignsController < Api::V1::Accounts::BaseController
     {
       id: message.id,
       status: message.status,
+      # Campaign messages are created together and dispatched apart, so the
+      # send time is the stamped dispatch — creation only answers for messages
+      # that predate the pacing.
+      sent_at: message.additional_attributes&.dig('campaign_dispatch_at') || message.created_at.to_i,
       created_at: message.created_at.to_i,
       error: message.external_error,
       contact_name: contact&.name,
