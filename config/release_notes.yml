@@ -1,4 +1,28 @@
 ---
+- tag: v4.15.1-auris.1.48
+  published_at: '2026-08-19T19:30:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.48
+  notes:
+    en: |-
+      ### ✨ What's new
+
+      - **Notifications for mentions and direct messages in the internal chat.** When a colleague mentions you or sends you a direct message, you get a notification like any other — and you can turn each one off in your profile.
+
+      ### 🐛 Fixes
+
+      - **The connection light of an inbox tells the truth.** It could stay green after WhatsApp had disconnected, even after reloading the page, so nobody noticed the inbox had gone quiet.
+      - **An inbox stuck out of WhatsApp recovers.** When the connection cannot be re-established, reconnecting now discards the dead session instead of retrying it forever, and the message on screen says what actually solves it.
+      - **The campaign audience file says which row was left out and why.** It used to report only how many rows were skipped, with no way to know what to fix in the spreadsheet.
+    pt_BR: |-
+      ### ✨ Novidades
+
+      - **Notificação de menção e mensagem direta no chat interno.** Quando alguém te menciona ou te manda uma mensagem direta, você recebe uma notificação como qualquer outra — e pode desligar cada uma delas no seu perfil.
+
+      ### 🐛 Correções
+
+      - **A luz de conexão da caixa de entrada mostra a verdade.** Ela podia continuar verde depois que o WhatsApp tinha caído, mesmo recarregando a página, e ninguém percebia que a caixa estava parada.
+      - **Caixa que sai do WhatsApp e não volta agora se recupera.** Quando a conexão não consegue ser restabelecida, reconectar passa a descartar a sessão morta em vez de insistir nela, e a mensagem da tela diz o que realmente resolve.
+      - **O arquivo de público da campanha diz qual linha ficou de fora e por quê.** Antes aparecia só a quantidade de linhas ignoradas, sem indicar o que corrigir na planilha.
 - tag: v4.15.1-auris.1.47
   published_at: '2026-08-19T02:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.47
@@ -307,15 +331,3 @@
       ### 🐛 Correções
 
       - **Mensagens para mais números brasileiros deixam de travar em "enviada".** A correção anterior pegou a maioria dos casos; essa cobre os contatos que sobraram travados usando exatamente o formato que o WhatsApp indica como certo pra rotear cada número.
-- tag: v4.15.1-auris.1.41.16
-  published_at: '2026-07-17T22:00:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.41.16
-  notes:
-    en: |-
-      ### 🐛 Fixes
-
-      - **Messages to Brazilian numbers stop getting stuck on "sent".** Contacts with a Brazilian phone that WhatsApp routes under the older 12-digit format were failing to deliver. Messages sent to new contacts now reach WhatsApp normally.
-    pt_BR: |-
-      ### 🐛 Correções
-
-      - **Mensagens para números brasileiros deixam de travar em "enviada".** Contatos com número brasileiro cuja conta do WhatsApp está registrada no formato antigo de 12 dígitos não estavam entregando. Mensagens para contatos novos agora chegam no WhatsApp normalmente.
