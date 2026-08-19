@@ -99,7 +99,44 @@ RSpec.describe 'Super Admin inbox status report', type: :request do
 
       body = response.parsed_body
       # 3 connected: baileys-open, zapi-open, cloud-always; 2 disconnected: baileys-close, zapi-close
-      expect(body['counts']).to eq('connected' => 3, 'disconnected' => 2)
+      expect(body['counts']).to eq('connected' => 3, 'disconnected' => 2, 'parked' => 0)
+    end
+
+    describe 'inboxes parked with reconnection paused' do
+      # Pausing reconnection is how an inbox is kept for a customer who left,
+      # without deleting it. It must never read as an outage.
+      let!(:parked) do
+        create(:channel_whatsapp, account: create(:account), phone_number: '+5585999990025', provider: 'baileys',
+                                  provider_connection: { 'connection' => 'close' }, reconnection_enabled: false,
+                                  validate_provider_config: false, sync_templates: false)
+      end
+
+      it 'exposes the reconnection state and when the stored state last changed' do
+        sign_in(super_admin, scope: :super_admin)
+        get '/super_admin/reports/inbox_status/data'
+
+        by_phone = response.parsed_body['inboxes'].index_by { |row| row['phone_number'] }
+        expect(by_phone[parked.phone_number]).to include('reconnection_enabled' => false, 'connected' => false)
+        expect(by_phone[parked.phone_number]['state_changed_at']).to eq(parked.reload.updated_at.to_i)
+        expect(by_phone[disconnected_baileys.phone_number]).to include('reconnection_enabled' => true)
+      end
+
+      it 'counts it as parked instead of disconnected' do
+        sign_in(super_admin, scope: :super_admin)
+        get '/super_admin/reports/inbox_status/data'
+
+        # The parked inbox is closed, but the disconnected tally stays at 2.
+        expect(response.parsed_body['counts']).to eq('connected' => 3, 'disconnected' => 2, 'parked' => 1)
+      end
+
+      it 'leaves reconnection state blank for cloud inboxes, which never pair a socket' do
+        sign_in(super_admin, scope: :super_admin)
+        get '/super_admin/reports/inbox_status/data'
+
+        cloud_row = response.parsed_body['inboxes'].find { |row| row['phone_number'] == cloud_inbox.phone_number }
+        expect(cloud_row['reconnection_enabled']).to be_nil
+        expect(cloud_row['state_changed_at']).to be_nil
+      end
     end
 
     describe 'outgoing 24h failure stats' do
