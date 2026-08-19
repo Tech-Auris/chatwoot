@@ -58,6 +58,14 @@ class SuperAdmin::Reports::InboxStatusController < SuperAdmin::ApplicationContro
       connection: connection_state,
       connected: connection_state == 'open',
       reconnect_supported: socket_provider,
+      # A paused inbox is a deliberate state (the customer left, the inbox is
+      # parked instead of deleted), not an incident — the report separates the
+      # two so a parked inbox never inflates the disconnected count.
+      reconnection_enabled: socket_provider ? channel.reconnection_enabled? : nil,
+      # When the stored state last changed. The connection-check job only runs
+      # for channels with reconnection enabled, so a paused inbox can sit on a
+      # state nobody has confirmed for weeks — this column makes that visible.
+      state_changed_at: socket_provider ? channel.updated_at.to_i : nil,
       outgoing_24h_total: stats[:total],
       outgoing_24h_failed: stats[:failed]
     }
@@ -95,9 +103,18 @@ class SuperAdmin::Reports::InboxStatusController < SuperAdmin::ApplicationContro
     end
   end
 
+  # `disconnected` counts only what an operator should act on. Parked inboxes
+  # (reconnection deliberately paused) get their own bucket, otherwise every
+  # departed customer reads as an outage forever.
   def count_states(rows)
-    rows.each_with_object(connected: 0, disconnected: 0) do |row, acc|
-      row[:connected] ? acc[:connected] += 1 : acc[:disconnected] += 1
+    rows.each_with_object(connected: 0, disconnected: 0, parked: 0) do |row, acc|
+      if row[:reconnection_enabled] == false
+        acc[:parked] += 1
+      elsif row[:connected]
+        acc[:connected] += 1
+      else
+        acc[:disconnected] += 1
+      end
     end
   end
 end

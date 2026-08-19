@@ -10,7 +10,7 @@ const props = defineProps({
 });
 
 const inboxes = ref([]);
-const counts = ref({ connected: 0, disconnected: 0 });
+const counts = ref({ connected: 0, disconnected: 0, parked: 0 });
 const loading = ref(false);
 const error = ref(null);
 const lastFetchedAt = ref(null);
@@ -36,6 +36,32 @@ const PROVIDER_LABELS = {
 
 const providerLabel = provider => PROVIDER_LABELS[provider] || provider || '—';
 
+// Reconnection paused is a deliberate state — the customer left and the inbox
+// is parked rather than deleted. It is NOT an incident, so it gets its own
+// bucket everywhere in this report instead of counting as disconnected.
+const isParked = row => row.reconnection_enabled === false;
+
+const stateChangedLabel = row => {
+  if (!row.state_changed_at) return '—';
+  return new Date(row.state_changed_at * 1000).toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+// The connection-check job skips paused channels, so their stored state is
+// only ever written by an incoming webhook. Past a few days without any
+// change, what the table shows may no longer reflect the real socket.
+const STALE_STATE_DAYS = 3;
+
+const isStateStale = row => {
+  if (!row.state_changed_at) return false;
+  const ageDays = (Date.now() / 1000 - row.state_changed_at) / 86400;
+  return ageDays > STALE_STATE_DAYS;
+};
+
 const fetchData = async () => {
   loading.value = true;
   error.value = null;
@@ -47,7 +73,7 @@ const fetchData = async () => {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const body = await res.json();
     inboxes.value = body.inboxes || [];
-    counts.value = body.counts || { connected: 0, disconnected: 0 };
+    counts.value = body.counts || { connected: 0, disconnected: 0, parked: 0 };
     lastFetchedAt.value = new Date();
   } catch (e) {
     error.value = e.message;
@@ -60,8 +86,17 @@ onMounted(fetchData);
 
 const filteredInboxes = computed(() => {
   return inboxes.value.filter(row => {
-    if (filters.value.status === 'connected' && !row.connected) return false;
-    if (filters.value.status === 'disconnected' && row.connected) return false;
+    if (
+      filters.value.status === 'connected' &&
+      (!row.connected || isParked(row))
+    )
+      return false;
+    if (
+      filters.value.status === 'disconnected' &&
+      (row.connected || isParked(row))
+    )
+      return false;
+    if (filters.value.status === 'parked' && !isParked(row)) return false;
     if (
       filters.value.provider !== 'all' &&
       row.provider !== filters.value.provider
@@ -116,17 +151,16 @@ const providerOptions = computed(() => {
 
 const filteredCounts = computed(() =>
   filteredInboxes.value.reduce(
-    (acc, row) => ({
-      connected: acc.connected + (row.connected ? 1 : 0),
-      disconnected: acc.disconnected + (row.connected ? 0 : 1),
-    }),
-    { connected: 0, disconnected: 0 }
+    (acc, row) => {
+      if (isParked(row)) return { ...acc, parked: acc.parked + 1 };
+      if (row.connected) return { ...acc, connected: acc.connected + 1 };
+      return { ...acc, disconnected: acc.disconnected + 1 };
+    },
+    { connected: 0, disconnected: 0, parked: 0 }
   )
 );
 
-const filteredTotal = computed(
-  () => filteredCounts.value.connected + filteredCounts.value.disconnected
-);
+const filteredTotal = computed(() => filteredInboxes.value.length);
 
 const pct = n => {
   if (filteredTotal.value === 0) return '0%';
@@ -236,7 +270,7 @@ const resetFilters = () => {
       </div>
 
       <!-- KPI cards -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div
           class="bg-n-solid-2 outline outline-1 outline-n-container rounded-xl shadow px-6 py-5"
         >
@@ -270,6 +304,21 @@ const resetFilters = () => {
               {{ pct(filteredCounts.disconnected) }}
             </span>
           </div>
+          <div class="text-xs text-n-slate-10 mt-1">Reconexão ativa</div>
+        </div>
+        <div
+          class="bg-n-solid-2 outline outline-1 outline-n-container rounded-xl shadow px-6 py-5"
+        >
+          <div class="text-sm text-n-slate-11">Pausado</div>
+          <div class="flex items-baseline gap-2 mt-2">
+            <span class="text-3xl font-medium text-n-slate-11">
+              {{ filteredCounts.parked }}
+            </span>
+            <span class="text-sm text-n-slate-11">
+              {{ pct(filteredCounts.parked) }}
+            </span>
+          </div>
+          <div class="text-xs text-n-slate-10 mt-1">Reconexão desligada</div>
         </div>
       </div>
 
@@ -287,6 +336,7 @@ const resetFilters = () => {
               <option value="all">Todos</option>
               <option value="connected">Conectado</option>
               <option value="disconnected">Desconectado</option>
+              <option value="parked">Pausado</option>
             </select>
           </label>
           <label class="flex flex-col text-xs text-n-slate-11">
@@ -371,6 +421,10 @@ const resetFilters = () => {
               <th class="text-left px-5 py-3 font-medium text-sm">Provider</th>
               <th class="text-left px-5 py-3 font-medium text-sm">Telefone</th>
               <th class="text-left px-5 py-3 font-medium text-sm">Status</th>
+              <th class="text-left px-5 py-3 font-medium text-sm">Reconexão</th>
+              <th class="text-left px-5 py-3 font-medium text-sm">
+                Estado desde
+              </th>
               <th class="text-left px-5 py-3 font-medium text-sm">
                 Não confirmadas 24h
               </th>
@@ -406,10 +460,48 @@ const resetFilters = () => {
                 </span>
                 <span
                   v-else
-                  class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs bg-n-ruby-3 text-n-ruby-12"
+                  class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs"
+                  :class="
+                    isParked(row)
+                      ? 'bg-n-alpha-2 text-n-slate-11'
+                      : 'bg-n-ruby-3 text-n-ruby-12'
+                  "
                 >
-                  <span class="w-1.5 h-1.5 rounded-full bg-n-ruby-10" />
+                  <span
+                    class="w-1.5 h-1.5 rounded-full"
+                    :class="isParked(row) ? 'bg-n-slate-9' : 'bg-n-ruby-10'"
+                  />
                   {{ row.connection || 'Desconectado' }}
+                </span>
+              </td>
+              <td class="px-5 py-4">
+                <span
+                  v-if="row.reconnection_enabled === null"
+                  class="text-xs text-n-slate-10"
+                >
+                  —
+                </span>
+                <span
+                  v-else-if="isParked(row)"
+                  class="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-n-amber-3 text-n-amber-12"
+                  title="Reconexão automática desligada nesta caixa — ela não volta sozinha se cair"
+                >
+                  Pausada
+                </span>
+                <span v-else class="text-xs text-n-slate-11">Ativa</span>
+              </td>
+              <td class="px-5 py-4 text-xs">
+                <span
+                  :class="
+                    isStateStale(row) ? 'text-n-amber-11' : 'text-n-slate-11'
+                  "
+                  :title="
+                    isStateStale(row)
+                      ? 'O estado gravado não muda há dias — pode não refletir a conexão real'
+                      : ''
+                  "
+                >
+                  {{ stateChangedLabel(row) }}
                 </span>
               </td>
               <td class="px-5 py-4">
@@ -446,7 +538,7 @@ const resetFilters = () => {
               </td>
             </tr>
             <tr v-if="!filteredInboxes.length">
-              <td colspan="8" class="px-5 py-8 text-center text-n-slate-11">
+              <td colspan="10" class="px-5 py-8 text-center text-n-slate-11">
                 Nenhuma inbox encontrada com os filtros atuais.
               </td>
             </tr>
