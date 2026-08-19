@@ -205,6 +205,8 @@
             "IMPORTING": "Reading the file…",
             "SUMMARY": "{total} contact(s) ready — {created} created, {reused} already existed.",
             "INVALID": " {count} row(s) skipped.",
+            "INVALID_ROW": "Row {line}: {reason}",
+            "INVALID_MORE": "and {count} more row(s).",
             "ERROR": "Could not read the file."
           },
           "CONVERSATION_LABEL": {
