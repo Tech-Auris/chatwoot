@@ -71,8 +71,25 @@ class Campaigns::AudienceCsvImportService
     Rails.logger.info "[campaign audience] could not enrich contact #{contact.id}: #{contact.errors.full_messages.to_sentence}"
   end
 
+  # Names that carry no information about who the person is, so the
+  # spreadsheet's version is an improvement rather than a loss.
   def placeholder_name?(contact, phone)
-    contact.name.blank? || contact.name.gsub(/\D/, '') == phone.gsub(/\D/, '')
+    name = contact.name.to_s.strip
+
+    name.blank? ||
+      name.length <= 1 ||
+      name.gsub(/\D/, '') == phone.gsub(/\D/, '') ||
+      emoji_only?(name)
+  end
+
+  # `\p{Emoji}` can't be used here: it also matches plain digits, so a name
+  # like "2026" would be taken for an emoji. Extended_Pictographic covers the
+  # pictographs, and the extra ranges cover the modifiers that make up family,
+  # flag and skin-tone sequences.
+  EMOJI_CHARACTERS = /[\p{Extended_Pictographic}\u{FE0F}\u{FE0E}\u{200D}\u{1F3FB}-\u{1F3FF}\u{1F1E6}-\u{1F1FF}]/
+
+  def emoji_only?(name)
+    name.gsub(EMOJI_CHARACTERS, '').strip.empty?
   end
 
   def create_contact(row, phone)

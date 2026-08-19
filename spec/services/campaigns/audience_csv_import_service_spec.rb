@@ -49,6 +49,37 @@ RSpec.describe Campaigns::AudienceCsvImportService do
       expect(existing.reload.name).to eq('Gustavo')
     end
 
+    it 'names a reused contact whose name is a single character' do
+      existing = create(:contact, account: account, name: 'G', phone_number: '+5511987654321')
+
+      import("id,name,email,phone_number\n1,Gustavo,,+5511987654321\n")
+
+      expect(existing.reload.name).to eq('Gustavo')
+    end
+
+    # WhatsApp profile names are often just emoji, which says nothing about who
+    # the person is.
+    it 'names a reused contact whose name is only emoji' do
+      ['👍', '🎉🎉', '👨‍👩‍👧', '🇧🇷', '👍🏽'].each_with_index do |emoji_name, index|
+        phone = "+551198765432#{index}"
+        existing = create(:contact, account: account, name: emoji_name, phone_number: phone)
+
+        import("id,name,email,phone_number\n1,Gustavo,,#{phone}\n")
+
+        expect(existing.reload.name).to eq('Gustavo')
+      end
+    end
+
+    # `\p{Emoji}` matches digits too, so a numeric name must not be mistaken
+    # for an emoji placeholder — it is still a name someone typed.
+    it 'keeps a numeric name that is not the phone number' do
+      existing = create(:contact, account: account, name: '2026', phone_number: '+5511987654321')
+
+      import("id,name,email,phone_number\n1,Gustavo,,+5511987654321\n")
+
+      expect(existing.reload.name).to eq('2026')
+    end
+
     # Overwriting a curated name with whatever a campaign spreadsheet carries
     # would let the contact base decay one campaign at a time.
     it 'keeps a real name and a real email that the contact already had' do
