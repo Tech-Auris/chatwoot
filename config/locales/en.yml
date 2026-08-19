@@ -182,7 +182,7 @@ en:
       channel:
         provider_connection:
           wrong_phone_number: The phone number you are trying to link is not the same as the one you have configured. Please make sure the phone number is correct before scanning the QR code.
-          reconnect_loop_detected: The connection could not be re-established after several attempts. Please try reconnecting the inbox.
+          reconnect_loop_detected: The connection could not be re-established after several attempts. Automatic retries continue at increasing intervals. If this persists, disconnect the inbox and pair it again by scanning a new QR code.
     meta_templates:
       non_cloud_inbox: This endpoint is only available for inboxes using the WhatsApp Cloud provider.
       sync_failed: Could not refresh templates from Meta. Please try again in a few seconds.

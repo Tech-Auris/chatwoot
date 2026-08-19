@@ -157,7 +157,7 @@ pt_BR:
       channel:
         provider_connection:
           wrong_phone_number: O número de telefone que você está tentando conectar não é o mesmo que o configurado. Certifique-se de que o número está correto antes de escanear o QR code.
-          reconnect_loop_detected: Não foi possível restabelecer a conexão após várias tentativas. Tente reconectar a caixa de entrada.
+          reconnect_loop_detected: Não foi possível restabelecer a conexão após várias tentativas. Novas tentativas automáticas continuam em intervalos crescentes. Se o problema persistir, desconecte a caixa de entrada e conecte novamente escaneando um novo QR code.
     meta_templates:
       non_cloud_inbox: Este endpoint só está disponível para caixas de entrada que usam o provedor WhatsApp Cloud.
       sync_failed: Não foi possível atualizar os templates junto ao Meta. Tente novamente em alguns segundos.
