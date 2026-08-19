@@ -1,4 +1,26 @@
 ---
+- tag: v4.15.1-auris.1.47
+  published_at: '2026-08-19T02:00:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.47
+  notes:
+    en: |-
+      ### ⚡ Improvements
+
+      - **The campaign report opens with the campaign on top.** Template, inbox, schedule, audience and cadence are right there, so you can tell which campaign you are looking at without going back.
+
+      ### 🐛 Fixes
+
+      - **The report shows when each message actually went out.** It used to show the moment the message was prepared, which is the same instant for the whole campaign — a campaign spaced by one minute looked like everything left at once.
+      - **Contacts from a spreadsheet keep the name you gave them.** When the phone number already existed in the system with no name, or with the number itself as the name, the name from the file is now applied instead of being dropped.
+    pt_BR: |-
+      ### ⚡ Melhorias
+
+      - **O relatório da campanha abre com a campanha no topo.** Modelo, caixa de entrada, agendamento, público e cadência ficam à vista, então dá para saber de qual campanha é o relatório sem voltar.
+
+      ### 🐛 Correções
+
+      - **O relatório mostra quando cada mensagem realmente saiu.** Antes mostrava o momento em que a mensagem foi preparada, que é o mesmo para a campanha inteira — uma campanha espaçada de 1 minuto parecia ter saído tudo junto.
+      - **Contatos vindos de planilha ficam com o nome que você informou.** Quando o telefone já existia no sistema sem nome, ou com o próprio número no lugar do nome, o nome do arquivo passa a ser aplicado em vez de descartado.
 - tag: v4.15.1-auris.1.46
   published_at: '2026-08-18T22:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.46
@@ -297,15 +319,3 @@
       ### 🐛 Correções
 
       - **Mensagens para números brasileiros deixam de travar em "enviada".** Contatos com número brasileiro cuja conta do WhatsApp está registrada no formato antigo de 12 dígitos não estavam entregando. Mensagens para contatos novos agora chegam no WhatsApp normalmente.
-- tag: v4.15.1-auris.1.41.15
-  published_at: '2026-07-16T18:00:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.41.15
-  notes:
-    en: |-
-      ### 🐛 Fixes
-
-      - **Managers can generate the WhatsApp QR code again.** Only admins were seeing the QR when connecting a WhatsApp device. Managers now get the QR too, matching the previous behavior.
-    pt_BR: |-
-      ### 🐛 Correções
-
-      - **Gestores conseguem gerar o QR Code do WhatsApp de novo.** Só administradores estavam vendo o QR ao conectar um dispositivo WhatsApp. Agora gestores também recebem o QR, como funcionava antes.
