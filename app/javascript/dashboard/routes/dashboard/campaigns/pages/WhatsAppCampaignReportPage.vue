@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useMapGetter } from 'dashboard/composables/store';
 import CampaignsAPI from 'dashboard/api/campaigns';
 import Button from 'dashboard/components-next/button/Button.vue';
+import CampaignCard from 'dashboard/components-next/Campaigns/CampaignCard/CampaignCard.vue';
 import { frontendURL } from 'dashboard/helper/URLHelper';
 
 const { t } = useI18n();
@@ -20,6 +21,7 @@ const summary = ref({
   read: 0,
   success_rate: 0,
 });
+const campaign = ref(null);
 const messages = ref([]);
 const meta = ref({ current_page: 1, total_pages: 1, total_count: 0 });
 const isLoading = ref(false);
@@ -40,6 +42,7 @@ const fetchPage = async (page = 1) => {
 
   try {
     const { data } = await CampaignsAPI.report(campaignId.value, page);
+    campaign.value = data.campaign ?? campaign.value;
     summary.value = data.summary ?? summary.value;
     messages.value = data.messages ?? [];
     meta.value = data.meta ?? meta.value;
@@ -65,6 +68,7 @@ watch(campaignId, () => {
     read: 0,
     success_rate: 0,
   };
+  campaign.value = null;
   messages.value = [];
   meta.value = { current_page: 1, total_pages: 1, total_count: 0 };
   fetchPage(1);
@@ -120,6 +124,22 @@ const goBack = () =>
       </div>
 
       <p v-if="error" class="text-sm text-n-ruby-11">{{ error }}</p>
+
+      <CampaignCard
+        v-if="campaign"
+        :title="campaign.title"
+        :message="campaign.message"
+        :status="campaign.campaign_status"
+        :sender="campaign.sender"
+        :inbox="campaign.inbox"
+        :scheduled-at="campaign.scheduled_at"
+        :template-params="campaign.template_params"
+        :audience="campaign.audience"
+        :audience-file-name="campaign.audience_file_name"
+        :cadence-seconds="campaign.cadence_seconds"
+        :conversation-label="campaign.conversation_label"
+        hide-actions
+      />
 
       <div class="grid grid-cols-2 gap-3 md:grid-cols-6">
         <div
