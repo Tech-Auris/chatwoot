@@ -44,6 +44,7 @@ class Campaigns::AudienceCsvImportService
 
     contact = account.contacts.find_by(phone_number: phone)
     if contact
+      fill_gaps(contact, row, phone)
       result[:reused_count] += 1
     else
       contact = create_contact(row, phone)
@@ -53,6 +54,25 @@ class Campaigns::AudienceCsvImportService
     end
 
     result[:contact_ids] << contact.id
+  end
+
+  # A contact created from an inbound message usually carries the number as its
+  # name, and often has no email. The spreadsheet fills those gaps — but never
+  # overwrites a real name or an existing email, which would let a campaign
+  # list degrade data the team curated.
+  def fill_gaps(contact, row, phone)
+    attributes = {}
+    attributes[:name] = row['name'] if row['name'].present? && placeholder_name?(contact, phone)
+    attributes[:email] = row['email'] if row['email'].present? && contact.email.blank?
+    return if attributes.empty?
+
+    return if contact.update(attributes)
+
+    Rails.logger.info "[campaign audience] could not enrich contact #{contact.id}: #{contact.errors.full_messages.to_sentence}"
+  end
+
+  def placeholder_name?(contact, phone)
+    contact.name.blank? || contact.name.gsub(/\D/, '') == phone.gsub(/\D/, '')
   end
 
   def create_contact(row, phone)

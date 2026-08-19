@@ -31,6 +31,35 @@ RSpec.describe Campaigns::AudienceCsvImportService do
       expect(result).to include(created_count: 0, reused_count: 1)
     end
 
+    # A contact created from an inbound message carries the number as its name;
+    # the spreadsheet knows who that is.
+    it 'names a reused contact whose name is just the phone number' do
+      existing = create(:contact, account: account, name: '+5511987654321', phone_number: '+5511987654321', email: nil)
+
+      import("id,name,email,phone_number\n1,Gustavo,gustavo@exemplo.com,+5511987654321\n")
+
+      expect(existing.reload).to have_attributes(name: 'Gustavo', email: 'gustavo@exemplo.com')
+    end
+
+    it 'names a reused contact that has no name at all' do
+      existing = create(:contact, account: account, name: '', phone_number: '+5511987654321')
+
+      import("id,name,email,phone_number\n1,Gustavo,,+5511987654321\n")
+
+      expect(existing.reload.name).to eq('Gustavo')
+    end
+
+    # Overwriting a curated name with whatever a campaign spreadsheet carries
+    # would let the contact base decay one campaign at a time.
+    it 'keeps a real name and a real email that the contact already had' do
+      existing = create(:contact, account: account, name: 'Fábio Rocha',
+                                  email: 'fabio@empresa.com', phone_number: '+5511987654321')
+
+      import("id,name,email,phone_number\n1,Flamengo,outro@exemplo.com,+5511987654321\n")
+
+      expect(existing.reload).to have_attributes(name: 'Fábio Rocha', email: 'fabio@empresa.com')
+    end
+
     # Spreadsheets hand over numbers with punctuation and no country prefix
     # marker; contacts are stored in E.164.
     it 'normalizes numbers written with punctuation' do
