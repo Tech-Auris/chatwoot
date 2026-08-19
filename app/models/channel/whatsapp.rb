@@ -146,6 +146,7 @@ class Channel::Whatsapp < ApplicationRecord # rubocop:disable Metrics/ClassLengt
     normalized = provider_connection.deep_stringify_keys
     return if normalized == self.provider_connection
 
+    previous_connection = self.provider_connection&.dig('connection')
     assign_attributes(provider_connection: normalized)
     # NOTE: Skip `validate_provider_config?` check.
     # `Inbox.no_touching` suppresses the `has_one :inbox, touch: true` callback
@@ -154,6 +155,7 @@ class Channel::Whatsapp < ApplicationRecord # rubocop:disable Metrics/ClassLengt
     # pushed to clients via a targeted `inbox.provider_connection_updated` event.
     Inbox.no_touching { save!(validate: false) }
     broadcast_provider_connection_updated
+    invalidate_inbox_cache_key if normalized['connection'] != previous_connection
   end
 
   # Proactive (REST poll) / push update of just the reach-out lock. Unlike the connection.update
@@ -421,6 +423,17 @@ class Channel::Whatsapp < ApplicationRecord # rubocop:disable Metrics/ClassLengt
   end
 
   private
+
+  # The realtime event above only reaches clients connected at that instant, while the
+  # inbox payload lives in the browser's IndexedDB behind an account-level cache key
+  # that `Inbox.no_touching` deliberately leaves untouched. A client that was offline
+  # for the event would keep serving the old connection status from that cache — across
+  # reloads, indefinitely — since nothing else moves the key. Bumping it on a real
+  # connection transition, and only then, keeps the high-frequency heartbeat fields
+  # (QR rotation, reach-out lock, quota) off the invalidation path.
+  def invalidate_inbox_cache_key
+    account&.update_cache_key(Inbox.name.underscore)
+  end
 
   def broadcast_provider_connection_updated
     return if inbox.blank?

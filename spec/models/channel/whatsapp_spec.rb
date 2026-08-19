@@ -526,6 +526,9 @@ RSpec.describe Channel::Whatsapp do
 
     it 'pushes a targeted event through the sync dispatcher only' do
       sync_dispatcher = Rails.configuration.dispatcher.sync_dispatcher
+      # A first-time connection state also invalidates the inbox cache key, which rides
+      # the same dispatcher — allow it so this example stays about the targeted event.
+      allow(sync_dispatcher).to receive(:dispatch)
       expect(sync_dispatcher).to receive(:dispatch).with(
         Events::Types::INBOX_PROVIDER_CONNECTION_UPDATED,
         anything,
@@ -548,6 +551,26 @@ RSpec.describe Channel::Whatsapp do
     it 'treats a nil payload as a no-op instead of raising' do
       expect { channel.update_provider_connection!(nil) }.not_to raise_error
       expect(channel.reload.provider_connection).to eq({})
+    end
+
+    # The realtime event only reaches clients online at that moment; everyone else
+    # reads the inbox from IndexedDB until the account cache key moves.
+    it 'invalidates the inbox cache key when the connection state changes' do
+      channel.update_provider_connection!(connection: 'open')
+
+      expect(channel.account).to receive(:update_cache_key).with('inbox')
+
+      channel.update_provider_connection!(connection: 'close')
+    end
+
+    it 'does not invalidate the cache key for heartbeat fields that ride the same column' do
+      channel.update_provider_connection!(connection: 'open')
+
+      expect(channel.account).not_to receive(:update_cache_key)
+
+      # Same connection, new QR — this happens constantly and must not trigger a
+      # full inbox refetch on every client.
+      channel.update_provider_connection!(connection: 'open', qr_data_url: 'data:image/png;base64,AAA')
     end
   end
 
