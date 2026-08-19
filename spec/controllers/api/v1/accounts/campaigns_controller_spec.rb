@@ -75,7 +75,12 @@ RSpec.describe 'Campaigns API', type: :request do
   describe 'GET /api/v1/accounts/{account.id}/campaigns/:id/report' do
     let(:administrator) { create(:user, account: account, role: :administrator) }
     let(:agent) { create(:user, account: account, role: :agent) }
-    let(:inbox) { create(:inbox, account: account) }
+    # A WhatsApp inbox so the campaign is one_off, which is the only kind that
+    # carries a schedule, an audience and a cadence.
+    let(:inbox) do
+      create(:channel_whatsapp, account: account, provider: 'whatsapp_cloud',
+                                validate_provider_config: false, sync_templates: false).inbox
+    end
     let(:campaign) { create(:campaign, account: account, inbox: inbox) }
     let(:conversation) { create(:conversation, account: account, inbox: inbox) }
 
@@ -89,6 +94,22 @@ RSpec.describe 'Campaigns API', type: :request do
           headers: agent.create_new_auth_token
 
       expect(response).to have_http_status(:unauthorized)
+    end
+
+    # The report page renders the campaign with the same card as the list, so
+    # it needs the campaign served the same way the list serves it.
+    it 'carries the campaign itself, serialized as the list does' do
+      campaign.update!(cadence_seconds: 60, conversation_label: 'promo', audience_file_name: 'lista.csv')
+
+      get "/api/v1/accounts/#{account.id}/campaigns/#{campaign.display_id}/report",
+          headers: administrator.create_new_auth_token
+
+      payload = response.parsed_body['campaign']
+      expect(payload).to include(
+        'id' => campaign.display_id, 'title' => campaign.title,
+        'cadence_seconds' => 60, 'conversation_label' => 'promo', 'audience_file_name' => 'lista.csv'
+      )
+      expect(payload['inbox']['name']).to eq(inbox.name)
     end
 
     it 'summarizes what happened to the campaign messages' do

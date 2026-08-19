@@ -63,6 +63,12 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  // The report page reuses this card to show the campaign it is reporting on,
+  // where editing, deleting or opening the report again make no sense.
+  hideActions: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(['edit', 'delete', 'report']);
@@ -243,7 +249,7 @@ const hasCampaignDetails = computed(
         </div>
       </div>
     </div>
-    <div class="flex items-center justify-end w-20 gap-2">
+    <div v-if="!hideActions" class="flex items-center justify-end w-20 gap-2">
       <Button
         v-if="isLiveChatType"
         variant="faded"

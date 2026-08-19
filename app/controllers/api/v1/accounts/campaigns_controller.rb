@@ -42,6 +42,7 @@ class Api::V1::Accounts::CampaignsController < Api::V1::Accounts::BaseController
     page = messages.reorder(created_at: :desc).page(params[:page] || 1).per(REPORT_PER_PAGE)
 
     render json: {
+      campaign: serialized_campaign,
       summary: report_summary(messages),
       messages: page.map { |message| serialize_report_message(message) },
       meta: {
@@ -69,6 +70,15 @@ class Api::V1::Accounts::CampaignsController < Api::V1::Accounts::BaseController
   end
 
   private
+
+  # Rendered through the same partial the list screen uses, so the report page
+  # can show the campaign with the very same card instead of a second, drifting
+  # copy of those fields.
+  def serialized_campaign
+    JSON.parse(
+      render_to_string(partial: 'api/v1/models/campaign', formats: [:json], locals: { resource: @campaign })
+    )
+  end
 
   # Messages carry the campaign id inside `additional_attributes`. The window
   # on `created_at` keeps the lookup off a full scan of a very large table —
