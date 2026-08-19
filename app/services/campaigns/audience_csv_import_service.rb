@@ -44,6 +44,7 @@ class Campaigns::AudienceCsvImportService
 
     contact = account.contacts.find_by(phone_number: phone)
     if contact
+      fill_gaps(contact, row, phone)
       result[:reused_count] += 1
     else
       contact = create_contact(row, phone)
@@ -53,6 +54,42 @@ class Campaigns::AudienceCsvImportService
     end
 
     result[:contact_ids] << contact.id
+  end
+
+  # A contact created from an inbound message usually carries the number as its
+  # name, and often has no email. The spreadsheet fills those gaps — but never
+  # overwrites a real name or an existing email, which would let a campaign
+  # list degrade data the team curated.
+  def fill_gaps(contact, row, phone)
+    attributes = {}
+    attributes[:name] = row['name'] if row['name'].present? && placeholder_name?(contact, phone)
+    attributes[:email] = row['email'] if row['email'].present? && contact.email.blank?
+    return if attributes.empty?
+
+    return if contact.update(attributes)
+
+    Rails.logger.info "[campaign audience] could not enrich contact #{contact.id}: #{contact.errors.full_messages.to_sentence}"
+  end
+
+  # Names that carry no information about who the person is, so the
+  # spreadsheet's version is an improvement rather than a loss.
+  def placeholder_name?(contact, phone)
+    name = contact.name.to_s.strip
+
+    name.blank? ||
+      name.length <= 1 ||
+      name.gsub(/\D/, '') == phone.gsub(/\D/, '') ||
+      emoji_only?(name)
+  end
+
+  # `\p{Emoji}` can't be used here: it also matches plain digits, so a name
+  # like "2026" would be taken for an emoji. Extended_Pictographic covers the
+  # pictographs, and the extra ranges cover the modifiers that make up family,
+  # flag and skin-tone sequences.
+  EMOJI_CHARACTERS = /[\p{Extended_Pictographic}\u{FE0F}\u{FE0E}\u{200D}\u{1F3FB}-\u{1F3FF}\u{1F1E6}-\u{1F1FF}]/
+
+  def emoji_only?(name)
+    name.gsub(EMOJI_CHARACTERS, '').strip.empty?
   end
 
   def create_contact(row, phone)
