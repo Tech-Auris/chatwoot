@@ -54,6 +54,21 @@ const AUDIENCE_SAMPLE_CSV = '/downloads/campaign-audience-sample.csv';
 const csvFileName = ref('');
 const csvSummary = ref(null);
 const csvError = ref('');
+
+// A long file can skip many rows; listing them all would bury the form. The
+// first few are enough to spot the pattern, and the rest are summarized.
+const MAX_VISIBLE_INVALID_ROWS = 5;
+
+const visibleInvalidRows = computed(() =>
+  (csvSummary.value?.invalid_rows || []).slice(0, MAX_VISIBLE_INVALID_ROWS)
+);
+
+const hiddenInvalidRowCount = computed(() =>
+  Math.max(
+    (csvSummary.value?.invalid_rows || []).length - MAX_VISIBLE_INVALID_ROWS,
+    0
+  )
+);
 const isImportingCsv = ref(false);
 const templateParserRef = ref(null);
 
@@ -425,6 +440,28 @@ watch(
           }}
         </span>
       </p>
+      <!-- The backend already says why each row was skipped; without this the
+           operator only sees a count and has no way to fix the file. -->
+      <ul
+        v-if="csvSummary?.invalid_rows?.length"
+        class="mt-1 flex flex-col gap-0.5 text-xs text-n-ruby-11"
+      >
+        <li v-for="row in visibleInvalidRows" :key="row.line">
+          {{
+            t('CAMPAIGN.WHATSAPP.CREATE.FORM.AUDIENCE_FILE.INVALID_ROW', {
+              line: row.line,
+              reason: row.reason,
+            })
+          }}
+        </li>
+        <li v-if="hiddenInvalidRowCount">
+          {{
+            t('CAMPAIGN.WHATSAPP.CREATE.FORM.AUDIENCE_FILE.INVALID_MORE', {
+              count: hiddenInvalidRowCount,
+            })
+          }}
+        </li>
+      </ul>
     </div>
 
     <div class="flex flex-col gap-1">

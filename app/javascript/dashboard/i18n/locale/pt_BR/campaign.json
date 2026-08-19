@@ -205,6 +205,8 @@
             "IMPORTING": "Lendo o arquivo…",
             "SUMMARY": "{total} contato(s) prontos — {created} criados, {reused} já existentes.",
             "INVALID": " {count} linha(s) ignorada(s).",
+            "INVALID_ROW": "Linha {line}: {reason}",
+            "INVALID_MORE": "e mais {count} linha(s).",
             "ERROR": "Não foi possível ler o arquivo."
           },
           "CONVERSATION_LABEL": {

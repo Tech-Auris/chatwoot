@@ -20,6 +20,20 @@ RSpec.describe Campaigns::AudienceCsvImportService do
       expect(result).to include(created_count: 1, reused_count: 0)
     end
 
+    # The operator only ever sees this reason in the UI, so it has to name the
+    # actual reason a row was dropped — a bare count leaves them guessing which
+    # line to fix. Seen with a spreadsheet whose e-mail already belonged to a
+    # different contact of the same account.
+    it 'reports why a row could not become a contact' do
+      create(:contact, account: account, email: 'repetido@exemplo.com', phone_number: '+5511900000001')
+
+      result = import("id,name,email,phone_number\n1,Novo,repetido@exemplo.com,+5511900000002\n")
+
+      expect(result[:created_count]).to eq(0)
+      expect(result[:invalid_rows].first[:line]).to eq(2)
+      expect(result[:invalid_rows].first[:reason]).to match(/mail/i)
+    end
+
     # The phone number is the identity key, so re-uploading the same audience
     # must not fan out duplicates.
     it 'reuses a contact that already has the phone number' do
