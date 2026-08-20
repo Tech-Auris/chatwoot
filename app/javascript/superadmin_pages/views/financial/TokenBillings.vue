@@ -20,6 +20,7 @@ const SAMPLE_CSV = '/downloads/token-usage-sample.csv';
 
 const prices = ref([]);
 const selectedPrices = ref({ text: '', media: '', audio: '' });
+const selectedProducts = ref({ text: '', media: '', audio: '' });
 const file = ref(null);
 const preview = ref(null);
 const description = ref('');
@@ -43,27 +44,35 @@ const formatAmount = amount => {
 
 const formatNumber = value => new Intl.NumberFormat('pt-BR').format(value || 0);
 
-// Stripe prices are immutable: changing an amount creates a new price and the
-// old one stays in the catalog. Two entries can therefore read exactly alike —
-// the id is what tells them apart, so it rides along in the label.
-const priceLabel = price => {
-  const name = price.nickname || price.product_name || price.id;
-  return `${name} — ${formatAmount(price.unit_amount)} (${price.id})`;
-};
-
-// Same product and same amount appearing more than once almost always means a
-// duplicate left behind in Stripe. Saying so beats letting someone pick one of
-// them at random every month.
-const duplicatedPrices = computed(() => {
-  const seen = new Map();
+// A product carries a one-off price and a monthly one, often of the same
+// amount, so the picker asks for the product first and only then for which of
+// its prices to charge.
+const products = computed(() => {
+  const byId = new Map();
   prices.value.forEach(price => {
-    const key = `${price.nickname || price.product_name}|${price.unit_amount}`;
-    seen.set(key, (seen.get(key) || 0) + 1);
+    if (!byId.has(price.product_id)) {
+      byId.set(price.product_id, {
+        id: price.product_id,
+        name: price.product_name || price.nickname || price.product_id,
+      });
+    }
   });
-  return [...seen.entries()]
-    .filter(([, count]) => count > 1)
-    .map(([key]) => key.split('|')[0]);
+  return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name));
 });
+
+const pricesOfProduct = productId =>
+  prices.value.filter(price => price.product_id === productId);
+
+const priceLabel = price =>
+  `${formatAmount(price.unit_amount)} — ${
+    price.recurring_interval ? 'Mensal' : 'Avulso'
+  }`;
+
+const onProductChange = category => {
+  const options = pricesOfProduct(selectedProducts.value[category]);
+  // One price under the product means there is nothing to choose.
+  selectedPrices.value[category] = options.length === 1 ? options[0].id : '';
+};
 
 const fetchData = async () => {
   try {
@@ -77,7 +86,10 @@ const fetchData = async () => {
     prices.value = body.prices || [];
     // Last month's choice comes back filled in, so nobody re-picks it monthly.
     CATEGORIES.forEach(category => {
-      selectedPrices.value[category] = body.selected_prices?.[category] || '';
+      const priceId = body.selected_prices?.[category] || '';
+      selectedPrices.value[category] = priceId;
+      selectedProducts.value[category] =
+        prices.value.find(price => price.id === priceId)?.product_id || '';
     });
   } catch (e) {
     error.value = e.message;
@@ -202,29 +214,51 @@ const statusLabel = status =>
         <h2 class="text-sm font-medium text-slate-800 mb-3">
           1. Preço de cada categoria
         </h2>
-        <p v-if="duplicatedPrices.length" class="text-xs text-amber-700 mb-2">
-          Há preços repetidos no catálogo do Stripe ({{
-            duplicatedPrices.join(', ')
-          }}). O id ao lado de cada opção diz qual é qual — vale arquivar os
-          antigos em Financeiro → Produtos.
-        </p>
+
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <label
+          <div
             v-for="category in CATEGORIES"
             :key="category"
-            class="block text-xs text-slate-500"
+            class="text-xs text-slate-500"
           >
-            {{ CATEGORY_LABELS[category] }}
-            <select
-              v-model="selectedPrices[category]"
-              class="mt-1 w-full border border-slate-200 rounded px-2 py-1.5 text-sm"
-            >
-              <option value="">— escolher —</option>
-              <option v-for="price in prices" :key="price.id" :value="price.id">
-                {{ priceLabel(price) }}
-              </option>
-            </select>
-          </label>
+            <span class="block font-medium text-slate-600">
+              {{ CATEGORY_LABELS[category] }}
+            </span>
+            <label class="block mt-1">
+              Produto
+              <select
+                v-model="selectedProducts[category]"
+                class="mt-1 w-full border border-slate-200 rounded px-2 py-1.5 text-sm"
+                @change="onProductChange(category)"
+              >
+                <option value="">— escolher —</option>
+                <option
+                  v-for="product in products"
+                  :key="product.id"
+                  :value="product.id"
+                >
+                  {{ product.name }}
+                </option>
+              </select>
+            </label>
+            <label class="block mt-2">
+              Preço
+              <select
+                v-model="selectedPrices[category]"
+                :disabled="!selectedProducts[category]"
+                class="mt-1 w-full border border-slate-200 rounded px-2 py-1.5 text-sm disabled:bg-slate-25"
+              >
+                <option value="">— escolher —</option>
+                <option
+                  v-for="price in pricesOfProduct(selectedProducts[category])"
+                  :key="price.id"
+                  :value="price.id"
+                >
+                  {{ priceLabel(price) }}
+                </option>
+              </select>
+            </label>
+          </div>
         </div>
 
         <h2 class="text-sm font-medium text-slate-800 mt-5 mb-3">

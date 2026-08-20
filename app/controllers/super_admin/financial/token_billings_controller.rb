@@ -85,8 +85,12 @@ class SuperAdmin::Financial::TokenBillingsController < SuperAdmin::ApplicationCo
     client.list_prices.data.filter_map do |price|
       next unless price.active
 
-      { id: price.id, nickname: price.nickname, product_name: product_names[price.product],
-        unit_amount: price.unit_amount, currency: price.currency }
+      { id: price.id, nickname: price.nickname, product_id: price.product,
+        product_name: product_names[price.product], unit_amount: price.unit_amount,
+        currency: price.currency,
+        # A product usually carries both a one-off and a monthly price of the
+        # same amount; without this the two read identically in the picker.
+        recurring_interval: price.recurring&.interval }
     end
   end
 

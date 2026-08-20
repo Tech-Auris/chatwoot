@@ -34,6 +34,23 @@ RSpec.describe 'Super Admin token billing', type: :request do
     end
   end
 
+  describe 'GET /super_admin/financial/token_billings/data' do
+    # A product carries a one-off price and a monthly one, usually of the same
+    # amount — without the product and the recurrence the two are impossible to
+    # tell apart in the picker.
+    it 'says which product each price belongs to and whether it recurs' do
+      recurring = Struct.new(:id, :product, :unit_amount, :currency, :nickname, :active, :recurring)
+                        .new('price_text_mensal', 'prod_1', 6, 'brl', 'Mensagens de Texto', true, Struct.new(:interval).new('month'))
+      allow(client).to receive(:list_prices).and_return(Struct.new(:data).new(catalog + [recurring]))
+
+      get '/super_admin/financial/token_billings/data'
+
+      by_id = response.parsed_body['prices'].index_by { |price| price['id'] }
+      expect(by_id['price_text']).to include('product_id' => 'prod_1', 'product_name' => 'Tokens', 'recurring_interval' => nil)
+      expect(by_id['price_text_mensal']).to include('recurring_interval' => 'month')
+    end
+  end
+
   describe 'POST /super_admin/financial/token_billings/preview' do
     let(:upload) { Rack::Test::UploadedFile.new(StringIO.new(csv), 'text/csv', original_filename: 'consumo.csv') }
 

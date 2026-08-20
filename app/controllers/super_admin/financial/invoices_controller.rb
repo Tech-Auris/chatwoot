@@ -101,6 +101,7 @@ class SuperAdmin::Financial::InvoicesController < SuperAdmin::ApplicationControl
 
       {
         id: price.id,
+        product_id: price.product,
         product_name: product_names[price.product] || price.nickname,
         unit_amount: price.unit_amount,
         currency: price.currency,

@@ -51,6 +51,7 @@ const createError = ref(null);
 const showCreate = ref(false);
 const DEFAULT_DAYS_UNTIL_DUE = 7;
 const emptyItem = () => ({
+  product_id: '',
   price_id: '',
   quantity: 1,
   description: '',
@@ -181,18 +182,43 @@ const removeItem = index => {
 // A line is worth sending when it points at a catalog price or carries a typed
 // amount; the empty rows of the form are just noise.
 const filledItems = computed(() =>
-  newInvoice.value.items.filter(item => item.price_id || item.amount)
+  newInvoice.value.items
+    .filter(item => item.price_id || item.amount)
+    .map(({ price_id, quantity, description, amount }) => ({
+      price_id,
+      quantity,
+      description,
+      amount,
+    }))
 );
 
-// A Stripe price is immutable, so changing an amount leaves the old price in the
-// catalog: two options can read exactly alike and the id is what separates them.
-const priceLabel = price => {
-  const name = price.product_name || 'Produto sem nome';
-  const amount = formatAmount(price.unit_amount, price.currency);
-  const interval = price.recurring_interval
-    ? ` (recorrente/${price.recurring_interval})`
-    : '';
-  return `${name} — ${amount}${interval} · ${price.id}`;
+// A product carries a one-off price and a monthly one, often of the same
+// amount. The form asks for the product first and then for which of its prices
+// to charge, instead of a flat list where the two read identically.
+const products = computed(() => {
+  const byId = new Map();
+  prices.value.forEach(price => {
+    if (!byId.has(price.product_id)) {
+      byId.set(price.product_id, {
+        id: price.product_id,
+        name: price.product_name || 'Produto sem nome',
+      });
+    }
+  });
+  return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name));
+});
+
+const pricesOfProduct = productId =>
+  prices.value.filter(price => price.product_id === productId);
+
+const priceLabel = price =>
+  `${formatAmount(price.unit_amount, price.currency)} — ${
+    price.recurring_interval ? 'Mensal' : 'Avulso'
+  }`;
+
+const onItemProductChange = item => {
+  const options = pricesOfProduct(item.product_id);
+  item.price_id = options.length === 1 ? options[0].id : '';
 };
 
 const submitCreate = async () => {
@@ -514,22 +540,42 @@ const submitPay = async () => {
             :key="index"
             class="border border-slate-100 rounded p-3 mt-2"
           >
-            <label class="block text-xs text-slate-500">
-              Produto do catálogo
-              <select
-                v-model="item.price_id"
-                class="mt-1 w-full border border-slate-200 rounded px-2 py-1.5 text-sm"
-              >
-                <option value="">— valor avulso —</option>
-                <option
-                  v-for="price in prices"
-                  :key="price.id"
-                  :value="price.id"
+            <div class="grid grid-cols-2 gap-2">
+              <label class="block text-xs text-slate-500">
+                Produto do catálogo
+                <select
+                  v-model="item.product_id"
+                  class="mt-1 w-full border border-slate-200 rounded px-2 py-1.5 text-sm"
+                  @change="onItemProductChange(item)"
                 >
-                  {{ priceLabel(price) }}
-                </option>
-              </select>
-            </label>
+                  <option value="">— valor avulso —</option>
+                  <option
+                    v-for="product in products"
+                    :key="product.id"
+                    :value="product.id"
+                  >
+                    {{ product.name }}
+                  </option>
+                </select>
+              </label>
+              <label class="block text-xs text-slate-500">
+                Preço
+                <select
+                  v-model="item.price_id"
+                  :disabled="!item.product_id"
+                  class="mt-1 w-full border border-slate-200 rounded px-2 py-1.5 text-sm disabled:bg-slate-25"
+                >
+                  <option value="">— escolher —</option>
+                  <option
+                    v-for="price in pricesOfProduct(item.product_id)"
+                    :key="price.id"
+                    :value="price.id"
+                  >
+                    {{ priceLabel(price) }}
+                  </option>
+                </select>
+              </label>
+            </div>
 
             <div class="grid grid-cols-3 gap-2 mt-2">
               <label class="block text-xs text-slate-500">
