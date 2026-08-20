@@ -12,6 +12,9 @@
 class Integrations::Stripe::Client
   DEFAULT_TIMEOUT = 15
   PRODUCT_LIST_LIMIT = 100
+  # Invoice due window when none is given. A week matches how the team already
+  # bills by PIX: the invoice goes out, the customer pays within the period.
+  DEFAULT_DAYS_UNTIL_DUE = 7
   # Reverse pointer stamped on the Stripe customer so the pairing is auditable
   # from the Stripe dashboard, not only from our database.
   ACCOUNT_METADATA_KEY = 'aurischat_account_id'.freeze
@@ -131,6 +134,25 @@ class Integrations::Stripe::Client
   def list_subscriptions
     with_error_handling do
       Stripe::Subscription.list({ status: 'all', limit: PRODUCT_LIST_LIMIT }, request_options).auto_paging_each.to_a
+    end
+  end
+
+  # Subscriptions are created to bill by invoice, never by card charge: part of
+  # the customers pay by PIX outside Stripe (Banco Inter, AsaaS), and an
+  # automatic charge would fail for exactly those. The invoice keeps Stripe as
+  # the record of what was billed, and a payment received elsewhere is written
+  # off against it (see `pay_invoice_out_of_band`).
+  def create_subscription(customer_id:, price_id:, quantity: 1, days_until_due: DEFAULT_DAYS_UNTIL_DUE)
+    with_error_handling do
+      Stripe::Subscription.create(
+        {
+          customer: customer_id,
+          items: [{ price: price_id, quantity: quantity }],
+          collection_method: 'send_invoice',
+          days_until_due: days_until_due
+        },
+        request_options
+      )
     end
   end
 

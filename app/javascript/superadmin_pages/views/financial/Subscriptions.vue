@@ -54,6 +54,21 @@ const search = ref('');
 const loading = ref(false);
 const error = ref(null);
 
+// Recurring prices of the catalog, offered when starting a subscription.
+const prices = ref([]);
+const subscribingAccount = ref(null);
+const creating = ref(false);
+const createError = ref(null);
+const DEFAULT_DAYS_UNTIL_DUE = 7;
+const form = ref({
+  price_id: '',
+  quantity: 1,
+  days_until_due: DEFAULT_DAYS_UNTIL_DUE,
+});
+
+const csrfToken = () =>
+  document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+
 const fetchData = async () => {
   loading.value = true;
   error.value = null;
@@ -72,6 +87,7 @@ const fetchData = async () => {
     if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
 
     accounts.value = body.accounts || [];
+    prices.value = body.prices || [];
     meta.value = body.meta || meta.value;
   } catch (e) {
     error.value = e.message;
@@ -111,9 +127,63 @@ const formatDate = timestamp => {
   return new Date(timestamp * 1000).toLocaleDateString('pt-BR');
 };
 
+const openCreate = account => {
+  subscribingAccount.value = account;
+  createError.value = null;
+  form.value = {
+    price_id: prices.value[0]?.id || '',
+    quantity: 1,
+    days_until_due: DEFAULT_DAYS_UNTIL_DUE,
+  };
+};
+
+const closeCreate = () => {
+  subscribingAccount.value = null;
+};
+
+const submitCreate = async () => {
+  creating.value = true;
+  createError.value = null;
+  try {
+    const res = await fetch(props.componentData.create_url, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrfToken(),
+      },
+      body: JSON.stringify({
+        account_id: subscribingAccount.value.id,
+        price_id: form.value.price_id,
+        quantity: form.value.quantity,
+        days_until_due: form.value.days_until_due,
+      }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+
+    closeCreate();
+    await fetchData();
+  } catch (e) {
+    createError.value = e.message;
+  } finally {
+    creating.value = false;
+  }
+};
+
 const statusLabel = status => STATUS_LABELS[status] || status;
 const statusClass = status =>
   STATUS_CLASSES[status] || 'bg-slate-25 text-slate-600';
+
+const priceLabel = price => {
+  const name = price.product_name || 'Produto sem nome';
+  const amount = formatAmount(price.unit_amount, price.currency);
+  const interval = price.recurring_interval
+    ? `/${INTERVAL_LABELS[price.recurring_interval] ?? price.recurring_interval}`
+    : '';
+  return `${name} — ${amount}${interval}`;
+};
 
 const itemLabel = item => {
   const name = item.product_name || 'Produto sem nome';
@@ -131,8 +201,9 @@ const itemLabel = item => {
     <div class="mb-6">
       <h1 class="text-xl font-medium text-slate-900">Assinaturas</h1>
       <p class="text-sm text-slate-500 mt-1">
-        Assinaturas no Stripe das contas já conciliadas. Esta tela é somente
-        leitura — criar e alterar assinatura ainda é feito no painel do Stripe.
+        Assinaturas no Stripe das contas já conciliadas. Aqui você inicia uma
+        assinatura; alterar e cancelar continua sendo feito no painel do Stripe.
+        A cobrança é sempre por fatura, para conviver com quem paga por PIX.
       </p>
     </div>
 
@@ -213,6 +284,7 @@ const itemLabel = item => {
             <th class="py-2">Status</th>
             <th class="py-2 text-right">Valor</th>
             <th class="py-2 text-right">Próxima cobrança</th>
+            <th class="py-2 text-right">Ação</th>
           </tr>
         </thead>
         <tbody>
@@ -292,6 +364,24 @@ const itemLabel = item => {
                 {{ formatDate(subscription.current_period_end) }}
               </div>
             </td>
+
+            <td class="py-3 text-right whitespace-nowrap">
+              <button
+                v-if="!account.subscriptions.length"
+                type="button"
+                class="px-2.5 py-1 rounded bg-woot-500 text-white text-xs disabled:opacity-40"
+                :disabled="!prices.length"
+                :title="
+                  prices.length
+                    ? ''
+                    : 'Cadastre um produto com preço recorrente em Financeiro → Produtos'
+                "
+                @click="openCreate(account)"
+              >
+                Criar assinatura
+              </button>
+              <span v-else class="text-xs text-slate-400">—</span>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -321,5 +411,79 @@ const itemLabel = item => {
         </button>
       </div>
     </template>
+
+    <div
+      v-if="subscribingAccount"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+    >
+      <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+        <h2 class="text-lg font-medium text-slate-900">Criar assinatura</h2>
+        <p class="text-sm text-slate-500 mt-1">
+          {{ subscribingAccount.name }} — cliente
+          {{ subscribingAccount.stripe_customer_id }}
+        </p>
+
+        <label class="block mt-4 text-sm text-slate-600">
+          Preço
+          <select
+            v-model="form.price_id"
+            class="mt-1 w-full border border-slate-200 rounded px-2 py-1.5 text-sm"
+          >
+            <option v-for="price in prices" :key="price.id" :value="price.id">
+              {{ priceLabel(price) }}
+            </option>
+          </select>
+        </label>
+
+        <div class="grid grid-cols-2 gap-3 mt-3">
+          <label class="block text-sm text-slate-600">
+            Quantidade
+            <input
+              v-model.number="form.quantity"
+              type="number"
+              min="1"
+              class="mt-1 w-full border border-slate-200 rounded px-2 py-1.5 text-sm"
+            />
+          </label>
+          <label class="block text-sm text-slate-600">
+            Vencimento (dias)
+            <input
+              v-model.number="form.days_until_due"
+              type="number"
+              min="1"
+              class="mt-1 w-full border border-slate-200 rounded px-2 py-1.5 text-sm"
+            />
+          </label>
+        </div>
+
+        <p class="text-xs text-slate-400 mt-3">
+          A assinatura emite fatura a cada ciclo. Pagamentos recebidos por fora
+          (PIX no Inter ou AsaaS) são baixados na fatura correspondente.
+        </p>
+
+        <p v-if="createError" class="text-sm text-red-600 mt-3">
+          {{ createError }}
+        </p>
+
+        <div class="flex justify-end gap-2 mt-5">
+          <button
+            type="button"
+            class="px-3 py-1.5 text-sm text-slate-600"
+            :disabled="creating"
+            @click="closeCreate"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="px-3 py-1.5 rounded bg-woot-500 text-white text-sm disabled:opacity-40"
+            :disabled="creating || !form.price_id"
+            @click="submitCreate"
+          >
+            {{ creating ? 'Criando…' : 'Criar' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
