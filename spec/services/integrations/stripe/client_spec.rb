@@ -232,6 +232,83 @@ RSpec.describe Integrations::Stripe::Client do
     end
   end
 
+  describe 'coupons' do
+    subject(:client) { described_class.new(api_key: 'sk_test_explicit') }
+
+    it 'creates a percentage coupon restricted to products' do
+      allow(Stripe::Coupon).to receive(:create).and_return(stripe_resource('coupon_1'))
+
+      client.create_coupon(name: 'Parceiro', percent_off: 15, duration: 'forever', product_ids: ['prod_1'])
+
+      expect(Stripe::Coupon).to have_received(:create).with(
+        { name: 'Parceiro', duration: 'forever', applies_to: { products: ['prod_1'] }, percent_off: 15.0 },
+        { api_key: 'sk_test_explicit' }
+      )
+    end
+
+    it 'sends a fixed discount in cents with its currency' do
+      allow(Stripe::Coupon).to receive(:create).and_return(stripe_resource('coupon_1'))
+
+      client.create_coupon(name: 'Cortesia', amount_off: 5000, duration: 'repeating', duration_in_months: 3)
+
+      expect(Stripe::Coupon).to have_received(:create).with(
+        { name: 'Cortesia', duration: 'repeating', duration_in_months: 3, amount_off: 5000, currency: 'brl' },
+        { api_key: 'sk_test_explicit' }
+      )
+    end
+
+    # Stripe refuses a coupon carrying both, and the error it returns says
+    # nothing useful about which one to drop.
+    it 'refuses a coupon with a percentage and an amount at once' do
+      expect { client.create_coupon(name: 'X', percent_off: 10, amount_off: 500) }
+        .to raise_error(described_class::InvalidRequest, /percentual ou valor/)
+    end
+
+    it 'refuses a coupon with no discount at all' do
+      expect { client.create_coupon(name: 'X') }
+        .to raise_error(described_class::InvalidRequest, /percentual ou um valor/)
+    end
+  end
+
+  describe 'applying a coupon' do
+    subject(:client) { described_class.new(api_key: 'sk_test_explicit') }
+
+    # `discounts` is the parameter in this API version. The older `coupon` is
+    # accepted by the SDK and dropped, which bills the customer full price with
+    # nobody the wiser — hence pinning the exact payload.
+    it 'discounts a subscription through the discounts parameter' do
+      allow(Stripe::Subscription).to receive(:create).and_return(stripe_resource('sub_1'))
+
+      client.create_subscription(customer_id: 'cus_1', price_id: 'price_1', coupon_id: 'coupon_1')
+
+      expect(Stripe::Subscription).to have_received(:create).with(
+        hash_including(discounts: [{ coupon: 'coupon_1' }]), { api_key: 'sk_test_explicit' }
+      )
+    end
+
+    it 'leaves the parameter out when there is no coupon' do
+      allow(Stripe::Subscription).to receive(:create).and_return(stripe_resource('sub_1'))
+
+      client.create_subscription(customer_id: 'cus_1', price_id: 'price_1')
+
+      expect(Stripe::Subscription).to have_received(:create).with(
+        hash_excluding(:discounts), { api_key: 'sk_test_explicit' }
+      )
+    end
+
+    it 'discounts an invoice through the same parameter' do
+      allow(Stripe::Invoice).to receive(:create).and_return(stripe_resource('in_1'))
+      allow(Stripe::InvoiceItem).to receive(:create).and_return(stripe_resource('ii_1'))
+      allow(Stripe::Invoice).to receive(:finalize_invoice).and_return(stripe_resource('in_1'))
+
+      client.create_invoice(customer_id: 'cus_1', items: [{ price_id: 'price_1' }], coupon_id: 'coupon_1')
+
+      expect(Stripe::Invoice).to have_received(:create).with(
+        hash_including(discounts: [{ coupon: 'coupon_1' }]), { api_key: 'sk_test_explicit' }
+      )
+    end
+  end
+
   describe '#pay_invoice_out_of_band' do
     subject(:client) { described_class.new(api_key: 'sk_test_explicit') }
 

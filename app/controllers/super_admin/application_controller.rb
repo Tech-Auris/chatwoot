@@ -26,6 +26,7 @@ class SuperAdmin::ApplicationController < Administrate::ApplicationController
     super_admin/financial/subscriptions
     super_admin/financial/invoices
     super_admin/financial/token_billings
+    super_admin/financial/coupons
     super_admin/profile/mfa
     super_admin/sessions/mfa_challenge
     super_admin/devise/sessions

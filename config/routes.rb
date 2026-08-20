@@ -867,6 +867,12 @@ Rails.application.routes.draw do
           end
         end
 
+        resources :coupons, only: [:index, :create, :destroy], controller: 'coupons' do
+          collection do
+            get :data
+          end
+        end
+
         resources :token_billings, only: [:index, :create], controller: 'token_billings' do
           collection do
             get :data

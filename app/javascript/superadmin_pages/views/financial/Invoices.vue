@@ -46,6 +46,7 @@ const error = ref(null);
 
 const accounts = ref([]);
 const prices = ref([]);
+const coupons = ref([]);
 const creating = ref(false);
 const createError = ref(null);
 const showCreate = ref(false);
@@ -91,6 +92,7 @@ const fetchData = async () => {
     invoices.value = body.invoices || [];
     accounts.value = body.accounts || accounts.value;
     prices.value = body.prices || prices.value;
+    coupons.value = body.coupons || coupons.value;
     meta.value = body.meta || meta.value;
   } catch (e) {
     error.value = e.message;
@@ -162,6 +164,7 @@ const openCreate = () => {
     account_id: accounts.value[0]?.id || '',
     days_until_due: DEFAULT_DAYS_UNTIL_DUE,
     description: '',
+    coupon_id: '',
     items: [emptyItem()],
   };
 };
@@ -216,6 +219,13 @@ const priceLabel = price =>
     price.recurring_interval ? 'Mensal' : 'Avulso'
   }`;
 
+const couponLabel = coupon => {
+  const discount = coupon.percent_off
+    ? `${coupon.percent_off}%`
+    : formatAmount(coupon.amount_off, coupon.currency);
+  return `${coupon.name || coupon.id} — ${discount}`;
+};
+
 const onItemProductChange = item => {
   const options = pricesOfProduct(item.product_id);
   item.price_id = options.length === 1 ? options[0].id : '';
@@ -237,6 +247,7 @@ const submitCreate = async () => {
         account_id: newInvoice.value.account_id,
         days_until_due: newInvoice.value.days_until_due,
         description: newInvoice.value.description,
+        coupon_id: newInvoice.value.coupon_id,
         items: filledItems.value,
       }),
     });
@@ -623,6 +634,23 @@ const submitPay = async () => {
             </div>
           </div>
         </div>
+
+        <label class="block mt-4 text-sm text-slate-600">
+          Cupom (opcional)
+          <select
+            v-model="newInvoice.coupon_id"
+            class="mt-1 w-full border border-slate-200 rounded px-2 py-1.5 text-sm"
+          >
+            <option value="">— sem desconto —</option>
+            <option
+              v-for="coupon in coupons"
+              :key="coupon.id"
+              :value="coupon.id"
+            >
+              {{ couponLabel(coupon) }}
+            </option>
+          </select>
+        </label>
 
         <label class="block mt-4 text-sm text-slate-600">
           Observação na fatura (opcional)
