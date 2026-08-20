@@ -226,6 +226,7 @@ const submitPay = async () => {
           <tr class="text-left text-slate-500 border-b border-slate-100">
             <th class="py-2">Conta</th>
             <th class="py-2">Fatura</th>
+            <th class="py-2">Produto</th>
             <th class="py-2">Status</th>
             <th class="py-2 text-right">Valor</th>
             <th class="py-2 text-right">Vencimento</th>
@@ -268,6 +269,19 @@ const submitPay = async () => {
               </div>
             </td>
 
+            <td class="py-3 text-slate-700">
+              <div
+                v-for="product in invoice.products"
+                :key="product"
+                class="mb-1 last:mb-0"
+              >
+                {{ product }}
+              </div>
+              <span v-if="!invoice.products?.length" class="text-slate-400">
+                —
+              </span>
+            </td>
+
             <td class="py-3">
               <span
                 class="text-xs px-2 py-1 rounded"
@@ -300,7 +314,7 @@ const submitPay = async () => {
             </td>
           </tr>
           <tr v-if="!invoices.length">
-            <td colspan="6" class="py-6 text-center text-slate-500">
+            <td colspan="7" class="py-6 text-center text-slate-500">
               Nenhuma fatura neste filtro.
             </td>
           </tr>

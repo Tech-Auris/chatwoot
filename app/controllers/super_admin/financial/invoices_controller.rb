@@ -61,6 +61,27 @@ class SuperAdmin::Financial::InvoicesController < SuperAdmin::ApplicationControl
                             .pluck(:stripe_customer_id, :name).to_h
   end
 
+  # What each line of the invoice is charging for.
+  #
+  # In this API version the price hangs off `pricing.price_details`, not
+  # `line.price` — the same move that took `current_period_end` to the
+  # subscription item. The line description is the fallback: it is what Stripe
+  # itself prints on the invoice when the product is gone from the catalog.
+  def invoice_products(invoice)
+    lines = invoice.try(:lines)&.data || []
+
+    lines.filter_map do |line|
+      product_id = line.try(:pricing)&.price_details&.product
+      product_names[product_id] || line.try(:description).presence
+    end.uniq
+  end
+
+  # One catalog fetch per page, indexed by id — the invoice only carries the
+  # product id, never its name.
+  def product_names
+    @product_names ||= client.list_products.data.to_h { |product| [product.id, product.name] }
+  end
+
   def serialize(invoice)
     {
       id: invoice.id,
@@ -76,6 +97,7 @@ class SuperAdmin::Financial::InvoicesController < SuperAdmin::ApplicationControl
       created: invoice.created,
       hosted_invoice_url: invoice.hosted_invoice_url,
       invoice_pdf: invoice.invoice_pdf,
+      products: invoice_products(invoice),
       # Present only on invoices written off from this screen; invoices settled
       # inside Stripe (card, boleto) legitimately have no origin of ours.
       paid_via: invoice.metadata&.[](Integrations::Stripe::Client::PAID_VIA_METADATA_KEY)

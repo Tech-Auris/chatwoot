@@ -4,15 +4,31 @@ RSpec.describe 'Super Admin Financial Invoices', type: :request do
   let(:super_admin) { create(:super_admin) }
   let(:client) { instance_double(Integrations::Stripe::Client, configured?: true) }
 
+  # In this API version the price of an invoice line hangs off
+  # `pricing.price_details`, not `line.price`.
+  def stripe_line(product: 'prod_1', description: '1 × Plano Pro')
+    price_details = product ? Struct.new(:product).new(product) : nil
+    pricing = Struct.new(:price_details).new(price_details)
+    Struct.new(:description, :pricing).new(description, pricing)
+  end
+
   # Stands in for the SDK object, whose fields resolve dynamically.
-  def stripe_invoice(id: 'in_1', customer: 'cus_1', status: 'open', due_date: 1_790_000_000, metadata: {})
+  def stripe_invoice(overrides = {})
+    attrs = { id: 'in_1', customer: 'cus_1', status: 'open', due_date: 1_790_000_000, metadata: {}, lines: nil }.merge(overrides)
+    line_list = Struct.new(:data).new(attrs[:lines] || [stripe_line])
+
     Struct.new(
       :id, :number, :status, :customer, :customer_name, :amount_due, :amount_paid,
-      :currency, :due_date, :created, :hosted_invoice_url, :invoice_pdf, :metadata
+      :currency, :due_date, :created, :hosted_invoice_url, :invoice_pdf, :metadata, :lines
     ).new(
-      id, 'A-001', status, customer, 'Clínica no Stripe', 19_990, 0,
-      'brl', due_date, 1_789_000_000, 'https://invoice.stripe.com/x', 'https://invoice.stripe.com/x.pdf', metadata
+      attrs[:id], 'A-001', attrs[:status], attrs[:customer], 'Clínica no Stripe', 19_990, 0,
+      'brl', attrs[:due_date], 1_789_000_000, 'https://invoice.stripe.com/x', 'https://invoice.stripe.com/x.pdf',
+      attrs[:metadata], line_list
     )
+  end
+
+  def stripe_product(id: 'prod_1', name: 'Plano Pro')
+    Struct.new(:id, :name).new(id, name)
   end
 
   def stripe_list(invoices, has_more: false)
@@ -23,6 +39,7 @@ RSpec.describe 'Super Admin Financial Invoices', type: :request do
     create(:account, name: 'Clínica Conciliada', stripe_customer_id: 'cus_1')
     allow(Integrations::Stripe::Client).to receive(:new).and_return(client)
     allow(client).to receive(:list_invoices).and_return(stripe_list([stripe_invoice]))
+    allow(client).to receive(:list_products).and_return(Struct.new(:data).new([stripe_product]))
     sign_in(super_admin, scope: :super_admin)
   end
 
@@ -92,6 +109,39 @@ RSpec.describe 'Super Admin Financial Invoices', type: :request do
       get '/super_admin/financial/invoices/data'
 
       expect(response.parsed_body['meta']).to include('has_more' => true, 'last_id' => 'in_7')
+    end
+
+    describe 'the product each invoice charges for' do
+      it 'names the product behind the invoice line' do
+        get '/super_admin/financial/invoices/data'
+
+        expect(response.parsed_body['invoices'].first['products']).to eq(['Plano Pro'])
+      end
+
+      # A product archived out of the catalog still has to say what was billed —
+      # the line description is what Stripe itself prints on the invoice.
+      it 'falls back to the line description when the product is gone' do
+        allow(client).to receive(:list_invoices).and_return(
+          stripe_list([stripe_invoice(lines: [stripe_line(product: 'prod_removido', description: '1 × Plano antigo')])])
+        )
+
+        get '/super_admin/financial/invoices/data'
+
+        expect(response.parsed_body['invoices'].first['products']).to eq(['1 × Plano antigo'])
+      end
+
+      it 'lists each distinct product of a multi-line invoice once' do
+        allow(client).to receive(:list_products).and_return(
+          Struct.new(:data).new([stripe_product, stripe_product(id: 'prod_2', name: 'Mensagens extras')])
+        )
+        allow(client).to receive(:list_invoices).and_return(
+          stripe_list([stripe_invoice(lines: [stripe_line, stripe_line, stripe_line(product: 'prod_2')])])
+        )
+
+        get '/super_admin/financial/invoices/data'
+
+        expect(response.parsed_body['invoices'].first['products']).to eq(['Plano Pro', 'Mensagens extras'])
+      end
     end
 
     it 'surfaces the payment origin already recorded on an invoice' do
