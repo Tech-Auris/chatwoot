@@ -684,6 +684,17 @@ Rails.application.routes.draw do
           end
           resources :email_channel_migrations, only: [:create]
         end
+
+        # Billing automation: issue the monthly token invoices without anybody
+        # opening the super admin.
+        namespace :financial do
+          resources :invoices, only: [:create] do
+            collection do
+              post :preview
+            end
+          end
+          resources :accounts, only: [:index]
+        end
       end
     end
   end
@@ -837,12 +848,35 @@ Rails.application.routes.draw do
           end
           member do
             post :customer
+            post :token_billing
           end
         end
 
         resources :subscriptions, only: [:index, :create], controller: 'subscriptions' do
           collection do
             get :data
+          end
+        end
+
+        resources :invoices, only: [:index, :create], controller: 'invoices' do
+          collection do
+            get :data
+          end
+          member do
+            post :pay
+          end
+        end
+
+        resources :coupons, only: [:index, :create, :destroy], controller: 'coupons' do
+          collection do
+            get :data
+          end
+        end
+
+        resources :token_billings, only: [:index, :create], controller: 'token_billings' do
+          collection do
+            get :data
+            post :preview
           end
         end
       end
@@ -902,7 +936,10 @@ Rails.application.routes.draw do
         resource :mfa_challenge, only: [:show, :create], controller: 'mfa_challenge'
       end
     end
-    authenticated :super_admin do
+    # Mounted outside the Administrate controllers, so the console's own
+    # section guard never runs here — a finance-only admin would otherwise
+    # reach the queues by typing the URL.
+    authenticated :super_admin, ->(super_admin) { !super_admin.financial_only? } do
       mount Sidekiq::Web => '/monitoring/sidekiq'
     end
   end

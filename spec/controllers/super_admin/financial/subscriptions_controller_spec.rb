@@ -24,6 +24,11 @@ RSpec.describe 'Super Admin Financial Subscriptions', type: :request do
           .new(id, customer, status, 'send_invoice', cancel_at_period_end, item_list)
   end
 
+  def stripe_coupon(id: 'coupon_1', valid: true)
+    Struct.new(:id, :name, :percent_off, :amount_off, :currency, :duration, :valid)
+          .new(id, 'Parceiro', 15, nil, 'brl', 'once', valid)
+  end
+
   def stripe_product(id: 'prod_1', name: 'Plano Pro')
     Struct.new(:id, :name).new(id, name)
   end
@@ -46,6 +51,7 @@ RSpec.describe 'Super Admin Financial Subscriptions', type: :request do
     allow(client).to receive(:list_subscriptions).and_return([stripe_subscription])
     allow(client).to receive(:list_products).and_return(Struct.new(:data).new([stripe_product]))
     allow(client).to receive(:list_prices).and_return(Struct.new(:data).new([stripe_catalog_price]))
+    allow(client).to receive(:list_coupons).and_return(Struct.new(:data).new([stripe_coupon]))
     sign_in(super_admin, scope: :super_admin)
   end
 
@@ -183,7 +189,7 @@ RSpec.describe 'Super Admin Financial Subscriptions', type: :request do
     # Stripe, and an automatic card charge would fail for exactly those.
     it 'creates the subscription for the account customer' do
       expect(client).to receive(:create_subscription)
-        .with(customer_id: 'cus_2', price_id: 'price_1', quantity: 1, days_until_due: 7)
+        .with(customer_id: 'cus_2', price_id: 'price_1', quantity: 1, days_until_due: 7, coupon_id: nil)
         .and_return(stripe_subscription(id: 'sub_new', customer: 'cus_2'))
 
       post '/super_admin/financial/subscriptions', params: { account_id: account.id, price_id: 'price_1' }
@@ -192,9 +198,32 @@ RSpec.describe 'Super Admin Financial Subscriptions', type: :request do
       expect(response.parsed_body['subscription']).to include('id' => 'sub_new', 'collection_method' => 'send_invoice')
     end
 
+    # A discount that silently fails to apply only shows up on the customer's
+    # invoice, already charged at full price.
+    it 'applies the coupon chosen by the operator' do
+      expect(client).to receive(:create_subscription)
+        .with(hash_including(coupon_id: 'coupon_1'))
+        .and_return(stripe_subscription(customer: 'cus_2'))
+
+      post '/super_admin/financial/subscriptions',
+           params: { account_id: account.id, price_id: 'price_1', coupon_id: 'coupon_1' }
+
+      expect(response).to have_http_status(:created)
+    end
+
+    it 'offers only the coupons Stripe still considers usable' do
+      allow(client).to receive(:list_coupons).and_return(
+        Struct.new(:data).new([stripe_coupon, stripe_coupon(id: 'coupon_expirado', valid: false)])
+      )
+
+      get '/super_admin/financial/subscriptions/data'
+
+      expect(response.parsed_body['coupons'].pluck('id')).to eq(['coupon_1'])
+    end
+
     it 'passes the quantity and the due window chosen by the operator' do
       expect(client).to receive(:create_subscription)
-        .with(customer_id: 'cus_2', price_id: 'price_1', quantity: 3, days_until_due: 15)
+        .with(customer_id: 'cus_2', price_id: 'price_1', quantity: 3, days_until_due: 15, coupon_id: nil)
         .and_return(stripe_subscription(customer: 'cus_2'))
 
       post '/super_admin/financial/subscriptions',

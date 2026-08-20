@@ -1,0 +1,33 @@
+type: object
+properties:
+  total_amount:
+    type: integer
+    description: Total of the batch in cents, counting only the billable accounts.
+  billable_count:
+    type: integer
+  currency:
+    type: string
+  lines:
+    type: array
+    items:
+      type: object
+      properties:
+        account_id:
+          type: integer
+        account_name:
+          type: string
+        total_amount:
+          type: integer
+        billable:
+          type: boolean
+        issue:
+          type: string
+          description: Why this account cannot be billed, when it cannot.
+        quantities:
+          type: object
+        items:
+          type: array
+          items:
+            type: object
+  prices_used:
+    type: object

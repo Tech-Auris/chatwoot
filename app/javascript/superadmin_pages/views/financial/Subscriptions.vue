@@ -56,6 +56,7 @@ const error = ref(null);
 
 // Recurring prices of the catalog, offered when starting a subscription.
 const prices = ref([]);
+const coupons = ref([]);
 const subscribingAccount = ref(null);
 const creating = ref(false);
 const createError = ref(null);
@@ -88,6 +89,7 @@ const fetchData = async () => {
 
     accounts.value = body.accounts || [];
     prices.value = body.prices || [];
+    coupons.value = body.coupons || [];
     meta.value = body.meta || meta.value;
   } catch (e) {
     error.value = e.message;
@@ -134,6 +136,7 @@ const openCreate = account => {
     price_id: prices.value[0]?.id || '',
     quantity: 1,
     days_until_due: DEFAULT_DAYS_UNTIL_DUE,
+    coupon_id: '',
   };
 };
 
@@ -158,6 +161,7 @@ const submitCreate = async () => {
         price_id: form.value.price_id,
         quantity: form.value.quantity,
         days_until_due: form.value.days_until_due,
+        coupon_id: form.value.coupon_id,
       }),
     });
     const body = await res.json().catch(() => ({}));
@@ -170,6 +174,13 @@ const submitCreate = async () => {
   } finally {
     creating.value = false;
   }
+};
+
+const couponLabel = coupon => {
+  const discount = coupon.percent_off
+    ? `${coupon.percent_off}%`
+    : formatAmount(coupon.amount_off, coupon.currency);
+  return `${coupon.name || coupon.id} — ${discount}`;
 };
 
 const statusLabel = status => STATUS_LABELS[status] || status;
@@ -455,6 +466,23 @@ const itemLabel = item => {
             />
           </label>
         </div>
+
+        <label class="block mt-3 text-sm text-slate-600">
+          Cupom (opcional)
+          <select
+            v-model="form.coupon_id"
+            class="mt-1 w-full border border-slate-200 rounded px-2 py-1.5 text-sm"
+          >
+            <option value="">— sem desconto —</option>
+            <option
+              v-for="coupon in coupons"
+              :key="coupon.id"
+              :value="coupon.id"
+            >
+              {{ couponLabel(coupon) }}
+            </option>
+          </select>
+        </label>
 
         <p class="text-xs text-slate-400 mt-3">
           A assinatura emite fatura a cada ciclo. Pagamentos recebidos por fora

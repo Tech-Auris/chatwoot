@@ -1,0 +1,40 @@
+tags:
+  - Financial
+operationId: issue-token-invoices
+summary: Issue the token invoices of a period
+description: >-
+  Issues one Stripe invoice per account of the payload, with a line per usage
+  category (quantity × unit price). Billing is by invoice, never an automatic
+  card charge, so a customer who pays outside Stripe can be written off later.
+
+
+  An account that cannot be billed is reported in the response instead of
+  aborting the batch, and one customer refused by Stripe does not stop the
+  remaining invoices.
+security:
+  - platformAppApiKey: []
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/token_billing_payload'
+responses:
+  201:
+    description: Batch processed. Check `results` for what was issued.
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/token_billing_result'
+  401:
+    description: Missing or invalid platform app token.
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/bad_request_error'
+  422:
+    description: No price was sent and none was ever chosen on the screen.
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/bad_request_error'

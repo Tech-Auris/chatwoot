@@ -27,6 +27,18 @@
   delete:
     $ref: ./platform/account_users/delete.yml
 
+# Financial
+
+/platform/api/v1/financial/accounts:
+  get:
+    $ref: ./platform/financial/accounts/index.yml
+/platform/api/v1/financial/invoices:
+  post:
+    $ref: ./platform/financial/invoices/create.yml
+/platform/api/v1/financial/invoices/preview:
+  post:
+    $ref: ./platform/financial/invoices/preview.yml
+
 # AgentBots
 
 /platform/api/v1/agent_bots:

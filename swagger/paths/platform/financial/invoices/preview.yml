@@ -1,0 +1,29 @@
+tags:
+  - Financial
+operationId: preview-token-invoices
+summary: Price a token billing run without issuing anything
+description: >-
+  Returns the same totals the issuing call would produce — per account and for
+  the batch — without creating a single invoice, so an automation can check the
+  amount before committing to it.
+security:
+  - platformAppApiKey: []
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/token_billing_payload'
+responses:
+  200:
+    description: Success
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/token_billing_preview'
+  401:
+    description: Missing or invalid platform app token.
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/bad_request_error'

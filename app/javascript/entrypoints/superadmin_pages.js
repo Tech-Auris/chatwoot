@@ -9,6 +9,9 @@ import HealthScoreIndex from '../superadmin_pages/views/reports/HealthScore.vue'
 import FinancialProductsIndex from '../superadmin_pages/views/financial/Products.vue';
 import FinancialCustomerLinksIndex from '../superadmin_pages/views/financial/CustomerLinks.vue';
 import FinancialSubscriptionsIndex from '../superadmin_pages/views/financial/Subscriptions.vue';
+import FinancialInvoicesIndex from '../superadmin_pages/views/financial/Invoices.vue';
+import FinancialTokenBillingsIndex from '../superadmin_pages/views/financial/TokenBillings.vue';
+import FinancialCouponsIndex from '../superadmin_pages/views/financial/Coupons.vue';
 
 const ComponentMapping = {
   PlaygroundIndex: PlaygroundIndex,
@@ -18,6 +21,9 @@ const ComponentMapping = {
   FinancialProductsIndex: FinancialProductsIndex,
   FinancialCustomerLinksIndex: FinancialCustomerLinksIndex,
   FinancialSubscriptionsIndex: FinancialSubscriptionsIndex,
+  FinancialInvoicesIndex: FinancialInvoicesIndex,
+  FinancialTokenBillingsIndex: FinancialTokenBillingsIndex,
+  FinancialCouponsIndex: FinancialCouponsIndex,
 };
 
 const renderComponent = (componentName, props) => {

@@ -1,0 +1,10 @@
+<% content_for(:title) do %>
+  Cupons
+<% end %>
+
+<%= render_vue_component('FinancialCouponsIndex', {
+  data_url: data_super_admin_financial_coupons_url(format: :json),
+  coupons_url: super_admin_financial_coupons_path,
+  configured: Integrations::Stripe::Client.new.configured?,
+  settings_url: super_admin_app_config_path(config: 'stripe')
+}) %>

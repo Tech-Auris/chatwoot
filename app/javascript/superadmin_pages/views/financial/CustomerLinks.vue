@@ -153,6 +153,25 @@ const createCustomer = account => {
   run(() => request(`${linkUrl(account.id)}/customer`, { method: 'POST' }));
 };
 
+// Not every customer is charged for token usage — internal accounts, courtesy,
+// contracts where it is bundled. The monthly batch reads this flag and leaves
+// those accounts out on its own.
+const toggleTokenBilling = account => {
+  const enabling = !account.token_billing_enabled;
+  const message = enabling
+    ? `Voltar a cobrar tokens de "${account.name}"? A conta passa a entrar nos próximos lotes de cobrança.`
+    : `Parar de cobrar tokens de "${account.name}"? A conta deixa de entrar nos lotes de cobrança de tokens.`;
+  // eslint-disable-next-line no-alert
+  if (!window.confirm(message)) return;
+
+  run(() =>
+    request(`${linkUrl(account.id)}/token_billing`, {
+      method: 'POST',
+      body: { enabled: enabling },
+    })
+  );
+};
+
 const customerLabel = customer => {
   if (!customer) return '—';
   const parts = [customer.name || customer.id];
@@ -305,6 +324,27 @@ const customerLabel = customer => {
               </td>
 
               <td class="py-3 text-right whitespace-nowrap">
+                <button
+                  type="button"
+                  class="mr-3"
+                  :class="
+                    account.token_billing_enabled
+                      ? 'text-slate-600'
+                      : 'text-amber-700'
+                  "
+                  :title="
+                    account.token_billing_enabled
+                      ? 'Esta conta entra nos lotes de cobrança de tokens'
+                      : 'Esta conta fica de fora dos lotes de cobrança de tokens'
+                  "
+                  @click="toggleTokenBilling(account)"
+                >
+                  {{
+                    account.token_billing_enabled
+                      ? 'Tokens: cobra'
+                      : 'Tokens: não cobra'
+                  }}
+                </button>
                 <button
                   type="button"
                   class="text-woot-500 mr-3"

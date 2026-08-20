@@ -80,6 +80,215 @@
           }
         }
       },
+      "financial_account": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "token_billing_enabled": {
+            "type": "boolean",
+            "description": "Whether this account is charged for token usage. Every account is charged by default; opting one out is done by the finance team on Financeiro → Vínculos."
+          },
+          "stripe_customer_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "Stripe customer paired with the account, when there is one."
+          },
+          "billable": {
+            "type": "boolean",
+            "description": "True only when the account is charged for tokens AND has a Stripe customer to be charged on — the two halves the monthly batch requires."
+          }
+        }
+      },
+      "token_billing_payload": {
+        "type": "object",
+        "properties": {
+          "usage": {
+            "type": "array",
+            "description": "Consumption of the period, one entry per account.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "account_id": {
+                  "type": "integer",
+                  "description": "AurisChat account id. The account must be linked to a Stripe customer."
+                },
+                "text": {
+                  "type": "integer",
+                  "description": "Text messages billed in the period."
+                },
+                "media": {
+                  "type": "integer",
+                  "description": "Answers to images, files and audio transcriptions billed in the period."
+                },
+                "audio": {
+                  "type": "integer",
+                  "description": "Audio messages billed in the period."
+                }
+              },
+              "required": [
+                "account_id"
+              ]
+            }
+          },
+          "prices": {
+            "type": "object",
+            "description": "Stripe price id charged for each category. Optional — when omitted, the prices last chosen on Financeiro → Cobrança de tokens are used, so an automation does not carry a copy that goes stale when a price is readjusted.",
+            "properties": {
+              "text": {
+                "type": "string"
+              },
+              "media": {
+                "type": "string"
+              },
+              "audio": {
+                "type": "string"
+              }
+            }
+          },
+          "description": {
+            "type": "string",
+            "description": "Text printed on the invoice, e.g. \"Cobrança Tokens - Julho/2026\"."
+          },
+          "period": {
+            "type": "string",
+            "description": "Stamped on the invoice metadata so the batch can be recognized later, e.g. \"2026-07\"."
+          },
+          "days_until_due": {
+            "type": "integer",
+            "description": "Days until the invoice is due. Defaults to 7."
+          }
+        },
+        "required": [
+          "usage"
+        ]
+      },
+      "token_billing_result": {
+        "type": "object",
+        "properties": {
+          "issued_count": {
+            "type": "integer",
+            "description": "How many invoices were actually issued."
+          },
+          "results": {
+            "type": "array",
+            "description": "One entry per account of the payload, in the order it was sent.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "account_id": {
+                  "type": "integer"
+                },
+                "account_name": {
+                  "type": "string"
+                },
+                "total_amount": {
+                  "type": "integer",
+                  "description": "Amount of the invoice in cents."
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "issued",
+                    "skipped",
+                    "failed"
+                  ],
+                  "description": "`skipped` means the account could not be billed (not found, no Stripe customer linked, or no usage); `failed` means Stripe refused it. One failure does not abort the remaining invoices."
+                },
+                "error": {
+                  "type": "string",
+                  "description": "Why the account was skipped or refused."
+                },
+                "invoice_id": {
+                  "type": "string"
+                },
+                "invoice_number": {
+                  "type": "string"
+                },
+                "invoice_url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "prices_used": {
+            "type": "object",
+            "description": "The price charged for each category, so the caller can assert what it billed.",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "price_id": {
+                  "type": "string"
+                },
+                "product_id": {
+                  "type": "string"
+                },
+                "unit_amount": {
+                  "type": "integer"
+                },
+                "currency": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "token_billing_preview": {
+        "type": "object",
+        "properties": {
+          "total_amount": {
+            "type": "integer",
+            "description": "Total of the batch in cents, counting only the billable accounts."
+          },
+          "billable_count": {
+            "type": "integer"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "account_id": {
+                  "type": "integer"
+                },
+                "account_name": {
+                  "type": "string"
+                },
+                "total_amount": {
+                  "type": "integer"
+                },
+                "billable": {
+                  "type": "boolean"
+                },
+                "issue": {
+                  "type": "string",
+                  "description": "Why this account cannot be billed, when it cannot."
+                },
+                "quantities": {
+                  "type": "object"
+                },
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          "prices_used": {
+            "type": "object"
+          }
+        }
+      },
       "canned_response": {
         "type": "object",
         "properties": {
@@ -8004,7 +8213,8 @@
         "Accounts",
         "Account Users",
         "AgentBots",
-        "Users"
+        "Users",
+        "Financial"
       ]
     },
     {

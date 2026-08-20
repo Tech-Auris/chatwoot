@@ -18,6 +18,15 @@ class Integrations::Stripe::Client
   # Reverse pointer stamped on the Stripe customer so the pairing is auditable
   # from the Stripe dashboard, not only from our database.
   ACCOUNT_METADATA_KEY = 'aurischat_account_id'.freeze
+  # Where a payment received outside Stripe came in. Stamped on the invoice so
+  # "how much came through AsaaS this month" is answerable from Stripe itself,
+  # without a table of our own to keep in sync.
+  PAID_VIA_METADATA_KEY = 'aurischat_paid_via'.freeze
+  PAID_VIA_SOURCES = %w[inter asaas].freeze
+  # Marks how an invoice was issued, so a batch can be recognized later.
+  BILLING_SOURCE_METADATA_KEY = 'aurischat_billing_source'.freeze
+  BILLING_PERIOD_METADATA_KEY = 'aurischat_billing_period'.freeze
+  INVOICE_PAGE_SIZE = 25
 
   class Error < StandardError; end
   class Unauthorized < Error; end
@@ -142,21 +151,147 @@ class Integrations::Stripe::Client
   # automatic charge would fail for exactly those. The invoice keeps Stripe as
   # the record of what was billed, and a payment received elsewhere is written
   # off against it (see `pay_invoice_out_of_band`).
-  def create_subscription(customer_id:, price_id:, quantity: 1, days_until_due: DEFAULT_DAYS_UNTIL_DUE)
+  def create_subscription(customer_id:, price_id:, quantity: 1, days_until_due: DEFAULT_DAYS_UNTIL_DUE, coupon_id: nil)
     with_error_handling do
       Stripe::Subscription.create(
         {
           customer: customer_id,
           items: [{ price: price_id, quantity: quantity }],
           collection_method: 'send_invoice',
-          days_until_due: days_until_due
-        },
+          days_until_due: days_until_due,
+          # `discounts` is the parameter in this API version; the older `coupon`
+          # is accepted silently by the SDK and dropped, leaving a subscription
+          # billed at full price with nobody the wiser.
+          discounts: discounts_for(coupon_id)
+        }.compact,
         request_options
       )
     end
   end
 
+  # Invoices, newest first. Stripe pages with a cursor rather than an offset, so
+  # the caller passes the id of the last row it already has.
+  def list_invoices(status: nil, customer_id: nil, limit: INVOICE_PAGE_SIZE, starting_after: nil)
+    payload = { status: status.presence, customer: customer_id.presence, limit: limit, starting_after: starting_after.presence }.compact
+
+    with_error_handling { Stripe::Invoice.list(payload, request_options) }
+  end
+
+  # Issues an invoice for a customer.
+  #
+  # The invoice is created empty first and every item is bound to it by id:
+  # an invoice item created loose would sit as "pending" on the customer and be
+  # swept into whatever invoice closes next — including the subscription's.
+  #
+  # Finalizing is what turns a draft into a collectible invoice, which is the
+  # state the write-off and the payment link need. Sending the e-mail is left
+  # to Stripe's own invoice settings; nothing here mails the customer.
+  #
+  # Items are either a catalog price (`price_id` + quantity) or a free amount
+  # (`description` + `unit_amount` in cents).
+  # `options` carries the optional side of an invoice: `days_until_due`,
+  # `description`, `metadata` and `coupon_id`.
+  def create_invoice(customer_id:, items:, **options)
+    raise InvalidRequest, 'A fatura precisa de pelo menos um item' if items.blank?
+
+    with_error_handling do
+      invoice = Stripe::Invoice.create(
+        { customer: customer_id, collection_method: 'send_invoice',
+          days_until_due: options[:days_until_due].presence || DEFAULT_DAYS_UNTIL_DUE,
+          description: options[:description].presence, metadata: options[:metadata].presence, auto_advance: false,
+          discounts: discounts_for(options[:coupon_id]),
+          # Anything left pending on the customer by another flow stays out of
+          # this invoice. A token charge must carry the token lines and nothing
+          # else, whatever else is queued on that customer.
+          pending_invoice_item_behavior: 'exclude' }.compact,
+        request_options
+      )
+      items.each { |item| create_invoice_item(invoice.id, customer_id, item) }
+      Stripe::Invoice.finalize_invoice(invoice.id, {}, request_options)
+    end
+  end
+
+  # Coupons available to be applied on a subscription or an invoice. Stripe has
+  # no "archived" state for a coupon: it either exists or is deleted, and a
+  # deleted one keeps applying to whoever already redeemed it.
+  def list_coupons(limit: PRODUCT_LIST_LIMIT)
+    with_error_handling { Stripe::Coupon.list({ limit: limit }, request_options) }
+  end
+
+  # Either a percentage or a fixed amount, never both — Stripe refuses the pair.
+  # `product_ids` restricts the discount to those products, which is how a
+  # coupon applies to one line of a subscription instead of the whole bill.
+  def create_coupon(attributes)
+    attributes = attributes.symbolize_keys
+    percent_off = attributes[:percent_off]
+    amount_off = attributes[:amount_off]
+    raise InvalidRequest, 'Informe um percentual ou um valor de desconto' if percent_off.blank? && amount_off.blank?
+    raise InvalidRequest, 'Escolha percentual ou valor, não os dois' if percent_off.present? && amount_off.present?
+
+    with_error_handling { Stripe::Coupon.create(coupon_payload(attributes), request_options) }
+  end
+
+  # Deleting only stops the coupon from being applied again; discounts already
+  # granted stay on the subscriptions that redeemed it.
+  def delete_coupon(coupon_id)
+    with_error_handling { Stripe::Coupon.delete(coupon_id, {}, request_options) }
+  end
+
+  # Writes off an invoice paid outside Stripe (PIX at Banco Inter or AsaaS).
+  #
+  # The payment is registered first and the origin stamped after: if the stamp
+  # failed we would have an invoice marked as paid missing only its source,
+  # which someone can fix. The reverse order could leave an unpaid invoice
+  # carrying a source, which reads as money that came in and did not.
+  def pay_invoice_out_of_band(invoice_id, paid_via:)
+    raise InvalidRequest, "Origem inválida: #{paid_via}" unless PAID_VIA_SOURCES.include?(paid_via.to_s)
+
+    with_error_handling do
+      invoice = Stripe::Invoice.pay(invoice_id, { paid_out_of_band: true }, request_options)
+      Stripe::Invoice.update(invoice_id, { metadata: { PAID_VIA_METADATA_KEY => paid_via.to_s } }, request_options)
+      invoice
+    end
+  end
+
   private
+
+  def discounts_for(coupon_id)
+    return nil if coupon_id.blank?
+
+    [{ coupon: coupon_id }]
+  end
+
+  def coupon_payload(attributes)
+    duration = attributes[:duration].presence || 'once'
+    payload = { name: attributes[:name], duration: duration }
+    payload[:duration_in_months] = attributes[:duration_in_months].to_i if duration == 'repeating'
+    payload[:max_redemptions] = attributes[:max_redemptions].to_i if attributes[:max_redemptions].present?
+    payload[:applies_to] = { products: Array(attributes[:product_ids]) } if attributes[:product_ids].present?
+    payload.merge(coupon_discount(attributes))
+  end
+
+  def coupon_discount(attributes)
+    return { percent_off: attributes[:percent_off].to_f } if attributes[:percent_off].present?
+
+    { amount_off: attributes[:amount_off].to_i, currency: attributes[:currency].presence || 'brl' }
+  end
+
+  def create_invoice_item(invoice_id, customer_id, item)
+    payload = { customer: customer_id, invoice: invoice_id }
+
+    if item[:price_id].present?
+      payload[:price] = item[:price_id]
+      payload[:quantity] = item[:quantity].presence || 1
+    else
+      # A free amount carries the whole line total, so the quantity is folded
+      # into it — Stripe rejects `amount` together with `quantity`.
+      payload[:amount] = item[:unit_amount].to_i * (item[:quantity].presence || 1).to_i
+      payload[:currency] = item[:currency].presence || 'brl'
+      payload[:description] = item[:description].presence || 'Cobrança avulsa'
+    end
+
+    Stripe::InvoiceItem.create(payload, request_options)
+  end
 
   def request_options
     { api_key: @api_key }

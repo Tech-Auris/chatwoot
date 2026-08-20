@@ -142,4 +142,226 @@ RSpec.describe Integrations::Stripe::Client do
       )
     end
   end
+
+  describe '#create_subscription' do
+    subject(:client) { described_class.new(api_key: 'sk_test_explicit') }
+
+    # Card charging would fail for every customer who pays by PIX outside
+    # Stripe, which is part of the base — billing is by invoice, always.
+    it 'bills by invoice instead of charging a card' do
+      allow(Stripe::Subscription).to receive(:create).and_return(stripe_resource('sub_1'))
+
+      client.create_subscription(customer_id: 'cus_1', price_id: 'price_1')
+
+      expect(Stripe::Subscription).to have_received(:create).with(
+        {
+          customer: 'cus_1',
+          items: [{ price: 'price_1', quantity: 1 }],
+          collection_method: 'send_invoice',
+          days_until_due: 7
+        },
+        { api_key: 'sk_test_explicit' }
+      )
+    end
+  end
+
+  describe '#create_invoice' do
+    subject(:client) { described_class.new(api_key: 'sk_test_explicit') }
+
+    before do
+      allow(Stripe::Invoice).to receive(:create).and_return(stripe_resource('in_1'))
+      allow(Stripe::InvoiceItem).to receive(:create).and_return(stripe_resource('ii_1'))
+      allow(Stripe::Invoice).to receive(:finalize_invoice).and_return(stripe_resource('in_1'))
+    end
+
+    # An invoice item created loose sits as "pending" on the customer and is
+    # swept into whatever invoice closes next — including the subscription's.
+    it 'binds every item to the invoice it just created' do
+      client.create_invoice(customer_id: 'cus_1', items: [{ price_id: 'price_1', quantity: 2 }])
+
+      expect(Stripe::InvoiceItem).to have_received(:create).with(
+        { customer: 'cus_1', invoice: 'in_1', price: 'price_1', quantity: 2 },
+        { api_key: 'sk_test_explicit' }
+      )
+    end
+
+    # Only a finalized invoice can be paid or written off; a draft is invisible
+    # to the customer and to the write-off.
+    it 'finalizes the invoice so it becomes collectible' do
+      client.create_invoice(customer_id: 'cus_1', items: [{ price_id: 'price_1' }])
+
+      expect(Stripe::Invoice).to have_received(:finalize_invoice).with('in_1', {}, { api_key: 'sk_test_explicit' })
+    end
+
+    it 'sends a free amount in cents with its description' do
+      client.create_invoice(
+        customer_id: 'cus_1',
+        items: [{ description: 'Pacote de tokens', unit_amount: 15_000, quantity: 2 }]
+      )
+
+      expect(Stripe::InvoiceItem).to have_received(:create).with(
+        { customer: 'cus_1', invoice: 'in_1', amount: 30_000, currency: 'brl', description: 'Pacote de tokens' },
+        { api_key: 'sk_test_explicit' }
+      )
+    end
+
+    it 'bills by invoice and does not let Stripe advance it on its own' do
+      client.create_invoice(customer_id: 'cus_1', items: [{ price_id: 'price_1' }], days_until_due: 15)
+
+      expect(Stripe::Invoice).to have_received(:create).with(
+        { customer: 'cus_1', collection_method: 'send_invoice', days_until_due: 15, auto_advance: false,
+          pending_invoice_item_behavior: 'exclude' },
+        { api_key: 'sk_test_explicit' }
+      )
+    end
+
+    # A charge issued here must carry its own lines and nothing else, whatever
+    # another flow may have left pending on that customer.
+    it 'keeps items pending on the customer out of this invoice' do
+      client.create_invoice(customer_id: 'cus_1', items: [{ price_id: 'price_1' }])
+
+      expect(Stripe::Invoice).to have_received(:create).with(
+        hash_including(pending_invoice_item_behavior: 'exclude'), anything
+      )
+    end
+
+    it 'refuses an invoice with no items instead of issuing an empty one' do
+      expect { client.create_invoice(customer_id: 'cus_1', items: []) }
+        .to raise_error(described_class::InvalidRequest, /pelo menos um item/)
+      expect(Stripe::Invoice).not_to have_received(:create)
+    end
+  end
+
+  describe 'coupons' do
+    subject(:client) { described_class.new(api_key: 'sk_test_explicit') }
+
+    it 'creates a percentage coupon restricted to products' do
+      allow(Stripe::Coupon).to receive(:create).and_return(stripe_resource('coupon_1'))
+
+      client.create_coupon(name: 'Parceiro', percent_off: 15, duration: 'forever', product_ids: ['prod_1'])
+
+      expect(Stripe::Coupon).to have_received(:create).with(
+        { name: 'Parceiro', duration: 'forever', applies_to: { products: ['prod_1'] }, percent_off: 15.0 },
+        { api_key: 'sk_test_explicit' }
+      )
+    end
+
+    it 'sends a fixed discount in cents with its currency' do
+      allow(Stripe::Coupon).to receive(:create).and_return(stripe_resource('coupon_1'))
+
+      client.create_coupon(name: 'Cortesia', amount_off: 5000, duration: 'repeating', duration_in_months: 3)
+
+      expect(Stripe::Coupon).to have_received(:create).with(
+        { name: 'Cortesia', duration: 'repeating', duration_in_months: 3, amount_off: 5000, currency: 'brl' },
+        { api_key: 'sk_test_explicit' }
+      )
+    end
+
+    # Stripe refuses a coupon carrying both, and the error it returns says
+    # nothing useful about which one to drop.
+    it 'refuses a coupon with a percentage and an amount at once' do
+      expect { client.create_coupon(name: 'X', percent_off: 10, amount_off: 500) }
+        .to raise_error(described_class::InvalidRequest, /percentual ou valor/)
+    end
+
+    it 'refuses a coupon with no discount at all' do
+      expect { client.create_coupon(name: 'X') }
+        .to raise_error(described_class::InvalidRequest, /percentual ou um valor/)
+    end
+  end
+
+  describe 'applying a coupon' do
+    subject(:client) { described_class.new(api_key: 'sk_test_explicit') }
+
+    # `discounts` is the parameter in this API version. The older `coupon` is
+    # accepted by the SDK and dropped, which bills the customer full price with
+    # nobody the wiser — hence pinning the exact payload.
+    it 'discounts a subscription through the discounts parameter' do
+      allow(Stripe::Subscription).to receive(:create).and_return(stripe_resource('sub_1'))
+
+      client.create_subscription(customer_id: 'cus_1', price_id: 'price_1', coupon_id: 'coupon_1')
+
+      expect(Stripe::Subscription).to have_received(:create).with(
+        hash_including(discounts: [{ coupon: 'coupon_1' }]), { api_key: 'sk_test_explicit' }
+      )
+    end
+
+    it 'leaves the parameter out when there is no coupon' do
+      allow(Stripe::Subscription).to receive(:create).and_return(stripe_resource('sub_1'))
+
+      client.create_subscription(customer_id: 'cus_1', price_id: 'price_1')
+
+      expect(Stripe::Subscription).to have_received(:create).with(
+        hash_excluding(:discounts), { api_key: 'sk_test_explicit' }
+      )
+    end
+
+    it 'discounts an invoice through the same parameter' do
+      allow(Stripe::Invoice).to receive(:create).and_return(stripe_resource('in_1'))
+      allow(Stripe::InvoiceItem).to receive(:create).and_return(stripe_resource('ii_1'))
+      allow(Stripe::Invoice).to receive(:finalize_invoice).and_return(stripe_resource('in_1'))
+
+      client.create_invoice(customer_id: 'cus_1', items: [{ price_id: 'price_1' }], coupon_id: 'coupon_1')
+
+      expect(Stripe::Invoice).to have_received(:create).with(
+        hash_including(discounts: [{ coupon: 'coupon_1' }]), { api_key: 'sk_test_explicit' }
+      )
+    end
+  end
+
+  describe '#pay_invoice_out_of_band' do
+    subject(:client) { described_class.new(api_key: 'sk_test_explicit') }
+
+    # The payment is registered first and the origin stamped after: a stamp that
+    # failed leaves an invoice paid without its source, which is fixable. The
+    # reverse would leave an unpaid invoice carrying a source, reading as money
+    # that never came in.
+    it 'settles the invoice before stamping where the money came in' do
+      calls = []
+      allow(Stripe::Invoice).to receive(:pay) { calls << :pay }.and_return(stripe_resource('in_1'))
+      allow(Stripe::Invoice).to receive(:update) { calls << :update }.and_return(stripe_resource('in_1'))
+
+      client.pay_invoice_out_of_band('in_1', paid_via: 'asaas')
+
+      expect(calls).to eq([:pay, :update])
+      expect(Stripe::Invoice).to have_received(:pay).with('in_1', { paid_out_of_band: true }, { api_key: 'sk_test_explicit' })
+      expect(Stripe::Invoice).to have_received(:update).with(
+        'in_1', { metadata: { 'aurischat_paid_via' => 'asaas' } }, { api_key: 'sk_test_explicit' }
+      )
+    end
+
+    # An unknown origin would be written to Stripe and silently pollute the
+    # answer to "how much came in through each account".
+    it 'refuses an origin outside the known ones' do
+      allow(Stripe::Invoice).to receive(:pay)
+
+      expect { client.pay_invoice_out_of_band('in_1', paid_via: 'picpay') }
+        .to raise_error(described_class::InvalidRequest, /picpay/)
+      expect(Stripe::Invoice).not_to have_received(:pay)
+    end
+  end
+
+  describe '#list_invoices' do
+    subject(:client) { described_class.new(api_key: 'sk_test_explicit') }
+
+    it 'sends only the filters it was given' do
+      allow(Stripe::Invoice).to receive(:list).and_return(stripe_resource('list'))
+
+      client.list_invoices(status: 'open')
+
+      expect(Stripe::Invoice).to have_received(:list).with(
+        { status: 'open', limit: 25 }, { api_key: 'sk_test_explicit' }
+      )
+    end
+
+    it 'pages with the cursor of the last row already shown' do
+      allow(Stripe::Invoice).to receive(:list).and_return(stripe_resource('list'))
+
+      client.list_invoices(starting_after: 'in_9')
+
+      expect(Stripe::Invoice).to have_received(:list).with(
+        { limit: 25, starting_after: 'in_9' }, { api_key: 'sk_test_explicit' }
+      )
+    end
+  end
 end

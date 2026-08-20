@@ -28,8 +28,10 @@ class SuperAdmin::Financial::CustomerLinksController < SuperAdmin::ApplicationCo
     render json: { error: 'Esse cliente do Stripe já está vinculado a outra conta.' }, status: :unprocessable_entity
   end
 
-  before_action :ensure_configured, except: [:index]
-  before_action :set_account, only: [:update, :destroy, :customer]
+  # Token billing is a decision of ours, not of Stripe — it stays reachable even
+  # when the credential is missing or broken.
+  before_action :ensure_configured, except: [:index, :token_billing]
+  before_action :set_account, only: [:update, :destroy, :customer, :token_billing]
 
   def index; end
 
@@ -56,6 +58,15 @@ class SuperAdmin::Financial::CustomerLinksController < SuperAdmin::ApplicationCo
     previous_customer_id = @account.stripe_customer_id
     @account.update!(stripe_customer_id: nil)
     client.unlink_customer(previous_customer_id) if previous_customer_id.present?
+
+    render json: { account: link_summary(@account) }
+  end
+
+  # Turns token billing on or off for the account. Not every customer is charged
+  # for usage — internal accounts, courtesy, contracts where it is bundled — and
+  # the monthly batch has to leave those out on its own.
+  def token_billing
+    @account.update!(token_billing_enabled: ActiveModel::Type::Boolean.new.cast(params.require(:enabled)))
 
     render json: { account: link_summary(@account) }
   end
@@ -146,7 +157,8 @@ class SuperAdmin::Financial::CustomerLinksController < SuperAdmin::ApplicationCo
   # afterwards, so rebuilding suggestions and the customer index here would be
   # two Stripe round trips for data nobody reads.
   def link_summary(account)
-    { id: account.id, name: account.name, stripe_customer_id: account.stripe_customer_id }
+    { id: account.id, name: account.name, stripe_customer_id: account.stripe_customer_id,
+      token_billing_enabled: account.token_billing_enabled? }
   end
 
   def serialize_accounts(accounts)
@@ -157,6 +169,9 @@ class SuperAdmin::Financial::CustomerLinksController < SuperAdmin::ApplicationCo
     {
       id: account.id,
       name: account.name,
+      # Whether this account is charged for token usage. Lives here because
+      # this is the screen that owns the billing relationship of an account.
+      token_billing_enabled: account.token_billing_enabled?,
       admin_emails: admin_emails_by_account[account.id] || [],
       stripe_customer_id: account.stripe_customer_id,
       stripe_customer: serialize_customer(customers[account.stripe_customer_id]),
