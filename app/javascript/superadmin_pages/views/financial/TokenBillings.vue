@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import { matchCategoryPrices } from '../../helpers/tokenCategoryMatcher';
 
 const props = defineProps({
   componentData: {
@@ -85,8 +86,12 @@ const fetchData = async () => {
 
     prices.value = body.prices || [];
     // Last month's choice comes back filled in, so nobody re-picks it monthly.
+    // What the team chose last month wins; otherwise the catalog is matched by
+    // product name so the screen opens ready to import.
+    const guessed = matchCategoryPrices(prices.value);
     CATEGORIES.forEach(category => {
-      const priceId = body.selected_prices?.[category] || '';
+      const priceId =
+        body.selected_prices?.[category] || guessed[category] || '';
       selectedPrices.value[category] = priceId;
       selectedProducts.value[category] =
         prices.value.find(price => price.id === priceId)?.product_id || '';
