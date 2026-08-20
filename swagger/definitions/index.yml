@@ -10,6 +10,8 @@ request_error:
 
 generic_id:
   $ref: ./resource/extension/generic.yml
+financial_account:
+  $ref: ./resource/financial_account.yml
 token_billing_payload:
   $ref: ./request/financial/token_billing_payload.yml
 token_billing_result:

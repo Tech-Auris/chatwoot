@@ -77,10 +77,10 @@ RSpec.describe Financial::TokenBillingService do
       expect(line).to include(billable: false, issue: 'cobrança de tokens desativada para esta conta')
     end
 
-    it 'keeps billing every account that was never opted out' do
+    it 'bills every account by default' do
       line = service.preview([{ account_id: account.id, text: 10, media: 0, audio: 0 }])[:lines].first
 
-      expect(account.token_billing_enabled).to be_nil
+      expect(account.token_billing_enabled).to be true
       expect(line[:billable]).to be true
     end
 

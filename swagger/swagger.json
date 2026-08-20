@@ -340,6 +340,102 @@
         }
       }
     },
+    "/platform/api/v1/financial/accounts": {
+      "get": {
+        "tags": [
+          "Financial"
+        ],
+        "operationId": "list-financial-accounts",
+        "summary": "List accounts with their billing flags",
+        "description": "Billing view of the accounts: who is charged for token usage and which Stripe customer each one is paired with. Read-only — turning billing on or off is a decision the finance team records on Financeiro → Vínculos.",
+        "security": [
+          {
+            "platformAppApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "token_billing_enabled",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Filters by accounts charged (`true`) or opted out (`false`). Omit for every account."
+          },
+          {
+            "name": "linked_only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Leaves out the accounts with no Stripe customer."
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Defaults to 50, capped at 200."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "accounts": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/financial_account"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "current_page": {
+                          "type": "integer"
+                        },
+                        "total_pages": {
+                          "type": "integer"
+                        },
+                        "total_count": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid platform app token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/bad_request_error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/platform/api/v1/financial/invoices": {
       "post": {
         "tags": [
@@ -13825,6 +13921,30 @@
         "properties": {
           "id": {
             "type": "number"
+          }
+        }
+      },
+      "financial_account": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "token_billing_enabled": {
+            "type": "boolean",
+            "description": "Whether this account is charged for token usage. Every account is charged by default; opting one out is done by the finance team on Financeiro → Vínculos."
+          },
+          "stripe_customer_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "Stripe customer paired with the account, when there is one."
+          },
+          "billable": {
+            "type": "boolean",
+            "description": "True only when the account is charged for tokens AND has a Stripe customer to be charged on — the two halves the monthly batch requires."
           }
         }
       },

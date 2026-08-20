@@ -1,7 +1,7 @@
 class AddTokenBillingEnabledToAccounts < ActiveRecord::Migration[7.1]
   def change
-    # Nullable on purpose: nil means "bills tokens", so every account that
-    # exists today keeps being billed and only an explicit opt-out changes it.
-    add_column :accounts, :token_billing_enabled, :boolean # rubocop:disable Rails/ThreeStateBooleanColumn
+    # Every account is charged for tokens; opting one out is the exception, so
+    # the default carries the rule and the column never answers "unknown".
+    add_column :accounts, :token_billing_enabled, :boolean, null: false, default: true
   end
 end

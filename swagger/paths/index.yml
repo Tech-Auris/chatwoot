@@ -29,6 +29,9 @@
 
 # Financial
 
+/platform/api/v1/financial/accounts:
+  get:
+    $ref: ./platform/financial/accounts/index.yml
 /platform/api/v1/financial/invoices:
   post:
     $ref: ./platform/financial/invoices/create.yml

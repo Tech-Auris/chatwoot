@@ -80,6 +80,30 @@
           }
         }
       },
+      "financial_account": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "token_billing_enabled": {
+            "type": "boolean",
+            "description": "Whether this account is charged for token usage. Every account is charged by default; opting one out is done by the finance team on Financeiro → Vínculos."
+          },
+          "stripe_customer_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "Stripe customer paired with the account, when there is one."
+          },
+          "billable": {
+            "type": "boolean",
+            "description": "True only when the account is charged for tokens AND has a Stripe customer to be charged on — the two halves the monthly batch requires."
+          }
+        }
+      },
       "token_billing_payload": {
         "type": "object",
         "properties": {

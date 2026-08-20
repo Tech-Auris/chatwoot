@@ -693,6 +693,7 @@ Rails.application.routes.draw do
               post :preview
             end
           end
+          resources :accounts, only: [:index]
         end
       end
     end
