@@ -188,7 +188,11 @@ class Integrations::Stripe::Client
     with_error_handling do
       invoice = Stripe::Invoice.create(
         { customer: customer_id, collection_method: 'send_invoice', days_until_due: days_until_due,
-          description: description.presence, auto_advance: false }.compact,
+          description: description.presence, auto_advance: false,
+          # Anything left pending on the customer by another flow stays out of
+          # this invoice. A token charge must carry the token lines and nothing
+          # else, whatever else is queued on that customer.
+          pending_invoice_item_behavior: 'exclude' }.compact,
         request_options
       )
       items.each { |item| create_invoice_item(invoice.id, customer_id, item) }

@@ -209,8 +209,19 @@ RSpec.describe Integrations::Stripe::Client do
       client.create_invoice(customer_id: 'cus_1', items: [{ price_id: 'price_1' }], days_until_due: 15)
 
       expect(Stripe::Invoice).to have_received(:create).with(
-        { customer: 'cus_1', collection_method: 'send_invoice', days_until_due: 15, auto_advance: false },
+        { customer: 'cus_1', collection_method: 'send_invoice', days_until_due: 15, auto_advance: false,
+          pending_invoice_item_behavior: 'exclude' },
         { api_key: 'sk_test_explicit' }
+      )
+    end
+
+    # A charge issued here must carry its own lines and nothing else, whatever
+    # another flow may have left pending on that customer.
+    it 'keeps items pending on the customer out of this invoice' do
+      client.create_invoice(customer_id: 'cus_1', items: [{ price_id: 'price_1' }])
+
+      expect(Stripe::Invoice).to have_received(:create).with(
+        hash_including(pending_invoice_item_behavior: 'exclude'), anything
       )
     end
 
