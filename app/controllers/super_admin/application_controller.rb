@@ -13,6 +13,23 @@ class SuperAdmin::ApplicationController < Administrate::ApplicationController
                 :financial_open?, :financial_pages
   # authenticiation done via devise : SuperAdmin Model
   before_action :authenticate_super_admin!
+  before_action :authorize_console_section!
+
+  # Controllers a finance-only super admin may reach. Everything under
+  # Financeiro, plus what any signed-in admin needs to manage their own session:
+  # profile, MFA and logout. Anything not listed is refused — a new console
+  # section is out of reach until somebody decides otherwise, which is the safe
+  # direction for a permission list to fail in.
+  FINANCIAL_ALLOWED_CONTROLLERS = %w[
+    super_admin/financial/products
+    super_admin/financial/customer_links
+    super_admin/financial/subscriptions
+    super_admin/financial/invoices
+    super_admin/financial/token_billings
+    super_admin/profile/mfa
+    super_admin/sessions/mfa_challenge
+    super_admin/devise/sessions
+  ].freeze
 
   # Override this value to specify the number of elements to display at a time
   # on index pages. Defaults to 20.
@@ -28,6 +45,15 @@ class SuperAdmin::ApplicationController < Administrate::ApplicationController
   end
 
   private
+
+  def authorize_console_section!
+    return unless current_super_admin&.financial_only?
+    return if FINANCIAL_ALLOWED_CONTROLLERS.include?(params[:controller])
+
+    # rubocop:disable Rails/I18nLocaleTexts
+    redirect_to super_admin_financial_invoices_path, alert: 'Seu acesso é restrito à seção Financeiro.'
+    # rubocop:enable Rails/I18nLocaleTexts
+  end
 
   def render_vue_component(component_name, props = {})
     html_options = {

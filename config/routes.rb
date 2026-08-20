@@ -930,7 +930,10 @@ Rails.application.routes.draw do
         resource :mfa_challenge, only: [:show, :create], controller: 'mfa_challenge'
       end
     end
-    authenticated :super_admin do
+    # Mounted outside the Administrate controllers, so the console's own
+    # section guard never runs here — a finance-only admin would otherwise
+    # reach the queues by typing the URL.
+    authenticated :super_admin, ->(super_admin) { !super_admin.financial_only? } do
       mount Sidekiq::Web => '/monitoring/sidekiq'
     end
   end
