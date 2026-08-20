@@ -28,8 +28,20 @@ class Financial::TokenBillingService
       lines: lines,
       total_amount: lines.sum { |line| line[:billable] ? line[:total_amount] : 0 },
       billable_count: lines.count { |line| line[:billable] },
-      currency: catalog.values.first&.currency || 'brl'
+      currency: catalog.values.first&.currency || 'brl',
+      prices_used: resolved_prices
     }
+  end
+
+  # What each category was actually priced at. An automation that never picked
+  # the prices itself has no other way to check it billed at the amount it
+  # meant to — and a price silently swapped on the screen would otherwise only
+  # show up on the customer's invoice.
+  def resolved_prices
+    price_catalog.transform_values do |price|
+      { price_id: price.id, product_id: price.try(:product), unit_amount: price.unit_amount,
+        currency: price.currency, nickname: price.try(:nickname) }
+    end
   end
 
   # Issues one invoice per billable row. A failure on one customer must not

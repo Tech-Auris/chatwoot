@@ -38,7 +38,8 @@ class Platform::Api::V1::Financial::InvoicesController < PlatformController
       period: params[:period]
     )
 
-    render json: { results: results, issued_count: results.count { |row| row[:status] == 'issued' } }, status: :created
+    render json: { results: results, issued_count: results.count { |row| row[:status] == 'issued' },
+                   prices_used: token_service.resolved_prices }, status: :created
   end
 
   private

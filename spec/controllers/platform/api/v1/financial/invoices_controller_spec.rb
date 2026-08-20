@@ -13,6 +13,9 @@ RSpec.describe 'Platform Financial Invoices API', type: :request do
   end
 
   before do
+    # GlobalConfig memoizes across examples while the rows themselves roll back,
+    # so a price saved by one example would leak into the next one.
+    GlobalConfig.clear_cache
     allow(Integrations::Stripe::Client).to receive(:new).and_return(client)
     allow(client).to receive(:list_prices).and_return(
       Struct.new(:data).new([stripe_price('price_text', 6), stripe_price('price_media', 10), stripe_price('price_audio', 49)])
@@ -70,6 +73,28 @@ RSpec.describe 'Platform Financial Invoices API', type: :request do
 
       expect(response).to have_http_status(:created)
       expect(response.parsed_body['issued_count']).to eq(1)
+    end
+
+    # A caller that relies on the saved prices has no other way to assert it
+    # billed at the amount it meant to.
+    it 'answers with the prices it actually charged' do
+      allow(client).to receive(:create_invoice).and_return(invoice)
+
+      post '/platform/api/v1/financial/invoices',
+           params: { usage: usage, prices: prices },
+           headers: { api_access_token: platform_app.access_token.token }, as: :json
+
+      expect(response.parsed_body['prices_used']['text']).to include('price_id' => 'price_text', 'unit_amount' => 6)
+      expect(response.parsed_body['prices_used']['audio']).to include('unit_amount' => 49)
+    end
+
+    it 'refuses the run when no price was sent and none was ever chosen' do
+      post '/platform/api/v1/financial/invoices',
+           params: { usage: usage },
+           headers: { api_access_token: platform_app.access_token.token }, as: :json
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.parsed_body['error']).to include('Escolha o preço')
     end
 
     it 'reports a row it could not bill instead of failing the whole call' do
