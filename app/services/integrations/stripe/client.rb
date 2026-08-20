@@ -170,6 +170,36 @@ class Integrations::Stripe::Client
     with_error_handling { Stripe::Invoice.list(payload, request_options) }
   end
 
+  # Issues an invoice for a customer.
+  #
+  # The invoice is created empty first and every item is bound to it by id:
+  # an invoice item created loose would sit as "pending" on the customer and be
+  # swept into whatever invoice closes next — including the subscription's.
+  #
+  # Finalizing is what turns a draft into a collectible invoice, which is the
+  # state the write-off and the payment link need. Sending the e-mail is left
+  # to Stripe's own invoice settings; nothing here mails the customer.
+  #
+  # Items are either a catalog price (`price_id` + quantity) or a free amount
+  # (`description` + `unit_amount` in cents).
+  def create_invoice(customer_id:, items:, days_until_due: DEFAULT_DAYS_UNTIL_DUE, description: nil)
+    raise InvalidRequest, 'A fatura precisa de pelo menos um item' if items.blank?
+
+    with_error_handling do
+      invoice = Stripe::Invoice.create(
+        { customer: customer_id, collection_method: 'send_invoice', days_until_due: days_until_due,
+          description: description.presence, auto_advance: false,
+          # Anything left pending on the customer by another flow stays out of
+          # this invoice. A token charge must carry the token lines and nothing
+          # else, whatever else is queued on that customer.
+          pending_invoice_item_behavior: 'exclude' }.compact,
+        request_options
+      )
+      items.each { |item| create_invoice_item(invoice.id, customer_id, item) }
+      Stripe::Invoice.finalize_invoice(invoice.id, {}, request_options)
+    end
+  end
+
   # Writes off an invoice paid outside Stripe (PIX at Banco Inter or AsaaS).
   #
   # The payment is registered first and the origin stamped after: if the stamp
@@ -187,6 +217,23 @@ class Integrations::Stripe::Client
   end
 
   private
+
+  def create_invoice_item(invoice_id, customer_id, item)
+    payload = { customer: customer_id, invoice: invoice_id }
+
+    if item[:price_id].present?
+      payload[:price] = item[:price_id]
+      payload[:quantity] = item[:quantity].presence || 1
+    else
+      # A free amount carries the whole line total, so the quantity is folded
+      # into it — Stripe rejects `amount` together with `quantity`.
+      payload[:amount] = item[:unit_amount].to_i * (item[:quantity].presence || 1).to_i
+      payload[:currency] = item[:currency].presence || 'brl'
+      payload[:description] = item[:description].presence || 'Cobrança avulsa'
+    end
+
+    Stripe::InvoiceItem.create(payload, request_options)
+  end
 
   def request_options
     { api_key: @api_key }

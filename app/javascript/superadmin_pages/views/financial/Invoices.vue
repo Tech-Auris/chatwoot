@@ -44,6 +44,25 @@ const pageIndex = ref(0);
 const loading = ref(false);
 const error = ref(null);
 
+const accounts = ref([]);
+const prices = ref([]);
+const creating = ref(false);
+const createError = ref(null);
+const showCreate = ref(false);
+const DEFAULT_DAYS_UNTIL_DUE = 7;
+const emptyItem = () => ({
+  price_id: '',
+  quantity: 1,
+  description: '',
+  amount: '',
+});
+const newInvoice = ref({
+  account_id: '',
+  days_until_due: DEFAULT_DAYS_UNTIL_DUE,
+  description: '',
+  items: [emptyItem()],
+});
+
 const payingInvoice = ref(null);
 const paidVia = ref('inter');
 const paying = ref(false);
@@ -69,6 +88,8 @@ const fetchData = async () => {
     if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
 
     invoices.value = body.invoices || [];
+    accounts.value = body.accounts || accounts.value;
+    prices.value = body.prices || prices.value;
     meta.value = body.meta || meta.value;
   } catch (e) {
     error.value = e.message;
@@ -133,6 +154,79 @@ const statusClass = invoice => {
 
 const overdueCount = computed(() => invoices.value.filter(isOverdue).length);
 
+const openCreate = () => {
+  showCreate.value = true;
+  createError.value = null;
+  newInvoice.value = {
+    account_id: accounts.value[0]?.id || '',
+    days_until_due: DEFAULT_DAYS_UNTIL_DUE,
+    description: '',
+    items: [emptyItem()],
+  };
+};
+
+const closeCreate = () => {
+  showCreate.value = false;
+};
+
+const addItem = () => {
+  newInvoice.value.items.push(emptyItem());
+};
+
+const removeItem = index => {
+  newInvoice.value.items.splice(index, 1);
+  if (!newInvoice.value.items.length) newInvoice.value.items.push(emptyItem());
+};
+
+// A line is worth sending when it points at a catalog price or carries a typed
+// amount; the empty rows of the form are just noise.
+const filledItems = computed(() =>
+  newInvoice.value.items.filter(item => item.price_id || item.amount)
+);
+
+const priceLabel = price => {
+  const name = price.product_name || 'Produto sem nome';
+  const amount = formatAmount(price.unit_amount, price.currency);
+  const interval = price.recurring_interval
+    ? ` (recorrente/${price.recurring_interval})`
+    : '';
+  return `${name} — ${amount}${interval}`;
+};
+
+const submitCreate = async () => {
+  creating.value = true;
+  createError.value = null;
+  try {
+    const res = await fetch(props.componentData.invoices_url, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrfToken(),
+      },
+      body: JSON.stringify({
+        account_id: newInvoice.value.account_id,
+        days_until_due: newInvoice.value.days_until_due,
+        description: newInvoice.value.description,
+        items: filledItems.value,
+      }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+
+    closeCreate();
+    activeTab.value = 'open';
+    cursors.value = [null];
+    pageIndex.value = 0;
+    await fetchData();
+  } catch (e) {
+    createError.value = e.message;
+  } finally {
+    creating.value = false;
+  }
+};
+
 const openPay = invoice => {
   payingInvoice.value = invoice;
   paidVia.value = meta.value.sources?.[0] || 'inter';
@@ -175,12 +269,28 @@ const submitPay = async () => {
 
 <template>
   <div class="p-6">
-    <div class="mb-6">
-      <h1 class="text-xl font-medium text-slate-900">Faturas</h1>
-      <p class="text-sm text-slate-500 mt-1">
-        Faturas emitidas pelo Stripe. Quem paga por PIX no Inter ou pelo AsaaS é
-        baixado aqui, registrando por onde o dinheiro entrou.
-      </p>
+    <div class="mb-6 flex items-start justify-between gap-4">
+      <div>
+        <h1 class="text-xl font-medium text-slate-900">Faturas</h1>
+        <p class="text-sm text-slate-500 mt-1">
+          Faturas emitidas pelo Stripe. Quem paga por PIX no Inter ou pelo AsaaS
+          é baixado aqui, registrando por onde o dinheiro entrou.
+        </p>
+      </div>
+      <button
+        v-if="componentData.configured"
+        type="button"
+        class="px-3 py-1.5 rounded bg-woot-500 text-white text-sm whitespace-nowrap disabled:opacity-40"
+        :disabled="!accounts.length"
+        :title="
+          accounts.length
+            ? ''
+            : 'Vincule uma conta a um cliente do Stripe em Financeiro → Vínculos'
+        "
+        @click="openCreate"
+      >
+        Nova fatura
+      </button>
     </div>
 
     <div
@@ -344,6 +454,169 @@ const submitPay = async () => {
         </button>
       </div>
     </template>
+
+    <div
+      v-if="showCreate"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+    >
+      <div
+        class="bg-white rounded-lg shadow-lg w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto"
+      >
+        <h2 class="text-lg font-medium text-slate-900">Nova fatura</h2>
+        <p class="text-sm text-slate-500 mt-1">
+          Emite uma fatura avulsa — a cobrança mensal de tokens, um serviço
+          extra, qualquer coisa fora da assinatura.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+          <label class="block text-sm text-slate-600 md:col-span-2">
+            Conta
+            <select
+              v-model="newInvoice.account_id"
+              class="mt-1 w-full border border-slate-200 rounded px-2 py-1.5 text-sm"
+            >
+              <option
+                v-for="account in accounts"
+                :key="account.id"
+                :value="account.id"
+              >
+                {{ account.name }}
+              </option>
+            </select>
+          </label>
+          <label class="block text-sm text-slate-600">
+            Vencimento (dias)
+            <input
+              v-model.number="newInvoice.days_until_due"
+              type="number"
+              min="1"
+              class="mt-1 w-full border border-slate-200 rounded px-2 py-1.5 text-sm"
+            />
+          </label>
+        </div>
+
+        <div class="mt-4">
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-slate-600">Itens</span>
+            <button
+              type="button"
+              class="text-xs text-woot-500"
+              @click="addItem"
+            >
+              + Adicionar item
+            </button>
+          </div>
+
+          <div
+            v-for="(item, index) in newInvoice.items"
+            :key="index"
+            class="border border-slate-100 rounded p-3 mt-2"
+          >
+            <label class="block text-xs text-slate-500">
+              Produto do catálogo
+              <select
+                v-model="item.price_id"
+                class="mt-1 w-full border border-slate-200 rounded px-2 py-1.5 text-sm"
+              >
+                <option value="">— valor avulso —</option>
+                <option
+                  v-for="price in prices"
+                  :key="price.id"
+                  :value="price.id"
+                >
+                  {{ priceLabel(price) }}
+                </option>
+              </select>
+            </label>
+
+            <div class="grid grid-cols-3 gap-2 mt-2">
+              <label class="block text-xs text-slate-500">
+                Quantidade
+                <input
+                  v-model.number="item.quantity"
+                  type="number"
+                  min="1"
+                  class="mt-1 w-full border border-slate-200 rounded px-2 py-1.5 text-sm"
+                />
+              </label>
+              <label class="block text-xs text-slate-500 col-span-2">
+                Descrição
+                <input
+                  v-model="item.description"
+                  type="text"
+                  :disabled="!!item.price_id"
+                  placeholder="Ex: Pacote de tokens — agosto"
+                  class="mt-1 w-full border border-slate-200 rounded px-2 py-1.5 text-sm disabled:bg-slate-25"
+                />
+              </label>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 mt-2 items-end">
+              <label class="block text-xs text-slate-500">
+                Valor unitário (R$)
+                <input
+                  v-model="item.amount"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  :disabled="!!item.price_id"
+                  class="mt-1 w-full border border-slate-200 rounded px-2 py-1.5 text-sm disabled:bg-slate-25"
+                />
+              </label>
+              <div class="col-span-2 text-right">
+                <button
+                  type="button"
+                  class="text-xs text-slate-500"
+                  @click="removeItem(index)"
+                >
+                  Remover item
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <label class="block mt-4 text-sm text-slate-600">
+          Observação na fatura (opcional)
+          <input
+            v-model="newInvoice.description"
+            type="text"
+            class="mt-1 w-full border border-slate-200 rounded px-2 py-1.5 text-sm"
+          />
+        </label>
+
+        <p class="text-xs text-slate-400 mt-3">
+          A fatura é emitida já em aberto, pronta para pagamento ou para baixa
+          manual. O envio de e-mail ao cliente segue a configuração da sua conta
+          no Stripe — nada é disparado por aqui.
+        </p>
+
+        <p v-if="createError" class="text-sm text-red-600 mt-3">
+          {{ createError }}
+        </p>
+
+        <div class="flex justify-end gap-2 mt-5">
+          <button
+            type="button"
+            class="px-3 py-1.5 text-sm text-slate-600"
+            :disabled="creating"
+            @click="closeCreate"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="px-3 py-1.5 rounded bg-woot-500 text-white text-sm disabled:opacity-40"
+            :disabled="
+              creating || !newInvoice.account_id || !filledItems.length
+            "
+            @click="submitCreate"
+          >
+            {{ creating ? 'Emitindo…' : 'Emitir fatura' }}
+          </button>
+        </div>
+      </div>
+    </div>
 
     <div
       v-if="payingInvoice"

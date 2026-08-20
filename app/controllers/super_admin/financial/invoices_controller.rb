@@ -28,8 +28,27 @@ class SuperAdmin::Financial::InvoicesController < SuperAdmin::ApplicationControl
 
     render json: {
       invoices: list.data.map { |invoice| serialize(invoice) },
+      accounts: billable_accounts,
+      prices: catalog_prices,
       meta: { has_more: list.has_more, last_id: list.data.last&.id, sources: Integrations::Stripe::Client::PAID_VIA_SOURCES }
     }
+  end
+
+  # Issues an invoice on the spot — the monthly token charge, an extra service,
+  # anything that is not covered by the subscription.
+  def create
+    account = Account.find(params[:account_id])
+    return render json: { error: 'Conta sem cliente do Stripe vinculado.' }, status: :unprocessable_entity if account.stripe_customer_id.blank?
+
+    invoice = client.create_invoice(
+      customer_id: account.stripe_customer_id,
+      items: invoice_items,
+      days_until_due: params[:days_until_due].presence&.to_i || Integrations::Stripe::Client::DEFAULT_DAYS_UNTIL_DUE,
+      description: params[:description]
+    )
+    load_account_names([invoice])
+
+    render json: { invoice: serialize(invoice) }, status: :created
   end
 
   # Marks an invoice as settled outside Stripe, recording where the money came
@@ -52,6 +71,42 @@ class SuperAdmin::Financial::InvoicesController < SuperAdmin::ApplicationControl
 
     render json: { error: 'Stripe não está configurado. Salve a Stripe Secret Key em Settings → Stripe.' },
            status: :unprocessable_entity
+  end
+
+  # A line is either a catalog price or a free amount typed by the operator.
+  # Amounts arrive in reais and Stripe counts in cents.
+  def invoice_items
+    Array(params[:items]).filter_map do |item|
+      next if item[:price_id].blank? && item[:amount].blank?
+
+      {
+        price_id: item[:price_id],
+        quantity: item[:quantity].presence&.to_i || 1,
+        description: item[:description],
+        unit_amount: item[:amount].present? ? (item[:amount].to_f * 100).round : nil
+      }
+    end
+  end
+
+  # Only accounts already paired with a Stripe customer can be billed.
+  def billable_accounts
+    Account.where.not(stripe_customer_id: nil).order(:name).map do |account|
+      { id: account.id, name: account.name }
+    end
+  end
+
+  def catalog_prices
+    client.list_prices.data.filter_map do |price|
+      next unless price.active
+
+      {
+        id: price.id,
+        product_name: product_names[price.product] || price.nickname,
+        unit_amount: price.unit_amount,
+        currency: price.currency,
+        recurring_interval: price.recurring&.interval
+      }
+    end
   end
 
   # Resolved for the whole page up front: a lookup inside the row loop would

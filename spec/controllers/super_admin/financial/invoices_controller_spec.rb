@@ -31,6 +31,12 @@ RSpec.describe 'Super Admin Financial Invoices', type: :request do
     Struct.new(:id, :name).new(id, name)
   end
 
+  def stripe_catalog_price(id: 'price_1', product: 'prod_1', active: true, interval: nil)
+    recurring = interval ? Struct.new(:interval).new(interval) : nil
+    Struct.new(:id, :product, :unit_amount, :currency, :recurring, :active, :nickname)
+          .new(id, product, 15_000, 'brl', recurring, active, nil)
+  end
+
   def stripe_list(invoices, has_more: false)
     Struct.new(:data, :has_more).new(invoices, has_more)
   end
@@ -40,6 +46,7 @@ RSpec.describe 'Super Admin Financial Invoices', type: :request do
     allow(Integrations::Stripe::Client).to receive(:new).and_return(client)
     allow(client).to receive(:list_invoices).and_return(stripe_list([stripe_invoice]))
     allow(client).to receive(:list_products).and_return(Struct.new(:data).new([stripe_product]))
+    allow(client).to receive(:list_prices).and_return(Struct.new(:data).new([stripe_catalog_price]))
     sign_in(super_admin, scope: :super_admin)
   end
 
@@ -152,6 +159,102 @@ RSpec.describe 'Super Admin Financial Invoices', type: :request do
       get '/super_admin/financial/invoices/data'
 
       expect(response.parsed_body['invoices'].first['paid_via']).to eq('asaas')
+    end
+  end
+
+  describe 'POST /super_admin/financial/invoices' do
+    let(:account) { Account.find_by(name: 'Clínica Conciliada') }
+
+    it 'issues an invoice with a catalog item for the account customer' do
+      expect(client).to receive(:create_invoice).with(
+        customer_id: 'cus_1',
+        items: [{ price_id: 'price_1', quantity: 2, description: nil, unit_amount: nil }],
+        days_until_due: 7,
+        description: nil
+      ).and_return(stripe_invoice)
+
+      post '/super_admin/financial/invoices',
+           params: { account_id: account.id, items: [{ price_id: 'price_1', quantity: 2 }] }
+
+      expect(response).to have_http_status(:created)
+      expect(response.parsed_body['invoice']).to include('id' => 'in_1', 'account_name' => 'Clínica Conciliada')
+    end
+
+    # Operators type reais; Stripe counts cents. Getting this wrong bills a
+    # customer a hundred times over.
+    it 'converts a free amount from reais to cents' do
+      expect(client).to receive(:create_invoice).with(
+        hash_including(items: [{ price_id: nil, quantity: 3, description: 'Tokens de agosto', unit_amount: 12_990 }])
+      ).and_return(stripe_invoice)
+
+      post '/super_admin/financial/invoices',
+           params: {
+             account_id: account.id,
+             items: [{ description: 'Tokens de agosto', amount: '129.90', quantity: 3 }]
+           }
+
+      expect(response).to have_http_status(:created)
+    end
+
+    it 'drops the blank rows the form always carries' do
+      expect(client).to receive(:create_invoice).with(
+        hash_including(items: [hash_including(price_id: 'price_1')])
+      ).and_return(stripe_invoice)
+
+      post '/super_admin/financial/invoices',
+           params: { account_id: account.id, items: [{ price_id: 'price_1' }, { price_id: '', amount: '' }] }
+
+      expect(response).to have_http_status(:created)
+    end
+
+    it 'passes the due window chosen by the operator' do
+      expect(client).to receive(:create_invoice).with(hash_including(days_until_due: 20)).and_return(stripe_invoice)
+
+      post '/super_admin/financial/invoices',
+           params: { account_id: account.id, days_until_due: 20, items: [{ price_id: 'price_1' }] }
+
+      expect(response).to have_http_status(:created)
+    end
+
+    it 'refuses an account with no Stripe customer' do
+      unlinked = create(:account, name: 'Sem Vínculo')
+
+      post '/super_admin/financial/invoices', params: { account_id: unlinked.id, items: [{ price_id: 'price_1' }] }
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.parsed_body['error']).to include('sem cliente do Stripe')
+    end
+
+    it 'reports back what Stripe refused' do
+      allow(client).to receive(:create_invoice)
+        .and_raise(Integrations::Stripe::Client::InvalidRequest, 'No such price: price_1')
+
+      post '/super_admin/financial/invoices', params: { account_id: account.id, items: [{ price_id: 'price_1' }] }
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.parsed_body['error']).to eq('No such price: price_1')
+    end
+  end
+
+  describe 'the data payload backing the new-invoice form' do
+    it 'lists the accounts that can be billed and the active catalog prices' do
+      create(:account, name: 'Sem Vínculo')
+
+      get '/super_admin/financial/invoices/data'
+
+      body = response.parsed_body
+      expect(body['accounts'].pluck('name')).to eq(['Clínica Conciliada'])
+      expect(body['prices']).to contain_exactly(hash_including('id' => 'price_1', 'product_name' => 'Plano Pro'))
+    end
+
+    it 'leaves archived prices out of the picker' do
+      allow(client).to receive(:list_prices).and_return(
+        Struct.new(:data).new([stripe_catalog_price(id: 'price_velho', active: false)])
+      )
+
+      get '/super_admin/financial/invoices/data'
+
+      expect(response.parsed_body['prices']).to be_empty
     end
   end
 
