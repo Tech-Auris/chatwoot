@@ -24,6 +24,7 @@
 #  settings_macros_menu_enabled     :boolean          default(FALSE), not null
 #  status                           :integer          default("active")
 #  support_email                    :string(100)
+#  token_billing_enabled            :boolean
 #  created_at                       :datetime         not null
 #  updated_at                       :datetime         not null
 #  simulator_inbox_id               :bigint
@@ -228,6 +229,12 @@ class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
 
   # Ensure reset_cache_keys also drops the unread counts store so any account-level
   # cache reset propagates to the memoized counters.
+  # Some accounts are not charged for tokens (internal, courtesy, contracts
+  # where it is bundled). nil means billed, so nobody has to backfill anything.
+  def token_billing_enabled?
+    token_billing_enabled != false
+  end
+
   def reset_cache_keys
     super
     clear_unread_conversation_counts_cache

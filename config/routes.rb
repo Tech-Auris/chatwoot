@@ -847,6 +847,7 @@ Rails.application.routes.draw do
           end
           member do
             post :customer
+            post :token_billing
           end
         end
 

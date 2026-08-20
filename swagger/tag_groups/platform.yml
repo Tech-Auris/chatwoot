@@ -20,6 +20,8 @@ tags:
     description: Manage agent bots on the platform
   - name: Users
     description: Platform user management
+  - name: Financial
+    description: Billing APIs backed by Stripe
 paths:
   $ref: ../paths/index.yml
 components:

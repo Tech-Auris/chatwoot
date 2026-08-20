@@ -66,6 +66,24 @@ RSpec.describe Financial::TokenBillingService do
       expect(line).to include(billable: false, issue: 'conta não encontrada', account_name: 'Fantasma')
     end
 
+    # Internal accounts, courtesy and contracts where usage is bundled: the batch
+    # has to leave those out on its own, not depend on someone editing the
+    # spreadsheet every month.
+    it 'flags an account that is not charged for tokens' do
+      account.update!(token_billing_enabled: false)
+
+      line = service.preview([{ account_id: account.id, text: 1480, media: 129, audio: 3 }])[:lines].first
+
+      expect(line).to include(billable: false, issue: 'cobrança de tokens desativada para esta conta')
+    end
+
+    it 'keeps billing every account that was never opted out' do
+      line = service.preview([{ account_id: account.id, text: 10, media: 0, audio: 0 }])[:lines].first
+
+      expect(account.token_billing_enabled).to be_nil
+      expect(line[:billable]).to be true
+    end
+
     it 'flags a customer with nothing to charge instead of issuing an empty invoice' do
       line = service.preview([{ account_id: account.id, text: 0, media: 0, audio: 0 }])[:lines].first
 

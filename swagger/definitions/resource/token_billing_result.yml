@@ -1,0 +1,51 @@
+type: object
+properties:
+  issued_count:
+    type: integer
+    description: How many invoices were actually issued.
+  results:
+    type: array
+    description: One entry per account of the payload, in the order it was sent.
+    items:
+      type: object
+      properties:
+        account_id:
+          type: integer
+        account_name:
+          type: string
+        total_amount:
+          type: integer
+          description: Amount of the invoice in cents.
+        status:
+          type: string
+          enum:
+            - issued
+            - skipped
+            - failed
+          description: >-
+            `skipped` means the account could not be billed (not found, no Stripe
+            customer linked, or no usage); `failed` means Stripe refused it. One
+            failure does not abort the remaining invoices.
+        error:
+          type: string
+          description: Why the account was skipped or refused.
+        invoice_id:
+          type: string
+        invoice_number:
+          type: string
+        invoice_url:
+          type: string
+  prices_used:
+    type: object
+    description: The price charged for each category, so the caller can assert what it billed.
+    additionalProperties:
+      type: object
+      properties:
+        price_id:
+          type: string
+        product_id:
+          type: string
+        unit_amount:
+          type: integer
+        currency:
+          type: string

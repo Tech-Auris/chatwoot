@@ -173,4 +173,26 @@ RSpec.describe 'Super Admin Financial Customer Links', type: :request do
       expect(response.parsed_body['error']).to include('Stripe Secret Key')
     end
   end
+
+  describe 'POST /super_admin/financial/customer_links/:account_id/token_billing' do
+    let(:account) { create(:account, name: 'Interna') }
+
+    before { sign_in(super_admin, scope: :super_admin) }
+
+    it 'stops charging tokens for the account' do
+      post "/super_admin/financial/customer_links/#{account.id}/token_billing", params: { enabled: false }
+
+      expect(response).to have_http_status(:success)
+      expect(response.parsed_body['account']).to include('token_billing_enabled' => false)
+      expect(account.reload.token_billing_enabled?).to be false
+    end
+
+    it 'puts the account back into the batches' do
+      account.update!(token_billing_enabled: false)
+
+      post "/super_admin/financial/customer_links/#{account.id}/token_billing", params: { enabled: true }
+
+      expect(account.reload.token_billing_enabled?).to be true
+    end
+  end
 end

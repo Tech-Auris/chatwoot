@@ -96,6 +96,7 @@ class Financial::TokenBillingService
 
   def row_issue(account, items)
     return 'conta não encontrada' if account.nil?
+    return 'cobrança de tokens desativada para esta conta' unless account.token_billing_enabled?
     return 'conta sem cliente do Stripe vinculado' if account.stripe_customer_id.blank?
     return 'consumo zerado' if items.empty?
 

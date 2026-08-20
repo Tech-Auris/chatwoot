@@ -39,6 +39,8 @@ tags:
     description: Account management APIs
   - name: Account Users
     description: Account user management APIs
+  - name: Financial
+    description: Billing APIs backed by Stripe
   - name: AgentBots
     description: Bot integrations
   - name: Users
@@ -120,6 +122,7 @@ x-tagGroups:
       - Account Users
       - AgentBots
       - Users
+      - Financial
   - name: Application
     tags:
       - Account AgentBots
