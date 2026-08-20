@@ -46,11 +46,13 @@ const error = ref(null);
 
 const accounts = ref([]);
 const prices = ref([]);
+const coupons = ref([]);
 const creating = ref(false);
 const createError = ref(null);
 const showCreate = ref(false);
 const DEFAULT_DAYS_UNTIL_DUE = 7;
 const emptyItem = () => ({
+  product_id: '',
   price_id: '',
   quantity: 1,
   description: '',
@@ -90,6 +92,7 @@ const fetchData = async () => {
     invoices.value = body.invoices || [];
     accounts.value = body.accounts || accounts.value;
     prices.value = body.prices || prices.value;
+    coupons.value = body.coupons || coupons.value;
     meta.value = body.meta || meta.value;
   } catch (e) {
     error.value = e.message;
@@ -161,6 +164,7 @@ const openCreate = () => {
     account_id: accounts.value[0]?.id || '',
     days_until_due: DEFAULT_DAYS_UNTIL_DUE,
     description: '',
+    coupon_id: '',
     items: [emptyItem()],
   };
 };
@@ -181,16 +185,50 @@ const removeItem = index => {
 // A line is worth sending when it points at a catalog price or carries a typed
 // amount; the empty rows of the form are just noise.
 const filledItems = computed(() =>
-  newInvoice.value.items.filter(item => item.price_id || item.amount)
+  newInvoice.value.items
+    .filter(item => item.price_id || item.amount)
+    .map(({ price_id, quantity, description, amount }) => ({
+      price_id,
+      quantity,
+      description,
+      amount,
+    }))
 );
 
-const priceLabel = price => {
-  const name = price.product_name || 'Produto sem nome';
-  const amount = formatAmount(price.unit_amount, price.currency);
-  const interval = price.recurring_interval
-    ? ` (recorrente/${price.recurring_interval})`
-    : '';
-  return `${name} — ${amount}${interval}`;
+// A product carries a one-off price and a monthly one, often of the same
+// amount. The form asks for the product first and then for which of its prices
+// to charge, instead of a flat list where the two read identically.
+const products = computed(() => {
+  const byId = new Map();
+  prices.value.forEach(price => {
+    if (!byId.has(price.product_id)) {
+      byId.set(price.product_id, {
+        id: price.product_id,
+        name: price.product_name || 'Produto sem nome',
+      });
+    }
+  });
+  return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name));
+});
+
+const pricesOfProduct = productId =>
+  prices.value.filter(price => price.product_id === productId);
+
+const priceLabel = price =>
+  `${formatAmount(price.unit_amount, price.currency)} — ${
+    price.recurring_interval ? 'Mensal' : 'Avulso'
+  }`;
+
+const couponLabel = coupon => {
+  const discount = coupon.percent_off
+    ? `${coupon.percent_off}%`
+    : formatAmount(coupon.amount_off, coupon.currency);
+  return `${coupon.name || coupon.id} — ${discount}`;
+};
+
+const onItemProductChange = item => {
+  const options = pricesOfProduct(item.product_id);
+  item.price_id = options.length === 1 ? options[0].id : '';
 };
 
 const submitCreate = async () => {
@@ -209,6 +247,7 @@ const submitCreate = async () => {
         account_id: newInvoice.value.account_id,
         days_until_due: newInvoice.value.days_until_due,
         description: newInvoice.value.description,
+        coupon_id: newInvoice.value.coupon_id,
         items: filledItems.value,
       }),
     });
@@ -512,22 +551,42 @@ const submitPay = async () => {
             :key="index"
             class="border border-slate-100 rounded p-3 mt-2"
           >
-            <label class="block text-xs text-slate-500">
-              Produto do catálogo
-              <select
-                v-model="item.price_id"
-                class="mt-1 w-full border border-slate-200 rounded px-2 py-1.5 text-sm"
-              >
-                <option value="">— valor avulso —</option>
-                <option
-                  v-for="price in prices"
-                  :key="price.id"
-                  :value="price.id"
+            <div class="grid grid-cols-2 gap-2">
+              <label class="block text-xs text-slate-500">
+                Produto do catálogo
+                <select
+                  v-model="item.product_id"
+                  class="mt-1 w-full border border-slate-200 rounded px-2 py-1.5 text-sm"
+                  @change="onItemProductChange(item)"
                 >
-                  {{ priceLabel(price) }}
-                </option>
-              </select>
-            </label>
+                  <option value="">— valor avulso —</option>
+                  <option
+                    v-for="product in products"
+                    :key="product.id"
+                    :value="product.id"
+                  >
+                    {{ product.name }}
+                  </option>
+                </select>
+              </label>
+              <label class="block text-xs text-slate-500">
+                Preço
+                <select
+                  v-model="item.price_id"
+                  :disabled="!item.product_id"
+                  class="mt-1 w-full border border-slate-200 rounded px-2 py-1.5 text-sm disabled:bg-slate-25"
+                >
+                  <option value="">— escolher —</option>
+                  <option
+                    v-for="price in pricesOfProduct(item.product_id)"
+                    :key="price.id"
+                    :value="price.id"
+                  >
+                    {{ priceLabel(price) }}
+                  </option>
+                </select>
+              </label>
+            </div>
 
             <div class="grid grid-cols-3 gap-2 mt-2">
               <label class="block text-xs text-slate-500">
@@ -575,6 +634,23 @@ const submitPay = async () => {
             </div>
           </div>
         </div>
+
+        <label class="block mt-4 text-sm text-slate-600">
+          Cupom (opcional)
+          <select
+            v-model="newInvoice.coupon_id"
+            class="mt-1 w-full border border-slate-200 rounded px-2 py-1.5 text-sm"
+          >
+            <option value="">— sem desconto —</option>
+            <option
+              v-for="coupon in coupons"
+              :key="coupon.id"
+              :value="coupon.id"
+            >
+              {{ couponLabel(coupon) }}
+            </option>
+          </select>
+        </label>
 
         <label class="block mt-4 text-sm text-slate-600">
           Observação na fatura (opcional)

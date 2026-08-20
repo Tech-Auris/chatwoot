@@ -30,6 +30,7 @@ class SuperAdmin::Financial::InvoicesController < SuperAdmin::ApplicationControl
       invoices: list.data.map { |invoice| serialize(invoice) },
       accounts: billable_accounts,
       prices: catalog_prices,
+      coupons: available_coupons,
       meta: { has_more: list.has_more, last_id: list.data.last&.id, sources: Integrations::Stripe::Client::PAID_VIA_SOURCES }
     }
   end
@@ -44,7 +45,8 @@ class SuperAdmin::Financial::InvoicesController < SuperAdmin::ApplicationControl
       customer_id: account.stripe_customer_id,
       items: invoice_items,
       days_until_due: params[:days_until_due].presence&.to_i || Integrations::Stripe::Client::DEFAULT_DAYS_UNTIL_DUE,
-      description: params[:description]
+      description: params[:description],
+      coupon_id: params[:coupon_id].presence
     )
     load_account_names([invoice])
 
@@ -88,6 +90,16 @@ class SuperAdmin::Financial::InvoicesController < SuperAdmin::ApplicationControl
     end
   end
 
+  # Only coupons Stripe still considers usable.
+  def available_coupons
+    client.list_coupons.data.filter_map do |coupon|
+      next unless coupon.valid
+
+      { id: coupon.id, name: coupon.name, percent_off: coupon.percent_off,
+        amount_off: coupon.amount_off, currency: coupon.currency, duration: coupon.duration }
+    end
+  end
+
   # Only accounts already paired with a Stripe customer can be billed.
   def billable_accounts
     Account.where.not(stripe_customer_id: nil).order(:name).map do |account|
@@ -101,6 +113,7 @@ class SuperAdmin::Financial::InvoicesController < SuperAdmin::ApplicationControl
 
       {
         id: price.id,
+        product_id: price.product,
         product_name: product_names[price.product] || price.nickname,
         unit_amount: price.unit_amount,
         currency: price.currency,

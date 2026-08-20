@@ -36,6 +36,8 @@ class UserDashboard < Administrate::BaseDashboard
     updated_at: Field::DateTime,
     pubsub_token: Field::String,
     type: Field::Select.with_options(collection: [nil, 'SuperAdmin']),
+    # Only read for SuperAdmin records; blank means the full console.
+    super_admin_role: Field::Select.with_options(collection: [nil] + SuperAdmin::ROLES),
     accounts: CountField,
     access_token: Field::HasOne
   }.freeze
@@ -69,6 +71,7 @@ class UserDashboard < Administrate::BaseDashboard
     confirmed_at
     account_users
     access_token
+    super_admin_role
   ].freeze
 
   # FORM_ATTRIBUTES
@@ -82,6 +85,7 @@ class UserDashboard < Administrate::BaseDashboard
     password
     confirmed_at
     type
+    super_admin_role
   ].freeze
 
   # COLLECTION_FILTERS

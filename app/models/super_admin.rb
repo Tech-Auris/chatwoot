@@ -28,6 +28,7 @@
 #  reset_password_sent_at :datetime
 #  reset_password_token   :string
 #  sign_in_count          :integer          default(0), not null
+#  super_admin_role       :string
 #  tokens                 :json
 #  type                   :string
 #  ui_settings            :jsonb
@@ -47,4 +48,16 @@
 #  index_users_on_uid_and_provider        (uid,provider) UNIQUE
 #
 class SuperAdmin < User
+  # What a super admin is allowed to reach in the console.
+  #
+  # `financial` exists so the finance team can work on the Financeiro section
+  # without being handed the rest of the console — accounts, users, inboxes and
+  # every instance-wide setting. Anything other than the roles below (including
+  # nil, which is every super admin that already exists) means the full console.
+  FINANCIAL_ROLE = 'financial'.freeze
+  ROLES = [FINANCIAL_ROLE].freeze
+
+  def financial_only?
+    super_admin_role == FINANCIAL_ROLE
+  end
 end

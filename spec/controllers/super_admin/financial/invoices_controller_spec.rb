@@ -47,6 +47,10 @@ RSpec.describe 'Super Admin Financial Invoices', type: :request do
     allow(client).to receive(:list_invoices).and_return(stripe_list([stripe_invoice]))
     allow(client).to receive(:list_products).and_return(Struct.new(:data).new([stripe_product]))
     allow(client).to receive(:list_prices).and_return(Struct.new(:data).new([stripe_catalog_price]))
+    allow(client).to receive(:list_coupons).and_return(
+      Struct.new(:data).new([Struct.new(:id, :name, :percent_off, :amount_off, :currency, :duration, :valid)
+                                   .new('coupon_1', 'Parceiro', 15, nil, 'brl', 'once', true)])
+    )
     sign_in(super_admin, scope: :super_admin)
   end
 
@@ -170,7 +174,8 @@ RSpec.describe 'Super Admin Financial Invoices', type: :request do
         customer_id: 'cus_1',
         items: [{ price_id: 'price_1', quantity: 2, description: nil, unit_amount: nil }],
         days_until_due: 7,
-        description: nil
+        description: nil,
+        coupon_id: nil
       ).and_return(stripe_invoice)
 
       post '/super_admin/financial/invoices',
@@ -212,6 +217,15 @@ RSpec.describe 'Super Admin Financial Invoices', type: :request do
 
       post '/super_admin/financial/invoices',
            params: { account_id: account.id, days_until_due: 20, items: [{ price_id: 'price_1' }] }
+
+      expect(response).to have_http_status(:created)
+    end
+
+    it 'applies the coupon chosen by the operator' do
+      expect(client).to receive(:create_invoice).with(hash_including(coupon_id: 'coupon_1')).and_return(stripe_invoice)
+
+      post '/super_admin/financial/invoices',
+           params: { account_id: account.id, items: [{ price_id: 'price_1' }], coupon_id: 'coupon_1' }
 
       expect(response).to have_http_status(:created)
     end

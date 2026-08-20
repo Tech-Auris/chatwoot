@@ -24,6 +24,7 @@
 #  settings_macros_menu_enabled     :boolean          default(FALSE), not null
 #  status                           :integer          default("active")
 #  support_email                    :string(100)
+#  token_billing_enabled            :boolean          default(TRUE), not null
 #  created_at                       :datetime         not null
 #  updated_at                       :datetime         not null
 #  simulator_inbox_id               :bigint

@@ -10,6 +10,14 @@ request_error:
 
 generic_id:
   $ref: ./resource/extension/generic.yml
+financial_account:
+  $ref: ./resource/financial_account.yml
+token_billing_payload:
+  $ref: ./request/financial/token_billing_payload.yml
+token_billing_result:
+  $ref: ./resource/token_billing_result.yml
+token_billing_preview:
+  $ref: ./resource/token_billing_preview.yml
 canned_response:
   $ref: ./resource/canned_response.yml
 custom_attribute:

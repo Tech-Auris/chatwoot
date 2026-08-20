@@ -28,6 +28,7 @@ class SuperAdmin::Financial::SubscriptionsController < SuperAdmin::ApplicationCo
     render json: {
       accounts: paginated_accounts.map { |account| serialize_account(account) },
       prices: billable_prices,
+      coupons: available_coupons,
       meta: pagination_meta
     }
   end
@@ -42,13 +43,25 @@ class SuperAdmin::Financial::SubscriptionsController < SuperAdmin::ApplicationCo
       customer_id: account.stripe_customer_id,
       price_id: params.require(:price_id),
       quantity: params[:quantity].presence&.to_i || 1,
-      days_until_due: params[:days_until_due].presence&.to_i || Integrations::Stripe::Client::DEFAULT_DAYS_UNTIL_DUE
+      days_until_due: params[:days_until_due].presence&.to_i || Integrations::Stripe::Client::DEFAULT_DAYS_UNTIL_DUE,
+      coupon_id: params[:coupon_id].presence
     )
 
     render json: { subscription: serialize_subscription(subscription) }, status: :created
   end
 
   private
+
+  # Only coupons Stripe still considers usable — an expired one or one past its
+  # redemption limit would be refused at the worst possible moment.
+  def available_coupons
+    client.list_coupons.data.filter_map do |coupon|
+      next unless coupon.valid
+
+      { id: coupon.id, name: coupon.name, percent_off: coupon.percent_off,
+        amount_off: coupon.amount_off, currency: coupon.currency, duration: coupon.duration }
+    end
+  end
 
   # Only recurring prices can back a subscription — a one-off price makes Stripe
   # reject the call, so it never reaches the picker. Archived prices are gone

@@ -1,0 +1,11 @@
+<% content_for(:title) do %>
+  Cobrança de tokens
+<% end %>
+
+<%= render_vue_component('FinancialTokenBillingsIndex', {
+  data_url: data_super_admin_financial_token_billings_url(format: :json),
+  preview_url: preview_super_admin_financial_token_billings_url(format: :json),
+  create_url: super_admin_financial_token_billings_path,
+  configured: Integrations::Stripe::Client.new.configured?,
+  settings_url: super_admin_app_config_path(config: 'stripe')
+}) %>
