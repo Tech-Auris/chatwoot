@@ -840,7 +840,7 @@ Rails.application.routes.draw do
           end
         end
 
-        resources :subscriptions, only: [:index], controller: 'subscriptions' do
+        resources :subscriptions, only: [:index, :create], controller: 'subscriptions' do
           collection do
             get :data
           end

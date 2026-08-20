@@ -1,4 +1,5 @@
-# Read-only view of the Stripe subscriptions behind each reconciled account.
+# The Stripe subscriptions behind each reconciled account, and the screen that
+# starts a new one.
 #
 # Only accounts already paired on Financeiro → Vínculos can appear here: with
 # no Stripe customer there is nothing to look up. Accounts that are paired but
@@ -9,6 +10,10 @@ class SuperAdmin::Financial::SubscriptionsController < SuperAdmin::ApplicationCo
 
   rescue_from Integrations::Stripe::Client::Unauthorized do |e|
     render json: { error: "Credencial do Stripe inválida: #{e.message}" }, status: :unauthorized
+  end
+
+  rescue_from Integrations::Stripe::Client::InvalidRequest do |e|
+    render json: { error: e.message }, status: :unprocessable_entity
   end
 
   rescue_from Integrations::Stripe::Client::ProviderUnavailable do |e|
@@ -22,11 +27,45 @@ class SuperAdmin::Financial::SubscriptionsController < SuperAdmin::ApplicationCo
   def data
     render json: {
       accounts: paginated_accounts.map { |account| serialize_account(account) },
+      prices: billable_prices,
       meta: pagination_meta
     }
   end
 
+  # Starts a subscription for an account already paired with a Stripe customer.
+  # Billing is always by invoice — see `Integrations::Stripe::Client#create_subscription`.
+  def create
+    account = Account.find(params[:account_id])
+    return render json: { error: 'Conta sem cliente do Stripe vinculado.' }, status: :unprocessable_entity if account.stripe_customer_id.blank?
+
+    subscription = client.create_subscription(
+      customer_id: account.stripe_customer_id,
+      price_id: params.require(:price_id),
+      quantity: params[:quantity].presence&.to_i || 1,
+      days_until_due: params[:days_until_due].presence&.to_i || Integrations::Stripe::Client::DEFAULT_DAYS_UNTIL_DUE
+    )
+
+    render json: { subscription: serialize_subscription(subscription) }, status: :created
+  end
+
   private
+
+  # Only recurring prices can back a subscription — a one-off price makes Stripe
+  # reject the call, so it never reaches the picker. Archived prices are gone
+  # from the catalog on purpose and must not be offered either.
+  def billable_prices
+    client.list_prices.data.filter_map do |price|
+      next if price.recurring.blank? || !price.active
+
+      {
+        id: price.id,
+        product_name: product_names[price.product] || price.nickname,
+        unit_amount: price.unit_amount,
+        currency: price.currency,
+        recurring_interval: price.recurring.interval
+      }
+    end
+  end
 
   def client
     @client ||= Integrations::Stripe::Client.new
