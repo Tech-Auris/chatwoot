@@ -23,6 +23,9 @@ class Integrations::Stripe::Client
   # without a table of our own to keep in sync.
   PAID_VIA_METADATA_KEY = 'aurischat_paid_via'.freeze
   PAID_VIA_SOURCES = %w[inter asaas].freeze
+  # Marks how an invoice was issued, so a batch can be recognized later.
+  BILLING_SOURCE_METADATA_KEY = 'aurischat_billing_source'.freeze
+  BILLING_PERIOD_METADATA_KEY = 'aurischat_billing_period'.freeze
   INVOICE_PAGE_SIZE = 25
 
   class Error < StandardError; end
@@ -182,13 +185,13 @@ class Integrations::Stripe::Client
   #
   # Items are either a catalog price (`price_id` + quantity) or a free amount
   # (`description` + `unit_amount` in cents).
-  def create_invoice(customer_id:, items:, days_until_due: DEFAULT_DAYS_UNTIL_DUE, description: nil)
+  def create_invoice(customer_id:, items:, days_until_due: DEFAULT_DAYS_UNTIL_DUE, description: nil, metadata: nil)
     raise InvalidRequest, 'A fatura precisa de pelo menos um item' if items.blank?
 
     with_error_handling do
       invoice = Stripe::Invoice.create(
         { customer: customer_id, collection_method: 'send_invoice', days_until_due: days_until_due,
-          description: description.presence, auto_advance: false,
+          description: description.presence, metadata: metadata.presence, auto_advance: false,
           # Anything left pending on the customer by another flow stays out of
           # this invoice. A token charge must carry the token lines and nothing
           # else, whatever else is queued on that customer.

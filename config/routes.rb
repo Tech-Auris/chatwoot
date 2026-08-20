@@ -684,6 +684,16 @@ Rails.application.routes.draw do
           end
           resources :email_channel_migrations, only: [:create]
         end
+
+        # Billing automation: issue the monthly token invoices without anybody
+        # opening the super admin.
+        namespace :financial do
+          resources :invoices, only: [:create] do
+            collection do
+              post :preview
+            end
+          end
+        end
       end
     end
   end
@@ -852,6 +862,13 @@ Rails.application.routes.draw do
           end
           member do
             post :pay
+          end
+        end
+
+        resources :token_billings, only: [:index, :create], controller: 'token_billings' do
+          collection do
+            get :data
+            post :preview
           end
         end
       end
