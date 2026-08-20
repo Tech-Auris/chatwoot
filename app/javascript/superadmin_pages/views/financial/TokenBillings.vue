@@ -16,6 +16,8 @@ const CATEGORY_LABELS = {
 
 const CATEGORIES = ['text', 'media', 'audio'];
 
+const SAMPLE_CSV = '/downloads/token-usage-sample.csv';
+
 const prices = ref([]);
 const selectedPrices = ref({ text: '', media: '', audio: '' });
 const file = ref(null);
@@ -41,10 +43,27 @@ const formatAmount = amount => {
 
 const formatNumber = value => new Intl.NumberFormat('pt-BR').format(value || 0);
 
+// Stripe prices are immutable: changing an amount creates a new price and the
+// old one stays in the catalog. Two entries can therefore read exactly alike —
+// the id is what tells them apart, so it rides along in the label.
 const priceLabel = price => {
   const name = price.nickname || price.product_name || price.id;
-  return `${name} — ${formatAmount(price.unit_amount)}`;
+  return `${name} — ${formatAmount(price.unit_amount)} (${price.id})`;
 };
+
+// Same product and same amount appearing more than once almost always means a
+// duplicate left behind in Stripe. Saying so beats letting someone pick one of
+// them at random every month.
+const duplicatedPrices = computed(() => {
+  const seen = new Map();
+  prices.value.forEach(price => {
+    const key = `${price.nickname || price.product_name}|${price.unit_amount}`;
+    seen.set(key, (seen.get(key) || 0) + 1);
+  });
+  return [...seen.entries()]
+    .filter(([, count]) => count > 1)
+    .map(([key]) => key.split('|')[0]);
+});
 
 const fetchData = async () => {
   try {
@@ -183,6 +202,12 @@ const statusLabel = status =>
         <h2 class="text-sm font-medium text-slate-800 mb-3">
           1. Preço de cada categoria
         </h2>
+        <p v-if="duplicatedPrices.length" class="text-xs text-amber-700 mb-2">
+          Há preços repetidos no catálogo do Stripe ({{
+            duplicatedPrices.join(', ')
+          }}). O id ao lado de cada opção diz qual é qual — vale arquivar os
+          antigos em Financeiro → Produtos.
+        </p>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
           <label
             v-for="category in CATEGORIES"
@@ -208,6 +233,13 @@ const statusLabel = status =>
         <p class="text-xs text-slate-500 mb-2">
           Colunas: accountid, accountname, texto, imagem arquivo e transcrições,
           audio.
+          <a
+            :href="SAMPLE_CSV"
+            download="token-usage-sample.csv"
+            class="text-woot-500 underline ml-1"
+          >
+            Baixar um exemplo de csv.
+          </a>
         </p>
         <input type="file" accept=".csv,text/csv" @change="onFileChange" />
 

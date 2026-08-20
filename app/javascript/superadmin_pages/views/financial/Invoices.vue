@@ -184,13 +184,15 @@ const filledItems = computed(() =>
   newInvoice.value.items.filter(item => item.price_id || item.amount)
 );
 
+// A Stripe price is immutable, so changing an amount leaves the old price in the
+// catalog: two options can read exactly alike and the id is what separates them.
 const priceLabel = price => {
   const name = price.product_name || 'Produto sem nome';
   const amount = formatAmount(price.unit_amount, price.currency);
   const interval = price.recurring_interval
     ? ` (recorrente/${price.recurring_interval})`
     : '';
-  return `${name} — ${amount}${interval}`;
+  return `${name} — ${amount}${interval} · ${price.id}`;
 };
 
 const submitCreate = async () => {
