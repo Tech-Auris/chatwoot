@@ -845,6 +845,15 @@ Rails.application.routes.draw do
             get :data
           end
         end
+
+        resources :invoices, only: [:index], controller: 'invoices' do
+          collection do
+            get :data
+          end
+          member do
+            post :pay
+          end
+        end
       end
 
       # order of resources affect the order of sidebar navigation in super admin
