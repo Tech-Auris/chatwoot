@@ -1,4 +1,12 @@
 ---
+- tag: v4.15.1-auris.1.49
+  published_at: '2026-08-20T21:00:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.49
+  notes:
+    en: |-
+      Bug fixes and internal improvements.
+    pt_BR: |-
+      Correções de bugs e melhorias internas.
 - tag: v4.15.1-auris.1.48
   published_at: '2026-08-19T19:30:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.48
@@ -319,15 +327,3 @@
       ### 🐛 Correções
 
       - **Mensagens enviadas pelo lápis de "Nova conversa" não travam mais em "enviada".** As correções anteriores pegaram contatos criados por mensagem recebida; essa cobre contatos criados direto pelo lápis, que tinham um caminho de criação separado que pulava a canonicalização do telefone.
-- tag: v4.15.1-auris.1.41.17
-  published_at: '2026-07-19T20:00:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.41.17
-  notes:
-    en: |-
-      ### 🐛 Fixes
-
-      - **Messages to more Brazilian numbers stop getting stuck on "sent".** The previous fix caught most cases; this one covers the remaining stuck contacts by trusting exactly what WhatsApp reports as the canonical routing form for each number.
-    pt_BR: |-
-      ### 🐛 Correções
-
-      - **Mensagens para mais números brasileiros deixam de travar em "enviada".** A correção anterior pegou a maioria dos casos; essa cobre os contatos que sobraram travados usando exatamente o formato que o WhatsApp indica como certo pra rotear cada número.
