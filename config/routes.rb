@@ -846,7 +846,7 @@ Rails.application.routes.draw do
           end
         end
 
-        resources :invoices, only: [:index], controller: 'invoices' do
+        resources :invoices, only: [:index, :create], controller: 'invoices' do
           collection do
             get :data
           end

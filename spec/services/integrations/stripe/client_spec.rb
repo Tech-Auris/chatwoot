@@ -165,6 +165,62 @@ RSpec.describe Integrations::Stripe::Client do
     end
   end
 
+  describe '#create_invoice' do
+    subject(:client) { described_class.new(api_key: 'sk_test_explicit') }
+
+    before do
+      allow(Stripe::Invoice).to receive(:create).and_return(stripe_resource('in_1'))
+      allow(Stripe::InvoiceItem).to receive(:create).and_return(stripe_resource('ii_1'))
+      allow(Stripe::Invoice).to receive(:finalize_invoice).and_return(stripe_resource('in_1'))
+    end
+
+    # An invoice item created loose sits as "pending" on the customer and is
+    # swept into whatever invoice closes next — including the subscription's.
+    it 'binds every item to the invoice it just created' do
+      client.create_invoice(customer_id: 'cus_1', items: [{ price_id: 'price_1', quantity: 2 }])
+
+      expect(Stripe::InvoiceItem).to have_received(:create).with(
+        { customer: 'cus_1', invoice: 'in_1', price: 'price_1', quantity: 2 },
+        { api_key: 'sk_test_explicit' }
+      )
+    end
+
+    # Only a finalized invoice can be paid or written off; a draft is invisible
+    # to the customer and to the write-off.
+    it 'finalizes the invoice so it becomes collectible' do
+      client.create_invoice(customer_id: 'cus_1', items: [{ price_id: 'price_1' }])
+
+      expect(Stripe::Invoice).to have_received(:finalize_invoice).with('in_1', {}, { api_key: 'sk_test_explicit' })
+    end
+
+    it 'sends a free amount in cents with its description' do
+      client.create_invoice(
+        customer_id: 'cus_1',
+        items: [{ description: 'Pacote de tokens', unit_amount: 15_000, quantity: 2 }]
+      )
+
+      expect(Stripe::InvoiceItem).to have_received(:create).with(
+        { customer: 'cus_1', invoice: 'in_1', amount: 30_000, currency: 'brl', description: 'Pacote de tokens' },
+        { api_key: 'sk_test_explicit' }
+      )
+    end
+
+    it 'bills by invoice and does not let Stripe advance it on its own' do
+      client.create_invoice(customer_id: 'cus_1', items: [{ price_id: 'price_1' }], days_until_due: 15)
+
+      expect(Stripe::Invoice).to have_received(:create).with(
+        { customer: 'cus_1', collection_method: 'send_invoice', days_until_due: 15, auto_advance: false },
+        { api_key: 'sk_test_explicit' }
+      )
+    end
+
+    it 'refuses an invoice with no items instead of issuing an empty one' do
+      expect { client.create_invoice(customer_id: 'cus_1', items: []) }
+        .to raise_error(described_class::InvalidRequest, /pelo menos um item/)
+      expect(Stripe::Invoice).not_to have_received(:create)
+    end
+  end
+
   describe '#pay_invoice_out_of_band' do
     subject(:client) { described_class.new(api_key: 'sk_test_explicit') }
 
