@@ -18,6 +18,12 @@ class Integrations::Stripe::Client
   # Reverse pointer stamped on the Stripe customer so the pairing is auditable
   # from the Stripe dashboard, not only from our database.
   ACCOUNT_METADATA_KEY = 'aurischat_account_id'.freeze
+  # Where a payment received outside Stripe came in. Stamped on the invoice so
+  # "how much came through AsaaS this month" is answerable from Stripe itself,
+  # without a table of our own to keep in sync.
+  PAID_VIA_METADATA_KEY = 'aurischat_paid_via'.freeze
+  PAID_VIA_SOURCES = %w[inter asaas].freeze
+  INVOICE_PAGE_SIZE = 25
 
   class Error < StandardError; end
   class Unauthorized < Error; end
@@ -153,6 +159,30 @@ class Integrations::Stripe::Client
         },
         request_options
       )
+    end
+  end
+
+  # Invoices, newest first. Stripe pages with a cursor rather than an offset, so
+  # the caller passes the id of the last row it already has.
+  def list_invoices(status: nil, customer_id: nil, limit: INVOICE_PAGE_SIZE, starting_after: nil)
+    payload = { status: status.presence, customer: customer_id.presence, limit: limit, starting_after: starting_after.presence }.compact
+
+    with_error_handling { Stripe::Invoice.list(payload, request_options) }
+  end
+
+  # Writes off an invoice paid outside Stripe (PIX at Banco Inter or AsaaS).
+  #
+  # The payment is registered first and the origin stamped after: if the stamp
+  # failed we would have an invoice marked as paid missing only its source,
+  # which someone can fix. The reverse order could leave an unpaid invoice
+  # carrying a source, which reads as money that came in and did not.
+  def pay_invoice_out_of_band(invoice_id, paid_via:)
+    raise InvalidRequest, "Origem inválida: #{paid_via}" unless PAID_VIA_SOURCES.include?(paid_via.to_s)
+
+    with_error_handling do
+      invoice = Stripe::Invoice.pay(invoice_id, { paid_out_of_band: true }, request_options)
+      Stripe::Invoice.update(invoice_id, { metadata: { PAID_VIA_METADATA_KEY => paid_via.to_s } }, request_options)
+      invoice
     end
   end
 

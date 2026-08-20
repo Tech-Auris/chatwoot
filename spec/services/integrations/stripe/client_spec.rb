@@ -142,4 +142,82 @@ RSpec.describe Integrations::Stripe::Client do
       )
     end
   end
+
+  describe '#create_subscription' do
+    subject(:client) { described_class.new(api_key: 'sk_test_explicit') }
+
+    # Card charging would fail for every customer who pays by PIX outside
+    # Stripe, which is part of the base — billing is by invoice, always.
+    it 'bills by invoice instead of charging a card' do
+      allow(Stripe::Subscription).to receive(:create).and_return(stripe_resource('sub_1'))
+
+      client.create_subscription(customer_id: 'cus_1', price_id: 'price_1')
+
+      expect(Stripe::Subscription).to have_received(:create).with(
+        {
+          customer: 'cus_1',
+          items: [{ price: 'price_1', quantity: 1 }],
+          collection_method: 'send_invoice',
+          days_until_due: 7
+        },
+        { api_key: 'sk_test_explicit' }
+      )
+    end
+  end
+
+  describe '#pay_invoice_out_of_band' do
+    subject(:client) { described_class.new(api_key: 'sk_test_explicit') }
+
+    # The payment is registered first and the origin stamped after: a stamp that
+    # failed leaves an invoice paid without its source, which is fixable. The
+    # reverse would leave an unpaid invoice carrying a source, reading as money
+    # that never came in.
+    it 'settles the invoice before stamping where the money came in' do
+      calls = []
+      allow(Stripe::Invoice).to receive(:pay) { calls << :pay }.and_return(stripe_resource('in_1'))
+      allow(Stripe::Invoice).to receive(:update) { calls << :update }.and_return(stripe_resource('in_1'))
+
+      client.pay_invoice_out_of_band('in_1', paid_via: 'asaas')
+
+      expect(calls).to eq([:pay, :update])
+      expect(Stripe::Invoice).to have_received(:pay).with('in_1', { paid_out_of_band: true }, { api_key: 'sk_test_explicit' })
+      expect(Stripe::Invoice).to have_received(:update).with(
+        'in_1', { metadata: { 'aurischat_paid_via' => 'asaas' } }, { api_key: 'sk_test_explicit' }
+      )
+    end
+
+    # An unknown origin would be written to Stripe and silently pollute the
+    # answer to "how much came in through each account".
+    it 'refuses an origin outside the known ones' do
+      allow(Stripe::Invoice).to receive(:pay)
+
+      expect { client.pay_invoice_out_of_band('in_1', paid_via: 'picpay') }
+        .to raise_error(described_class::InvalidRequest, /picpay/)
+      expect(Stripe::Invoice).not_to have_received(:pay)
+    end
+  end
+
+  describe '#list_invoices' do
+    subject(:client) { described_class.new(api_key: 'sk_test_explicit') }
+
+    it 'sends only the filters it was given' do
+      allow(Stripe::Invoice).to receive(:list).and_return(stripe_resource('list'))
+
+      client.list_invoices(status: 'open')
+
+      expect(Stripe::Invoice).to have_received(:list).with(
+        { status: 'open', limit: 25 }, { api_key: 'sk_test_explicit' }
+      )
+    end
+
+    it 'pages with the cursor of the last row already shown' do
+      allow(Stripe::Invoice).to receive(:list).and_return(stripe_resource('list'))
+
+      client.list_invoices(starting_after: 'in_9')
+
+      expect(Stripe::Invoice).to have_received(:list).with(
+        { limit: 25, starting_after: 'in_9' }, { api_key: 'sk_test_explicit' }
+      )
+    end
+  end
 end

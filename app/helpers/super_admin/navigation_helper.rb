@@ -35,7 +35,8 @@ module SuperAdmin::NavigationHelper
     [
       { label: 'Produtos', url: super_admin_financial_products_url },
       { label: 'Vínculos', url: super_admin_financial_customer_links_url },
-      { label: 'Assinaturas', url: super_admin_financial_subscriptions_url }
+      { label: 'Assinaturas', url: super_admin_financial_subscriptions_url },
+      { label: 'Faturas', url: super_admin_financial_invoices_url }
     ]
   end
 end
