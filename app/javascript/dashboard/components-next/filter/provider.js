@@ -140,9 +140,19 @@ export function useConversationFilterContext() {
             attributeName: t('FILTER.ATTRIBUTES.FUNNEL_STAGE'),
             label: t('FILTER.ATTRIBUTES.FUNNEL_STAGE'),
             inputType: 'searchSelect',
+            // Same colour dot the funnel board and the conversation header
+            // paint, so a stage is recognized by colour here too.
             options: funnelStages.value.map(stage => ({
               id: stage.id,
               name: stage.name,
+              icon: h('span', {
+                class: 'rounded-full',
+                style: {
+                  backgroundColor: stage.color,
+                  height: '6px',
+                  width: '6px',
+                },
+              }),
             })),
             dataType: 'text',
             filterOperators: equalityOperators.value,
