@@ -118,6 +118,7 @@ export const getActionOptions = ({
 export const getConditionOptions = ({
   agents,
   aiStatusOptions,
+  funnelStages,
   booleanFilterOptions,
   campaigns,
   contacts,
@@ -159,6 +160,12 @@ export const getConditionOptions = ({
     ],
     labels: generateConditionOptions(labels, 'title'),
     ai_enabled: aiStatusOptions,
+    // Stages carry `name`, not the `title` that `generateConditionOptions`
+    // reads — mapping them through it would list options with no label.
+    funnel_stage_id: (funnelStages || []).map(stage => ({
+      id: stage.id,
+      name: stage.name,
+    })),
   };
 
   return conditionFilterMaps[type];

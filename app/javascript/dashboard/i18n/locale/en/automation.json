@@ -196,7 +196,8 @@
       "TEAM_NAME": "Team",
       "PRIORITY": "Priority",
       "LABELS": "Labels",
-      "AI_ENABLED": "AI Status"
+      "AI_ENABLED": "AI Status",
+      "FUNNEL_STAGE": "Funnel stage"
     },
     "AI_STATUS_TYPES": {
       "ENABLED": "AI Enabled",

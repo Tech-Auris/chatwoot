@@ -42,6 +42,17 @@ export function useAutomation(startValue = null) {
 
   const automation = ref(startValue);
   const automationTypes = reactive(structuredClone(AUTOMATIONS));
+
+  // The funnel stage condition only makes sense where the funnel exists. An
+  // account without it would otherwise be offered a condition whose option list
+  // is empty and which can never match a conversation.
+  if (!getters.getCurrentAccount.value?.funnel_enabled) {
+    Object.values(automationTypes).forEach(automationType => {
+      automationType.conditions = automationType.conditions.filter(
+        condition => condition.key !== 'funnel_stage_id'
+      );
+    });
+  }
   const eventName = computed(() => automation.value?.event_name);
 
   /**

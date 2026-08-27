@@ -179,6 +179,30 @@ describe('getConditionOptions', () => {
     ).toEqual(testOptions);
   });
 
+  // Stages carry `name` where the shared mapper reads `title`; going through it
+  // would list every stage with an empty label.
+  it('returns the funnel stages with their names', () => {
+    expect(
+      helpers.getConditionOptions({
+        customAttributes,
+        funnelStages: [
+          { id: 4, name: 'Agendado', color: '#16A34A' },
+          { id: 5, name: 'Perdido', color: '#DC2626' },
+        ],
+        type: 'funnel_stage_id',
+      })
+    ).toEqual([
+      { id: 4, name: 'Agendado' },
+      { id: 5, name: 'Perdido' },
+    ]);
+  });
+
+  it('returns an empty list when the account has no funnel stages', () => {
+    expect(
+      helpers.getConditionOptions({ customAttributes, type: 'funnel_stage_id' })
+    ).toEqual([]);
+  });
+
   it('returns boolean options for private_note', () => {
     const booleanOptions = [
       { id: true, name: 'True' },

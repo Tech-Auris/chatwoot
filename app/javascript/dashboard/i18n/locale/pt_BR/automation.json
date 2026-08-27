@@ -196,7 +196,8 @@
       "TEAM_NAME": "Time",
       "PRIORITY": "Prioridade",
       "LABELS": "Etiquetas",
-      "AI_ENABLED": "Status da IA"
+      "AI_ENABLED": "Status da IA",
+      "FUNNEL_STAGE": "Etapa do funil"
     },
     "AI_STATUS_TYPES": {
       "ENABLED": "IA Ativada",

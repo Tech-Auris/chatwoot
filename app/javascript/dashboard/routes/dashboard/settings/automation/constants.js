@@ -92,6 +92,12 @@ export const AUTOMATIONS = {
         inputType: 'multi_select',
         filterOperators: OPERATOR_TYPES_1,
       },
+      {
+        key: 'funnel_stage_id',
+        name: 'FUNNEL_STAGE',
+        inputType: 'multi_select',
+        filterOperators: OPERATOR_TYPES_1,
+      },
     ],
     actions: [
       {
@@ -249,6 +255,12 @@ export const AUTOMATIONS = {
       {
         key: 'ai_enabled',
         name: 'AI_ENABLED',
+        inputType: 'multi_select',
+        filterOperators: OPERATOR_TYPES_1,
+      },
+      {
+        key: 'funnel_stage_id',
+        name: 'FUNNEL_STAGE',
         inputType: 'multi_select',
         filterOperators: OPERATOR_TYPES_1,
       },
@@ -416,6 +428,12 @@ export const AUTOMATIONS = {
         inputType: 'multi_select',
         filterOperators: OPERATOR_TYPES_1,
       },
+      {
+        key: 'funnel_stage_id',
+        name: 'FUNNEL_STAGE',
+        inputType: 'multi_select',
+        filterOperators: OPERATOR_TYPES_1,
+      },
     ],
     actions: [
       {
@@ -574,6 +592,12 @@ export const AUTOMATIONS = {
         inputType: 'multi_select',
         filterOperators: OPERATOR_TYPES_1,
       },
+      {
+        key: 'funnel_stage_id',
+        name: 'FUNNEL_STAGE',
+        inputType: 'multi_select',
+        filterOperators: OPERATOR_TYPES_1,
+      },
     ],
     actions: [
       {
@@ -719,6 +743,12 @@ export const AUTOMATIONS = {
       {
         key: 'ai_enabled',
         name: 'AI_ENABLED',
+        inputType: 'multi_select',
+        filterOperators: OPERATOR_TYPES_1,
+      },
+      {
+        key: 'funnel_stage_id',
+        name: 'FUNNEL_STAGE',
         inputType: 'multi_select',
         filterOperators: OPERATOR_TYPES_1,
       },
