@@ -11,7 +11,9 @@
       "TOOLTIP": "Funnel stage — click to change",
       "NO_STAGES": "No active stages configured.",
       "MOVED": "Conversation moved to {stage}.",
-      "MOVE_ERROR": "Could not change the stage of this conversation. Please try again."
+      "MOVE_ERROR": "Could not change the stage of this conversation. Please try again.",
+      "ADVANCE_TO": "Advance to {stage}",
+      "ADVANCE_DISABLED": "This is the last stage of the funnel"
     },
     "SELECT_A_CONVERSATION": "Please select a conversation from left pane",
     "CSAT_REPLY_MESSAGE": "Please rate the conversation",

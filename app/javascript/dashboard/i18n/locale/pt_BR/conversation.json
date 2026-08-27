@@ -11,7 +11,9 @@
       "TOOLTIP": "Etapa do funil — clique para alterar",
       "NO_STAGES": "Nenhuma etapa ativa cadastrada.",
       "MOVED": "Conversa movida para {stage}.",
-      "MOVE_ERROR": "Não foi possível alterar a etapa desta conversa. Tente novamente."
+      "MOVE_ERROR": "Não foi possível alterar a etapa desta conversa. Tente novamente.",
+      "ADVANCE_TO": "Avançar para {stage}",
+      "ADVANCE_DISABLED": "Esta é a última etapa do funil"
     },
     "SELECT_A_CONVERSATION": "Por favor, selecione uma conversa no painel da esquerda",
     "CSAT_REPLY_MESSAGE": "Por favor, classifique a conversa",

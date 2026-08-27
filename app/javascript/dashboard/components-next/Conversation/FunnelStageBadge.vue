@@ -7,6 +7,8 @@ import { useMapGetter } from 'dashboard/composables/store';
 import LossReasonAPI from 'dashboard/api/lossReason';
 import LossReasonDialog from 'dashboard/routes/dashboard/funnel/components/LossReasonDialog.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
+import Button from 'dashboard/components-next/button/Button.vue';
+import ButtonGroup from 'dashboard/components-next/buttonGroup/ButtonGroup.vue';
 
 const props = defineProps({
   conversationId: { type: Number, required: true },
@@ -63,6 +65,21 @@ const applyStage = async (stage, lossReasonId) => {
   }
 };
 
+// The stage that comes after the current one, in the order the funnel is
+// configured. It is what the play button advances to, the same way the kanban
+// walks a card to the right.
+const nextStage = computed(() => {
+  if (!stages.value.length) return null;
+  if (!props.stage) return stages.value[0];
+
+  const currentIndex = stages.value.findIndex(
+    option => option.id === props.stage.id
+  );
+  if (currentIndex === -1) return stages.value[0];
+
+  return stages.value[currentIndex + 1] || null;
+});
+
 const selectStage = async stage => {
   isOpen.value = false;
   if (stage.id === props.stage?.id) return;
@@ -77,6 +94,12 @@ const selectStage = async stage => {
   }
 
   await applyStage(stage);
+};
+
+const advance = async () => {
+  if (!nextStage.value) return;
+
+  await selectStage(nextStage.value);
 };
 
 const onLossReasonConfirm = async lossReasonId => {
@@ -98,19 +121,43 @@ const onLossReasonClose = () => {
 
 <template>
   <div class="relative flex-shrink-0">
-    <button
-      type="button"
-      class="inline-flex items-center gap-1.5 h-6 px-2 py-0.5 rounded-md text-xs font-medium leading-tight max-w-[10rem] transition-opacity hover:opacity-90 disabled:opacity-60 cursor-pointer bg-n-alpha-2 text-n-slate-12"
-      :disabled="isMoving"
-      :title="t('CONVERSATION.FUNNEL_STAGE.TOOLTIP')"
-      @click.stop.prevent="toggle"
+    <ButtonGroup
+      class="flex-shrink-0 rounded-lg shadow outline outline-1 outline-n-container"
     >
-      <span
-        class="inline-block w-2 h-2 rounded-full flex-shrink-0"
-        :style="{ backgroundColor: stage?.color || 'var(--s-300)' }"
+      <Button
+        size="sm"
+        color="slate"
+        no-animation
+        class="ltr:rounded-r-none rtl:rounded-l-none !outline-0 max-w-[11rem]"
+        :is-loading="isMoving"
+        :title="t('CONVERSATION.FUNNEL_STAGE.TOOLTIP')"
+        @click.stop.prevent="toggle"
+      >
+        <template #icon>
+          <span
+            class="inline-block w-2 h-2 rounded-full flex-shrink-0"
+            :style="{ backgroundColor: stage?.color || 'var(--s-300)' }"
+          />
+        </template>
+        <span class="truncate">{{ currentStageName }}</span>
+      </Button>
+      <Button
+        v-tooltip="
+          nextStage
+            ? t('CONVERSATION.FUNNEL_STAGE.ADVANCE_TO', {
+                stage: nextStage.name,
+              })
+            : t('CONVERSATION.FUNNEL_STAGE.ADVANCE_DISABLED')
+        "
+        icon="i-lucide-play"
+        size="sm"
+        color="slate"
+        no-animation
+        class="ltr:rounded-l-none rtl:rounded-r-none !outline-0"
+        :disabled="!nextStage || isMoving"
+        @click.stop.prevent="advance"
       />
-      <span class="truncate">{{ currentStageName }}</span>
-    </button>
+    </ButtonGroup>
 
     <div
       v-if="isOpen"
