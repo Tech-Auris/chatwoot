@@ -6,6 +6,13 @@
       "TOGGLE_OFF_TOOLTIP": "Click to disable AI on this conversation",
       "TOGGLE_ERROR": "Could not toggle AI on this conversation. Please try again."
     },
+    "FUNNEL_STAGE": {
+      "EMPTY": "No stage",
+      "TOOLTIP": "Funnel stage — click to change",
+      "NO_STAGES": "No active stages configured.",
+      "MOVED": "Conversation moved to {stage}.",
+      "MOVE_ERROR": "Could not change the stage of this conversation. Please try again."
+    },
     "SELECT_A_CONVERSATION": "Please select a conversation from left pane",
     "CSAT_REPLY_MESSAGE": "Please rate the conversation",
     "404": "Sorry, we cannot find the conversation. Please try again",

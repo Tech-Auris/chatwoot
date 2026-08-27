@@ -56,6 +56,10 @@ const DEFAULT_FILTER = {
 const { t } = useI18n();
 const store = useStore();
 
+// The funnel stage option needs the stage list; the action is a no-op once
+// the list is already in the store.
+store.dispatch('funnelStages/get');
+
 const resetFilter = () => {
   filters.value = [{ ...DEFAULT_FILTER }];
 };

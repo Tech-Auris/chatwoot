@@ -84,6 +84,16 @@ json.group_type conversation.group_type
 json.priority conversation.priority
 json.summary conversation.summary
 json.ai_enabled conversation.ai_status_enabled?
+# Auris: the header shows and changes the funnel stage of the conversation.
+# Serialized here so opening a conversation does not cost an extra request just
+# to learn which stage it is in.
+if conversation.account.funnel_enabled? && conversation.funnel_stage.present?
+  json.funnel_stage do
+    json.id conversation.funnel_stage.id
+    json.name conversation.funnel_stage.name
+    json.color conversation.funnel_stage.color
+  end
+end
 json.waiting_since conversation.waiting_since.to_i.to_i
 json.sla_policy_id conversation.sla_policy_id
 json.partial! 'enterprise/api/v1/conversations/partials/conversation', conversation: conversation if ChatwootApp.enterprise?

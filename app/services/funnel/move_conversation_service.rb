@@ -3,14 +3,11 @@ class Funnel::MoveConversationService
 
   Result = Struct.new(:conversation, :previous_stage, :new_stage, :change, keyword_init: true)
 
-  pattr_initialize [:account!, :conversation_display_id!, :target_stage_name!,
-                    { user: nil, reason: nil, source: 'web', loss_reason_id: nil }]
+  pattr_initialize [:account!, :conversation_display_id!,
+                    { target_stage_name: nil, target_stage_id: nil, user: nil, reason: nil, source: 'web', loss_reason_id: nil }]
 
   def perform
-    raise ActiveRecord::RecordNotFound, 'Conversation not found' unless conversation
-    raise ArgumentError, "Stage '#{target_stage_name}' is not active" unless target_stage
-    raise ArgumentError, "Stage '#{target_stage.name}' requires a loss_reason_id" if loss_reason_required_but_missing?
-    raise ArgumentError, "loss_reason_id #{loss_reason_id} is invalid" if loss_reason_id_provided_but_invalid?
+    validate!
 
     previous_stage = conversation.funnel_stage
 
@@ -31,12 +28,32 @@ class Funnel::MoveConversationService
 
   private
 
+  def validate!
+    raise ActiveRecord::RecordNotFound, 'Conversation not found' unless conversation
+
+    validate_target_stage!
+    raise ArgumentError, "Stage '#{target_stage.name}' requires a loss_reason_id" if loss_reason_required_but_missing?
+    raise ArgumentError, "loss_reason_id #{loss_reason_id} is invalid" if loss_reason_id_provided_but_invalid?
+  end
+
+  def validate_target_stage!
+    raise ArgumentError, 'Informe a etapa de destino' if target_stage_name.blank? && target_stage_id.blank?
+    raise ArgumentError, "Stage '#{target_stage_name || target_stage_id}' is not active" unless target_stage
+  end
+
   def conversation
     @conversation ||= account.conversations.find_by(display_id: conversation_display_id)
   end
 
+  # Callers may point at the stage by id or by name. The id is the reliable
+  # handle — renaming a stage would otherwise break a move already in flight —
+  # but the name is kept because the kanban and the automations still use it.
   def target_stage
-    @target_stage ||= FunnelStage.active.find_by(name: target_stage_name)
+    @target_stage ||= if target_stage_id.present?
+                        FunnelStage.active.find_by(id: target_stage_id)
+                      else
+                        FunnelStage.active.find_by(name: target_stage_name)
+                      end
   end
 
   def loss_reason

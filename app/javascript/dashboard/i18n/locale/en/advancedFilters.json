@@ -64,7 +64,8 @@
       "CREATED_AT": "Created at",
       "LAST_ACTIVITY": "Last activity",
       "GROUP_TYPE": "Group type",
-      "AI_ENABLED": "AI status"
+      "AI_ENABLED": "AI status",
+      "FUNNEL_STAGE": "Funnel stage"
     },
     "ERRORS": {
       "VALUE_REQUIRED": "Value is required",

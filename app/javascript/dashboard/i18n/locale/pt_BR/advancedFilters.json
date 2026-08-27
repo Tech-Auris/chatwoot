@@ -64,7 +64,8 @@
       "CREATED_AT": "Criado em",
       "LAST_ACTIVITY": "Última atividade",
       "GROUP_TYPE": "Tipo de conversa",
-      "AI_ENABLED": "Status da IA"
+      "AI_ENABLED": "Status da IA",
+      "FUNNEL_STAGE": "Etapa do funil"
     },
     "ERRORS": {
       "VALUE_REQUIRED": "Valor obrigatório",

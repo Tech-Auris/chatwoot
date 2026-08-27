@@ -10,7 +10,10 @@ class Api::V1::Accounts::FunnelController < Api::V1::Accounts::BaseController
     service = Funnel::MoveConversationService.new(
       account: Current.account,
       conversation_display_id: params.require(:conversation_id),
-      target_stage_name: params.require(:stage),
+      # `stage` (name) is what the kanban sends; `funnel_stage_id` is the stable
+      # handle the conversation header uses.
+      target_stage_name: params[:stage],
+      target_stage_id: params[:funnel_stage_id],
       user: Current.user,
       reason: params[:reason],
       source: params[:source] || 'web',

@@ -18,10 +18,21 @@ class FunnelAPI extends ApiClient {
     return axios.get(url);
   }
 
-  move({ conversationId, stage, reason, source = 'web', lossReasonId }) {
+  // `stage` is the stage name (what the kanban drags around) and
+  // `funnelStageId` its id — the header points at the id so a stage renamed
+  // meanwhile cannot send the move to nowhere.
+  move({
+    conversationId,
+    stage,
+    funnelStageId,
+    reason,
+    source = 'web',
+    lossReasonId,
+  }) {
     return axios.post(`${this.url}/move`, {
       conversation_id: conversationId,
       stage,
+      funnel_stage_id: funnelStageId,
       reason,
       source,
       loss_reason_id: lossReasonId,

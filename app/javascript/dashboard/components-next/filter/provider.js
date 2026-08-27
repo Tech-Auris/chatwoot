@@ -58,6 +58,7 @@ export function useConversationFilterContext() {
   const agents = useMapGetter('agents/getAgents');
   const inboxes = useMapGetter('inboxes/getInboxes');
   const teams = useMapGetter('teams/getTeams');
+  const funnelStages = useMapGetter('funnelStages/getFunnelStages');
   const campaigns = useMapGetter('campaigns/getAllCampaigns');
 
   const {
@@ -129,6 +130,26 @@ export function useConversationFilterContext() {
       filterOperators: equalityOperators.value,
       attributeModel: 'standard',
     },
+    // Only offered when the account uses the funnel and has active stages —
+    // otherwise the operator would pick a filter that can never match.
+    ...(funnelStages.value.length
+      ? [
+          {
+            attributeKey: CONVERSATION_ATTRIBUTES.FUNNEL_STAGE_ID,
+            value: CONVERSATION_ATTRIBUTES.FUNNEL_STAGE_ID,
+            attributeName: t('FILTER.ATTRIBUTES.FUNNEL_STAGE'),
+            label: t('FILTER.ATTRIBUTES.FUNNEL_STAGE'),
+            inputType: 'searchSelect',
+            options: funnelStages.value.map(stage => ({
+              id: stage.id,
+              name: stage.name,
+            })),
+            dataType: 'text',
+            filterOperators: equalityOperators.value,
+            attributeModel: 'standard',
+          },
+        ]
+      : []),
     {
       attributeKey: CONVERSATION_ATTRIBUTES.ASSIGNEE_ID,
       value: CONVERSATION_ATTRIBUTES.ASSIGNEE_ID,

@@ -53,6 +53,7 @@ import sidebarSortPreferences from './modules/sidebarSortPreferences';
 import summaryReports from './modules/summaryReports';
 import teamMembers from './modules/teamMembers';
 import teams from './modules/teams';
+import funnelStages from './modules/funnelStages';
 import tickets from './modules/tickets';
 import userNotificationSettings from './modules/userNotificationSettings';
 import webhooks from './modules/webhooks';
@@ -126,6 +127,7 @@ export default createStore({
     summaryReports,
     teamMembers,
     teams,
+    funnelStages,
     tickets,
     userNotificationSettings,
     webhooks,
