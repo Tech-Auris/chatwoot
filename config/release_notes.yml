@@ -1,4 +1,16 @@
 ---
+- tag: v4.15.1-auris.1.50
+  published_at: '2026-08-27T18:30:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.50
+  notes:
+    en: |-
+      ### ⚡ Improvements
+
+      - **Exporting contacts downloads the file right away.** The export used to be sent by e-mail and the message often never arrived, leaving you waiting for a file that was never coming. Now the CSV is saved to your computer as soon as you confirm the export.
+    pt_BR: |-
+      ### ⚡ Melhorias
+
+      - **Exportar contatos baixa o arquivo na hora.** Antes a exportação era enviada por e-mail e muitas vezes a mensagem não chegava, deixando você esperando por um arquivo que não vinha. Agora o CSV é salvo no seu computador assim que você confirma a exportação.
 - tag: v4.15.1-auris.1.49
   published_at: '2026-08-20T21:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.49
@@ -315,15 +327,3 @@
 
       - **A passagem da IA para o time volta a escolher um atendente sozinha.** Quando a IA passa uma conversa para a equipe uma segunda vez, o sistema volta a atribuir um atendente automaticamente — antes você precisava atribuir na mão.
       - **Mensagens de template do WhatsApp com quebras de linha ou espaços extras agora saem sem erro.** Aqueles templates que a Meta rejeitava sem explicação passam a ser enviados normalmente.
-- tag: v4.15.1-auris.1.41.18
-  published_at: '2026-07-20T14:00:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.41.18
-  notes:
-    en: |-
-      ### 🐛 Fixes
-
-      - **Messages sent from the "New conversation" pencil no longer stay stuck on "sent".** The previous fixes handled contacts created via inbound messages; this covers contacts created directly from the pencil, which had a separate creation path that skipped the phone canonicalization.
-    pt_BR: |-
-      ### 🐛 Correções
-
-      - **Mensagens enviadas pelo lápis de "Nova conversa" não travam mais em "enviada".** As correções anteriores pegaram contatos criados por mensagem recebida; essa cobre contatos criados direto pelo lápis, que tinham um caminho de criação separado que pulava a canonicalização do telefone.
