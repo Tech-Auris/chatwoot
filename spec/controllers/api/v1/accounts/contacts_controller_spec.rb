@@ -216,6 +216,61 @@ RSpec.describe 'Contacts API', type: :request do
     end
   end
 
+  describe 'POST /api/v1/accounts/{account.id}/contacts/export_download' do
+    let!(:contact) { create(:contact, account: account, name: 'Maria Souza', phone_number: '+5511987654321') }
+
+    context 'when it is an unauthenticated user' do
+      it 'returns unauthorized' do
+        post "/api/v1/accounts/#{account.id}/contacts/export_download"
+
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+
+    # Downloading hands over the same data the e-mail export does, so it cannot
+    # be reachable by someone who is not allowed to export.
+    context 'when it is an agent' do
+      let(:agent) { create(:user, account: account, role: :agent) }
+
+      it 'returns unauthorized' do
+        post "/api/v1/accounts/#{account.id}/contacts/export_download", headers: agent.create_new_auth_token
+
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+
+    context 'when it is an administrator' do
+      let(:admin) { create(:user, account: account, role: :administrator) }
+
+      it 'answers with the csv as a download instead of mailing it' do
+        expect(Account::ContactsExportJob).not_to receive(:perform_later)
+
+        post "/api/v1/accounts/#{account.id}/contacts/export_download", headers: admin.create_new_auth_token
+
+        expect(response).to have_http_status(:success)
+        expect(response.media_type).to eq('text/csv')
+        expect(response.headers['Content-Disposition']).to include('attachment')
+        expect(response.body).to include(contact.name)
+      end
+
+      it 'exports only the requested columns, in the requested order' do
+        post "/api/v1/accounts/#{account.id}/contacts/export_download",
+             headers: admin.create_new_auth_token,
+             params: { column_names: %w[phone_number name] }
+
+        headers = response.body.lines.first.strip.delete_prefix("\xEF\xBB\xBF")
+        expect(headers).to eq('phone_number,name')
+      end
+
+      # Spreadsheets read accented names as garbage without it.
+      it 'keeps the BOM that makes spreadsheets read the file correctly' do
+        post "/api/v1/accounts/#{account.id}/contacts/export_download", headers: admin.create_new_auth_token
+
+        expect(response.body.b).to start_with("\xEF\xBB\xBF".b)
+      end
+    end
+  end
+
   describe 'POST /api/v1/accounts/{account.id}/contacts/export' do
     context 'when it is an unauthenticated user' do
       it 'returns unauthorized' do

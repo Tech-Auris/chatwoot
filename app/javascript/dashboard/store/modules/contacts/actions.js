@@ -189,6 +189,30 @@ export const actions = {
     }
   },
 
+  // Auris: replaces the "send by email" export. The upstream flow mails a link,
+  // which never arrives on an instance without outbound e-mail, so the operator
+  // gets the file straight from the browser instead.
+  downloadExport: async ({ commit }, { payload, label } = {}) => {
+    commit(types.SET_CONTACT_UI_FLAG, { isExporting: true });
+    try {
+      const response = await ContactAPI.downloadContactsExport({
+        payload,
+        label,
+      });
+      const blob = new Blob([response.data], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = 'contatos.csv';
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      window.URL.revokeObjectURL(url);
+    } finally {
+      commit(types.SET_CONTACT_UI_FLAG, { isExporting: false });
+    }
+  },
+
   export: async ({ commit }, { payload, label }) => {
     commit(types.SET_CONTACT_UI_FLAG, { isExporting: true });
     try {

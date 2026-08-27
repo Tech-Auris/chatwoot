@@ -50,6 +50,20 @@ class Api::V1::Accounts::ContactsController < Api::V1::Accounts::BaseController 
     head :ok, message: I18n.t('errors.contacts.export.success')
   end
 
+  # Auris: hands the CSV straight back to the browser. The upstream export
+  # mails a link, which is useless on an instance with no outbound e-mail —
+  # the operator would just wait for a file that never arrives.
+  def export_download
+    service = Contacts::ExportService.new(
+      account: Current.account,
+      user: Current.user,
+      column_names: params['column_names'],
+      params: { payload: params.permit!['payload'], label: params.permit!['label'] }
+    )
+
+    send_data service.perform, filename: service.filename, type: 'text/csv', disposition: 'attachment'
+  end
+
   # returns online contacts
   def active
     contacts = Current.account.contacts.where(id: ::OnlineStatusTracker

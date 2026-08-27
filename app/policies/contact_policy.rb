@@ -15,6 +15,12 @@ class ContactPolicy < ApplicationPolicy
     @account_user.administrator?
   end
 
+  # Same data, same gate — downloading the file must not be reachable by
+  # someone who cannot ask for it by e-mail.
+  def export_download?
+    export?
+  end
+
   def search?
     true
   end

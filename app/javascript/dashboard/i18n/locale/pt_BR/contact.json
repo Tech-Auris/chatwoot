@@ -339,9 +339,9 @@
         },
         "EXPORT_CONTACT": {
           "TITLE": "Exportar contatos",
-          "DESCRIPTION": "Exporte rapidamente um arquivo CSV com detalhes completos dos seus contatos",
+          "DESCRIPTION": "Baixe um arquivo CSV com os detalhes dos seus contatos",
           "CONFIRM": "Exportar",
-          "SUCCESS_MESSAGE": "Exportando. Você será notificado por e-mail quando o arquivo estiver pronto para ser baixado.",
+          "SUCCESS_MESSAGE": "Download iniciado. O arquivo será salvo no seu computador.",
           "ERROR_MESSAGE": "Ocorreu um erro, por favor tente novamente"
         },
         "SORT_BY": {

@@ -135,7 +135,7 @@ const onImport = async file => {
 
 const onExport = async query => {
   try {
-    await store.dispatch('contacts/export', query);
+    await store.dispatch('contacts/downloadExport', query);
     useAlert(
       t('CONTACTS_LAYOUT.HEADER.ACTIONS.EXPORT_CONTACT.SUCCESS_MESSAGE')
     );
