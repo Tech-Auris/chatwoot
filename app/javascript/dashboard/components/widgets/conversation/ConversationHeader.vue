@@ -7,6 +7,7 @@ import BackButton from '../BackButton.vue';
 import InboxName from '../InboxName.vue';
 import AiStatusBadge from 'dashboard/components-next/Conversation/AiStatusBadge.vue';
 import FunnelStageBadge from 'dashboard/components-next/Conversation/FunnelStageBadge.vue';
+import { useAccount } from 'dashboard/composables/useAccount';
 import MoreActions from './MoreActions.vue';
 import Avatar from 'next/avatar/Avatar.vue';
 import SLACardLabel from './components/SLACardLabel.vue';
@@ -39,8 +40,11 @@ const { isAWebWidgetInbox } = useInbox();
 const currentChat = computed(() => store.getters.getSelectedChat);
 
 // The funnel badge only exists for accounts that use the funnel at all.
+// `getCurrentAccount` is not a getter — reading it yields undefined, which
+// would hide the badge on every account, funnel or not.
+const { currentAccount } = useAccount();
 const isFunnelEnabled = computed(
-  () => store.getters.getCurrentAccount?.funnel_enabled === true
+  () => currentAccount.value?.funnel_enabled === true
 );
 
 const accountId = computed(() => store.getters.getCurrentAccountId);
