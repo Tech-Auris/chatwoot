@@ -115,7 +115,7 @@ RSpec.describe Account::ContactsExportJob do
       row = csv_data.find { |r| r['email'] == account.contacts.first.email }
 
       expect(csv_data.headers).to include('labels')
-      expect(row['labels'].split(described_class::LABELS_DELIMITER)).to match_array(%w[vip support])
+      expect(row['labels'].split(Contacts::ExportService::LABELS_DELIMITER)).to match_array(%w[vip support])
       expect(taggings_queries.size).to eq(1)
     ensure
       ActiveSupport::Notifications.unsubscribe(subscriber) if subscriber

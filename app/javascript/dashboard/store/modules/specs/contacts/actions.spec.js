@@ -509,4 +509,47 @@ describe('#actions', () => {
       ]);
     });
   });
+
+  describe('#downloadExport', () => {
+    // The upstream export mails a link. On an instance with no outbound
+    // e-mail the operator waits for a file that never arrives, so the CSV is
+    // handed to the browser instead.
+    it('asks for the csv as a blob and saves it', async () => {
+      const anchor = { click: vi.fn(), href: '', download: '' };
+      vi.spyOn(document, 'createElement').mockReturnValue(anchor);
+      vi.spyOn(document.body, 'appendChild').mockImplementation(() => {});
+      vi.spyOn(document.body, 'removeChild').mockImplementation(() => {});
+      window.URL.createObjectURL = vi.fn(() => 'blob:contatos');
+      window.URL.revokeObjectURL = vi.fn();
+      axios.post.mockResolvedValue({ data: 'id,name\n1,Maria' });
+
+      await actions.downloadExport({ commit }, { payload: null, label: null });
+
+      expect(axios.post).toHaveBeenCalledWith(
+        expect.stringContaining('/export_download'),
+        { payload: null, label: null },
+        { responseType: 'blob' }
+      );
+      expect(anchor.download).toBe('contatos.csv');
+      expect(anchor.click).toHaveBeenCalled();
+      expect(window.URL.revokeObjectURL).toHaveBeenCalledWith('blob:contatos');
+      expect(commit.mock.calls).toEqual([
+        [types.SET_CONTACT_UI_FLAG, { isExporting: true }],
+        [types.SET_CONTACT_UI_FLAG, { isExporting: false }],
+      ]);
+      vi.restoreAllMocks();
+    });
+
+    it('clears the loading flag when the download fails', async () => {
+      axios.post.mockRejectedValue(new Error('Network error'));
+
+      await expect(actions.downloadExport({ commit }, {})).rejects.toThrow(
+        'Network error'
+      );
+      expect(commit.mock.calls).toEqual([
+        [types.SET_CONTACT_UI_FLAG, { isExporting: true }],
+        [types.SET_CONTACT_UI_FLAG, { isExporting: false }],
+      ]);
+    });
+  });
 });

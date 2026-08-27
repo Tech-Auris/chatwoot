@@ -124,6 +124,12 @@ class ContactAPI extends ApiClient {
   exportContacts(queryPayload) {
     return axios.post(`${this.url}/export`, queryPayload);
   }
+
+  downloadContactsExport(queryPayload) {
+    return axios.post(`${this.url}/export_download`, queryPayload, {
+      responseType: 'blob',
+    });
+  }
 }
 
 export default new ContactAPI();

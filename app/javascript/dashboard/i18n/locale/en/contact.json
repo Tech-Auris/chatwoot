@@ -340,9 +340,9 @@
         },
         "EXPORT_CONTACT": {
           "TITLE": "Export contacts",
-          "DESCRIPTION": "Quickly export a csv file with comprehensive details of your contacts",
+          "DESCRIPTION": "Download a csv file with the details of your contacts",
           "CONFIRM": "Export",
-          "SUCCESS_MESSAGE": "Export is in progress. You will be notified on email when the export file is ready to download.",
+          "SUCCESS_MESSAGE": "Download started. The file will be saved to your computer.",
           "ERROR_MESSAGE": "There was an error, please try again"
         },
         "SORT_BY": {
