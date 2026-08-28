@@ -44,7 +44,7 @@ class SuperAdmin::AppConfigsController < SuperAdmin::ApplicationController
       # Only the API key is user-editable; CLICKUP_WEBHOOK_ID and
       # CLICKUP_WEBHOOK_SECRET are populated automatically by
       # Integrations::Clickup::RegisterWebhookJob after the key is saved.
-      'clickup' => %w[CLICKUP_API_KEY],
+      'clickup' => %w[CLICKUP_API_KEY CLICKUP_PIPELINE_LIST_ID],
       # Stripe integration behind the Financeiro section. Single secret key per
       # installation — every Financeiro screen reads it through
       # Integrations::Stripe::Client.

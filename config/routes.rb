@@ -831,6 +831,16 @@ Rails.application.routes.draw do
 
       # Financeiro: Stripe-backed screens for products, account links,
       # subscriptions and invoices.
+      namespace :commercial do
+        resources :quotes, only: [:index, :create], controller: 'quotes' do
+          collection do
+            get :data
+            get :prospects
+            post :preview
+          end
+        end
+      end
+
       namespace :financial do
         resources :products, only: [:index, :create, :update, :destroy], controller: 'products' do
           collection do
