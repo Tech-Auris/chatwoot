@@ -20,3 +20,13 @@ FactoryBot.define do
     event { 'created' }
   end
 end
+
+FactoryBot.define do
+  factory :pix_renewal do
+    account
+    sales_quote
+    due_on { 10.days.from_now.to_date }
+    amount { 89_700 }
+    status { :pending }
+  end
+end
