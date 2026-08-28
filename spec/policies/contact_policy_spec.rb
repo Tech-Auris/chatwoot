@@ -42,6 +42,22 @@ RSpec.describe ContactPolicy, type: :policy do
     end
   end
 
+  # The manager runs the contact base day to day; an agent moving the whole
+  # list in or out is not part of the job, and the screen no longer offers it.
+  permissions :export?, :export_download?, :import? do
+    context 'when administrator' do
+      it { expect(contact_policy).to permit(administrator_context, contact) }
+    end
+
+    context 'when manager' do
+      it { expect(contact_policy).to permit(manager_context, contact) }
+    end
+
+    context 'when agent' do
+      it { expect(contact_policy).not_to permit(agent_context, contact) }
+    end
+  end
+
   permissions :destroy? do
     context 'when administrator' do
       it { expect(contact_policy).to permit(administrator_context, contact) }

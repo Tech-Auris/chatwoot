@@ -7,12 +7,14 @@ class ContactPolicy < ApplicationPolicy
     true
   end
 
+  # Managers run the contact base day to day — they already create, edit and
+  # delete contacts here — so moving the list in and out is theirs as well.
   def import?
-    @account_user.administrator?
+    @account_user.administrator? || @account_user.manager?
   end
 
   def export?
-    @account_user.administrator?
+    @account_user.administrator? || @account_user.manager?
   end
 
   # Same data, same gate — downloading the file must not be reachable by

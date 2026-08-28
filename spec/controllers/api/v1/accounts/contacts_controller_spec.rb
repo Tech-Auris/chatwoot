@@ -239,6 +239,17 @@ RSpec.describe 'Contacts API', type: :request do
       end
     end
 
+    context 'when it is a manager' do
+      let(:manager) { create(:user, account: account, role: :manager) }
+
+      it 'downloads the csv' do
+        post "/api/v1/accounts/#{account.id}/contacts/export_download", headers: manager.create_new_auth_token
+
+        expect(response).to have_http_status(:success)
+        expect(response.body).to include(contact.name)
+      end
+    end
+
     context 'when it is an administrator' do
       let(:admin) { create(:user, account: account, role: :administrator) }
 
