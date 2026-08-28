@@ -26,6 +26,9 @@ RSpec.describe Sales::CheckoutService do
     it 'proceeds once the signature exists' do
       sign_terms
       allow(client).to receive(:create_customer).and_return(Struct.new(:id).new('cus_1'))
+      allow(client).to receive(:update_customer)
+      allow(client).to receive(:list_tax_ids).and_return(Struct.new(:data).new([]))
+      allow(client).to receive(:create_tax_id)
       allow(client).to receive(:create_checkout_session).and_return(Struct.new(:id, :url).new('cs_1', 'https://checkout.stripe.com/x'))
 
       expect(checkout.checkout_url).to eq('https://checkout.stripe.com/x')
@@ -36,6 +39,9 @@ RSpec.describe Sales::CheckoutService do
     before do
       sign_terms
       allow(client).to receive(:create_customer).and_return(Struct.new(:id).new('cus_1'))
+      allow(client).to receive(:update_customer)
+      allow(client).to receive(:list_tax_ids).and_return(Struct.new(:data).new([]))
+      allow(client).to receive(:create_tax_id)
       allow(client).to receive(:create_checkout_session).and_return(Struct.new(:id, :url).new('cs_1', 'https://checkout.stripe.com/x'))
     end
 
@@ -82,6 +88,68 @@ RSpec.describe Sales::CheckoutService do
       checkout
 
       expect(client).not_to have_received(:create_customer)
+    end
+  end
+
+  describe 'what the payment page opens with' do
+    before do
+      sign_terms
+      quote.update!(prospect_name: 'Maria Souza', prospect_phone: '+5561981402211', prospect_document: '123.456.789-00')
+      allow(client).to receive(:create_customer).and_return(Struct.new(:id).new('cus_1'))
+      allow(client).to receive(:update_customer)
+      allow(client).to receive(:list_tax_ids).and_return(Struct.new(:data).new([]))
+      allow(client).to receive(:create_tax_id)
+      allow(client).to receive(:create_checkout_session).and_return(Struct.new(:id, :url).new('cs_1', 'https://checkout.stripe.com/x'))
+    end
+
+    # Everything the prospect already typed on our form goes onto the Stripe
+    # customer, so the payment page does not ask for it a second time.
+    it 'pushes the details onto the Stripe customer' do
+      checkout
+
+      expect(client).to have_received(:update_customer)
+        .with('cus_1', hash_including(email: quote.prospect_email, phone: '+5561981402211'))
+    end
+
+    it 'attaches the CPF when there is no company document' do
+      checkout
+
+      expect(client).to have_received(:create_tax_id).with('cus_1', type: 'br_cpf', value: '123.456.789-00')
+    end
+
+    it 'prefers the CNPJ when the customer asked for an invoice against it' do
+      quote.update!(company_document: '12.345.678/0001-90', billing_name: 'Clínica Cinco Ltda')
+
+      checkout
+
+      expect(client).to have_received(:create_tax_id).with('cus_1', type: 'br_cnpj', value: '12.345.678/0001-90')
+    end
+
+    it 'bills the company name when the invoice goes to a CNPJ' do
+      quote.update!(billing_name: 'Clínica Cinco Ltda')
+
+      checkout
+
+      expect(client).to have_received(:update_customer).with('cus_1', hash_including(name: 'Clínica Cinco Ltda'))
+    end
+
+    # A retried checkout would otherwise hit Stripe's refusal of a repeated
+    # document.
+    it 'does not attach a document the customer already carries' do
+      allow(client).to receive(:list_tax_ids)
+        .and_return(Struct.new(:data).new([Struct.new(:value).new('12345678900')]))
+
+      checkout
+
+      expect(client).not_to have_received(:create_tax_id)
+    end
+
+    # A document Stripe refuses cannot stop a sale — the customer can still type
+    # it on the payment page.
+    it 'carries on when Stripe refuses the document' do
+      allow(client).to receive(:create_tax_id).and_raise(Integrations::Stripe::Client::InvalidRequest, 'invalid tax id')
+
+      expect { checkout }.not_to raise_error
     end
   end
 

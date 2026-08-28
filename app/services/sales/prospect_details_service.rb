@@ -41,6 +41,8 @@ class Sales::ProspectDetailsService
       # The clinic names the account that will be created, so it is asked here
       # rather than read from a ClickUp field that is still empty at this point.
       company_name: attributes[:company_name],
+      billing_name: attributes[:billing_name],
+      company_document: attributes[:company_document],
       # The gate follows the number the prospect confirmed, otherwise the next
       # visit would ask for digits they no longer use.
       verification_phone_last4: digits(attributes[:phone]).last(4).presence

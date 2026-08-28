@@ -124,6 +124,20 @@ class Integrations::Stripe::Client
     with_error_handling { Stripe::Customer.create(payload, request_options) }
   end
 
+  def update_customer(customer_id, attributes)
+    with_error_handling { Stripe::Customer.update(customer_id, attributes.compact, request_options) }
+  end
+
+  # Brazilian tax ids. Attaching one lets Stripe Checkout open with the document
+  # already filled instead of asking the customer for it again.
+  def create_tax_id(customer_id, type:, value:)
+    with_error_handling { Stripe::Customer.create_tax_id(customer_id, { type: type, value: value }, request_options) }
+  end
+
+  def list_tax_ids(customer_id)
+    with_error_handling { Stripe::Customer.list_tax_ids(customer_id, {}, request_options) }
+  end
+
   def link_customer_to_account(customer_id, account_id)
     with_error_handling do
       Stripe::Customer.update(customer_id, { metadata: { ACCOUNT_METADATA_KEY => account_id.to_s } }, request_options)
@@ -249,7 +263,12 @@ class Integrations::Stripe::Client
       success_url: urls.fetch(:success),
       cancel_url: urls.fetch(:cancel),
       metadata: options[:metadata] || {},
-      payment_method_types: ['card']
+      payment_method_types: ['card'],
+      # The fields are already filled from the customer; collection has to be on
+      # for Checkout to show them at all.
+      phone_number_collection: { enabled: true },
+      tax_id_collection: { enabled: true },
+      customer_update: { name: 'auto', address: 'auto' }
     }
     payload[:payment_method_options] = installment_options(options[:max_installments]) if options[:max_installments].to_i > 1
 
