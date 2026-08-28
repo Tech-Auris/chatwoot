@@ -76,8 +76,10 @@
         <%= hidden_field_tag :terms_version_id, @terms_version.id %>
         <div
           id="terms-box"
-          class="mt-2 h-56 overflow-y-auto border border-slate-200 rounded p-3 text-xs leading-relaxed text-slate-600 whitespace-pre-line"
-        ><%= @terms_version.content %></div>
+          class="mt-2 h-56 overflow-y-auto border border-slate-200 rounded p-3 text-xs leading-relaxed text-slate-600 prose-sm"
+        ><%= sanitize @terms_version.content,
+              tags: Sales::TermsFetcherService::ALLOWED_TAGS,
+              attributes: Sales::TermsFetcherService::ALLOWED_ATTRIBUTES %></div>
         <p id="terms-hint" class="mt-1 text-xs text-slate-500">
           Role até o fim para liberar o aceite.
         </p>
