@@ -1,4 +1,20 @@
 ---
+- tag: v4.15.1-auris.1.51
+  published_at: '2026-08-28T00:30:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.51
+  notes:
+    en: |-
+      ### ✨ What's new
+
+      - **The funnel stage now lives on the conversation.** The stage the conversation is in appears right in its header, with the colour of the stage, and can be changed there — including a play button that advances it to the next stage. No need to open the funnel board to move a conversation along.
+      - **Filter conversations by funnel stage.** The conversation filters gained a "Funnel stage" option, so you can list everyone sitting in a given stage.
+      - **Automations can look at the funnel stage.** A rule can now require the conversation to be in a given stage before it acts.
+    pt_BR: |-
+      ### ✨ Novidades
+
+      - **A etapa do funil agora fica na conversa.** A etapa em que a conversa está aparece no topo dela, com a cor da fase, e pode ser alterada ali mesmo — inclusive com um botão de avançar para a próxima etapa. Não precisa mais abrir o quadro do funil para mover a conversa.
+      - **Filtrar conversas por etapa do funil.** Os filtros de conversa ganharam a opção "Etapa do funil", para listar quem está em uma determinada fase.
+      - **Automações podem olhar a etapa do funil.** Uma regra passa a poder exigir que a conversa esteja em determinada etapa antes de agir.
 - tag: v4.15.1-auris.1.50
   published_at: '2026-08-27T18:30:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.50
@@ -313,17 +329,3 @@
       Internal improvements.
     pt_BR: |-
       Melhorias internas.
-- tag: v4.15.1-auris.1.41.19
-  published_at: '2026-08-04T20:00:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.41.19
-  notes:
-    en: |-
-      ### 🐛 Fixes
-
-      - **AI handoff to the team picks an agent again on its own.** When the AI passes a conversation to the team a second time, an agent is auto-assigned again — no more picking one manually.
-      - **WhatsApp template messages with line breaks or extra spaces now go through.** Templates that Meta was rejecting with no clear reason now send normally.
-    pt_BR: |-
-      ### 🐛 Correções
-
-      - **A passagem da IA para o time volta a escolher um atendente sozinha.** Quando a IA passa uma conversa para a equipe uma segunda vez, o sistema volta a atribuir um atendente automaticamente — antes você precisava atribuir na mão.
-      - **Mensagens de template do WhatsApp com quebras de linha ou espaços extras agora saem sem erro.** Aqueles templates que a Meta rejeitava sem explicação passam a ser enviados normalmente.
