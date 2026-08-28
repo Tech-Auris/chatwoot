@@ -27,6 +27,16 @@ module SuperAdmin::NavigationHelper
     ]
   end
 
+  def commercial_open?
+    params[:controller].start_with?('super_admin/commercial/')
+  end
+
+  def commercial_pages
+    [
+      { label: 'Montar plano', url: super_admin_commercial_quotes_url }
+    ]
+  end
+
   def financial_open?
     params[:controller].start_with?('super_admin/financial/')
   end

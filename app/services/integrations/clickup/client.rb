@@ -29,6 +29,13 @@ class Integrations::Clickup::Client
     )
   end
 
+  # Tasks of a list, one page at a time. `include_closed: false` already drops
+  # the won/lost ones, which is exactly the slice the sales autocomplete wants —
+  # the lost column alone holds thousands of tasks nobody searches for.
+  def list_tasks(list_id:, page: 0, include_closed: false)
+    get_json("/list/#{list_id}/task", page: page, include_closed: include_closed, subtasks: false)
+  end
+
   def add_comment(task_id, text)
     post_json("/task/#{task_id}/comment", { comment_text: text.to_s })
   end
@@ -76,6 +83,18 @@ class Integrations::Clickup::Client
   end
 
   private
+
+  def get_json(path, query = {})
+    response = HTTParty.get(
+      "#{BASE_URL}#{path}",
+      headers: default_headers,
+      query: query,
+      timeout: DEFAULT_TIMEOUT
+    )
+    parse(response)
+  rescue HTTParty::Error, SocketError, Errno::ECONNREFUSED, Net::OpenTimeout, Net::ReadTimeout => e
+    raise ProviderUnavailable, e.message
+  end
 
   def post_json(path, body)
     response = HTTParty.post(
