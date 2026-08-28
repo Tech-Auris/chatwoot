@@ -67,16 +67,64 @@
       </label>
     </fieldset>
 
-    <label class="flex items-start gap-2 text-sm text-slate-700">
-      <%= check_box_tag :accept_terms, '1', false, class: 'mt-1' %>
-      <span>
-        Li e aceito os
-        <a href="<%= Sales::TermsFetcherService::DEFAULT_URL %>" target="_blank" rel="noopener noreferrer" class="underline">
-          termos de uso
-        </a>.
-      </span>
-    </label>
+    <div>
+      <span class="text-sm font-medium text-slate-800">Termos de uso</span>
 
-    <%= f.submit 'Assinar', class: 'w-full px-3 py-2 rounded bg-blue-600 text-white text-sm cursor-pointer' %>
+      <% if @terms_error.present? %>
+        <p class="mt-2 text-sm text-red-600"><%= @terms_error %></p>
+      <% else %>
+        <%= hidden_field_tag :terms_version_id, @terms_version.id %>
+        <div
+          id="terms-box"
+          class="mt-2 h-56 overflow-y-auto border border-slate-200 rounded p-3 text-xs leading-relaxed text-slate-600 whitespace-pre-line"
+        ><%= @terms_version.content %></div>
+        <p id="terms-hint" class="mt-1 text-xs text-slate-500">
+          Role até o fim para liberar o aceite.
+        </p>
+
+        <label class="flex items-start gap-2 mt-3 text-sm text-slate-700">
+          <%= check_box_tag :accept_terms, '1', false, class: 'mt-1', disabled: true, id: 'accept-terms' %>
+          <span>
+            Li e aceito os termos de uso acima
+            <a href="<%= @terms_version.source_url %>" target="_blank" rel="noopener noreferrer" class="underline text-slate-500">
+              (abrir em outra aba)
+            </a>.
+          </span>
+        </label>
+      <% end %>
+    </div>
+
+    <%= f.submit 'Assinar', id: 'submit-signature', disabled: @terms_error.present?,
+          class: 'w-full px-3 py-2 rounded bg-blue-600 text-white text-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed' %>
   <% end %>
 </div>
+
+<script>
+  // The checkbox only wakes up once the customer reaches the end of the terms.
+  // This is about making "I never saw it" harder to claim, not a security
+  // control — the server still requires the checkbox and the version id.
+  (function () {
+    var box = document.getElementById('terms-box');
+    var checkbox = document.getElementById('accept-terms');
+    var hint = document.getElementById('terms-hint');
+    if (!box || !checkbox) return;
+
+    function release() {
+      checkbox.disabled = false;
+      if (hint) hint.textContent = 'Você chegou ao fim dos termos.';
+      box.removeEventListener('scroll', onScroll);
+    }
+
+    function onScroll() {
+      if (box.scrollTop + box.clientHeight >= box.scrollHeight - 8) release();
+    }
+
+    // A short document that does not scroll would otherwise lock the customer
+    // out of a checkbox they can never enable.
+    if (box.scrollHeight <= box.clientHeight + 8) {
+      release();
+    } else {
+      box.addEventListener('scroll', onScroll);
+    }
+  })();
+</script>

@@ -48,8 +48,9 @@ class Sales::ProposalsController < ActionController::Base
     @items = @proposal.items
     return redirect_to sales_proposal_path(@proposal.public_token) unless @proposal.details_complete?
 
-    @pix_discount = Sales::CheckoutService.pix_discount_for(@proposal.billing_cycle)
-    @max_installments = Sales::CheckoutService.max_installments_for(@proposal.billing_cycle)
+    load_checkout_data
+  rescue Sales::TermsFetcherService::Unavailable => e
+    @terms_error = e.message
   end
 
   # Signs the terms and starts the payment. The signature is recorded here
@@ -58,7 +59,10 @@ class Sales::ProposalsController < ActionController::Base
   def pay
     return render_checkout_error('É preciso aceitar os termos de uso') unless params[:accept_terms] == '1'
 
-    sign_terms!
+    # The signature points at the very text the page rendered, not at whatever
+    # the site serves now — otherwise the customer could sign a wording that
+    # changed between reading and clicking.
+    sign_terms!(params[:terms_version_id])
     result = Sales::CheckoutService.new(
       quote: @proposal, payment_method: params[:payment_method], urls: checkout_urls
     ).perform
@@ -77,8 +81,10 @@ class Sales::ProposalsController < ActionController::Base
 
   private
 
-  def sign_terms!
-    version = Sales::TermsFetcherService.new.perform
+  def sign_terms!(version_id)
+    version = TermsVersion.find_by(id: version_id)
+    raise Sales::TermsFetcherService::Unavailable, 'Recarregue a página para ler os termos antes de assinar' if version.blank?
+
     acceptance = @proposal.terms_acceptances.create!(terms_version: version, status: :pending)
     acceptance.sign!(
       signer: { name: @proposal.prospect_name, email: @proposal.prospect_email, document: @proposal.prospect_document },
@@ -98,10 +104,18 @@ class Sales::ProposalsController < ActionController::Base
     ENV.fetch('FRONTEND_URL', request.base_url)
   end
 
-  def render_checkout_error(message)
-    @items = @proposal.items
+  def load_checkout_data
     @pix_discount = Sales::CheckoutService.pix_discount_for(@proposal.billing_cycle)
     @max_installments = Sales::CheckoutService.max_installments_for(@proposal.billing_cycle)
+    @terms_version = Sales::TermsFetcherService.new.perform
+  end
+
+  def render_checkout_error(message)
+    @items = @proposal.items
+    load_checkout_data
+    render :checkout, status: :unprocessable_entity, locals: { error: message }
+  rescue Sales::TermsFetcherService::Unavailable => e
+    @terms_error = e.message
     render :checkout, status: :unprocessable_entity, locals: { error: message }
   end
 
