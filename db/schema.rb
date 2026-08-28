@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_08_20_203323) do
+ActiveRecord::Schema[7.1].define(version: 2026_08_28_165747) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -1554,6 +1554,69 @@ ActiveRecord::Schema[7.1].define(version: 2026_08_20_203323) do
     t.index ["account_id", "metric", "date"], name: "index_rollup_timeseries"
   end
 
+  create_table "sales_quote_events", force: :cascade do |t|
+    t.bigint "sales_quote_id", null: false
+    t.bigint "user_id"
+    t.string "event", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.index ["sales_quote_id", "created_at"], name: "index_sales_quote_events_on_sales_quote_id_and_created_at"
+    t.index ["sales_quote_id"], name: "index_sales_quote_events_on_sales_quote_id"
+    t.index ["user_id"], name: "index_sales_quote_events_on_user_id"
+  end
+
+  create_table "sales_quote_items", force: :cascade do |t|
+    t.bigint "sales_quote_id", null: false
+    t.string "stripe_price_id", null: false
+    t.string "stripe_product_id"
+    t.string "name", null: false
+    t.integer "unit_amount", null: false
+    t.integer "quantity", default: 1, null: false
+    t.string "recurring_interval"
+    t.integer "kind", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["sales_quote_id"], name: "index_sales_quote_items_on_sales_quote_id"
+  end
+
+  create_table "sales_quotes", force: :cascade do |t|
+    t.string "public_token", null: false
+    t.string "access_code", null: false
+    t.string "verification_phone_last4"
+    t.bigint "seller_id", null: false
+    t.bigint "account_id"
+    t.string "clickup_task_id", null: false
+    t.string "clickup_status"
+    t.datetime "clickup_status_synced_at"
+    t.integer "status", default: 0, null: false
+    t.datetime "reserved_until"
+    t.string "prospect_name"
+    t.string "prospect_email"
+    t.string "prospect_phone"
+    t.string "prospect_document"
+    t.string "company_name"
+    t.string "company_document"
+    t.boolean "meeting_discount", default: false, null: false
+    t.string "coupon_id"
+    t.integer "payment_method"
+    t.integer "billing_cycle"
+    t.integer "subtotal_amount", default: 0, null: false
+    t.integer "discount_amount", default: 0, null: false
+    t.integer "total_amount", default: 0, null: false
+    t.string "currency", default: "brl", null: false
+    t.string "discount_summary"
+    t.string "stripe_customer_id"
+    t.string "stripe_subscription_id"
+    t.string "stripe_invoice_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_sales_quotes_on_account_id"
+    t.index ["clickup_task_id"], name: "index_sales_quotes_on_clickup_task_id"
+    t.index ["public_token"], name: "index_sales_quotes_on_public_token", unique: true
+    t.index ["seller_id"], name: "index_sales_quotes_on_seller_id"
+    t.index ["status"], name: "index_sales_quotes_on_status"
+  end
+
   create_table "scheduled_messages", force: :cascade do |t|
     t.text "content"
     t.jsonb "template_params", default: {}
@@ -1658,6 +1721,38 @@ ActiveRecord::Schema[7.1].define(version: 2026_08_20_203323) do
     t.datetime "updated_at", null: false
     t.index ["account_id"], name: "index_teams_on_account_id"
     t.index ["name", "account_id"], name: "index_teams_on_name_and_account_id", unique: true
+  end
+
+  create_table "terms_acceptances", force: :cascade do |t|
+    t.bigint "terms_version_id", null: false
+    t.bigint "sales_quote_id"
+    t.bigint "account_id"
+    t.integer "status", default: 0, null: false
+    t.string "request_token"
+    t.datetime "requested_at"
+    t.string "signer_name"
+    t.string "signer_email"
+    t.string "signer_document"
+    t.datetime "signed_at"
+    t.string "ip_address"
+    t.string "user_agent"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_terms_acceptances_on_account_id"
+    t.index ["request_token"], name: "index_terms_acceptances_on_request_token", unique: true
+    t.index ["sales_quote_id"], name: "index_terms_acceptances_on_sales_quote_id"
+    t.index ["status"], name: "index_terms_acceptances_on_status"
+    t.index ["terms_version_id"], name: "index_terms_acceptances_on_terms_version_id"
+  end
+
+  create_table "terms_versions", force: :cascade do |t|
+    t.string "source_url", null: false
+    t.text "content", null: false
+    t.string "content_hash", null: false
+    t.datetime "fetched_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["content_hash"], name: "index_terms_versions_on_content_hash"
   end
 
   create_table "ticket_updates", force: :cascade do |t|
@@ -1829,11 +1924,19 @@ ActiveRecord::Schema[7.1].define(version: 2026_08_20_203323) do
   add_foreign_key "recurring_scheduled_messages", "accounts"
   add_foreign_key "recurring_scheduled_messages", "conversations"
   add_foreign_key "recurring_scheduled_messages", "inboxes"
+  add_foreign_key "sales_quote_events", "sales_quotes"
+  add_foreign_key "sales_quote_events", "users"
+  add_foreign_key "sales_quote_items", "sales_quotes"
+  add_foreign_key "sales_quotes", "accounts"
+  add_foreign_key "sales_quotes", "users", column: "seller_id"
   add_foreign_key "scheduled_messages", "accounts"
   add_foreign_key "scheduled_messages", "conversations"
   add_foreign_key "scheduled_messages", "inboxes"
   add_foreign_key "scheduled_messages", "messages"
   add_foreign_key "scheduled_messages", "recurring_scheduled_messages"
+  add_foreign_key "terms_acceptances", "accounts"
+  add_foreign_key "terms_acceptances", "sales_quotes"
+  add_foreign_key "terms_acceptances", "terms_versions"
   add_foreign_key "ticket_updates", "tickets", on_delete: :cascade
   add_foreign_key "ticket_updates", "users"
   add_foreign_key "tickets", "accounts", on_delete: :cascade
