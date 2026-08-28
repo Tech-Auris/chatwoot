@@ -848,6 +848,12 @@ Rails.application.routes.draw do
       # Financeiro: Stripe-backed screens for products, account links,
       # subscriptions and invoices.
       namespace :commercial do
+        resources :reservations, only: [:index], controller: 'reservations' do
+          collection do
+            get :data
+          end
+        end
+
         resources :quotes, only: [:index, :create], controller: 'quotes' do
           collection do
             get :data
@@ -912,6 +918,12 @@ Rails.application.routes.draw do
       end
 
       # order of resources affect the order of sidebar navigation in super admin
+      resources :terms_acceptances, only: [:index, :show] do
+        collection do
+          get :data
+        end
+      end
+
       resources :accounts, only: [:index, :new, :create, :show, :edit, :update, :destroy] do
         post :seed, on: :member
         post :reset_cache, on: :member

@@ -26,6 +26,8 @@ class SuperAdmin::ApplicationController < Administrate::ApplicationController
   # decides otherwise.
   COMMERCIAL_ALLOWED_CONTROLLERS = %w[
     super_admin/commercial/quotes
+    super_admin/commercial/reservations
+    super_admin/terms_acceptances
     super_admin/profile/mfa
     super_admin/sessions/mfa_challenge
     super_admin/devise/sessions
@@ -38,6 +40,7 @@ class SuperAdmin::ApplicationController < Administrate::ApplicationController
     super_admin/financial/invoices
     super_admin/financial/token_billings
     super_admin/financial/coupons
+    super_admin/terms_acceptances
     super_admin/profile/mfa
     super_admin/sessions/mfa_challenge
     super_admin/devise/sessions

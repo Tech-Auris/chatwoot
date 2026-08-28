@@ -73,6 +73,8 @@ class Sales::ClickupProspectSearchService
       phone: custom_field(task, PHONE_FIELD_ID),
       status: task.dig('status', 'status'),
       status_color: task.dig('status', 'color'),
+      # ClickUp owns the deadline; the reservation report mirrors it from here.
+      due_date: task['due_date'].presence&.to_i,
       url: task['url']
     }
   end

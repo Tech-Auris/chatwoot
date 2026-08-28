@@ -13,6 +13,8 @@ import FinancialInvoicesIndex from '../superadmin_pages/views/financial/Invoices
 import FinancialTokenBillingsIndex from '../superadmin_pages/views/financial/TokenBillings.vue';
 import FinancialCouponsIndex from '../superadmin_pages/views/financial/Coupons.vue';
 import CommercialQuotesIndex from '../superadmin_pages/views/commercial/Quotes.vue';
+import CommercialReservationsIndex from '../superadmin_pages/views/commercial/Reservations.vue';
+import TermsAcceptancesIndex from '../superadmin_pages/views/commercial/TermsAcceptances.vue';
 
 const ComponentMapping = {
   PlaygroundIndex: PlaygroundIndex,
@@ -26,6 +28,8 @@ const ComponentMapping = {
   FinancialTokenBillingsIndex: FinancialTokenBillingsIndex,
   FinancialCouponsIndex: FinancialCouponsIndex,
   CommercialQuotesIndex: CommercialQuotesIndex,
+  CommercialReservationsIndex: CommercialReservationsIndex,
+  TermsAcceptancesIndex: TermsAcceptancesIndex,
 };
 
 const renderComponent = (componentName, props) => {

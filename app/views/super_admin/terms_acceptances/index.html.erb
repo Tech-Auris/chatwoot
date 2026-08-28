@@ -1,0 +1,8 @@
+<% content_for(:title) do %>
+  Termos de uso
+<% end %>
+
+<%= render_vue_component('TermsAcceptancesIndex', {
+  data_url: data_super_admin_terms_acceptances_url(format: :json),
+  acceptance_url: super_admin_terms_acceptances_path
+}) %>
