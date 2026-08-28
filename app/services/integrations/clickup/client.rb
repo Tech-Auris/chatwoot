@@ -47,6 +47,11 @@ class Integrations::Clickup::Client
     post_json("/task/#{task_id}/tag/#{ERB::Util.url_encode(tag_name)}", {})
   end
 
+  # Custom fields are written one at a time, addressed by their own id.
+  def set_custom_field(task_id, field_id, value)
+    post_json("/task/#{task_id}/field/#{field_id}", { value: value })
+  end
+
   def add_comment(task_id, text)
     post_json("/task/#{task_id}/comment", { comment_text: text.to_s })
   end

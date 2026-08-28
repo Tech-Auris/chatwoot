@@ -1,0 +1,46 @@
+<div class="bg-white rounded-lg shadow p-6">
+  <h1 class="text-lg font-medium text-slate-900">Confirme seus dados</h1>
+  <p class="text-sm text-slate-500 mt-1">
+    Precisamos deles para emitir o contrato e a cobrança.
+  </p>
+
+  <% if local_assigns[:error].present? %>
+    <p class="mt-4 text-sm text-red-600"><%= error %></p>
+  <% end %>
+
+  <%= form_with url: sales_proposal_details_path(@proposal.public_token), method: :post, scope: :proposal, class: 'mt-5 flex flex-col gap-3' do |f| %>
+    <label class="text-sm text-slate-600">
+      Nome completo
+      <%= f.text_field :name, value: @proposal.prospect_name, required: true,
+            class: 'mt-1 w-full border border-slate-200 rounded px-3 py-2 text-sm' %>
+    </label>
+
+    <div>
+      <label class="text-sm text-slate-600">
+        WhatsApp
+        <%= f.telephone_field :phone, value: @proposal.prospect_phone, required: true,
+              class: 'mt-1 w-full border border-slate-200 rounded px-3 py-2 text-sm' %>
+      </label>
+      <% if @proposal.prospect_phone.present? %>
+        <p class="text-xs text-slate-500 mt-1">
+          Confirme se este é o número que você usa. Se mudou, corrija aqui —
+          nós atualizamos no seu cadastro.
+        </p>
+      <% end %>
+    </div>
+
+    <label class="text-sm text-slate-600">
+      E-mail
+      <%= f.email_field :email, value: @proposal.prospect_email, required: true,
+            class: 'mt-1 w-full border border-slate-200 rounded px-3 py-2 text-sm' %>
+    </label>
+
+    <label class="text-sm text-slate-600">
+      CPF
+      <%= f.text_field :document, value: @proposal.prospect_document, required: true, inputmode: 'numeric',
+            class: 'mt-1 w-full border border-slate-200 rounded px-3 py-2 text-sm' %>
+    </label>
+
+    <%= f.submit 'Continuar', class: 'mt-2 w-full px-3 py-2 rounded bg-blue-600 text-white text-sm cursor-pointer' %>
+  <% end %>
+</div>
