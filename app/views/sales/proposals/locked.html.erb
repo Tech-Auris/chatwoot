@@ -1,0 +1,25 @@
+<div class="bg-white rounded-lg shadow p-6">
+  <h1 class="text-lg font-medium text-slate-900">Sua proposta AurisChat</h1>
+  <p class="text-sm text-slate-500 mt-1">
+    Informe o código que enviamos e os quatro últimos dígitos do seu WhatsApp
+    para abrir a proposta.
+  </p>
+
+  <% if local_assigns[:error].present? %>
+    <p class="mt-4 text-sm text-red-600"><%= error %></p>
+  <% end %>
+
+  <%= form_with url: sales_unlock_proposal_path(@proposal.public_token), method: :post, class: 'mt-5 flex flex-col gap-3' do |f| %>
+    <label class="text-sm text-slate-600">
+      Código de 6 dígitos
+      <%= f.text_field :access_code, inputmode: 'numeric', maxlength: 6,
+            class: 'mt-1 w-full border border-slate-200 rounded px-3 py-2 text-sm' %>
+    </label>
+    <label class="text-sm text-slate-600">
+      4 últimos dígitos do seu WhatsApp
+      <%= f.text_field :phone_last4, inputmode: 'numeric', maxlength: 4,
+            class: 'mt-1 w-full border border-slate-200 rounded px-3 py-2 text-sm' %>
+    </label>
+    <%= f.submit 'Abrir proposta', class: 'mt-2 w-full px-3 py-2 rounded bg-blue-600 text-white text-sm cursor-pointer' %>
+  <% end %>
+</div>

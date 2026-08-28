@@ -141,6 +141,48 @@ RSpec.describe 'Super Admin Commercial Quotes', type: :request do
     end
   end
 
+  describe 'POST /super_admin/commercial/quotes/:id/reserve' do
+    let(:clickup_client) { instance_double(Integrations::Clickup::Client, configured?: true) }
+    let(:quote) { create(:sales_quote) }
+
+    before do
+      allow(Integrations::Clickup::Client).to receive(:new).and_return(clickup_client)
+      allow(clickup_client).to receive(:update_task)
+      allow(clickup_client).to receive(:add_tag)
+    end
+
+    it 'holds the proposal and answers with the link and the QR the seller shares' do
+      post "/super_admin/commercial/quotes/#{quote.id}/reserve",
+           params: { reserved_until: 5.days.from_now.iso8601 }, as: :json
+
+      expect(response).to have_http_status(:success)
+      body = response.parsed_body['quote']
+      expect(body['public_url']).to include("/proposals/#{quote.public_token}")
+      expect(body['qr_code']).to start_with('data:image/svg+xml;base64,')
+      expect(quote.reload.status).to eq('reserved')
+    end
+
+    # The seller is in front of the customer; a ClickUp outage cannot block the
+    # reservation, but it also cannot pass silently.
+    it 'reports a ClickUp failure without losing the reservation' do
+      allow(clickup_client).to receive(:add_tag).and_raise(Integrations::Clickup::Client::ProviderUnavailable, 'ClickUp 503')
+
+      post "/super_admin/commercial/quotes/#{quote.id}/reserve",
+           params: { reserved_until: 5.days.from_now.iso8601 }, as: :json
+
+      expect(response.parsed_body).to include('clickup_synced' => false, 'clickup_error' => 'ClickUp 503')
+      expect(quote.reload.status).to eq('reserved')
+    end
+
+    it 'refuses a date in the past' do
+      post "/super_admin/commercial/quotes/#{quote.id}/reserve",
+           params: { reserved_until: 2.days.ago.iso8601 }, as: :json
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.parsed_body['error']).to include('futuro')
+    end
+  end
+
   describe 'the pipeline list configuration' do
     # The search cannot guess which ClickUp list holds the pipeline, and a wrong
     # guess would silently search the wrong deals.

@@ -26,6 +26,10 @@ const loading = ref(false);
 const saving = ref(false);
 const error = ref(null);
 const savedQuote = ref(null);
+const reservedUntil = ref('');
+const reserving = ref(false);
+const reservation = ref(null);
+const copied = ref(false);
 
 const csrfToken = () =>
   document.querySelector('meta[name="csrf-token"]')?.content ?? '';
@@ -180,8 +184,38 @@ const saveQuote = async () => {
   }
 };
 
+// Holding the proposal writes the deadline onto the ClickUp task; a failure
+// there is reported instead of swallowed, because the seller would otherwise
+// believe the task carries the date.
+const reserve = async () => {
+  reserving.value = true;
+  error.value = null;
+  try {
+    const body = await request(
+      `${props.componentData.quotes_url}/${savedQuote.value.id}/reserve`,
+      { method: 'POST', body: { reserved_until: reservedUntil.value } }
+    );
+    reservation.value = body;
+    savedQuote.value = body.quote;
+  } catch (e) {
+    error.value = e.message;
+  } finally {
+    reserving.value = false;
+  }
+};
+
+const copyLink = async () => {
+  await navigator.clipboard.writeText(savedQuote.value.public_url);
+  copied.value = true;
+  setTimeout(() => {
+    copied.value = false;
+  }, 2000);
+};
+
 const startOver = () => {
   savedQuote.value = null;
+  reservation.value = null;
+  reservedUntil.value = '';
   cart.value = [];
   meetingDiscount.value = false;
   couponId.value = '';
@@ -237,10 +271,89 @@ const startOver = () => {
         <p class="text-xs text-slate-500 mt-2">
           Código de acesso do cliente:
           <strong>{{ savedQuote.access_code }}</strong>
+          <span v-if="savedQuote.phone_last4">
+            · confirma com os 4 últimos dígitos do WhatsApp
+            <strong>{{ savedQuote.phone_last4 }}</strong>
+          </span>
         </p>
+
+        <div class="mt-5 pt-5 border-t border-slate-100">
+          <h3 class="text-sm font-medium text-slate-800">Reserva</h3>
+          <p class="text-xs text-slate-500 mt-1">
+            A data vai para o vencimento da tarefa no ClickUp, junto com a
+            etiqueta “reserva”.
+          </p>
+
+          <div class="flex flex-wrap items-end gap-3 mt-3">
+            <label class="text-sm text-slate-600">
+              Vencimento da reserva
+              <input
+                v-model="reservedUntil"
+                type="datetime-local"
+                class="mt-1 block border border-slate-200 rounded px-2 py-1.5 text-sm"
+              />
+            </label>
+            <button
+              type="button"
+              class="px-3 py-1.5 rounded bg-woot-500 text-white text-sm disabled:opacity-40"
+              :disabled="!reservedUntil || reserving"
+              @click="reserve"
+            >
+              {{
+                reserving
+                  ? 'Reservando…'
+                  : savedQuote.reserved_until
+                    ? 'Renovar reserva'
+                    : 'Reservar'
+              }}
+            </button>
+          </div>
+
+          <p
+            v-if="reservation && !reservation.clickup_synced"
+            class="mt-3 text-xs text-amber-700"
+          >
+            Reserva registrada, mas o ClickUp não foi atualizado:
+            {{ reservation.clickup_error }}. Ajuste a data na tarefa à mão.
+          </p>
+        </div>
+
+        <div
+          v-if="savedQuote.public_url"
+          class="mt-5 pt-5 border-t border-slate-100"
+        >
+          <h3 class="text-sm font-medium text-slate-800">Link do cliente</h3>
+          <div class="flex flex-wrap items-start gap-4 mt-3">
+            <img
+              v-if="savedQuote.qr_code"
+              :src="savedQuote.qr_code"
+              alt="QR code da proposta"
+              class="w-32 h-32 border border-slate-100 rounded"
+            />
+            <div class="flex-1 min-w-[16rem]">
+              <input
+                :value="savedQuote.public_url"
+                readonly
+                class="w-full border border-slate-200 rounded px-2 py-1.5 text-xs text-slate-600"
+              />
+              <button
+                type="button"
+                class="mt-2 px-3 py-1.5 rounded bg-slate-100 text-slate-700 text-xs"
+                @click="copyLink"
+              >
+                {{ copied ? 'Copiado!' : 'Copiar link' }}
+              </button>
+              <p class="text-xs text-slate-400 mt-2">
+                Envie o link, o código e peça os 4 últimos dígitos do WhatsApp
+                do cliente para ele abrir.
+              </p>
+            </div>
+          </div>
+        </div>
+
         <button
           type="button"
-          class="mt-4 px-3 py-1.5 rounded bg-woot-500 text-white text-sm"
+          class="mt-5 px-3 py-1.5 rounded bg-slate-100 text-slate-700 text-sm"
           @click="startOver"
         >
           Montar outra

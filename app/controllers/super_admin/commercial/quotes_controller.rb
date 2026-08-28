@@ -37,6 +37,23 @@ class SuperAdmin::Commercial::QuotesController < SuperAdmin::ApplicationControll
     render json: { subtotal: result.subtotal, discount: result.discount, total: result.total, summary: result.summary }
   end
 
+  # Holds the proposal until a date and mirrors it onto the ClickUp task. The
+  # same action renews an existing reservation — the seller pushing the deadline
+  # is the same operation as setting it the first time.
+  def reserve
+    result = Sales::ReserveQuoteService.new(
+      quote: quote, reserved_until: parsed_reserved_until, user: current_super_admin
+    ).perform
+
+    render json: {
+      quote: serialize(result.quote),
+      clickup_synced: result.clickup_synced,
+      clickup_error: result.clickup_error
+    }
+  rescue ArgumentError => e
+    render json: { error: e.message }, status: :unprocessable_entity
+  end
+
   def create
     quote = SalesQuote.new(quote_attributes)
     quote.items = item_records
@@ -49,6 +66,17 @@ class SuperAdmin::Commercial::QuotesController < SuperAdmin::ApplicationControll
   end
 
   private
+
+  def quote
+    @quote ||= SalesQuote.find(params[:id])
+  end
+
+  def parsed_reserved_until
+    value = params.require(:reserved_until)
+    Time.zone.parse(value.to_s)
+  rescue ArgumentError
+    nil
+  end
 
   def stripe_client
     @stripe_client ||= Integrations::Stripe::Client.new
@@ -139,9 +167,22 @@ class SuperAdmin::Commercial::QuotesController < SuperAdmin::ApplicationControll
   def serialize(quote)
     {
       id: quote.id, public_token: quote.public_token, access_code: quote.access_code,
+      public_url: public_url_for(quote), qr_code: qr_code_for(quote),
+      reserved_until: quote.reserved_until, phone_last4: quote.verification_phone_last4,
       prospect_name: quote.prospect_name, subtotal_amount: quote.subtotal_amount,
       discount_amount: quote.discount_amount, total_amount: quote.total_amount,
       discount_summary: quote.discount_summary, status: quote.status
     }
+  end
+
+  def public_url_for(quote)
+    sales_proposal_url(quote.public_token, host: ENV.fetch('FRONTEND_URL', request.base_url))
+  end
+
+  # Rendered here rather than in the browser: the seller shares the screen with
+  # the customer during the meeting, and the QR has to be there on load.
+  def qr_code_for(quote)
+    svg = RQRCode::QRCode.new(public_url_for(quote)).as_svg(module_size: 4, standalone: true, use_path: true)
+    "data:image/svg+xml;base64,#{Base64.strict_encode64(svg)}"
   end
 end

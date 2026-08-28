@@ -36,6 +36,17 @@ class Integrations::Clickup::Client
     get_json("/list/#{list_id}/task", page: page, include_closed: include_closed, subtasks: false)
   end
 
+  # ClickUp takes dates as epoch milliseconds.
+  def update_task(task_id, attributes)
+    put_json("/task/#{task_id}", attributes)
+  end
+
+  # Tags are addressed by name, and the endpoint is idempotent — adding one the
+  # task already carries is a no-op rather than an error.
+  def add_tag(task_id, tag_name)
+    post_json("/task/#{task_id}/tag/#{ERB::Util.url_encode(tag_name)}", {})
+  end
+
   def add_comment(task_id, text)
     post_json("/task/#{task_id}/comment", { comment_text: text.to_s })
   end
@@ -89,6 +100,18 @@ class Integrations::Clickup::Client
       "#{BASE_URL}#{path}",
       headers: default_headers,
       query: query,
+      timeout: DEFAULT_TIMEOUT
+    )
+    parse(response)
+  rescue HTTParty::Error, SocketError, Errno::ECONNREFUSED, Net::OpenTimeout, Net::ReadTimeout => e
+    raise ProviderUnavailable, e.message
+  end
+
+  def put_json(path, body)
+    response = HTTParty.put(
+      "#{BASE_URL}#{path}",
+      headers: default_headers,
+      body: body.to_json,
       timeout: DEFAULT_TIMEOUT
     )
     parse(response)
