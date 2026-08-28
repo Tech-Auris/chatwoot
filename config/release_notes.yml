@@ -1,4 +1,16 @@
 ---
+- tag: v4.15.1-auris.1.51
+  published_at: '2026-08-28T21:00:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.51
+  notes:
+    en: |-
+      ### 🐛 Fixes
+
+      - **Exporting contacts as a manager.** If you use the manager profile, "Export contacts" was failing with an error. It now downloads the file normally, following the filters on screen.
+    pt_BR: |-
+      ### 🐛 Correções
+
+      - **Exportar contatos no perfil manager.** Se você usa o perfil de manager, o "Exportar contatos" estava dando erro. Agora o arquivo baixa normalmente, respeitando os filtros da tela.
 - tag: v4.15.1-auris.1.50
   published_at: '2026-08-28T00:45:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.50
