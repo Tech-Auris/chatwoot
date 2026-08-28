@@ -140,4 +140,14 @@ RSpec.describe 'Super Admin Commercial Quotes', type: :request do
       expect(SalesQuote.last.events.first).to have_attributes(event: 'created', user_id: super_admin.id)
     end
   end
+
+  describe 'the pipeline list configuration' do
+    # The search cannot guess which ClickUp list holds the pipeline, and a wrong
+    # guess would silently search the wrong deals.
+    it 'is offered on the ClickUp settings screen' do
+      get '/super_admin/app_config', params: { config: 'clickup' }
+
+      expect(response.body).to include('CLICKUP_PIPELINE_LIST_ID')
+    end
+  end
 end
