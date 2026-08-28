@@ -15,6 +15,15 @@
             class: 'mt-1 w-full border border-slate-200 rounded px-3 py-2 text-sm' %>
     </label>
 
+    <label class="text-sm text-slate-600">
+      Nome da clínica
+      <%= f.text_field :company_name, value: @proposal.company_name, required: true,
+            class: 'mt-1 w-full border border-slate-200 rounded px-3 py-2 text-sm' %>
+      <span class="block text-xs text-slate-500 mt-1">
+        É o nome que vai identificar a sua conta no AurisChat.
+      </span>
+    </label>
+
     <div>
       <label class="text-sm text-slate-600">
         WhatsApp

@@ -4,7 +4,7 @@ RSpec.describe 'Public sales proposal', type: :request do
   let(:quote) do
     create(:sales_quote, prospect_phone: '+55 61 98140-2211', reserved_until: 5.days.from_now,
                          prospect_name: 'Maria Souza', prospect_email: 'maria@clinica.com.br',
-                         prospect_document: '12345678900')
+                         prospect_document: '12345678900', company_name: 'Clínica Cinco')
   end
   # A proposal whose prospect has not filled anything in yet.
   let(:blank_quote) { create(:sales_quote, prospect_phone: '+55 61 98140-2211', reserved_until: 5.days.from_now) }
@@ -99,6 +99,18 @@ RSpec.describe 'Public sales proposal', type: :request do
       expect(response.body).not_to include('Estas condições valem por')
     end
 
+    # The clinic custom field is empty in ClickUp at this stage, so the prospect
+    # is the one who tells us — it is what will name the account.
+    it 'asks for the clinic name' do
+      post "/proposals/#{blank_quote.public_token}/unlock",
+           params: { access_code: blank_quote.access_code, phone_last4: '2211' }
+
+      get "/proposals/#{blank_quote.public_token}"
+
+      expect(response.body).to include('Nome da clínica')
+      expect(response.body).to include('identificar a sua conta')
+    end
+
     it 'shows the number already on file to be confirmed rather than asking again' do
       post "/proposals/#{blank_quote.public_token}/unlock",
            params: { access_code: blank_quote.access_code, phone_last4: '2211' }
@@ -111,7 +123,8 @@ RSpec.describe 'Public sales proposal', type: :request do
 
     it 'moves on to the confirmation once the data is filled' do
       post "/proposals/#{quote.public_token}/details", params: {
-        proposal: { name: 'Maria Souza', email: 'maria@clinica.com.br', phone: quote.prospect_phone, document: '12345678900' }
+        proposal: { name: 'Maria Souza', company_name: 'Clínica Cinco', email: 'maria@clinica.com.br',
+                    phone: quote.prospect_phone, document: '12345678900' }
       }
 
       follow_redirect!
@@ -122,7 +135,8 @@ RSpec.describe 'Public sales proposal', type: :request do
     it 'counts down to the reservation deadline and states what is at stake' do
       quote.update!(discount_amount: 10_950)
       post "/proposals/#{quote.public_token}/details", params: {
-        proposal: { name: 'Maria', email: 'maria@clinica.com.br', phone: quote.prospect_phone, document: '12345678900' }
+        proposal: { name: 'Maria', company_name: 'Clínica Cinco', email: 'maria@clinica.com.br',
+                    phone: quote.prospect_phone, document: '12345678900' }
       }
 
       follow_redirect!
@@ -133,7 +147,7 @@ RSpec.describe 'Public sales proposal', type: :request do
       reset_session_by_reopening
 
       post "/proposals/#{quote.public_token}/details", params: {
-        proposal: { name: 'Invasor', email: 'x@y.com', phone: '+5511900000000', document: '000' }
+        proposal: { name: 'Invasor', company_name: 'Clínica X', email: 'x@y.com', phone: '+5511900000000', document: '000' }
       }
 
       expect(quote.reload.prospect_name).not_to eq('Invasor')

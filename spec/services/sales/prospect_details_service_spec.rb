@@ -3,7 +3,8 @@ require 'rails_helper'
 RSpec.describe Sales::ProspectDetailsService do
   let(:client) { instance_double(Integrations::Clickup::Client, configured?: true) }
   let(:details) do
-    { name: 'Maria Souza', email: 'maria@clinica.com.br', phone: '+55 61 98140-2211', document: '123.456.789-00' }
+    { name: 'Maria Souza', company_name: 'Clínica Cinco', email: 'maria@clinica.com.br',
+      phone: '+55 61 98140-2211', document: '123.456.789-00' }
   end
 
   def fill(quote, attributes = details)
@@ -35,7 +36,7 @@ RSpec.describe Sales::ProspectDetailsService do
   # Confirming the number that was already there changes nothing — there is
   # nothing to correct, and ClickUp stays the source of truth.
   it 'leaves the task alone when the prospect confirms the same number' do
-    quote = create(:sales_quote, prospect_phone: '+5561981402211')
+    quote = create(:sales_quote, prospect_phone: '+5561981402211', company_name: 'Clínica Cinco')
 
     fill(quote)
 
@@ -43,7 +44,7 @@ RSpec.describe Sales::ProspectDetailsService do
   end
 
   it 'ignores formatting when deciding whether the number changed' do
-    quote = create(:sales_quote, prospect_phone: '5561981402211')
+    quote = create(:sales_quote, prospect_phone: '5561981402211', company_name: 'Clínica Cinco')
 
     fill(quote)
 
@@ -77,6 +78,35 @@ RSpec.describe Sales::ProspectDetailsService do
 
     expect(quote.reload.prospect_name).to eq('Maria Souza')
     expect(result).to have_attributes(clickup_synced: false, clickup_error: 'ClickUp 503')
+  end
+
+  describe 'the clinic name' do
+    # The ClickUp field is empty when the deal starts; the prospect is the one
+    # who tells us, and the task is where the team will look for it.
+    it 'writes it onto the task when it was missing there' do
+      quote = create(:sales_quote, company_name: nil)
+
+      fill(quote)
+
+      expect(client).to have_received(:set_custom_field)
+        .with(quote.clickup_task_id, described_class::CLINIC_FIELD_ID, 'Clínica Cinco')
+    end
+
+    it 'keeps it on the proposal, which is what names the account' do
+      quote = create(:sales_quote, company_name: nil)
+
+      fill(quote)
+
+      expect(quote.reload.company_name).to eq('Clínica Cinco')
+    end
+
+    it 'leaves the task alone when the clinic did not change' do
+      quote = create(:sales_quote, company_name: 'Clínica Cinco', prospect_phone: '+5561981402211')
+
+      fill(quote)
+
+      expect(client).not_to have_received(:set_custom_field)
+    end
   end
 
   it 'marks the proposal as ready to move on' do

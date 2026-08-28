@@ -147,7 +147,7 @@ class Sales::ProposalsController < ActionController::Base
   end
 
   def details_params
-    params.require(:proposal).permit(:name, :email, :phone, :document)
+    params.require(:proposal).permit(:name, :company_name, :email, :phone, :document)
   end
 
   def set_proposal

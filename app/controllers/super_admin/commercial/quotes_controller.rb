@@ -118,7 +118,11 @@ class SuperAdmin::Commercial::QuotesController < SuperAdmin::ApplicationControll
       clickup_task_id: params.require(:clickup_task_id),
       clickup_status: prospect[:status],
       clickup_status_synced_at: Time.current,
-      prospect_name: prospect[:clinic_name].presence || prospect[:name],
+      # The task title is the person the seller talked to; the clinic is a custom
+      # field that is usually still empty at this point and gets filled by the
+      # prospect on the public form.
+      prospect_name: prospect[:name],
+      company_name: prospect[:clinic_name],
       prospect_email: prospect[:email],
       prospect_phone: prospect[:phone],
       meeting_discount: ActiveModel::Type::Boolean.new.cast(params[:meeting_discount]),
