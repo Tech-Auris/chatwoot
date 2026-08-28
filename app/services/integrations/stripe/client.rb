@@ -256,6 +256,24 @@ class Integrations::Stripe::Client
     with_error_handling { Stripe::Checkout::Session.create(payload, request_options) }
   end
 
+  # Saves a card without charging it. Used for the token charges, which are
+  # billed later against whatever the customer registers here.
+  def create_setup_session(customer_id:, urls:, metadata: {})
+    with_error_handling do
+      Stripe::Checkout::Session.create(
+        {
+          mode: 'setup',
+          customer: customer_id,
+          currency: 'brl',
+          success_url: urls.fetch(:success),
+          cancel_url: urls.fetch(:cancel),
+          metadata: metadata
+        },
+        request_options
+      )
+    end
+  end
+
   def retrieve_checkout_session(session_id)
     with_error_handling { Stripe::Checkout::Session.retrieve(session_id, request_options) }
   end

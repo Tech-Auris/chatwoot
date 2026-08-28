@@ -3,6 +3,22 @@
 # Signatures point at a version, never at the live page: the page can be edited
 # at any moment, and a contract that changes after it was signed is not a
 # contract anybody can audit.
+# == Schema Information
+#
+# Table name: terms_versions
+#
+#  id           :bigint           not null, primary key
+#  content      :text             not null
+#  content_hash :string           not null
+#  fetched_at   :datetime         not null
+#  source_url   :string           not null
+#  created_at   :datetime         not null
+#  updated_at   :datetime         not null
+#
+# Indexes
+#
+#  index_terms_versions_on_content_hash  (content_hash)
+#
 class TermsVersion < ApplicationRecord
   has_many :terms_acceptances, dependent: :restrict_with_error
 

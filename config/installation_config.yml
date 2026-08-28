@@ -555,6 +555,12 @@
   value: ''
   locked: false
   type: secret
+- name: STRIPE_WEBHOOK_SECRET
+  display_title: 'Stripe Webhook Secret'
+  description: 'Signing secret of the Stripe webhook pointed at /webhooks/commercial/stripe. Without it, payment confirmations are ignored — a customer who pays and closes the tab would not be recorded as paid.'
+  value: ''
+  locked: false
+  type: secret
 - name: CLICKUP_PIPELINE_LIST_ID
   display_title: 'ClickUp Pipeline List ID'
   description: 'Id of the sales pipeline list. The Comercial section searches this list for the prospect a proposal is built for; the deals themselves stay in ClickUp. Leave blank to disable the prospect search.'

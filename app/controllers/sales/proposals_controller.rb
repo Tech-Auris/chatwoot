@@ -11,7 +11,7 @@ class Sales::ProposalsController < ActionController::Base
   layout 'sales_proposal'
 
   before_action :set_proposal
-  before_action :require_unlock, only: [:show, :save_details, :checkout, :pay, :payment_return]
+  before_action :require_unlock, only: [:show, :save_details, :checkout, :pay, :payment_return, :tokens, :save_token_card]
 
   def show
     @items = @proposal.items
@@ -76,6 +76,33 @@ class Sales::ProposalsController < ActionController::Base
   end
 
   def payment_return
+    @items = @proposal.items
+  end
+
+  # Third step: the card the token usage will be charged against. It may be the
+  # one that just paid the subscription or another — Stripe shows the saved card
+  # and lets the customer add a different one.
+  def tokens
+    @same_card_available = @proposal.payment_method_card?
+  end
+
+  def save_token_card
+    session = Integrations::Stripe::Client.new.create_setup_session(
+      customer_id: @proposal.stripe_customer_id,
+      urls: { success: sales_proposal_status_url(@proposal.public_token, host: public_host),
+              cancel: sales_proposal_tokens_url(@proposal.public_token, host: public_host) },
+      metadata: { sales_quote_id: @proposal.id }
+    )
+
+    redirect_to session.url, allow_other_host: true
+  rescue Integrations::Stripe::Client::Error => e
+    @same_card_available = @proposal.payment_method_card?
+    render :tokens, status: :unprocessable_entity, locals: { error: e.message }
+  end
+
+  # Where the customer comes back to, and keeps coming back to, until the
+  # account is live.
+  def status
     @items = @proposal.items
   end
 
