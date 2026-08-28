@@ -44,6 +44,9 @@ Rails.application.routes.draw do
       get ':token/pagamento', to: 'proposals#checkout', as: :proposal_checkout
       post ':token/pagamento', to: 'proposals#pay', as: :proposal_pay
       get ':token/obrigado', to: 'proposals#payment_return', as: :proposal_payment_return
+      get ':token/tokens', to: 'proposals#tokens', as: :proposal_tokens
+      post ':token/tokens', to: 'proposals#save_token_card', as: :proposal_save_token_card
+      get ':token/acompanhamento', to: 'proposals#status', as: :proposal_status
     end
     resource :slack_uploads, only: [:show]
   end
@@ -769,6 +772,9 @@ Rails.application.routes.draw do
   post 'webhooks/tiktok', to: 'webhooks/tiktok#events'
   post 'webhooks/shopify', to: 'webhooks/shopify#events'
   post 'webhooks/clickup', to: 'webhooks/clickup#process_payload'
+  # Payment confirmations for the commercial flow. Kept apart from the Chatwoot
+  # Cloud billing webhook, which listens on the enterprise namespace.
+  post 'webhooks/commercial/stripe', to: 'webhooks/commercial/stripe#process_payload'
 
   namespace :twitter do
     resource :callback, only: [:show]

@@ -48,7 +48,7 @@ class SuperAdmin::AppConfigsController < SuperAdmin::ApplicationController
       # Stripe integration behind the Financeiro section. Single secret key per
       # installation — every Financeiro screen reads it through
       # Integrations::Stripe::Client.
-      'stripe' => %w[STRIPE_SECRET_KEY]
+      'stripe' => %w[STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET]
     }
   end
 

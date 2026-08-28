@@ -241,4 +241,84 @@ RSpec.describe 'Public sales proposal', type: :request do
       expect(quote.reload.terms_acceptances.status_signed).to be_empty
     end
   end
+
+  describe 'the token card step' do
+    let(:stripe_client) { instance_double(Integrations::Stripe::Client) }
+
+    before do
+      quote.update!(status: :paid, payment_method: :card, stripe_customer_id: 'cus_1')
+      allow(Integrations::Stripe::Client).to receive(:new).and_return(stripe_client)
+      allow(stripe_client).to receive(:create_setup_session).and_return(Struct.new(:id, :url).new('cs_setup', 'https://checkout.stripe.com/setup'))
+      unlock
+    end
+
+    it 'sends the customer to save a card without charging it' do
+      post "/proposals/#{quote.public_token}/tokens"
+
+      expect(stripe_client).to have_received(:create_setup_session).with(hash_including(customer_id: 'cus_1'))
+      expect(response).to redirect_to('https://checkout.stripe.com/setup')
+    end
+
+    # A monthly plan is charged on this same card from here on, and the customer
+    # has to be told before registering it.
+    it 'warns a monthly customer that the card also carries the subscription' do
+      quote.update!(billing_cycle: :monthly)
+
+      get "/proposals/#{quote.public_token}/tokens"
+
+      expect(response.body).to include('também será usado nas')
+    end
+
+    it 'does not warn an annual customer, whose plan is already paid' do
+      quote.update!(billing_cycle: :annual)
+
+      get "/proposals/#{quote.public_token}/tokens"
+
+      expect(response.body).not_to include('também será usado nas')
+    end
+  end
+
+  describe 'the status page' do
+    before { unlock }
+
+    it 'says the payment is still awaited on a pix sale' do
+      quote.update!(status: :signed, payment_method: :pix)
+
+      get "/proposals/#{quote.public_token}/acompanhamento"
+
+      expect(response.body).to include('Aguardando a confirmação do seu PIX')
+    end
+
+    it 'says the access is being created once the payment landed' do
+      quote.update!(status: :paid)
+
+      get "/proposals/#{quote.public_token}/acompanhamento"
+
+      expect(response.body).to include('Estamos criando o seu acesso')
+    end
+
+    it 'points to the token card while it is missing' do
+      quote.update!(status: :paid)
+
+      get "/proposals/#{quote.public_token}/acompanhamento"
+
+      expect(response.body).to include('Cadastrar cartão dos tokens')
+    end
+
+    it 'stops asking for the card once it is saved' do
+      quote.update!(status: :paid, token_payment_method_id: 'seti_1')
+
+      get "/proposals/#{quote.public_token}/acompanhamento"
+
+      expect(response.body).not_to include('Cadastrar cartão dos tokens')
+    end
+
+    it 'tells the converted customer the onboarding is under way' do
+      quote.update!(status: :converted)
+
+      get "/proposals/#{quote.public_token}/acompanhamento"
+
+      expect(response.body).to include('time já está preparando a implantação')
+    end
+  end
 end
