@@ -106,6 +106,7 @@ Rails/ApplicationController:
     - 'app/controllers/platform_controller.rb'
     - 'app/controllers/public_controller.rb'
     - 'app/controllers/survey/responses_controller.rb'
+    - 'app/controllers/sales/proposals_controller.rb'
 
 Rails/FindEach:
   Enabled: true

@@ -35,6 +35,12 @@ Rails.application.routes.draw do
     namespace :survey do
       resources :responses, only: [:show]
     end
+    # Public proposal page. No login: the prospect is not a customer yet, so the
+    # token in the link plus the code the seller sends is what opens it.
+    scope :proposals, module: :sales, as: :sales do
+      get ':token', to: 'proposals#show', as: :proposal
+      post ':token/unlock', to: 'proposals#unlock', as: :unlock_proposal
+    end
     resource :slack_uploads, only: [:show]
   end
 
@@ -837,6 +843,9 @@ Rails.application.routes.draw do
             get :data
             get :prospects
             post :preview
+          end
+          member do
+            post :reserve
           end
         end
       end
