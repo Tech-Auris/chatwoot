@@ -11,10 +11,23 @@ class Sales::ProposalsController < ActionController::Base
   layout 'sales_proposal'
 
   before_action :set_proposal
-  before_action :require_unlock, only: [:show]
+  before_action :require_unlock, only: [:show, :save_details]
 
   def show
     @items = @proposal.items
+    # The prospect only sees the confirmation once we know who they are: name,
+    # phone, e-mail and document are what the contract and the invoice need.
+    render :details unless @proposal.details_complete?
+  end
+
+  def save_details
+    result = Sales::ProspectDetailsService.new(quote: @proposal, attributes: details_params).perform
+    @clickup_error = result.clickup_error
+
+    redirect_to sales_proposal_path(@proposal.public_token)
+  rescue ActiveRecord::RecordInvalid => e
+    @items = @proposal.items
+    render :details, status: :unprocessable_entity, locals: { error: e.record.errors.full_messages.to_sentence }
   end
 
   def unlock
@@ -32,6 +45,10 @@ class Sales::ProposalsController < ActionController::Base
   end
 
   private
+
+  def details_params
+    params.require(:proposal).permit(:name, :email, :phone, :document)
+  end
 
   def set_proposal
     @proposal = SalesQuote.find_by!(public_token: params[:token])

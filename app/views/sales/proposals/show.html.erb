@@ -48,8 +48,25 @@
     </div>
   </div>
 
+  <% if @proposal.reservation_active? %>
+    <div class="mt-6 rounded bg-emerald-50 px-4 py-3" data-testid="countdown">
+      <p class="text-sm text-emerald-800">
+        Estas condições valem por
+        <strong><%= distance_of_time_in_words(Time.current, @proposal.reserved_until) %></strong>,
+        até <%= l(@proposal.reserved_until, format: :long) %>.
+      </p>
+      <% if @proposal.discount_amount.positive? %>
+        <p class="text-sm text-emerald-800 mt-1">
+          São
+          <strong><%= number_to_currency(@proposal.discount_amount / 100.0, unit: 'R$') %></strong>
+          de desconto garantidos até lá.
+        </p>
+      <% end %>
+    </div>
+  <% end %>
+
   <p class="mt-6 text-sm text-slate-500">
-    O próximo passo — seus dados e o pagamento — será liberado em breve nesta
-    mesma página.
+    O próximo passo — pagamento e aceite dos termos — será liberado em breve
+    nesta mesma página.
   </p>
 </div>

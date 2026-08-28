@@ -28,6 +28,12 @@ class SalesQuote < ApplicationRecord
 
   scope :open_deals, -> { where.not(status: [:converted, :expired, :cancelled]) }
 
+  # Everything the contract and the invoice will need from the prospect. Until
+  # it is filled, the public page keeps asking rather than moving on.
+  def details_complete?
+    prospect_name.present? && prospect_email.present? && prospect_phone.present? && prospect_document.present?
+  end
+
   # The reservation discount only holds while the reservation does. Past the
   # date the proposal stays reachable, at full price, until someone renews it.
   def reservation_active?
