@@ -81,7 +81,7 @@ class SalesQuote < ApplicationRecord
   # Everything the contract and the invoice will need from the prospect. Until
   # it is filled, the public page keeps asking rather than moving on.
   def details_complete?
-    prospect_name.present? && prospect_email.present? && prospect_phone.present? && prospect_document.present?
+    [prospect_name, company_name, prospect_email, prospect_phone, prospect_document].all?(&:present?)
   end
 
   # The reservation discount only holds while the reservation does. Past the

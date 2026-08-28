@@ -109,8 +109,10 @@ RSpec.describe 'Super Admin Commercial Quotes', type: :request do
 
       expect(response).to have_http_status(:created)
       quote = SalesQuote.last
+      # The task title is the person; the clinic rides in its own field and is
+      # usually still blank at this point.
       expect(quote).to have_attributes(
-        clickup_task_id: '86ak7rd8j', prospect_name: 'Clínica Cinco',
+        clickup_task_id: '86ak7rd8j', prospect_name: 'Felicia Macedo', company_name: 'Clínica Cinco',
         prospect_phone: '+5561981402211', clickup_status: 'negociação', status: 'draft'
       )
     end

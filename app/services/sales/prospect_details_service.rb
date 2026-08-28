@@ -7,6 +7,7 @@
 # or corrects the one it does.
 class Sales::ProspectDetailsService
   PHONE_FIELD_ID = Sales::ClickupProspectSearchService::PHONE_FIELD_ID
+  CLINIC_FIELD_ID = Sales::ClickupProspectSearchService::CLINIC_FIELD_ID
 
   Result = Struct.new(:quote, :clickup_synced, :clickup_error, keyword_init: true)
 
@@ -20,9 +21,10 @@ class Sales::ProspectDetailsService
 
   def perform
     previous_phone = digits(quote.prospect_phone)
+    previous_clinic = quote.company_name.to_s.strip
     save_details!
 
-    error = phone_changed?(previous_phone) ? sync_phone : nil
+    error = [sync_phone_if_changed(previous_phone), sync_clinic_if_changed(previous_clinic)].compact.first
     quote.events.create!(event: 'details_filled', metadata: { clickup_synced: error.nil?, clickup_error: error }.compact)
 
     Result.new(quote: quote, clickup_synced: error.nil?, clickup_error: error)
@@ -36,6 +38,9 @@ class Sales::ProspectDetailsService
       prospect_email: attributes[:email],
       prospect_phone: attributes[:phone],
       prospect_document: attributes[:document],
+      # The clinic names the account that will be created, so it is asked here
+      # rather than read from a ClickUp field that is still empty at this point.
+      company_name: attributes[:company_name],
       # The gate follows the number the prospect confirmed, otherwise the next
       # visit would ask for digits they no longer use.
       verification_phone_last4: digits(attributes[:phone]).last(4).presence
@@ -48,14 +53,25 @@ class Sales::ProspectDetailsService
     @client ||= Integrations::Clickup::Client.new
   end
 
-  def phone_changed?(previous_phone)
-    digits(attributes[:phone]).present? && digits(attributes[:phone]) != previous_phone
+  def sync_phone_if_changed(previous_phone)
+    return nil if digits(attributes[:phone]).blank? || digits(attributes[:phone]) == previous_phone
+
+    write_field(PHONE_FIELD_ID, attributes[:phone])
   end
 
-  def sync_phone
+  # The clinic is what the sales team and the ops team call the customer, and
+  # the task is where they look for it.
+  def sync_clinic_if_changed(previous_clinic)
+    clinic = attributes[:company_name].to_s.strip
+    return nil if clinic.blank? || clinic == previous_clinic
+
+    write_field(CLINIC_FIELD_ID, clinic)
+  end
+
+  def write_field(field_id, value)
     return 'ClickUp não está configurado' unless client.configured?
 
-    client.set_custom_field(quote.clickup_task_id, PHONE_FIELD_ID, attributes[:phone])
+    client.set_custom_field(quote.clickup_task_id, field_id, value)
     nil
   rescue Integrations::Clickup::Client::Error => e
     e.message

@@ -2,8 +2,8 @@ require 'rails_helper'
 
 RSpec.describe Sales::ConvertQuoteService do
   let(:quote) do
-    create(:sales_quote, prospect_name: 'Clínica Cinco', prospect_email: 'contato@clinicacinco.com.br',
-                         stripe_customer_id: 'cus_1', status: :paid)
+    create(:sales_quote, prospect_name: 'Felicia Macedo', company_name: 'Clínica Cinco',
+                         prospect_email: 'contato@clinicacinco.com.br', stripe_customer_id: 'cus_1', status: :paid)
   end
 
   it 'creates the account named after the clinic' do
@@ -48,8 +48,16 @@ RSpec.describe Sales::ConvertQuoteService do
     expect(User.where(email: 'contato@clinicacinco.com.br').count).to eq(1)
   end
 
-  it 'falls back to a name of its own when the proposal has none' do
-    quote.update!(prospect_name: nil)
+  # The clinic is what the team calls the customer; the contact's own name is
+  # only the fallback, for a sale converted before the form was filled.
+  it 'falls back to the contact name when no clinic is known yet' do
+    quote.update!(company_name: nil)
+
+    expect(described_class.new(quote: quote).perform.account.name).to eq('Felicia Macedo')
+  end
+
+  it 'falls back to a name of its own when the proposal has neither' do
+    quote.update!(company_name: nil, prospect_name: nil)
 
     expect(described_class.new(quote: quote).perform.account.name).to eq("Conta #{quote.id}")
   end

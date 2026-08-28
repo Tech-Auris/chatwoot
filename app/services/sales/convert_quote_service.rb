@@ -27,21 +27,29 @@ class Sales::ConvertQuoteService
 
   attr_reader :quote
 
-  # The account is named after the clinic the seller picked in ClickUp, which is
-  # what the team recognizes it by — never the payer's personal name.
+  # Named after the clinic, which is how the team refers to the customer. The
+  # contact's own name is the fallback: the clinic is only known once the
+  # prospect fills the public form, and a sale can be converted before that.
   def build_account
-    _user, account = AccountBuilder.new(
-      account_name: quote.prospect_name.presence || "Conta #{quote.id}",
+    _user, account = AccountBuilder.new(**builder_attributes).perform
+    account.update!(stripe_customer_id: quote.stripe_customer_id) if quote.stripe_customer_id.present?
+    account
+  end
+
+  def builder_attributes
+    {
+      account_name: account_name,
       email: quote.prospect_email,
       # A proposal can reach here without a name — the user record still needs
       # one, and the e-mail is the only other thing we are sure of.
       user_full_name: quote.prospect_name.presence || quote.prospect_email.to_s.split('@').first,
       confirmed: true,
       user: existing_user
-    ).perform
+    }
+  end
 
-    account.update!(stripe_customer_id: quote.stripe_customer_id) if quote.stripe_customer_id.present?
-    account
+  def account_name
+    quote.company_name.presence || quote.prospect_name.presence || "Conta #{quote.id}"
   end
 
   # Somebody who already has a login — a customer of another clinic, or a second
