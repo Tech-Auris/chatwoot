@@ -50,6 +50,24 @@
             class: 'mt-1 w-full border border-slate-200 rounded px-3 py-2 text-sm' %>
     </label>
 
+    <details class="mt-1 rounded border border-slate-200 px-3 py-2">
+      <summary class="text-sm text-slate-600 cursor-pointer">
+        Quero a nota fiscal no CNPJ
+      </summary>
+      <div class="mt-3 flex flex-col gap-3">
+        <label class="text-sm text-slate-600">
+          Razão social
+          <%= f.text_field :billing_name, value: @proposal.billing_name,
+                class: 'mt-1 w-full border border-slate-200 rounded px-3 py-2 text-sm' %>
+        </label>
+        <label class="text-sm text-slate-600">
+          CNPJ
+          <%= f.text_field :company_document, value: @proposal.company_document, inputmode: 'numeric',
+                class: 'mt-1 w-full border border-slate-200 rounded px-3 py-2 text-sm' %>
+        </label>
+      </div>
+    </details>
+
     <%= f.submit 'Continuar', class: 'mt-2 w-full px-3 py-2 rounded bg-blue-600 text-white text-sm cursor-pointer' %>
   <% end %>
 </div>

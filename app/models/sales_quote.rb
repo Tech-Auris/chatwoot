@@ -13,6 +13,7 @@
 #  id                       :bigint           not null, primary key
 #  access_code              :string           not null
 #  billing_cycle            :integer
+#  billing_name             :string
 #  clickup_status           :string
 #  clickup_status_synced_at :datetime
 #  company_document         :string

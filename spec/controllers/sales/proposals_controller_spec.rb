@@ -163,6 +163,9 @@ RSpec.describe 'Public sales proposal', type: :request do
         .to_return(status: 200, body: '<html><body><h1>Termos</h1><p>Conteúdo dos termos.</p></body></html>')
       allow(Integrations::Stripe::Client).to receive(:new).and_return(stripe_client)
       allow(stripe_client).to receive(:create_customer).and_return(Struct.new(:id).new('cus_1'))
+      allow(stripe_client).to receive(:update_customer)
+      allow(stripe_client).to receive(:list_tax_ids).and_return(Struct.new(:data).new([]))
+      allow(stripe_client).to receive(:create_tax_id)
       allow(stripe_client).to receive(:create_checkout_session).and_return(Struct.new(:id, :url).new('cs_1', 'https://checkout.stripe.com/x'))
       unlock
     end
