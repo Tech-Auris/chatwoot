@@ -139,4 +139,106 @@ RSpec.describe 'Public sales proposal', type: :request do
       expect(quote.reload.prospect_name).not_to eq('Invasor')
     end
   end
+
+  describe 'the payment step' do
+    let(:stripe_client) { instance_double(Integrations::Stripe::Client) }
+
+    before do
+      quote.update!(billing_cycle: :annual)
+      stub_request(:get, Sales::TermsFetcherService::DEFAULT_URL)
+        .to_return(status: 200, body: '<html><body><h1>Termos</h1><p>Conteúdo dos termos.</p></body></html>')
+      allow(Integrations::Stripe::Client).to receive(:new).and_return(stripe_client)
+      allow(stripe_client).to receive(:create_customer).and_return(Struct.new(:id).new('cus_1'))
+      allow(stripe_client).to receive(:create_checkout_session).and_return(Struct.new(:id, :url).new('cs_1', 'https://checkout.stripe.com/x'))
+      unlock
+    end
+
+    # The customer reads the terms on the page and signs that exact version; the
+    # tests go through the same door.
+    def sign_and_pay(method: 'pix', accept: '1', headers: {})
+      get "/proposals/#{quote.public_token}/pagamento"
+      version_id = response.body[/name="terms_version_id" id="terms_version_id" value="(\d+)"/, 1] ||
+                   response.body[/terms_version_id"[^>]*value="(\d+)"/, 1]
+
+      post "/proposals/#{quote.public_token}/pagamento",
+           params: { payment_method: method, accept_terms: accept, terms_version_id: version_id }.compact,
+           headers: headers
+    end
+
+    it 'renders the terms on the page instead of only linking to them' do
+      get "/proposals/#{quote.public_token}/pagamento"
+
+      expect(response.body).to include('Conteúdo dos termos')
+      expect(response.body).to include('Role até o fim para liberar o aceite')
+    end
+
+    it 'shows the plan, the pix discount and the instalment cap' do
+      get "/proposals/#{quote.public_token}/pagamento"
+
+      expect(response.body).to include('10% de desconto')
+      expect(response.body).to include('em até 12x')
+    end
+
+    # The signature has to exist before the payment starts, and it has to say
+    # where it came from.
+    it 'records the signature with the address and the browser' do
+      sign_and_pay(headers: { 'HTTP_USER_AGENT' => 'Mozilla/5.0 (Teste)' })
+
+      acceptance = quote.reload.terms_acceptances.last
+      expect(acceptance).to have_attributes(status: 'signed', signer_email: quote.prospect_email, user_agent: 'Mozilla/5.0 (Teste)')
+      expect(acceptance.ip_address).to be_present
+    end
+
+    # A contract that changes after it was signed is not auditable.
+    it 'freezes the terms as they read at the moment of signing' do
+      sign_and_pay
+
+      expect(quote.reload.terms_acceptances.last.terms_version.content).to include('Conteúdo dos termos')
+    end
+
+    it 'refuses to move on without the checkbox' do
+      sign_and_pay(method: 'card', accept: nil)
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).to include('aceitar os termos')
+      expect(quote.reload.terms_acceptances).to be_empty
+    end
+
+    it 'sends a card payment to the Stripe checkout' do
+      sign_and_pay(method: 'card')
+
+      expect(response).to redirect_to('https://checkout.stripe.com/x')
+    end
+
+    it 'keeps a pix sale here, waiting for the confirmation' do
+      sign_and_pay
+
+      follow_redirect!
+      expect(response.body).to include('enviar os dados do PIX')
+      expect(response.body).to include(quote.prospect_phone)
+    end
+
+    # Signing has to point at the text the customer actually read; without the
+    # version the page rendered, a wording changed in between would be the one
+    # on file.
+    it 'refuses a signature that does not name the version that was read' do
+      post "/proposals/#{quote.public_token}/pagamento", params: { payment_method: 'pix', accept_terms: '1' }
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).to include('Recarregue a página')
+      expect(quote.reload.terms_acceptances.status_signed).to be_empty
+    end
+
+    # Signing against a page nobody could read would leave an empty contract on
+    # file, so the flow stops instead.
+    it 'stops when the terms page cannot be read' do
+      stub_request(:get, Sales::TermsFetcherService::DEFAULT_URL).to_return(status: 503)
+
+      get "/proposals/#{quote.public_token}/pagamento"
+
+      expect(response.body).to include('Termos indisponíveis')
+      expect(response.body).not_to include('Role até o fim')
+      expect(quote.reload.terms_acceptances.status_signed).to be_empty
+    end
+  end
 end

@@ -237,6 +237,29 @@ class Integrations::Stripe::Client
     with_error_handling { Stripe::Coupon.delete(coupon_id, {}, request_options) }
   end
 
+  # Hosted checkout for the sales flow. Installments are a Brazilian card
+  # feature enabled on the account; the cap comes from the plan the customer
+  # picked, and Stripe filters the offered plans down to it.
+  # `options` carries `max_installments` and `metadata`.
+  def create_checkout_session(customer_id:, line_items:, urls:, **options)
+    payload = {
+      mode: 'payment',
+      customer: customer_id,
+      line_items: line_items,
+      success_url: urls.fetch(:success),
+      cancel_url: urls.fetch(:cancel),
+      metadata: options[:metadata] || {},
+      payment_method_types: ['card']
+    }
+    payload[:payment_method_options] = installment_options(options[:max_installments]) if options[:max_installments].to_i > 1
+
+    with_error_handling { Stripe::Checkout::Session.create(payload, request_options) }
+  end
+
+  def retrieve_checkout_session(session_id)
+    with_error_handling { Stripe::Checkout::Session.retrieve(session_id, request_options) }
+  end
+
   # Writes off an invoice paid outside Stripe (PIX at Banco Inter or AsaaS).
   #
   # The payment is registered first and the origin stamped after: if the stamp
@@ -254,6 +277,11 @@ class Integrations::Stripe::Client
   end
 
   private
+
+  def installment_options(max_installments)
+    { card: { installments: { enabled: true,
+                              plan: { count: max_installments.to_i, interval: 'month', type: 'fixed_count' } } } }
+  end
 
   def discounts_for(coupon_id)
     return nil if coupon_id.blank?

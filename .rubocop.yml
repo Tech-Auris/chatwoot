@@ -18,6 +18,7 @@ Metrics/ClassLength:
   Exclude:
     - 'app/models/message.rb'
     - 'app/models/conversation.rb'
+    - 'app/services/integrations/stripe/client.rb'
 
 Metrics/MethodLength:
   Max: 19

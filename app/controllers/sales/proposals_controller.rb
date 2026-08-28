@@ -11,7 +11,7 @@ class Sales::ProposalsController < ActionController::Base
   layout 'sales_proposal'
 
   before_action :set_proposal
-  before_action :require_unlock, only: [:show, :save_details]
+  before_action :require_unlock, only: [:show, :save_details, :checkout, :pay, :payment_return]
 
   def show
     @items = @proposal.items
@@ -44,7 +44,80 @@ class Sales::ProposalsController < ActionController::Base
     end
   end
 
+  def checkout
+    @items = @proposal.items
+    return redirect_to sales_proposal_path(@proposal.public_token) unless @proposal.details_complete?
+
+    load_checkout_data
+  rescue Sales::TermsFetcherService::Unavailable => e
+    @terms_error = e.message
+  end
+
+  # Signs the terms and starts the payment. The signature is recorded here
+  # because this is the only place that knows the address and the browser the
+  # acceptance came from.
+  def pay
+    return render_checkout_error('É preciso aceitar os termos de uso') unless params[:accept_terms] == '1'
+
+    # The signature points at the very text the page rendered, not at whatever
+    # the site serves now — otherwise the customer could sign a wording that
+    # changed between reading and clicking.
+    sign_terms!(params[:terms_version_id])
+    result = Sales::CheckoutService.new(
+      quote: @proposal, payment_method: params[:payment_method], urls: checkout_urls
+    ).perform
+
+    return redirect_to result.checkout_url, allow_other_host: true if result.checkout_url.present?
+
+    redirect_to sales_proposal_payment_return_path(@proposal.public_token)
+  rescue Sales::TermsFetcherService::Unavailable, Sales::CheckoutService::TermsNotAccepted,
+         Integrations::Stripe::Client::Error => e
+    render_checkout_error(e.message)
+  end
+
+  def payment_return
+    @items = @proposal.items
+  end
+
   private
+
+  def sign_terms!(version_id)
+    version = TermsVersion.find_by(id: version_id)
+    raise Sales::TermsFetcherService::Unavailable, 'Recarregue a página para ler os termos antes de assinar' if version.blank?
+
+    acceptance = @proposal.terms_acceptances.create!(terms_version: version, status: :pending)
+    acceptance.sign!(
+      signer: { name: @proposal.prospect_name, email: @proposal.prospect_email, document: @proposal.prospect_document },
+      ip_address: request.remote_ip,
+      user_agent: request.user_agent
+    )
+  end
+
+  def checkout_urls
+    {
+      success: sales_proposal_payment_return_url(@proposal.public_token, host: public_host),
+      cancel: sales_proposal_checkout_url(@proposal.public_token, host: public_host)
+    }
+  end
+
+  def public_host
+    ENV.fetch('FRONTEND_URL', request.base_url)
+  end
+
+  def load_checkout_data
+    @pix_discount = Sales::CheckoutService.pix_discount_for(@proposal.billing_cycle)
+    @max_installments = Sales::CheckoutService.max_installments_for(@proposal.billing_cycle)
+    @terms_version = Sales::TermsFetcherService.new.perform
+  end
+
+  def render_checkout_error(message)
+    @items = @proposal.items
+    load_checkout_data
+    render :checkout, status: :unprocessable_entity, locals: { error: message }
+  rescue Sales::TermsFetcherService::Unavailable => e
+    @terms_error = e.message
+    render :checkout, status: :unprocessable_entity, locals: { error: message }
+  end
 
   def details_params
     params.require(:proposal).permit(:name, :email, :phone, :document)

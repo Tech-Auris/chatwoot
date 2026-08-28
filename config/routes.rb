@@ -41,6 +41,9 @@ Rails.application.routes.draw do
       get ':token', to: 'proposals#show', as: :proposal
       post ':token/unlock', to: 'proposals#unlock', as: :unlock_proposal
       post ':token/details', to: 'proposals#save_details', as: :proposal_details
+      get ':token/pagamento', to: 'proposals#checkout', as: :proposal_checkout
+      post ':token/pagamento', to: 'proposals#pay', as: :proposal_pay
+      get ':token/obrigado', to: 'proposals#payment_return', as: :proposal_payment_return
     end
     resource :slack_uploads, only: [:show]
   end
