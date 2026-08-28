@@ -27,8 +27,26 @@ module SuperAdmin::NavigationHelper
     ]
   end
 
+  def commercial_open?
+    params[:controller].start_with?('super_admin/commercial/') || terms_acceptances_page?
+  end
+
+  def commercial_pages
+    [
+      { label: 'Montar plano', url: super_admin_commercial_quotes_url },
+      { label: 'Reservas', url: super_admin_commercial_reservations_url },
+      { label: 'Termos de uso', url: super_admin_terms_acceptances_url }
+    ]
+  end
+
   def financial_open?
-    params[:controller].start_with?('super_admin/financial/')
+    params[:controller].start_with?('super_admin/financial/') || terms_acceptances_page?
+  end
+
+  # Listed under both Comercial and Financeiro, so that either restricted role
+  # can reach the audit without borrowing the other's menu.
+  def terms_acceptances_page?
+    params[:controller] == 'super_admin/terms_acceptances'
   end
 
   def financial_pages
@@ -37,6 +55,8 @@ module SuperAdmin::NavigationHelper
       { label: 'Vínculos', url: super_admin_financial_customer_links_url },
       { label: 'Assinaturas', url: super_admin_financial_subscriptions_url },
       { label: 'Faturas', url: super_admin_financial_invoices_url },
+      { label: 'Renovações PIX', url: super_admin_financial_pix_renewals_url },
+      { label: 'Termos de uso', url: super_admin_terms_acceptances_url },
       { label: 'Cupons', url: super_admin_financial_coupons_url },
       { label: 'Cobrança de tokens', url: super_admin_financial_token_billings_url }
     ]

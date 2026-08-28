@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_08_28_165747) do
+ActiveRecord::Schema[7.1].define(version: 2026_08_28_203000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -1429,6 +1429,23 @@ ActiveRecord::Schema[7.1].define(version: 2026_08_28_165747) do
     t.index ["published_at"], name: "index_operations_notifications_on_published_at"
   end
 
+  create_table "pix_renewals", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "sales_quote_id", null: false
+    t.date "due_on", null: false
+    t.integer "amount", null: false
+    t.integer "status", default: 0, null: false
+    t.string "stripe_invoice_id"
+    t.string "hosted_invoice_url"
+    t.string "paid_via"
+    t.datetime "paid_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_pix_renewals_on_account_id"
+    t.index ["sales_quote_id"], name: "index_pix_renewals_on_sales_quote_id"
+    t.index ["status", "due_on"], name: "index_pix_renewals_on_status_and_due_on"
+  end
+
   create_table "platform_app_permissibles", force: :cascade do |t|
     t.bigint "platform_app_id", null: false
     t.string "permissible_type", null: false
@@ -1610,6 +1627,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_08_28_165747) do
     t.string "stripe_invoice_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "token_payment_method_id"
+    t.string "billing_name"
     t.index ["account_id"], name: "index_sales_quotes_on_account_id"
     t.index ["clickup_task_id"], name: "index_sales_quotes_on_clickup_task_id"
     t.index ["public_token"], name: "index_sales_quotes_on_public_token", unique: true
@@ -1921,6 +1940,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_08_28_165747) do
   add_foreign_key "operations_notification_acks", "accounts"
   add_foreign_key "operations_notification_acks", "operations_notifications", on_delete: :cascade
   add_foreign_key "operations_notification_acks", "users"
+  add_foreign_key "pix_renewals", "accounts"
+  add_foreign_key "pix_renewals", "sales_quotes"
   add_foreign_key "recurring_scheduled_messages", "accounts"
   add_foreign_key "recurring_scheduled_messages", "conversations"
   add_foreign_key "recurring_scheduled_messages", "inboxes"

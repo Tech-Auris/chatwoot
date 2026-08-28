@@ -1,0 +1,11 @@
+<% content_for(:title) do %>
+  Renovações PIX
+<% end %>
+
+<%= render_vue_component('FinancialPixRenewalsIndex', {
+  data_url: data_super_admin_financial_pix_renewals_url(format: :json),
+  renewals_url: super_admin_financial_pix_renewals_path,
+  register_sale_url: register_sale_super_admin_financial_pix_renewals_path,
+  configured: Integrations::Stripe::Client.new.configured?,
+  settings_url: super_admin_app_config_path(config: 'stripe')
+}) %>

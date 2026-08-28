@@ -6,6 +6,57 @@
 #
 # The deal itself lives in ClickUp. This record mirrors the task id and its
 # status so the report can be rendered without calling the API per row.
+# == Schema Information
+#
+# Table name: sales_quotes
+#
+#  id                       :bigint           not null, primary key
+#  access_code              :string           not null
+#  billing_cycle            :integer
+#  billing_name             :string
+#  clickup_status           :string
+#  clickup_status_synced_at :datetime
+#  company_document         :string
+#  company_name             :string
+#  currency                 :string           default("brl"), not null
+#  discount_amount          :integer          default(0), not null
+#  discount_summary         :string
+#  meeting_discount         :boolean          default(FALSE), not null
+#  payment_method           :integer
+#  prospect_document        :string
+#  prospect_email           :string
+#  prospect_name            :string
+#  prospect_phone           :string
+#  public_token             :string           not null
+#  reserved_until           :datetime
+#  status                   :integer          default("draft"), not null
+#  subtotal_amount          :integer          default(0), not null
+#  total_amount             :integer          default(0), not null
+#  verification_phone_last4 :string
+#  created_at               :datetime         not null
+#  updated_at               :datetime         not null
+#  account_id               :bigint
+#  clickup_task_id          :string           not null
+#  coupon_id                :string
+#  seller_id                :bigint           not null
+#  stripe_customer_id       :string
+#  stripe_invoice_id        :string
+#  stripe_subscription_id   :string
+#  token_payment_method_id  :string
+#
+# Indexes
+#
+#  index_sales_quotes_on_account_id       (account_id)
+#  index_sales_quotes_on_clickup_task_id  (clickup_task_id)
+#  index_sales_quotes_on_public_token     (public_token) UNIQUE
+#  index_sales_quotes_on_seller_id        (seller_id)
+#  index_sales_quotes_on_status           (status)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (account_id => accounts.id)
+#  fk_rails_...  (seller_id => users.id)
+#
 class SalesQuote < ApplicationRecord
   ACCESS_CODE_LENGTH = 6
 
@@ -27,6 +78,12 @@ class SalesQuote < ApplicationRecord
   before_validation :assign_credentials, on: :create
 
   scope :open_deals, -> { where.not(status: [:converted, :expired, :cancelled]) }
+
+  # Everything the contract and the invoice will need from the prospect. Until
+  # it is filled, the public page keeps asking rather than moving on.
+  def details_complete?
+    [prospect_name, company_name, prospect_email, prospect_phone, prospect_document].all?(&:present?)
+  end
 
   # The reservation discount only holds while the reservation does. Past the
   # date the proposal stays reachable, at full price, until someone renews it.

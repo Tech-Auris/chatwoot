@@ -35,6 +35,19 @@ Rails.application.routes.draw do
     namespace :survey do
       resources :responses, only: [:show]
     end
+    # Public proposal page. No login: the prospect is not a customer yet, so the
+    # token in the link plus the code the seller sends is what opens it.
+    scope :proposals, module: :sales, as: :sales do
+      get ':token', to: 'proposals#show', as: :proposal
+      post ':token/unlock', to: 'proposals#unlock', as: :unlock_proposal
+      post ':token/details', to: 'proposals#save_details', as: :proposal_details
+      get ':token/pagamento', to: 'proposals#checkout', as: :proposal_checkout
+      post ':token/pagamento', to: 'proposals#pay', as: :proposal_pay
+      get ':token/obrigado', to: 'proposals#payment_return', as: :proposal_payment_return
+      get ':token/tokens', to: 'proposals#tokens', as: :proposal_tokens
+      post ':token/tokens', to: 'proposals#save_token_card', as: :proposal_save_token_card
+      get ':token/acompanhamento', to: 'proposals#status', as: :proposal_status
+    end
     resource :slack_uploads, only: [:show]
   end
 
@@ -759,6 +772,9 @@ Rails.application.routes.draw do
   post 'webhooks/tiktok', to: 'webhooks/tiktok#events'
   post 'webhooks/shopify', to: 'webhooks/shopify#events'
   post 'webhooks/clickup', to: 'webhooks/clickup#process_payload'
+  # Payment confirmations for the commercial flow. Kept apart from the Chatwoot
+  # Cloud billing webhook, which listens on the enterprise namespace.
+  post 'webhooks/commercial/stripe', to: 'webhooks/commercial/stripe#process_payload'
 
   namespace :twitter do
     resource :callback, only: [:show]
@@ -831,6 +847,25 @@ Rails.application.routes.draw do
 
       # Financeiro: Stripe-backed screens for products, account links,
       # subscriptions and invoices.
+      namespace :commercial do
+        resources :reservations, only: [:index], controller: 'reservations' do
+          collection do
+            get :data
+          end
+        end
+
+        resources :quotes, only: [:index, :create], controller: 'quotes' do
+          collection do
+            get :data
+            get :prospects
+            post :preview
+          end
+          member do
+            post :reserve
+          end
+        end
+      end
+
       namespace :financial do
         resources :products, only: [:index, :create, :update, :destroy], controller: 'products' do
           collection do
@@ -868,6 +903,18 @@ Rails.application.routes.draw do
           end
         end
 
+        resources :pix_renewals, only: [:index], controller: 'pix_renewals' do
+          collection do
+            get :data
+            post :register_sale
+          end
+          member do
+            post :invoice
+            post :pay
+            post :cancel
+          end
+        end
+
         resources :coupons, only: [:index, :create, :destroy], controller: 'coupons' do
           collection do
             get :data
@@ -883,6 +930,12 @@ Rails.application.routes.draw do
       end
 
       # order of resources affect the order of sidebar navigation in super admin
+      resources :terms_acceptances, only: [:index, :show] do
+        collection do
+          get :data
+        end
+      end
+
       resources :accounts, only: [:index, :new, :create, :show, :edit, :update, :destroy] do
         post :seed, on: :member
         post :reset_cache, on: :member

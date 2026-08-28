@@ -1,0 +1,72 @@
+<%= render 'steps', current: :plan %>
+
+<div class="bg-white rounded-lg shadow p-6">
+  <h1 class="text-lg font-medium text-slate-900">
+    Proposta para <%= @proposal.prospect_name %>
+  </h1>
+
+  <% if @proposal.reservation_active? %>
+    <p class="mt-1 text-sm text-emerald-700">
+      Condições reservadas até
+      <strong><%= l(@proposal.reserved_until, format: :long) %></strong>.
+    </p>
+  <% elsif @proposal.reserved_until.present? %>
+    <p class="mt-1 text-sm text-amber-700">
+      A reserva venceu em <%= l(@proposal.reserved_until, format: :long) %>.
+      Fale com o seu consultor para renovar as condições.
+    </p>
+  <% end %>
+
+  <ul class="mt-5 divide-y divide-slate-100">
+    <% @items.each do |item| %>
+      <li class="py-2 flex justify-between text-sm">
+        <span class="text-slate-700">
+          <%= item.name %>
+          <% if item.quantity > 1 %>
+            <span class="text-slate-400">× <%= item.quantity %></span>
+          <% end %>
+        </span>
+        <span class="text-slate-700">
+          <%= number_to_currency(item.total_amount / 100.0, unit: 'R$') %>
+        </span>
+      </li>
+    <% end %>
+  </ul>
+
+  <div class="mt-4 pt-4 border-t border-slate-100 text-sm">
+    <div class="flex justify-between text-slate-600">
+      <span>Subtotal</span>
+      <span><%= number_to_currency(@proposal.subtotal_amount / 100.0, unit: 'R$') %></span>
+    </div>
+    <% if @proposal.discount_amount.positive? %>
+      <div class="flex justify-between text-emerald-700 mt-1">
+        <span>Desconto<%= " (#{@proposal.discount_summary})" if @proposal.discount_summary %></span>
+        <span>− <%= number_to_currency(@proposal.discount_amount / 100.0, unit: 'R$') %></span>
+      </div>
+    <% end %>
+    <div class="flex justify-between text-slate-900 font-medium mt-2 text-base">
+      <span>Total</span>
+      <span><%= number_to_currency(@proposal.total_amount / 100.0, unit: 'R$') %></span>
+    </div>
+  </div>
+
+  <% if @proposal.reservation_active? %>
+    <div class="mt-6 rounded bg-emerald-50 px-4 py-3" data-testid="countdown">
+      <p class="text-sm text-emerald-800">
+        Estas condições valem por
+        <strong><%= distance_of_time_in_words(Time.current, @proposal.reserved_until) %></strong>,
+        até <%= l(@proposal.reserved_until, format: :long) %>.
+      </p>
+      <% if @proposal.discount_amount.positive? %>
+        <p class="text-sm text-emerald-800 mt-1">
+          São
+          <strong><%= number_to_currency(@proposal.discount_amount / 100.0, unit: 'R$') %></strong>
+          de desconto garantidos até lá.
+        </p>
+      <% end %>
+    </div>
+  <% end %>
+
+  <%= link_to 'Assinar', sales_proposal_checkout_path(@proposal.public_token),
+        class: 'mt-6 block w-full text-center px-3 py-2 rounded bg-blue-600 text-white text-sm' %>
+</div>

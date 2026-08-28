@@ -10,7 +10,8 @@ class SuperAdmin::ApplicationController < Administrate::ApplicationController
   include SuperAdmin::NavigationHelper
 
   helper_method :render_vue_component, :settings_open?, :settings_pages, :reports_open?, :reports_pages,
-                :financial_open?, :financial_pages
+                :financial_open?, :financial_pages,
+                :commercial_open?, :commercial_pages
   # authenticiation done via devise : SuperAdmin Model
   before_action :authenticate_super_admin!
   before_action :authorize_console_section!
@@ -24,6 +25,9 @@ class SuperAdmin::ApplicationController < Administrate::ApplicationController
   # finance role: a console section added later is out of reach until somebody
   # decides otherwise.
   COMMERCIAL_ALLOWED_CONTROLLERS = %w[
+    super_admin/commercial/quotes
+    super_admin/commercial/reservations
+    super_admin/terms_acceptances
     super_admin/profile/mfa
     super_admin/sessions/mfa_challenge
     super_admin/devise/sessions
@@ -36,6 +40,8 @@ class SuperAdmin::ApplicationController < Administrate::ApplicationController
     super_admin/financial/invoices
     super_admin/financial/token_billings
     super_admin/financial/coupons
+    super_admin/financial/pix_renewals
+    super_admin/terms_acceptances
     super_admin/profile/mfa
     super_admin/sessions/mfa_challenge
     super_admin/devise/sessions

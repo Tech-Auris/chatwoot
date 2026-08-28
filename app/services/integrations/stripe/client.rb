@@ -124,6 +124,20 @@ class Integrations::Stripe::Client
     with_error_handling { Stripe::Customer.create(payload, request_options) }
   end
 
+  def update_customer(customer_id, attributes)
+    with_error_handling { Stripe::Customer.update(customer_id, attributes.compact, request_options) }
+  end
+
+  # Brazilian tax ids. Attaching one lets Stripe Checkout open with the document
+  # already filled instead of asking the customer for it again.
+  def create_tax_id(customer_id, type:, value:)
+    with_error_handling { Stripe::Customer.create_tax_id(customer_id, { type: type, value: value }, request_options) }
+  end
+
+  def list_tax_ids(customer_id)
+    with_error_handling { Stripe::Customer.list_tax_ids(customer_id, {}, request_options) }
+  end
+
   def link_customer_to_account(customer_id, account_id)
     with_error_handling do
       Stripe::Customer.update(customer_id, { metadata: { ACCOUNT_METADATA_KEY => account_id.to_s } }, request_options)
@@ -237,6 +251,52 @@ class Integrations::Stripe::Client
     with_error_handling { Stripe::Coupon.delete(coupon_id, {}, request_options) }
   end
 
+  # Hosted checkout for the sales flow. Installments are a Brazilian card
+  # feature enabled on the account; the cap comes from the plan the customer
+  # picked, and Stripe filters the offered plans down to it.
+  # `options` carries `max_installments` and `metadata`.
+  def create_checkout_session(customer_id:, line_items:, urls:, **options)
+    payload = {
+      mode: 'payment',
+      customer: customer_id,
+      line_items: line_items,
+      success_url: urls.fetch(:success),
+      cancel_url: urls.fetch(:cancel),
+      metadata: options[:metadata] || {},
+      payment_method_types: ['card'],
+      # The fields are already filled from the customer; collection has to be on
+      # for Checkout to show them at all.
+      phone_number_collection: { enabled: true },
+      tax_id_collection: { enabled: true },
+      customer_update: { name: 'auto', address: 'auto' }
+    }
+    payload[:payment_method_options] = installment_options(options[:max_installments]) if options[:max_installments].to_i > 1
+
+    with_error_handling { Stripe::Checkout::Session.create(payload, request_options) }
+  end
+
+  # Saves a card without charging it. Used for the token charges, which are
+  # billed later against whatever the customer registers here.
+  def create_setup_session(customer_id:, urls:, metadata: {})
+    with_error_handling do
+      Stripe::Checkout::Session.create(
+        {
+          mode: 'setup',
+          customer: customer_id,
+          currency: 'brl',
+          success_url: urls.fetch(:success),
+          cancel_url: urls.fetch(:cancel),
+          metadata: metadata
+        },
+        request_options
+      )
+    end
+  end
+
+  def retrieve_checkout_session(session_id)
+    with_error_handling { Stripe::Checkout::Session.retrieve(session_id, request_options) }
+  end
+
   # Writes off an invoice paid outside Stripe (PIX at Banco Inter or AsaaS).
   #
   # The payment is registered first and the origin stamped after: if the stamp
@@ -254,6 +314,11 @@ class Integrations::Stripe::Client
   end
 
   private
+
+  def installment_options(max_installments)
+    { card: { installments: { enabled: true,
+                              plan: { count: max_installments.to_i, interval: 'month', type: 'fixed_count' } } } }
+  end
 
   def discounts_for(coupon_id)
     return nil if coupon_id.blank?

@@ -1,0 +1,33 @@
+<%= render 'steps', current: :tokens %>
+
+<div class="bg-white rounded-lg shadow p-6">
+  <h1 class="text-lg font-medium text-slate-900">Forma de pagamento dos tokens</h1>
+  <p class="text-sm text-slate-600 mt-2">
+    O consumo de tokens é cobrado mensalmente, conforme o uso. Cadastre o cartão
+    que usaremos para essa cobrança.
+  </p>
+
+  <% if @proposal.billing_cycle_monthly? %>
+    <p class="mt-3 rounded bg-amber-50 px-3 py-2 text-sm text-amber-800">
+      Como o seu plano é mensal, este mesmo cartão também será usado nas
+      próximas mensalidades.
+    </p>
+  <% end %>
+
+  <% if local_assigns[:error].present? %>
+    <p class="mt-4 text-sm text-red-600"><%= error %></p>
+  <% end %>
+
+  <%= form_with url: sales_proposal_save_token_card_path(@proposal.public_token), method: :post, class: 'mt-5' do |f| %>
+    <p class="text-xs text-slate-500">
+      <% if @same_card_available %>
+        Você será levado ao ambiente seguro do processador, onde pode usar o
+        mesmo cartão da assinatura ou informar outro.
+      <% else %>
+        Você será levado ao ambiente seguro do processador. Não armazenamos
+        dados do cartão.
+      <% end %>
+    </p>
+    <%= f.submit 'Cadastrar cartão', class: 'mt-4 w-full px-3 py-2 rounded bg-blue-600 text-white text-sm cursor-pointer' %>
+  <% end %>
+</div>

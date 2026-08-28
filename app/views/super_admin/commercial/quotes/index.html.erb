@@ -1,0 +1,13 @@
+<% content_for(:title) do %>
+  Montar plano
+<% end %>
+
+<%= render_vue_component('CommercialQuotesIndex', {
+  data_url: data_super_admin_commercial_quotes_url(format: :json),
+  prospects_url: prospects_super_admin_commercial_quotes_url(format: :json),
+  preview_url: preview_super_admin_commercial_quotes_url(format: :json),
+  quotes_url: super_admin_commercial_quotes_path,
+  stripe_configured: Integrations::Stripe::Client.new.configured?,
+  clickup_configured: Integrations::Clickup::Client.new.configured?,
+  settings_url: super_admin_app_config_path(config: 'stripe')
+}) %>

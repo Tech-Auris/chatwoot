@@ -1,0 +1,9 @@
+<% content_for(:title) do %>
+  Reservas
+<% end %>
+
+<%= render_vue_component('CommercialReservationsIndex', {
+  data_url: data_super_admin_commercial_reservations_url(format: :json),
+  clickup_configured: Integrations::Clickup::Client.new.configured?,
+  settings_url: super_admin_app_config_path(config: 'clickup')
+}) %>
