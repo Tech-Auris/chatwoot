@@ -1,0 +1,25 @@
+<%= render 'steps', current: :payment %>
+
+<div class="bg-white rounded-lg shadow p-6">
+  <% if @proposal.payment_method_pix? %>
+    <h1 class="text-lg font-medium text-slate-900">Quase lá</h1>
+    <p class="text-sm text-slate-600 mt-2">
+      Recebemos o seu aceite. Nosso time vai enviar os dados do PIX no seu
+      WhatsApp <strong><%= @proposal.prospect_phone %></strong>.
+    </p>
+    <p class="text-sm text-slate-600 mt-2">
+      Assim que o pagamento for confirmado, liberamos o acesso e o onboarding
+      começa. Você pode voltar a esta página a qualquer momento para acompanhar.
+    </p>
+  <% else %>
+    <h1 class="text-lg font-medium text-slate-900">Pagamento recebido</h1>
+    <p class="text-sm text-slate-600 mt-2">
+      Obrigado! Vamos preparar o seu acesso e o onboarding começa em seguida.
+    </p>
+  <% end %>
+
+  <div class="mt-4 pt-4 border-t border-slate-100 flex justify-between text-sm text-slate-700">
+    <span>Total contratado</span>
+    <span><%= number_to_currency(@proposal.total_amount / 100.0, unit: 'R$') %></span>
+  </div>
+</div>

@@ -1,0 +1,82 @@
+<%= render 'steps', current: :payment %>
+
+<div class="bg-white rounded-lg shadow p-6">
+  <h1 class="text-lg font-medium text-slate-900">Pagamento da assinatura</h1>
+
+  <% if @proposal.reservation_active? %>
+    <p class="mt-1 text-sm text-emerald-700">
+      Condições reservadas até <%= l(@proposal.reserved_until, format: :long) %>.
+    </p>
+  <% elsif @proposal.reserved_until.present? %>
+    <p class="mt-1 text-sm text-amber-700">
+      A reserva venceu — os valores abaixo são os de tabela.
+    </p>
+  <% end %>
+
+  <% if local_assigns[:error].present? %>
+    <p class="mt-4 text-sm text-red-600"><%= error %></p>
+  <% end %>
+
+  <ul class="mt-5 divide-y divide-slate-100">
+    <% @items.each do |item| %>
+      <li class="py-2 flex justify-between text-sm">
+        <span class="text-slate-700">
+          <%= item.name %>
+          <% if item.quantity > 1 %><span class="text-slate-400">× <%= item.quantity %></span><% end %>
+        </span>
+        <span class="text-slate-700"><%= number_to_currency(item.total_amount / 100.0, unit: 'R$') %></span>
+      </li>
+    <% end %>
+  </ul>
+
+  <div class="mt-3 pt-3 border-t border-slate-100 flex justify-between text-base font-medium text-slate-900">
+    <span>Total</span>
+    <span><%= number_to_currency(@proposal.total_amount / 100.0, unit: 'R$') %></span>
+  </div>
+
+  <%= form_with url: sales_proposal_pay_path(@proposal.public_token), method: :post, class: 'mt-6 flex flex-col gap-4' do |f| %>
+    <fieldset>
+      <legend class="text-sm font-medium text-slate-800">Forma de pagamento</legend>
+
+      <label class="flex items-start gap-2 mt-2 text-sm text-slate-700">
+        <%= f.radio_button :payment_method, 'pix', checked: true, class: 'mt-1' %>
+        <span>
+          PIX
+          <% if @pix_discount.positive? %>
+            <strong class="text-emerald-700">— <%= @pix_discount %>% de desconto</strong>
+          <% end %>
+          <span class="block text-xs text-slate-500">
+            Enviamos os dados do PIX após a confirmação. O acesso é liberado
+            assim que o pagamento for confirmado pela nossa equipe.
+          </span>
+        </span>
+      </label>
+
+      <label class="flex items-start gap-2 mt-3 text-sm text-slate-700">
+        <%= f.radio_button :payment_method, 'card', class: 'mt-1' %>
+        <span>
+          Cartão de crédito
+          <% if @max_installments > 1 %>
+            <span class="text-slate-500">— em até <%= @max_installments %>x</span>
+          <% end %>
+          <span class="block text-xs text-slate-500">
+            Você será levado ao ambiente seguro do nosso processador de
+            pagamentos. Não armazenamos dados do cartão.
+          </span>
+        </span>
+      </label>
+    </fieldset>
+
+    <label class="flex items-start gap-2 text-sm text-slate-700">
+      <%= check_box_tag :accept_terms, '1', false, class: 'mt-1' %>
+      <span>
+        Li e aceito os
+        <a href="<%= Sales::TermsFetcherService::DEFAULT_URL %>" target="_blank" rel="noopener noreferrer" class="underline">
+          termos de uso
+        </a>.
+      </span>
+    </label>
+
+    <%= f.submit 'Assinar', class: 'w-full px-3 py-2 rounded bg-blue-600 text-white text-sm cursor-pointer' %>
+  <% end %>
+</div>

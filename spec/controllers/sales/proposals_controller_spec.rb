@@ -139,4 +139,78 @@ RSpec.describe 'Public sales proposal', type: :request do
       expect(quote.reload.prospect_name).not_to eq('Invasor')
     end
   end
+
+  describe 'the payment step' do
+    let(:stripe_client) { instance_double(Integrations::Stripe::Client) }
+
+    before do
+      quote.update!(billing_cycle: :annual)
+      stub_request(:get, Sales::TermsFetcherService::DEFAULT_URL)
+        .to_return(status: 200, body: '<html><body><h1>Termos</h1><p>Conteúdo dos termos.</p></body></html>')
+      allow(Integrations::Stripe::Client).to receive(:new).and_return(stripe_client)
+      allow(stripe_client).to receive(:create_customer).and_return(Struct.new(:id).new('cus_1'))
+      allow(stripe_client).to receive(:create_checkout_session).and_return(Struct.new(:id, :url).new('cs_1', 'https://checkout.stripe.com/x'))
+      unlock
+    end
+
+    it 'shows the plan, the pix discount and the instalment cap' do
+      get "/proposals/#{quote.public_token}/pagamento"
+
+      expect(response.body).to include('10% de desconto')
+      expect(response.body).to include('em até 12x')
+    end
+
+    # The signature has to exist before the payment starts, and it has to say
+    # where it came from.
+    it 'records the signature with the address and the browser' do
+      post "/proposals/#{quote.public_token}/pagamento",
+           params: { payment_method: 'pix', accept_terms: '1' },
+           headers: { 'HTTP_USER_AGENT' => 'Mozilla/5.0 (Teste)' }
+
+      acceptance = quote.reload.terms_acceptances.last
+      expect(acceptance).to have_attributes(status: 'signed', signer_email: quote.prospect_email, user_agent: 'Mozilla/5.0 (Teste)')
+      expect(acceptance.ip_address).to be_present
+    end
+
+    # A contract that changes after it was signed is not auditable.
+    it 'freezes the terms as they read at the moment of signing' do
+      post "/proposals/#{quote.public_token}/pagamento", params: { payment_method: 'pix', accept_terms: '1' }
+
+      expect(quote.reload.terms_acceptances.last.terms_version.content).to include('Conteúdo dos termos')
+    end
+
+    it 'refuses to move on without the checkbox' do
+      post "/proposals/#{quote.public_token}/pagamento", params: { payment_method: 'card' }
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).to include('aceitar os termos')
+      expect(quote.reload.terms_acceptances).to be_empty
+    end
+
+    it 'sends a card payment to the Stripe checkout' do
+      post "/proposals/#{quote.public_token}/pagamento", params: { payment_method: 'card', accept_terms: '1' }
+
+      expect(response).to redirect_to('https://checkout.stripe.com/x')
+    end
+
+    it 'keeps a pix sale here, waiting for the confirmation' do
+      post "/proposals/#{quote.public_token}/pagamento", params: { payment_method: 'pix', accept_terms: '1' }
+
+      follow_redirect!
+      expect(response.body).to include('enviar os dados do PIX')
+      expect(response.body).to include(quote.prospect_phone)
+    end
+
+    # Signing against a page nobody could read would leave an empty contract on
+    # file, so the flow stops instead.
+    it 'stops when the terms page cannot be read' do
+      stub_request(:get, Sales::TermsFetcherService::DEFAULT_URL).to_return(status: 503)
+
+      post "/proposals/#{quote.public_token}/pagamento", params: { payment_method: 'pix', accept_terms: '1' }
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).to include('Termos indisponíveis')
+      expect(quote.reload.terms_acceptances.status_signed).to be_empty
+    end
+  end
 end

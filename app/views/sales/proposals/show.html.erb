@@ -1,3 +1,5 @@
+<%= render 'steps', current: :plan %>
+
 <div class="bg-white rounded-lg shadow p-6">
   <h1 class="text-lg font-medium text-slate-900">
     Proposta para <%= @proposal.prospect_name %>
@@ -65,8 +67,6 @@
     </div>
   <% end %>
 
-  <p class="mt-6 text-sm text-slate-500">
-    O próximo passo — pagamento e aceite dos termos — será liberado em breve
-    nesta mesma página.
-  </p>
+  <%= link_to 'Assinar', sales_proposal_checkout_path(@proposal.public_token),
+        class: 'mt-6 block w-full text-center px-3 py-2 rounded bg-blue-600 text-white text-sm' %>
 </div>
