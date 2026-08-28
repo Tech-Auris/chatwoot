@@ -93,4 +93,31 @@ RSpec.describe 'Super admin restricted to Financeiro', type: :request do
       expect(response.body).to include('Sidekiq Dashboard')
     end
   end
+
+  describe 'a sales-only super admin' do
+    let(:sales_admin) { create(:super_admin, super_admin_role: SuperAdmin::COMMERCIAL_ROLE) }
+
+    before { sign_in(sales_admin, scope: :super_admin) }
+
+    # The sales role is the same shape as the finance one: an allowlist, so a
+    # console section added later is out of reach until somebody decides.
+    it 'is turned away from the rest of the console' do
+      get '/super_admin/accounts'
+
+      expect(response).to have_http_status(:redirect)
+      expect(flash[:alert]).to include('Comercial')
+    end
+
+    it 'is turned away from the finance section' do
+      get '/super_admin/financial/invoices'
+
+      expect(response).to have_http_status(:redirect)
+    end
+
+    it 'still manages its own two-factor authentication' do
+      get '/super_admin/profile/mfa'
+
+      expect(response).to have_http_status(:success)
+    end
+  end
 end

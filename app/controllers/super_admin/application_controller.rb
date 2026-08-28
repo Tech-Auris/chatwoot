@@ -20,6 +20,15 @@ class SuperAdmin::ApplicationController < Administrate::ApplicationController
   # profile, MFA and logout. Anything not listed is refused — a new console
   # section is out of reach until somebody decides otherwise, which is the safe
   # direction for a permission list to fail in.
+  # Controllers a sales-only super admin may reach. Same allowlist shape as the
+  # finance role: a console section added later is out of reach until somebody
+  # decides otherwise.
+  COMMERCIAL_ALLOWED_CONTROLLERS = %w[
+    super_admin/profile/mfa
+    super_admin/sessions/mfa_challenge
+    super_admin/devise/sessions
+  ].freeze
+
   FINANCIAL_ALLOWED_CONTROLLERS = %w[
     super_admin/financial/products
     super_admin/financial/customer_links
@@ -48,12 +57,22 @@ class SuperAdmin::ApplicationController < Administrate::ApplicationController
   private
 
   def authorize_console_section!
-    return unless current_super_admin&.financial_only?
-    return if FINANCIAL_ALLOWED_CONTROLLERS.include?(params[:controller])
+    return unless current_super_admin&.restricted?
+    return if allowed_controllers.include?(params[:controller])
 
     # rubocop:disable Rails/I18nLocaleTexts
-    redirect_to super_admin_financial_invoices_path, alert: 'Seu acesso é restrito à seção Financeiro.'
+    if current_super_admin.commercial_only?
+      redirect_to super_admin_root_path, alert: 'Seu acesso é restrito à seção Comercial.'
+    else
+      redirect_to super_admin_financial_invoices_path, alert: 'Seu acesso é restrito à seção Financeiro.'
+    end
     # rubocop:enable Rails/I18nLocaleTexts
+  end
+
+  def allowed_controllers
+    return COMMERCIAL_ALLOWED_CONTROLLERS if current_super_admin.commercial_only?
+
+    FINANCIAL_ALLOWED_CONTROLLERS
   end
 
   def render_vue_component(component_name, props = {})

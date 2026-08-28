@@ -55,9 +55,20 @@ class SuperAdmin < User
   # every instance-wide setting. Anything other than the roles below (including
   # nil, which is every super admin that already exists) means the full console.
   FINANCIAL_ROLE = 'financial'.freeze
-  ROLES = [FINANCIAL_ROLE].freeze
+  COMMERCIAL_ROLE = 'commercial'.freeze
+  ROLES = [FINANCIAL_ROLE, COMMERCIAL_ROLE].freeze
 
   def financial_only?
     super_admin_role == FINANCIAL_ROLE
+  end
+
+  # Sales works on proposals and reservations; the rest of the console —
+  # accounts, users, inboxes, instance settings — stays out of reach.
+  def commercial_only?
+    super_admin_role == COMMERCIAL_ROLE
+  end
+
+  def restricted?
+    ROLES.include?(super_admin_role)
   end
 end
