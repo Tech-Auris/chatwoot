@@ -1,6 +1,7 @@
 <script setup>
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useAdmin } from 'dashboard/composables/useAdmin';
 
 import Button from 'dashboard/components-next/button/Button.vue';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu.vue';
@@ -9,26 +10,38 @@ const emit = defineEmits(['add', 'import', 'export']);
 
 const { t } = useI18n();
 
-const contactMenuItems = [
-  {
-    label: t('CONTACTS_LAYOUT.HEADER.ACTIONS.CONTACT_CREATION.ADD_CONTACT'),
-    action: 'add',
-    value: 'add',
-    icon: 'i-lucide-plus',
-  },
-  {
-    label: t('CONTACTS_LAYOUT.HEADER.ACTIONS.CONTACT_CREATION.EXPORT_CONTACT'),
-    action: 'export',
-    value: 'export',
-    icon: 'i-lucide-upload',
-  },
-  {
-    label: t('CONTACTS_LAYOUT.HEADER.ACTIONS.CONTACT_CREATION.IMPORT_CONTACT'),
-    action: 'import',
-    value: 'import',
-    icon: 'i-lucide-download',
-  },
-];
+const { isAdmin, isManager } = useAdmin();
+
+// Moving the whole contact base in or out is not an agent's to do, and the API
+// refuses it. Offering the option anyway only produced a failed request.
+const canMoveContactList = computed(() => isAdmin.value || isManager.value);
+
+const contactMenuItems = computed(() =>
+  [
+    {
+      label: t('CONTACTS_LAYOUT.HEADER.ACTIONS.CONTACT_CREATION.ADD_CONTACT'),
+      action: 'add',
+      value: 'add',
+      icon: 'i-lucide-plus',
+    },
+    canMoveContactList.value && {
+      label: t(
+        'CONTACTS_LAYOUT.HEADER.ACTIONS.CONTACT_CREATION.EXPORT_CONTACT'
+      ),
+      action: 'export',
+      value: 'export',
+      icon: 'i-lucide-upload',
+    },
+    canMoveContactList.value && {
+      label: t(
+        'CONTACTS_LAYOUT.HEADER.ACTIONS.CONTACT_CREATION.IMPORT_CONTACT'
+      ),
+      action: 'import',
+      value: 'import',
+      icon: 'i-lucide-download',
+    },
+  ].filter(Boolean)
+);
 const showActionsDropdown = ref(false);
 
 const handleContactAction = ({ action }) => {
