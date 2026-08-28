@@ -1,7 +1,7 @@
 ---
-- tag: v4.15.1-auris.1.51
-  published_at: '2026-08-28T00:30:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.51
+- tag: v4.15.1-auris.1.50
+  published_at: '2026-08-28T00:45:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.50
   notes:
     en: |-
       ### ✨ What's new
@@ -9,21 +9,17 @@
       - **The funnel stage now lives on the conversation.** The stage the conversation is in appears right in its header, with the colour of the stage, and can be changed there — including a play button that advances it to the next stage. No need to open the funnel board to move a conversation along.
       - **Filter conversations by funnel stage.** The conversation filters gained a "Funnel stage" option, so you can list everyone sitting in a given stage.
       - **Automations can look at the funnel stage.** A rule can now require the conversation to be in a given stage before it acts.
+
+      ### ⚡ Improvements
+
+      - **Exporting contacts downloads the file right away.** The export used to be sent by e-mail and the message often never arrived, leaving you waiting for a file that was never coming. Now the CSV is saved to your computer as soon as you confirm the export.
     pt_BR: |-
       ### ✨ Novidades
 
       - **A etapa do funil agora fica na conversa.** A etapa em que a conversa está aparece no topo dela, com a cor da fase, e pode ser alterada ali mesmo — inclusive com um botão de avançar para a próxima etapa. Não precisa mais abrir o quadro do funil para mover a conversa.
       - **Filtrar conversas por etapa do funil.** Os filtros de conversa ganharam a opção "Etapa do funil", para listar quem está em uma determinada fase.
       - **Automações podem olhar a etapa do funil.** Uma regra passa a poder exigir que a conversa esteja em determinada etapa antes de agir.
-- tag: v4.15.1-auris.1.50
-  published_at: '2026-08-27T18:30:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.50
-  notes:
-    en: |-
-      ### ⚡ Improvements
 
-      - **Exporting contacts downloads the file right away.** The export used to be sent by e-mail and the message often never arrived, leaving you waiting for a file that was never coming. Now the CSV is saved to your computer as soon as you confirm the export.
-    pt_BR: |-
       ### ⚡ Melhorias
 
       - **Exportar contatos baixa o arquivo na hora.** Antes a exportação era enviada por e-mail e muitas vezes a mensagem não chegava, deixando você esperando por um arquivo que não vinha. Agora o CSV é salvo no seu computador assim que você confirma a exportação.
