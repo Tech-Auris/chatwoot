@@ -1,5 +1,6 @@
 import types from '../../mutation-types';
 import ConversationApi from '../../../api/inbox/conversation';
+import FunnelAPI from '../../../api/funnel';
 import MessageApi from '../../../api/inbox/message';
 import { MESSAGE_STATUS, MESSAGE_TYPE } from 'shared/constants/messages';
 import { createPendingMessage } from 'dashboard/helper/commons';
@@ -619,6 +620,25 @@ const actions = {
       aiEnabled: data.ai_enabled,
     });
     return data.ai_enabled;
+  },
+
+  // Moves the conversation to another funnel stage from the conversation header.
+  // Goes through the same endpoint the kanban uses, so the change is audited and
+  // reported the same way a dragged card is.
+  moveToFunnelStage: async (
+    { commit },
+    { conversationId, stage, lossReasonId }
+  ) => {
+    await FunnelAPI.move({
+      conversationId,
+      funnelStageId: stage.id,
+      source: 'web',
+      lossReasonId,
+    });
+    commit(types.UPDATE_CONVERSATION_FUNNEL_STAGE, {
+      conversationId,
+      stage: { id: stage.id, name: stage.name, color: stage.color },
+    });
   },
 
   setContextMenuChatId({ commit }, chatId) {

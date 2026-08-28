@@ -143,6 +143,14 @@ export const mutations = {
     if (chat) chat.ai_enabled = aiEnabled;
   },
 
+  // The funnel change is not broadcast over the websocket, so the conversation
+  // in the store is updated here — otherwise the badge would keep showing the
+  // previous stage until the list is refetched.
+  [types.UPDATE_CONVERSATION_FUNNEL_STAGE](_state, { conversationId, stage }) {
+    const chat = _state.allConversations.find(c => c.id === conversationId);
+    if (chat) chat.funnel_stage = stage;
+  },
+
   [types.UPDATE_CONVERSATION_CUSTOM_ATTRIBUTES](
     _state,
     { conversationId, customAttributes }

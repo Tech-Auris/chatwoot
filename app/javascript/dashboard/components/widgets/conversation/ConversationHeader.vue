@@ -6,6 +6,8 @@ import { useElementSize } from '@vueuse/core';
 import BackButton from '../BackButton.vue';
 import InboxName from '../InboxName.vue';
 import AiStatusBadge from 'dashboard/components-next/Conversation/AiStatusBadge.vue';
+import FunnelStageBadge from 'dashboard/components-next/Conversation/FunnelStageBadge.vue';
+import { useAccount } from 'dashboard/composables/useAccount';
 import MoreActions from './MoreActions.vue';
 import Avatar from 'next/avatar/Avatar.vue';
 import SLACardLabel from './components/SLACardLabel.vue';
@@ -36,6 +38,15 @@ const { width } = useElementSize(conversationHeader);
 const { isAWebWidgetInbox } = useInbox();
 
 const currentChat = computed(() => store.getters.getSelectedChat);
+
+// The funnel badge only exists for accounts that use the funnel at all.
+// `getCurrentAccount` is not a getter — reading it yields undefined, which
+// would hide the badge on every account, funnel or not.
+const { currentAccount } = useAccount();
+const isFunnelEnabled = computed(
+  () => currentAccount.value?.funnel_enabled === true
+);
+
 const accountId = computed(() => store.getters.getCurrentAccountId);
 
 const chatMetadata = computed(() => props.chat.meta);
@@ -71,6 +82,17 @@ const isHMACVerified = computed(() => {
 const currentContact = computed(() =>
   store.getters['contacts/getContact'](props.chat.meta.sender.id)
 );
+// The header is crowded — avatar, name, id, inbox, AI badge, SLA and actions.
+// A long contact name would push the badges out of view, so it is cut here and
+// kept whole in the tooltip.
+const CONTACT_NAME_LIMIT = 20;
+
+const contactDisplayName = computed(() => {
+  const name = currentContact.value?.name || '';
+  return name.length > CONTACT_NAME_LIMIT
+    ? `${name.slice(0, CONTACT_NAME_LIMIT)}…`
+    : name;
+});
 
 const isSnoozed = computed(
   () => currentChat.value.status === wootConstants.STATUS_TYPE.SNOOZED
@@ -133,9 +155,10 @@ const copyConversationId = async () => {
       >
         <div class="flex flex-row items-center max-w-full gap-1 p-0 m-0">
           <span
+            v-tooltip="currentContact.name"
             class="text-sm font-medium truncate leading-tight text-n-slate-12"
           >
-            {{ currentContact.name }}
+            {{ contactDisplayName }}
           </span>
           <fluent-icon
             v-if="!isHMACVerified"
@@ -190,6 +213,11 @@ const copyConversationId = async () => {
         v-if="chat?.id"
         :conversation-id="chat.id"
         :ai-enabled="chat.ai_enabled !== false"
+      />
+      <FunnelStageBadge
+        v-if="chat?.id && isFunnelEnabled"
+        :conversation-id="chat.id"
+        :stage="chat.funnel_stage"
       />
       <SLACardLabel
         v-if="hasSlaPolicyId"

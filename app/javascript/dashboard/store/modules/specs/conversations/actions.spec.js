@@ -797,3 +797,47 @@ describe('#addMentions', () => {
     });
   });
 });
+
+describe('#moveToFunnelStage', () => {
+  // The move goes through the same endpoint the kanban uses, so the change is
+  // audited and reported the same way a dragged card is.
+  it('moves by stage id and updates the conversation in the store', async () => {
+    const funnelCommit = vi.fn();
+    axios.post.mockResolvedValue({ data: {} });
+
+    await actions.moveToFunnelStage(
+      { commit: funnelCommit },
+      {
+        conversationId: 7,
+        stage: { id: 3, name: 'Agendado', color: '#16A34A' },
+      }
+    );
+
+    expect(axios.post).toHaveBeenCalledWith(
+      expect.stringContaining('/funnel/move'),
+      expect.objectContaining({ conversation_id: 7, funnel_stage_id: 3 })
+    );
+    expect(funnelCommit).toHaveBeenCalledWith(
+      types.UPDATE_CONVERSATION_FUNNEL_STAGE,
+      {
+        conversationId: 7,
+        stage: { id: 3, name: 'Agendado', color: '#16A34A' },
+      }
+    );
+  });
+
+  // The badge shows the failure; committing anyway would leave the header
+  // claiming a stage the conversation is not in.
+  it('does not touch the store when the move fails', async () => {
+    const funnelCommit = vi.fn();
+    axios.post.mockRejectedValue(new Error('Network error'));
+
+    await expect(
+      actions.moveToFunnelStage(
+        { commit: funnelCommit },
+        { conversationId: 7, stage: { id: 3, name: 'Agendado' } }
+      )
+    ).rejects.toThrow('Network error');
+    expect(funnelCommit).not.toHaveBeenCalled();
+  });
+});

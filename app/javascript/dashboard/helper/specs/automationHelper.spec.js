@@ -179,6 +179,42 @@ describe('getConditionOptions', () => {
     ).toEqual(testOptions);
   });
 
+  // Stages carry `name` where the shared mapper reads `title`; going through it
+  // would list every stage with an empty label.
+  it('returns the funnel stages with their names', () => {
+    expect(
+      helpers.getConditionOptions({
+        customAttributes,
+        funnelStages: [
+          { id: 4, name: 'Agendado', color: '#16A34A' },
+          { id: 5, name: 'Perdido', color: '#DC2626' },
+        ],
+        type: 'funnel_stage_id',
+      })
+    ).toEqual([
+      expect.objectContaining({ id: 4, name: 'Agendado' }),
+      expect.objectContaining({ id: 5, name: 'Perdido' }),
+    ]);
+  });
+
+  // The dot makes a stage recognizable by colour, the same way it looks on the
+  // funnel board and on the conversation header.
+  it('paints each funnel stage with its colour', () => {
+    const [option] = helpers.getConditionOptions({
+      customAttributes,
+      funnelStages: [{ id: 4, name: 'Agendado', color: '#16A34A' }],
+      type: 'funnel_stage_id',
+    });
+
+    expect(option.icon.props.style.backgroundColor).toBe('#16A34A');
+  });
+
+  it('returns an empty list when the account has no funnel stages', () => {
+    expect(
+      helpers.getConditionOptions({ customAttributes, type: 'funnel_stage_id' })
+    ).toEqual([]);
+  });
+
   it('returns boolean options for private_note', () => {
     const booleanOptions = [
       { id: true, name: 'True' },

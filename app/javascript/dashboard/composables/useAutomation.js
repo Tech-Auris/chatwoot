@@ -1,5 +1,5 @@
-import { ref, reactive, computed } from 'vue';
-import { useStoreGetters } from 'dashboard/composables/store';
+import { ref, reactive, computed, watch } from 'vue';
+import { useStoreGetters, useMapGetter } from 'dashboard/composables/store';
 import { useAlert } from 'dashboard/composables';
 import { useI18n } from 'vue-i18n';
 
@@ -42,6 +42,29 @@ export function useAutomation(startValue = null) {
 
   const automation = ref(startValue);
   const automationTypes = reactive(structuredClone(AUTOMATIONS));
+
+  // The funnel stage condition only makes sense where the funnel exists. Rather
+  // than asking the account — which would drag the router in here, and this
+  // composable also runs outside one — it follows the data: no active stages,
+  // no condition to offer. The wait for the fetch to settle keeps the condition
+  // from disappearing on accounts that do have stages.
+  const funnelStages = useMapGetter('funnelStages/getFunnelStages');
+  const funnelStagesUiFlags = useMapGetter('funnelStages/getUIFlags');
+
+  watch(
+    [funnelStages, funnelStagesUiFlags],
+    ([stages, uiFlags]) => {
+      if (!uiFlags?.isFetched || stages.length) return;
+
+      Object.values(automationTypes).forEach(automationType => {
+        automationType.conditions = automationType.conditions.filter(
+          condition => condition.key !== 'funnel_stage_id'
+        );
+      });
+    },
+    { immediate: true, deep: true }
+  );
+
   const eventName = computed(() => automation.value?.event_name);
 
   /**

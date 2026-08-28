@@ -26,6 +26,7 @@ export default function useAutomationValues() {
   const inboxes = useMapGetter('inboxes/getInboxes');
   const labels = useMapGetter('labels/getLabels');
   const teams = useMapGetter('teams/getTeams');
+  const funnelStages = useMapGetter('funnelStages/getFunnelStages');
   const slaPolicies = useMapGetter('sla/getSLA');
 
   const booleanFilterOptions = computed(() => [
@@ -115,6 +116,7 @@ export default function useAutomationValues() {
       priorityOptions: priorityOptions.value,
       messageTypeOptions: messageTypeOptions.value,
       teams: teams.value,
+      funnelStages: funnelStages.value,
       languages,
       countries,
       type,

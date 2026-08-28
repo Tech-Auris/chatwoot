@@ -215,8 +215,11 @@ class ConversationFinder # rubocop:disable Metrics/ClassLength
   end
 
   def conversations_base_query
+    # `funnel_stage` is serialized on every conversation, so preloading it keeps
+    # a list of 25 from firing 25 extra queries.
     @conversations.includes(
-      :taggings, :inbox, { assignee: { avatar_attachment: [:blob] } }, { contact: { avatar_attachment: [:blob] } }, :team, :contact_inbox
+      :taggings, :inbox, { assignee: { avatar_attachment: [:blob] } }, { contact: { avatar_attachment: [:blob] } }, :team, :contact_inbox,
+      :funnel_stage
     )
   end
 

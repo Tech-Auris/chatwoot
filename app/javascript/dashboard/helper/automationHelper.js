@@ -1,3 +1,4 @@
+import { h } from 'vue';
 import {
   OPERATOR_TYPES_1,
   OPERATOR_TYPES_3,
@@ -118,6 +119,7 @@ export const getActionOptions = ({
 export const getConditionOptions = ({
   agents,
   aiStatusOptions,
+  funnelStages,
   booleanFilterOptions,
   campaigns,
   contacts,
@@ -159,6 +161,22 @@ export const getConditionOptions = ({
     ],
     labels: generateConditionOptions(labels, 'title'),
     ai_enabled: aiStatusOptions,
+    // Stages carry `name`, not the `title` that `generateConditionOptions`
+    // reads — mapping them through it would list options with no label. The
+    // colour dot is the same one the funnel board and the conversation header
+    // paint, so a stage is recognized by colour wherever it is offered.
+    funnel_stage_id: (funnelStages || []).map(stage => ({
+      id: stage.id,
+      name: stage.name,
+      icon: h('span', {
+        class: 'rounded-full',
+        style: {
+          backgroundColor: stage.color,
+          height: '6px',
+          width: '6px',
+        },
+      }),
+    })),
   };
 
   return conditionFilterMaps[type];
