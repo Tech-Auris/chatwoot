@@ -903,6 +903,18 @@ Rails.application.routes.draw do
           end
         end
 
+        resources :pix_renewals, only: [:index], controller: 'pix_renewals' do
+          collection do
+            get :data
+            post :register_sale
+          end
+          member do
+            post :invoice
+            post :pay
+            post :cancel
+          end
+        end
+
         resources :coupons, only: [:index, :create, :destroy], controller: 'coupons' do
           collection do
             get :data

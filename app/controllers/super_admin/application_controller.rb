@@ -40,6 +40,7 @@ class SuperAdmin::ApplicationController < Administrate::ApplicationController
     super_admin/financial/invoices
     super_admin/financial/token_billings
     super_admin/financial/coupons
+    super_admin/financial/pix_renewals
     super_admin/terms_acceptances
     super_admin/profile/mfa
     super_admin/sessions/mfa_challenge

@@ -55,6 +55,7 @@ module SuperAdmin::NavigationHelper
       { label: 'Vínculos', url: super_admin_financial_customer_links_url },
       { label: 'Assinaturas', url: super_admin_financial_subscriptions_url },
       { label: 'Faturas', url: super_admin_financial_invoices_url },
+      { label: 'Renovações PIX', url: super_admin_financial_pix_renewals_url },
       { label: 'Termos de uso', url: super_admin_terms_acceptances_url },
       { label: 'Cupons', url: super_admin_financial_coupons_url },
       { label: 'Cobrança de tokens', url: super_admin_financial_token_billings_url }
