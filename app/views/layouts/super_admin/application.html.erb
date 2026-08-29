@@ -18,6 +18,9 @@ By default, it renders:
   <meta charset="utf-8">
   <meta name="ROBOTS" content="NOODP">
   <meta name="viewport" content="initial-scale=1">
+  <%# Light-only design: without this, a browser in dark mode paints selects,
+      buttons and scrollbars with its own system colours. %>
+  <meta name="color-scheme" content="light">
   <title>
     <%= content_for(:title) %> - <%= application_title %>
   </title>

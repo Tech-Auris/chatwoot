@@ -377,23 +377,28 @@ const startOver = () => {
 
             <ul
               v-if="prospectResults.length"
-              class="mt-2 border border-slate-100 rounded divide-y divide-slate-50"
+              class="mt-2 bg-white border border-slate-200 rounded-lg shadow-sm divide-y divide-slate-100 overflow-hidden"
             >
               <li v-for="prospect in prospectResults" :key="prospect.task_id">
                 <button
                   type="button"
-                  class="w-full text-left px-3 py-2 hover:bg-slate-25"
+                  class="w-full text-left px-3 py-2 bg-white hover:bg-slate-50"
                   @click="selectProspect(prospect)"
                 >
-                  <span class="text-sm text-slate-900">
-                    {{ prospect.clinic_name || prospect.name }}
-                  </span>
-                  <span class="text-xs text-slate-500 ml-2">
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm text-slate-900 truncate">
+                      {{ prospect.clinic_name || prospect.name }}
+                    </span>
+                    <span
+                      v-if="prospect.status"
+                      class="ml-auto flex-shrink-0 px-1.5 py-0.5 rounded text-xs bg-slate-100 text-slate-600"
+                    >
+                      {{ prospect.status }}
+                    </span>
+                  </div>
+                  <div class="text-xs text-slate-500 mt-0.5 truncate">
                     {{ prospect.email }} {{ prospect.phone }}
-                  </span>
-                  <span class="text-xs text-slate-400 ml-2">
-                    {{ prospect.status }}
-                  </span>
+                  </div>
                 </button>
               </li>
             </ul>
