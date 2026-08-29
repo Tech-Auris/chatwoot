@@ -31,6 +31,8 @@ const SOURCE_LABELS = {
 };
 
 const activeTab = ref('open');
+const searchTerm = ref('');
+let searchTimer = null;
 const invoices = ref([]);
 const meta = ref({
   has_more: false,
@@ -79,6 +81,7 @@ const fetchData = async () => {
   try {
     const params = new URLSearchParams();
     if (activeTab.value) params.set('status', activeTab.value);
+    if (searchTerm.value.trim()) params.set('q', searchTerm.value.trim());
     const cursor = cursors.value[pageIndex.value];
     if (cursor) params.set('starting_after', cursor);
 
@@ -106,6 +109,24 @@ onMounted(() => {
 });
 
 watch([activeTab, pageIndex], fetchData);
+
+// A search answers with a single page of the customer's invoices, so the cursor
+// trail is dropped rather than kept pointing at rows that are no longer listed.
+const onSearch = () => {
+  window.clearTimeout(searchTimer);
+  searchTimer = window.setTimeout(() => {
+    cursors.value = [null];
+    pageIndex.value = 0;
+    fetchData();
+  }, 400);
+};
+
+const clearSearch = () => {
+  searchTerm.value = '';
+  cursors.value = [null];
+  pageIndex.value = 0;
+  fetchData();
+};
 
 const changeTab = tab => {
   if (activeTab.value === tab) return;
@@ -344,6 +365,24 @@ const submitPay = async () => {
     </div>
 
     <template v-else>
+      <div class="flex items-center gap-3 mb-4">
+        <input
+          v-model="searchTerm"
+          type="search"
+          placeholder="Buscar por nome, e-mail ou telefone do cliente…"
+          class="w-full max-w-md border border-slate-200 rounded px-3 py-1.5 text-sm"
+          @input="onSearch"
+        />
+        <button
+          v-if="searchTerm"
+          type="button"
+          class="px-2 py-1 rounded border border-slate-200 text-slate-600 text-xs whitespace-nowrap"
+          @click="clearSearch"
+        >
+          Limpar busca
+        </button>
+      </div>
+
       <div class="flex items-center gap-4 border-b border-slate-100 mb-4">
         <button
           v-for="tab in TABS"
@@ -359,6 +398,9 @@ const submitPay = async () => {
         >
           {{ tab.label }}
         </button>
+        <span v-if="searchTerm" class="ml-auto text-xs text-slate-400">
+          Resultado da busca
+        </span>
         <span v-if="overdueCount" class="ml-auto text-xs text-red-700">
           {{ overdueCount }} vencida(s) nesta página
         </span>

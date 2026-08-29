@@ -115,6 +115,18 @@ class Integrations::Stripe::Client
     end
   end
 
+  # Customers matching a typed term, by name, e-mail or phone. Stripe's search
+  # index lags a change by up to a minute, which is harmless for a screen that
+  # looks up customers created long before the invoice being chased.
+  def search_customers(term, limit: PRODUCT_LIST_LIMIT)
+    escaped = term.to_s.gsub(/["\\]/, '')
+    return [] if escaped.blank?
+
+    query = %(name~"#{escaped}" OR email~"#{escaped}" OR phone~"#{escaped}")
+
+    with_error_handling { Stripe::Customer.search({ query: query, limit: limit }, request_options).data }
+  end
+
   # The account id rides on `metadata` so the link is readable from the Stripe
   # dashboard and can be rebuilt from Stripe if our column is ever lost.
   def create_customer(name:, email: nil, account_id: nil)
