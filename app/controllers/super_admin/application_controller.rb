@@ -11,7 +11,8 @@ class SuperAdmin::ApplicationController < Administrate::ApplicationController
 
   helper_method :render_vue_component, :settings_open?, :settings_pages, :reports_open?, :reports_pages,
                 :financial_open?, :financial_pages,
-                :commercial_open?, :commercial_pages
+                :commercial_open?, :commercial_pages,
+                :operations_open?, :operations_pages
   # authenticiation done via devise : SuperAdmin Model
   before_action :authenticate_super_admin!
   before_action :authorize_console_section!

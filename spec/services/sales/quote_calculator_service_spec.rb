@@ -23,7 +23,7 @@ RSpec.describe Sales::QuoteCalculatorService do
   it 'says what each discount was' do
     result = calculate(cart, meeting_discount: true, coupon: { id: 'c1', name: 'Parceiro', percent_off: 15 })
 
-    expect(result.summary).to eq('10% venda + 15% cupom')
+    expect(result.summary).to eq('10% venda + cupom Parceiro (15%)')
   end
 
   it 'stacks the meeting discount with a percentage coupon' do
@@ -57,11 +57,11 @@ RSpec.describe Sales::QuoteCalculatorService do
   end
 
   it 'reads a whole percentage without a decimal' do
-    expect(calculate(cart, coupon: { percent_off: 15.0 }).summary).to eq('15% cupom')
+    expect(calculate(cart, coupon: { id: 'c1', percent_off: 15.0 }).summary).to eq('cupom c1 (15%)')
   end
 
   it 'keeps the decimals of a broken percentage' do
-    expect(calculate(cart, coupon: { percent_off: 12.5 }).summary).to eq('12.5% cupom')
+    expect(calculate(cart, coupon: { id: 'c1', percent_off: 12.5 }).summary).to eq('cupom c1 (12.5%)')
   end
 
   it 'has no summary when nothing was discounted' do

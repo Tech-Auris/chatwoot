@@ -49,10 +49,14 @@ class Sales::QuoteCalculatorService
     return nil if coupon.blank?
 
     if coupon[:percent_off].present?
-      { amount: percent_of(subtotal, coupon[:percent_off]), label: "#{format_percent(coupon[:percent_off])}% cupom" }
+      { amount: percent_of(subtotal, coupon[:percent_off]), label: "cupom #{coupon_name} (#{format_percent(coupon[:percent_off])}%)" }
     else
-      { amount: coupon[:amount_off].to_i, label: "cupom #{coupon[:name] || coupon[:id]}" }
+      { amount: coupon[:amount_off].to_i, label: "cupom #{coupon_name}" }
     end
+  end
+
+  def coupon_name
+    coupon[:name].presence || coupon[:id]
   end
 
   # Only applies once the customer picks PIX, at the payment step.
