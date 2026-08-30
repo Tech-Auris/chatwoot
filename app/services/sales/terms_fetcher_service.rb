@@ -17,9 +17,16 @@ class Sales::TermsFetcherService
     response = HTTParty.get(@url, timeout: TIMEOUT, follow_redirects: true)
     raise Unavailable, "Termos indisponíveis (HTTP #{response.code})" unless response.success?
 
-    TermsVersion.for_content(@url, extract_content(response.body))
+    content = extract_content(response.body)
+    raise Unavailable, 'Os termos vieram vazios' if content.blank?
+
+    TermsVersion.for_content(@url, content)
   rescue HTTParty::Error, SocketError, Errno::ECONNREFUSED, Net::OpenTimeout, Net::ReadTimeout => e
     raise Unavailable, "Não foi possível carregar os termos: #{e.message}"
+  rescue ActiveRecord::RecordInvalid => e
+    # The page is reachable but what came back cannot be stored. Saying so on
+    # the proposal beats the generic error page the exception would produce.
+    raise Unavailable, "Não foi possível registrar os termos: #{e.record.errors.full_messages.to_sentence}"
   end
 
   private
