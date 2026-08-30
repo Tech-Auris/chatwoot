@@ -34,6 +34,28 @@ RSpec.describe Sales::ClickupProspectSearchService do
   end
 
   describe '#search' do
+    # ClickUp keeps won and lost as open columns of the pipeline, so the API
+    # still hands them over — building a plan for either makes no sense.
+    context 'when the deal is already closed' do
+      let(:tasks) do
+        [
+          task(id: '86a1', name: 'Fabio Rocha', email: 'fabio@exemplo.com', status: 'negociação'),
+          task(id: '86a2', name: 'Fabio Rocha', email: 'fabio@exemplo.com', status: 'perdido'),
+          task(id: '86a3', name: 'Fabio Rocha', email: 'fabio@exemplo.com', status: 'GANHO')
+        ]
+      end
+
+      it 'offers only the deals still in play' do
+        expect(service.search('fabio').pluck(:task_id)).to eq(['86a1'])
+      end
+
+      # The reservations report mirrors what happened to a deal, so it has to
+      # keep seeing the won and the lost ones.
+      it 'still finds a closed deal by its task id' do
+        expect(service.find('86a3')).to include(status: 'GANHO')
+      end
+    end
+
     it 'finds by the task name' do
       expect(service.search('felicia').pluck(:task_id)).to eq(['86a1'])
     end

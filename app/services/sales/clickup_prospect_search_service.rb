@@ -16,6 +16,10 @@ class Sales::ClickupProspectSearchService
   PHONE_FIELD_ID = '4e7406d4-8122-4547-a24d-d9d060920d58'.freeze
   CLINIC_FIELD_ID = '07e5b8ee-e9ab-416b-92a4-bff90aacce9c'.freeze
 
+  # A deal that was won or lost is not somebody to build a plan for. ClickUp
+  # only hides what it considers closed, and these two are open columns there.
+  CLOSED_DEAL_STATUSES = %w[ganho perdido].freeze
+
   class NotConfigured < StandardError; end
 
   def initialize(client: nil, list_id: nil)
@@ -27,9 +31,11 @@ class Sales::ClickupProspectSearchService
     normalized = normalize(term)
     return [] if normalized.blank?
 
-    prospects.select { |prospect| matches?(prospect, normalized) }.first(MAX_RESULTS)
+    prospects.select { |prospect| open_deal?(prospect) && matches?(prospect, normalized) }.first(MAX_RESULTS)
   end
 
+  # Not filtered by status: the reservations report mirrors what happened to a
+  # deal, and being won or lost is exactly what it has to see.
   def find(task_id)
     prospects.find { |prospect| prospect[:task_id] == task_id }
   end
@@ -82,6 +88,10 @@ class Sales::ClickupProspectSearchService
   def custom_field(task, field_id)
     field = (task['custom_fields'] || []).find { |candidate| candidate['id'] == field_id }
     field&.dig('value').presence
+  end
+
+  def open_deal?(prospect)
+    CLOSED_DEAL_STATUSES.exclude?(normalize(prospect[:status]))
   end
 
   # The operator types a name, an e-mail or a phone — one or the other, never a

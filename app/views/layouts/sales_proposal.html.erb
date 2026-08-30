@@ -3,6 +3,9 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <%# The page is light-only; a browser in dark mode would otherwise paint the
+        form controls with its own system colours. %>
+    <meta name="color-scheme" content="light" />
     <title>Proposta — AurisChat</title>
     <%= csrf_meta_tags %>
     <%= vite_client_tag %>
