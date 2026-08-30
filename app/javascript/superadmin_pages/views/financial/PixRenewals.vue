@@ -146,9 +146,9 @@ const cycleLabel = cycle => CYCLE_LABELS[cycle] || '—';
 const sourceLabel = source => SOURCE_LABELS[source] || source;
 
 const rowClass = renewal => {
-  if (renewal.overdue) return 'bg-red-25 text-red-700';
-  if (renewal.alerting) return 'bg-amber-25 text-amber-700';
-  if (renewal.status === 'paid') return 'bg-emerald-25 text-emerald-700';
+  if (renewal.overdue) return 'bg-red-50 text-red-700';
+  if (renewal.alerting) return 'bg-yellow-50 text-yellow-700';
+  if (renewal.status === 'paid') return 'bg-green-50 text-green-700';
   return 'bg-slate-25 text-slate-600';
 };
 
@@ -174,7 +174,7 @@ const alertMessage = computed(() => {
 
     <div
       v-if="!componentData.configured"
-      class="p-4 rounded border border-amber-100 bg-amber-25 text-sm text-amber-700"
+      class="p-4 rounded border border-yellow-100 bg-yellow-50 text-sm text-yellow-700"
     >
       Stripe ainda não configurado. Salve a Stripe Secret Key em
       <a :href="componentData.settings_url" class="underline">
@@ -184,7 +184,7 @@ const alertMessage = computed(() => {
     </div>
 
     <template v-else>
-      <div v-if="error" class="p-3 mb-4 rounded bg-red-25 text-sm text-red-700">
+      <div v-if="error" class="p-3 mb-4 rounded bg-red-50 text-sm text-red-700">
         {{ error }}
       </div>
 
@@ -198,7 +198,7 @@ const alertMessage = computed(() => {
             {{ sourceLabel(source) }}
           </option>
         </select>
-        <span v-if="alertMessage" class="ml-auto text-xs text-amber-700">
+        <span v-if="alertMessage" class="ml-auto text-xs text-yellow-700">
           {{ alertMessage }}
         </span>
       </div>

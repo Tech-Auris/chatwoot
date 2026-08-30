@@ -84,7 +84,7 @@ const isExpiring = reservation =>
 const deadlineClass = reservation => {
   if (reservation.won) return 'text-slate-500';
   if (!reservation.reservation_active) return 'text-red-700';
-  return isExpiring(reservation) ? 'text-amber-700' : 'text-slate-700';
+  return isExpiring(reservation) ? 'text-yellow-700' : 'text-slate-700';
 };
 
 const expiringCount = computed(
@@ -119,7 +119,7 @@ const wasCopied = (reservation, field) =>
 
     <div
       v-if="!componentData.clickup_configured"
-      class="p-4 rounded border border-amber-100 bg-amber-25 text-sm text-amber-700"
+      class="p-4 rounded border border-yellow-100 bg-yellow-50 text-sm text-yellow-700"
     >
       ClickUp ainda não configurado. Informe o token e a lista do pipeline em
       <a :href="componentData.settings_url" class="underline">
@@ -142,12 +142,12 @@ const wasCopied = (reservation, field) =>
       <span class="text-sm text-slate-400">
         {{ meta.total_count }} proposta(s)
       </span>
-      <span v-if="expiringCount" class="ml-auto text-xs text-amber-700">
+      <span v-if="expiringCount" class="ml-auto text-xs text-yellow-700">
         {{ expiringCount }} reserva(s) vencendo em até 3 dias
       </span>
     </div>
 
-    <div v-if="error" class="p-3 mb-4 rounded bg-red-25 text-sm text-red-700">
+    <div v-if="error" class="p-3 mb-4 rounded bg-red-50 text-sm text-red-700">
       {{ error }}
     </div>
 
@@ -201,7 +201,7 @@ const wasCopied = (reservation, field) =>
               class="px-2 py-0.5 rounded text-xs"
               :class="
                 reservation.won
-                  ? 'bg-emerald-25 text-emerald-700'
+                  ? 'bg-green-50 text-green-700'
                   : 'bg-slate-25 text-slate-600'
               "
             >

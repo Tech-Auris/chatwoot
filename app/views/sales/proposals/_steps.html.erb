@@ -12,8 +12,8 @@
 <ol class="flex items-center gap-2 mb-6" aria-label="Etapas da contratação">
   <% steps.each_with_index do |(label, key), index| %>
     <li class="flex-1">
-      <div class="h-1 rounded <%= index <= current_index ? 'bg-blue-600' : 'bg-slate-200' %>"></div>
-      <span class="mt-1 block text-[11px] <%= index == current_index ? 'text-blue-700 font-medium' : 'text-slate-400' %>">
+      <div class="h-1 rounded <%= index <= current_index ? 'bg-woot-500' : 'bg-slate-200' %>"></div>
+      <span class="mt-1 block text-[11px] <%= index == current_index ? 'text-woot-600 font-medium' : 'text-slate-400' %>">
         <%= index + 1 %>. <%= label %>
       </span>
     </li>
