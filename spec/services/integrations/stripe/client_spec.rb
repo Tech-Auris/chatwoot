@@ -210,7 +210,7 @@ RSpec.describe Integrations::Stripe::Client do
 
       expect(Stripe::Invoice).to have_received(:create).with(
         { customer: 'cus_1', collection_method: 'send_invoice', days_until_due: 15, auto_advance: false,
-          pending_invoice_item_behavior: 'exclude' },
+          pending_invoice_items_behavior: 'exclude' },
         { api_key: 'sk_test_explicit' }
       )
     end
@@ -221,7 +221,7 @@ RSpec.describe Integrations::Stripe::Client do
       client.create_invoice(customer_id: 'cus_1', items: [{ price_id: 'price_1' }])
 
       expect(Stripe::Invoice).to have_received(:create).with(
-        hash_including(pending_invoice_item_behavior: 'exclude'), anything
+        hash_including(pending_invoice_items_behavior: 'exclude'), anything
       )
     end
 
