@@ -6,6 +6,10 @@
 # that payment is registered against the invoice, keeping Stripe as the single
 # record of what was billed and what was settled.
 class SuperAdmin::Financial::InvoicesController < SuperAdmin::ApplicationController
+  # A search that matched half the base would be a page walk of Stripe, one
+  # call per customer; past this many the term was too broad to be useful.
+  SEARCH_CUSTOMER_LIMIT = 10
+
   rescue_from Integrations::Stripe::Client::Unauthorized do |e|
     render json: { error: "Credencial do Stripe inválida: #{e.message}" }, status: :unauthorized
   end
@@ -23,15 +27,15 @@ class SuperAdmin::Financial::InvoicesController < SuperAdmin::ApplicationControl
   def index; end
 
   def data
-    list = client.list_invoices(status: params[:status], starting_after: params[:starting_after])
-    load_account_names(list.data)
+    invoices, has_more = params[:q].present? ? searched_invoices : listed_invoices
+    load_account_names(invoices)
 
     render json: {
-      invoices: list.data.map { |invoice| serialize(invoice) },
+      invoices: invoices.map { |invoice| serialize(invoice) },
       accounts: billable_accounts,
       prices: catalog_prices,
       coupons: available_coupons,
-      meta: { has_more: list.has_more, last_id: list.data.last&.id, sources: Integrations::Stripe::Client::PAID_VIA_SOURCES }
+      meta: { has_more: has_more, last_id: invoices.last&.id, sources: Integrations::Stripe::Client::PAID_VIA_SOURCES }
     }
   end
 
@@ -63,6 +67,34 @@ class SuperAdmin::Financial::InvoicesController < SuperAdmin::ApplicationControl
   end
 
   private
+
+  def listed_invoices
+    list = client.list_invoices(status: params[:status], starting_after: params[:starting_after])
+    [list.data, list.has_more]
+  end
+
+  # Stripe cannot search invoices by who they are for, so the customer is found
+  # first and their invoices are read one customer at a time. The result is a
+  # single page: somebody chasing a named customer is not paging through
+  # thousands of rows.
+  def searched_invoices
+    ids = matching_customer_ids
+    return [[], false] if ids.empty?
+
+    invoices = ids.flat_map { |id| client.list_invoices(status: params[:status], customer_id: id).data }
+    [invoices.sort_by { |invoice| -invoice.created.to_i }.first(Integrations::Stripe::Client::INVOICE_PAGE_SIZE), false]
+  end
+
+  # The term is matched against Stripe and against our own account names, which
+  # drift apart: an account renamed here keeps the name it was sold under in
+  # Stripe.
+  def matching_customer_ids
+    term = params[:q].to_s.strip
+    from_stripe = client.search_customers(term).map(&:id)
+    from_accounts = Account.where('name ILIKE ?', "%#{term}%").where.not(stripe_customer_id: nil).pluck(:stripe_customer_id)
+
+    (from_stripe + from_accounts).uniq.first(SEARCH_CUSTOMER_LIMIT)
+  end
 
   def client
     @client ||= Integrations::Stripe::Client.new

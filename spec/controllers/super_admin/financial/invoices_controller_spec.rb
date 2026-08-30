@@ -54,6 +54,58 @@ RSpec.describe 'Super Admin Financial Invoices', type: :request do
     sign_in(super_admin, scope: :super_admin)
   end
 
+  describe 'searching for a customer' do
+    let(:stripe_customer) { Struct.new(:id, :name, :email).new('cus_2', 'Felicia Macedo', 'felicia@exemplo.com') }
+
+    before do
+      allow(client).to receive(:search_customers).and_return([stripe_customer])
+      allow(client).to receive(:list_invoices).with(hash_including(customer_id: 'cus_2'))
+                                              .and_return(stripe_list([stripe_invoice(id: 'in_felicia', customer: 'cus_2')]))
+      allow(client).to receive(:list_invoices).with(hash_including(customer_id: 'cus_1'))
+                                              .and_return(stripe_list([stripe_invoice(id: 'in_conciliada')]))
+    end
+
+    it 'lists the invoices of whoever matches the term in stripe' do
+      get '/super_admin/financial/invoices/data', params: { q: 'felicia' }
+
+      expect(client).to have_received(:search_customers).with('felicia')
+      expect(response.parsed_body['invoices'].pluck('id')).to eq(['in_felicia'])
+    end
+
+    # An account renamed here keeps the name it was sold under in Stripe, so the
+    # term is matched against our own names too.
+    it 'finds a customer by the account name even when stripe has another' do
+      allow(client).to receive(:search_customers).and_return([])
+
+      get '/super_admin/financial/invoices/data', params: { q: 'conciliada' }
+
+      expect(response.parsed_body['invoices'].pluck('id')).to eq(['in_conciliada'])
+    end
+
+    it 'keeps the status tab while searching' do
+      get '/super_admin/financial/invoices/data', params: { q: 'felicia', status: 'paid' }
+
+      expect(client).to have_received(:list_invoices).with(hash_including(status: 'paid', customer_id: 'cus_2'))
+    end
+
+    it 'answers with nothing when the term matches no customer' do
+      allow(client).to receive(:search_customers).and_return([])
+
+      get '/super_admin/financial/invoices/data', params: { q: 'ninguem' }
+
+      expect(response.parsed_body['invoices']).to be_empty
+      expect(response.parsed_body['meta']['has_more']).to be(false)
+    end
+
+    # The search answers with one page of that customer's invoices; paging the
+    # whole account is what the unfiltered list is for.
+    it 'does not offer another page of results' do
+      get '/super_admin/financial/invoices/data', params: { q: 'felicia' }
+
+      expect(response.parsed_body['meta']['has_more']).to be(false)
+    end
+  end
+
   describe 'GET /super_admin/financial/invoices' do
     it 'renders the screen' do
       get '/super_admin/financial/invoices'
