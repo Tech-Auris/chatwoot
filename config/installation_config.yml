@@ -561,6 +561,11 @@
   value: ''
   locked: false
   type: secret
+- name: SALES_PIX_PAYLOAD
+  display_title: 'PIX copia e cola das propostas'
+  description: 'Static PIX code of the company, shown to the prospect who chooses to pay by PIX. Paste the "copia e cola" of the account QR code — the one with no amount, since the customer types the agreed total. Leave blank to keep the page telling the customer that the sales team will send the details.'
+  value: ''
+  locked: false
 - name: CLICKUP_PIPELINE_LIST_ID
   display_title: 'ClickUp Pipeline List ID'
   description: 'Id of the sales pipeline list. The Comercial section searches this list for the prospect a proposal is built for; the deals themselves stay in ClickUp. Leave blank to disable the prospect search.'

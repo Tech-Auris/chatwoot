@@ -26,6 +26,10 @@
       Aguardando a confirmação do seu PIX. Assim que o pagamento for
       identificado, criamos o acesso e seguimos para o onboarding.
     </p>
+
+    <%# Still here, and not only on the page right after the choice: somebody
+        who closed the tab before paying comes back to this one. %>
+    <%= render 'pix_instructions' %>
   <% else %>
     <p class="text-sm text-slate-600 mt-2">
       Aguardando a confirmação do pagamento.
