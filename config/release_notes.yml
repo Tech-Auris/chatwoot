@@ -1,4 +1,12 @@
 ---
+- tag: v4.15.1-auris.1.51.3
+  published_at: '2026-08-30T22:00:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.51.3
+  notes:
+    en: |-
+      Bug fixes and internal improvements.
+    pt_BR: |-
+      Correções de bugs e melhorias internas.
 - tag: v4.15.1-auris.1.51.2
   published_at: '2026-08-30T20:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.51.2
@@ -307,27 +315,3 @@
       ### ⚡ Melhorias
 
       - **A lista de templates carrega sozinha ao abrir a página.** Se a lista estiver vazia quando você abrir Templates Meta numa caixa, o AurisChat agora sincroniza com a Meta automaticamente em vez de mostrar lista em branco. O botão Sincronizar continua funcionando igual.
-- tag: v4.15.1-auris.1.41.22
-  published_at: '2026-08-11T22:00:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.41.22
-  notes:
-    en: |-
-      ### ✨ What's new
-
-      - **New "Templates Meta" section.** You can now browse, create, edit and delete WhatsApp templates directly inside AurisChat, without opening Business Manager. Each template shows a usage summary for the last few days (how many were sent, delivered and read), and you get an on-screen notice the moment Meta approves or rejects a template.
-
-      ### 🐛 Fixes
-
-      - **Templates with a variable in the header work again.** Templates that had a variable in the header (like "Hi {{name}}") were failing to send. They now work normally.
-      - **Template messages in the history show everything the customer saw.** When you sent a template with a header or footer, the conversation history only showed the body. It now shows the whole thing, matching what the customer received on WhatsApp.
-      - **Fewer false "failed to send" alerts.** Brief WhatsApp hiccups used to instantly flag a message as failed. It now retries by itself before giving up.
-    pt_BR: |-
-      ### ✨ Novidades
-
-      - **Nova seção Templates Meta.** Agora dá pra ver, criar, editar e excluir os templates de WhatsApp direto pelo AurisChat, sem abrir o Business Manager. Cada template mostra um resumo de uso dos últimos dias (quantas foram enviadas, entregues e lidas), e você recebe um aviso na tela na hora que a Meta aprova ou rejeita um template.
-
-      ### 🐛 Correções
-
-      - **Template com variável no cabeçalho volta a funcionar.** Templates que tinham uma variável no cabeçalho (tipo "Olá {{nome}}") estavam falhando no envio. Agora funcionam normalmente.
-      - **Mensagem de template no histórico mostra tudo que o cliente viu.** Quando você enviava um template com cabeçalho ou rodapé, o histórico da conversa mostrava só o corpo. Agora aparece completo, igual ao que o cliente recebeu no WhatsApp.
-      - **Menos alertas de "falha ao enviar" falsos.** Erros passageiros do WhatsApp (uma travadinha momentânea) marcavam a mensagem como falha imediatamente. Agora ela tenta de novo sozinha antes de dizer que falhou.
