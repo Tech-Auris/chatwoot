@@ -22,7 +22,15 @@
 class TermsVersion < ApplicationRecord
   has_many :terms_acceptances, dependent: :restrict_with_error
 
+  # A contract runs longer than the 20k ApplicationRecord allows every text
+  # column by default, and that ceiling is lifted by declaring one here — which
+  # is the escape hatch it checks for. Without this the page answered 422 on the
+  # way to the payment step, since a version that cannot be saved is a contract
+  # nobody can sign.
+  CONTENT_LIMIT = 500_000
+
   validates :source_url, :content, :content_hash, :fetched_at, presence: true
+  validates :content, length: { maximum: CONTENT_LIMIT }
 
   before_validation :assign_content_hash
 

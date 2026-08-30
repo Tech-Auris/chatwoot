@@ -23,6 +23,6 @@
 
   <div class="mt-4 pt-4 border-t border-slate-100 flex justify-between text-sm text-slate-700">
     <span>Total contratado</span>
-    <span><%= number_to_currency(@proposal.total_amount / 100.0, unit: 'R$') %></span>
+    <span><%= proposal_amount(@proposal.total_amount) %></span>
   </div>
 </div>

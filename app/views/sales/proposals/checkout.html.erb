@@ -5,7 +5,7 @@
 
   <% if @proposal.reservation_active? %>
     <p class="mt-1 text-sm text-green-700">
-      Condições reservadas até <%= l(@proposal.reserved_until, format: :long) %>.
+      Condições reservadas até <%= proposal_datetime(@proposal.reserved_until) %>.
     </p>
   <% elsif @proposal.reserved_until.present? %>
     <p class="mt-1 text-sm text-yellow-700">
@@ -24,14 +24,14 @@
           <%= item.name %>
           <% if item.quantity > 1 %><span class="text-slate-400">× <%= item.quantity %></span><% end %>
         </span>
-        <span class="text-slate-700"><%= number_to_currency(item.total_amount / 100.0, unit: 'R$') %></span>
+        <span class="text-slate-700"><%= proposal_amount(item.total_amount) %></span>
       </li>
     <% end %>
   </ul>
 
   <div class="mt-3 pt-3 border-t border-slate-100 flex justify-between text-base font-medium text-slate-900">
     <span>Total</span>
-    <span><%= number_to_currency(@proposal.total_amount / 100.0, unit: 'R$') %></span>
+    <span><%= proposal_amount(@proposal.total_amount) %></span>
   </div>
 
   <%= form_with url: sales_proposal_pay_path(@proposal.public_token), method: :post, class: 'mt-6 flex flex-col gap-4' do |f| %>
