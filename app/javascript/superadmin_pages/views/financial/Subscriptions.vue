@@ -27,10 +27,10 @@ const STATUS_LABELS = {
 // Only the states that need someone to act get a colour; the rest stay neutral
 // so the table doesn't turn into a christmas tree.
 const STATUS_CLASSES = {
-  active: 'bg-emerald-25 text-emerald-700',
-  trialing: 'bg-emerald-25 text-emerald-700',
-  past_due: 'bg-red-25 text-red-700',
-  unpaid: 'bg-red-25 text-red-700',
+  active: 'bg-green-50 text-green-700',
+  trialing: 'bg-green-50 text-green-700',
+  past_due: 'bg-red-50 text-red-700',
+  unpaid: 'bg-red-50 text-red-700',
 };
 
 const INTERVAL_LABELS = {
@@ -220,7 +220,7 @@ const itemLabel = item => {
 
     <div
       v-if="!componentData.configured"
-      class="p-4 rounded border border-amber-100 bg-amber-25 text-sm text-amber-700"
+      class="p-4 rounded border border-yellow-100 bg-yellow-50 text-sm text-yellow-700"
     >
       Stripe ainda não configurado. Salve a Stripe Secret Key em
       <a :href="componentData.settings_url" class="underline">
@@ -232,7 +232,7 @@ const itemLabel = item => {
     <template v-else>
       <div
         v-if="error"
-        class="mb-4 p-3 rounded border border-red-100 bg-red-25 text-sm text-red-700"
+        class="mb-4 p-3 rounded border border-red-100 bg-red-50 text-sm text-red-700"
       >
         {{ error }}
       </div>
@@ -314,7 +314,7 @@ const itemLabel = item => {
             <td class="py-3">
               <div
                 v-if="!account.subscriptions.length"
-                class="text-xs text-amber-700"
+                class="text-xs text-yellow-700"
               >
                 Sem assinatura no Stripe
               </div>
@@ -332,7 +332,7 @@ const itemLabel = item => {
                 </div>
                 <div
                   v-if="subscription.cancel_at_period_end"
-                  class="text-xs text-amber-700"
+                  class="text-xs text-yellow-700"
                 >
                   Cancela no fim do período
                 </div>

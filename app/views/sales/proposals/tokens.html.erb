@@ -8,7 +8,7 @@
   </p>
 
   <% if @proposal.billing_cycle_monthly? %>
-    <p class="mt-3 rounded bg-amber-50 px-3 py-2 text-sm text-amber-800">
+    <p class="mt-3 rounded bg-yellow-50 px-3 py-2 text-sm text-yellow-800">
       Como o seu plano é mensal, este mesmo cartão também será usado nas
       próximas mensalidades.
     </p>
@@ -28,6 +28,6 @@
         dados do cartão.
       <% end %>
     </p>
-    <%= f.submit 'Cadastrar cartão', class: 'mt-4 w-full px-3 py-2 rounded bg-blue-600 text-white text-sm cursor-pointer' %>
+    <%= f.submit 'Cadastrar cartão', class: 'mt-4 w-full px-3 py-2 rounded bg-woot-500 text-white text-sm cursor-pointer' %>
   <% end %>
 </div>

@@ -70,8 +70,8 @@ const formatDateTime = value =>
 const statusLabel = status => STATUS_LABELS[status] || status;
 
 const statusClass = status => {
-  if (status === 'signed') return 'bg-emerald-25 text-emerald-700';
-  if (status === 'pending') return 'bg-amber-25 text-amber-700';
+  if (status === 'signed') return 'bg-green-50 text-green-700';
+  if (status === 'pending') return 'bg-yellow-50 text-yellow-700';
   return 'bg-slate-25 text-slate-600';
 };
 
@@ -132,7 +132,7 @@ const closeTerms = () => {
       </span>
     </div>
 
-    <div v-if="error" class="p-3 mb-4 rounded bg-red-25 text-sm text-red-700">
+    <div v-if="error" class="p-3 mb-4 rounded bg-red-50 text-sm text-red-700">
       {{ error }}
     </div>
 

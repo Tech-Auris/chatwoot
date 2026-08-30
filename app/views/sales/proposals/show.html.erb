@@ -6,12 +6,12 @@
   </h1>
 
   <% if @proposal.reservation_active? %>
-    <p class="mt-1 text-sm text-emerald-700">
+    <p class="mt-1 text-sm text-green-700">
       Condições reservadas até
       <strong><%= l(@proposal.reserved_until, format: :long) %></strong>.
     </p>
   <% elsif @proposal.reserved_until.present? %>
-    <p class="mt-1 text-sm text-amber-700">
+    <p class="mt-1 text-sm text-yellow-700">
       A reserva venceu em <%= l(@proposal.reserved_until, format: :long) %>.
       Fale com o seu consultor para renovar as condições.
     </p>
@@ -39,7 +39,7 @@
       <span><%= number_to_currency(@proposal.subtotal_amount / 100.0, unit: 'R$') %></span>
     </div>
     <% if @proposal.discount_amount.positive? %>
-      <div class="flex justify-between text-emerald-700 mt-1">
+      <div class="flex justify-between text-green-700 mt-1">
         <span>Desconto<%= " (#{@proposal.discount_summary})" if @proposal.discount_summary %></span>
         <span>− <%= number_to_currency(@proposal.discount_amount / 100.0, unit: 'R$') %></span>
       </div>
@@ -51,14 +51,14 @@
   </div>
 
   <% if @proposal.reservation_active? %>
-    <div class="mt-6 rounded bg-emerald-50 px-4 py-3" data-testid="countdown">
-      <p class="text-sm text-emerald-800">
+    <div class="mt-6 rounded bg-green-50 px-4 py-3" data-testid="countdown">
+      <p class="text-sm text-green-800">
         Estas condições valem por
         <strong><%= distance_of_time_in_words(Time.current, @proposal.reserved_until) %></strong>,
         até <%= l(@proposal.reserved_until, format: :long) %>.
       </p>
       <% if @proposal.discount_amount.positive? %>
-        <p class="text-sm text-emerald-800 mt-1">
+        <p class="text-sm text-green-800 mt-1">
           São
           <strong><%= number_to_currency(@proposal.discount_amount / 100.0, unit: 'R$') %></strong>
           de desconto garantidos até lá.
@@ -68,5 +68,5 @@
   <% end %>
 
   <%= link_to 'Assinar', sales_proposal_checkout_path(@proposal.public_token),
-        class: 'mt-6 block w-full text-center px-3 py-2 rounded bg-blue-600 text-white text-sm' %>
+        class: 'mt-6 block w-full text-center px-3 py-2 rounded bg-woot-500 text-white text-sm' %>
 </div>

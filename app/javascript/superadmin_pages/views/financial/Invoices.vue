@@ -170,9 +170,9 @@ const isOverdue = invoice =>
   invoice.due_date * 1000 < Date.now();
 
 const statusClass = invoice => {
-  if (isOverdue(invoice)) return 'bg-red-25 text-red-700';
-  if (invoice.status === 'paid') return 'bg-emerald-25 text-emerald-700';
-  if (invoice.status === 'open') return 'bg-amber-25 text-amber-700';
+  if (isOverdue(invoice)) return 'bg-red-50 text-red-700';
+  if (invoice.status === 'paid') return 'bg-green-50 text-green-700';
+  if (invoice.status === 'open') return 'bg-yellow-50 text-yellow-700';
   return 'bg-slate-25 text-slate-600';
 };
 
@@ -355,7 +355,7 @@ const submitPay = async () => {
 
     <div
       v-if="!componentData.configured"
-      class="p-4 rounded border border-amber-100 bg-amber-25 text-sm text-amber-700"
+      class="p-4 rounded border border-yellow-100 bg-yellow-50 text-sm text-yellow-700"
     >
       Stripe ainda não configurado. Salve a Stripe Secret Key em
       <a :href="componentData.settings_url" class="underline">
@@ -406,7 +406,7 @@ const submitPay = async () => {
         </span>
       </div>
 
-      <div v-if="error" class="p-3 mb-4 rounded bg-red-25 text-sm text-red-700">
+      <div v-if="error" class="p-3 mb-4 rounded bg-red-50 text-sm text-red-700">
         {{ error }}
       </div>
 
@@ -436,7 +436,7 @@ const submitPay = async () => {
               </div>
               <div
                 v-if="!invoice.account_name"
-                class="text-xs text-amber-700 mt-1"
+                class="text-xs text-yellow-700 mt-1"
               >
                 Cliente sem conta vinculada
               </div>

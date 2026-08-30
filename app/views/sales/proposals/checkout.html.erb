@@ -4,11 +4,11 @@
   <h1 class="text-lg font-medium text-slate-900">Pagamento da assinatura</h1>
 
   <% if @proposal.reservation_active? %>
-    <p class="mt-1 text-sm text-emerald-700">
+    <p class="mt-1 text-sm text-green-700">
       Condições reservadas até <%= l(@proposal.reserved_until, format: :long) %>.
     </p>
   <% elsif @proposal.reserved_until.present? %>
-    <p class="mt-1 text-sm text-amber-700">
+    <p class="mt-1 text-sm text-yellow-700">
       A reserva venceu — os valores abaixo são os de tabela.
     </p>
   <% end %>
@@ -43,7 +43,7 @@
         <span>
           PIX
           <% if @pix_discount.positive? %>
-            <strong class="text-emerald-700">— <%= @pix_discount %>% de desconto</strong>
+            <strong class="text-green-700">— <%= @pix_discount %>% de desconto</strong>
           <% end %>
           <span class="block text-xs text-slate-500">
             Enviamos os dados do PIX após a confirmação. O acesso é liberado
@@ -97,7 +97,7 @@
     </div>
 
     <%= f.submit 'Assinar', id: 'submit-signature', disabled: @terms_error.present?,
-          class: 'w-full px-3 py-2 rounded bg-blue-600 text-white text-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed' %>
+          class: 'w-full px-3 py-2 rounded bg-woot-500 text-white text-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed' %>
   <% end %>
 </div>
 

@@ -248,7 +248,7 @@ const startOver = () => {
       v-if="
         !componentData.stripe_configured || !componentData.clickup_configured
       "
-      class="p-4 rounded border border-amber-100 bg-amber-25 text-sm text-amber-700"
+      class="p-4 rounded border border-yellow-100 bg-yellow-50 text-sm text-yellow-700"
     >
       Falta configurar
       <span v-if="!componentData.stripe_configured">o Stripe</span>
@@ -264,7 +264,7 @@ const startOver = () => {
     </div>
 
     <template v-else>
-      <div v-if="error" class="p-3 mb-4 rounded bg-red-25 text-sm text-red-700">
+      <div v-if="error" class="p-3 mb-4 rounded bg-red-50 text-sm text-red-700">
         {{ error }}
       </div>
 
@@ -320,7 +320,7 @@ const startOver = () => {
 
           <p
             v-if="reservation && !reservation.clickup_synced"
-            class="mt-3 text-xs text-amber-700"
+            class="mt-3 text-xs text-yellow-700"
           >
             Reserva registrada, mas o ClickUp não foi atualizado:
             {{ reservation.clickup_error }}. Ajuste a data na tarefa à mão.
@@ -514,7 +514,7 @@ const startOver = () => {
             </div>
             <div
               v-if="totals.discount"
-              class="flex justify-between text-emerald-700 mt-1"
+              class="flex justify-between text-green-700 mt-1"
             >
               <span>Desconto</span>
               <span>− {{ formatAmount(totals.discount) }}</span>

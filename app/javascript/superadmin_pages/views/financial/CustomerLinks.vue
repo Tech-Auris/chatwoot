@@ -193,7 +193,7 @@ const customerLabel = customer => {
 
     <div
       v-if="!componentData.configured"
-      class="p-4 rounded border border-amber-100 bg-amber-25 text-sm text-amber-700"
+      class="p-4 rounded border border-yellow-100 bg-yellow-50 text-sm text-yellow-700"
     >
       Stripe ainda não configurado. Salve a Stripe Secret Key em
       <a :href="componentData.settings_url" class="underline">
@@ -205,7 +205,7 @@ const customerLabel = customer => {
     <template v-else>
       <div
         v-if="error"
-        class="mb-4 p-3 rounded border border-red-100 bg-red-25 text-sm text-red-700"
+        class="mb-4 p-3 rounded border border-red-100 bg-red-50 text-sm text-red-700"
       >
         {{ error }}
       </div>
@@ -286,7 +286,7 @@ const customerLabel = customer => {
                   </div>
                   <div
                     v-if="!account.stripe_customer"
-                    class="text-xs text-amber-700 mt-1"
+                    class="text-xs text-yellow-700 mt-1"
                   >
                     Cliente não encontrado no Stripe — pode ter sido excluído
                     lá.
@@ -330,7 +330,7 @@ const customerLabel = customer => {
                   :class="
                     account.token_billing_enabled
                       ? 'text-slate-600'
-                      : 'text-amber-700'
+                      : 'text-yellow-700'
                   "
                   :title="
                     account.token_billing_enabled

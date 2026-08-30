@@ -201,7 +201,7 @@ const statusLabel = status =>
 
     <div
       v-if="!componentData.configured"
-      class="p-4 rounded border border-amber-100 bg-amber-25 text-sm text-amber-700"
+      class="p-4 rounded border border-yellow-100 bg-yellow-50 text-sm text-yellow-700"
     >
       Stripe ainda não configurado. Salve a Stripe Secret Key em
       <a :href="componentData.settings_url" class="underline">
@@ -211,7 +211,7 @@ const statusLabel = status =>
     </div>
 
     <template v-else>
-      <div v-if="error" class="p-3 mb-4 rounded bg-red-25 text-sm text-red-700">
+      <div v-if="error" class="p-3 mb-4 rounded bg-red-50 text-sm text-red-700">
         {{ error }}
       </div>
 
@@ -346,10 +346,10 @@ const statusLabel = status =>
         </table>
 
         <div v-if="blockedLines.length" class="mt-4">
-          <p class="text-xs text-amber-700 mb-1">
+          <p class="text-xs text-yellow-700 mb-1">
             {{ blockedLines.length }} linha(s) fora do lote:
           </p>
-          <ul class="text-xs text-amber-700 list-disc pl-4">
+          <ul class="text-xs text-yellow-700 list-disc pl-4">
             <li v-for="line in blockedLines" :key="line.account_id">
               {{ line.account_name || 'conta ' + line.account_id }} —
               {{ line.issue }}
@@ -432,9 +432,9 @@ const statusLabel = status =>
                   class="text-xs px-2 py-1 rounded"
                   :class="
                     row.status === 'issued'
-                      ? 'bg-emerald-25 text-emerald-700'
+                      ? 'bg-green-50 text-green-700'
                       : row.status === 'failed'
-                        ? 'bg-red-25 text-red-700'
+                        ? 'bg-red-50 text-red-700'
                         : 'bg-slate-25 text-slate-600'
                   "
                 >

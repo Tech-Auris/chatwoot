@@ -181,7 +181,7 @@ const removeCoupon = async coupon => {
 
     <div
       v-if="!componentData.configured"
-      class="p-4 rounded border border-amber-100 bg-amber-25 text-sm text-amber-700"
+      class="p-4 rounded border border-yellow-100 bg-yellow-50 text-sm text-yellow-700"
     >
       Stripe ainda não configurado. Salve a Stripe Secret Key em
       <a :href="componentData.settings_url" class="underline">
@@ -191,7 +191,7 @@ const removeCoupon = async coupon => {
     </div>
 
     <template v-else>
-      <div v-if="error" class="p-3 mb-4 rounded bg-red-25 text-sm text-red-700">
+      <div v-if="error" class="p-3 mb-4 rounded bg-red-50 text-sm text-red-700">
         {{ error }}
       </div>
 
