@@ -1,4 +1,12 @@
 ---
+- tag: v4.15.1-auris.1.51.1
+  published_at: '2026-08-30T15:30:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.51.1
+  notes:
+    en: |-
+      Bug fixes and internal improvements.
+    pt_BR: |-
+      Correções de bugs e melhorias internas.
 - tag: v4.15.1-auris.1.51
   published_at: '2026-08-28T21:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.51
@@ -329,11 +337,3 @@
 
       - **Sem repetições de "Atribuído a X" na conversa.** Quando o sistema atribuía a conversa automaticamente, às vezes apareciam várias linhas iguais de "Atribuído a X" em poucos segundos. Agora aparece só uma.
       - **Relatório de Funil volta a fazer sentido.** No relatório "Funil de Conversão", a primeira coluna às vezes ficava menor que uma seguinte, dando impressão de funil errado. Agora a primeira coluna já engloba todas as conversas que passaram pelo funil no período, e as taxas de conversão usam esse mesmo número — então elas podem aparecer um pouco menores para contas que recebem leads que entraram no funil em períodos anteriores.
-- tag: v4.15.1-auris.1.41.20
-  published_at: '2026-08-05T14:00:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.41.20
-  notes:
-    en: |-
-      Internal improvements.
-    pt_BR: |-
-      Melhorias internas.
