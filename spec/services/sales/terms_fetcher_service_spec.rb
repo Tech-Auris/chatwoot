@@ -85,4 +85,28 @@ RSpec.describe Sales::TermsFetcherService do
 
     expect { described_class.new.perform }.to raise_error(described_class::Unavailable, /não foi possível/i)
   end
+
+  # ApplicationRecord caps every text column at 20k unless the model says
+  # otherwise, and a contract runs well past that. Before the model declared its
+  # own limit, reaching the payment step answered 422.
+  it 'stores a contract longer than the default column ceiling' do
+    long_terms = "<p>#{'cláusula ' * 5_000}</p>"
+    stub_request(:get, described_class::DEFAULT_URL).to_return(status: 200, body: long_terms)
+
+    version = described_class.new.perform
+
+    expect(version.content.length).to be > 20_000
+  end
+
+  it 'refuses a page that came back empty instead of failing to save it' do
+    stub_request(:get, described_class::DEFAULT_URL).to_return(status: 200, body: '<html><body></body></html>')
+
+    expect { described_class.new.perform }.to raise_error(described_class::Unavailable, /vazios/)
+  end
+
+  it 'explains a version that cannot be stored' do
+    stub_request(:get, described_class::DEFAULT_URL).to_return(status: 200, body: "<p>#{'x' * 600_000}</p>")
+
+    expect { described_class.new.perform }.to raise_error(described_class::Unavailable, /não foi possível registrar os termos/i)
+  end
 end
