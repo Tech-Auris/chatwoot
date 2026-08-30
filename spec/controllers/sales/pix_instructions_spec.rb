@@ -17,7 +17,10 @@ RSpec.describe 'Sales proposal PIX instructions', type: :request do
   end
 
   context 'when the company PIX code is configured' do
-    let(:payload) { '00020126580014BR.GOV.BCB.PIX0136auris-pix-key5204000053039865802BR6009SAO PAULO' }
+    # The company's own static code, which is what Settings ships with.
+    let(:payload) do
+      '00020101021126360014br.gov.bcb.pix0114618188670001435204000053039865802BR5905AURIS6009SAO PAULO62070503***6304BF67'
+    end
 
     before do
       InstallationConfig.where(name: 'SALES_PIX_PAYLOAD').first_or_create!(value: payload)
@@ -28,16 +31,17 @@ RSpec.describe 'Sales proposal PIX instructions', type: :request do
       get "/proposals/#{proposal.public_token}/obrigado"
 
       expect(response.body).to include('AURIS AI SERVIÇOS DE TECNOLOGIA LTDA', '61.818.867/0001-43')
-      expect(response.body).to include('Informe o valor quando for pagar')
-      expect(response.body).to include(payload)
+      expect(response.body).to include('Confira o valor quando for pagar')
       expect(response.body).to include('R$ 12.867,60')
+      # The code carries the total, so the customer confirms rather than types.
+      expect(response.body).to include('540812867.60')
     end
 
     # The customer who closed the tab before paying comes back to this one.
     it 'keeps the instructions on the tracking page while the payment is pending' do
       get "/proposals/#{proposal.public_token}/acompanhamento"
 
-      expect(response.body).to include('Informe o valor quando for pagar', payload)
+      expect(response.body).to include('Confira o valor quando for pagar', '540812867.60')
     end
 
     it 'draws the qr code from the same payload' do
@@ -58,7 +62,7 @@ RSpec.describe 'Sales proposal PIX instructions', type: :request do
 
       expect(response.body).to include('AURIS AI SERVIÇOS DE TECNOLOGIA LTDA')
       expect(response.body).to include('envia o código do PIX no seu WhatsApp')
-      expect(response.body).not_to include('Informe o valor quando for pagar')
+      expect(response.body).not_to include('Confira o valor quando for pagar')
     end
   end
 end
