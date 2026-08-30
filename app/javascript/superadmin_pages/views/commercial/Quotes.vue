@@ -56,6 +56,15 @@ const formatAmount = (amount, currency = 'brl') =>
     currency: currency.toUpperCase(),
   }).format((amount || 0) / 100);
 
+// A coupon says what it takes off, next to its name: the team picks by the
+// discount, and two coupons can read the same by name alone.
+const couponLabel = coupon => {
+  const name = coupon.name || coupon.id;
+  if (coupon.percent_off) return `${name} — ${coupon.percent_off}%`;
+  if (coupon.amount_off) return `${name} — ${formatAmount(coupon.amount_off)}`;
+  return name;
+};
+
 const fetchCatalog = async () => {
   loading.value = true;
   error.value = null;
@@ -488,7 +497,7 @@ const startOver = () => {
                 :key="coupon.id"
                 :value="coupon.id"
               >
-                {{ coupon.name || coupon.id }}
+                {{ couponLabel(coupon) }}
               </option>
             </select>
           </label>

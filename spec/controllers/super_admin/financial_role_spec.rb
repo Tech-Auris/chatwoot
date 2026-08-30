@@ -68,12 +68,21 @@ RSpec.describe 'Super admin restricted to Financeiro', type: :request do
       expect(response).to have_http_status(:success)
     end
 
-    it 'sees only the Financeiro menu in the sidebar' do
+    it 'sees only the Financial menu in the sidebar' do
       get '/super_admin/financial/invoices'
 
-      expect(response.body).to include('Financeiro')
+      expect(response.body).to include('Financial')
       expect(response.body).not_to include('Sidekiq Dashboard')
       expect(response.body).not_to include('Platform Apps')
+    end
+
+    # The terms audit is the one Operations page a restricted console reaches;
+    # the health screens are not theirs.
+    it 'sees the terms audit under Operations, and nothing else there' do
+      get '/super_admin/financial/invoices'
+
+      expect(response.body).to include('Terms of use')
+      expect(response.body).not_to include('Health Score')
     end
   end
 
@@ -91,6 +100,14 @@ RSpec.describe 'Super admin restricted to Financeiro', type: :request do
 
       expect(full_admin.super_admin_role).to be_nil
       expect(response.body).to include('Sidekiq Dashboard')
+    end
+
+    # How the operation is doing and what it has on record: neither a sales nor
+    # a finance matter, so they sit in a section of their own.
+    it 'finds the health screens and the terms audit under Operations' do
+      get '/super_admin/accounts'
+
+      expect(response.body).to include('Operations', 'Health Score', 'Inbox status', 'Terms of use')
     end
   end
 

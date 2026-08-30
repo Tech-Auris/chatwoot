@@ -73,9 +73,10 @@ as defined by the routes in the `admin/` namespace
         %>
 
       <% end %>
-      <%= render 'commercial_menu', open: commercial_open? %>
-      <%= render 'financial_menu', open: financial_open? %>
-      <%= render 'reports_menu', open: reports_open? unless financial_only %>
+      <%= render 'section_menu', title: 'Commercial', icon: 'icon-briefcase-line', pages: commercial_pages, open: commercial_open? %>
+      <%= render 'section_menu', title: 'Financial', icon: 'icon-money-dollar-circle-line', pages: financial_pages, open: financial_open? %>
+      <%= render 'section_menu', title: 'Operations', icon: 'icon-health-book-line', pages: operations_pages, open: operations_open? %>
+      <%= render 'section_menu', title: 'Reports', icon: 'icon-bar-chart-2-line', pages: reports_pages, open: reports_open? unless financial_only %>
       <%= render 'settings_menu', open: settings_open? unless financial_only %>
     </ul>
   </div>
