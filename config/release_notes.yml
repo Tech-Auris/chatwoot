@@ -1,4 +1,12 @@
 ---
+- tag: v4.15.1-auris.1.51.2
+  published_at: '2026-08-30T20:00:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.51.2
+  notes:
+    en: |-
+      Bug fixes and internal improvements.
+    pt_BR: |-
+      Correções de bugs e melhorias internas.
 - tag: v4.15.1-auris.1.51.1
   published_at: '2026-08-30T15:30:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.51.1
@@ -323,17 +331,3 @@
       - **Template com variável no cabeçalho volta a funcionar.** Templates que tinham uma variável no cabeçalho (tipo "Olá {{nome}}") estavam falhando no envio. Agora funcionam normalmente.
       - **Mensagem de template no histórico mostra tudo que o cliente viu.** Quando você enviava um template com cabeçalho ou rodapé, o histórico da conversa mostrava só o corpo. Agora aparece completo, igual ao que o cliente recebeu no WhatsApp.
       - **Menos alertas de "falha ao enviar" falsos.** Erros passageiros do WhatsApp (uma travadinha momentânea) marcavam a mensagem como falha imediatamente. Agora ela tenta de novo sozinha antes de dizer que falhou.
-- tag: v4.15.1-auris.1.41.21
-  published_at: '2026-08-06T14:00:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.41.21
-  notes:
-    en: |-
-      ### 🐛 Fixes
-
-      - **No more repeated "Assigned to X" lines on a conversation.** When the system auto-assigned a conversation, the timeline sometimes showed several identical "Assigned to X" entries within a few seconds. Now only one shows up.
-      - **The Funnel report tapers again.** In the "Conversion Funnel" report, the first column would sometimes end up smaller than a later column, making the funnel look broken. The first column now rolls up every conversation that moved through the funnel in the period, and the conversion rates use it as the denominator — so rates may read a bit lower for accounts that receive leads that first entered in earlier periods.
-    pt_BR: |-
-      ### 🐛 Correções
-
-      - **Sem repetições de "Atribuído a X" na conversa.** Quando o sistema atribuía a conversa automaticamente, às vezes apareciam várias linhas iguais de "Atribuído a X" em poucos segundos. Agora aparece só uma.
-      - **Relatório de Funil volta a fazer sentido.** No relatório "Funil de Conversão", a primeira coluna às vezes ficava menor que uma seguinte, dando impressão de funil errado. Agora a primeira coluna já engloba todas as conversas que passaram pelo funil no período, e as taxas de conversão usam esse mesmo número — então elas podem aparecer um pouco menores para contas que recebem leads que entraram no funil em períodos anteriores.
