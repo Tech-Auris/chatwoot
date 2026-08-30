@@ -28,7 +28,9 @@ const statusFilter = ref('');
 const page = ref(1);
 const loading = ref(false);
 const error = ref(null);
-const copiedId = ref(null);
+// Which row was copied and what was taken from it, so the feedback lands on the
+// button that was actually pressed.
+const copied = ref({ id: null, field: null });
 
 const fetchData = async () => {
   loading.value = true;
@@ -89,17 +91,20 @@ const expiringCount = computed(
   () => reservations.value.filter(r => !r.won && isExpiring(r)).length
 );
 
-// The prospect gets the link and the code together — the code is useless
-// without the page and the page will not open without the code.
-const copyLink = async reservation => {
-  await navigator.clipboard.writeText(
-    `${reservation.public_url}\nCódigo de acesso: ${reservation.access_code}`
-  );
-  copiedId.value = reservation.id;
+// The link and the code are copied apart on purpose: sending both in the same
+// message would make the code pointless, since it exists so that a forwarded
+// link alone opens nothing.
+const copy = async (reservation, field, value) => {
+  await navigator.clipboard.writeText(value);
+  copied.value = { id: reservation.id, field };
   window.setTimeout(() => {
-    if (copiedId.value === reservation.id) copiedId.value = null;
+    if (copied.value.id === reservation.id && copied.value.field === field)
+      copied.value = { id: null, field: null };
   }, 2000);
 };
+
+const wasCopied = (reservation, field) =>
+  copied.value.id === reservation.id && copied.value.field === field;
 </script>
 
 <template>
@@ -157,7 +162,7 @@ const copyLink = async reservation => {
           <th class="py-2">Situação</th>
           <th class="py-2 text-right">Valor</th>
           <th class="py-2 text-right">Reserva até</th>
-          <th class="py-2 text-right">Link</th>
+          <th class="py-2 text-right">Link e código</th>
         </tr>
       </thead>
       <tbody>
@@ -219,13 +224,29 @@ const copyLink = async reservation => {
           </td>
 
           <td class="py-3 text-right">
-            <button
-              type="button"
-              class="px-2 py-1 rounded border border-slate-200 text-slate-600 text-xs"
-              @click="copyLink(reservation)"
-            >
-              {{ copiedId === reservation.id ? 'Copiado!' : 'Copiar link' }}
-            </button>
+            <div class="flex gap-2 justify-end">
+              <button
+                type="button"
+                class="px-2 py-1 rounded border border-slate-200 text-slate-600 text-xs whitespace-nowrap"
+                @click="copy(reservation, 'link', reservation.public_url)"
+              >
+                {{
+                  wasCopied(reservation, 'link') ? 'Copiado!' : 'Copiar link'
+                }}
+              </button>
+              <button
+                type="button"
+                class="px-2 py-1 rounded border border-slate-200 text-slate-600 text-xs whitespace-nowrap"
+                :title="`Código de acesso: ${reservation.access_code}`"
+                @click="copy(reservation, 'code', reservation.access_code)"
+              >
+                {{
+                  wasCopied(reservation, 'code')
+                    ? 'Copiado!'
+                    : reservation.access_code
+                }}
+              </button>
+            </div>
           </td>
         </tr>
 
