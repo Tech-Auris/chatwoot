@@ -23,8 +23,8 @@ const STATUS_LABELS = {
 const reservations = ref([]);
 const statuses = ref([]);
 const meta = ref({ current_page: 1, total_pages: 1, total_count: 0 });
-// null means "not chosen yet"; the server answers with the status it applied.
-const statusFilter = ref(null);
+// The screen opens showing every proposal; the status narrows it down.
+const statusFilter = ref('');
 const page = ref(1);
 const loading = ref(false);
 const error = ref(null);
@@ -35,8 +35,7 @@ const fetchData = async () => {
   error.value = null;
   try {
     const params = new URLSearchParams({ page: page.value });
-    if (statusFilter.value !== null)
-      params.set('clickup_status', statusFilter.value);
+    if (statusFilter.value) params.set('clickup_status', statusFilter.value);
 
     const res = await fetch(`${props.componentData.data_url}?${params}`, {
       headers: { Accept: 'application/json' },
@@ -48,8 +47,6 @@ const fetchData = async () => {
     reservations.value = body.reservations || [];
     statuses.value = body.statuses || [];
     meta.value = body.meta || meta.value;
-    if (statusFilter.value === null)
-      statusFilter.value = body.meta?.applied_status ?? '';
   } catch (e) {
     error.value = e.message;
   } finally {
@@ -60,9 +57,7 @@ const fetchData = async () => {
 onMounted(fetchData);
 
 watch(page, fetchData);
-watch(statusFilter, (value, previous) => {
-  // The first assignment only records what the server already applied.
-  if (previous === null) return;
+watch(statusFilter, () => {
   page.value = 1;
   fetchData();
 });
@@ -236,7 +231,11 @@ const copyLink = async reservation => {
 
         <tr v-if="!reservations.length">
           <td colspan="7" class="py-6 text-center text-slate-400">
-            Nenhuma proposta com este status.
+            {{
+              statusFilter
+                ? 'Nenhuma proposta com este status.'
+                : 'Nenhuma proposta enviada ainda.'
+            }}
           </td>
         </tr>
       </tbody>

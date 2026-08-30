@@ -23,21 +23,12 @@ RSpec.describe 'Super Admin Commercial Reservations', type: :request do
     let!(:negotiating) { create(:sales_quote, status: :reserved, clickup_status: 'negociação', reserved_until: 5.days.from_now) }
     let!(:won) { create(:sales_quote, status: :converted, clickup_status: 'ganho') }
 
-    # The team works the deals still in play; the closed ones only show up when
-    # asked for.
-    it 'opens on the deals in negotiation' do
+    # Whatever the team has out is the screen; a status is how they narrow it.
+    it 'opens on every proposal' do
       get '/super_admin/commercial/reservations/data'
 
-      expect(response.parsed_body['reservations'].pluck('id')).to eq([negotiating.id])
-      expect(response.parsed_body['meta']['applied_status']).to eq('negociação')
-    end
-
-    it 'lists every proposal when the filter is cleared' do
-      allow(search_service).to receive(:find) { |task_id| { task_id: task_id, status: nil } }
-
-      get '/super_admin/commercial/reservations/data', params: { clickup_status: '' }
-
       expect(response.parsed_body['reservations'].pluck('id')).to contain_exactly(negotiating.id, won.id)
+      expect(response.parsed_body['meta']['applied_status']).to eq('')
     end
 
     it 'filters by a chosen status regardless of case' do
@@ -47,7 +38,7 @@ RSpec.describe 'Super Admin Commercial Reservations', type: :request do
     end
 
     it 'carries the link and the access code the prospect needs' do
-      get '/super_admin/commercial/reservations/data'
+      get '/super_admin/commercial/reservations/data', params: { clickup_status: 'negociação' }
 
       row = response.parsed_body['reservations'].first
       expect(row['public_url']).to include(negotiating.public_token)
@@ -56,7 +47,7 @@ RSpec.describe 'Super Admin Commercial Reservations', type: :request do
     end
 
     it 'marks only a converted proposal as won' do
-      get '/super_admin/commercial/reservations/data', params: { clickup_status: '' }
+      get '/super_admin/commercial/reservations/data'
 
       by_id = response.parsed_body['reservations'].index_by { |row| row['id'] }
       expect(by_id[won.id]['won']).to be(true)
