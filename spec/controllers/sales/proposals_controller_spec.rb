@@ -154,6 +154,93 @@ RSpec.describe 'Public sales proposal', type: :request do
     end
   end
 
+  # The proposal has one address and several states; opening it has to land on
+  # the step that is still open.
+  describe 'where the link lands' do
+    before { unlock }
+
+    it 'asks for the missing details first' do
+      # Each proposal is unlocked on its own; this one is not the one the outer
+      # setup opened.
+      post "/proposals/#{blank_quote.public_token}/unlock",
+           params: { access_code: blank_quote.access_code, phone_last4: '2211' }
+
+      get "/proposals/#{blank_quote.public_token}"
+
+      expect(response.body).to include('Confirme se este é o número que você usa')
+    end
+
+    it 'shows the plan while there is nothing signed' do
+      get "/proposals/#{quote.public_token}"
+
+      expect(response.body).to include('Assinar')
+    end
+
+    # This is what sent a customer who had already signed back to the signature.
+    it 'takes a signed pix sale to the tracking page' do
+      quote.update!(status: :signed, payment_method: :pix)
+
+      get "/proposals/#{quote.public_token}"
+
+      expect(response).to redirect_to(sales_proposal_status_path(quote.public_token))
+    end
+
+    # A card checkout that was abandoned is finished from the payment page, and
+    # the signature already on file is reused there.
+    it 'takes a signed card sale back to the payment page' do
+      quote.update!(status: :signed, payment_method: :card)
+
+      get "/proposals/#{quote.public_token}"
+
+      expect(response).to redirect_to(sales_proposal_checkout_path(quote.public_token))
+    end
+
+    it 'takes a paid proposal to the tracking page' do
+      quote.update!(status: :paid, payment_method: :pix)
+
+      get "/proposals/#{quote.public_token}"
+
+      expect(response).to redirect_to(sales_proposal_status_path(quote.public_token))
+    end
+
+    it 'keeps a converted proposal on the tracking page' do
+      quote.update!(status: :converted, payment_method: :pix)
+
+      get "/proposals/#{quote.public_token}"
+
+      expect(response).to redirect_to(sales_proposal_status_path(quote.public_token))
+    end
+
+    it 'refuses to open the payment page of a proposal already paid' do
+      quote.update!(status: :paid, payment_method: :pix)
+
+      get "/proposals/#{quote.public_token}/pagamento"
+
+      expect(response).to redirect_to(sales_proposal_status_path(quote.public_token))
+    end
+
+    # A page left open in another tab must not start a second payment.
+    it 'refuses a second payment of a proposal already paid' do
+      quote.update!(status: :paid, payment_method: :pix)
+
+      post "/proposals/#{quote.public_token}/pagamento", params: { payment_method: 'pix', accept_terms: '1' }
+
+      expect(response).to redirect_to(sales_proposal_status_path(quote.public_token))
+      expect(quote.reload.terms_acceptances).to be_empty
+    end
+
+    # The bar answers for the contract, and a card saved for the token charges
+    # is not a payment.
+    it 'holds the bar at the payment while the pix is pending' do
+      quote.update!(status: :signed, payment_method: :pix, token_payment_method_id: 'seti_1')
+
+      get "/proposals/#{quote.public_token}/acompanhamento"
+
+      expect(response.body).to include('2. Pagamento')
+      expect(response.body).to include('Aguardando a confirmação do seu PIX')
+    end
+  end
+
   describe 'the payment step' do
     let(:stripe_client) { instance_double(Integrations::Stripe::Client) }
 
@@ -221,6 +308,25 @@ RSpec.describe 'Public sales proposal', type: :request do
       expect(quote.reload.terms_acceptances).to be_empty
     end
 
+    # Coming back to the link is how a customer checks on the deal, and the link
+    # is the same one from the first day to the last.
+    it 'does not sign the terms a second time when the customer comes back' do
+      sign_and_pay
+      sign_and_pay
+
+      expect(quote.reload.terms_acceptances.status_signed.count).to eq(1)
+    end
+
+    it 'signs again only when the wording changed' do
+      sign_and_pay
+      stub_request(:get, Sales::TermsFetcherService::DEFAULT_URL)
+        .to_return(status: 200, body: '<html><body><p>Outra redação dos termos.</p></body></html>')
+
+      sign_and_pay
+
+      expect(quote.reload.terms_acceptances.status_signed.count).to eq(2)
+    end
+
     it 'sends a card payment to the Stripe checkout' do
       sign_and_pay(method: 'card')
 
@@ -274,6 +380,22 @@ RSpec.describe 'Public sales proposal', type: :request do
 
       expect(stripe_client).to have_received(:create_setup_session).with(hash_including(customer_id: 'cus_1'))
       expect(response).to redirect_to('https://checkout.stripe.com/setup')
+    end
+
+    # A PIX sale has no customer in Stripe until the payment is registered by
+    # the finance team, and the card for the token charges is saved before
+    # that — it has to hang off a customer we can bill later.
+    it 'creates the stripe customer of a pix sale before saving the card' do
+      quote.update!(status: :signed, payment_method: :pix, stripe_customer_id: nil)
+      allow(stripe_client).to receive_messages(create_customer: Struct.new(:id).new('cus_pix'),
+                                               list_tax_ids: Struct.new(:data).new([]))
+      allow(stripe_client).to receive(:update_customer)
+      allow(stripe_client).to receive(:create_tax_id)
+
+      post "/proposals/#{quote.public_token}/tokens"
+
+      expect(stripe_client).to have_received(:create_setup_session).with(hash_including(customer_id: 'cus_pix'))
+      expect(quote.reload.stripe_customer_id).to eq('cus_pix')
     end
 
     # A monthly plan is charged on this same card from here on, and the customer
