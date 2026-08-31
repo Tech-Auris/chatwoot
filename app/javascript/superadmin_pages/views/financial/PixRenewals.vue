@@ -43,6 +43,11 @@ const meta = ref({
 const loading = ref(false);
 const error = ref(null);
 const busyId = ref(null);
+// Which write-off is being confirmed, and where that money came in. Asked per
+// row rather than once for the screen: two payments settled in a row can come
+// in through different banks, and a single selector at the top is a setting
+// somebody forgets is there.
+const settling = ref(null);
 const paidVia = ref('inter');
 
 const csrfToken = () =>
@@ -107,12 +112,36 @@ const issueInvoice = renewal =>
     renewal.id
   );
 
-const payRenewal = renewal =>
-  post(
-    `${props.componentData.renewals_url}/${renewal.id}/pay`,
+// Both write-offs ask the same question, so they open the same dialog: the
+// first PIX of a sale and a renewal differ only in what is posted.
+const askWhereMoneyCameIn = (kind, record) => {
+  paidVia.value = 'inter';
+  settling.value = { kind, record };
+};
+
+const closeSettleDialog = () => {
+  settling.value = null;
+};
+
+const confirmSettlement = async () => {
+  const { kind, record } = settling.value;
+  settling.value = null;
+
+  if (kind === 'sale') {
+    await post(
+      props.componentData.register_sale_url,
+      { sales_quote_id: record.id, paid_via: paidVia.value },
+      `quote-${record.id}`
+    );
+    return;
+  }
+
+  await post(
+    `${props.componentData.renewals_url}/${record.id}/pay`,
     { paid_via: paidVia.value },
-    renewal.id
+    record.id
   );
+};
 
 const cancelRenewal = renewal => {
   if (!window.confirm('Encerrar a cobrança deste cliente?')) return;
@@ -122,13 +151,6 @@ const cancelRenewal = renewal => {
     renewal.id
   );
 };
-
-const registerSale = quote =>
-  post(
-    props.componentData.register_sale_url,
-    { sales_quote_id: quote.id, paid_via: paidVia.value },
-    `quote-${quote.id}`
-  );
 
 const formatAmount = amount =>
   amount == null
@@ -188,19 +210,8 @@ const alertMessage = computed(() => {
         {{ error }}
       </div>
 
-      <div class="flex items-center gap-3 mb-4">
-        <label class="text-sm text-slate-500">Dinheiro entrou por</label>
-        <select
-          v-model="paidVia"
-          class="text-sm border border-slate-200 rounded px-2 py-1"
-        >
-          <option v-for="source in meta.sources" :key="source" :value="source">
-            {{ sourceLabel(source) }}
-          </option>
-        </select>
-        <span v-if="alertMessage" class="ml-auto text-xs text-yellow-700">
-          {{ alertMessage }}
-        </span>
+      <div v-if="alertMessage" class="flex mb-4">
+        <span class="ml-auto text-xs text-yellow-700">{{ alertMessage }}</span>
       </div>
 
       <section v-if="awaitingFirstPayment.length" class="mb-8">
@@ -249,7 +260,7 @@ const alertMessage = computed(() => {
                   type="button"
                   class="px-2 py-1 rounded bg-woot-500 text-white text-xs disabled:opacity-40"
                   :disabled="busyId === `quote-${quote.id}`"
-                  @click="registerSale(quote)"
+                  @click="askWhereMoneyCameIn('sale', quote)"
                 >
                   Registrar pagamento
                 </button>
@@ -349,7 +360,7 @@ const alertMessage = computed(() => {
                   type="button"
                   class="px-2 py-1 rounded bg-woot-500 text-white text-xs disabled:opacity-40"
                   :disabled="busyId === renewal.id"
-                  @click="payRenewal(renewal)"
+                  @click="askWhereMoneyCameIn('renewal', renewal)"
                 >
                   Dar baixa
                 </button>
@@ -374,5 +385,59 @@ const alertMessage = computed(() => {
         </tbody>
       </table>
     </template>
+
+    <div
+      v-if="settling"
+      class="fixed inset-0 bg-black/40 flex items-center justify-center p-6 z-50"
+      @click.self="closeSettleDialog"
+    >
+      <div class="bg-white rounded-lg w-full max-w-sm p-5">
+        <h2 class="text-base font-medium text-slate-900">
+          Registrar pagamento
+        </h2>
+        <p class="text-sm text-slate-500 mt-1">
+          {{ settling.record.customer_name }} —
+          {{ formatAmount(settling.record.amount) }}
+        </p>
+
+        <label class="block mt-4 text-sm text-slate-600">
+          Dinheiro entrou por
+          <select
+            v-model="paidVia"
+            class="mt-1 w-full border border-slate-200 rounded px-2 py-1.5 text-sm"
+          >
+            <option
+              v-for="source in meta.sources"
+              :key="source"
+              :value="source"
+            >
+              {{ sourceLabel(source) }}
+            </option>
+          </select>
+        </label>
+
+        <p v-if="settling.kind === 'sale'" class="mt-3 text-xs text-slate-500">
+          A conta do cliente é criada agora, e o próximo vencimento entra na
+          lista de renovações.
+        </p>
+
+        <div class="mt-5 flex justify-end gap-2">
+          <button
+            type="button"
+            class="px-3 py-1.5 rounded border border-slate-200 text-slate-600 text-sm"
+            @click="closeSettleDialog"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="px-3 py-1.5 rounded bg-woot-500 text-white text-sm"
+            @click="confirmSettlement"
+          >
+            Confirmar pagamento
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>

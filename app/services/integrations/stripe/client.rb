@@ -229,7 +229,7 @@ class Integrations::Stripe::Client
           # Anything left pending on the customer by another flow stays out of
           # this invoice. A token charge must carry the token lines and nothing
           # else, whatever else is queued on that customer.
-          pending_invoice_item_behavior: 'exclude' }.compact,
+          pending_invoice_items_behavior: 'exclude' }.compact,
         request_options
       )
       items.each { |item| create_invoice_item(invoice.id, customer_id, item) }
