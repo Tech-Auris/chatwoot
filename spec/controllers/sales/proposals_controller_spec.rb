@@ -32,6 +32,14 @@ RSpec.describe 'Public sales proposal', type: :request do
       expect(response.body).not_to include('Plano Pro')
     end
 
+    # Whose number this is decides whether the customer can answer at all.
+    it 'shows the beginning of the registered number, never the digits it asks for' do
+      get "/proposals/#{quote.public_token}"
+
+      expect(response.body).to include('(61) 98140-XXXX')
+      expect(response.body).not_to include('2211')
+    end
+
     it 'shows the proposal once unlocked' do
       unlock
       get "/proposals/#{quote.public_token}"
