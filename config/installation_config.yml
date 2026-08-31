@@ -561,6 +561,12 @@
   value: ''
   locked: false
   type: secret
+- name: ASAAS_API_KEY
+  display_title: 'AsaaS API Key'
+  description: 'API key of the AsaaS account, one of the two places PIX money comes in through. Take it from AsaaS under Integrações → API; a sandbox key and a production key are different keys, so paste the one of the account being used.'
+  value: ''
+  locked: false
+  type: secret
 - name: SALES_PIX_PAYLOAD
   display_title: 'PIX copia e cola das propostas'
   description: 'Static PIX code of the company, shown to the prospect who chooses to pay by PIX. It carries no amount — the customer types the agreed total — so the same code serves every proposal. Replace it if the company account changes; leaving it blank makes the page say the sales team will send the details.'

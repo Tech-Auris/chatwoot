@@ -156,3 +156,9 @@ stripe:
   enabled: true
   icon: 'icon-money-dollar-circle-line'
   config_key: 'stripe'
+asaas:
+  name: 'AsaaS'
+  description: 'API key of the AsaaS account money comes in through'
+  enabled: true
+  icon: 'icon-money-dollar-circle-line'
+  config_key: 'asaas'
