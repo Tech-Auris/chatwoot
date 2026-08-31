@@ -12,6 +12,7 @@
 #
 #  id                       :bigint           not null, primary key
 #  access_code              :string           not null
+#  asaas_payment_link_url   :string
 #  billing_cycle            :integer
 #  billing_name             :string
 #  clickup_status           :string
@@ -36,6 +37,7 @@
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
 #  account_id               :bigint
+#  asaas_payment_link_id    :string
 #  clickup_task_id          :string           not null
 #  coupon_id                :string
 #  seller_id                :bigint           not null
@@ -78,6 +80,14 @@ class SalesQuote < ApplicationRecord
   before_validation :assign_credentials, on: :create
 
   scope :open_deals, -> { where.not(status: [:converted, :expired, :cancelled]) }
+
+  # Signed and not yet an account, minus the monthly card sale — that one is a
+  # Stripe subscription, and Stripe confirms it through the webhook.
+  scope :awaiting_manual_payment, lambda {
+    where(status: :signed, account_id: nil)
+      .where.not('payment_method = :card AND billing_cycle = :monthly',
+                 card: payment_methods[:card], monthly: billing_cycles[:monthly])
+  }
 
   # Everything the contract and the invoice will need from the prospect. Until
   # it is filled, the public page keeps asking rather than moving on.

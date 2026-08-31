@@ -24,6 +24,7 @@ RSpec.describe Sales::CheckoutService do
     end
 
     it 'proceeds once the signature exists' do
+      quote.update!(billing_cycle: :monthly)
       sign_terms
       allow(client).to receive(:create_customer).and_return(Struct.new(:id).new('cus_1'))
       allow(client).to receive(:update_customer)
@@ -35,8 +36,11 @@ RSpec.describe Sales::CheckoutService do
     end
   end
 
-  describe 'paying by card' do
+  # The monthly plan is the one Stripe carries, because the recurrence lives
+  # there.
+  describe 'paying the monthly plan by card' do
     before do
+      quote.update!(billing_cycle: :monthly)
       sign_terms
       allow(client).to receive(:create_customer).and_return(Struct.new(:id).new('cus_1'))
       allow(client).to receive(:update_customer)
@@ -54,23 +58,9 @@ RSpec.describe Sales::CheckoutService do
         .with(hash_including(line_items: [hash_including(quantity: 1, price_data: hash_including(unit_amount: 89_700))]))
     end
 
-    it 'offers up to twelve instalments on an annual plan' do
-      checkout
-
-      expect(client).to have_received(:create_checkout_session).with(hash_including(max_installments: 12))
-    end
-
-    it 'offers up to six on a semiannual plan' do
-      quote.update!(billing_cycle: :semiannual)
-
-      checkout
-
-      expect(client).to have_received(:create_checkout_session).with(hash_including(max_installments: 6))
-    end
-
-    it 'offers none on a monthly plan' do
-      quote.update!(billing_cycle: :monthly)
-
+    # A monthly subscription is charged month by month; there is nothing to
+    # split.
+    it 'offers no instalments' do
       checkout
 
       expect(client).to have_received(:create_checkout_session).with(hash_including(max_installments: 1))
@@ -93,6 +83,7 @@ RSpec.describe Sales::CheckoutService do
 
   describe 'what the payment page opens with' do
     before do
+      quote.update!(billing_cycle: :monthly)
       sign_terms
       quote.update!(prospect_name: 'Maria Souza', prospect_phone: '+5561981402211', prospect_document: '123.456.789-00')
       allow(client).to receive(:create_customer).and_return(Struct.new(:id).new('cus_1'))
@@ -150,6 +141,100 @@ RSpec.describe Sales::CheckoutService do
       allow(client).to receive(:create_tax_id).and_raise(Integrations::Stripe::Client::InvalidRequest, 'invalid tax id')
 
       expect { checkout }.not_to raise_error
+    end
+  end
+
+  # A long plan paid by card is charged in instalments through AsaaS; Stripe
+  # carries the monthly subscription and nothing else.
+  describe 'paying a long plan by card' do
+    let(:asaas) { instance_double(Integrations::Asaas::Client) }
+
+    before do
+      sign_terms
+      allow(Integrations::Asaas::Client).to receive(:new).and_return(asaas)
+      allow(asaas).to receive(:create_payment_link)
+        .and_return({ 'id' => 'pay_link_1', 'url' => 'https://www.asaas.com/c/pay_link_1' })
+    end
+
+    it 'sends the customer to an AsaaS payment link' do
+      result = checkout
+
+      expect(result.checkout_url).to eq('https://www.asaas.com/c/pay_link_1')
+      expect(quote.reload).to have_attributes(status: 'signed', payment_method: 'card',
+                                              asaas_payment_link_id: 'pay_link_1',
+                                              asaas_payment_link_url: 'https://www.asaas.com/c/pay_link_1')
+    end
+
+    it 'charges the agreed total and offers the instalments of the plan' do
+      checkout
+
+      expect(asaas).to have_received(:create_payment_link)
+        .with(hash_including(value_cents: 89_700, max_installment_count: 12))
+    end
+
+    it 'never opens a Stripe checkout' do
+      allow(client).to receive(:create_checkout_session)
+
+      checkout
+
+      expect(client).not_to have_received(:create_checkout_session)
+    end
+
+    it 'records the link on the proposal history' do
+      checkout
+
+      expect(quote.events.pluck(:event)).to include('asaas_link_created')
+    end
+  end
+
+  describe 'how many instalments are offered' do
+    after { GlobalConfig.clear_cache }
+
+    def configure(installments)
+      InstallationConfig.where(name: 'ASAAS_MAX_INSTALLMENTS').first_or_create!(value: installments)
+      GlobalConfig.clear_cache
+    end
+
+    it 'follows what Settings says' do
+      configure('10')
+
+      expect(described_class.max_installments_for(:annual)).to eq(10)
+    end
+
+    # Splitting a semiannual plan into ten would run past the period it pays for.
+    it 'never runs past the months the plan covers' do
+      configure('10')
+
+      expect(described_class.max_installments_for(:semiannual)).to eq(6)
+    end
+
+    it 'has none to offer on a monthly plan' do
+      configure('10')
+
+      expect(described_class.max_installments_for(:monthly)).to eq(1)
+    end
+  end
+
+  describe 'what each plan can be paid with' do
+    # A monthly PIX would mean chasing a transfer every month; the monthly plan
+    # is a subscription and lives on the card.
+    it 'refuses pix on the monthly plan' do
+      quote.update!(billing_cycle: :monthly)
+      sign_terms
+
+      expect { checkout(method: 'pix') }.to raise_error(described_class::UnsupportedPaymentMethod, /mensal/)
+    end
+
+    it 'takes pix on the longer plans' do
+      expect(described_class.offers?('pix', :semiannual)).to be(true)
+      expect(described_class.offers?('pix', :annual)).to be(true)
+      expect(described_class.offers?('pix', :monthly)).to be(false)
+    end
+
+    it 'sends the card of a monthly plan to stripe and of a long plan to asaas' do
+      expect(described_class.card_provider_for(:monthly)).to eq(:stripe)
+      expect(described_class.card_provider_for(:semiannual)).to eq(:asaas)
+      expect(described_class.card_provider_for(:annual)).to eq(:asaas)
     end
   end
 

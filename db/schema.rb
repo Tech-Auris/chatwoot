@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_08_28_203000) do
+ActiveRecord::Schema[7.1].define(version: 2026_08_31_120000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -1629,6 +1629,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_08_28_203000) do
     t.datetime "updated_at", null: false
     t.string "token_payment_method_id"
     t.string "billing_name"
+    t.string "asaas_payment_link_id"
+    t.string "asaas_payment_link_url"
     t.index ["account_id"], name: "index_sales_quotes_on_account_id"
     t.index ["clickup_task_id"], name: "index_sales_quotes_on_clickup_task_id"
     t.index ["public_token"], name: "index_sales_quotes_on_public_token", unique: true

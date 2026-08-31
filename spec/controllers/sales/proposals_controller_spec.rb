@@ -185,14 +185,24 @@ RSpec.describe 'Public sales proposal', type: :request do
       expect(response).to redirect_to(sales_proposal_status_path(quote.public_token))
     end
 
-    # A card checkout that was abandoned is finished from the payment page, and
-    # the signature already on file is reused there.
-    it 'takes a signed card sale back to the payment page' do
-      quote.update!(status: :signed, payment_method: :card)
+    # A Stripe checkout that was abandoned is finished from the payment page,
+    # and the signature already on file is reused there.
+    it 'takes a signed monthly card sale back to the payment page' do
+      quote.update!(status: :signed, payment_method: :card, billing_cycle: :monthly)
 
       get "/proposals/#{quote.public_token}"
 
       expect(response).to redirect_to(sales_proposal_checkout_path(quote.public_token))
+    end
+
+    # An AsaaS link is paid outside and confirmed by hand, so there is nothing
+    # to retry — the customer belongs on the tracking page.
+    it 'takes a signed instalment sale to the tracking page' do
+      quote.update!(status: :signed, payment_method: :card, billing_cycle: :annual)
+
+      get "/proposals/#{quote.public_token}"
+
+      expect(response).to redirect_to(sales_proposal_status_path(quote.public_token))
     end
 
     it 'takes a paid proposal to the tracking page' do
@@ -327,7 +337,39 @@ RSpec.describe 'Public sales proposal', type: :request do
       expect(quote.reload.terms_acceptances.status_signed.count).to eq(2)
     end
 
-    it 'sends a card payment to the Stripe checkout' do
+    # Each plan is paid where it belongs: the monthly subscription on Stripe,
+    # the long ones in instalments through AsaaS or by PIX.
+    it 'offers pix and instalments on a long plan' do
+      get "/proposals/#{quote.public_token}/pagamento"
+
+      expect(response.body).to include('PIX')
+      expect(response.body).to include('em até 12x')
+    end
+
+    it 'offers only the card on a monthly plan' do
+      quote.update!(billing_cycle: :monthly)
+
+      get "/proposals/#{quote.public_token}/pagamento"
+
+      expect(response.body).to include('Cartão de crédito')
+      expect(response.body).not_to include('em até')
+      expect(response.body).not_to include('% de desconto')
+    end
+
+    it 'sends a long plan paid by card to an AsaaS link' do
+      asaas = instance_double(Integrations::Asaas::Client)
+      allow(Integrations::Asaas::Client).to receive(:new).and_return(asaas)
+      allow(asaas).to receive(:create_payment_link)
+        .and_return({ 'id' => 'pay_link_1', 'url' => 'https://www.asaas.com/c/pay_link_1' })
+
+      sign_and_pay(method: 'card')
+
+      expect(response).to redirect_to('https://www.asaas.com/c/pay_link_1')
+    end
+
+    it 'sends a monthly plan paid by card to the Stripe checkout' do
+      quote.update!(billing_cycle: :monthly)
+
       sign_and_pay(method: 'card')
 
       expect(response).to redirect_to('https://checkout.stripe.com/x')
