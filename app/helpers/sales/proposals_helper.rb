@@ -13,9 +13,14 @@ module Sales::ProposalsHelper
     number_to_currency((cents || 0) / 100.0, unit: 'R$ ', separator: ',', delimiter: '.')
   end
 
-  # The company's own static PIX code, configured once in Settings.
-  def pix_payload
-    @pix_payload ||= GlobalConfig.get('SALES_PIX_PAYLOAD')['SALES_PIX_PAYLOAD'].presence
+  # The company's own static PIX code, configured once in Settings, carrying the
+  # total of this proposal — so the customer confirms an amount instead of
+  # typing one they read minutes ago.
+  def pix_payload(proposal)
+    configured = GlobalConfig.get('SALES_PIX_PAYLOAD')['SALES_PIX_PAYLOAD'].presence
+    return nil if configured.blank?
+
+    Sales::PixCodeService.new(payload: configured, amount_cents: proposal.total_amount).perform
   end
 
   # Drawn from the code itself rather than stored as an image, so the QR and the
