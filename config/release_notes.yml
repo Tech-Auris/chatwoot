@@ -1,4 +1,12 @@
 ---
+- tag: v4.15.1-auris.1.51.4
+  published_at: '2026-08-31T00:30:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.51.4
+  notes:
+    en: |-
+      Bug fixes and internal improvements.
+    pt_BR: |-
+      Correções de bugs e melhorias internas.
 - tag: v4.15.1-auris.1.51.3
   published_at: '2026-08-30T22:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.51.3
@@ -295,23 +303,3 @@
       ### 🐛 Correções
 
       - **Template novo aparece na lista logo após criar.** Ao criar um novo template você voltava pra lista e ele não estava lá — precisava dar refresh na página pra ver. A lista agora já mostra o template recém-criado na hora.
-- tag: v4.15.1-auris.1.41.23
-  published_at: '2026-08-12T00:15:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.41.23
-  notes:
-    en: |-
-      ### 🐛 Fixes
-
-      - **The Meta Templates page opens again.** The "New template" and "Edit template" screens were opening blank right after the previous release. Both work normally now.
-
-      ### ⚡ Improvements
-
-      - **Templates load themselves when you open the page.** If the list is empty when you open Templates Meta on an inbox, AurisChat now syncs with Meta automatically instead of showing a blank list. The Sincronizar button still works the same.
-    pt_BR: |-
-      ### 🐛 Correções
-
-      - **A tela de Templates Meta volta a abrir.** As telas "Novo template" e "Editar template" estavam abrindo em branco desde a versão anterior. Voltam a funcionar normalmente agora.
-
-      ### ⚡ Melhorias
-
-      - **A lista de templates carrega sozinha ao abrir a página.** Se a lista estiver vazia quando você abrir Templates Meta numa caixa, o AurisChat agora sincroniza com a Meta automaticamente em vez de mostrar lista em branco. O botão Sincronizar continua funcionando igual.
