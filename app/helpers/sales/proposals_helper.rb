@@ -13,6 +13,18 @@ module Sales::ProposalsHelper
     number_to_currency((cents || 0) / 100.0, unit: 'R$ ', separator: ',', delimiter: '.')
   end
 
+  # The company's own static PIX code, configured once in Settings.
+  def pix_payload
+    @pix_payload ||= GlobalConfig.get('SALES_PIX_PAYLOAD')['SALES_PIX_PAYLOAD'].presence
+  end
+
+  # Drawn from the code itself rather than stored as an image, so the QR and the
+  # copy-and-paste code can never be of two different accounts.
+  def pix_qr_code(payload)
+    svg = RQRCode::QRCode.new(payload).as_svg(module_size: 4, standalone: true, use_path: true)
+    "data:image/svg+xml;base64,#{Base64.strict_encode64(svg)}"
+  end
+
   def proposal_datetime(time)
     return nil if time.blank?
 

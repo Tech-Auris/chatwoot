@@ -227,11 +227,11 @@ RSpec.describe 'Public sales proposal', type: :request do
       expect(response).to redirect_to('https://checkout.stripe.com/x')
     end
 
-    it 'keeps a pix sale here, waiting for the confirmation' do
+    it 'keeps a pix sale here, with what the customer needs to pay' do
       sign_and_pay
 
       follow_redirect!
-      expect(response.body).to include('enviar os dados do PIX')
+      expect(response.body).to include('AURIS AI SERVIÇOS DE TECNOLOGIA LTDA')
       expect(response.body).to include(quote.prospect_phone)
     end
 

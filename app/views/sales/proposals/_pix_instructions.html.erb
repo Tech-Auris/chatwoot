@@ -1,0 +1,38 @@
+<%# Everything the prospect needs to pay: who is being paid, the code, and the
+    reminder that the amount is typed by them — the company code is static and
+    carries no value. %>
+<div class="mt-5 rounded-lg border border-slate-200 p-4">
+  <h2 class="text-sm font-medium text-slate-900">Pague por PIX</h2>
+
+  <div class="mt-3 text-sm text-slate-700 leading-relaxed">
+    <p class="font-medium">AURIS AI SERVIÇOS DE TECNOLOGIA LTDA</p>
+    <p class="mt-2">61.818.867/0001-43</p>
+    <p class="mt-2">
+      Rua Pais Leme, 214, CONJ 1713<br />
+      São Paulo SP 05.424-150<br />
+      Brasil
+    </p>
+  </div>
+
+  <% if pix_payload.present? %>
+    <p class="mt-4 text-sm font-medium text-slate-900">
+      Informe o valor quando for pagar
+    </p>
+
+    <div class="mt-3 flex justify-center">
+      <%= image_tag pix_qr_code(pix_payload), alt: 'QR Code do PIX', class: 'w-56 h-56' %>
+    </div>
+
+    <p class="mt-3 text-xs text-slate-500">
+      Prefere copiar e colar? Use o código abaixo no aplicativo do seu banco.
+    </p>
+    <textarea readonly rows="3"
+      class="mt-2 w-full border border-slate-200 rounded px-3 py-2 text-xs text-slate-600 break-all"
+      onclick="this.select()"><%= pix_payload %></textarea>
+  <% else %>
+    <p class="mt-4 text-sm text-slate-600">
+      Nosso time envia o código do PIX no seu WhatsApp
+      <strong><%= @proposal.prospect_phone %></strong>.
+    </p>
+  <% end %>
+</div>

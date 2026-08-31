@@ -16,6 +16,11 @@ RSpec.describe Sales::ProposalsHelper do
   end
 
   describe '#proposal_time_left' do
+    # Counted in whole days, so the answer only holds still if the day does.
+    around do |example|
+      travel_to(Time.zone.parse('2026-08-30 09:00')) { example.run }
+    end
+
     it 'counts the days that are left' do
       expect(helper.proposal_time_left(12.days.from_now)).to eq('mais 12 dias')
     end
