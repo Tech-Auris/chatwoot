@@ -156,6 +156,12 @@ stripe:
   enabled: true
   icon: 'icon-money-dollar-circle-line'
   config_key: 'stripe'
+commercial:
+  name: 'Comercial'
+  description: 'Settings of the proposal a prospect opens: the logo it carries and the PIX code it pays to'
+  enabled: true
+  icon: 'icon-briefcase-line'
+  config_key: 'commercial'
 asaas:
   name: 'AsaaS'
   description: 'API key of the AsaaS account money comes in through'

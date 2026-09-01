@@ -13,10 +13,13 @@ module Sales::ProposalsHelper
     number_to_currency((cents || 0) / 100.0, unit: 'R$ ', separator: ',', delimiter: '.')
   end
 
-  # The installation's own logo and name, so a white-labelled instance shows
-  # its brand on the page a prospect of theirs opens.
+  # The sales flow carries a mark of its own — the prospect is not a user of the
+  # product yet — and falls back to the product's while none is configured, so
+  # the page is never left without one.
   def proposal_logo_url
-    GlobalConfig.get('LOGO')['LOGO'].presence || '/brand-assets/logo.svg'
+    GlobalConfig.get('SALES_PROPOSAL_LOGO')['SALES_PROPOSAL_LOGO'].presence ||
+      GlobalConfig.get('LOGO')['LOGO'].presence ||
+      '/brand-assets/logo.svg'
   end
 
   def proposal_brand_name

@@ -33,12 +33,26 @@ RSpec.describe 'Public sales proposal', type: :request do
     end
 
     # The brand is the logo on top; the heading is about the customer's own
-    # proposal, and a white-labelled instance shows its own mark.
-    it 'shows the installation logo instead of naming the brand in the heading' do
+    # proposal.
+    it 'shows a logo instead of naming the brand in the heading' do
       get "/proposals/#{quote.public_token}"
 
       expect(response.body).to include('Sua proposta</h1>')
       expect(response.body).to include('/brand-assets/logo.svg')
+    end
+
+    # The prospect is not a user of the product yet, so the sales flow carries a
+    # mark of its own once one is configured.
+    it 'carries the sales logo when there is one' do
+      InstallationConfig.where(name: 'SALES_PROPOSAL_LOGO').first_or_create!(value: '/brand-assets/auris_sales_logo.png')
+      GlobalConfig.clear_cache
+
+      get "/proposals/#{quote.public_token}"
+
+      expect(response.body).to include('/brand-assets/auris_sales_logo.png')
+    ensure
+      InstallationConfig.where(name: 'SALES_PROPOSAL_LOGO').destroy_all
+      GlobalConfig.clear_cache
     end
 
     it 'shows the proposal once unlocked' do
