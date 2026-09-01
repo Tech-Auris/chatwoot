@@ -215,8 +215,14 @@ const pricePeriodSuffix = price => {
   return price.recurring_interval ? `/${price.recurring_interval}` : '';
 };
 
-const priceAmountLabel = price =>
-  `${formatAmount(price.unit_amount, price.currency)}${pricePeriodSuffix(price)}`;
+// A tiered Stripe price has no single unit amount — the number depends
+// on the quantity band. Fall back to the first-tier price and prefix
+// "A partir de " so the seller reads the same wording Stripe uses.
+const priceAmountLabel = price => {
+  const amount = price.tiered ? price.starting_amount : price.unit_amount;
+  const label = `${formatAmount(amount, price.currency)}${pricePeriodSuffix(price)}`;
+  return price.tiered ? `A partir de ${label}` : label;
+};
 
 const addToCart = price => {
   const existing = cart.value.find(item => item.stripe_price_id === price.id);

@@ -14,9 +14,11 @@ module SalesStripeStub
   # `billing_period_of` in the quotes controller read from the real
   # Stripe SDK. Keep the field lists in sync with those helpers.
   Product = Struct.new(:id, :name, :description, :active, :metadata, keyword_init: true)
-  Price = Struct.new(:id, :product, :unit_amount, :currency, :recurring, :active, :nickname, keyword_init: true)
+  Price = Struct.new(:id, :product, :unit_amount, :currency, :recurring, :active, :nickname,
+                     :billing_scheme, :tiers_mode, :tiers, keyword_init: true)
   Coupon = Struct.new(:id, :name, :percent_off, :amount_off, :currency, :valid, keyword_init: true)
   Recurring = Struct.new(:interval, :interval_count, keyword_init: true)
+  Tier = Struct.new(:up_to, :unit_amount, :flat_amount, keyword_init: true)
   List = Struct.new(:data)
 
   # `interval_count` is what tells a monthly plan (1) from a semiannual
@@ -33,7 +35,18 @@ module SalesStripeStub
 
   def self.price(id, product_id, cents, recurring: nil)
     Price.new(id: id, product: product_id, unit_amount: cents, currency: 'brl',
-              recurring: recurring, active: true, nickname: nil)
+              recurring: recurring, active: true, nickname: nil,
+              billing_scheme: 'per_unit', tiers_mode: nil, tiers: nil)
+  end
+
+  # Tiered price: `unit_amount` is nil on the top level, the amount lives
+  # inside the tiers array. `graduated` charges each band separately;
+  # `volume` charges the whole quantity at the tier the total lands in.
+  def self.tiered_price(id, product_id, tiers, recurring: nil, mode: 'graduated')
+    Price.new(id: id, product: product_id, unit_amount: nil, currency: 'brl',
+              recurring: recurring, active: true, nickname: nil,
+              billing_scheme: 'tiered', tiers_mode: mode,
+              tiers: tiers.map { |band| Tier.new(**band) })
   end
 
   PRODUCTS = [
@@ -81,10 +94,26 @@ module SalesStripeStub
     price('price_stub_channel_semiannual', 'prod_stub_channel', 41_400, recurring: SEMIANNUAL),
     price('price_stub_channel_annual', 'prod_stub_channel', 74_520, recurring: ANNUAL),
 
-    # Adicional de Profissional — cortesia, cobrança R$ 0
-    price('price_stub_professional_monthly', 'prod_stub_professional', 0, recurring: MONTHLY),
-    price('price_stub_professional_semiannual', 'prod_stub_professional', 0, recurring: SEMIANNUAL),
-    price('price_stub_professional_annual', 'prod_stub_professional', 0, recurring: ANNUAL),
+    # Adicional de Profissional — preço em faixas (graduado no mensal,
+    # volume nos ciclos longos), casando com o que existe no Stripe real.
+    tiered_price('price_stub_professional_monthly', 'prod_stub_professional', [
+                   { up_to: 8,  unit_amount: 5_900, flat_amount: nil },
+                   { up_to: 29, unit_amount: 2_900, flat_amount: nil },
+                   { up_to: 59, unit_amount: 1_900, flat_amount: nil },
+                   { up_to: nil, unit_amount: 900,  flat_amount: nil }
+                 ], recurring: MONTHLY, mode: 'graduated'),
+    tiered_price('price_stub_professional_semiannual', 'prod_stub_professional', [
+                   { up_to: 8,  unit_amount: 35_400, flat_amount: nil },
+                   { up_to: 29, unit_amount: 17_400, flat_amount: nil },
+                   { up_to: 59, unit_amount: 11_400, flat_amount: nil },
+                   { up_to: nil, unit_amount: 5_400,  flat_amount: nil }
+                 ], recurring: SEMIANNUAL, mode: 'volume'),
+    tiered_price('price_stub_professional_annual', 'prod_stub_professional', [
+                   { up_to: 8,  unit_amount: 63_720, flat_amount: nil },
+                   { up_to: 29, unit_amount: 31_320, flat_amount: nil },
+                   { up_to: 59, unit_amount: 20_520, flat_amount: nil },
+                   { up_to: nil, unit_amount: 9_720,  flat_amount: nil }
+                 ], recurring: ANNUAL, mode: 'volume'),
 
     # Adicional de Unidade — três ciclos
     price('price_stub_unit_monthly', 'prod_stub_unit', 19_900, recurring: MONTHLY),

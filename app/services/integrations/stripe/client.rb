@@ -92,7 +92,13 @@ class Integrations::Stripe::Client
 
   def list_prices(product_id: nil, limit: PRODUCT_LIST_LIMIT)
     with_error_handling do
-      Stripe::Price.list({ product: product_id, limit: limit }.compact, request_options)
+      # `expand: ['data.tiers']` is what makes tiered prices report their
+      # levels — without it the picker sees `unit_amount = nil` and reads
+      # every tiered plan as R$ 0,00.
+      Stripe::Price.list(
+        { product: product_id, limit: limit, expand: ['data.tiers'] }.compact,
+        request_options
+      )
     end
   end
 

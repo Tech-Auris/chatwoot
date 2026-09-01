@@ -11,12 +11,21 @@ RSpec.describe 'Super Admin Commercial Quotes', type: :request do
   end
 
   # `recurring: nil` stands for a one-off price; the count is what tells a
-  # monthly plan from a semiannual one.
-  def stripe_price(id: 'price_plan', product: 'prod_1', unit_amount: 89_700, active: true, recurring: { interval: 'month', count: 1 })
+  # monthly plan from a semiannual one. `tiers` opts the price into
+  # Stripe's tiered scheme, where `unit_amount` on the top level is nil.
+  # rubocop:disable Metrics/ParameterLists, Metrics/CyclomaticComplexity -- test fixture, params read best inline
+  def stripe_price(id: 'price_plan', product: 'prod_1', unit_amount: 89_700, active: true,
+                   recurring: { interval: 'month', count: 1 }, tiers: nil)
     recurring &&= Struct.new(:interval, :interval_count).new(recurring[:interval], recurring[:count] || 1)
-    Struct.new(:id, :product, :unit_amount, :currency, :recurring, :active, :nickname)
-          .new(id, product, unit_amount, 'brl', recurring, active, nil)
+    tier_struct = Struct.new(:up_to, :unit_amount, :flat_amount, keyword_init: true)
+    tiers_data = tiers&.map { |band| tier_struct.new(**band) }
+    scheme = tiers ? 'tiered' : 'per_unit'
+    Struct.new(:id, :product, :unit_amount, :currency, :recurring, :active, :nickname,
+               :billing_scheme, :tiers_mode, :tiers)
+          .new(id, product, tiers ? nil : unit_amount, 'brl', recurring, active, nil,
+               scheme, tiers ? 'graduated' : nil, tiers_data)
   end
+  # rubocop:enable Metrics/ParameterLists, Metrics/CyclomaticComplexity
 
   def stripe_product(id: 'prod_1', name: 'Plano Pro', description: nil, metadata: {})
     Struct.new(:id, :name, :description, :metadata).new(id, name, description, metadata)
@@ -100,6 +109,17 @@ RSpec.describe 'Super Admin Commercial Quotes', type: :request do
                    products: [stripe_product(description: 'Inclui 1 Unidade, 1 Profissional de Atendimento')])
 
       expect(catalog_from_data.first['product_description']).to eq('Inclui 1 Unidade, 1 Profissional de Atendimento')
+    end
+
+    # A tiered Stripe price has no top-level unit amount, so the row
+    # falls back to the first tier and the UI labels it "a partir de".
+    # Without this the picker read R$ 0,00 on every tiered plan.
+    it 'reads a tiered price from the first tier and flags it as "starts from"' do
+      stub_catalog(prices: [stripe_price(tiers: [{ up_to: 8, unit_amount: 5_900, flat_amount: nil },
+                                                 { up_to: nil, unit_amount: 900, flat_amount: nil }])])
+
+      row = catalog_from_data.first
+      expect(row).to include('tiered' => true, 'starting_amount' => 5_900, 'unit_amount' => nil)
     end
 
     it 'lets the product say what it is' do

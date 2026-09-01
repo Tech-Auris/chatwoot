@@ -3,6 +3,7 @@
 # The prospect comes from the ClickUp pipeline (the deal lives there), the
 # catalogue comes from Stripe, and what results is a draft proposal — the
 # reservation and the public link come in the next step.
+# rubocop:disable Metrics/ClassLength
 class SuperAdmin::Commercial::QuotesController < SuperAdmin::ApplicationController
   rescue_from Integrations::Stripe::Client::Unauthorized, Integrations::Clickup::Client::Unauthorized do |e|
     render json: { error: "Credencial rejeitada: #{e.message}" }, status: :unauthorized
@@ -179,15 +180,34 @@ class SuperAdmin::Commercial::QuotesController < SuperAdmin::ApplicationControll
   end
 
   def serialize_price(price, product, usage_count)
+    tiered = price.billing_scheme == 'tiered'
+    starting = tiered ? starting_tier_amount(price) : nil
+
     {
       id: price.id, product_id: product.id, product_name: product.name.presence || price.nickname,
       product_description: product.description,
+      # For a tiered price the top-level `unit_amount` is nil (the amount
+      # depends on the quantity band), so we surface the first tier as
+      # `starting_amount` and let the UI say "a partir de …". The old
+      # `unit_amount` still travels through so per-unit prices behave
+      # exactly as they did.
       unit_amount: price.unit_amount, currency: price.currency,
+      tiered: tiered,
+      starting_amount: starting,
       recurring_interval: price.recurring&.interval,
       billing_period: billing_period_of(price),
       category: category_of(product, price),
       usage_count: usage_count
     }
+  end
+
+  # A Stripe tier looks like `{ up_to, unit_amount, flat_amount }`; the
+  # first band is the one the seller quotes when asked "quanto começa?".
+  def starting_tier_amount(price)
+    first_tier = Array(price.tiers).first
+    return nil if first_tier.blank?
+
+    first_tier.unit_amount.presence || first_tier.flat_amount
   end
 
   # How often each price was actually sold. The catalogue grows and the team
@@ -252,3 +272,4 @@ class SuperAdmin::Commercial::QuotesController < SuperAdmin::ApplicationControll
     "data:image/svg+xml;base64,#{Base64.strict_encode64(svg)}"
   end
 end
+# rubocop:enable Metrics/ClassLength
