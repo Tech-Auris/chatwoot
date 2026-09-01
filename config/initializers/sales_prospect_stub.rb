@@ -47,4 +47,12 @@ Rails.application.config.after_initialize do
     # entry — override it so the stub works on a fresh dev DB.
     define_method(:list_id) { 'STUB_LIST' }
   end
+
+  # The Commercial pages read `Integrations::Clickup::Client.new.configured?`
+  # to decide whether to hide their "não configurado" banner and enable the
+  # sync calls; the stub speaks the same protocol so the UI is not held up
+  # by a missing token in dev.
+  Integrations::Clickup::Client.class_eval do
+    define_method(:configured?) { true }
+  end
 end
