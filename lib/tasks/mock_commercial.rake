@@ -27,45 +27,50 @@ namespace :commercial do
       user.confirmed_at = Time.current
     end
 
-    # Six lifecycle rows plus one terminal, all identifiable by the MOCK_
-    # prefix so a rerun wipes just what this task made.
+    require Rails.root.join('lib/dev/stub_prospects')
+
+    # Each seed pairs a ClickUp stub prospect with the lifecycle stage
+    # and the cart shape we want to see on the Reservations screen. The
+    # prospect fields (name / clinic / phone / e-mail) come straight
+    # from `Dev::StubProspects` so the row here and the autocomplete on
+    # Montar plano show the same person, and so the last-4-digits gate
+    # on the public proposal reads the same phone the seller sees.
     seeds = [
-      { key: 'draft_empty', status: :draft, clickup_status: 'novo lead',
-        prospect: 'Rafael Cardoso', clinic: 'Clínica Cardoso', details: false,
-        reserved_until: nil, cart: :plan_monthly },
-      { key: 'draft_confirmed', status: :details_confirmed, clickup_status: 'em análise',
-        prospect: 'Gustavo Teste', clinic: 'Clínica Teste', details: true,
-        reserved_until: nil, cart: :plan_semiannual_with_addon },
-      { key: 'reserved_empty', status: :reserved, clickup_status: 'proposta enviada',
-        prospect: 'Camila Vieira', clinic: 'Clínica Vieira', details: false,
-        reserved_until: 3.days.from_now, cart: :plan_monthly },
-      { key: 'reserved_confirmed', status: :details_confirmed, clickup_status: 'em análise',
-        prospect: 'Beatriz Prado', clinic: 'Clínica Prado', details: true,
-        reserved_until: 5.days.from_now, cart: :plan_annual_with_addon },
-      { key: 'signed', status: :signed, clickup_status: 'assinou',
-        prospect: 'Marcos Aurélio', clinic: 'Clínica Aurélio', details: true,
-        reserved_until: 2.days.from_now, cart: :plan_annual, payment_method: :pix },
-      { key: 'paid', status: :paid, clickup_status: 'pago',
-        prospect: 'Isabela Nunes', clinic: 'Clínica Nunes', details: true,
-        reserved_until: 4.days.from_now, cart: :plan_semiannual_with_addon, payment_method: :card },
-      { key: 'converted', status: :converted, clickup_status: 'ganho',
-        prospect: 'Lucas Almeida', clinic: 'Clínica Almeida', details: true,
-        reserved_until: 6.days.from_now, cart: :plan_monthly, payment_method: :card },
-      { key: 'expired', status: :expired, clickup_status: 'perdido',
-        prospect: 'Fernanda Costa', clinic: 'Clínica Costa', details: false,
-        reserved_until: 2.days.ago, cart: :plan_monthly }
+      { key: 'draft_empty', task_id: 'STUB_rafael_cardoso', status: :draft,
+        details: false, reserved_until: nil, cart: :plan_monthly },
+      { key: 'draft_confirmed', task_id: 'STUB_gustavo_teste', status: :details_confirmed,
+        details: true, reserved_until: nil, cart: :plan_semiannual_with_addon },
+      { key: 'reserved_empty', task_id: 'STUB_camila_vieira', status: :reserved,
+        details: false, reserved_until: 3.days.from_now, cart: :plan_monthly },
+      { key: 'reserved_confirmed', task_id: 'STUB_beatriz_prado', status: :details_confirmed,
+        details: true, reserved_until: 5.days.from_now, cart: :plan_annual_with_addon },
+      { key: 'signed', task_id: 'STUB_marcos_aurelio', status: :signed,
+        details: true, reserved_until: 2.days.from_now, cart: :plan_annual, payment_method: :pix },
+      { key: 'paid', task_id: 'STUB_isabela_nunes', status: :paid,
+        details: true, reserved_until: 4.days.from_now, cart: :plan_semiannual_with_addon, payment_method: :card },
+      { key: 'converted', task_id: 'STUB_lucas_almeida', status: :converted,
+        details: true, reserved_until: 6.days.from_now, cart: :plan_monthly, payment_method: :card },
+      { key: 'expired', task_id: 'STUB_fernanda_costa', status: :expired,
+        details: false, reserved_until: 2.days.ago, cart: :plan_monthly }
     ]
 
     SalesQuote.where('clickup_task_id LIKE ?', 'MOCK_%').destroy_all
 
     seeds.each_with_index do |seed, index|
+      prospect = Dev::StubProspects.find(seed[:task_id]) or
+        raise "prospect #{seed[:task_id]} not found in Dev::StubProspects"
+
       quote = SalesQuote.new(
         seller: seller,
         clickup_task_id: "MOCK_#{seed[:key]}",
-        clickup_status: seed[:clickup_status],
+        clickup_status: prospect[:status],
         clickup_status_synced_at: Time.current,
-        prospect_name: seed[:prospect],
-        company_name: seed[:clinic],
+        prospect_name: prospect[:name],
+        # A prospect who has not filled the public form yet has no clinic
+        # on the ClickUp task; fall back to a readable placeholder built
+        # from their name, so the Reservations screen has a Cliente cell
+        # to render.
+        company_name: prospect[:clinic_name].presence || "Clínica de #{prospect[:name]}",
         billing_cycle: billing_cycle_for(seed[:cart]),
         payment_method: seed[:payment_method],
         reserved_until: seed[:reserved_until],
@@ -74,9 +79,13 @@ namespace :commercial do
 
       if seed[:details]
         quote.assign_attributes(
-          prospect_email: "#{seed[:prospect].parameterize}@#{seed[:clinic].parameterize}.com",
-          prospect_phone: format('+5561%<a>04d%<b>04d', a: index, b: index * 3),
-          prospect_document: format('%<n>011d', n: index * 1_234_567)
+          prospect_email: prospect[:email].presence ||
+                          "#{prospect[:name].parameterize}@mock.local",
+          prospect_phone: prospect[:phone],
+          # CPF is not on the ClickUp task, so we still synthesise it
+          # deterministically off the seed index; only the shape matters
+          # for the form validation.
+          prospect_document: format('%<n>011d', n: (index + 1) * 1_234_567)
         )
       end
 
