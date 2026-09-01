@@ -571,7 +571,7 @@ const startOver = () => {
                       <li v-for="price in product.prices" :key="price.id">
                         <button
                           type="button"
-                          class="w-full flex items-center justify-between gap-3 px-2 py-1.5 rounded text-left text-sm text-slate-700 bg-transparent hover:text-woot-500"
+                          class="w-full flex items-center justify-between gap-3 px-2 py-1.5 rounded text-left text-sm !text-slate-700 !bg-transparent hover:!bg-slate-100 hover:!text-slate-900"
                           @click="selectPrice(price)"
                         >
                           <span>{{ priceAmountLabel(price) }}</span>
