@@ -54,6 +54,21 @@ RSpec.describe 'Super Admin Commercial Reservations', type: :request do
       expect(by_id[negotiating.id]['won']).to be(false)
     end
 
+    # The screen needs to tell a reservation whose prospect already filled the
+    # public form apart from one still waiting on it, without leaving the
+    # `reserved` status. The flag on the row is what the badge reads.
+    it 'flags a reservation whose prospect confirmed the details on the public page' do
+      negotiating.update!(prospect_name: 'Fábio Rocha', company_name: 'Clínica X',
+                          prospect_email: 'fabio@clinicax.com', prospect_phone: '+5561999998888',
+                          prospect_document: '12345678900')
+
+      get '/super_admin/commercial/reservations/data'
+
+      by_id = response.parsed_body['reservations'].index_by { |row| row['id'] }
+      expect(by_id[negotiating.id]['details_confirmed']).to be(true)
+      expect(by_id[won.id]['details_confirmed']).to be(false)
+    end
+
     it 'refreshes the status from clickup before listing' do
       allow(search_service).to receive(:find).and_return({ status: 'proposta enviada' })
 

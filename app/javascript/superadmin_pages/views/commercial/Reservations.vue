@@ -234,16 +234,34 @@ const wasCopied = (reservation, field) =>
           </td>
 
           <td class="py-3">
-            <span
-              class="px-2 py-0.5 rounded text-xs"
-              :class="
-                reservation.won
-                  ? 'bg-green-50 text-green-700'
-                  : 'bg-slate-25 text-slate-600'
-              "
-            >
-              {{ reservation.won ? 'Ganho' : statusLabel(reservation.status) }}
-            </span>
+            <div class="flex flex-col gap-1 items-start">
+              <span
+                class="px-2 py-0.5 rounded text-xs"
+                :class="
+                  reservation.won
+                    ? 'bg-green-50 text-green-700'
+                    : 'bg-slate-25 text-slate-600'
+                "
+              >
+                {{
+                  reservation.won ? 'Ganho' : statusLabel(reservation.status)
+                }}
+              </span>
+              <!-- Progress inside the `reserved` state: once the prospect
+                   confirms the data on the public page, the deal can move
+                   to contract and payment. Later states already imply it,
+                   so the badge is scoped to `reserved`. -->
+              <span
+                v-if="
+                  reservation.details_confirmed &&
+                  reservation.status === 'reserved'
+                "
+                class="px-2 py-0.5 rounded text-xs bg-green-50 text-green-700"
+                title="O cliente confirmou nome, clínica, contato e documento"
+              >
+                Dados confirmados
+              </span>
+            </div>
           </td>
 
           <td class="py-3 text-right text-slate-700">

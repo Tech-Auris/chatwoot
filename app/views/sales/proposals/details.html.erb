@@ -1,7 +1,7 @@
 <div class="bg-white rounded-lg shadow p-6">
   <h1 class="text-lg font-medium text-slate-900">Confirme seus dados</h1>
   <p class="text-sm text-slate-500 mt-1">
-    Precisamos deles para emitir o contrato e a cobrança.
+    Precisamos deles para darmos seguimento.
   </p>
 
   <% if local_assigns[:error].present? %>
@@ -17,10 +17,10 @@
 
     <label class="text-sm text-slate-600">
       Nome da clínica
-      <%= f.text_field :company_name, value: @proposal.company_name, required: true,
+      <%= f.text_field :company_name, value: @proposal.company_name, required: true, maxlength: 25,
             class: 'mt-1 w-full border border-slate-200 rounded px-3 py-2 text-sm' %>
       <span class="block text-xs text-slate-500 mt-1">
-        É o nome que vai identificar a sua conta no AurisChat.
+        É o nome que vai identificar a sua conta no Auris.
       </span>
     </label>
 
@@ -50,11 +50,18 @@
             class: 'mt-1 w-full border border-slate-200 rounded px-3 py-2 text-sm' %>
     </label>
 
-    <details class="mt-1 rounded border border-slate-200 px-3 py-2">
-      <summary class="text-sm text-slate-600 cursor-pointer">
+    <%# `<details>` felt like an inspector, not an option. A checkbox reads as
+        "here is a choice you are making about the invoice"; the two CNPJ fields
+        appear when it is on and stay in the DOM when it is off (the browser
+        still submits their values, matching the previous `<details>` behaviour). %>
+    <% billing_open = @proposal.company_document.present? || @proposal.billing_name.present? %>
+    <div class="mt-1 rounded border border-slate-200 px-3 py-2">
+      <label class="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
+        <input id="cnpj_toggle" type="checkbox" <%= 'checked' if billing_open %>
+               class="h-4 w-4 rounded border-slate-300 text-woot-500 focus:ring-woot-500" />
         Quero faturar pelo CNPJ
-      </summary>
-      <div class="mt-3 flex flex-col gap-3">
+      </label>
+      <div id="cnpj_fields" class="mt-3 flex flex-col gap-3 <%= 'hidden' unless billing_open %>">
         <label class="text-sm text-slate-600">
           Razão social
           <%= f.text_field :billing_name, value: @proposal.billing_name,
@@ -66,8 +73,19 @@
                 class: 'mt-1 w-full border border-slate-200 rounded px-3 py-2 text-sm' %>
         </label>
       </div>
-    </details>
+    </div>
 
     <%= f.submit 'Continuar', class: 'mt-2 w-full px-3 py-2 rounded bg-woot-500 text-white text-sm cursor-pointer' %>
   <% end %>
 </div>
+
+<script>
+  (function () {
+    var toggle = document.getElementById('cnpj_toggle');
+    var fields = document.getElementById('cnpj_fields');
+    if (!toggle || !fields) return;
+    toggle.addEventListener('change', function () {
+      fields.classList.toggle('hidden', !toggle.checked);
+    });
+  })();
+</script>
