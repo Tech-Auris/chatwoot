@@ -163,6 +163,12 @@ const addToCart = price => {
     unit_amount: price.unit_amount,
     currency: price.currency,
     recurring_interval: price.recurring_interval,
+    // `billing_period` on the plan item is what the backend uses to know
+    // whether the proposal is monthly/semiannual/annual — the routing
+    // between Stripe (subscription) and AsaaS (instalments) reads that
+    // off the quote and the `recurring_interval` alone doesn't tell
+    // monthly from semiannual (both are "month" with different counts).
+    billing_period: price.billing_period,
     quantity: 1,
     kind: price.category || (price.recurring_interval ? 'plan' : 'addon'),
   });

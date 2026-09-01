@@ -127,8 +127,22 @@ class SuperAdmin::Commercial::QuotesController < SuperAdmin::ApplicationControll
       prospect_phone: prospect[:phone],
       meeting_discount: ActiveModel::Type::Boolean.new.cast(params[:meeting_discount]),
       coupon_id: params[:coupon_id].presence,
+      billing_cycle: billing_cycle_from_items,
       status: :draft
     }
+  end
+
+  # The plan item carries the period the whole proposal is on. Checkout
+  # routes card payments by this — Stripe for monthly (a subscription
+  # lives where the recurrence lives), AsaaS for semi/annual (paid in
+  # instalments). Nil when the cart has no plan yet, which validation
+  # will refuse on save; unknown periods are dropped so a stray
+  # `billing_period` never blows up the create with an enum error.
+  ALLOWED_BILLING_CYCLES = SalesQuote.billing_cycles.keys.freeze
+  def billing_cycle_from_items
+    plan_item = Array(params[:items]).find { |item| (item[:kind].presence || 'plan') == 'plan' }
+    period = plan_item&.[](:billing_period).to_s
+    ALLOWED_BILLING_CYCLES.include?(period) ? period : nil
   end
 
   # Totals are frozen on the proposal: the catalogue moves, and what the

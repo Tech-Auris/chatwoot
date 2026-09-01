@@ -175,7 +175,8 @@ RSpec.describe 'Super Admin Commercial Quotes', type: :request do
         clickup_task_id: '86ak7rd8j',
         meeting_discount: true,
         items: [{ stripe_price_id: 'price_plan', stripe_product_id: 'prod_1', name: 'Plano Pro',
-                  unit_amount: 89_700, quantity: 1, recurring_interval: 'month', kind: 'plan' }]
+                  unit_amount: 89_700, quantity: 1, recurring_interval: 'month',
+                  billing_period: 'annual', kind: 'plan' }]
       }
     end
 
@@ -215,6 +216,36 @@ RSpec.describe 'Super Admin Commercial Quotes', type: :request do
       post '/super_admin/commercial/quotes', params: payload, as: :json
 
       expect(SalesQuote.last.events.first).to have_attributes(event: 'created', user_id: super_admin.id)
+    end
+
+    # Checkout routes the card between Stripe (monthly, subscription) and
+    # AsaaS (semi/annual, instalments) by the quote's billing_cycle, so the
+    # plan item's billing_period has to land there at creation.
+    it 'takes the billing cycle from the plan item so checkout can route the card' do
+      post '/super_admin/commercial/quotes',
+           params: payload.deep_merge(items: [payload[:items].first.merge(billing_period: 'monthly')]),
+           as: :json
+
+      expect(SalesQuote.last.billing_cycle).to eq('monthly')
+    end
+
+    it 'still writes the billing cycle when the plan is annual' do
+      post '/super_admin/commercial/quotes', params: payload, as: :json
+
+      expect(SalesQuote.last.billing_cycle).to eq('annual')
+    end
+
+    # A stray `billing_period` on a payload — an addon-only cart, or a value
+    # outside the enum — must not blow up the create with an enum error.
+    it 'leaves the billing cycle blank when no plan item declares one' do
+      addon_only = payload.merge(
+        items: [{ stripe_price_id: 'price_setup', name: 'Setup', unit_amount: 50_000, quantity: 1, kind: 'addon' }]
+      )
+
+      post '/super_admin/commercial/quotes', params: addon_only, as: :json
+
+      expect(response).to have_http_status(:created)
+      expect(SalesQuote.last.billing_cycle).to be_nil
     end
   end
 
