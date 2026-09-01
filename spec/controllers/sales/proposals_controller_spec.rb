@@ -346,6 +346,20 @@ RSpec.describe 'Public sales proposal', type: :request do
       expect(response.body).to include('em até 12x')
     end
 
+    # "Total" on a monthly plan is the first invoice, setup fee included; what
+    # comes back every month is only the subscription.
+    it 'says what the first charge covers and what recurs' do
+      quote.update!(billing_cycle: :monthly, subtotal_amount: 389_700, discount_amount: 0, total_amount: 389_700)
+      create(:sales_quote_item, sales_quote: quote, name: 'Plataforma Auris', unit_amount: 89_700, recurring_interval: 'month')
+      create(:sales_quote_item, sales_quote: quote, name: 'Implantação', unit_amount: 300_000, recurring_interval: nil)
+
+      get "/proposals/#{quote.public_token}/pagamento"
+
+      expect(response.body).to include('Primeira cobrança de')
+      expect(response.body).to include('R$ 897,00</strong> por mês')
+      expect(response.body).to include('Fidelidade de 12 meses')
+    end
+
     it 'offers only the card on a monthly plan' do
       quote.update!(billing_cycle: :monthly)
 

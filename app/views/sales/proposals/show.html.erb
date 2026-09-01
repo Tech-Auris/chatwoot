@@ -48,6 +48,8 @@
       <span>Total</span>
       <span><%= proposal_amount(@proposal.total_amount) %></span>
     </div>
+
+    <%= render 'monthly_note' %>
   </div>
 
   <% if @proposal.reservation_active? %>

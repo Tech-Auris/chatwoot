@@ -34,6 +34,8 @@
     <span><%= proposal_amount(@proposal.total_amount) %></span>
   </div>
 
+  <%= render 'monthly_note' %>
+
   <%= form_with url: sales_proposal_pay_path(@proposal.public_token), method: :post, class: 'mt-6 flex flex-col gap-4' do |f| %>
     <fieldset>
       <legend class="text-sm font-medium text-slate-800">Forma de pagamento</legend>

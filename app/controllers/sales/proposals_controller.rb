@@ -15,6 +15,7 @@ class Sales::ProposalsController < ActionController::Base
 
   def show
     @items = @proposal.items
+    @monthly_charge = Sales::CheckoutService.monthly_charge_for(@proposal)
     # The link never changes, so opening it has to land on the step that is
     # still open. Offering the plan again to somebody who already signed is how
     # the same proposal collected two signatures.
@@ -185,6 +186,7 @@ class Sales::ProposalsController < ActionController::Base
   end
 
   def load_checkout_data
+    @monthly_charge = Sales::CheckoutService.monthly_charge_for(@proposal)
     @pix_available = Sales::CheckoutService.offers?('pix', @proposal.billing_cycle)
     @pix_discount = Sales::CheckoutService.pix_discount_for(@proposal.billing_cycle)
     @max_installments = Sales::CheckoutService.max_installments_for(@proposal.billing_cycle)

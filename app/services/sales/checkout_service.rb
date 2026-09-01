@@ -10,6 +10,10 @@ class Sales::CheckoutService
   CYCLE_MONTHS = { monthly: 1, semiannual: 6, annual: 12 }.freeze
   # PIX is paid outside Stripe, so the discount is ours to grant.
   PIX_DISCOUNT_PERCENT = { semiannual: 5, annual: 10 }.freeze
+  # How long the monthly plan is contracted for. Stripe has no notion of a
+  # minimum term, so it rides on the subscription as metadata and is stated on
+  # the page — what holds it is the contract the customer signs.
+  MINIMUM_TERM_MONTHS = 12
 
   Result = Struct.new(:quote, :checkout_url, :awaiting_manual_payment, keyword_init: true)
 
@@ -36,7 +40,22 @@ class Sales::CheckoutService
 
     return await_manual_payment if payment_method == 'pix'
 
-    self.class.card_provider_for(quote.billing_cycle) == :asaas ? start_asaas_checkout : start_card_checkout
+    return start_asaas_checkout if self.class.card_provider_for(quote.billing_cycle) == :asaas
+
+    start_card_checkout
+  end
+
+  # What the customer pays every month once the first invoice is settled: the
+  # recurring lines, discounted. The one-off ones — the setup fee — are charged
+  # with that first invoice and never again.
+  def self.monthly_charge_for(quote)
+    new(quote: quote, payment_method: 'card').monthly_charge
+  end
+
+  def monthly_charge
+    return 0 unless quote.billing_cycle_monthly?
+
+    discounted_lines.select { |line| line[:recurring] }.sum { |line| line[:amount] }
   end
 
   # Who charges the card. The monthly plan is a subscription and belongs where
@@ -121,12 +140,22 @@ class Sales::CheckoutService
       line_items: line_items,
       urls: urls,
       max_installments: self.class.max_installments_for(quote.billing_cycle),
-      metadata: { sales_quote_id: quote.id }
+      metadata: { sales_quote_id: quote.id },
+      **subscription_payload
     )
     quote.update!(status: :signed, stripe_customer_id: customer_id)
     quote.events.create!(event: 'checkout_started', metadata: { session_id: session.id })
 
     Result.new(quote: quote, checkout_url: session.url, awaiting_manual_payment: false)
+  end
+
+  # Only the monthly plan is a subscription; a long plan reaching Stripe is a
+  # single charge, and today it does not reach Stripe at all.
+  def subscription_payload
+    return {} unless quote.billing_cycle_monthly?
+
+    { mode: 'subscription',
+      subscription_data: { metadata: { sales_quote_id: quote.id, minimum_term_months: MINIMUM_TERM_MONTHS } } }
   end
 
   # The customer exists in Stripe from here on: the subscription, the invoices
@@ -135,9 +164,20 @@ class Sales::CheckoutService
     @customer_id ||= Sales::StripeCustomerService.new(quote: quote, client: client).ensure!
   end
 
-  # A single line with the agreed total. The breakdown lives on the proposal;
-  # sending the catalogue prices here would ignore the discounts.
+  # A long plan is one charge of the agreed total. The monthly one is billed
+  # line by line, because what recurs and what is charged once have to part
+  # ways: the subscription carries the plan, and the setup fee rides on the
+  # first invoice only.
   def line_items
+    return single_line_items unless quote.billing_cycle_monthly?
+    # A proposal with no lines of its own still has a total, and on a monthly
+    # plan that total is what recurs.
+    return [checkout_line(name: "AurisChat — #{quote.prospect_name}", recurring: true, amount: quote.total_amount)] if quote.items.empty?
+
+    discounted_lines.map { |line| checkout_line(**line) }
+  end
+
+  def single_line_items
     [{
       quantity: 1,
       price_data: {
@@ -146,5 +186,44 @@ class Sales::CheckoutService
         product_data: { name: "AurisChat — #{quote.prospect_name}", description: quote.discount_summary.presence }.compact
       }
     }]
+  end
+
+  def checkout_line(name:, amount:, recurring:)
+    price_data = { currency: quote.currency, unit_amount: amount, product_data: { name: name } }
+    price_data[:recurring] = { interval: 'month' } if recurring
+
+    { quantity: 1, price_data: price_data }
+  end
+
+  # The discount was agreed on the proposal as a whole and holds for as long as
+  # the plan runs, so it is spread across the lines and baked into the amounts
+  # rather than handed to Stripe as a coupon — one arithmetic, ours, and no
+  # drift between what the customer read and what the invoice says.
+  #
+  # The rounding residue lands on the largest line, so the first invoice adds up
+  # to the agreed total to the cent.
+  def discounted_lines
+    @discounted_lines ||= begin
+      lines = quote.items.map { |item| { name: line_name(item), recurring: item.recurring_interval.present?, amount: discounted(item) } }
+      apply_residue(lines)
+    end
+  end
+
+  def discounted(item)
+    return item.total_amount if quote.subtotal_amount.to_i.zero?
+
+    (item.total_amount * (quote.subtotal_amount - quote.discount_amount) / quote.subtotal_amount.to_f).round
+  end
+
+  def apply_residue(lines)
+    residue = quote.total_amount - lines.sum { |line| line[:amount] }
+    return lines if residue.zero? || lines.empty?
+
+    lines.max_by { |line| line[:amount] }[:amount] += residue
+    lines
+  end
+
+  def line_name(item)
+    item.quantity > 1 ? "#{item.name} (#{item.quantity}×)" : item.name
   end
 end

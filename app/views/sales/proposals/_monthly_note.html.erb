@@ -1,0 +1,9 @@
+<%# What "total" means on a monthly plan: the first invoice carries the setup
+    fee as well, and only the subscription comes back every month. %>
+<% if @monthly_charge.to_i.positive? %>
+  <p class="mt-2 text-xs text-slate-500">
+    Primeira cobrança de <strong><%= proposal_amount(@proposal.total_amount) %></strong>,
+    depois <strong><%= proposal_amount(@monthly_charge) %></strong> por mês no
+    cartão. Fidelidade de <%= Sales::CheckoutService::MINIMUM_TERM_MONTHS %> meses.
+  </p>
+<% end %>

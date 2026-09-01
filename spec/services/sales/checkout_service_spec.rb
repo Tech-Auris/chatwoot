@@ -12,6 +12,14 @@ RSpec.describe Sales::CheckoutService do
     described_class.new(quote: quote_record, payment_method: method, urls: urls, client: client).perform
   end
 
+  # What the double was actually called with, so the payload can be read field
+  # by field instead of matched blind.
+  def received_session
+    session_args = nil
+    expect(client).to have_received(:create_checkout_session) { |args| session_args = args }
+    session_args
+  end
+
   def sign_terms(quote_record = quote)
     acceptance = quote_record.terms_acceptances.create!(terms_version: create(:terms_version), status: :pending)
     acceptance.sign!(signer: { name: 'Maria', email: 'maria@clinica.com' }, ip_address: '1.1.1.1', user_agent: 'x')
@@ -40,7 +48,12 @@ RSpec.describe Sales::CheckoutService do
   # there.
   describe 'paying the monthly plan by card' do
     before do
-      quote.update!(billing_cycle: :monthly)
+      # What a monthly proposal is made of: the subscription and a setup fee
+      # that is charged once.
+      create(:sales_quote_item, sales_quote: quote, name: 'Plataforma Auris',
+                                unit_amount: 89_700, recurring_interval: 'month')
+      create(:sales_quote_item, sales_quote: quote, name: 'Implantação', unit_amount: 300_000, recurring_interval: nil)
+      quote.update!(billing_cycle: :monthly, subtotal_amount: 389_700, discount_amount: 0, total_amount: 389_700)
       sign_terms
       allow(client).to receive(:create_customer).and_return(Struct.new(:id).new('cus_1'))
       allow(client).to receive(:update_customer)
@@ -49,13 +62,59 @@ RSpec.describe Sales::CheckoutService do
       allow(client).to receive(:create_checkout_session).and_return(Struct.new(:id, :url).new('cs_1', 'https://checkout.stripe.com/x'))
     end
 
-    # The proposal already carries the agreed total; sending catalogue prices
-    # would quietly drop every discount.
-    it 'charges the agreed total, not the catalogue price' do
+    # The subscription carries the plan; the setup fee rides on the first
+    # invoice and never comes back.
+    it 'subscribes the recurring lines and charges the one-off ones once' do
       checkout
 
-      expect(client).to have_received(:create_checkout_session)
-        .with(hash_including(line_items: [hash_including(quantity: 1, price_data: hash_including(unit_amount: 89_700))]))
+      lines = received_session[:line_items]
+      expect(lines.map { |line| line[:price_data][:product_data][:name] }).to contain_exactly('Plataforma Auris', 'Implantação')
+      expect(lines.find { |line| line[:price_data][:product_data][:name] == 'Plataforma Auris' }[:price_data][:recurring])
+        .to eq({ interval: 'month' })
+      expect(lines.find { |line| line[:price_data][:product_data][:name] == 'Implantação' }[:price_data]).not_to have_key(:recurring)
+    end
+
+    it 'opens a subscription rather than a single charge' do
+      checkout
+
+      expect(received_session[:mode]).to eq('subscription')
+    end
+
+    # Stripe has no minimum term, so the contracted one travels with the
+    # subscription for whoever has to answer for it later.
+    it 'records the twelve months the plan is contracted for' do
+      checkout
+
+      expect(received_session.dig(:subscription_data, :metadata))
+        .to include(minimum_term_months: 12, sales_quote_id: quote.id)
+    end
+
+    # The discount was agreed on the proposal as a whole and holds for as long
+    # as the plan runs, so every line carries its share of it.
+    it 'spreads the discount across the lines, for good' do
+      quote.update!(discount_amount: 38_970, total_amount: 350_730)
+
+      checkout
+
+      amounts = received_session[:line_items].to_h { |line| [line[:price_data][:product_data][:name], line[:price_data][:unit_amount]] }
+      expect(amounts).to eq('Plataforma Auris' => 80_730, 'Implantação' => 270_000)
+      expect(amounts.values.sum).to eq(350_730)
+    end
+
+    # Rounding a percentage over several lines leaves cents behind, and the
+    # first invoice still has to add up to what the customer agreed to.
+    it 'adds up to the agreed total to the cent' do
+      quote.update!(discount_amount: 33_333, total_amount: 356_367)
+
+      checkout
+
+      expect(received_session[:line_items].sum { |line| line[:price_data][:unit_amount] }).to eq(356_367)
+    end
+
+    it 'says what comes every month after the first invoice' do
+      quote.update!(discount_amount: 38_970, total_amount: 350_730)
+
+      expect(described_class.monthly_charge_for(quote.reload)).to eq(80_730)
     end
 
     # A monthly subscription is charged month by month; there is nothing to
