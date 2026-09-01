@@ -165,7 +165,7 @@ RSpec.describe 'Super Admin Commercial Quotes', type: :request do
 
       body = response.parsed_body
       expect(body).to include('subtotal' => 89_700, 'discount' => 8970 + 13_455)
-      expect(body['summary']).to eq('10% venda + cupom Parceiro (15%)')
+      expect(body['summary']).to eq('10% reunião + cupom Parceiro (15%)')
     end
   end
 
@@ -198,7 +198,7 @@ RSpec.describe 'Super Admin Commercial Quotes', type: :request do
 
       quote = SalesQuote.last
       expect(quote).to have_attributes(subtotal_amount: 89_700, discount_amount: 8970, total_amount: 80_730,
-                                       discount_summary: '10% venda')
+                                       discount_summary: '10% reunião')
       expect(quote.items.first).to have_attributes(name: 'Plano Pro', unit_amount: 89_700)
     end
 

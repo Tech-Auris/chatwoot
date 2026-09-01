@@ -41,7 +41,7 @@ class Sales::QuoteCalculatorService
   def meeting_part(subtotal)
     return nil unless meeting_discount
 
-    { amount: percent_of(subtotal, MEETING_DISCOUNT_PERCENT), label: "#{MEETING_DISCOUNT_PERCENT}% venda" }
+    { amount: percent_of(subtotal, MEETING_DISCOUNT_PERCENT), label: "#{MEETING_DISCOUNT_PERCENT}% reunião" }
   end
 
   # A Stripe coupon is either a percentage or a fixed amount, never both.
@@ -70,8 +70,8 @@ class Sales::QuoteCalculatorService
     (amount * percent.to_f / 100).round
   end
 
-  # "10% venda" reads better than "10.0% venda"; a broken percentage keeps its
-  # decimals.
+  # "10% reunião" reads better than "10.0% reunião"; a broken percentage keeps
+  # its decimals.
   def format_percent(percent)
     value = percent.to_f
     (value % 1).zero? ? value.to_i : value
