@@ -4,7 +4,7 @@ RSpec.describe Sales::CheckoutService do
   let(:client) { instance_double(Integrations::Stripe::Client) }
   let(:quote) do
     create(:sales_quote, prospect_name: 'Clínica Cinco', prospect_email: 'contato@clinica.com',
-                         total_amount: 89_700, billing_cycle: :annual, discount_summary: '10% venda')
+                         total_amount: 89_700, billing_cycle: :annual, discount_summary: '10% reunião')
   end
   let(:urls) { { success: 'https://chat.auris.ia.br/obrigado', cancel: 'https://chat.auris.ia.br/pagamento' } }
 

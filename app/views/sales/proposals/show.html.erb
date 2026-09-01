@@ -22,6 +22,9 @@
       <li class="py-2 flex justify-between text-sm">
         <span class="text-slate-700">
           <%= item.name %>
+          <span class="text-slate-400 ml-1">
+            (<%= proposal_item_period(item, @proposal) %>)
+          </span>
           <% if item.quantity > 1 %>
             <span class="text-slate-400">× <%= item.quantity %></span>
           <% end %>

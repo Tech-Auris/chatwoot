@@ -13,6 +13,7 @@ const props = defineProps({
 const STATUS_LABELS = {
   draft: 'Rascunho',
   reserved: 'Reservada',
+  details_confirmed: 'Dados confirmados',
   signed: 'Termos assinados',
   paid: 'Paga',
   converted: 'Conta criada',

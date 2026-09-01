@@ -58,6 +58,35 @@ RSpec.describe 'Super Admin Application Config API', type: :request do
     end
   end
 
+  # The proposal a prospect opens is neither the console nor the product, and
+  # what it carries was living in the database with no screen to reach it.
+  describe 'the Comercial section' do
+    before { sign_in(super_admin, scope: :super_admin) }
+
+    it 'holds the logo and the pix code of the proposal' do
+      create(:installation_config, name: 'SALES_PIX_PAYLOAD', value: '00020101021126360014br.gov.bcb.pix')
+      create(:installation_config, name: 'SALES_PROPOSAL_LOGO', value: '/brand-assets/auris_sales_logo.png')
+
+      get '/super_admin/app_config?config=commercial'
+
+      expect(response.body).to include('00020101021126360014br.gov.bcb.pix')
+      expect(response.body).to include('/brand-assets/auris_sales_logo.png')
+    end
+
+    it 'saves the logo of the proposal' do
+      post '/super_admin/app_config?config=commercial',
+           params: { app_config: { SALES_PROPOSAL_LOGO: '/brand-assets/auris_sales_logo.png' } }
+
+      expect(GlobalConfig.get('SALES_PROPOSAL_LOGO')['SALES_PROPOSAL_LOGO']).to eq('/brand-assets/auris_sales_logo.png')
+    end
+
+    it 'is listed in the settings menu' do
+      get '/super_admin/settings'
+
+      expect(response.body).to include('Comercial')
+    end
+  end
+
   describe 'POST /super_admin/app_config' do
     context 'when it is an unauthenticated super admin' do
       it 'returns unauthorized' do

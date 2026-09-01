@@ -32,6 +32,11 @@ class Sales::ProspectDetailsService
 
   private
 
+  # Statuses whose lifecycle position is behind the confirmation step —
+  # signed/paid/converted already imply the details are in, and
+  # expired/cancelled are terminal, so none of them should be moved.
+  ADVANCEABLE_STATUSES = %w[draft reserved].freeze
+
   def save_details!
     quote.update!(
       prospect_name: attributes[:name],
@@ -47,6 +52,15 @@ class Sales::ProspectDetailsService
       # visit would ask for digits they no longer use.
       verification_phone_last4: digits(attributes[:phone]).last(4).presence
     )
+
+    advance_status_to_details_confirmed!
+  end
+
+  def advance_status_to_details_confirmed!
+    return unless quote.details_complete?
+    return unless ADVANCEABLE_STATUSES.include?(quote.status)
+
+    quote.update!(status: :details_confirmed)
   end
 
   attr_reader :quote, :attributes

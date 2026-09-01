@@ -115,39 +115,124 @@ const selectProspect = prospect => {
   prospectTerm.value = prospect.clinic_name || prospect.name;
 };
 
-const priceLabel = price =>
-  `${price.product_name || price.id} — ${formatAmount(price.unit_amount, price.currency)}`;
+// Same shape the product picker uses: close the results only when
+// focus lands outside the container so a click on a row is not
+// dismissed mid-selection.
+const onProspectPickerFocusOut = event => {
+  const next = event.relatedTarget;
+  if (!next || !event.currentTarget.contains(next)) {
+    prospectResults.value = [];
+  }
+};
 
-// The catalogue is read while somebody is on the phone, so it is laid out the
-// way the plan is spoken: the subscription first, then what is sold beside it,
-// each broken down by how often it is charged.
-const CATEGORIES = [
-  { id: 'plan', label: 'Planos' },
-  { id: 'addon', label: 'Adicionais' },
-];
+// The seller searches by the deal's own name — the clinic name is filled in
+// later by the prospect on the public form, so a row must lead with the
+// name the seller knows and carry the rest as context for disambiguation.
+const formatBrPhone = raw => {
+  if (!raw) return '';
+  const digits = String(raw).replace(/\D/g, '');
+  if (digits.length === 13 && digits.startsWith('55')) {
+    return `+55 (${digits.slice(2, 4)}) ${digits.slice(4, 9)}-${digits.slice(9)}`;
+  }
+  if (digits.length === 11) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  }
+  if (digits.length === 10) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+  return raw;
+};
 
-const PERIODS = [
-  { id: 'monthly', label: 'Mensal' },
-  { id: 'semiannual', label: 'Semestral' },
-  { id: 'annual', label: 'Anual' },
-  { id: 'one_off', label: 'Avulso' },
-  { id: 'other', label: 'Outra recorrência' },
-];
+const formatProspectRow = prospect => {
+  const parts = [
+    prospect.name,
+    prospect.status,
+    prospect.email,
+    formatBrPhone(prospect.phone),
+    prospect.clinic_name,
+  ]
+    .map(value => (value == null ? '' : String(value).trim()))
+    .filter(value => value.length);
 
-// Order is kept as the server sent it — most sold first — so the combinations
-// the team actually uses sit at the top of each group.
-const catalog = computed(() =>
-  CATEGORIES.map(category => ({
-    ...category,
-    groups: PERIODS.map(period => ({
-      ...period,
-      prices: prices.value.filter(
-        price =>
-          price.category === category.id && price.billing_period === period.id
-      ),
-    })).filter(group => group.prices.length),
-  })).filter(category => category.groups.length)
-);
+  return parts.join(' / ');
+};
+
+// The catalogue is read while somebody is on the phone, and the seller
+// speaks the product first ("Plataforma Auris") and only then the period
+// ("mensal / semestral / anual"). Match that flow: an autocomplete field
+// that opens a floating dropdown of every product on focus, grouped with
+// its prices under each; typing filters both the name and the description.
+const productSearch = ref('');
+const productDropdownOpen = ref(false);
+
+const openProductDropdown = () => {
+  productDropdownOpen.value = true;
+};
+
+// `focusout` bubbles up from any focusable inside the container; close
+// only when the focus lands outside so a click on a price row does not
+// dismiss the list mid-selection.
+const onProductPickerFocusOut = event => {
+  const next = event.relatedTarget;
+  if (!next || !event.currentTarget.contains(next)) {
+    productDropdownOpen.value = false;
+  }
+};
+
+// The order the server sends prices in is most-sold first; keep that,
+// but preserve product ordering by first-appearance so the top of the
+// list is what the team actually sells the most.
+const productList = computed(() => {
+  const byId = new Map();
+  prices.value.forEach(price => {
+    if (!byId.has(price.product_id)) {
+      byId.set(price.product_id, {
+        id: price.product_id,
+        name: price.product_name,
+        description: price.product_description,
+        prices: [],
+      });
+    }
+    byId.get(price.product_id).prices.push(price);
+  });
+  return [...byId.values()];
+});
+
+const filteredProducts = computed(() => {
+  const query = productSearch.value.trim().toLowerCase();
+  if (!query) return productList.value;
+  return productList.value.filter(product => {
+    const haystack =
+      `${product.name || ''} ${product.description || ''}`.toLowerCase();
+    return haystack.includes(query);
+  });
+});
+
+// How Stripe labels the price beside the amount — the seller reads this
+// out loud, so it matches how the plan is spoken: "/mês", "a cada 6
+// meses", "/ano", or nothing when the item is charged once.
+const PERIOD_SUFFIX = {
+  monthly: '/mês',
+  semiannual: ' a cada 6 meses',
+  annual: '/ano',
+  one_off: '',
+};
+
+const pricePeriodSuffix = price => {
+  if (price.billing_period in PERIOD_SUFFIX) {
+    return PERIOD_SUFFIX[price.billing_period];
+  }
+  return price.recurring_interval ? `/${price.recurring_interval}` : '';
+};
+
+// A tiered Stripe price has no single unit amount — the number depends
+// on the quantity band. Fall back to the first-tier price and prefix
+// "A partir de " so the seller reads the same wording Stripe uses.
+const priceAmountLabel = price => {
+  const amount = price.tiered ? price.starting_amount : price.unit_amount;
+  const label = `${formatAmount(amount, price.currency)}${pricePeriodSuffix(price)}`;
+  return price.tiered ? `A partir de ${label}` : label;
+};
 
 const addToCart = price => {
   const existing = cart.value.find(item => item.stripe_price_id === price.id);
@@ -163,9 +248,89 @@ const addToCart = price => {
     unit_amount: price.unit_amount,
     currency: price.currency,
     recurring_interval: price.recurring_interval,
+    // `billing_period` on the plan item is what the backend uses to know
+    // whether the proposal is monthly/semiannual/annual — the routing
+    // between Stripe (subscription) and AsaaS (instalments) reads that
+    // off the quote and the `recurring_interval` alone doesn't tell
+    // monthly from semiannual (both are "month" with different counts).
+    billing_period: price.billing_period,
     quantity: 1,
     kind: price.category || (price.recurring_interval ? 'plan' : 'addon'),
+    // Tier data flows through so the cart can price the row at the
+    // right band as the seller edits the quantity; the payload
+    // transforms `unit_amount` back into a flat effective price so the
+    // backend calculator (which just multiplies) still lands on the
+    // same subtotal.
+    tiered: price.tiered === true,
+    tiers: price.tiers || null,
+    tiers_mode: price.tiers_mode || null,
   });
+};
+
+// Sums the line at the tier the current quantity lands in. `graduated`
+// charges each band separately (a Stripe classic — the first 8 at R$59,
+// the next 21 at R$29, and so on); `volume` charges the whole quantity
+// at the band the total falls in.
+const computeTierLineTotal = item => {
+  const qty = Math.max(1, Number(item.quantity) || 1);
+  const tiers = Array.isArray(item.tiers) ? item.tiers : [];
+  if (!tiers.length) return 0;
+
+  if (item.tiers_mode === 'volume') {
+    const tier =
+      tiers.find(
+        t => t.up_to === null || t.up_to === undefined || qty <= t.up_to
+      ) || tiers[tiers.length - 1];
+    return (
+      qty * (Number(tier.unit_amount) || 0) + (Number(tier.flat_amount) || 0)
+    );
+  }
+
+  // `.reduce` here plays the role of a break-on-empty loop — once every
+  // unit has been priced, later tiers add nothing.
+  return tiers.reduce(
+    (acc, tier) => {
+      if (acc.remaining <= 0) return acc;
+      const cap =
+        tier.up_to === null || tier.up_to === undefined ? Infinity : tier.up_to;
+      const bandSize = cap - acc.previousCap;
+      const take = Math.min(bandSize, acc.remaining);
+      return {
+        remaining: acc.remaining - take,
+        total:
+          acc.total +
+          take * (Number(tier.unit_amount) || 0) +
+          (Number(tier.flat_amount) || 0),
+        previousCap: cap,
+      };
+    },
+    { remaining: qty, total: 0, previousCap: 0 }
+  ).total;
+};
+
+const cartItemLineTotal = item => {
+  if (item.tiered) return computeTierLineTotal(item);
+  const qty = Math.max(1, Number(item.quantity) || 1);
+  return (Number(item.unit_amount) || 0) * qty;
+};
+
+// The backend calculator sums `unit_amount * quantity`, so a tiered
+// item ships with the effective per-unit price (line total ÷ qty) and
+// the original quantity, keeping the persisted row readable. Rounding
+// can drift graduated totals by a handful of cents; Stripe applies
+// tiers exactly at checkout time.
+const payloadItems = () =>
+  cart.value.map(item => {
+    if (!item.tiered) return item;
+    const qty = Math.max(1, Number(item.quantity) || 1);
+    const line = computeTierLineTotal(item);
+    return { ...item, unit_amount: Math.round(line / qty), quantity: qty };
+  });
+
+const selectPrice = price => {
+  addToCart(price);
+  productSearch.value = '';
+  productDropdownOpen.value = false;
 };
 
 const removeFromCart = index => {
@@ -182,7 +347,7 @@ const refreshTotals = async () => {
     totals.value = await request(props.componentData.preview_url, {
       method: 'POST',
       body: {
-        items: cart.value,
+        items: payloadItems(),
         meeting_discount: meetingDiscount.value,
         coupon_id: couponId.value,
       },
@@ -206,7 +371,7 @@ const saveQuote = async () => {
       method: 'POST',
       body: {
         clickup_task_id: selectedProspect.value.task_id,
-        items: cart.value,
+        items: payloadItems(),
         meeting_discount: meetingDiscount.value,
         coupon_id: couponId.value,
       },
@@ -399,54 +564,51 @@ const startOver = () => {
         <div class="lg:col-span-2 flex flex-col gap-6">
           <div class="border border-slate-100 rounded-lg p-5">
             <h2 class="text-sm font-medium text-slate-800 mb-3">1. Cliente</h2>
-            <input
-              v-model="prospectTerm"
-              type="text"
-              placeholder="Buscar por nome, e-mail ou telefone…"
-              class="w-full border border-slate-200 rounded px-3 py-2 text-sm"
-              @input="searchProspects"
-            />
+
+            <div class="relative" @focusout="onProspectPickerFocusOut">
+              <input
+                v-model="prospectTerm"
+                type="text"
+                autocomplete="off"
+                placeholder="Buscar por nome, e-mail ou telefone…"
+                class="w-full border border-slate-200 rounded px-3 py-2 text-sm focus:border-woot-500 focus:outline-none"
+                @input="searchProspects"
+              />
+
+              <div
+                v-if="prospectResults.length"
+                class="absolute left-0 right-0 top-full mt-1 z-10 max-h-96 overflow-y-auto bg-white border border-slate-200 rounded-lg shadow-lg"
+              >
+                <ul class="py-1">
+                  <li
+                    v-for="prospect in prospectResults"
+                    :key="prospect.task_id"
+                  >
+                    <button
+                      type="button"
+                      class="w-full px-3 py-2 text-left text-sm !text-slate-700 !bg-transparent hover:!bg-slate-100 hover:!text-slate-900"
+                      @click="selectProspect(prospect)"
+                    >
+                      <div class="truncate">
+                        {{ formatProspectRow(prospect) }}
+                      </div>
+                    </button>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
             <p v-if="searching" class="text-xs text-slate-500 mt-2">
               Buscando…
             </p>
 
-            <ul
-              v-if="prospectResults.length"
-              class="mt-2 bg-white border border-slate-200 rounded-lg shadow-sm divide-y divide-slate-100 overflow-hidden"
-            >
-              <li v-for="prospect in prospectResults" :key="prospect.task_id">
-                <button
-                  type="button"
-                  class="w-full text-left px-3 py-2 bg-white hover:bg-slate-50"
-                  @click="selectProspect(prospect)"
-                >
-                  <div class="flex items-center gap-2">
-                    <span class="text-sm text-slate-900 truncate">
-                      {{ prospect.clinic_name || prospect.name }}
-                    </span>
-                    <span
-                      v-if="prospect.status"
-                      class="ml-auto flex-shrink-0 px-1.5 py-0.5 rounded text-xs bg-slate-100 text-slate-600"
-                    >
-                      {{ prospect.status }}
-                    </span>
-                  </div>
-                  <div class="text-xs text-slate-500 mt-0.5 truncate">
-                    {{ prospect.email }} {{ prospect.phone }}
-                  </div>
-                </button>
-              </li>
-            </ul>
-
-            <p v-if="selectedProspect" class="text-sm text-slate-700 mt-3">
-              Selecionado:
-              <strong>
-                {{ selectedProspect.clinic_name || selectedProspect.name }}
-              </strong>
+            <div v-if="selectedProspect" class="text-sm text-slate-700 mt-3">
+              <span class="text-slate-500">Selecionado:</span>
+              <strong>{{ formatProspectRow(selectedProspect) }}</strong>
               <span class="text-xs text-slate-400 ml-1">
                 ({{ selectedProspect.task_id }})
               </span>
-            </p>
+            </div>
           </div>
 
           <div class="border border-slate-100 rounded-lg p-5">
@@ -455,51 +617,73 @@ const startOver = () => {
             </h2>
             <p v-if="loading" class="text-sm text-slate-500">Carregando…</p>
 
-            <p v-else-if="!catalog.length" class="text-sm text-slate-500">
-              Nenhum produto ativo no Stripe.
-            </p>
+            <div
+              v-else-if="productList.length"
+              class="relative"
+              @focusout="onProductPickerFocusOut"
+            >
+              <input
+                v-model="productSearch"
+                type="search"
+                autocomplete="off"
+                placeholder="Encontre ou adicione um produto…"
+                class="w-full border border-slate-200 rounded px-3 py-2 text-sm focus:border-woot-500 focus:outline-none"
+                @focus="openProductDropdown"
+                @input="openProductDropdown"
+              />
 
-            <div v-else class="flex flex-col gap-5">
-              <div v-for="category in catalog" :key="category.id">
-                <h3
-                  class="text-xs font-medium uppercase tracking-wide text-slate-400"
+              <div
+                v-if="productDropdownOpen"
+                class="absolute left-0 right-0 top-full mt-1 z-10 max-h-96 overflow-y-auto bg-white border border-slate-200 rounded-lg shadow-lg"
+              >
+                <p
+                  v-if="!filteredProducts.length"
+                  class="px-3 py-2 text-sm text-slate-500"
                 >
-                  {{ category.label }}
-                </h3>
+                  Nenhum produto para "{{ productSearch }}".
+                </p>
 
-                <div
-                  v-for="group in category.groups"
-                  :key="`${category.id}-${group.id}`"
-                  class="mt-2"
-                >
-                  <p class="text-xs text-slate-500">{{ group.label }}</p>
-                  <ul class="divide-y divide-slate-50">
-                    <li
-                      v-for="price in group.prices"
-                      :key="price.id"
-                      class="flex items-center justify-between py-2"
+                <ul v-else class="py-1">
+                  <li
+                    v-for="product in filteredProducts"
+                    :key="product.id"
+                    class="px-3 py-2"
+                  >
+                    <div class="text-sm font-medium text-slate-800">
+                      {{ product.name }}
+                    </div>
+                    <p
+                      v-if="product.description"
+                      class="text-xs text-slate-500 mt-0.5 line-clamp-2"
                     >
-                      <span class="text-sm text-slate-700">
-                        {{ priceLabel(price) }}
-                        <span
-                          v-if="price.usage_count"
-                          class="ml-1 text-xs text-slate-400"
+                      {{ product.description }}
+                    </p>
+
+                    <ul class="mt-1">
+                      <li v-for="price in product.prices" :key="price.id">
+                        <button
+                          type="button"
+                          class="w-full flex items-center justify-between gap-3 px-2 py-1.5 rounded text-left text-sm !text-slate-700 !bg-transparent hover:!bg-slate-100 hover:!text-slate-900"
+                          @click="selectPrice(price)"
                         >
-                          · {{ price.usage_count }}x vendido
-                        </span>
-                      </span>
-                      <button
-                        type="button"
-                        class="px-2.5 py-1 rounded bg-woot-500 text-white text-xs"
-                        @click="addToCart(price)"
-                      >
-                        Adicionar
-                      </button>
-                    </li>
-                  </ul>
-                </div>
+                          <span>{{ priceAmountLabel(price) }}</span>
+                          <span
+                            v-if="price.usage_count"
+                            class="text-xs text-slate-400 whitespace-nowrap"
+                          >
+                            {{ price.usage_count }}x vendido
+                          </span>
+                        </button>
+                      </li>
+                    </ul>
+                  </li>
+                </ul>
               </div>
             </div>
+
+            <p v-else class="text-sm text-slate-500">
+              Nenhum produto ativo no Stripe.
+            </p>
           </div>
         </div>
 
@@ -533,7 +717,10 @@ const startOver = () => {
                   class="w-16 border border-slate-200 rounded px-2 py-1 text-sm"
                 />
                 <span class="text-xs text-slate-500">
-                  × {{ formatAmount(item.unit_amount, item.currency) }}
+                  = {{ formatAmount(cartItemLineTotal(item), item.currency) }}
+                  <span v-if="item.tiered" class="ml-1 text-slate-400">
+                    (por faixa)
+                  </span>
                 </span>
               </div>
             </li>

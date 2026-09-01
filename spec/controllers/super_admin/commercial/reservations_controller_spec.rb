@@ -54,6 +54,18 @@ RSpec.describe 'Super Admin Commercial Reservations', type: :request do
       expect(by_id[negotiating.id]['won']).to be(false)
     end
 
+    # `details_confirmed` is its own status between `reserved` and
+    # `signed`; the row now carries it directly, and the screen reads it
+    # straight off the status pill.
+    it 'passes the details_confirmed status through to the row' do
+      confirmed = create(:sales_quote, status: :details_confirmed, clickup_status: 'em análise')
+
+      get '/super_admin/commercial/reservations/data'
+
+      by_id = response.parsed_body['reservations'].index_by { |row| row['id'] }
+      expect(by_id[confirmed.id]['status']).to eq('details_confirmed')
+    end
+
     it 'refreshes the status from clickup before listing' do
       allow(search_service).to receive(:find).and_return({ status: 'proposta enviada' })
 

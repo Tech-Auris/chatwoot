@@ -23,7 +23,7 @@ RSpec.describe Sales::QuoteCalculatorService do
   it 'says what each discount was' do
     result = calculate(cart, meeting_discount: true, coupon: { id: 'c1', name: 'Parceiro', percent_off: 15 })
 
-    expect(result.summary).to eq('10% venda + cupom Parceiro (15%)')
+    expect(result.summary).to eq('10% reunião + cupom Parceiro (15%)')
   end
 
   it 'stacks the meeting discount with a percentage coupon' do

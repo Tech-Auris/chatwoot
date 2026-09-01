@@ -51,7 +51,10 @@ class SuperAdmin::AppConfigsController < SuperAdmin::ApplicationController
       'stripe' => %w[STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET],
       # AsaaS is one of the two places PIX money comes in through, next to
       # Banco Inter, and today it is only recorded by hand on the invoices.
-      'asaas' => %w[ASAAS_API_KEY ASAAS_MAX_INSTALLMENTS]
+      'asaas' => %w[ASAAS_API_KEY ASAAS_MAX_INSTALLMENTS],
+      # The page a prospect opens. It is not the console and not the product:
+      # it carries the sales logo and the PIX code the company is paid to.
+      'commercial' => %w[SALES_PROPOSAL_LOGO SALES_PIX_PAYLOAD]
     }
   end
 

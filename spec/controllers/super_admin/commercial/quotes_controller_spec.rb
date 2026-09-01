@@ -11,15 +11,24 @@ RSpec.describe 'Super Admin Commercial Quotes', type: :request do
   end
 
   # `recurring: nil` stands for a one-off price; the count is what tells a
-  # monthly plan from a semiannual one.
-  def stripe_price(id: 'price_plan', product: 'prod_1', unit_amount: 89_700, active: true, recurring: { interval: 'month', count: 1 })
+  # monthly plan from a semiannual one. `tiers` opts the price into
+  # Stripe's tiered scheme, where `unit_amount` on the top level is nil.
+  # rubocop:disable Metrics/ParameterLists, Metrics/CyclomaticComplexity -- test fixture, params read best inline
+  def stripe_price(id: 'price_plan', product: 'prod_1', unit_amount: 89_700, active: true,
+                   recurring: { interval: 'month', count: 1 }, tiers: nil)
     recurring &&= Struct.new(:interval, :interval_count).new(recurring[:interval], recurring[:count] || 1)
-    Struct.new(:id, :product, :unit_amount, :currency, :recurring, :active, :nickname)
-          .new(id, product, unit_amount, 'brl', recurring, active, nil)
+    tier_struct = Struct.new(:up_to, :unit_amount, :flat_amount, keyword_init: true)
+    tiers_data = tiers&.map { |band| tier_struct.new(**band) }
+    scheme = tiers ? 'tiered' : 'per_unit'
+    Struct.new(:id, :product, :unit_amount, :currency, :recurring, :active, :nickname,
+               :billing_scheme, :tiers_mode, :tiers)
+          .new(id, product, tiers ? nil : unit_amount, 'brl', recurring, active, nil,
+               scheme, tiers ? 'graduated' : nil, tiers_data)
   end
+  # rubocop:enable Metrics/ParameterLists, Metrics/CyclomaticComplexity
 
-  def stripe_product(id: 'prod_1', name: 'Plano Pro', metadata: {})
-    Struct.new(:id, :name, :metadata).new(id, name, metadata)
+  def stripe_product(id: 'prod_1', name: 'Plano Pro', description: nil, metadata: {})
+    Struct.new(:id, :name, :description, :metadata).new(id, name, description, metadata)
   end
 
   def stub_catalog(prices:, products: [stripe_product])
@@ -92,6 +101,27 @@ RSpec.describe 'Super Admin Commercial Quotes', type: :request do
 
     # A recurring extra — a second number billed monthly — is a plan by that
     # rule alone, so Stripe gets the final word.
+    # The picker groups by product and shows the description beside each
+    # price, so the description has to travel from Stripe through the
+    # catalogue payload without being dropped.
+    it 'carries the product description so the picker can show it beside each price' do
+      stub_catalog(prices: [stripe_price],
+                   products: [stripe_product(description: 'Inclui 1 Unidade, 1 Profissional de Atendimento')])
+
+      expect(catalog_from_data.first['product_description']).to eq('Inclui 1 Unidade, 1 Profissional de Atendimento')
+    end
+
+    # A tiered Stripe price has no top-level unit amount, so the row
+    # falls back to the first tier and the UI labels it "a partir de".
+    # Without this the picker read R$ 0,00 on every tiered plan.
+    it 'reads a tiered price from the first tier and flags it as "starts from"' do
+      stub_catalog(prices: [stripe_price(tiers: [{ up_to: 8, unit_amount: 5_900, flat_amount: nil },
+                                                 { up_to: nil, unit_amount: 900, flat_amount: nil }])])
+
+      row = catalog_from_data.first
+      expect(row).to include('tiered' => true, 'starting_amount' => 5_900, 'unit_amount' => nil)
+    end
+
     it 'lets the product say what it is' do
       stub_catalog(prices: [stripe_price(product: 'prod_extra')],
                    products: [stripe_product(id: 'prod_extra', name: 'Número extra',
@@ -165,7 +195,7 @@ RSpec.describe 'Super Admin Commercial Quotes', type: :request do
 
       body = response.parsed_body
       expect(body).to include('subtotal' => 89_700, 'discount' => 8970 + 13_455)
-      expect(body['summary']).to eq('10% venda + cupom Parceiro (15%)')
+      expect(body['summary']).to eq('10% reunião + cupom Parceiro (15%)')
     end
   end
 
@@ -175,7 +205,8 @@ RSpec.describe 'Super Admin Commercial Quotes', type: :request do
         clickup_task_id: '86ak7rd8j',
         meeting_discount: true,
         items: [{ stripe_price_id: 'price_plan', stripe_product_id: 'prod_1', name: 'Plano Pro',
-                  unit_amount: 89_700, quantity: 1, recurring_interval: 'month', kind: 'plan' }]
+                  unit_amount: 89_700, quantity: 1, recurring_interval: 'month',
+                  billing_period: 'annual', kind: 'plan' }]
       }
     end
 
@@ -198,7 +229,7 @@ RSpec.describe 'Super Admin Commercial Quotes', type: :request do
 
       quote = SalesQuote.last
       expect(quote).to have_attributes(subtotal_amount: 89_700, discount_amount: 8970, total_amount: 80_730,
-                                       discount_summary: '10% venda')
+                                       discount_summary: '10% reunião')
       expect(quote.items.first).to have_attributes(name: 'Plano Pro', unit_amount: 89_700)
     end
 
@@ -215,6 +246,36 @@ RSpec.describe 'Super Admin Commercial Quotes', type: :request do
       post '/super_admin/commercial/quotes', params: payload, as: :json
 
       expect(SalesQuote.last.events.first).to have_attributes(event: 'created', user_id: super_admin.id)
+    end
+
+    # Checkout routes the card between Stripe (monthly, subscription) and
+    # AsaaS (semi/annual, instalments) by the quote's billing_cycle, so the
+    # plan item's billing_period has to land there at creation.
+    it 'takes the billing cycle from the plan item so checkout can route the card' do
+      post '/super_admin/commercial/quotes',
+           params: payload.deep_merge(items: [payload[:items].first.merge(billing_period: 'monthly')]),
+           as: :json
+
+      expect(SalesQuote.last.billing_cycle).to eq('monthly')
+    end
+
+    it 'still writes the billing cycle when the plan is annual' do
+      post '/super_admin/commercial/quotes', params: payload, as: :json
+
+      expect(SalesQuote.last.billing_cycle).to eq('annual')
+    end
+
+    # A stray `billing_period` on a payload — an addon-only cart, or a value
+    # outside the enum — must not blow up the create with an enum error.
+    it 'leaves the billing cycle blank when no plan item declares one' do
+      addon_only = payload.merge(
+        items: [{ stripe_price_id: 'price_setup', name: 'Setup', unit_amount: 50_000, quantity: 1, kind: 'addon' }]
+      )
+
+      post '/super_admin/commercial/quotes', params: addon_only, as: :json
+
+      expect(response).to have_http_status(:created)
+      expect(SalesQuote.last.billing_cycle).to be_nil
     end
   end
 
