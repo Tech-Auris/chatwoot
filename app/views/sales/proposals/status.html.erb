@@ -1,7 +1,9 @@
 <%
+  # The bar shows the step that is still open, so it stops at the payment
+  # while the payment is pending — a card saved for the token charges is
+  # convenience, not a paid contract.
   current_step =
     if @proposal.converted? then :onboarding
-    elsif @proposal.token_payment_method_id.present? then :tokens
     elsif @proposal.paid? then :tokens
     else :payment
     end

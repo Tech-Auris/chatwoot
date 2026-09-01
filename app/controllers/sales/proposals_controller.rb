@@ -15,6 +15,11 @@ class Sales::ProposalsController < ActionController::Base
 
   def show
     @items = @proposal.items
+    # The link never changes, so opening it has to land on the step that is
+    # still open. Offering the plan again to somebody who already signed is how
+    # the same proposal collected two signatures.
+    return redirect_to open_step_path if open_step_path.present?
+
     # The prospect only sees the confirmation once we know who they are: name,
     # phone, e-mail and document are what the contract and the invoice need.
     render :details unless @proposal.details_complete?
@@ -46,6 +51,7 @@ class Sales::ProposalsController < ActionController::Base
 
   def checkout
     @items = @proposal.items
+    return redirect_to sales_proposal_status_path(@proposal.public_token) if settled?
     return redirect_to sales_proposal_path(@proposal.public_token) unless @proposal.details_complete?
 
     load_checkout_data
@@ -57,6 +63,9 @@ class Sales::ProposalsController < ActionController::Base
   # because this is the only place that knows the address and the browser the
   # acceptance came from.
   def pay
+    # A page left open in another tab must not start a second payment for a
+    # proposal that is already settled.
+    return redirect_to sales_proposal_status_path(@proposal.public_token) if settled?
     return render_checkout_error('É preciso aceitar os termos de uso') unless params[:accept_terms] == '1'
 
     # The signature points at the very text the page rendered, not at whatever
@@ -88,7 +97,7 @@ class Sales::ProposalsController < ActionController::Base
 
   def save_token_card
     session = Integrations::Stripe::Client.new.create_setup_session(
-      customer_id: @proposal.stripe_customer_id,
+      customer_id: stripe_customer_id,
       urls: { success: sales_proposal_status_url(@proposal.public_token, host: public_host),
               cancel: sales_proposal_tokens_url(@proposal.public_token, host: public_host) },
       metadata: { sales_quote_id: @proposal.id }
@@ -108,9 +117,50 @@ class Sales::ProposalsController < ActionController::Base
 
   private
 
+  # Where the proposal is, when that is somewhere other than the plan:
+  #
+  #   paid or converted -> the tracking page, there is nothing left to do here
+  #   signed by PIX     -> the tracking page, which carries the PIX details
+  #   signed by card    -> the payment page, so an abandoned checkout can be
+  #                        finished without signing the terms a second time
+  #
+  # Anything else is still being put together and belongs on the plan.
+  def open_step_path
+    return sales_proposal_status_path(@proposal.public_token) if settled?
+    return nil unless @proposal.signed?
+
+    if @proposal.payment_method_pix?
+      sales_proposal_status_path(@proposal.public_token)
+    else
+      sales_proposal_checkout_path(@proposal.public_token)
+    end
+  end
+
+  # The money is in, or the account already exists.
+  def settled?
+    @proposal.paid? || @proposal.converted?
+  end
+
+  # The customer exists in Stripe from the card checkout, and for a PIX sale
+  # only when the payment is registered — but the card for the token charges is
+  # saved before that, and it has to hang off a customer we can bill later.
+  def stripe_customer_id
+    @proposal.stripe_customer_id.presence || begin
+      id = Sales::StripeCustomerService.new(quote: @proposal).ensure!
+      @proposal.update!(stripe_customer_id: id)
+      id
+    end
+  end
+
+  # One signature per proposal and per wording. A customer who comes back to
+  # pay is signing the same contract they already signed, and the audit is
+  # supposed to show a contract signed once — not once per visit.
   def sign_terms!(version_id)
     version = TermsVersion.find_by(id: version_id)
     raise Sales::TermsFetcherService::Unavailable, 'Recarregue a página para ler os termos antes de assinar' if version.blank?
+
+    signed = @proposal.terms_acceptances.status_signed.find_by(terms_version: version)
+    return signed if signed.present?
 
     acceptance = @proposal.terms_acceptances.create!(terms_version: version, status: :pending)
     acceptance.sign!(
