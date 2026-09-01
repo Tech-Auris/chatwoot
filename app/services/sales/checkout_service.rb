@@ -10,10 +10,6 @@ class Sales::CheckoutService
   CYCLE_MONTHS = { monthly: 1, semiannual: 6, annual: 12 }.freeze
   # PIX is paid outside Stripe, so the discount is ours to grant.
   PIX_DISCOUNT_PERCENT = { semiannual: 5, annual: 10 }.freeze
-  # How long the monthly plan is contracted for. Stripe has no notion of a
-  # minimum term, so it rides on the subscription as metadata and is stated on
-  # the page — what holds it is the contract the customer signs.
-  MINIMUM_TERM_MONTHS = 12
 
   Result = Struct.new(:quote, :checkout_url, :awaiting_manual_payment, keyword_init: true)
 
@@ -154,8 +150,9 @@ class Sales::CheckoutService
   def subscription_payload
     return {} unless quote.billing_cycle_monthly?
 
-    { mode: 'subscription',
-      subscription_data: { metadata: { sales_quote_id: quote.id, minimum_term_months: MINIMUM_TERM_MONTHS } } }
+    # No minimum term: the subscription renews month to month until the
+    # customer cancels.
+    { mode: 'subscription', subscription_data: { metadata: { sales_quote_id: quote.id } } }
   end
 
   # The customer exists in Stripe from here on: the subscription, the invoices

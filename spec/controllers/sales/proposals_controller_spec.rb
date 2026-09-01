@@ -357,7 +357,7 @@ RSpec.describe 'Public sales proposal', type: :request do
 
       expect(response.body).to include('Primeira cobrança de')
       expect(response.body).to include('R$ 897,00</strong> por mês')
-      expect(response.body).to include('Fidelidade de 12 meses')
+      expect(response.body).to include('até você cancelar')
     end
 
     it 'offers only the card on a monthly plan' do

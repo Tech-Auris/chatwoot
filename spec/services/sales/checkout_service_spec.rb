@@ -80,13 +80,12 @@ RSpec.describe Sales::CheckoutService do
       expect(received_session[:mode]).to eq('subscription')
     end
 
-    # Stripe has no minimum term, so the contracted one travels with the
-    # subscription for whoever has to answer for it later.
-    it 'records the twelve months the plan is contracted for' do
+    # The subscription renews month to month until the customer cancels, so
+    # nothing on it claims a term.
+    it 'ties the subscription to the proposal it came from' do
       checkout
 
-      expect(received_session.dig(:subscription_data, :metadata))
-        .to include(minimum_term_months: 12, sales_quote_id: quote.id)
+      expect(received_session.dig(:subscription_data, :metadata)).to eq({ sales_quote_id: quote.id })
     end
 
     # The discount was agreed on the proposal as a whole and holds for as long
