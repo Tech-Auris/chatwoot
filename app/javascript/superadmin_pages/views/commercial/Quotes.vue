@@ -246,8 +246,76 @@ const addToCart = price => {
     billing_period: price.billing_period,
     quantity: 1,
     kind: price.category || (price.recurring_interval ? 'plan' : 'addon'),
+    // Tier data flows through so the cart can price the row at the
+    // right band as the seller edits the quantity; the payload
+    // transforms `unit_amount` back into a flat effective price so the
+    // backend calculator (which just multiplies) still lands on the
+    // same subtotal.
+    tiered: price.tiered === true,
+    tiers: price.tiers || null,
+    tiers_mode: price.tiers_mode || null,
   });
 };
+
+// Sums the line at the tier the current quantity lands in. `graduated`
+// charges each band separately (a Stripe classic — the first 8 at R$59,
+// the next 21 at R$29, and so on); `volume` charges the whole quantity
+// at the band the total falls in.
+const computeTierLineTotal = item => {
+  const qty = Math.max(1, Number(item.quantity) || 1);
+  const tiers = Array.isArray(item.tiers) ? item.tiers : [];
+  if (!tiers.length) return 0;
+
+  if (item.tiers_mode === 'volume') {
+    const tier =
+      tiers.find(
+        t => t.up_to === null || t.up_to === undefined || qty <= t.up_to
+      ) || tiers[tiers.length - 1];
+    return (
+      qty * (Number(tier.unit_amount) || 0) + (Number(tier.flat_amount) || 0)
+    );
+  }
+
+  // `.reduce` here plays the role of a break-on-empty loop — once every
+  // unit has been priced, later tiers add nothing.
+  return tiers.reduce(
+    (acc, tier) => {
+      if (acc.remaining <= 0) return acc;
+      const cap =
+        tier.up_to === null || tier.up_to === undefined ? Infinity : tier.up_to;
+      const bandSize = cap - acc.previousCap;
+      const take = Math.min(bandSize, acc.remaining);
+      return {
+        remaining: acc.remaining - take,
+        total:
+          acc.total +
+          take * (Number(tier.unit_amount) || 0) +
+          (Number(tier.flat_amount) || 0),
+        previousCap: cap,
+      };
+    },
+    { remaining: qty, total: 0, previousCap: 0 }
+  ).total;
+};
+
+const cartItemLineTotal = item => {
+  if (item.tiered) return computeTierLineTotal(item);
+  const qty = Math.max(1, Number(item.quantity) || 1);
+  return (Number(item.unit_amount) || 0) * qty;
+};
+
+// The backend calculator sums `unit_amount * quantity`, so a tiered
+// item ships with the effective per-unit price (line total ÷ qty) and
+// the original quantity, keeping the persisted row readable. Rounding
+// can drift graduated totals by a handful of cents; Stripe applies
+// tiers exactly at checkout time.
+const payloadItems = () =>
+  cart.value.map(item => {
+    if (!item.tiered) return item;
+    const qty = Math.max(1, Number(item.quantity) || 1);
+    const line = computeTierLineTotal(item);
+    return { ...item, unit_amount: Math.round(line / qty), quantity: qty };
+  });
 
 const selectPrice = price => {
   addToCart(price);
@@ -269,7 +337,7 @@ const refreshTotals = async () => {
     totals.value = await request(props.componentData.preview_url, {
       method: 'POST',
       body: {
-        items: cart.value,
+        items: payloadItems(),
         meeting_discount: meetingDiscount.value,
         coupon_id: couponId.value,
       },
@@ -293,7 +361,7 @@ const saveQuote = async () => {
       method: 'POST',
       body: {
         clickup_task_id: selectedProspect.value.task_id,
-        items: cart.value,
+        items: payloadItems(),
         meeting_discount: meetingDiscount.value,
         coupon_id: couponId.value,
       },
@@ -631,7 +699,10 @@ const startOver = () => {
                   class="w-16 border border-slate-200 rounded px-2 py-1 text-sm"
                 />
                 <span class="text-xs text-slate-500">
-                  × {{ formatAmount(item.unit_amount, item.currency) }}
+                  = {{ formatAmount(cartItemLineTotal(item), item.currency) }}
+                  <span v-if="item.tiered" class="ml-1 text-slate-400">
+                    (por faixa)
+                  </span>
                 </span>
               </div>
             </li>
