@@ -181,6 +181,7 @@ class SuperAdmin::Commercial::QuotesController < SuperAdmin::ApplicationControll
   def serialize_price(price, product, usage_count)
     {
       id: price.id, product_id: product.id, product_name: product.name.presence || price.nickname,
+      product_description: product.description,
       unit_amount: price.unit_amount, currency: price.currency,
       recurring_interval: price.recurring&.interval,
       billing_period: billing_period_of(price),

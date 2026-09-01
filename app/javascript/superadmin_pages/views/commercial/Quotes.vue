@@ -147,39 +147,61 @@ const formatProspectRow = prospect => {
   return parts.join(' / ');
 };
 
-const priceLabel = price =>
-  `${price.product_name || price.id} — ${formatAmount(price.unit_amount, price.currency)}`;
+// The catalogue is read while somebody is on the phone, and the seller
+// speaks the product first ("Plataforma Auris") and only then the period
+// ("mensal / semestral / anual"). Match that flow: group the prices by
+// product, show every period the product is sold on, and let a search
+// box filter both name and description as the seller types.
+const productSearch = ref('');
 
-// The catalogue is read while somebody is on the phone, so it is laid out the
-// way the plan is spoken: the subscription first, then what is sold beside it,
-// each broken down by how often it is charged.
-const CATEGORIES = [
-  { id: 'plan', label: 'Planos' },
-  { id: 'addon', label: 'Adicionais' },
-];
+// The order the server sends prices in is most-sold first; keep that,
+// but preserve product ordering by first-appearance so the top of the
+// list is what the team actually sells the most.
+const productList = computed(() => {
+  const byId = new Map();
+  prices.value.forEach(price => {
+    if (!byId.has(price.product_id)) {
+      byId.set(price.product_id, {
+        id: price.product_id,
+        name: price.product_name,
+        description: price.product_description,
+        prices: [],
+      });
+    }
+    byId.get(price.product_id).prices.push(price);
+  });
+  return [...byId.values()];
+});
 
-const PERIODS = [
-  { id: 'monthly', label: 'Mensal' },
-  { id: 'semiannual', label: 'Semestral' },
-  { id: 'annual', label: 'Anual' },
-  { id: 'one_off', label: 'Avulso' },
-  { id: 'other', label: 'Outra recorrência' },
-];
+const filteredProducts = computed(() => {
+  const query = productSearch.value.trim().toLowerCase();
+  if (!query) return productList.value;
+  return productList.value.filter(product => {
+    const haystack =
+      `${product.name || ''} ${product.description || ''}`.toLowerCase();
+    return haystack.includes(query);
+  });
+});
 
-// Order is kept as the server sent it — most sold first — so the combinations
-// the team actually uses sit at the top of each group.
-const catalog = computed(() =>
-  CATEGORIES.map(category => ({
-    ...category,
-    groups: PERIODS.map(period => ({
-      ...period,
-      prices: prices.value.filter(
-        price =>
-          price.category === category.id && price.billing_period === period.id
-      ),
-    })).filter(group => group.prices.length),
-  })).filter(category => category.groups.length)
-);
+// How Stripe labels the price beside the amount — the seller reads this
+// out loud, so it matches how the plan is spoken: "/mês", "a cada 6
+// meses", "/ano", or nothing when the item is charged once.
+const PERIOD_SUFFIX = {
+  monthly: '/mês',
+  semiannual: ' a cada 6 meses',
+  annual: '/ano',
+  one_off: '',
+};
+
+const pricePeriodSuffix = price => {
+  if (price.billing_period in PERIOD_SUFFIX) {
+    return PERIOD_SUFFIX[price.billing_period];
+  }
+  return price.recurring_interval ? `/${price.recurring_interval}` : '';
+};
+
+const priceAmountLabel = price =>
+  `${formatAmount(price.unit_amount, price.currency)}${pricePeriodSuffix(price)}`;
 
 const addToCart = price => {
   const existing = cart.value.find(item => item.stripe_price_id === price.id);
@@ -482,51 +504,70 @@ const startOver = () => {
             </h2>
             <p v-if="loading" class="text-sm text-slate-500">Carregando…</p>
 
-            <p v-else-if="!catalog.length" class="text-sm text-slate-500">
-              Nenhum produto ativo no Stripe.
-            </p>
+            <template v-else-if="productList.length">
+              <input
+                v-model="productSearch"
+                type="search"
+                placeholder="Encontre ou adicione um produto…"
+                class="w-full border border-slate-200 rounded px-3 py-2 text-sm focus:border-woot-500 focus:outline-none"
+              />
 
-            <div v-else class="flex flex-col gap-5">
-              <div v-for="category in catalog" :key="category.id">
-                <h3
-                  class="text-xs font-medium uppercase tracking-wide text-slate-400"
-                >
-                  {{ category.label }}
-                </h3>
+              <p
+                v-if="!filteredProducts.length"
+                class="mt-3 text-sm text-slate-500"
+              >
+                Nenhum produto para "{{ productSearch }}".
+              </p>
 
-                <div
-                  v-for="group in category.groups"
-                  :key="`${category.id}-${group.id}`"
-                  class="mt-2"
+              <ul v-else class="mt-3 divide-y divide-slate-100">
+                <li
+                  v-for="product in filteredProducts"
+                  :key="product.id"
+                  class="py-3 first:pt-0 last:pb-0"
                 >
-                  <p class="text-xs text-slate-500">{{ group.label }}</p>
-                  <ul class="divide-y divide-slate-50">
+                  <div class="text-sm font-medium text-slate-800">
+                    {{ product.name }}
+                  </div>
+
+                  <ul class="mt-1">
                     <li
-                      v-for="price in group.prices"
+                      v-for="price in product.prices"
                       :key="price.id"
-                      class="flex items-center justify-between py-2"
+                      class="flex items-start gap-3 py-1.5"
                     >
-                      <span class="text-sm text-slate-700">
-                        {{ priceLabel(price) }}
-                        <span
-                          v-if="price.usage_count"
-                          class="ml-1 text-xs text-slate-400"
-                        >
-                          · {{ price.usage_count }}x vendido
-                        </span>
+                      <span class="text-sm text-slate-700 w-40 flex-shrink-0">
+                        {{ priceAmountLabel(price) }}
+                      </span>
+                      <span
+                        v-if="product.description"
+                        class="text-sm text-slate-500 flex-1 line-clamp-2"
+                        :title="product.description"
+                      >
+                        {{ product.description }}
+                      </span>
+                      <span v-else class="flex-1" />
+                      <span
+                        v-if="price.usage_count"
+                        class="text-xs text-slate-400 self-center whitespace-nowrap"
+                      >
+                        {{ price.usage_count }}x vendido
                       </span>
                       <button
                         type="button"
-                        class="px-2.5 py-1 rounded bg-woot-500 text-white text-xs"
+                        class="px-2.5 py-1 rounded bg-woot-500 text-white text-xs self-center"
                         @click="addToCart(price)"
                       >
                         Adicionar
                       </button>
                     </li>
                   </ul>
-                </div>
-              </div>
-            </div>
+                </li>
+              </ul>
+            </template>
+
+            <p v-else class="text-sm text-slate-500">
+              Nenhum produto ativo no Stripe.
+            </p>
           </div>
         </div>
 

@@ -18,8 +18,8 @@ RSpec.describe 'Super Admin Commercial Quotes', type: :request do
           .new(id, product, unit_amount, 'brl', recurring, active, nil)
   end
 
-  def stripe_product(id: 'prod_1', name: 'Plano Pro', metadata: {})
-    Struct.new(:id, :name, :metadata).new(id, name, metadata)
+  def stripe_product(id: 'prod_1', name: 'Plano Pro', description: nil, metadata: {})
+    Struct.new(:id, :name, :description, :metadata).new(id, name, description, metadata)
   end
 
   def stub_catalog(prices:, products: [stripe_product])
@@ -92,6 +92,16 @@ RSpec.describe 'Super Admin Commercial Quotes', type: :request do
 
     # A recurring extra — a second number billed monthly — is a plan by that
     # rule alone, so Stripe gets the final word.
+    # The picker groups by product and shows the description beside each
+    # price, so the description has to travel from Stripe through the
+    # catalogue payload without being dropped.
+    it 'carries the product description so the picker can show it beside each price' do
+      stub_catalog(prices: [stripe_price],
+                   products: [stripe_product(description: 'Inclui 1 Unidade, 1 Profissional de Atendimento')])
+
+      expect(catalog_from_data.first['product_description']).to eq('Inclui 1 Unidade, 1 Profissional de Atendimento')
+    end
+
     it 'lets the product say what it is' do
       stub_catalog(prices: [stripe_price(product: 'prod_extra')],
                    products: [stripe_product(id: 'prod_extra', name: 'Número extra',
