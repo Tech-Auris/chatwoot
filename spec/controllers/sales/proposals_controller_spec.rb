@@ -39,12 +39,6 @@ RSpec.describe 'Public sales proposal', type: :request do
 
       expect(response.body).to include('Sua proposta</h1>')
       expect(response.body).to include('/brand-assets/logo.svg')
-    # Whose number this is decides whether the customer can answer at all.
-    it 'shows the beginning of the registered number, never the digits it asks for' do
-      get "/proposals/#{quote.public_token}"
-
-      expect(response.body).to include('(61) 98140-XXXX')
-      expect(response.body).not_to include('2211')
     end
 
     it 'shows the proposal once unlocked' do
@@ -53,6 +47,14 @@ RSpec.describe 'Public sales proposal', type: :request do
 
       expect(response.body).to include(item.name)
       expect(response.body).to include('Condições reservadas até')
+    end
+
+    # Whose number this is decides whether the customer can answer at all.
+    it 'shows the beginning of the registered number, never the digits it asks for' do
+      get "/proposals/#{quote.public_token}"
+
+      expect(response.body).to include('(61) 98140-XXXX')
+      expect(response.body).not_to include('2211')
     end
 
     it 'answers 404 for a token that does not exist' do
@@ -204,10 +206,6 @@ RSpec.describe 'Public sales proposal', type: :request do
     # and the signature already on file is reused there.
     it 'takes a signed monthly card sale back to the payment page' do
       quote.update!(status: :signed, payment_method: :card, billing_cycle: :monthly)
-    # A card checkout that was abandoned is finished from the payment page, and
-    # the signature already on file is reused there.
-    it 'takes a signed card sale back to the payment page' do
-      quote.update!(status: :signed, payment_method: :card)
 
       get "/proposals/#{quote.public_token}"
 
@@ -412,7 +410,6 @@ RSpec.describe 'Public sales proposal', type: :request do
     it 'sends a monthly plan paid by card to the Stripe checkout' do
       quote.update!(billing_cycle: :monthly)
 
-    it 'sends a card payment to the Stripe checkout' do
       sign_and_pay(method: 'card')
 
       expect(response).to redirect_to('https://checkout.stripe.com/x')
