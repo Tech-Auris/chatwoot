@@ -147,17 +147,64 @@ class SuperAdmin::Commercial::QuotesController < SuperAdmin::ApplicationControll
     available_coupons.find { |coupon| coupon[:id] == params[:coupon_id] }
   end
 
+  # What the seller can put in the cart: the prices of products that are still
+  # on sale, most used first — archived products keep their prices active in
+  # Stripe, so filtering the price alone let a retired plan be sold again.
   def catalog_prices
-    product_names = stripe_client.list_products.data.to_h { |product| [product.id, product.name] }
+    products = stripe_client.list_products(active: true).data.index_by(&:id)
+    usage = price_usage_counts
 
-    stripe_client.list_prices.data.filter_map do |price|
-      next unless price.active
+    prices = stripe_client.list_prices.data.filter_map do |price|
+      product = products[price.product]
+      next if !price.active || product.nil?
 
-      {
-        id: price.id, product_id: price.product, product_name: product_names[price.product] || price.nickname,
-        unit_amount: price.unit_amount, currency: price.currency, recurring_interval: price.recurring&.interval
-      }
+      serialize_price(price, product, usage[price.id].to_i)
     end
+
+    prices.sort_by { |price| [-price[:usage_count], price[:product_name].to_s.downcase] }
+  end
+
+  def serialize_price(price, product, usage_count)
+    {
+      id: price.id, product_id: product.id, product_name: product.name.presence || price.nickname,
+      unit_amount: price.unit_amount, currency: price.currency,
+      recurring_interval: price.recurring&.interval,
+      billing_period: billing_period_of(price),
+      category: category_of(product, price),
+      usage_count: usage_count
+    }
+  end
+
+  # How often each price was actually sold. The catalogue grows and the team
+  # sells a handful of combinations, so what has been sold before is the best
+  # order we have for what comes first.
+  def price_usage_counts
+    SalesQuoteItem.group(:stripe_price_id).count
+  end
+
+  # Stripe describes a semiannual plan as six monthly intervals, so the period
+  # only reads right once the count is taken with the interval.
+  def billing_period_of(price)
+    return 'one_off' if price.recurring.blank?
+
+    months = price.recurring.interval == 'year' ? price.recurring.interval_count * 12 : price.recurring.interval_count
+
+    case months
+    when 1 then 'monthly'
+    when 6 then 'semiannual'
+    when 12 then 'annual'
+    else 'other'
+    end
+  end
+
+  # The subscription itself against everything sold beside it. A product says
+  # so through `auris_category` in Stripe; without it, a recurring price is the
+  # plan and a one-off is an extra, which is what the cart has always assumed.
+  def category_of(product, price)
+    declared = product.metadata&.[]('auris_category').presence
+    return declared if %w[plan addon].include?(declared)
+
+    price.recurring.present? ? 'plan' : 'addon'
   end
 
   def available_coupons

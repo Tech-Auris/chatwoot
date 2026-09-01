@@ -139,6 +139,10 @@ class Sales::ProposalsController < ActionController::Base
       sales_proposal_checkout_path(@proposal.public_token)
     else
       sales_proposal_status_path(@proposal.public_token)
+    if @proposal.payment_method_pix?
+      sales_proposal_status_path(@proposal.public_token)
+    else
+      sales_proposal_checkout_path(@proposal.public_token)
     end
   end
 

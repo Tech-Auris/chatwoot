@@ -17,6 +17,12 @@
     </label>
     <label class="text-sm text-slate-600">
       4 últimos dígitos do seu WhatsApp
+      <% if (masked_phone = proposal_masked_phone(@proposal.prospect_phone)) %>
+        <span class="block text-xs text-slate-500 mt-0.5">
+          Número cadastrado: <strong><%= masked_phone %></strong>. Se não for o
+          seu, fale com o seu consultor.
+        </span>
+      <% end %>
       <%= f.text_field :phone_last4, inputmode: 'numeric', maxlength: 4,
             class: 'mt-1 w-full border border-slate-200 rounded px-3 py-2 text-sm' %>
     </label>

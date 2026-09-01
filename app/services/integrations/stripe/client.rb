@@ -62,10 +62,13 @@ class Integrations::Stripe::Client
     with_error_handling { Stripe::Account.retrieve(nil, request_options) }
   end
 
-  def list_products(limit: PRODUCT_LIST_LIMIT)
-    with_error_handling do
-      Stripe::Product.list({ limit: limit, expand: ['data.default_price'] }, request_options)
-    end
+  # `active: true` asks Stripe for the catalogue as it stands today. The
+  # products screen wants the archived ones too, which is why this is a choice
+  # and not the default.
+  def list_products(limit: PRODUCT_LIST_LIMIT, active: nil)
+    payload = { limit: limit, expand: ['data.default_price'], active: active }.compact
+
+    with_error_handling { Stripe::Product.list(payload, request_options) }
   end
 
   def create_product(name:, description: nil, active: true)
