@@ -23,6 +23,41 @@ RSpec.describe 'Super Admin Application Config API', type: :request do
     end
   end
 
+  # The Auris-only sections live in their own mapping so a sync with upstream
+  # does not conflict on every entry.
+  describe 'the AsaaS section' do
+    before { sign_in(super_admin, scope: :super_admin) }
+
+    it 'shows the key of the account money comes in through' do
+      create(:installation_config, name: 'ASAAS_API_KEY', value: '$aact_test_key')
+
+      get '/super_admin/app_config?config=asaas'
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include('$aact_test_key')
+    end
+
+    it 'saves the key' do
+      post '/super_admin/app_config?config=asaas', params: { app_config: { ASAAS_API_KEY: '$aact_nova' } }
+
+      expect(GlobalConfig.get('ASAAS_API_KEY')['ASAAS_API_KEY']).to eq('$aact_nova')
+    end
+
+    # Every section is an allowlist: a key that is not part of it must not be
+    # writable through it.
+    it 'refuses to write another section key through it' do
+      post '/super_admin/app_config?config=asaas', params: { app_config: { STRIPE_SECRET_KEY: 'sk_live_x' } }
+
+      expect(GlobalConfig.get('STRIPE_SECRET_KEY')['STRIPE_SECRET_KEY']).to be_blank
+    end
+
+    it 'is listed in the settings menu' do
+      get '/super_admin/settings'
+
+      expect(response.body).to include('AsaaS')
+    end
+  end
+
   describe 'POST /super_admin/app_config' do
     context 'when it is an unauthenticated super admin' do
       it 'returns unauthorized' do

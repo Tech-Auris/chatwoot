@@ -48,7 +48,10 @@ class SuperAdmin::AppConfigsController < SuperAdmin::ApplicationController
       # Stripe integration behind the Financeiro section. Single secret key per
       # installation — every Financeiro screen reads it through
       # Integrations::Stripe::Client.
-      'stripe' => %w[STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET]
+      'stripe' => %w[STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET],
+      # AsaaS is one of the two places PIX money comes in through, next to
+      # Banco Inter, and today it is only recorded by hand on the invoices.
+      'asaas' => %w[ASAAS_API_KEY]
     }
   end
 
