@@ -61,6 +61,17 @@ module Sales::ProposalsHelper
     "(#{digits[0, 2]}) #{digits[2...-4]}-"
   end
 
+  # The label the prospect reads next to each item on the plan page, so
+  # they know what recurrence they are signing for. A recurring item
+  # follows the whole quote's billing_cycle (a monthly plan comes with
+  # monthly add-ons); an item with no interval is a one-off.
+  BILLING_CYCLE_LABELS = { 'monthly' => 'mensal', 'semiannual' => 'semestral', 'annual' => 'anual' }.freeze
+  def proposal_item_period(item, proposal)
+    return 'avulso' if item.recurring_interval.blank?
+
+    BILLING_CYCLE_LABELS[proposal.billing_cycle.to_s] || item.recurring_interval
+  end
+
   def proposal_datetime(time)
     return nil if time.blank?
 
