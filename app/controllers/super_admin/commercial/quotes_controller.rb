@@ -179,20 +179,24 @@ class SuperAdmin::Commercial::QuotesController < SuperAdmin::ApplicationControll
     prices.sort_by { |price| [-price[:usage_count], price[:product_name].to_s.downcase] }
   end
 
+  # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
   def serialize_price(price, product, usage_count)
     tiered = price.billing_scheme == 'tiered'
-    starting = tiered ? starting_tier_amount(price) : nil
+    tier_bands = tiered ? serialize_tiers(price) : nil
+    starting = tier_bands&.first&.[](:unit_amount) || tier_bands&.first&.[](:flat_amount)
 
     {
       id: price.id, product_id: product.id, product_name: product.name.presence || price.nickname,
       product_description: product.description,
       # For a tiered price the top-level `unit_amount` is nil (the amount
       # depends on the quantity band), so we surface the first tier as
-      # `starting_amount` and let the UI say "a partir de …". The old
-      # `unit_amount` still travels through so per-unit prices behave
-      # exactly as they did.
+      # `starting_amount` and let the UI say "a partir de …". The full
+      # `tiers` array travels along so the cart can price the row at
+      # the band the seller's quantity lands in.
       unit_amount: price.unit_amount, currency: price.currency,
       tiered: tiered,
+      tiers_mode: tiered ? price.tiers_mode : nil,
+      tiers: tier_bands,
       starting_amount: starting,
       recurring_interval: price.recurring&.interval,
       billing_period: billing_period_of(price),
@@ -201,13 +205,16 @@ class SuperAdmin::Commercial::QuotesController < SuperAdmin::ApplicationControll
     }
   end
 
-  # A Stripe tier looks like `{ up_to, unit_amount, flat_amount }`; the
-  # first band is the one the seller quotes when asked "quanto começa?".
-  def starting_tier_amount(price)
-    first_tier = Array(price.tiers).first
-    return nil if first_tier.blank?
+  # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
-    first_tier.unit_amount.presence || first_tier.flat_amount
+  # A Stripe tier looks like `{ up_to, unit_amount, flat_amount }`; ship a
+  # plain-hash copy so JSON serialization keeps it flat, and the cart's
+  # tier math has the same shape whether the source is Stripe or the
+  # dev stub.
+  def serialize_tiers(price)
+    Array(price.tiers).map do |tier|
+      { up_to: tier.up_to, unit_amount: tier.unit_amount, flat_amount: tier.flat_amount }
+    end
   end
 
   # How often each price was actually sold. The catalogue grows and the team
