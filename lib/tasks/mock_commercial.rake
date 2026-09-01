@@ -65,7 +65,15 @@ namespace :commercial do
         clickup_task_id: "MOCK_#{seed[:key]}",
         clickup_status: prospect[:status],
         clickup_status_synced_at: Time.current,
+        # ClickUp already carries name / e-mail / phone by the time the
+        # seller creates the proposal, so every quote — confirmed or not —
+        # starts with those fields in. Only the CPF (which the ClickUp
+        # task does not track) waits on the customer's public visit, and
+        # that is what the `details:` flag toggles below.
         prospect_name: prospect[:name],
+        prospect_email: prospect[:email].presence ||
+                        "#{prospect[:name].parameterize}@mock.local",
+        prospect_phone: prospect[:phone],
         # A prospect who has not filled the public form yet has no clinic
         # on the ClickUp task; fall back to a readable placeholder built
         # from their name, so the Reservations screen has a Cliente cell
@@ -78,15 +86,10 @@ namespace :commercial do
       )
 
       if seed[:details]
-        quote.assign_attributes(
-          prospect_email: prospect[:email].presence ||
-                          "#{prospect[:name].parameterize}@mock.local",
-          prospect_phone: prospect[:phone],
-          # CPF is not on the ClickUp task, so we still synthesise it
-          # deterministically off the seed index; only the shape matters
-          # for the form validation.
-          prospect_document: format('%<n>011d', n: (index + 1) * 1_234_567)
-        )
+        # CPF is not on the ClickUp task, so we still synthesise it
+        # deterministically off the seed index; only the shape matters
+        # for the form validation.
+        quote.prospect_document = format('%<n>011d', n: (index + 1) * 1_234_567)
       end
 
       items = build_items(seed[:cart])
