@@ -31,6 +31,7 @@ const error = ref(null);
 // Which row was copied and what was taken from it, so the feedback lands on the
 // button that was actually pressed.
 const copied = ref({ id: null, field: null });
+const busyId = ref(null);
 
 const fetchData = async () => {
   loading.value = true;
@@ -94,6 +95,41 @@ const expiringCount = computed(
 // The link and the code are copied apart on purpose: sending both in the same
 // message would make the code pointless, since it exists so that a forwarded
 // link alone opens nothing.
+// Somebody who paid the year by PIX may have no card to leave on file. The
+// team says so here, and the customer stops being asked for one.
+const waiveTokenCard = async reservation => {
+  if (
+    !window.confirm(
+      'Dispensar o cartão dos tokens? O consumo passa a ser cobrado por fatura.'
+    )
+  )
+    return;
+
+  busyId.value = reservation.id;
+  error.value = null;
+  try {
+    const res = await fetch(
+      `${props.componentData.reservations_url}/${reservation.id}/waive_token_card`,
+      {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          Accept: 'application/json',
+          'X-CSRF-Token':
+            document.querySelector('meta[name="csrf-token"]')?.content ?? '',
+        },
+      }
+    );
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+    await fetchData();
+  } catch (e) {
+    error.value = e.message;
+  } finally {
+    busyId.value = null;
+  }
+};
+
 const copy = async (reservation, field, value) => {
   await navigator.clipboard.writeText(value);
   copied.value = { id: reservation.id, field };
@@ -162,6 +198,7 @@ const wasCopied = (reservation, field) =>
           <th class="py-2">Situação</th>
           <th class="py-2 text-right">Valor</th>
           <th class="py-2 text-right">Reserva até</th>
+          <th class="py-2">Tokens</th>
           <th class="py-2 text-right">Link e código</th>
         </tr>
       </thead>
@@ -223,6 +260,31 @@ const wasCopied = (reservation, field) =>
             </div>
           </td>
 
+          <td class="py-3">
+            <span
+              v-if="reservation.token_card_saved"
+              class="text-xs text-slate-500"
+            >
+              Cartão cadastrado
+            </span>
+            <span
+              v-else-if="reservation.token_card_waived"
+              class="text-xs text-slate-500"
+            >
+              Cobrança por fatura
+            </span>
+            <button
+              v-else
+              type="button"
+              class="px-2 py-1 rounded border border-slate-200 text-slate-600 text-xs whitespace-nowrap disabled:opacity-40"
+              :disabled="busyId === reservation.id"
+              title="Para quem pagou por PIX e não tem cartão. O consumo passa a ser cobrado por fatura."
+              @click="waiveTokenCard(reservation)"
+            >
+              Dispensar cartão
+            </button>
+          </td>
+
           <td class="py-3 text-right">
             <div class="flex gap-2 justify-end">
               <button
@@ -251,7 +313,7 @@ const wasCopied = (reservation, field) =>
         </tr>
 
         <tr v-if="!reservations.length">
-          <td colspan="7" class="py-6 text-center text-slate-400">
+          <td colspan="8" class="py-6 text-center text-slate-400">
             {{
               statusFilter
                 ? 'Nenhuma proposta com este status.'
