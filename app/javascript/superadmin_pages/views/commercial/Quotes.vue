@@ -149,10 +149,25 @@ const formatProspectRow = prospect => {
 
 // The catalogue is read while somebody is on the phone, and the seller
 // speaks the product first ("Plataforma Auris") and only then the period
-// ("mensal / semestral / anual"). Match that flow: group the prices by
-// product, show every period the product is sold on, and let a search
-// box filter both name and description as the seller types.
+// ("mensal / semestral / anual"). Match that flow: an autocomplete field
+// that opens a floating dropdown of every product on focus, grouped with
+// its prices under each; typing filters both the name and the description.
 const productSearch = ref('');
+const productDropdownOpen = ref(false);
+
+const openProductDropdown = () => {
+  productDropdownOpen.value = true;
+};
+
+// `focusout` bubbles up from any focusable inside the container; close
+// only when the focus lands outside so a click on a price row does not
+// dismiss the list mid-selection.
+const onProductPickerFocusOut = event => {
+  const next = event.relatedTarget;
+  if (!next || !event.currentTarget.contains(next)) {
+    productDropdownOpen.value = false;
+  }
+};
 
 // The order the server sends prices in is most-sold first; keep that,
 // but preserve product ordering by first-appearance so the top of the
@@ -226,6 +241,12 @@ const addToCart = price => {
     quantity: 1,
     kind: price.category || (price.recurring_interval ? 'plan' : 'addon'),
   });
+};
+
+const selectPrice = price => {
+  addToCart(price);
+  productSearch.value = '';
+  productDropdownOpen.value = false;
 };
 
 const removeFromCart = index => {
@@ -504,66 +525,69 @@ const startOver = () => {
             </h2>
             <p v-if="loading" class="text-sm text-slate-500">Carregando…</p>
 
-            <template v-else-if="productList.length">
+            <div
+              v-else-if="productList.length"
+              class="relative"
+              @focusout="onProductPickerFocusOut"
+            >
               <input
                 v-model="productSearch"
                 type="search"
+                autocomplete="off"
                 placeholder="Encontre ou adicione um produto…"
                 class="w-full border border-slate-200 rounded px-3 py-2 text-sm focus:border-woot-500 focus:outline-none"
+                @focus="openProductDropdown"
+                @input="openProductDropdown"
               />
 
-              <p
-                v-if="!filteredProducts.length"
-                class="mt-3 text-sm text-slate-500"
+              <div
+                v-if="productDropdownOpen"
+                class="absolute left-0 right-0 top-full mt-1 z-10 max-h-96 overflow-y-auto bg-white border border-slate-200 rounded-lg shadow-lg"
               >
-                Nenhum produto para "{{ productSearch }}".
-              </p>
-
-              <ul v-else class="mt-3 divide-y divide-slate-100">
-                <li
-                  v-for="product in filteredProducts"
-                  :key="product.id"
-                  class="py-3 first:pt-0 last:pb-0"
+                <p
+                  v-if="!filteredProducts.length"
+                  class="px-3 py-2 text-sm text-slate-500"
                 >
-                  <div class="text-sm font-medium text-slate-800">
-                    {{ product.name }}
-                  </div>
+                  Nenhum produto para "{{ productSearch }}".
+                </p>
 
-                  <ul class="mt-1">
-                    <li
-                      v-for="price in product.prices"
-                      :key="price.id"
-                      class="flex items-start gap-3 py-1.5"
+                <ul v-else class="py-1">
+                  <li
+                    v-for="product in filteredProducts"
+                    :key="product.id"
+                    class="px-3 py-2"
+                  >
+                    <div class="text-sm font-medium text-slate-800">
+                      {{ product.name }}
+                    </div>
+                    <p
+                      v-if="product.description"
+                      class="text-xs text-slate-500 mt-0.5 line-clamp-2"
                     >
-                      <span class="text-sm text-slate-700 w-40 flex-shrink-0">
-                        {{ priceAmountLabel(price) }}
-                      </span>
-                      <span
-                        v-if="product.description"
-                        class="text-sm text-slate-500 flex-1 line-clamp-2"
-                        :title="product.description"
-                      >
-                        {{ product.description }}
-                      </span>
-                      <span v-else class="flex-1" />
-                      <span
-                        v-if="price.usage_count"
-                        class="text-xs text-slate-400 self-center whitespace-nowrap"
-                      >
-                        {{ price.usage_count }}x vendido
-                      </span>
-                      <button
-                        type="button"
-                        class="px-2.5 py-1 rounded bg-woot-500 text-white text-xs self-center"
-                        @click="addToCart(price)"
-                      >
-                        Adicionar
-                      </button>
-                    </li>
-                  </ul>
-                </li>
-              </ul>
-            </template>
+                      {{ product.description }}
+                    </p>
+
+                    <ul class="mt-1">
+                      <li v-for="price in product.prices" :key="price.id">
+                        <button
+                          type="button"
+                          class="w-full flex items-center justify-between gap-3 px-2 py-1.5 rounded text-left text-sm text-slate-700 hover:bg-woot-50"
+                          @click="selectPrice(price)"
+                        >
+                          <span>{{ priceAmountLabel(price) }}</span>
+                          <span
+                            v-if="price.usage_count"
+                            class="text-xs text-slate-400 whitespace-nowrap"
+                          >
+                            {{ price.usage_count }}x vendido
+                          </span>
+                        </button>
+                      </li>
+                    </ul>
+                  </li>
+                </ul>
+              </div>
+            </div>
 
             <p v-else class="text-sm text-slate-500">
               Nenhum produto ativo no Stripe.
