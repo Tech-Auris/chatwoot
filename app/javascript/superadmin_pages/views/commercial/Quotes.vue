@@ -115,13 +115,39 @@ const selectProspect = prospect => {
   prospectTerm.value = prospect.clinic_name || prospect.name;
 };
 
-const priceLabel = price => {
-  const name = price.product_name || price.id;
-  const interval = price.recurring_interval
-    ? ` / ${price.recurring_interval}`
-    : '';
-  return `${name} — ${formatAmount(price.unit_amount, price.currency)}${interval}`;
-};
+const priceLabel = price =>
+  `${price.product_name || price.id} — ${formatAmount(price.unit_amount, price.currency)}`;
+
+// The catalogue is read while somebody is on the phone, so it is laid out the
+// way the plan is spoken: the subscription first, then what is sold beside it,
+// each broken down by how often it is charged.
+const CATEGORIES = [
+  { id: 'plan', label: 'Planos' },
+  { id: 'addon', label: 'Adicionais' },
+];
+
+const PERIODS = [
+  { id: 'monthly', label: 'Mensal' },
+  { id: 'semiannual', label: 'Semestral' },
+  { id: 'annual', label: 'Anual' },
+  { id: 'one_off', label: 'Avulso' },
+  { id: 'other', label: 'Outra recorrência' },
+];
+
+// Order is kept as the server sent it — most sold first — so the combinations
+// the team actually uses sit at the top of each group.
+const catalog = computed(() =>
+  CATEGORIES.map(category => ({
+    ...category,
+    groups: PERIODS.map(period => ({
+      ...period,
+      prices: prices.value.filter(
+        price =>
+          price.category === category.id && price.billing_period === period.id
+      ),
+    })).filter(group => group.prices.length),
+  })).filter(category => category.groups.length)
+);
 
 const addToCart = price => {
   const existing = cart.value.find(item => item.stripe_price_id === price.id);
@@ -138,7 +164,7 @@ const addToCart = price => {
     currency: price.currency,
     recurring_interval: price.recurring_interval,
     quantity: 1,
-    kind: price.recurring_interval ? 'plan' : 'addon',
+    kind: price.category || (price.recurring_interval ? 'plan' : 'addon'),
   });
 };
 
@@ -428,24 +454,52 @@ const startOver = () => {
               2. Planos e adicionais
             </h2>
             <p v-if="loading" class="text-sm text-slate-500">Carregando…</p>
-            <ul v-else class="divide-y divide-slate-50">
-              <li
-                v-for="price in prices"
-                :key="price.id"
-                class="flex items-center justify-between py-2"
-              >
-                <span class="text-sm text-slate-700">
-                  {{ priceLabel(price) }}
-                </span>
-                <button
-                  type="button"
-                  class="px-2.5 py-1 rounded bg-woot-500 text-white text-xs"
-                  @click="addToCart(price)"
+
+            <p v-else-if="!catalog.length" class="text-sm text-slate-500">
+              Nenhum produto ativo no Stripe.
+            </p>
+
+            <div v-else class="flex flex-col gap-5">
+              <div v-for="category in catalog" :key="category.id">
+                <h3
+                  class="text-xs font-medium uppercase tracking-wide text-slate-400"
                 >
-                  Adicionar
-                </button>
-              </li>
-            </ul>
+                  {{ category.label }}
+                </h3>
+
+                <div
+                  v-for="group in category.groups"
+                  :key="`${category.id}-${group.id}`"
+                  class="mt-2"
+                >
+                  <p class="text-xs text-slate-500">{{ group.label }}</p>
+                  <ul class="divide-y divide-slate-50">
+                    <li
+                      v-for="price in group.prices"
+                      :key="price.id"
+                      class="flex items-center justify-between py-2"
+                    >
+                      <span class="text-sm text-slate-700">
+                        {{ priceLabel(price) }}
+                        <span
+                          v-if="price.usage_count"
+                          class="ml-1 text-xs text-slate-400"
+                        >
+                          · {{ price.usage_count }}x vendido
+                        </span>
+                      </span>
+                      <button
+                        type="button"
+                        class="px-2.5 py-1 rounded bg-woot-500 text-white text-xs"
+                        @click="addToCart(price)"
+                      >
+                        Adicionar
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 

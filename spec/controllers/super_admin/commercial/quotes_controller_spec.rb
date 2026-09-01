@@ -10,10 +10,26 @@ RSpec.describe 'Super Admin Commercial Quotes', type: :request do
       email: 'contato@exemplo.com', phone: '+5561981402211', status: 'negociação' }
   end
 
-  def stripe_price(id: 'price_plan', product: 'prod_1', unit_amount: 89_700, interval: 'month')
-    recurring = interval ? Struct.new(:interval).new(interval) : nil
+  # `recurring: nil` stands for a one-off price; the count is what tells a
+  # monthly plan from a semiannual one.
+  def stripe_price(id: 'price_plan', product: 'prod_1', unit_amount: 89_700, active: true, recurring: { interval: 'month', count: 1 })
+    recurring &&= Struct.new(:interval, :interval_count).new(recurring[:interval], recurring[:count] || 1)
     Struct.new(:id, :product, :unit_amount, :currency, :recurring, :active, :nickname)
-          .new(id, product, unit_amount, 'brl', recurring, true, nil)
+          .new(id, product, unit_amount, 'brl', recurring, active, nil)
+  end
+
+  def stripe_product(id: 'prod_1', name: 'Plano Pro', metadata: {})
+    Struct.new(:id, :name, :metadata).new(id, name, metadata)
+  end
+
+  def stub_catalog(prices:, products: [stripe_product])
+    allow(stripe_client).to receive(:list_prices).and_return(Struct.new(:data).new(prices))
+    allow(stripe_client).to receive(:list_products).and_return(Struct.new(:data).new(products))
+  end
+
+  def catalog_from_data
+    get '/super_admin/commercial/quotes/data'
+    response.parsed_body['prices']
   end
 
   def stripe_coupon(id: 'coupon_1', percent_off: 15, valid: true)
@@ -25,7 +41,7 @@ RSpec.describe 'Super Admin Commercial Quotes', type: :request do
     allow(Integrations::Stripe::Client).to receive(:new).and_return(stripe_client)
     allow(Sales::ClickupProspectSearchService).to receive(:new).and_return(search_service)
     allow(stripe_client).to receive(:list_prices).and_return(Struct.new(:data).new([stripe_price]))
-    allow(stripe_client).to receive(:list_products).and_return(Struct.new(:data).new([Struct.new(:id, :name).new('prod_1', 'Plano Pro')]))
+    allow(stripe_client).to receive(:list_products).and_return(Struct.new(:data).new([stripe_product]))
     allow(stripe_client).to receive(:list_coupons).and_return(Struct.new(:data).new([stripe_coupon]))
     allow(search_service).to receive(:find).with('86ak7rd8j').and_return(prospect)
     sign_in(super_admin, scope: :super_admin)
@@ -37,6 +53,65 @@ RSpec.describe 'Super Admin Commercial Quotes', type: :request do
 
       expect(response).to have_http_status(:success)
       expect(response.body).to include('CommercialQuotesIndex')
+    end
+  end
+
+  describe 'the catalogue offered to the seller' do
+    # Archiving a product in Stripe does not archive its prices, so filtering
+    # the price alone kept retired plans on sale here.
+    it 'leaves out the price of a product that is no longer sold' do
+      stub_catalog(prices: [stripe_price, stripe_price(id: 'price_old', product: 'prod_retired')])
+
+      expect(catalog_from_data.pluck('id')).to eq(['price_plan'])
+    end
+
+    it 'leaves out an archived price of a product still on sale' do
+      stub_catalog(prices: [stripe_price, stripe_price(id: 'price_old', active: false)])
+
+      expect(catalog_from_data.pluck('id')).to eq(['price_plan'])
+    end
+
+    # Stripe describes a semiannual plan as six monthly intervals.
+    it 'reads the billing period from the interval and its count' do
+      stub_catalog(prices: [stripe_price(id: 'p_month'),
+                            stripe_price(id: 'p_semi', recurring: { interval: 'month', count: 6 }),
+                            stripe_price(id: 'p_year', recurring: { interval: 'year' }),
+                            stripe_price(id: 'p_once', recurring: nil)])
+
+      periods = catalog_from_data.to_h { |price| [price['id'], price['billing_period']] }
+      expect(periods).to eq('p_month' => 'monthly', 'p_semi' => 'semiannual',
+                            'p_year' => 'annual', 'p_once' => 'one_off')
+    end
+
+    it 'takes a recurring price for the plan and a one-off for an extra' do
+      stub_catalog(prices: [stripe_price(id: 'p_plan'), stripe_price(id: 'p_extra', recurring: nil)])
+
+      categories = catalog_from_data.to_h { |price| [price['id'], price['category']] }
+      expect(categories).to eq('p_plan' => 'plan', 'p_extra' => 'addon')
+    end
+
+    # A recurring extra — a second number billed monthly — is a plan by that
+    # rule alone, so Stripe gets the final word.
+    it 'lets the product say what it is' do
+      stub_catalog(prices: [stripe_price(product: 'prod_extra')],
+                   products: [stripe_product(id: 'prod_extra', name: 'Número extra',
+                                             metadata: { 'auris_category' => 'addon' })])
+
+      expect(catalog_from_data.first['category']).to eq('addon')
+    end
+
+    # The catalogue grows and the team sells a handful of combinations.
+    it 'puts what has been sold most at the top' do
+      quote = create(:sales_quote)
+      create(:sales_quote_item, sales_quote: quote, stripe_price_id: 'price_used')
+      create(:sales_quote_item, sales_quote: quote, stripe_price_id: 'price_used')
+      create(:sales_quote_item, sales_quote: quote, stripe_price_id: 'price_rare')
+      stub_catalog(prices: [stripe_price(id: 'price_never'), stripe_price(id: 'price_rare'),
+                            stripe_price(id: 'price_used')])
+
+      catalog = catalog_from_data
+      expect(catalog.pluck('id')).to eq(%w[price_used price_rare price_never])
+      expect(catalog.first['usage_count']).to eq(2)
     end
   end
 
