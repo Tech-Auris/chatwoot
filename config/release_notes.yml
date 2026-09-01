@@ -1,4 +1,12 @@
 ---
+- tag: v4.15.1-auris.1.51.5
+  published_at: '2026-09-01T02:00:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.51.5
+  notes:
+    en: |-
+      Bug fixes and internal improvements.
+    pt_BR: |-
+      Correções de bugs e melhorias internas.
 - tag: v4.15.1-auris.1.51.4
   published_at: '2026-08-31T00:30:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.51.4
@@ -283,23 +291,3 @@
 
       - **Excluir um template Meta volta a funcionar.** A Meta estava recusando a exclusão com erro de permissão mesmo em tokens que criam e enviam templates normalmente. A exclusão agora usa o endpoint mais preciso da Meta, que aceita o mesmo escopo já usado no resto do fluxo de templates.
       - **Templates Meta não pisca mais "sem caixa Cloud conectada" no refresh forçado.** Depois de um Ctrl+Shift+R a tela mostrava brevemente (às vezes de forma persistente) "sem caixa Cloud conectada" enquanto as caixas ainda carregavam. Agora aparece um spinner até termos a lista, e depois os templates.
-- tag: v4.15.1-auris.1.42.0
-  published_at: '2026-08-12T14:45:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.42.0
-  notes:
-    en: |-
-      ### ⚡ Improvements
-
-      - **The Edit button on a template respects Meta's rules.** Meta only accepts edits on templates whose status is Approved. On any other status the Edit button is now disabled with a short line explaining why — instead of letting you fill the form and only find out at save time.
-
-      ### 🐛 Fixes
-
-      - **A new template appears on the list right after you create it.** Creating a new template used to bounce you back to the list without it, and you had to refresh the page to see it. The list now includes the just-created template immediately.
-    pt_BR: |-
-      ### ⚡ Melhorias
-
-      - **O botão Editar de um template respeita as regras da Meta.** A Meta só aceita edições em templates com status Aprovado. Em qualquer outro status o botão Editar fica desabilitado com uma linha curta explicando o motivo — em vez de deixar você preencher o formulário e só descobrir na hora de salvar.
-
-      ### 🐛 Correções
-
-      - **Template novo aparece na lista logo após criar.** Ao criar um novo template você voltava pra lista e ele não estava lá — precisava dar refresh na página pra ver. A lista agora já mostra o template recém-criado na hora.
