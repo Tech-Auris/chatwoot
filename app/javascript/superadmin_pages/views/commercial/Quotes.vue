@@ -115,6 +115,16 @@ const selectProspect = prospect => {
   prospectTerm.value = prospect.clinic_name || prospect.name;
 };
 
+// Same shape the product picker uses: close the results only when
+// focus lands outside the container so a click on a row is not
+// dismissed mid-selection.
+const onProspectPickerFocusOut = event => {
+  const next = event.relatedTarget;
+  if (!next || !event.currentTarget.contains(next)) {
+    prospectResults.value = [];
+  }
+};
+
 // The seller searches by the deal's own name — the clinic name is filled in
 // later by the prospect on the public form, so a row must lead with the
 // name the seller knows and carry the rest as context for disambiguation.
@@ -554,33 +564,43 @@ const startOver = () => {
         <div class="lg:col-span-2 flex flex-col gap-6">
           <div class="border border-slate-100 rounded-lg p-5">
             <h2 class="text-sm font-medium text-slate-800 mb-3">1. Cliente</h2>
-            <input
-              v-model="prospectTerm"
-              type="text"
-              placeholder="Buscar por nome, e-mail ou telefone…"
-              class="w-full border border-slate-200 rounded px-3 py-2 text-sm"
-              @input="searchProspects"
-            />
+
+            <div class="relative" @focusout="onProspectPickerFocusOut">
+              <input
+                v-model="prospectTerm"
+                type="text"
+                autocomplete="off"
+                placeholder="Buscar por nome, e-mail ou telefone…"
+                class="w-full border border-slate-200 rounded px-3 py-2 text-sm focus:border-woot-500 focus:outline-none"
+                @input="searchProspects"
+              />
+
+              <div
+                v-if="prospectResults.length"
+                class="absolute left-0 right-0 top-full mt-1 z-10 max-h-96 overflow-y-auto bg-white border border-slate-200 rounded-lg shadow-lg"
+              >
+                <ul class="py-1">
+                  <li
+                    v-for="prospect in prospectResults"
+                    :key="prospect.task_id"
+                  >
+                    <button
+                      type="button"
+                      class="w-full px-3 py-2 text-left text-sm !text-slate-700 !bg-transparent hover:!bg-slate-100 hover:!text-slate-900"
+                      @click="selectProspect(prospect)"
+                    >
+                      <div class="truncate">
+                        {{ formatProspectRow(prospect) }}
+                      </div>
+                    </button>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
             <p v-if="searching" class="text-xs text-slate-500 mt-2">
               Buscando…
             </p>
-
-            <ul
-              v-if="prospectResults.length"
-              class="mt-2 bg-white border border-slate-200 rounded-lg shadow-sm divide-y divide-slate-100 overflow-hidden"
-            >
-              <li v-for="prospect in prospectResults" :key="prospect.task_id">
-                <button
-                  type="button"
-                  class="w-full text-left px-3 py-2 bg-white hover:bg-slate-50"
-                  @click="selectProspect(prospect)"
-                >
-                  <div class="text-sm text-slate-900 truncate">
-                    {{ formatProspectRow(prospect) }}
-                  </div>
-                </button>
-              </li>
-            </ul>
 
             <p v-if="selectedProspect" class="text-sm text-slate-700 mt-3">
               Selecionado:
