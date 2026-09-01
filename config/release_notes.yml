@@ -1,4 +1,26 @@
 ---
+- tag: v4.15.1-auris.1.52
+  published_at: '2026-09-01T21:45:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.52
+  notes:
+    en: |-
+      ### ✨ What's new
+
+      - **Access screen with a box per digit.** Like a 2FA screen: the customer pastes the code from WhatsApp and it fills the boxes on its own; the registered number appears on the page so they can tell whether the record is theirs.
+      - **Every proposal line shows monthly / semiannual / annual.** The customer sees the billing period of each line before signing — no surprise later about what is recurring.
+
+      ### 🐛 Fixes
+
+      - **Monthly card sign-up now creates a real subscription.** It had been sent to the instalment flow instead of becoming a recurring charge. Monthly now goes to the subscription processor; semiannual and annual keep going to the instalment link.
+    pt_BR: |-
+      ### ✨ Novidades
+
+      - **Tela de acesso da proposta em blocos.** Cada dígito em uma caixinha, como o código do banco no celular: o cliente cola o código do WhatsApp e preenche sozinho; o número já cadastrado aparece na tela para ele conferir se é o dele.
+      - **Cada item da proposta mostra "mensal", "semestral" ou "anual".** O cliente vê a recorrência de cada linha antes de assinar, sem surpresa depois sobre o que fica recorrente.
+
+      ### 🐛 Correções
+
+      - **Pagamento mensal no cartão vira assinatura mesmo.** Estava caindo em uma tela de parcelamento em vez de virar cobrança recorrente. Agora o mensal segue para a assinatura; o semestral e o anual continuam indo para o link de parcelamento.
 - tag: v4.15.1-auris.1.51.5
   published_at: '2026-09-01T02:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.51.5
@@ -277,17 +299,3 @@
       ### 🐛 Correções
 
       - **Templates Meta não trava mais em "Carregando templates…".** Depois da release anterior, abrir Templates Meta a partir de uma sessão que já tinha as caixas carregadas (ou seja, chegando pela sidebar depois de estar em outra tela) deixava a página girando pra sempre. Agora carrega a lista normalmente.
-- tag: v4.15.1-auris.1.42.1
-  published_at: '2026-08-12T16:50:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.42.1
-  notes:
-    en: |-
-      ### 🐛 Fixes
-
-      - **Deleting a Meta template works again.** Meta was rejecting the delete with a permission error even for tokens that could create and send templates normally. The delete flow now uses Meta's more precise endpoint, which accepts the same permissions the rest of the template flow already uses.
-      - **Templates Meta stops flashing "no Cloud inbox connected" on hard refresh.** After a hard refresh (Ctrl+Shift+R) the screen used to briefly (and sometimes stubbornly) show "no Cloud inbox connected" while the inboxes were still loading. Now you see a spinner until the list is known, then the templates.
-    pt_BR: |-
-      ### 🐛 Correções
-
-      - **Excluir um template Meta volta a funcionar.** A Meta estava recusando a exclusão com erro de permissão mesmo em tokens que criam e enviam templates normalmente. A exclusão agora usa o endpoint mais preciso da Meta, que aceita o mesmo escopo já usado no resto do fluxo de templates.
-      - **Templates Meta não pisca mais "sem caixa Cloud conectada" no refresh forçado.** Depois de um Ctrl+Shift+R a tela mostrava brevemente (às vezes de forma persistente) "sem caixa Cloud conectada" enquanto as caixas ainda carregavam. Agora aparece um spinner até termos a lista, e depois os templates.
