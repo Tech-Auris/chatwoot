@@ -41,7 +41,7 @@ class Sales::ProposalsController < ActionController::Base
 
     register_attempt
 
-    if @proposal.verify_access(code: params[:access_code], phone_last4: params[:phone_last4])
+    if @proposal.verify_access(code: submitted_access_code, phone_last4: submitted_phone_last4)
       session[unlocked_key] = true
       @proposal.events.create!(event: 'opened_by_prospect', metadata: { ip: request.remote_ip })
       redirect_to sales_proposal_path(@proposal.public_token)
@@ -161,6 +161,17 @@ class Sales::ProposalsController < ActionController::Base
   # One signature per proposal and per wording. A customer who comes back to
   # pay is signing the same contract they already signed, and the audit is
   # supposed to show a contract signed once — not once per visit.
+  # The page splits both codes into one box per digit, and answers with them in
+  # order. A single field is still accepted: without JavaScript the boxes are
+  # plain inputs the customer tabs through, and that is what arrives.
+  def submitted_access_code
+    params[:access_code].presence || Array(params[:access_code_digits]).join
+  end
+
+  def submitted_phone_last4
+    params[:phone_last4].presence || Array(params[:phone_last4_digits]).join
+  end
+
   def sign_terms!(version_id)
     version = TermsVersion.find_by(id: version_id)
     raise Sales::TermsFetcherService::Unavailable, 'Recarregue a página para ler os termos antes de assinar' if version.blank?

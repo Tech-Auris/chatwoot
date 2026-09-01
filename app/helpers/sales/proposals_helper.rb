@@ -48,11 +48,17 @@ module Sales::ProposalsHelper
   # secretary, and the customer has no way of telling whose number it is
   # without seeing the beginning of it.
   def proposal_masked_phone(phone)
+    prefix = proposal_phone_prefix(phone)
+    prefix && "#{prefix}XXXX"
+  end
+
+  # Everything but the four digits the page is asking for: "(61) 99844-".
+  def proposal_phone_prefix(phone)
     digits = phone.to_s.gsub(/\D/, '')
     digits = digits.delete_prefix('55') if digits.length > 11 && digits.start_with?('55')
     return nil if digits.length < 10
 
-    "(#{digits[0, 2]}) #{digits[2...-4]}-XXXX"
+    "(#{digits[0, 2]}) #{digits[2...-4]}-"
   end
 
   def proposal_datetime(time)
