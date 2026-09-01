@@ -1,0 +1,6 @@
+<%# Somebody who picked PIX and would rather pay by card — or the reverse —
+    has no reason to be stuck with the first answer while nothing was paid. %>
+<% unless @proposal.paid? || @proposal.converted? %>
+  <%= link_to 'Alterar forma de pagamento', sales_proposal_checkout_path(@proposal.public_token),
+        class: 'mt-4 block w-full text-center px-3 py-2 rounded border border-slate-200 text-slate-600 text-sm' %>
+<% end %>

@@ -51,6 +51,19 @@ class Integrations::Asaas::Client
     }.compact)
   end
 
+  # A link of a sale that changed its mind is money with nowhere to land, so it
+  # is taken down rather than left open.
+  def delete_payment_link(payment_link_id)
+    response = HTTParty.delete(
+      "#{base_url}/paymentLinks/#{payment_link_id}",
+      headers: default_headers,
+      timeout: DEFAULT_TIMEOUT
+    )
+    parse(response)
+  rescue HTTParty::Error, SocketError, Errno::ECONNREFUSED, Net::OpenTimeout, Net::ReadTimeout => e
+    raise ProviderUnavailable, e.message
+  end
+
   private
 
   def post_json(path, body)
