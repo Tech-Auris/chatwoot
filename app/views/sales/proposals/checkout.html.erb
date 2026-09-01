@@ -90,7 +90,7 @@
         ><%= sanitize @terms_version.content,
               tags: Sales::TermsFetcherService::ALLOWED_TAGS,
               attributes: Sales::TermsFetcherService::ALLOWED_ATTRIBUTES %></div>
-        <p id="terms-hint" class="mt-1 text-xs text-slate-500">
+        <p id="terms-hint" class="mt-1 text-xs text-slate-500" aria-live="polite">
           Role até o fim para liberar o aceite.
         </p>
 
@@ -112,8 +112,8 @@
 </div>
 
 <script>
-  // The checkbox only wakes up once the customer reaches the end of the terms.
-  // This is about making "I never saw it" harder to claim, not a security
+  // The checkbox only accepts the terms once the customer reaches the end of
+  // them. This is about making "I never saw it" harder to claim, not a security
   // control — the server still requires the checkbox and the version id.
   (function () {
     var box = document.getElementById('terms-box');
@@ -121,9 +121,29 @@
     var hint = document.getElementById('terms-hint');
     if (!box || !checkbox) return;
 
+    var QUIET = ['text-slate-500'];
+    var LOUD = ['text-red-600', 'font-medium'];
+    var blocked = true;
+
+    // Enabled from here on so that clicking it is an event we can answer. A
+    // disabled control swallows the click, and the customer who tries gets
+    // nothing back — which is how the notice went unread.
+    checkbox.disabled = false;
+
+    function warn() {
+      if (!hint) return;
+      hint.textContent = 'Role os termos até o fim para liberar o aceite.';
+      hint.classList.remove.apply(hint.classList, QUIET);
+      hint.classList.add.apply(hint.classList, LOUD);
+    }
+
     function release() {
-      checkbox.disabled = false;
-      if (hint) hint.textContent = 'Você chegou ao fim dos termos.';
+      blocked = false;
+      if (hint) {
+        hint.textContent = 'Você chegou ao fim dos termos.';
+        hint.classList.remove.apply(hint.classList, LOUD);
+        hint.classList.add.apply(hint.classList, QUIET);
+      }
       box.removeEventListener('scroll', onScroll);
     }
 
@@ -131,8 +151,17 @@
       if (box.scrollTop + box.clientHeight >= box.scrollHeight - 8) release();
     }
 
+    // Covers the mouse and the keyboard alike: both activate through a click
+    // event, and neither may tick the box before the reading is done.
+    checkbox.addEventListener('click', function (event) {
+      if (!blocked) return;
+      event.preventDefault();
+      warn();
+      box.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    });
+
     // A short document that does not scroll would otherwise lock the customer
-    // out of a checkbox they can never enable.
+    // out of a checkbox they can never tick.
     if (box.scrollHeight <= box.clientHeight + 8) {
       release();
     } else {

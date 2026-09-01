@@ -32,6 +32,14 @@ RSpec.describe 'Public sales proposal', type: :request do
       expect(response.body).not_to include('Plano Pro')
     end
 
+    # Whose number this is decides whether the customer can answer at all.
+    it 'shows the beginning of the registered number, never the digits it asks for' do
+      get "/proposals/#{quote.public_token}"
+
+      expect(response.body).to include('(61) 98140-XXXX')
+      expect(response.body).not_to include('2211')
+    end
+
     it 'shows the proposal once unlocked' do
       unlock
       get "/proposals/#{quote.public_token}"
@@ -189,6 +197,10 @@ RSpec.describe 'Public sales proposal', type: :request do
     # and the signature already on file is reused there.
     it 'takes a signed monthly card sale back to the payment page' do
       quote.update!(status: :signed, payment_method: :card, billing_cycle: :monthly)
+    # A card checkout that was abandoned is finished from the payment page, and
+    # the signature already on file is reused there.
+    it 'takes a signed card sale back to the payment page' do
+      quote.update!(status: :signed, payment_method: :card)
 
       get "/proposals/#{quote.public_token}"
 
@@ -284,6 +296,15 @@ RSpec.describe 'Public sales proposal', type: :request do
 
       expect(response.body).to include('Conteúdo dos termos')
       expect(response.body).to include('Role até o fim para liberar o aceite')
+    end
+
+    # The notice goes unread while it is quiet; somebody who tries to tick the
+    # box before reading is told why nothing happened.
+    it 'carries the warning it shows when the box is ticked too early' do
+      get "/proposals/#{quote.public_token}/pagamento"
+
+      expect(response.body).to include('Role os termos até o fim para liberar o aceite.')
+      expect(response.body).to include('text-red-600')
     end
 
     it 'shows the plan, the pix discount and the instalment cap' do
@@ -384,6 +405,7 @@ RSpec.describe 'Public sales proposal', type: :request do
     it 'sends a monthly plan paid by card to the Stripe checkout' do
       quote.update!(billing_cycle: :monthly)
 
+    it 'sends a card payment to the Stripe checkout' do
       sign_and_pay(method: 'card')
 
       expect(response).to redirect_to('https://checkout.stripe.com/x')

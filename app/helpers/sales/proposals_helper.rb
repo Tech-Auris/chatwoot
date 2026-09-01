@@ -30,6 +30,18 @@ module Sales::ProposalsHelper
     "data:image/svg+xml;base64,#{Base64.strict_encode64(svg)}"
   end
 
+  # The number the proposal was registered against, with the four digits the
+  # page is asking for left out: a lead is often created by the clinic's
+  # secretary, and the customer has no way of telling whose number it is
+  # without seeing the beginning of it.
+  def proposal_masked_phone(phone)
+    digits = phone.to_s.gsub(/\D/, '')
+    digits = digits.delete_prefix('55') if digits.length > 11 && digits.start_with?('55')
+    return nil if digits.length < 10
+
+    "(#{digits[0, 2]}) #{digits[2...-4]}-XXXX"
+  end
+
   def proposal_datetime(time)
     return nil if time.blank?
 
