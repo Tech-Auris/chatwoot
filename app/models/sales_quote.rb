@@ -32,6 +32,7 @@
 #  reserved_until           :datetime
 #  status                   :integer          default("draft"), not null
 #  subtotal_amount          :integer          default(0), not null
+#  token_card_waived_at     :datetime
 #  total_amount             :integer          default(0), not null
 #  verification_phone_last4 :string
 #  created_at               :datetime         not null
@@ -88,6 +89,13 @@ class SalesQuote < ApplicationRecord
       .where.not('payment_method = :card AND billing_cycle = :monthly',
                  card: payment_methods[:card], monthly: billing_cycles[:monthly])
   }
+
+  # The card for the token charges is not always possible: somebody who paid
+  # the year by PIX may have none. The sales team says so, and from then on the
+  # usage is charged by invoice like everything else they pay outside Stripe.
+  def token_card_settled?
+    token_payment_method_id.present? || token_card_waived_at.present?
+  end
 
   # Everything the contract and the invoice will need from the prospect. Until
   # it is filled, the public page keeps asking rather than moving on.

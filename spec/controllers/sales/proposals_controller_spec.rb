@@ -460,6 +460,25 @@ RSpec.describe 'Public sales proposal', type: :request do
       expect(response).to redirect_to('https://checkout.stripe.com/setup')
     end
 
+    # The team can settle the card question for somebody who has none, and from
+    # then on the page stops asking.
+    it 'sends a customer whose card was waived past the step' do
+      quote.update!(status: :converted, token_payment_method_id: nil, token_card_waived_at: Time.current)
+
+      get "/proposals/#{quote.public_token}/tokens"
+
+      expect(response).to redirect_to(sales_proposal_status_path(quote.public_token))
+    end
+
+    it 'stops offering the card on the tracking page once it is waived' do
+      quote.update!(status: :converted, token_payment_method_id: nil, token_card_waived_at: Time.current)
+
+      get "/proposals/#{quote.public_token}/acompanhamento"
+
+      expect(response.body).not_to include('Cadastrar cartão dos tokens')
+      expect(response.body).to include('sem cartão cadastrado')
+    end
+
     # A PIX sale has no customer in Stripe until the payment is registered by
     # the finance team, and the card for the token charges is saved before
     # that — it has to hang off a customer we can bill later.

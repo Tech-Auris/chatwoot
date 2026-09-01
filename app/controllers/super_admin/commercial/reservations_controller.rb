@@ -9,6 +9,17 @@ class SuperAdmin::Commercial::ReservationsController < SuperAdmin::ApplicationCo
 
   def index; end
 
+  # Some customers pay the year by PIX and have no card to leave on file. The
+  # team says so here, and the usage is charged by invoice from then on — the
+  # public page stops asking and moves the customer along.
+  def waive_token_card
+    quote = SalesQuote.find(params[:id])
+    quote.update!(token_card_waived_at: Time.current)
+    quote.events.create!(event: 'token_card_waived', metadata: { super_admin_id: current_super_admin.id })
+
+    render json: { reservation: serialize(quote) }
+  end
+
   def data
     quotes = Sales::ReservationSyncService.new(quotes: paginated_quotes.to_a).perform
 
@@ -44,6 +55,8 @@ class SuperAdmin::Commercial::ReservationsController < SuperAdmin::ApplicationCo
       reserved_until: quote.reserved_until,
       reservation_active: quote.reservation_active?,
       total_amount: quote.total_amount,
+      token_card_saved: quote.token_payment_method_id.present?,
+      token_card_waived: quote.token_card_waived_at.present?,
       public_url: sales_proposal_url(quote.public_token, host: ENV.fetch('FRONTEND_URL', request.base_url)),
       access_code: quote.access_code
     }

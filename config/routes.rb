@@ -852,6 +852,9 @@ Rails.application.routes.draw do
           collection do
             get :data
           end
+          member do
+            post :waive_token_card
+          end
         end
 
         resources :quotes, only: [:index, :create], controller: 'quotes' do

@@ -22,7 +22,8 @@
     </p>
   <% end %>
 
-  <%= link_to 'Continuar', sales_proposal_tokens_path(@proposal.public_token),
+  <%= link_to 'Continuar',
+        @proposal.token_card_settled? ? sales_proposal_status_path(@proposal.public_token) : sales_proposal_tokens_path(@proposal.public_token),
         class: 'mt-5 block w-full text-center px-3 py-2 rounded bg-woot-500 text-white text-sm' %>
 
   <div class="mt-4 pt-4 border-t border-slate-100 flex justify-between text-sm text-slate-700">

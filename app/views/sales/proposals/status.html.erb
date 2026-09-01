@@ -18,6 +18,13 @@
       Seu acesso foi criado e o time já está preparando a implantação. Vamos
       falar com você pelo WhatsApp <strong><%= @proposal.prospect_phone %></strong>.
     </p>
+
+    <% if @proposal.token_card_waived_at.present? %>
+      <p class="text-sm text-slate-600 mt-2">
+        Combinado com o seu consultor: o consumo de tokens será cobrado por
+        fatura, sem cartão cadastrado.
+      </p>
+    <% end %>
   <% elsif @proposal.paid? %>
     <p class="text-sm text-slate-600 mt-2">
       Pagamento confirmado. Estamos criando o seu acesso — em instantes o
@@ -38,7 +45,7 @@
     </p>
   <% end %>
 
-  <% if @proposal.token_payment_method_id.blank? && (@proposal.paid? || @proposal.converted?) %>
+  <% if !@proposal.token_card_settled? && (@proposal.paid? || @proposal.converted?) %>
     <%= link_to 'Cadastrar cartão dos tokens', sales_proposal_tokens_path(@proposal.public_token),
           class: 'mt-5 block w-full text-center px-3 py-2 rounded bg-woot-500 text-white text-sm' %>
   <% end %>

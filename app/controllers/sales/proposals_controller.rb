@@ -94,6 +94,8 @@ class Sales::ProposalsController < ActionController::Base
   # one that just paid the subscription or another — Stripe shows the saved card
   # and lets the customer add a different one.
   def tokens
+    return redirect_to sales_proposal_status_path(@proposal.public_token) if @proposal.token_card_settled?
+
     @same_card_available = @proposal.payment_method_card?
   end
 
