@@ -89,10 +89,11 @@ class SuperAdmin::Financial::PixRenewalsController < SuperAdmin::ApplicationCont
     params[:status] == 'paid' ? scope.status_paid.order(paid_at: :desc) : scope.open_periods.order(:due_on)
   end
 
-  # A PIX sale stops at "signed" until the money is confirmed — nothing else in
-  # the product moves it, which is exactly what this screen is for.
+  # A sale settled outside Stripe stops at "signed" until somebody confirms the
+  # money — a PIX at Banco Inter, or a card in instalments through the AsaaS
+  # link. Nothing else in the product moves it, which is what this screen is for.
   def awaiting_first_payment
-    SalesQuote.where(payment_method: :pix, status: :signed, account_id: nil).order(:created_at)
+    SalesQuote.awaiting_manual_payment.order(:created_at)
   end
 
   def serialize(renewal)
@@ -120,6 +121,8 @@ class SuperAdmin::Financial::PixRenewalsController < SuperAdmin::ApplicationCont
       prospect_email: quote.prospect_email,
       amount: quote.total_amount,
       billing_cycle: quote.billing_cycle,
+      payment_method: quote.payment_method,
+      asaas_payment_link_url: quote.asaas_payment_link_url,
       signed_at: quote.terms_acceptances.status_signed.maximum(:signed_at)
     }
   end

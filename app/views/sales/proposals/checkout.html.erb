@@ -34,34 +34,44 @@
     <span><%= proposal_amount(@proposal.total_amount) %></span>
   </div>
 
+  <%= render 'monthly_note' %>
+
   <%= form_with url: sales_proposal_pay_path(@proposal.public_token), method: :post, class: 'mt-6 flex flex-col gap-4' do |f| %>
     <fieldset>
       <legend class="text-sm font-medium text-slate-800">Forma de pagamento</legend>
 
-      <label class="flex items-start gap-2 mt-2 text-sm text-slate-700">
-        <%= f.radio_button :payment_method, 'pix', checked: true, class: 'mt-1' %>
-        <span>
-          PIX
-          <% if @pix_discount.positive? %>
-            <strong class="text-green-700">— <%= @pix_discount %>% de desconto</strong>
-          <% end %>
-          <span class="block text-xs text-slate-500">
-            Enviamos os dados do PIX após a confirmação. O acesso é liberado
-            assim que o pagamento for confirmado pela nossa equipe.
+      <% if @pix_available %>
+        <label class="flex items-start gap-2 mt-2 text-sm text-slate-700">
+          <%= f.radio_button :payment_method, 'pix', checked: true, class: 'mt-1' %>
+          <span>
+            PIX
+            <% if @pix_discount.positive? %>
+              <strong class="text-green-700">— <%= @pix_discount %>% de desconto</strong>
+            <% end %>
+            <span class="block text-xs text-slate-500">
+              Mostramos o QR Code e o código na tela seguinte. O acesso é
+              liberado assim que o pagamento for confirmado pela nossa equipe.
+            </span>
           </span>
-        </span>
-      </label>
+        </label>
+      <% end %>
 
       <label class="flex items-start gap-2 mt-3 text-sm text-slate-700">
-        <%= f.radio_button :payment_method, 'card', class: 'mt-1' %>
+        <%= f.radio_button :payment_method, 'card', checked: !@pix_available, class: 'mt-1' %>
         <span>
           Cartão de crédito
           <% if @max_installments > 1 %>
             <span class="text-slate-500">— em até <%= @max_installments %>x</span>
           <% end %>
           <span class="block text-xs text-slate-500">
-            Você será levado ao ambiente seguro do nosso processador de
-            pagamentos. Não armazenamos dados do cartão.
+            <% if @max_installments > 1 %>
+              Você será levado ao ambiente seguro do nosso processador de
+              pagamentos, onde escolhe em quantas vezes quer parcelar. Não
+              armazenamos dados do cartão.
+            <% else %>
+              Você será levado ao ambiente seguro do nosso processador de
+              pagamentos. Não armazenamos dados do cartão.
+            <% end %>
           </span>
         </span>
       </label>

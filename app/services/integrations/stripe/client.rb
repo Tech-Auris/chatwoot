@@ -269,10 +269,12 @@ class Integrations::Stripe::Client
   # Hosted checkout for the sales flow. Installments are a Brazilian card
   # feature enabled on the account; the cap comes from the plan the customer
   # picked, and Stripe filters the offered plans down to it.
-  # `options` carries `max_installments` and `metadata`.
+  # `options` carries `max_installments`, `metadata`, `mode` and
+  # `subscription_data` — the last two are what turn the session into a
+  # subscription instead of a single charge.
   def create_checkout_session(customer_id:, line_items:, urls:, **options)
     payload = {
-      mode: 'payment',
+      mode: options[:mode].presence || 'payment',
       customer: customer_id,
       line_items: line_items,
       success_url: urls.fetch(:success),
@@ -286,6 +288,7 @@ class Integrations::Stripe::Client
       customer_update: { name: 'auto', address: 'auto' }
     }
     payload[:payment_method_options] = installment_options(options[:max_installments]) if options[:max_installments].to_i > 1
+    payload[:subscription_data] = options[:subscription_data] if options[:subscription_data].present?
 
     with_error_handling { Stripe::Checkout::Session.create(payload, request_options) }
   end

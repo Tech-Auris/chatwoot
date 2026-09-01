@@ -50,14 +50,27 @@ RSpec.describe 'Super Admin Financial Pix Renewals', type: :request do
       expect(response.parsed_body['renewals'].pluck('id')).to eq([settled.id])
     end
 
-    # A PIX sale sits at "signed" until somebody confirms the money.
+    # Everything settled outside Stripe waits here: a PIX at Banco Inter and a
+    # card in instalments through the AsaaS link.
     it 'lists the sales still waiting for their first payment' do
-      waiting = create(:sales_quote, status: :signed, payment_method: :pix, company_name: 'Clínica Nova', total_amount: 50_000)
-      create(:sales_quote, status: :signed, payment_method: :card, company_name: 'Paga no cartão')
+      pix = create(:sales_quote, status: :signed, payment_method: :pix, billing_cycle: :annual,
+                                 company_name: 'Clínica Nova', total_amount: 50_000)
+      asaas = create(:sales_quote, status: :signed, payment_method: :card, billing_cycle: :annual,
+                                   company_name: 'Clínica Parcelada', total_amount: 90_000)
 
       get '/super_admin/financial/pix_renewals/data'
 
-      expect(response.parsed_body['awaiting_first_payment'].pluck('id')).to eq([waiting.id])
+      expect(response.parsed_body['awaiting_first_payment'].pluck('id')).to contain_exactly(pix.id, asaas.id)
+    end
+
+    # The monthly card sale is a Stripe subscription, and Stripe confirms it
+    # through the webhook — it has no business on a manual list.
+    it 'leaves the monthly card sale out of it' do
+      create(:sales_quote, status: :signed, payment_method: :card, billing_cycle: :monthly, company_name: 'Mensal')
+
+      get '/super_admin/financial/pix_renewals/data'
+
+      expect(response.parsed_body['awaiting_first_payment']).to be_empty
     end
   end
 

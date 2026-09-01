@@ -15,6 +15,7 @@ class Sales::ProposalsController < ActionController::Base
 
   def show
     @items = @proposal.items
+    @monthly_charge = Sales::CheckoutService.monthly_charge_for(@proposal)
     # The link never changes, so opening it has to land on the step that is
     # still open. Offering the plan again to somebody who already signed is how
     # the same proposal collected two signatures.
@@ -80,7 +81,8 @@ class Sales::ProposalsController < ActionController::Base
 
     redirect_to sales_proposal_payment_return_path(@proposal.public_token)
   rescue Sales::TermsFetcherService::Unavailable, Sales::CheckoutService::TermsNotAccepted,
-         Integrations::Stripe::Client::Error => e
+         Sales::CheckoutService::UnsupportedPaymentMethod,
+         Integrations::Stripe::Client::Error, Integrations::Asaas::Client::Error => e
     render_checkout_error(e.message)
   end
 
@@ -129,6 +131,12 @@ class Sales::ProposalsController < ActionController::Base
     return sales_proposal_status_path(@proposal.public_token) if settled?
     return nil unless @proposal.signed?
 
+    # Only the Stripe checkout can be picked up where it was left; the PIX and
+    # the AsaaS link are both waiting on somebody confirming the money.
+    if @proposal.payment_method_card? && Sales::CheckoutService.card_provider_for(@proposal.billing_cycle) == :stripe
+      sales_proposal_checkout_path(@proposal.public_token)
+    else
+      sales_proposal_status_path(@proposal.public_token)
     if @proposal.payment_method_pix?
       sales_proposal_status_path(@proposal.public_token)
     else
@@ -182,6 +190,8 @@ class Sales::ProposalsController < ActionController::Base
   end
 
   def load_checkout_data
+    @monthly_charge = Sales::CheckoutService.monthly_charge_for(@proposal)
+    @pix_available = Sales::CheckoutService.offers?('pix', @proposal.billing_cycle)
     @pix_discount = Sales::CheckoutService.pix_discount_for(@proposal.billing_cycle)
     @max_installments = Sales::CheckoutService.max_installments_for(@proposal.billing_cycle)
     @terms_version = Sales::TermsFetcherService.new.perform
