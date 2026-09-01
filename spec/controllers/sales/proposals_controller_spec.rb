@@ -32,6 +32,15 @@ RSpec.describe 'Public sales proposal', type: :request do
       expect(response.body).not_to include('Plano Pro')
     end
 
+    # The brand is the logo on top; the heading is about the customer's own
+    # proposal, and a white-labelled instance shows its own mark.
+    it 'shows the installation logo instead of naming the brand in the heading' do
+      get "/proposals/#{quote.public_token}"
+
+      expect(response.body).to include('Sua proposta</h1>')
+      expect(response.body).to include('/brand-assets/logo.svg')
+    end
+
     it 'shows the proposal once unlocked' do
       unlock
       get "/proposals/#{quote.public_token}"
@@ -436,6 +445,23 @@ RSpec.describe 'Public sales proposal', type: :request do
 
       expect(stripe_client).to have_received(:create_setup_session).with(hash_including(customer_id: 'cus_1'))
       expect(response).to redirect_to('https://checkout.stripe.com/setup')
+    end
+
+    # Nothing was paid yet, so the first answer is not binding.
+    it 'offers the way back to change how the subscription is paid' do
+      quote.update!(status: :signed, payment_method: :pix)
+
+      get "/proposals/#{quote.public_token}/acompanhamento"
+
+      expect(response.body).to include('Alterar forma de pagamento')
+    end
+
+    it 'stops offering it once the money is in' do
+      quote.update!(status: :converted, payment_method: :pix)
+
+      get "/proposals/#{quote.public_token}/acompanhamento"
+
+      expect(response.body).not_to include('Alterar forma de pagamento')
     end
 
     # The team can settle the card question for somebody who has none, and from

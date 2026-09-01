@@ -13,6 +13,16 @@ module Sales::ProposalsHelper
     number_to_currency((cents || 0) / 100.0, unit: 'R$ ', separator: ',', delimiter: '.')
   end
 
+  # The installation's own logo and name, so a white-labelled instance shows
+  # its brand on the page a prospect of theirs opens.
+  def proposal_logo_url
+    GlobalConfig.get('LOGO')['LOGO'].presence || '/brand-assets/logo.svg'
+  end
+
+  def proposal_brand_name
+    GlobalConfig.get('INSTALLATION_NAME')['INSTALLATION_NAME'].presence || 'AurisChat'
+  end
+
   # The company's own static PIX code, configured once in Settings, carrying the
   # total of this proposal — so the customer confirms an amount instead of
   # typing one they read minutes ago.

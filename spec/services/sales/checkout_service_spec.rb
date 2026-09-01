@@ -245,6 +245,43 @@ RSpec.describe Sales::CheckoutService do
     end
   end
 
+  # A customer who changes their mind leaves an instalment link behind, and a
+  # payment on it would arrive against terms nobody is holding.
+  describe 'when the payment method changes' do
+    let(:asaas) { instance_double(Integrations::Asaas::Client) }
+
+    before do
+      sign_terms
+      quote.update!(asaas_payment_link_id: 'pay_link_old', asaas_payment_link_url: 'https://www.asaas.com/c/old')
+      allow(Integrations::Asaas::Client).to receive(:new).and_return(asaas)
+      allow(asaas).to receive(:delete_payment_link)
+      allow(asaas).to receive(:create_payment_link)
+        .and_return({ 'id' => 'pay_link_new', 'url' => 'https://www.asaas.com/c/new' })
+    end
+
+    it 'takes the old link down when the customer switches to pix' do
+      checkout(method: 'pix')
+
+      expect(asaas).to have_received(:delete_payment_link).with('pay_link_old')
+      expect(quote.reload.asaas_payment_link_id).to be_nil
+    end
+
+    it 'leaves only the newest link standing when they pick the card again' do
+      checkout
+
+      expect(asaas).to have_received(:delete_payment_link).with('pay_link_old')
+      expect(quote.reload.asaas_payment_link_id).to eq('pay_link_new')
+    end
+
+    # A link we cannot take down is a mess to sort out later, but stopping the
+    # customer from paying is worse.
+    it 'carries on when the old link cannot be removed' do
+      allow(asaas).to receive(:delete_payment_link).and_raise(Integrations::Asaas::Client::ProviderUnavailable, 'timeout')
+
+      expect { checkout(method: 'pix') }.not_to raise_error
+    end
+  end
+
   describe 'how many instalments are offered' do
     after { GlobalConfig.clear_cache }
 

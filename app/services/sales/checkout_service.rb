@@ -32,6 +32,7 @@ class Sales::CheckoutService
 
     raise UnsupportedPaymentMethod, 'O plano mensal é pago no cartão' unless self.class.offers?(payment_method, quote.billing_cycle)
 
+    discard_open_asaas_link
     quote.update!(payment_method: payment_method)
 
     return await_manual_payment if payment_method == 'pix'
@@ -107,6 +108,19 @@ class Sales::CheckoutService
     quote.events.create!(event: 'awaiting_pix_payment', metadata: { total: quote.total_amount })
 
     Result.new(quote: quote, awaiting_manual_payment: true)
+  end
+
+  # A customer who comes back to change how they pay leaves an instalment link
+  # behind. Taking it down keeps exactly one live link per proposal — a
+  # payment on the old one would arrive against terms nobody is holding.
+  def discard_open_asaas_link
+    return if quote.asaas_payment_link_id.blank?
+
+    asaas_client.delete_payment_link(quote.asaas_payment_link_id)
+    quote.update!(asaas_payment_link_id: nil, asaas_payment_link_url: nil)
+  rescue Integrations::Asaas::Client::Error => e
+    # A link we could not take down must not stop the customer from paying.
+    Rails.logger.info("[sales] asaas link #{quote.asaas_payment_link_id} not removed: #{e.message}")
   end
 
   # The card in instalments, charged by AsaaS. The link is generic — it carries
