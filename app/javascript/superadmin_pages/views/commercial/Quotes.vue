@@ -602,15 +602,13 @@ const startOver = () => {
               Buscando…
             </p>
 
-            <p v-if="selectedProspect" class="text-sm text-slate-700 mt-3">
-              Selecionado:
-              <strong>
-                {{ selectedProspect.clinic_name || selectedProspect.name }}
-              </strong>
+            <div v-if="selectedProspect" class="text-sm text-slate-700 mt-3">
+              <span class="text-slate-500">Selecionado:</span>
+              <strong>{{ formatProspectRow(selectedProspect) }}</strong>
               <span class="text-xs text-slate-400 ml-1">
                 ({{ selectedProspect.task_id }})
               </span>
-            </p>
+            </div>
           </div>
 
           <div class="border border-slate-100 rounded-lg p-5">
