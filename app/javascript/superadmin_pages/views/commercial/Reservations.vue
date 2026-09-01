@@ -247,14 +247,15 @@ const wasCopied = (reservation, field) =>
                   reservation.won ? 'Ganho' : statusLabel(reservation.status)
                 }}
               </span>
-              <!-- Progress inside the `reserved` state: once the prospect
-                   confirms the data on the public page, the deal can move
-                   to contract and payment. Later states already imply it,
-                   so the badge is scoped to `reserved`. -->
+              <!-- Progress on the early states: once the prospect confirms
+                   the data on the public page, the deal can move to
+                   contract and payment. `signed`/`paid`/`converted` already
+                   imply it, so the badge only shows while the status is
+                   still `draft` or `reserved`. -->
               <span
                 v-if="
                   reservation.details_confirmed &&
-                  reservation.status === 'reserved'
+                  ['draft', 'reserved'].includes(reservation.status)
                 "
                 class="px-2 py-0.5 rounded text-xs bg-green-50 text-green-700"
                 title="O cliente confirmou nome, clínica, contato e documento"
