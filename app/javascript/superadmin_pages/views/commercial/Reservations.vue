@@ -13,6 +13,7 @@ const props = defineProps({
 const STATUS_LABELS = {
   draft: 'Rascunho',
   reserved: 'Reservada',
+  details_confirmed: 'Dados confirmados',
   signed: 'Termos assinados',
   paid: 'Paga',
   converted: 'Conta criada',
@@ -234,35 +235,16 @@ const wasCopied = (reservation, field) =>
           </td>
 
           <td class="py-3">
-            <div class="flex flex-col gap-1 items-start">
-              <span
-                class="px-2 py-0.5 rounded text-xs"
-                :class="
-                  reservation.won
-                    ? 'bg-green-50 text-green-700'
-                    : 'bg-slate-25 text-slate-600'
-                "
-              >
-                {{
-                  reservation.won ? 'Ganho' : statusLabel(reservation.status)
-                }}
-              </span>
-              <!-- Progress on the early states: once the prospect confirms
-                   the data on the public page, the deal can move to
-                   contract and payment. `signed`/`paid`/`converted` already
-                   imply it, so the badge only shows while the status is
-                   still `draft` or `reserved`. -->
-              <span
-                v-if="
-                  reservation.details_confirmed &&
-                  ['draft', 'reserved'].includes(reservation.status)
-                "
-                class="px-2 py-0.5 rounded text-xs bg-green-50 text-green-700"
-                title="O cliente confirmou nome, clínica, contato e documento"
-              >
-                Dados confirmados
-              </span>
-            </div>
+            <span
+              class="px-2 py-0.5 rounded text-xs"
+              :class="
+                reservation.won
+                  ? 'bg-green-50 text-green-700'
+                  : 'bg-slate-25 text-slate-600'
+              "
+            >
+              {{ reservation.won ? 'Ganho' : statusLabel(reservation.status) }}
+            </span>
           </td>
 
           <td class="py-3 text-right text-slate-700">

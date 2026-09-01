@@ -54,33 +54,16 @@ RSpec.describe 'Super Admin Commercial Reservations', type: :request do
       expect(by_id[negotiating.id]['won']).to be(false)
     end
 
-    # The screen needs to tell a reservation whose prospect already filled the
-    # public form apart from one still waiting on it — and the confirmation
-    # can happen before the seller has reserved (status `draft`), not only
-    # after (status `reserved`).
-    it 'flags a reservation whose prospect confirmed the details on the public page' do
-      negotiating.update!(prospect_name: 'Fábio Rocha', company_name: 'Clínica X',
-                          prospect_email: 'fabio@clinicax.com', prospect_phone: '+5561999998888',
-                          prospect_document: '12345678900')
+    # `details_confirmed` is its own status between `reserved` and
+    # `signed`; the row now carries it directly, and the screen reads it
+    # straight off the status pill.
+    it 'passes the details_confirmed status through to the row' do
+      confirmed = create(:sales_quote, status: :details_confirmed, clickup_status: 'em análise')
 
       get '/super_admin/commercial/reservations/data'
 
       by_id = response.parsed_body['reservations'].index_by { |row| row['id'] }
-      expect(by_id[negotiating.id]['details_confirmed']).to be(true)
-      expect(by_id[won.id]['details_confirmed']).to be(false)
-    end
-
-    it 'also flags a draft whose prospect already confirmed the details' do
-      draft = create(:sales_quote, status: :draft, clickup_status: 'novo lead', reserved_until: nil,
-                                   prospect_name: 'Gustavo Teste', company_name: 'Clínica Teste',
-                                   prospect_email: 'gustavo@teste.com', prospect_phone: '+5561992720350',
-                                   prospect_document: '12345678900')
-
-      get '/super_admin/commercial/reservations/data'
-
-      by_id = response.parsed_body['reservations'].index_by { |row| row['id'] }
-      expect(by_id[draft.id]['details_confirmed']).to be(true)
-      expect(by_id[draft.id]['status']).to eq('draft')
+      expect(by_id[confirmed.id]['status']).to eq('details_confirmed')
     end
 
     it 'refreshes the status from clickup before listing' do

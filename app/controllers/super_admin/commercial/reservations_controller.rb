@@ -49,11 +49,6 @@ class SuperAdmin::Commercial::ReservationsController < SuperAdmin::ApplicationCo
       clickup_status: quote.clickup_status,
       clickup_url: "https://app.clickup.com/t/#{quote.clickup_task_id}",
       status: quote.status,
-      # Whether the prospect has confirmed name / clinic / phone / e-mail /
-      # document on the public page — the step that unlocks contract and
-      # payment. Reservations only needs it to surface progress inside the
-      # `reserved` state; on later states the status alone already implies it.
-      details_confirmed: quote.details_complete?,
       # A deal that closed on our side is what the team calls "ganho"; the rest
       # is still being worked.
       won: quote.converted?,

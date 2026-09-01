@@ -116,4 +116,44 @@ RSpec.describe Sales::ProspectDetailsService do
 
     expect(quote.reload).to be_details_complete
   end
+
+  # The seller sees the deal's stage on the Reservations screen, and the
+  # confirmation is a step of its own between reserving the proposal and
+  # signing the terms.
+  describe 'the status transition to details_confirmed' do
+    it 'advances a draft the prospect just filled' do
+      quote = create(:sales_quote, status: :draft, prospect_phone: nil)
+
+      fill(quote)
+
+      expect(quote.reload.status).to eq('details_confirmed')
+    end
+
+    it 'advances a reserved proposal the same way' do
+      quote = create(:sales_quote, status: :reserved, prospect_phone: nil)
+
+      fill(quote)
+
+      expect(quote.reload.status).to eq('details_confirmed')
+    end
+
+    it 'does not rewind a proposal that is already signed' do
+      quote = create(:sales_quote, status: :signed, prospect_phone: nil)
+
+      fill(quote)
+
+      expect(quote.reload.status).to eq('signed')
+    end
+
+    # A field left blank keeps the confirmation partial, so the status
+    # must not advance yet — otherwise the seller would think the deal
+    # can move on when it still cannot.
+    it 'leaves the status alone when the prospect skipped a required field' do
+      quote = create(:sales_quote, status: :reserved, prospect_phone: nil)
+
+      fill(quote, details.merge(document: ''))
+
+      expect(quote.reload.status).to eq('reserved')
+    end
+  end
 end

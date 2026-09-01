@@ -70,7 +70,14 @@ class SalesQuote < ApplicationRecord
   has_many :events, class_name: 'SalesQuoteEvent', dependent: :destroy
   has_many :terms_acceptances, dependent: :nullify
 
-  enum :status, { draft: 0, reserved: 1, signed: 2, paid: 3, converted: 4, expired: 5, cancelled: 6 }
+  # `details_confirmed` sits between `reserved` and `signed` in the
+  # customer's journey: the prospect has filled name / clinic / contact /
+  # document on the public page but has not accepted the terms yet.
+  # Its integer value (7) is out of order because the earlier six values
+  # are already in production and shifting them would rewrite every row —
+  # the enum's declared order carries the lifecycle, the underlying
+  # numbers only need to stay unique.
+  enum :status, { draft: 0, reserved: 1, details_confirmed: 7, signed: 2, paid: 3, converted: 4, expired: 5, cancelled: 6 }
   enum :payment_method, { pix: 0, card: 1 }, prefix: true
   enum :billing_cycle, { monthly: 0, semiannual: 1, annual: 2 }, prefix: true
 
