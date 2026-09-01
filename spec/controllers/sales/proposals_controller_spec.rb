@@ -276,6 +276,15 @@ RSpec.describe 'Public sales proposal', type: :request do
       expect(response.body).to include('Role até o fim para liberar o aceite')
     end
 
+    # The notice goes unread while it is quiet; somebody who tries to tick the
+    # box before reading is told why nothing happened.
+    it 'carries the warning it shows when the box is ticked too early' do
+      get "/proposals/#{quote.public_token}/pagamento"
+
+      expect(response.body).to include('Role os termos até o fim para liberar o aceite.')
+      expect(response.body).to include('text-red-600')
+    end
+
     it 'shows the plan, the pix discount and the instalment cap' do
       get "/proposals/#{quote.public_token}/pagamento"
 
