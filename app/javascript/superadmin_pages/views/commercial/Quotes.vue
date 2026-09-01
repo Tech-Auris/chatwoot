@@ -115,6 +115,38 @@ const selectProspect = prospect => {
   prospectTerm.value = prospect.clinic_name || prospect.name;
 };
 
+// The seller searches by the deal's own name — the clinic name is filled in
+// later by the prospect on the public form, so a row must lead with the
+// name the seller knows and carry the rest as context for disambiguation.
+const formatBrPhone = raw => {
+  if (!raw) return '';
+  const digits = String(raw).replace(/\D/g, '');
+  if (digits.length === 13 && digits.startsWith('55')) {
+    return `+55 (${digits.slice(2, 4)}) ${digits.slice(4, 9)}-${digits.slice(9)}`;
+  }
+  if (digits.length === 11) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  }
+  if (digits.length === 10) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+  return raw;
+};
+
+const formatProspectRow = prospect => {
+  const parts = [
+    prospect.name,
+    prospect.status,
+    prospect.email,
+    formatBrPhone(prospect.phone),
+    prospect.clinic_name,
+  ]
+    .map(value => (value == null ? '' : String(value).trim()))
+    .filter(value => value.length);
+
+  return parts.join(' / ');
+};
+
 const priceLabel = price =>
   `${price.product_name || price.id} — ${formatAmount(price.unit_amount, price.currency)}`;
 
@@ -426,19 +458,8 @@ const startOver = () => {
                   class="w-full text-left px-3 py-2 bg-white hover:bg-slate-50"
                   @click="selectProspect(prospect)"
                 >
-                  <div class="flex items-center gap-2">
-                    <span class="text-sm text-slate-900 truncate">
-                      {{ prospect.clinic_name || prospect.name }}
-                    </span>
-                    <span
-                      v-if="prospect.status"
-                      class="ml-auto flex-shrink-0 px-1.5 py-0.5 rounded text-xs bg-slate-100 text-slate-600"
-                    >
-                      {{ prospect.status }}
-                    </span>
-                  </div>
-                  <div class="text-xs text-slate-500 mt-0.5 truncate">
-                    {{ prospect.email }} {{ prospect.phone }}
+                  <div class="text-sm text-slate-900 truncate">
+                    {{ formatProspectRow(prospect) }}
                   </div>
                 </button>
               </li>
