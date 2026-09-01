@@ -575,7 +575,7 @@
 - name: SALES_PROPOSAL_LOGO
   display_title: 'Logo da proposta'
   description: 'Image shown at the top of the pages a prospect opens — path under public (for example /brand-assets/auris_sales_logo.png) or a full URL. Left blank, the proposal carries the same logo as the product.'
-  value: ''
+  value: '/brand-assets/auris_sales_logo.png'
   locked: false
 - name: SALES_PIX_PAYLOAD
   display_title: 'PIX copia e cola das propostas'
