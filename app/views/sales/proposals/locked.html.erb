@@ -9,23 +9,103 @@
     <p class="mt-4 text-sm text-red-600"><%= error %></p>
   <% end %>
 
-  <%= form_with url: sales_unlock_proposal_path(@proposal.public_token), method: :post, class: 'mt-5 flex flex-col gap-3' do |f| %>
-    <label class="text-sm text-slate-600">
-      Código de 6 dígitos
-      <%= f.text_field :access_code, inputmode: 'numeric', maxlength: 6,
-            class: 'mt-1 w-full border border-slate-200 rounded px-3 py-2 text-sm' %>
-    </label>
-    <label class="text-sm text-slate-600">
-      4 últimos dígitos do seu WhatsApp
-      <% if (masked_phone = proposal_masked_phone(@proposal.prospect_phone)) %>
-        <span class="block text-xs text-slate-500 mt-0.5">
-          Número cadastrado: <strong><%= masked_phone %></strong>. Se não for o
-          seu, fale com o seu consultor.
-        </span>
+  <%= form_with url: sales_unlock_proposal_path(@proposal.public_token), method: :post,
+        id: 'unlock-form', class: 'mt-6 flex flex-col gap-5' do %>
+    <div>
+      <span class="text-sm text-slate-600">Código de 6 dígitos</span>
+      <div class="mt-2 flex gap-2" data-code-group>
+        <% 6.times do %>
+          <%= text_field_tag 'access_code_digits[]', nil, maxlength: 1, inputmode: 'numeric', pattern: '[0-9]',
+                autocomplete: 'off', 'aria-label': 'Dígito do código de acesso',
+                class: 'w-11 h-12 text-center text-lg font-medium border-2 border-slate-200 rounded-lg
+                        focus:border-woot-500 focus:outline-none text-slate-900' %>
+        <% end %>
+      </div>
+    </div>
+
+    <div>
+      <span class="text-sm text-slate-600">4 últimos dígitos do seu WhatsApp</span>
+      <div class="mt-2 flex items-center gap-2" data-code-group>
+        <%# The number the proposal was registered against, so the customer can
+            tell it is theirs — a lead is often created by the clinic's
+            secretary — with the digits being asked for left out. %>
+        <% if (prefix = proposal_phone_prefix(@proposal.prospect_phone)) %>
+          <span class="text-lg text-slate-500 tabular-nums"><%= prefix %></span>
+        <% end %>
+        <% 4.times do %>
+          <%= text_field_tag 'phone_last4_digits[]', nil, maxlength: 1, inputmode: 'numeric', pattern: '[0-9]',
+                autocomplete: 'off', 'aria-label': 'Dígito do WhatsApp',
+                class: 'w-11 h-12 text-center text-lg font-medium border-2 border-slate-200 rounded-lg
+                        focus:border-woot-500 focus:outline-none text-slate-900' %>
+        <% end %>
+      </div>
+      <% if proposal_phone_prefix(@proposal.prospect_phone).present? %>
+        <p class="mt-2 text-xs text-slate-500">
+          Se este não for o seu número, fale com o seu consultor.
+        </p>
       <% end %>
-      <%= f.text_field :phone_last4, inputmode: 'numeric', maxlength: 4,
-            class: 'mt-1 w-full border border-slate-200 rounded px-3 py-2 text-sm' %>
-    </label>
-    <%= f.submit 'Abrir proposta', class: 'mt-2 w-full px-3 py-2 rounded bg-woot-500 text-white text-sm cursor-pointer' %>
+    </div>
+
+    <%= submit_tag 'Abrir proposta',
+          class: 'mt-1 w-full px-3 py-2 rounded bg-woot-500 text-white text-sm cursor-pointer' %>
   <% end %>
 </div>
+
+<script>
+  // One box per digit, as the two-factor screen does: typing walks forward,
+  // backspace walks back, and a pasted code fills the boxes it belongs to.
+  (function () {
+    var form = document.getElementById('unlock-form');
+    if (!form) return;
+
+    var boxes = Array.prototype.slice.call(form.querySelectorAll('[data-code-group] input'));
+    if (!boxes.length) return;
+
+    function focusAt(index) {
+      if (index >= 0 && index < boxes.length) boxes[index].focus();
+    }
+
+    function complete() {
+      return boxes.every(function (box) { return box.value.length === 1; });
+    }
+
+    boxes.forEach(function (box, index) {
+      box.addEventListener('input', function () {
+        box.value = box.value.replace(/\D/g, '').slice(-1);
+        if (!box.value) return;
+
+        // The last box of one group hands over to the first of the next, so the
+        // whole thing is typed without reaching for the mouse.
+        if (index < boxes.length - 1) focusAt(index + 1);
+        if (complete()) form.requestSubmit();
+      });
+
+      box.addEventListener('keydown', function (event) {
+        if (event.key === 'Backspace' && !box.value && index > 0) {
+          event.preventDefault();
+          boxes[index - 1].value = '';
+          focusAt(index - 1);
+        }
+        if (event.key === 'ArrowLeft') { event.preventDefault(); focusAt(index - 1); }
+        if (event.key === 'ArrowRight') { event.preventDefault(); focusAt(index + 1); }
+      });
+
+      box.addEventListener('focus', function () { box.select(); });
+
+      // A code arrives copied from WhatsApp far more often than typed.
+      box.addEventListener('paste', function (event) {
+        event.preventDefault();
+        var digits = (event.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
+        if (!digits) return;
+
+        digits.split('').forEach(function (digit, offset) {
+          if (boxes[index + offset]) boxes[index + offset].value = digit;
+        });
+        focusAt(Math.min(index + digits.length, boxes.length - 1));
+        if (complete()) form.requestSubmit();
+      });
+    });
+
+    focusAt(0);
+  })();
+</script>
