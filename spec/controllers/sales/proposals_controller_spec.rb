@@ -22,6 +22,12 @@ RSpec.describe 'Public sales proposal', type: :request do
     post "/proposals/#{quote.public_token}/unlock", params: { access_code: code, phone_last4: phone }
   end
 
+  # What the page itself sends: one field per digit, in order.
+  def unlock_by_digits(code: quote.access_code, phone: '2211')
+    post "/proposals/#{quote.public_token}/unlock",
+         params: { access_code_digits: code.chars, phone_last4_digits: phone.chars }
+  end
+
   describe 'GET /proposals/:token' do
     # The prospect has no login, so the page asks for what the seller sent
     # before showing anything about the deal.
@@ -53,8 +59,16 @@ RSpec.describe 'Public sales proposal', type: :request do
     it 'shows the beginning of the registered number, never the digits it asks for' do
       get "/proposals/#{quote.public_token}"
 
-      expect(response.body).to include('(61) 98140-XXXX')
+      expect(response.body).to include('(61) 98140-')
       expect(response.body).not_to include('2211')
+    end
+
+    # One box per digit, as the two-factor screen does.
+    it 'asks for the code and the number one digit at a time' do
+      get "/proposals/#{quote.public_token}"
+
+      expect(response.body.scan('name="access_code_digits[]"').size).to eq(6)
+      expect(response.body.scan('name="phone_last4_digits[]"').size).to eq(4)
     end
 
     it 'answers 404 for a token that does not exist' do
@@ -173,6 +187,21 @@ RSpec.describe 'Public sales proposal', type: :request do
 
   # The proposal has one address and several states; opening it has to land on
   # the step that is still open.
+  describe 'unlocking through the digit boxes' do
+    it 'opens the proposal with the digits the page sends' do
+      unlock_by_digits
+
+      expect(response).to redirect_to(sales_proposal_path(quote.public_token))
+    end
+
+    it 'refuses the wrong digits like any other attempt' do
+      unlock_by_digits(code: '000000')
+
+      expect(response).to have_http_status(:unauthorized)
+      expect(response.body).to include('não conferem')
+    end
+  end
+
   describe 'where the link lands' do
     before { unlock }
 
