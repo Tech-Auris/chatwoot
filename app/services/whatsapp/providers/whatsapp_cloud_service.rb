@@ -14,21 +14,18 @@ class Whatsapp::Providers::WhatsappCloudService < Whatsapp::Providers::BaseServi
   end
 
   def send_template(phone_number, template_info, message)
-    template_body = template_body_parameters(template_info)
+    response = post_template_message(phone_number, template_info, message)
 
-    request_body = {
-      messaging_product: 'whatsapp',
-      recipient_type: 'individual', # Only individual messages supported (not group messages)
-      to: phone_number,
-      type: 'template',
-      template: template_body
-    }
-
-    response = HTTParty.post(
-      "#{phone_id_path}/messages",
-      headers: api_headers,
-      body: request_body.to_json
-    )
+    # 131053 on a header-IMAGE template means the media reference we
+    # passed is stale on Meta's side (their own `example.header_handle`
+    # URL expired, or the cached media_id was purged after ~30 days).
+    # Regenerate the media_id, refresh the cached template, and retry
+    # once before falling into the standard retry pipeline — a clean
+    # in-process recovery from what would otherwise be a delivery gap
+    # the operator only notices later.
+    if header_media_upload_failure?(response, template_info) && refresh_template_header_media(template_info[:name], template_info[:language])
+      response = post_template_message(phone_number, template_info, message)
+    end
 
     process_response(response, message)
   end
@@ -37,8 +34,51 @@ class Whatsapp::Providers::WhatsappCloudService < Whatsapp::Providers::BaseServi
     # ensuring that channels with wrong provider config wouldn't keep trying to sync templates
     whatsapp_channel.mark_message_templates_updated
     templates = fetch_whatsapp_templates("#{business_account_path}/message_templates?access_token=#{whatsapp_channel.provider_config['api_key']}")
-    whatsapp_channel.update!(message_templates: templates, message_templates_last_updated: Time.now.utc) if templates.present?
+    return if templates.blank?
+
+    # Turn `example.header_handle` into a reusable media_id on our side:
+    # `scontent.whatsapp.net` URLs are Meta's own preview URLs and cannot
+    # be passed back to their send API (they return 131053). Uploading
+    # the bytes to `/PHONE_NUMBER_ID/media` once yields a stable id that
+    # the send flow uses forever, until Meta expires it (~30 days idle),
+    # at which point the send flow refreshes it in-process.
+    enrich_templates_with_header_media_ids(templates)
+    whatsapp_channel.update!(message_templates: templates, message_templates_last_updated: Time.now.utc)
   end
+
+  # Downloads the file at `url` and posts it to Meta's messaging media
+  # endpoint. Returns `{ success:, id:, error_message: }`. The `id` is a
+  # long-lived media reference our send flow passes as
+  # `{image: {id: ...}}`; it survives many sends and only needs
+  # refreshing when Meta expires it.
+  # rubocop:disable Metrics/MethodLength, Metrics/AbcSize, Metrics/CyclomaticComplexity
+  def upload_media_from_url(url)
+    return { success: false, error_message: 'URL is required' } if url.blank?
+
+    downloaded = Down.download(url, max_size: 100 * 1024 * 1024)
+    mime_type = downloaded.content_type.presence || Marcel::MimeType.for(downloaded.path) || 'application/octet-stream'
+
+    response = HTTParty.post(
+      "#{phone_id_path('v22.0')}/media",
+      headers: { 'Authorization' => "Bearer #{whatsapp_channel.provider_config['api_key']}" },
+      body: {
+        'messaging_product' => 'whatsapp',
+        'type' => mime_type,
+        'file' => File.new(downloaded.path)
+      }
+    )
+
+    return format_meta_upload_error('messaging_media', response) unless response.success?
+
+    { success: true, id: response.parsed_response['id'] }
+  rescue Down::Error => e
+    Rails.logger.error("Meta messaging_media download failed: #{e.message}")
+    { success: false, error_message: e.message }
+  ensure
+    downloaded&.close
+    downloaded&.unlink if downloaded.respond_to?(:unlink)
+  end
+  # rubocop:enable Metrics/MethodLength, Metrics/AbcSize, Metrics/CyclomaticComplexity
 
   # Updates an existing template on Meta. Only certain fields are
   # editable and the rules depend on the template's current status
@@ -419,6 +459,110 @@ class Whatsapp::Providers::WhatsappCloudService < Whatsapp::Providers::BaseServi
     )
 
     process_response(response, message)
+  end
+
+  # Extracted so `send_template` can call it twice — once with the
+  # cached media_id, and once with a refreshed one when the first send
+  # trips 131053.
+  def post_template_message(phone_number, template_info, message)
+    template_body = template_body_parameters(template_info)
+
+    request_body = {
+      messaging_product: 'whatsapp',
+      recipient_type: 'individual',
+      to: phone_number,
+      type: 'template',
+      template: template_body
+    }
+    _ = message # kept for future symmetry with send_text_message signature
+
+    HTTParty.post(
+      "#{phone_id_path}/messages",
+      headers: api_headers,
+      body: request_body.to_json
+    )
+  end
+
+  def header_media_upload_failure?(response, template_info)
+    return false if response.success?
+
+    error_code = response.parsed_response.is_a?(Hash) ? response.parsed_response.dig('error', 'code') : nil
+    error_code.to_s == '131053' && template_info[:name].present?
+  end
+
+  # Walks the cached template list and fills in `header_media_id` for
+  # every template whose header component is IMAGE / VIDEO / DOCUMENT.
+  # Skips templates whose source URL has not changed since the last
+  # sync — a heuristic that keeps the sync cheap on the common case
+  # where Meta returns the same preview URL between polls.
+  def enrich_templates_with_header_media_ids(templates)
+    existing_ids_by_source = existing_media_ids_by_source
+    templates.each do |template|
+      header = template_header_component(template)
+      next if header.blank?
+
+      media_type = normalize_media_type(header['format'])
+      next if media_type.blank?
+
+      source_url = Array(header.dig('example', 'header_handle')).first
+      next if source_url.blank?
+
+      cached_id = existing_ids_by_source[source_url]
+      if cached_id.present?
+        template['header_media_id'] = cached_id
+        template['header_media_source_url'] = source_url
+        next
+      end
+
+      result = upload_media_from_url(source_url)
+      next unless result[:success]
+
+      template['header_media_id'] = result[:id]
+      template['header_media_source_url'] = source_url
+    end
+  end
+
+  def existing_media_ids_by_source
+    Array(whatsapp_channel.message_templates).each_with_object({}) do |template, acc|
+      source = template['header_media_source_url']
+      id = template['header_media_id']
+      acc[source] = id if source.present? && id.present?
+    end
+  end
+
+  # Force-refresh the cached header media_id for a template, then persist
+  # the refreshed list. Returns true when a new id landed, false when the
+  # template was not found or the upload failed — the caller then falls
+  # back to the standard error pipeline.
+  # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+  def refresh_template_header_media(template_name, template_language)
+    templates = Array(whatsapp_channel.message_templates).map(&:deep_dup)
+    template = templates.find do |t|
+      t['name'] == template_name && t['language']&.downcase == template_language&.downcase
+    end
+    return false if template.blank?
+
+    header = template_header_component(template)
+    source_url = Array(header&.dig('example', 'header_handle')).first
+    return false if source_url.blank?
+
+    result = upload_media_from_url(source_url)
+    return false unless result[:success]
+
+    template['header_media_id'] = result[:id]
+    template['header_media_source_url'] = source_url
+    whatsapp_channel.update!(message_templates: templates)
+    true
+  end
+  # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+
+  def template_header_component(template)
+    Array(template['components']).find { |c| c['type']&.upcase == 'HEADER' }
+  end
+
+  def normalize_media_type(format)
+    value = format.to_s.downcase
+    %w[image video document].include?(value) ? value : nil
   end
 end
 

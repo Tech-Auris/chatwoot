@@ -68,6 +68,34 @@ describe Whatsapp::PopulateTemplateParametersService do
     end
   end
 
+  # `build_media_id_parameter` is used when the send flow has a cached
+  # media_id from Meta's `/PHONE_NUMBER_ID/media` upload — no URL fetch,
+  # no `link` field, just an `id` Meta looks up on its side.
+  describe '#build_media_id_parameter' do
+    it 'shapes an image parameter with the media id' do
+      expect(service.build_media_id_parameter('image', 'MEDIA_ID_1'))
+        .to eq(type: 'image', image: { id: 'MEDIA_ID_1' })
+    end
+
+    it 'shapes a video parameter with the media id' do
+      expect(service.build_media_id_parameter('video', 'MEDIA_ID_2'))
+        .to eq(type: 'video', video: { id: 'MEDIA_ID_2' })
+    end
+
+    it 'shapes a document parameter with the media id and optional filename' do
+      expect(service.build_media_id_parameter('document', 'MEDIA_ID_3', 'report.pdf'))
+        .to eq(type: 'document', document: { id: 'MEDIA_ID_3', filename: 'report.pdf' })
+    end
+
+    it 'returns nil when the id is blank' do
+      expect(service.build_media_id_parameter('image', '')).to be_nil
+    end
+
+    it 'refuses an unsupported media type so we do not send a broken payload' do
+      expect { service.build_media_id_parameter('audio', 'X') }.to raise_error(ArgumentError)
+    end
+  end
+
   # Meta rejects template parameters that contain tabs, newlines, or more
   # than 4 consecutive spaces with #132018. Real incident: `lista_exames`
   # arrived as "ITEM_A/\tITEM_B" — invisible in the UI (tab renders as a

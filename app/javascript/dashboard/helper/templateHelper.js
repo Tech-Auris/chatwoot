@@ -94,11 +94,15 @@ export const buildTemplateParameters = (template, hasMediaHeaderValue) => {
 
   if (hasMediaHeaderValue) {
     if (!allVariables.header) allVariables.header = {};
-    // Pre-fill with the sample media URL that ships with the template
-    // (components[].example.header_handle[0]) so the agent doesn't have to
-    // paste it manually. The field stays editable in the parser.
-    allVariables.header.media_url =
-      headerComponent.example?.header_handle?.[0] || '';
+    // `example.header_handle` is Meta's preview URL — the one that
+    // sits on `scontent.whatsapp.net`. Passing it back to their send
+    // API returns 131053 ("Media upload error") because that URL is
+    // not fetchable from outside; it is only intended for preview.
+    // The backend now caches a real, reusable media_id from the sync
+    // step and prefers that at send time, so leaving `media_url`
+    // blank here is safe — the agent does not need to paste a URL
+    // for a template whose header was registered on the Meta side.
+    allVariables.header.media_url = '';
     allVariables.header.media_type = headerComponent.format.toLowerCase();
 
     // For document templates, include media_name field for filename support
