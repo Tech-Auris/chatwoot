@@ -143,7 +143,11 @@ module SalesStripeStub
   ].freeze
 end
 
-Rails.application.config.after_initialize do
+# `to_prepare` (rather than `after_initialize`) so the monkey-patch
+# survives a dev-mode class reload — the Commercial screens read
+# `configured?` on every request, and losing the override to a
+# reload would silently bring the "não configurado" banner back.
+Rails.application.config.to_prepare do
   Integrations::Stripe::Client.class_eval do
     define_method(:configured?) { true }
 

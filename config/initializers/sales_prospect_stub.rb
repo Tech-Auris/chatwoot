@@ -12,7 +12,13 @@ return unless Rails.env.development? && ENV['CLICKUP_PROSPECT_STUB'] == '1'
 
 require Rails.root.join('lib/dev/stub_prospects')
 
-Rails.application.config.after_initialize do
+# `to_prepare` runs at boot AND on every code reload in dev, so the
+# monkey-patch survives when Rails swaps a class after an edit. Using
+# `after_initialize` here would apply the override once at boot and
+# lose it as soon as the ClickUp client (or anything in its autoload
+# tree) got reloaded, and the "não configurado" banner would come
+# back mid-session for no visible reason.
+Rails.application.config.to_prepare do
   Sales::ClickupProspectSearchService.class_eval do
     define_method(:prospects) { Dev::StubProspects::PROSPECTS }
     # `list_id` would still raise NotConfigured without a real GlobalConfig
