@@ -88,4 +88,78 @@ RSpec.describe Whatsapp::TemplateProcessorService do
       end
     end
   end
+
+  # `example.header_handle` is Meta's preview URL and is not fetchable
+  # from outside — passing it back to their send API returns 131053.
+  # The sync flow resolves a reusable media_id via `/PHONE_NUMBER_ID/media`
+  # and the processor prefers that id at send time.
+  describe 'header component with a media header' do
+    let(:templates_cache) do
+      [
+        {
+          'name' => 'confirmacao',
+          'language' => 'pt_BR',
+          'status' => 'approved',
+          'header_media_id' => 'CACHED_MEDIA_ID',
+          'components' => [
+            { 'type' => 'HEADER', 'format' => 'IMAGE',
+              'example' => { 'header_handle' => ['https://scontent.whatsapp.net/preview.png'] } },
+            { 'type' => 'BODY', 'text' => 'Olá {{1}}' }
+          ]
+        }
+      ]
+    end
+    let(:template_params) do
+      {
+        'name' => 'confirmacao',
+        'language' => 'pt_BR',
+        'processed_params' => {
+          'header' => { 'media_url' => 'https://scontent.whatsapp.net/preview.png', 'media_type' => 'image' },
+          'body' => { '1' => 'Fabio' }
+        }
+      }
+    end
+
+    it 'sends the cached media_id, not the preview URL that would trigger 131053' do
+      _name, _namespace, _lang, components = described_class.new(
+        channel: channel, template_params: template_params, message: message
+      ).call
+
+      header = components.find { |c| c[:type] == 'header' }
+      expect(header[:parameters]).to eq([{ type: 'image', image: { id: 'CACHED_MEDIA_ID' } }])
+    end
+
+    context 'when the template has no cached media_id yet' do
+      let(:templates_cache) do
+        [
+          {
+            'name' => 'confirmacao',
+            'language' => 'pt_BR',
+            'status' => 'approved',
+            'components' => [
+              { 'type' => 'HEADER', 'format' => 'IMAGE' },
+              { 'type' => 'BODY', 'text' => 'Olá {{1}}' }
+            ]
+          }
+        ]
+      end
+
+      # Degraded path: no cached id, so we still send the URL (which
+      # is exactly the pre-fix behavior). Meta will 131053 and the
+      # send flow's regenerate-on-131053 recovery takes over.
+      it 'falls back to the URL when no media_id has been resolved' do
+        _name, _namespace, _lang, components = described_class.new(
+          channel: channel, template_params: template_params.deep_merge(
+            'processed_params' => {
+              'header' => { 'media_url' => 'https://example.com/logo.png', 'media_type' => 'image' }
+            }
+          ), message: message
+        ).call
+
+        header = components.find { |c| c[:type] == 'header' }
+        expect(header[:parameters].first[:type]).to eq('image')
+        expect(header[:parameters].first[:image][:link]).to include('example.com/logo.png')
+      end
+    end
+  end
 end

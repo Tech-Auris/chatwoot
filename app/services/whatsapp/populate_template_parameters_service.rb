@@ -39,6 +39,29 @@ class Whatsapp::PopulateTemplateParametersService
     build_media_type_parameter(normalized_url, media_type.downcase, media_name)
   end
 
+  # Reference a media file Meta already has via `/PHONE_NUMBER_ID/media`.
+  # This is the path used for template header IMAGE / VIDEO / DOCUMENT
+  # once we have a persistent id cached — avoids Meta re-fetching a URL
+  # on every send, which is fragile with preview URLs from
+  # `example.header_handle`.
+  def build_media_id_parameter(media_type, media_id, media_name = nil)
+    return nil if media_id.blank?
+
+    normalized_type = media_type.to_s.downcase
+    case normalized_type
+    when 'image'
+      { type: 'image', image: { id: media_id } }
+    when 'video'
+      { type: 'video', video: { id: media_id } }
+    when 'document'
+      document = { id: media_id }
+      document[:filename] = media_name if media_name.present?
+      { type: 'document', document: document }
+    else
+      raise ArgumentError, "Unsupported media type: #{media_type}"
+    end
+  end
+
   def build_named_parameter(parameter_name, value)
     sanitized_value = sanitize_parameter(value.to_s)
     { type: 'text', parameter_name: parameter_name, text: sanitized_value }

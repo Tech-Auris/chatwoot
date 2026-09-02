@@ -118,9 +118,11 @@ const isFormInvalid = computed(() => {
     return false;
   }
 
-  if (hasMediaHeader.value && !processedParams.value.header?.media_url) {
-    return true;
-  }
+  // A media header no longer needs a URL in the form: the backend
+  // resolved a persistent media_id at sync time and prefers that at
+  // send time. The field is still editable for operators who want to
+  // override with their own image, but leaving it blank is the
+  // expected default.
 
   // Header text variables live under `header.<key>` alongside media_url/
   // media_type/media_name. Only the plain text keys count for validation.

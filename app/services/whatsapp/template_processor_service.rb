@@ -62,21 +62,39 @@ class Whatsapp::TemplateProcessorService
   # params" even when the count matches, because it can't map the value
   # back to the named placeholder). Media parameters are always shaped
   # by their media type, so parameter_format doesn't apply there.
+  # rubocop:disable Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
   def build_header_params(header_data, template)
     parameter_format = template['parameter_format']
+    cached_media_id = template['header_media_id']
+    cached_media_type = cached_media_type_for(template)
     header_params = []
     header_data.each do |key, value|
       next if value.blank?
 
       if media_url_with_type?(key, header_data)
+        # Prefer the cached media_id when we have one — it survives the
+        # preview-URL expiry that causes Meta's 131053 on send. Falls
+        # back to the URL only when the sync has not resolved an id yet
+        # (fresh template, or upload failed and we're mid-recovery).
         media_name = header_data['media_name']
-        media_param = parameter_builder.build_media_parameter(value, header_data['media_type'], media_name)
+        media_param = if cached_media_id.present?
+                        parameter_builder.build_media_id_parameter(cached_media_type || header_data['media_type'],
+                                                                   cached_media_id, media_name)
+                      else
+                        parameter_builder.build_media_parameter(value, header_data['media_type'], media_name)
+                      end
         header_params << media_param if media_param
       elsif key != 'media_type' && key != 'media_name'
         header_params << text_header_param(key, value, parameter_format)
       end
     end
     header_params
+  end
+  # rubocop:enable Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+
+  def cached_media_type_for(template)
+    header = Array(template['components']).find { |c| c['type']&.upcase == 'HEADER' }
+    header&.dig('format')&.to_s&.downcase
   end
 
   def text_header_param(key, value, parameter_format)

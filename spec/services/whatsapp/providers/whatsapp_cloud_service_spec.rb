@@ -304,6 +304,125 @@ describe Whatsapp::Providers::WhatsappCloudService do
         subject.sync_templates
         expect(whatsapp_channel.reload.message_templates_last_updated).not_to eq(timstamp)
       end
+
+      # Meta's `example.header_handle` on IMAGE-header templates is a
+      # `scontent.whatsapp.net` preview URL, not a reusable media
+      # reference. The sync uploads it to `/PHONE_NUMBER_ID/media` and
+      # stores the returned id on the template, so the send flow can
+      # send `{image: {id: ...}}` instead of a URL Meta cannot fetch.
+      it 'resolves a header_media_id for templates with an IMAGE header' do
+        stub_request(:get, 'https://graph.facebook.com/v22.0/123456789/message_templates?access_token=test_key')
+          .to_return(status: 200, headers: response_headers, body: {
+            data: [
+              { id: '1', name: 'confirmacao',
+                components: [
+                  { type: 'HEADER', format: 'IMAGE',
+                    example: { header_handle: ['https://scontent.whatsapp.net/preview.png'] } },
+                  { type: 'BODY', text: 'Olá' }
+                ] }
+            ]
+          }.to_json)
+
+        # rubocop:disable RSpec/SubjectStub -- Meta media upload is covered by its own spec; here we assert the sync wiring
+        allow(subject).to receive(:upload_media_from_url)
+          .with('https://scontent.whatsapp.net/preview.png')
+          .and_return(success: true, id: 'FRESH_MEDIA_ID')
+        # rubocop:enable RSpec/SubjectStub
+
+        subject.sync_templates
+
+        template = whatsapp_channel.reload.message_templates.first
+        expect(template['header_media_id']).to eq('FRESH_MEDIA_ID')
+        expect(template['header_media_source_url']).to eq('https://scontent.whatsapp.net/preview.png')
+      end
+
+      # Sync runs on a schedule and re-uploading unchanged headers would
+      # waste one Meta media POST per template per sync. The cache keys
+      # off the preview URL, so a stable one lets us short-circuit.
+      it 'reuses the existing header_media_id when the source URL has not changed' do
+        whatsapp_channel.update!(message_templates: [
+                                   { 'id' => '1', 'name' => 'confirmacao',
+                                     'header_media_id' => 'CACHED_ID',
+                                     'header_media_source_url' => 'https://scontent.whatsapp.net/preview.png',
+                                     'components' => [
+                                       { 'type' => 'HEADER', 'format' => 'IMAGE',
+                                         'example' => { 'header_handle' => ['https://scontent.whatsapp.net/preview.png'] } }
+                                     ] }
+                                 ])
+
+        stub_request(:get, 'https://graph.facebook.com/v22.0/123456789/message_templates?access_token=test_key')
+          .to_return(status: 200, headers: response_headers, body: {
+            data: [
+              { id: '1', name: 'confirmacao',
+                components: [
+                  { type: 'HEADER', format: 'IMAGE',
+                    example: { header_handle: ['https://scontent.whatsapp.net/preview.png'] } }
+                ] }
+            ]
+          }.to_json)
+
+        expect(subject).not_to receive(:upload_media_from_url) # rubocop:disable RSpec/SubjectStub -- boundary the test guards is exactly "no upload happens"
+
+        subject.sync_templates
+
+        template = whatsapp_channel.reload.message_templates.first
+        expect(template['header_media_id']).to eq('CACHED_ID')
+      end
+    end
+  end
+
+  describe '#send_template regenerating header media on 131053' do
+    let(:template_info) do
+      {
+        name: 'confirmacao',
+        namespace: nil,
+        lang_code: 'pt_BR',
+        language: 'pt_BR',
+        parameters: [{ type: 'header', parameters: [{ type: 'image', image: { id: 'OLD_ID' } }] }]
+      }
+    end
+
+    before do
+      whatsapp_channel.update!(message_templates: [
+                                 { 'name' => 'confirmacao', 'language' => 'pt_BR',
+                                   'header_media_id' => 'OLD_ID',
+                                   'header_media_source_url' => 'https://scontent.whatsapp.net/preview.png',
+                                   'components' => [
+                                     { 'type' => 'HEADER', 'format' => 'IMAGE',
+                                       'example' => { 'header_handle' => ['https://scontent.whatsapp.net/preview.png'] } }
+                                   ] }
+                               ])
+    end
+
+    it 'refreshes the cached media_id and retries the send once' do
+      failure = { error: { code: 131_053, message: 'Media upload error' } }.to_json
+      stub_request(:post, 'https://graph.facebook.com/v13.0/123456789/messages')
+        .to_return(
+          { status: 400, body: failure, headers: response_headers },
+          { status: 200, body: whatsapp_response.to_json, headers: response_headers }
+        )
+
+      # rubocop:disable RSpec/SubjectStub -- upload is covered separately; here we exercise the retry wiring
+      allow(subject).to receive(:upload_media_from_url)
+        .with('https://scontent.whatsapp.net/preview.png')
+        .and_return(success: true, id: 'FRESH_ID')
+      # rubocop:enable RSpec/SubjectStub
+
+      expect(subject.send_template('+123456789', template_info, message)).to eq('message_id')
+      expect(whatsapp_channel.reload.message_templates.first['header_media_id']).to eq('FRESH_ID')
+    end
+
+    it 'lets the error propagate when the refresh itself fails' do
+      failure = { error: { code: 131_053, message: 'Media upload error' } }.to_json
+      stub_request(:post, 'https://graph.facebook.com/v13.0/123456789/messages')
+        .to_return(status: 400, body: failure, headers: response_headers)
+
+      # rubocop:disable RSpec/SubjectStub -- upload is covered separately; here we assert propagation when it fails
+      allow(subject).to receive(:upload_media_from_url).and_return(success: false, error_message: 'oops')
+      # rubocop:enable RSpec/SubjectStub
+
+      expect { subject.send_template('+123456789', template_info, message) }
+        .to raise_error(Whatsapp::Providers::TransientError)
     end
   end
 
