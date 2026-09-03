@@ -4,7 +4,9 @@
 # be edited at any moment, and a contract that changes after it was signed is
 # not something anybody can audit.
 class Sales::TermsFetcherService
-  DEFAULT_URL = 'https://agenteauris.com.br/termos-de-uso/'.freeze
+  # The public terms page. Overridable via `SALES_TERMS_URL` on Super
+  # Admin → Settings when marketing rehosts it.
+  DEFAULT_URL = 'https://www.auris.ia.br/termos-de-uso'.freeze
   TIMEOUT = 10
 
   class Unavailable < StandardError; end

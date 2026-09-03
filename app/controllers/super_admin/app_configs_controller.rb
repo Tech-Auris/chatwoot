@@ -54,7 +54,7 @@ class SuperAdmin::AppConfigsController < SuperAdmin::ApplicationController
       'asaas' => %w[ASAAS_API_KEY ASAAS_MAX_INSTALLMENTS],
       # The page a prospect opens. It is not the console and not the product:
       # it carries the sales logo and the PIX code the company is paid to.
-      'commercial' => %w[SALES_PROPOSAL_LOGO SALES_PIX_PAYLOAD]
+      'commercial' => %w[SALES_PROPOSAL_LOGO SALES_PIX_PAYLOAD SALES_TERMS_URL]
     }
   end
 
