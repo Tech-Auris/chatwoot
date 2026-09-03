@@ -1,4 +1,24 @@
 ---
+- tag: v4.15.1-auris.1.53
+  published_at: '2026-09-03T21:00:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.53
+  notes:
+    en: |-
+      ### ⚡ Improvements
+
+      - **Bigger logo on the proposal page.** The header logo on every step of the proposal is now larger, so the brand reads clearly on the page the prospect opens.
+
+      ### 🐛 Fixes
+
+      - **WhatsApp templates with an image header now go through.** Templates that carried a logo or banner on top were being rejected by Meta on every send, and the customer never received them. They now go out normally, and AurisChat recovers on its own when the image reference expires.
+    pt_BR: |-
+      ### ⚡ Melhorias
+
+      - **Logo maior na página da proposta.** O logo do cabeçalho em cada etapa da proposta ficou maior, para a marca aparecer com destaque na tela que o cliente abre.
+
+      ### 🐛 Correções
+
+      - **Templates do WhatsApp com imagem no cabeçalho voltam a ser enviados.** Templates que carregavam um logo ou banner em cima estavam sendo recusados pela Meta a cada envio, e o cliente nunca recebia. Agora vão normalmente, e o sistema se recupera sozinho quando a referência da imagem expira.
 - tag: v4.15.1-auris.1.52
   published_at: '2026-09-01T21:45:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.52
@@ -287,15 +307,3 @@
       ### 🐛 Correções
 
       - **Um template Meta editado já aparece como Pendente logo após salvar.** A página de templates continuava mostrando Aprovado depois de salvar uma edição, e só virava Pendente ao clicar em Sincronizar manualmente. Agora o template já aparece como Pendente assim que você volta pra lista.
-- tag: v4.15.1-auris.1.42.2
-  published_at: '2026-08-12T17:45:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.42.2
-  notes:
-    en: |-
-      ### 🐛 Fixes
-
-      - **Templates Meta stops hanging on "Loading templates…".** After the previous release, opening Templates Meta from within a session that already had inboxes loaded (i.e. reaching it from any other page) would leave the page spinning forever. It now loads the list normally.
-    pt_BR: |-
-      ### 🐛 Correções
-
-      - **Templates Meta não trava mais em "Carregando templates…".** Depois da release anterior, abrir Templates Meta a partir de uma sessão que já tinha as caixas carregadas (ou seja, chegando pela sidebar depois de estar em outra tela) deixava a página girando pra sempre. Agora carrega a lista normalmente.
