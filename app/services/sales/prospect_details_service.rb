@@ -22,9 +22,11 @@ class Sales::ProspectDetailsService
   def perform
     previous_phone = digits(quote.prospect_phone)
     previous_clinic = quote.company_name.to_s.strip
+    was_details_complete = quote.details_complete?
     save_details!
 
     error = [sync_phone_if_changed(previous_phone), sync_clinic_if_changed(previous_clinic)].compact.first
+    post_details_confirmed_comment_if_new(was_details_complete)
     quote.events.create!(event: 'details_filled', metadata: { clickup_synced: error.nil?, clickup_error: error }.compact)
 
     Result.new(quote: quote, clickup_synced: error.nil?, clickup_error: error)
@@ -91,6 +93,40 @@ class Sales::ProspectDetailsService
     nil
   rescue Integrations::Clickup::Client::Error => e
     e.message
+  end
+
+  # Post a ClickUp comment on the TRANSITION from "not complete" to
+  # "complete" — subsequent edits by the customer stay silent so the
+  # task does not fill with duplicate notices. A hiccup here does not
+  # fail the save; the details are what matters and the log carries
+  # the reason for anyone looking.
+  def post_details_confirmed_comment_if_new(was_details_complete)
+    return if was_details_complete
+    return unless quote.reload.details_complete?
+    return unless client.configured?
+
+    client.add_comment(quote.clickup_task_id, details_confirmed_comment)
+  rescue Integrations::Clickup::Client::Error => e
+    Rails.logger.warn("[sales] details-confirmed comment not posted: #{e.message}")
+  end
+
+  def details_confirmed_comment # rubocop:disable Metrics/AbcSize -- concatenating labelled fields reads better inline than in a loop
+    lines = [
+      'Cliente confirmou os dados na proposta.',
+      '',
+      "*Nome:* #{quote.prospect_name}",
+      "*Clínica:* #{quote.company_name}",
+      "*E-mail:* #{quote.prospect_email}",
+      "*WhatsApp:* #{quote.prospect_phone}",
+      "*CPF:* #{quote.prospect_document}"
+    ]
+    if quote.company_document.present? || quote.billing_name.present?
+      lines << ''
+      lines << 'Faturamento por CNPJ:'
+      lines << "*Razão social:* #{quote.billing_name}" if quote.billing_name.present?
+      lines << "*CNPJ:* #{quote.company_document}" if quote.company_document.present?
+    end
+    lines.join("\n")
   end
 
   def digits(value)
