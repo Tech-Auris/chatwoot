@@ -13,6 +13,7 @@ RSpec.describe Sales::ReserveQuoteService do
   before do
     allow(client).to receive(:update_task)
     allow(client).to receive(:add_tag)
+    allow(client).to receive(:add_comment)
   end
 
   it 'holds the proposal until the date' do
@@ -33,6 +34,32 @@ RSpec.describe Sales::ReserveQuoteService do
     reserve
 
     expect(client).to have_received(:add_tag).with('86ak7rd8j', 'reserva')
+  end
+
+  # After a successful reserve, the ClickUp task gets a comment with the
+  # copy-paste WhatsApp message so whoever handles the handoff has the
+  # text at hand — same wording the Quotes / Reservations screens copy.
+  it 'posts the reservation message on the ClickUp task as a comment' do
+    reserve
+
+    expect(client).to have_received(:add_comment) do |task_id, text|
+      expect(task_id).to eq('86ak7rd8j')
+      expect(text).to start_with('Vendedor criou a reserva. Envie a seguinte mensagem para o cliente:')
+      expect(text).to include(quote.access_code)
+      expect(text).to include(quote.public_token)
+    end
+  end
+
+  # The comment is a convenience — a hiccup posting it must not fail
+  # the reserve nor change what the ClickUp sync reports.
+  it 'reserves cleanly when the comment post fails' do
+    allow(client).to receive(:add_comment).and_raise(Integrations::Clickup::Client::ProviderUnavailable, 'ClickUp 500')
+
+    result = reserve
+
+    expect(result.quote.reload.status).to eq('reserved')
+    expect(result.clickup_synced).to be true
+    expect(result.clickup_error).to be_nil
   end
 
   # A hiccup at ClickUp must not block a sale happening in front of a customer,
