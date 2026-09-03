@@ -158,7 +158,7 @@ stripe:
   config_key: 'stripe'
 commercial:
   name: 'Comercial'
-  description: 'Settings of the proposal a prospect opens: the logo it carries and the PIX code it pays to'
+  description: 'Settings of the proposal a prospect opens: the logo it carries, the PIX code it pays to, and the terms page it links'
   enabled: true
   icon: 'icon-briefcase-line'
   config_key: 'commercial'
