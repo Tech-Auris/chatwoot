@@ -1,5 +1,9 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
+import {
+  buildReservationMessage,
+  isReservationMessageAvailable,
+} from '../../helpers/commercialMessage';
 
 const props = defineProps({
   componentData: {
@@ -412,6 +416,34 @@ const copyLink = async () => {
   }, 2000);
 };
 
+// Same visual affordance as `copyLink`, but writes the composed
+// WhatsApp message the sales team pastes into the prospect's chat.
+const messageCopied = ref(false);
+const copyMessage = async () => {
+  await navigator.clipboard.writeText(
+    buildReservationMessage(savedQuote.value)
+  );
+  messageCopied.value = true;
+  setTimeout(() => {
+    messageCopied.value = false;
+  }, 2000);
+};
+const canCopyMessage = computed(() =>
+  isReservationMessageAvailable(savedQuote.value)
+);
+
+// Third button on the row — matches the code button on Reservations,
+// so the seller can hand the 6-digit access code to the prospect
+// without reading it off the screen.
+const codeCopied = ref(false);
+const copyCode = async () => {
+  await navigator.clipboard.writeText(savedQuote.value.access_code);
+  codeCopied.value = true;
+  setTimeout(() => {
+    codeCopied.value = false;
+  }, 2000);
+};
+
 const startOver = () => {
   savedQuote.value = null;
   reservation.value = null;
@@ -468,14 +500,23 @@ const startOver = () => {
             ({{ savedQuote.discount_summary }})
           </span>
         </p>
-        <p class="text-xs text-slate-500 mt-2">
-          Código de acesso do cliente:
-          <strong>{{ savedQuote.access_code }}</strong>
-          <span v-if="savedQuote.phone_last4">
-            · confirma com os 4 últimos dígitos do WhatsApp
-            <strong>{{ savedQuote.phone_last4 }}</strong>
-          </span>
-        </p>
+        <!-- Lead context on the confirmation panel so the seller can
+             double-check the recipient without opening the ClickUp task.
+             Fields that come blank from ClickUp simply skip their row. -->
+        <ul class="mt-2 text-xs text-slate-500 space-y-0.5">
+          <li v-if="savedQuote.company_name">
+            <span class="text-slate-400">Clínica:</span>
+            {{ savedQuote.company_name }}
+          </li>
+          <li v-if="savedQuote.prospect_email">
+            <span class="text-slate-400">E-mail:</span>
+            {{ savedQuote.prospect_email }}
+          </li>
+          <li v-if="savedQuote.prospect_phone">
+            <span class="text-slate-400">WhatsApp:</span>
+            {{ savedQuote.prospect_phone }}
+          </li>
+        </ul>
 
         <div class="mt-5 pt-5 border-t border-slate-100">
           <h3 class="text-sm font-medium text-slate-800">Reserva</h3>
@@ -536,13 +577,39 @@ const startOver = () => {
                 readonly
                 class="w-full border border-slate-200 rounded px-2 py-1.5 text-xs text-slate-600"
               />
-              <button
-                type="button"
-                class="mt-2 px-3 py-1.5 rounded bg-slate-100 text-slate-700 text-xs"
-                @click="copyLink"
-              >
-                {{ copied ? 'Copiado!' : 'Copiar link' }}
-              </button>
+              <!-- Same three-button set the Reservations screen shows, same
+                   order (Mensagem, Copiar link, código) so the sales team
+                   uses the same muscle memory on both surfaces. -->
+              <div class="mt-2 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  class="px-3 py-1.5 rounded bg-slate-100 text-slate-700 text-xs disabled:opacity-40 disabled:cursor-not-allowed"
+                  :disabled="!canCopyMessage"
+                  :title="
+                    canCopyMessage
+                      ? ''
+                      : 'Reserve a proposta para gerar a mensagem.'
+                  "
+                  @click="copyMessage"
+                >
+                  {{ messageCopied ? 'Copiada!' : 'Mensagem' }}
+                </button>
+                <button
+                  type="button"
+                  class="px-3 py-1.5 rounded bg-slate-100 text-slate-700 text-xs"
+                  @click="copyLink"
+                >
+                  {{ copied ? 'Copiado!' : 'Copiar link' }}
+                </button>
+                <button
+                  type="button"
+                  class="px-3 py-1.5 rounded bg-slate-100 text-slate-700 text-xs"
+                  :title="`Código de acesso: ${savedQuote.access_code}`"
+                  @click="copyCode"
+                >
+                  {{ codeCopied ? 'Copiado!' : savedQuote.access_code }}
+                </button>
+              </div>
               <p class="text-xs text-slate-400 mt-2">
                 Envie o link, o código e peça os 4 últimos dígitos do WhatsApp
                 do cliente para ele abrir.

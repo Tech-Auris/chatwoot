@@ -11,7 +11,10 @@ RSpec.describe Sales::ProspectDetailsService do
     described_class.new(quote: quote, attributes: attributes, client: client).perform
   end
 
-  before { allow(client).to receive(:set_custom_field) }
+  before do
+    allow(client).to receive(:set_custom_field)
+    allow(client).to receive(:add_comment)
+  end
 
   it 'records what the prospect filled in' do
     quote = create(:sales_quote, prospect_phone: nil, prospect_name: nil)
@@ -154,6 +157,51 @@ RSpec.describe Sales::ProspectDetailsService do
       fill(quote, details.merge(document: ''))
 
       expect(quote.reload.status).to eq('reserved')
+    end
+  end
+
+  # The ClickUp task carries the "customer confirmed" moment for
+  # whoever picks the deal up after the reserve. Posted only on the
+  # transition from incomplete to complete so re-edits do not spam.
+  describe 'the ClickUp comment when the customer confirms the details' do
+    it 'posts a comment on the first time all fields are complete' do
+      quote = create(:sales_quote, status: :reserved, prospect_phone: nil)
+
+      fill(quote)
+
+      expect(client).to have_received(:add_comment) do |task_id, text|
+        expect(task_id).to eq(quote.clickup_task_id)
+        expect(text).to start_with('Cliente confirmou os dados na proposta.')
+        expect(text).to include('Maria Souza')
+        expect(text).to include('Clínica Cinco')
+        expect(text).to include('maria@clinica.com.br')
+      end
+    end
+
+    it 'stays silent when a customer edits an already-complete proposal' do
+      quote = create(:sales_quote, status: :details_confirmed, prospect_name: 'Maria',
+                                   prospect_email: 'maria@clinica.com.br', prospect_phone: '+5561981402211',
+                                   prospect_document: '12345678900', company_name: 'Clínica Cinco')
+
+      fill(quote, details.merge(name: 'Maria Correção'))
+
+      expect(client).not_to have_received(:add_comment)
+    end
+
+    it 'stays silent when the save still leaves a required field blank' do
+      quote = create(:sales_quote, status: :reserved, prospect_phone: nil)
+
+      fill(quote, details.merge(document: ''))
+
+      expect(client).not_to have_received(:add_comment)
+    end
+
+    it 'does not fail the save when posting the comment errors' do
+      allow(client).to receive(:add_comment).and_raise(Integrations::Clickup::Client::ProviderUnavailable, 'ClickUp 500')
+      quote = create(:sales_quote, status: :reserved, prospect_phone: nil)
+
+      expect { fill(quote) }.not_to raise_error
+      expect(quote.reload).to be_details_complete
     end
   end
 end

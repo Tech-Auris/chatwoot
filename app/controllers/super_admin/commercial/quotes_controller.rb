@@ -262,7 +262,13 @@ class SuperAdmin::Commercial::QuotesController < SuperAdmin::ApplicationControll
       id: quote.id, public_token: quote.public_token, access_code: quote.access_code,
       public_url: public_url_for(quote), qr_code: qr_code_for(quote),
       reserved_until: quote.reserved_until, phone_last4: quote.verification_phone_last4,
-      prospect_name: quote.prospect_name, subtotal_amount: quote.subtotal_amount,
+      prospect_name: quote.prospect_name,
+      # Lead context on the "proposta criada" panel so the seller can
+      # confirm at a glance who the deal is for without opening ClickUp.
+      prospect_email: quote.prospect_email,
+      prospect_phone: quote.prospect_phone,
+      company_name: quote.company_name,
+      subtotal_amount: quote.subtotal_amount,
       discount_amount: quote.discount_amount, total_amount: quote.total_amount,
       discount_summary: quote.discount_summary, status: quote.status
     }

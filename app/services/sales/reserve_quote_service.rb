@@ -42,9 +42,23 @@ class Sales::ReserveQuoteService
 
     client.update_task(quote.clickup_task_id, due_date: reserved_until.to_i * 1000, due_date_time: true)
     client.add_tag(quote.clickup_task_id, RESERVATION_TAG)
+    post_reservation_comment
     nil
   rescue Integrations::Clickup::Client::Error => e
     e.message
+  end
+
+  # Posts a comment with the copy-paste WhatsApp message on the task,
+  # so the person who handles the handoff has the exact text next to
+  # the reservation deadline. Failure here does not fail the sync —
+  # the reservation is what matters; the comment is a convenience.
+  def post_reservation_comment
+    comment = Sales::ReservationMessageBuilder.clickup_comment_for(quote)
+    return if comment.blank?
+
+    client.add_comment(quote.clickup_task_id, comment)
+  rescue Integrations::Clickup::Client::Error => e
+    Rails.logger.warn("[sales] reservation comment not posted: #{e.message}")
   end
 
   def record_event(renewal, error)

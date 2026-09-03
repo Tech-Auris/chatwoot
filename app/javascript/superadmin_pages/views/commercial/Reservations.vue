@@ -1,5 +1,9 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
+import {
+  buildReservationMessage,
+  isReservationMessageAvailable,
+} from '../../helpers/commercialMessage';
 
 const props = defineProps({
   componentData: {
@@ -142,6 +146,13 @@ const copy = async (reservation, field, value) => {
 
 const wasCopied = (reservation, field) =>
   copied.value.id === reservation.id && copied.value.field === field;
+
+// Reuses the shared builder so the wording is the same as the Quotes
+// screen; disabled when no reservation date is set — the message has
+// a "reservada até X" sentence that only reads right with an X.
+const reservationMessage = reservation => buildReservationMessage(reservation);
+const canCopyMessage = reservation =>
+  isReservationMessageAvailable(reservation);
 </script>
 
 <template>
@@ -200,7 +211,7 @@ const wasCopied = (reservation, field) =>
           <th class="py-2 text-right">Valor</th>
           <th class="py-2 text-right">Reserva até</th>
           <th class="py-2">Tokens</th>
-          <th class="py-2 text-right">Link e código</th>
+          <th class="py-2 text-right">Envio ao cliente</th>
         </tr>
       </thead>
       <tbody>
@@ -288,6 +299,28 @@ const wasCopied = (reservation, field) =>
 
           <td class="py-3 text-right">
             <div class="flex gap-2 justify-end">
+              <!-- Same composed WhatsApp message the Quotes screen offers,
+                   so a seller who needs to re-send the reservation link
+                   pastes exactly the copy the team agreed on. Disabled
+                   when there is no `reserved_until` yet — the message
+                   has a "até X" sentence that only reads right with an X. -->
+              <button
+                type="button"
+                class="px-2 py-1 rounded border border-slate-200 text-slate-600 text-xs whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
+                :disabled="!canCopyMessage(reservation)"
+                :title="
+                  canCopyMessage(reservation)
+                    ? ''
+                    : 'Reserve a proposta para gerar a mensagem.'
+                "
+                @click="
+                  copy(reservation, 'message', reservationMessage(reservation))
+                "
+              >
+                {{
+                  wasCopied(reservation, 'message') ? 'Copiada!' : 'Mensagem'
+                }}
+              </button>
               <button
                 type="button"
                 class="px-2 py-1 rounded border border-slate-200 text-slate-600 text-xs whitespace-nowrap"
