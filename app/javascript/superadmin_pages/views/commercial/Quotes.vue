@@ -432,6 +432,18 @@ const canCopyMessage = computed(() =>
   isReservationMessageAvailable(savedQuote.value)
 );
 
+// Third button on the row — matches the code button on Reservations,
+// so the seller can hand the 6-digit access code to the prospect
+// without reading it off the screen.
+const codeCopied = ref(false);
+const copyCode = async () => {
+  await navigator.clipboard.writeText(savedQuote.value.access_code);
+  codeCopied.value = true;
+  setTimeout(() => {
+    codeCopied.value = false;
+  }, 2000);
+};
+
 const startOver = () => {
   savedQuote.value = null;
   reservation.value = null;
@@ -565,18 +577,10 @@ const startOver = () => {
                 readonly
                 class="w-full border border-slate-200 rounded px-2 py-1.5 text-xs text-slate-600"
               />
+              <!-- Same three-button set the Reservations screen shows, same
+                   order (Mensagem, Copiar link, código) so the sales team
+                   uses the same muscle memory on both surfaces. -->
               <div class="mt-2 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  class="px-3 py-1.5 rounded bg-slate-100 text-slate-700 text-xs"
-                  @click="copyLink"
-                >
-                  {{ copied ? 'Copiado!' : 'Copiar link' }}
-                </button>
-                <!-- The composed WhatsApp message the sales team pastes into
-                     the prospect's chat. Disabled until the reservation date
-                     is set — the message has a "reservada até X" sentence
-                     that only reads right with an X. -->
                 <button
                   type="button"
                   class="px-3 py-1.5 rounded bg-slate-100 text-slate-700 text-xs disabled:opacity-40 disabled:cursor-not-allowed"
@@ -588,7 +592,22 @@ const startOver = () => {
                   "
                   @click="copyMessage"
                 >
-                  {{ messageCopied ? 'Copiada!' : 'Copiar mensagem' }}
+                  {{ messageCopied ? 'Copiada!' : 'Mensagem' }}
+                </button>
+                <button
+                  type="button"
+                  class="px-3 py-1.5 rounded bg-slate-100 text-slate-700 text-xs"
+                  @click="copyLink"
+                >
+                  {{ copied ? 'Copiado!' : 'Copiar link' }}
+                </button>
+                <button
+                  type="button"
+                  class="px-3 py-1.5 rounded bg-slate-100 text-slate-700 text-xs"
+                  :title="`Código de acesso: ${savedQuote.access_code}`"
+                  @click="copyCode"
+                >
+                  {{ codeCopied ? 'Copiado!' : savedQuote.access_code }}
                 </button>
               </div>
               <p class="text-xs text-slate-400 mt-2">
