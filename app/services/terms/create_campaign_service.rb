@@ -37,8 +37,10 @@ class Terms::CreateCampaignService
     end
 
     # Enqueued outside the transaction so a rollback here doesn't leave a
-    # ghost job pointing at a campaign row that never existed.
-    Terms::ExpireCampaignJob.set(wait_until: @deadline_at).perform_later(result.campaign.id)
+    # ghost job pointing at a campaign row that never existed. Reads back
+    # the persisted `deadline_at` because the HTTP payload delivers it as a
+    # string and `set(wait_until:)` expects a Time.
+    Terms::ExpireCampaignJob.set(wait_until: result.campaign.deadline_at).perform_later(result.campaign.id)
 
     result
   end

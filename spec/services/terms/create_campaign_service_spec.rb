@@ -89,4 +89,21 @@ RSpec.describe Terms::CreateCampaignService do
       expect(job[:at]).to be_within(1.second).of(result.campaign.deadline_at.to_f)
     end
   end
+
+  # The controller hands the deadline in as an ISO string (that's what the
+  # Vue wizard posts). ActiveJob's `set(wait_until:)` refuses a String, so
+  # the enqueue must read the coerced Time back from the persisted row.
+  it 'still enqueues when the caller passes deadline_at as an ISO string' do
+    freeze_time do
+      described_class.new(
+        super_admin: super_admin, terms_version: terms_version,
+        document_date: Date.new(2026, 9, 3),
+        deadline_at: 7.days.from_now.iso8601,
+        required_signers_by_account: { account_a.id => [manager_a1_au.id] }
+      ).perform
+
+      job = ActiveJob::Base.queue_adapter.enqueued_jobs.find { |j| j[:job] == Terms::ExpireCampaignJob }
+      expect(job).to be_present
+    end
+  end
 end
