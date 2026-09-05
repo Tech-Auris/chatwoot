@@ -947,6 +947,17 @@ Rails.application.routes.draw do
         end
       end
 
+      resources :terms_acceptance_requests, only: [:index, :new, :create, :show] do
+        collection do
+          get :data
+          get :manager_roster
+          post :preview
+        end
+        member do
+          get :report
+        end
+      end
+
       resources :accounts, only: [:index, :new, :create, :show, :edit, :update, :destroy] do
         post :seed, on: :member
         post :reset_cache, on: :member

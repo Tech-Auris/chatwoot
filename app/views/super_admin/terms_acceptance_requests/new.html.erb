@@ -1,0 +1,11 @@
+<% content_for(:title) do %>
+  Nova campanha de termos
+<% end %>
+
+<%= render_vue_component('TermsAcceptanceRequestWizard', {
+  preview_url: preview_super_admin_terms_acceptance_requests_url(format: :json),
+  roster_url: manager_roster_super_admin_terms_acceptance_requests_url(format: :json),
+  create_url: super_admin_terms_acceptance_requests_url(format: :json),
+  index_url: super_admin_terms_acceptance_requests_url,
+  show_url_template: super_admin_terms_acceptance_request_url(':id')
+}) %>
