@@ -52,6 +52,9 @@ class OperationsNotification < ApplicationRecord
   }.freeze
 
   belongs_to :created_by, class_name: 'User'
+  # A campaign lives in its own model (currently only TermsAcceptanceRequest);
+  # the notification is the "gate" the modal opens on top of it.
+  belongs_to :subject, polymorphic: true, optional: true
   has_many :operations_notification_acks, dependent: :destroy
 
   validates :title, presence: true
