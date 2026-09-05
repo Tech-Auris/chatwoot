@@ -28,6 +28,36 @@ class TermsAcceptanceRequest < ApplicationRecord
 
   scope :active, -> { status_open }
 
+  # Accounts of `user` that are locked out by an expired campaign the user
+  # is NOT a required signer of. Returns `[{ account:, campaign: }]`.
+  # A required signer is deliberately excluded: the modal lets them sign,
+  # which is what unlocks the account for everybody else.
+  def self.blocking_login_for(user)
+    account_ids = user.account_users.pluck(:account_id)
+    return [] if account_ids.empty?
+
+    expired = status_expired.joins(:terms_acceptances)
+                            .where(terms_acceptances: { account_id: account_ids, required: true, status: :pending })
+                            .distinct
+
+    expired.filter_map do |campaign|
+      unsigned_account_ids = campaign.terms_acceptances
+                                     .where(account_id: account_ids, required: true, status: :pending)
+                                     .pluck(:account_id).uniq
+      unsigned_account_ids.filter_map do |account_id|
+        # Is THIS user a pending required signer on that account? If yes,
+        # they get to log in so the modal can open.
+        pinned_here = campaign.terms_acceptances
+                              .joins(:account_user)
+                              .exists?(account_id: account_id, required: true, status: :pending,
+                                       account_users: { user_id: user.id })
+        next if pinned_here
+
+        { account: Account.find(account_id), campaign: campaign }
+      end
+    end.flatten
+  end
+
   private
 
   def deadline_within_bounds
