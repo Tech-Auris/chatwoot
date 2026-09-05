@@ -405,6 +405,14 @@ Rails.application.routes.draw do
             end
           end
 
+          # Signs a re-signature campaign token from the dashboard. The public
+          # sales-checkout flow signs by a different (unauthenticated) path.
+          resources :terms_acceptances, only: [], param: :token do
+            member do
+              post :sign
+            end
+          end
+
           resources :teams do
             resources :team_members, only: [:index, :create] do
               collection do
@@ -936,6 +944,17 @@ Rails.application.routes.draw do
       resources :terms_acceptances, only: [:index, :show] do
         collection do
           get :data
+        end
+      end
+
+      resources :terms_acceptance_requests, only: [:index, :new, :create, :show] do
+        collection do
+          get :data
+          get :manager_roster
+          post :preview
+        end
+        member do
+          get :report
         end
       end
 

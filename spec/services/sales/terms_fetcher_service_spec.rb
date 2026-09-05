@@ -109,4 +109,47 @@ RSpec.describe Sales::TermsFetcherService do
 
     expect { described_class.new.perform }.to raise_error(described_class::Unavailable, /não foi possível registrar os termos/i)
   end
+
+  # The marketing page stamps its edition as "Última atualização: 3 de Set de
+  # 2026." The super_admin report needs that date next to the wording so the
+  # campaign can point at a specific version.
+  describe 'document date extraction' do
+    it 'reads the "Última atualização" line with an abbreviated month' do
+      stub_request(:get, described_class::DEFAULT_URL).to_return(
+        status: 200,
+        body: '<html><body><p>Última atualização: 3 de Set de 2026.</p><p>Cláusula.</p></body></html>'
+      )
+
+      expect(described_class.new.perform.document_date).to eq(Date.new(2026, 9, 3))
+    end
+
+    it 'reads the same line with the full month name' do
+      stub_request(:get, described_class::DEFAULT_URL).to_return(
+        status: 200,
+        body: '<html><body><p>Última atualização: 25 de Maio de 2026.</p><p>Cláusula.</p></body></html>'
+      )
+
+      expect(described_class.new.perform.document_date).to eq(Date.new(2026, 5, 25))
+    end
+
+    # Absent or unparseable stamp lets the wizard prompt the super_admin
+    # instead of guessing — better a manual date than a wrong one.
+    it 'leaves document_date nil when the line is missing' do
+      stub_request(:get, described_class::DEFAULT_URL).to_return(status: 200, body: '<p>Cláusula.</p>')
+
+      expect(described_class.new.perform.document_date).to be_nil
+    end
+
+    it 'reuses the version on a second fetch of the same wording' do
+      stub_request(:get, described_class::DEFAULT_URL).to_return(
+        status: 200, body: '<p>Última atualização: 3 de Set de 2026.</p><p>Cláusula.</p>'
+      )
+
+      first = described_class.new.perform
+      second = described_class.new.perform
+
+      expect(second.id).to eq(first.id)
+      expect(second.document_date).to eq(Date.new(2026, 9, 3))
+    end
+  end
 end

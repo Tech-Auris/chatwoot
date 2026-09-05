@@ -1,0 +1,9 @@
+<% content_for(:title) do %>
+  Campanhas de termos
+<% end %>
+
+<%= render_vue_component('TermsAcceptanceRequestsIndex', {
+  data_url: data_super_admin_terms_acceptance_requests_url(format: :json),
+  new_url: new_super_admin_terms_acceptance_request_url,
+  request_url: super_admin_terms_acceptance_requests_path
+}) %>

@@ -16,6 +16,9 @@ import FinancialPixRenewalsIndex from '../superadmin_pages/views/financial/PixRe
 import CommercialQuotesIndex from '../superadmin_pages/views/commercial/Quotes.vue';
 import CommercialReservationsIndex from '../superadmin_pages/views/commercial/Reservations.vue';
 import TermsAcceptancesIndex from '../superadmin_pages/views/commercial/TermsAcceptances.vue';
+import TermsAcceptanceRequestsIndex from '../superadmin_pages/views/commercial/TermsAcceptanceRequestsIndex.vue';
+import TermsAcceptanceRequestWizard from '../superadmin_pages/views/commercial/TermsAcceptanceRequestWizard.vue';
+import TermsAcceptanceRequestReport from '../superadmin_pages/views/commercial/TermsAcceptanceRequestReport.vue';
 
 const ComponentMapping = {
   PlaygroundIndex: PlaygroundIndex,
@@ -32,6 +35,9 @@ const ComponentMapping = {
   CommercialQuotesIndex: CommercialQuotesIndex,
   CommercialReservationsIndex: CommercialReservationsIndex,
   TermsAcceptancesIndex: TermsAcceptancesIndex,
+  TermsAcceptanceRequestsIndex: TermsAcceptanceRequestsIndex,
+  TermsAcceptanceRequestWizard: TermsAcceptanceRequestWizard,
+  TermsAcceptanceRequestReport: TermsAcceptanceRequestReport,
 };
 
 const renderComponent = (componentName, props) => {
