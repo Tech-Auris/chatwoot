@@ -12,11 +12,13 @@
 #  published_at      :datetime
 #  scope_type        :integer          default("all_accounts"), not null
 #  severity          :integer          default("info"), not null
+#  subject_type      :string
 #  title             :string           not null
 #  trigger_kind      :integer          default("immediate"), not null
 #  created_at        :datetime         not null
 #  updated_at        :datetime         not null
 #  created_by_id     :bigint           not null
+#  subject_id        :bigint
 #
 # Indexes
 #
@@ -26,6 +28,7 @@
 #  index_operations_notifications_on_deleted_at         (deleted_at)
 #  index_operations_notifications_on_expires_at         (expires_at)
 #  index_operations_notifications_on_published_at       (published_at)
+#  index_operations_notifications_on_subject            (subject_type,subject_id)
 #
 class OperationsNotification < ApplicationRecord
   enum severity: { info: 0, emergency: 1 }

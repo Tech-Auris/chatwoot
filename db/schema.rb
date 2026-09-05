@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_09_01_180000) do
+ActiveRecord::Schema[7.1].define(version: 2026_09_05_120001) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -1421,12 +1421,15 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_01_180000) do
     t.datetime "updated_at", null: false
     t.bigint "account_ids", default: [], null: false, array: true
     t.bigint "audience_user_ids", default: [], null: false, array: true
+    t.string "subject_type"
+    t.bigint "subject_id"
     t.index ["account_ids"], name: "index_operations_notifications_on_account_ids", using: :gin
     t.index ["audience_user_ids"], name: "index_operations_notifications_on_audience_user_ids", using: :gin
     t.index ["created_by_id"], name: "index_operations_notifications_on_created_by_id"
     t.index ["deleted_at"], name: "index_operations_notifications_on_deleted_at"
     t.index ["expires_at"], name: "index_operations_notifications_on_expires_at"
     t.index ["published_at"], name: "index_operations_notifications_on_published_at"
+    t.index ["subject_type", "subject_id"], name: "index_operations_notifications_on_subject"
   end
 
   create_table "pix_renewals", force: :cascade do |t|
@@ -1745,6 +1748,21 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_01_180000) do
     t.index ["name", "account_id"], name: "index_teams_on_name_and_account_id", unique: true
   end
 
+  create_table "terms_acceptance_requests", force: :cascade do |t|
+    t.bigint "terms_version_id", null: false
+    t.bigint "created_by_id", null: false
+    t.integer "kind", default: 1, null: false
+    t.integer "status", default: 0, null: false
+    t.date "document_date", null: false
+    t.datetime "deadline_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_terms_acceptance_requests_on_created_by_id"
+    t.index ["deadline_at"], name: "index_terms_acceptance_requests_on_deadline_at"
+    t.index ["status"], name: "index_terms_acceptance_requests_on_status"
+    t.index ["terms_version_id"], name: "index_terms_acceptance_requests_on_terms_version_id"
+  end
+
   create_table "terms_acceptances", force: :cascade do |t|
     t.bigint "terms_version_id", null: false
     t.bigint "sales_quote_id"
@@ -1760,10 +1778,19 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_01_180000) do
     t.string "user_agent"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "terms_acceptance_request_id"
+    t.bigint "account_user_id"
+    t.integer "kind", default: 0, null: false
+    t.datetime "deadline_at"
+    t.boolean "required", default: false, null: false
     t.index ["account_id"], name: "index_terms_acceptances_on_account_id"
+    t.index ["account_user_id"], name: "index_terms_acceptances_on_account_user_id"
+    t.index ["deadline_at"], name: "index_terms_acceptances_on_deadline_at"
+    t.index ["kind"], name: "index_terms_acceptances_on_kind"
     t.index ["request_token"], name: "index_terms_acceptances_on_request_token", unique: true
     t.index ["sales_quote_id"], name: "index_terms_acceptances_on_sales_quote_id"
     t.index ["status"], name: "index_terms_acceptances_on_status"
+    t.index ["terms_acceptance_request_id"], name: "index_terms_acceptances_on_terms_acceptance_request_id"
     t.index ["terms_version_id"], name: "index_terms_acceptances_on_terms_version_id"
   end
 
@@ -1774,6 +1801,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_01_180000) do
     t.datetime "fetched_at", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.date "document_date"
     t.index ["content_hash"], name: "index_terms_versions_on_content_hash"
   end
 
@@ -1958,8 +1986,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_01_180000) do
   add_foreign_key "scheduled_messages", "inboxes"
   add_foreign_key "scheduled_messages", "messages"
   add_foreign_key "scheduled_messages", "recurring_scheduled_messages"
+  add_foreign_key "terms_acceptance_requests", "terms_versions"
+  add_foreign_key "terms_acceptance_requests", "users", column: "created_by_id"
+  add_foreign_key "terms_acceptances", "account_users"
   add_foreign_key "terms_acceptances", "accounts"
   add_foreign_key "terms_acceptances", "sales_quotes"
+  add_foreign_key "terms_acceptances", "terms_acceptance_requests"
   add_foreign_key "terms_acceptances", "terms_versions"
   add_foreign_key "ticket_updates", "tickets", on_delete: :cascade
   add_foreign_key "ticket_updates", "users"
