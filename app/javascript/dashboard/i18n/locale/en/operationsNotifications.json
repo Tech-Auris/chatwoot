@@ -10,6 +10,14 @@
     "ACKNOWLEDGE": "I understand",
     "CLOSE": "Close",
     "ACKED_AT": "{icon} Acknowledged at {date}",
-    "MORE_PENDING": "{count} more pending after this one."
+    "MORE_PENDING": "{count} more pending after this one.",
+    "TERMS": {
+      "TITLE": "New terms of use",
+      "DOCUMENT_DATE": "Document date: {date}",
+      "DEADLINE": "Sign by {date}",
+      "SCROLL_HINT": "Scroll to the end of the document to enable the acceptance.",
+      "ACCEPT_CHECKBOX": "I have read and accept the new terms of use.",
+      "SIGN": "Sign"
+    }
   }
 }

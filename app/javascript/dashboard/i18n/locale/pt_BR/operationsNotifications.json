@@ -10,6 +10,14 @@
     "ACKNOWLEDGE": "Entendi",
     "CLOSE": "Fechar",
     "ACKED_AT": "{icon} Confirmado em {date}",
-    "MORE_PENDING": "{count} aviso(s) ainda aguardando confirmação."
+    "MORE_PENDING": "{count} aviso(s) ainda aguardando confirmação.",
+    "TERMS": {
+      "TITLE": "Novos termos de uso",
+      "DOCUMENT_DATE": "Data do documento: {date}",
+      "DEADLINE": "Assinar até {date}",
+      "SCROLL_HINT": "Role até o fim do documento para habilitar o aceite.",
+      "ACCEPT_CHECKBOX": "Li e aceito os novos termos de uso.",
+      "SIGN": "Assinar"
+    }
   }
 }
