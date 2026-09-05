@@ -61,4 +61,32 @@ RSpec.describe Terms::CreateCampaignService do
     expect(TermsAcceptanceRequest.count).to eq(0)
     expect(TermsAcceptance.where(kind: :update).count).to eq(0)
   end
+
+  # A second OpsNotif is created for agents in the same accounts — a plain
+  # info notice that tells them the manager needs to sign by <deadline>.
+  # Agents cannot sign, so no `subject` is attached; the modal falls through
+  # to the generic "Entendi" flow.
+  it 'creates an informational notification for agents of the same accounts' do
+    result = perform(account_a.id => [manager_a1_au.id])
+
+    expect(result.agent_notification).to be_persisted
+    expect(result.agent_notification.audience_type).to eq('agents')
+    expect(result.agent_notification.subject).to be_nil
+    expect(result.agent_notification.account_ids).to eq([account_a.id])
+    expect(result.agent_notification.body).to match(/gerente/i)
+  end
+
+  # The deadline is what unlocks the block; the job that flips the campaign
+  # to `expired` and revokes sessions must be scheduled for exactly that
+  # moment.
+  it 'enqueues Terms::ExpireCampaignJob at the deadline' do
+    freeze_time do
+      result = perform(account_a.id => [manager_a1_au.id])
+
+      job = ActiveJob::Base.queue_adapter.enqueued_jobs.find { |j| j[:job] == Terms::ExpireCampaignJob }
+      expect(job).to be_present
+      expect(job[:args].first).to eq(result.campaign.id)
+      expect(job[:at]).to be_within(1.second).of(result.campaign.deadline_at.to_f)
+    end
+  end
 end
