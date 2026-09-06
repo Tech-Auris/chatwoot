@@ -119,10 +119,15 @@ const goBack = () => {
   if (step.value > 1) step.value -= 1;
 };
 
-const submit = async () => {
+// A campaign with the same document_date already open almost always means
+// the super_admin forgot the previous one. On the first submit the backend
+// answers 409 and the wizard offers to cancel the previous — the operator
+// opts in by triggering a second post with `force: true`.
+const submit = async (force = false) => {
   loading.value = true;
   error.value = null;
   const payload = {
+    force: force,
     campaign: {
       terms_version_id: version.value.id,
       document_date: documentDateInput.value,
@@ -148,6 +153,19 @@ const submit = async () => {
       body: JSON.stringify(payload),
     });
     const body = await res.json().catch(() => ({}));
+    if (res.status === 409 && body.existing_campaign) {
+      loading.value = false;
+      const existing = body.existing_campaign;
+      const dt = existing.created_at
+        ? new Date(existing.created_at).toLocaleString('pt-BR')
+        : '—';
+      const proceed = window.confirm(
+        `Já existe uma campanha aberta para a data ${existing.document_date} ` +
+          `(#${existing.id}, criada em ${dt}). Cancelar a anterior e criar esta nova?`
+      );
+      if (proceed) submit(true);
+      return;
+    }
     if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
     window.location.href = props.componentData.show_url_template.replace(
       ':id',
@@ -350,7 +368,7 @@ onMounted(fetchPreview);
           type="button"
           class="px-3 py-1.5 rounded bg-woot-500 text-white text-sm disabled:opacity-40"
           :disabled="loading || totalRequired === 0"
-          @click="submit"
+          @click="() => submit()"
         >
           Criar campanha
         </button>
