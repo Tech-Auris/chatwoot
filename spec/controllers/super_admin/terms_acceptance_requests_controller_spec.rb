@@ -84,7 +84,9 @@ RSpec.describe 'Super Admin Terms Acceptance Requests', type: :request do
       expect(response.parsed_body).to include('acceptance_count' => 1)
       expect(TermsAcceptanceRequest.count - request_count).to eq(1)
       expect(TermsAcceptance.count - acceptance_count).to eq(1)
-      expect(OperationsNotification.count - notification_count).to eq(1)
+      # Two OpsNotifs land per campaign: one for managers (subject=campaign)
+      # and one info notice for agents (plain, no subject).
+      expect(OperationsNotification.count - notification_count).to eq(2)
     end
 
     it 'reports a validation error without persisting' do
@@ -96,6 +98,60 @@ RSpec.describe 'Super Admin Terms Acceptance Requests', type: :request do
 
       expect(response).to have_http_status(:unprocessable_entity)
       expect(TermsAcceptanceRequest.count).to eq(0)
+    end
+  end
+
+  describe 'DELETE /super_admin/terms_acceptance_requests/:id' do
+    it 'cancels the campaign and its pending acceptances' do
+      campaign = create(:terms_acceptance_request, terms_version: terms_version, created_by: super_admin)
+      create(:terms_acceptance, terms_acceptance_request: campaign, terms_version: terms_version,
+                                account: account, account_user: manager_au, kind: :update,
+                                required: true, status: :pending, deadline_at: campaign.deadline_at)
+
+      delete "/super_admin/terms_acceptance_requests/#{campaign.id}"
+
+      expect(response).to have_http_status(:ok)
+      expect(campaign.reload.status).to eq('closed')
+      expect(campaign.terms_acceptances.status_pending.count).to eq(0)
+      expect(campaign.terms_acceptances.status_cancelled.count).to eq(1)
+    end
+  end
+
+  # A duplicate document_date almost always means the super_admin forgot the
+  # previous campaign is still open. The wizard's second submit with
+  # `force: true` cancels the previous and creates the new one.
+  describe 'POST create with a duplicate document_date' do
+    let!(:existing) do
+      create(:terms_acceptance_request, terms_version: terms_version, created_by: super_admin,
+                                        document_date: Date.new(2026, 9, 3), status: :open)
+    end
+
+    it 'refuses with 409 and surfaces the existing campaign' do
+      manager_au
+
+      post '/super_admin/terms_acceptance_requests',
+           params: { campaign: { terms_version_id: terms_version.id,
+                                 document_date: '2026-09-03',
+                                 deadline_at: 7.days.from_now.iso8601,
+                                 required_signers_by_account: { account.id.to_s => [manager_au.id.to_s] } } }
+
+      expect(response).to have_http_status(:conflict)
+      expect(response.parsed_body.dig('existing_campaign', 'id')).to eq(existing.id)
+    end
+
+    it 'cancels the previous and creates the new one when force is true' do
+      manager_au
+
+      post '/super_admin/terms_acceptance_requests',
+           params: { force: true,
+                     campaign: { terms_version_id: terms_version.id,
+                                 document_date: '2026-09-03',
+                                 deadline_at: 7.days.from_now.iso8601,
+                                 required_signers_by_account: { account.id.to_s => [manager_au.id.to_s] } } }
+
+      expect(response).to have_http_status(:created)
+      expect(existing.reload.status).to eq('closed')
+      expect(TermsAcceptanceRequest.status_open.count).to eq(1)
     end
   end
 

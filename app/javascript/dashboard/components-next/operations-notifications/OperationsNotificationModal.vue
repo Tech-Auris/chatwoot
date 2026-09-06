@@ -97,6 +97,7 @@ onBeforeUnmount(() => {
     position="center"
     :show-cancel-button="false"
     :show-confirm-button="false"
+    :dismissable="!isTermsSignature"
   >
     <TermsSignatureBody
       v-if="currentNotification && isTermsSignature"

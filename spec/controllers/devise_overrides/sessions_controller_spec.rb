@@ -327,6 +327,44 @@ RSpec.describe DeviseOverrides::SessionsController, type: :controller do
         expect(session.platform_name).to eq('macOS')
       end
     end
+
+    # An expired re-signature campaign locks the account for everybody who
+    # is not a pinned signer. The refusal message names the accounts so the
+    # operator can figure out who to chase — an anonymous 403 would look
+    # like a wrong-password bug.
+    context 'with an expired terms-of-use campaign' do
+      let(:account) { create(:account) }
+      let(:agent) { create(:user, account: account, password: 'Test@123456') }
+      let(:manager) { create(:user, account: account, password: 'Test@123456') }
+      let(:manager_au) do
+        account.account_users.find_by(user: manager).tap { |au| au.update!(role: :manager) }
+      end
+      let(:super_admin) { create(:super_admin) }
+      let(:terms_version) { create(:terms_version) }
+      let(:campaign) do
+        create(:terms_acceptance_request, terms_version: terms_version, created_by: super_admin, status: :expired)
+      end
+
+      before do
+        create(:terms_acceptance, terms_acceptance_request: campaign, terms_version: terms_version,
+                                  account: account, account_user: manager_au, kind: :update,
+                                  status: :pending, required: true, deadline_at: 1.day.ago)
+      end
+
+      it 'refuses login for an agent of the locked account and names it' do
+        post :create, params: { email: agent.email, password: 'Test@123456' }
+
+        expect(response).to have_http_status(:forbidden)
+        expect(response.parsed_body['errors'].first).to include(account.name)
+        expect(response.parsed_body['error_code']).to eq('terms_signature_overdue')
+      end
+
+      it 'lets the pinned manager in so the modal can open' do
+        post :create, params: { email: manager.email, password: 'Test@123456' }
+
+        expect(response).to have_http_status(:success)
+      end
+    end
   end
 
   describe 'impersonation SSO login' do

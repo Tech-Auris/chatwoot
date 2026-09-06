@@ -14,6 +14,14 @@ const STATUS_LABELS = {
   cancelled: 'Cancelado',
 };
 
+// `signature` is the aceite feito no momento da contratação da conta
+// (fluxo do checkout de vendas); `update` é uma campanha de atualização
+// disparada pelo super_admin quando os termos mudam.
+const KIND_LABELS = {
+  signature: 'Contratação',
+  update: 'Atualização',
+};
+
 const TABS = [
   { id: 'signed', label: 'Assinados' },
   { id: 'pending', label: 'Aguardando' },
@@ -143,6 +151,7 @@ const closeTerms = () => {
         <tr class="text-left text-slate-500 border-b border-slate-100">
           <th class="py-2">Quem assinou</th>
           <th class="py-2">Conta</th>
+          <th class="py-2">Tipo</th>
           <th class="py-2">Status</th>
           <th class="py-2">Pedido em</th>
           <th class="py-2">Assinado em</th>
@@ -176,6 +185,10 @@ const closeTerms = () => {
             >
               Proposta #{{ acceptance.sales_quote_id }}
             </div>
+          </td>
+
+          <td class="py-3 text-slate-700">
+            {{ KIND_LABELS[acceptance.kind] || acceptance.kind || '—' }}
           </td>
 
           <td class="py-3">
@@ -218,7 +231,7 @@ const closeTerms = () => {
         </tr>
 
         <tr v-if="!acceptances.length">
-          <td colspan="7" class="py-6 text-center text-slate-400">
+          <td colspan="8" class="py-6 text-center text-slate-400">
             Nenhum registro nesta aba.
           </td>
         </tr>
