@@ -31,6 +31,16 @@ RSpec.describe 'Super Admin Terms Acceptances', type: :request do
     expect(row['signed_at']).to be_present
   end
 
+  # The audit distinguishes "contratação" (sale-time) from "atualização"
+  # (a super_admin re-signature campaign) so an operator reading the log
+  # can see which kind produced the row.
+  it 'surfaces the kind so the audit shows contratação vs atualização' do
+    get '/super_admin/terms_acceptances/data'
+
+    row = response.parsed_body['acceptances'].find { |item| item['id'] == signed.id }
+    expect(row['kind']).to eq(signed.kind)
+  end
+
   it 'filters by status' do
     get '/super_admin/terms_acceptances/data'
 
