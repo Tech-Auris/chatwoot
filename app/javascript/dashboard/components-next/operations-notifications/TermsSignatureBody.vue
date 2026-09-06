@@ -20,6 +20,9 @@ const { t } = useI18n();
 const scrollContainer = ref(null);
 const scrolledToBottom = ref(false);
 const accepted = ref(false);
+// Turns red when the manager clicks the checkbox before reaching the end
+// of the terms — same nudge the public proposal shows.
+const hintLoud = ref(false);
 
 const uiFlags = computed(
   () => store.getters['operationsNotifications/getUIFlags']
@@ -30,6 +33,7 @@ watch(
   () => {
     scrolledToBottom.value = false;
     accepted.value = false;
+    hintLoud.value = false;
   }
 );
 
@@ -42,7 +46,21 @@ const onScroll = () => {
   if (!el) return;
   if (el.scrollHeight - el.scrollTop - el.clientHeight <= SCROLL_TOLERANCE_PX) {
     scrolledToBottom.value = true;
+    hintLoud.value = false;
   }
+};
+
+// Enabled at all times so we can intercept the click and answer with the
+// red hint — a disabled checkbox swallows the click silently, which is
+// what left the reader wondering why nothing happened.
+const onAcceptClick = event => {
+  if (scrolledToBottom.value) return;
+  event.preventDefault();
+  hintLoud.value = true;
+  scrollContainer.value?.scrollIntoView({
+    block: 'nearest',
+    behavior: 'smooth',
+  });
 };
 
 const canSign = computed(() => scrolledToBottom.value && accepted.value);
@@ -94,7 +112,11 @@ const sign = async () => {
       <div v-dompurify-html="notification.terms_version?.content || ''" />
     </div>
 
-    <p v-if="!scrolledToBottom" class="text-xs text-n-slate-10">
+    <p
+      v-if="!scrolledToBottom"
+      class="text-xs"
+      :class="hintLoud ? 'text-n-ruby-11 font-medium' : 'text-n-slate-10'"
+    >
       {{ t('OPERATIONS_NOTIFICATIONS.TERMS.SCROLL_HINT') }}
     </p>
 
@@ -103,7 +125,7 @@ const sign = async () => {
         v-model="accepted"
         type="checkbox"
         class="mt-1"
-        :disabled="!scrolledToBottom"
+        @click="onAcceptClick"
       />
       <span>{{ t('OPERATIONS_NOTIFICATIONS.TERMS.ACCEPT_CHECKBOX') }}</span>
     </label>

@@ -5,7 +5,7 @@ const props = defineProps({
   componentData: { type: Object, default: () => ({}) },
 });
 
-const KIND_LABELS = { signature: 'Assinatura', update: 'Atualização' };
+const KIND_LABELS = { signature: 'Contratação', update: 'Atualização' };
 const STATUS_LABELS = {
   open: 'Aberta',
   expired: 'Vencida',

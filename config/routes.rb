@@ -947,7 +947,7 @@ Rails.application.routes.draw do
         end
       end
 
-      resources :terms_acceptance_requests, only: [:index, :new, :create, :show] do
+      resources :terms_acceptance_requests, only: [:index, :new, :create, :show, :destroy] do
         collection do
           get :data
           get :manager_roster

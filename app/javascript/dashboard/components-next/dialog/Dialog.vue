@@ -58,6 +58,13 @@ const props = defineProps({
     default: 'center',
     validator: value => ['center', 'top'].includes(value),
   },
+  // A blocking dialog stays open regardless of ESC or click-outside — used
+  // when the acknowledgment is a legal-adjacent act (terms signature) and
+  // must not be dismissable by accident.
+  dismissable: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 const emit = defineEmits(['confirm', 'close']);
@@ -98,11 +105,20 @@ const close = () => {
 
 // Only close if the close event originated from this dialog,
 // not from a child dialog (e.g. ProseMirror prompt) bubbling up.
-const handleDialogClose = e => e.target === dialogRef.value && close();
+const handleDialogClose = e => {
+  if (!props.dismissable) {
+    // The native `close` event fires before the dialog is torn down; a
+    // blocking dialog re-opens itself so ESC does not dismiss it.
+    dialogRef.value?.showModal();
+    return;
+  }
+  if (e.target === dialogRef.value) close();
+};
 
 // Only close on click-outside if this dialog is the topmost one.
 // If another dialog (e.g. ProseMirror prompt) is open on top, ignore.
 const handleClickOutside = () => {
+  if (!props.dismissable) return;
   const dialogs = document.querySelectorAll('dialog[open]');
   if (dialogs[dialogs.length - 1] === dialogRef.value) close();
 };

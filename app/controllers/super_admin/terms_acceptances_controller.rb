@@ -38,6 +38,7 @@ class SuperAdmin::TermsAcceptancesController < SuperAdmin::ApplicationController
     {
       id: acceptance.id,
       status: acceptance.status,
+      kind: acceptance.kind,
       requested_at: acceptance.created_at,
       signed_at: acceptance.signed_at,
       signer_name: acceptance.signer_name,

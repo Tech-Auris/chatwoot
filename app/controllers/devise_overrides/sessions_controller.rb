@@ -1,4 +1,4 @@
-class DeviseOverrides::SessionsController < DeviseTokenAuth::SessionsController
+class DeviseOverrides::SessionsController < DeviseTokenAuth::SessionsController # rubocop:disable Metrics/ClassLength
   MAX_SESSIONS = ENV.fetch('MAX_USER_SESSIONS', 25).to_i
 
   # Prevent session parameter from being passed
@@ -10,12 +10,13 @@ class DeviseOverrides::SessionsController < DeviseTokenAuth::SessionsController
     redirect_to login_page_url(error: 'access-denied')
   end
 
-  def create
+  def create # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     return handle_mfa_verification if mfa_verification_request?
     return handle_sso_authentication if sso_authentication_request?
 
     user = find_user_for_authentication
     return handle_mfa_required(user) if user&.mfa_enabled?
+    return if user && refuse_when_blocked_by_terms(user)
     return if user && enforce_session_limit_for_password_login(user)
 
     # Only proceed with standard authentication if no MFA is required
@@ -171,6 +172,26 @@ class DeviseOverrides::SessionsController < DeviseTokenAuth::SessionsController
 
   def revoking_sessions?
     params[:revoke_session_id].present? || params[:revoke_all_sessions].present?
+  end
+
+  # Refuses login when the user belongs to any account locked by an
+  # expired re-signature campaign the user is NOT a required signer of.
+  # A required signer is deliberately let in so the on-login modal can open.
+  # Message names the accounts and the campaign so the agent knows who to
+  # chase — the required signers appear in the same page a super_admin uses
+  # to run the campaign, but the operator will not know that; the email
+  # they should chase is left to their manager to answer.
+  def refuse_when_blocked_by_terms(user)
+    blocking = TermsAcceptanceRequest.blocking_login_for(user)
+    return false if blocking.empty?
+
+    account_names = blocking.map { |b| b[:account].name }.uniq.join(', ')
+    render_error(
+      :forbidden,
+      "Acesso bloqueado: os termos de uso da(s) conta(s) '#{account_names}' venceram e ainda não foram assinados pelos gerentes.",
+      error_code: 'terms_signature_overdue'
+    )
+    true
   end
 
   def revoke_sessions_for_login(user)
