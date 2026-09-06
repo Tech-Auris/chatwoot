@@ -1,4 +1,18 @@
 ---
+- tag: v4.15.1-auris.1.54
+  published_at: '2026-09-06T03:30:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.54
+  notes:
+    en: |-
+      ### ✨ What's new
+
+      - **New terms of use — the manager needs to accept.** When the AurisChat team publishes an updated terms of use, the manager of the clinic sees a screen with the new text on the next login. They have to scroll to the end and confirm acceptance — same idea as the acceptance on a new contract.
+      - **Deadline on the acceptance.** Each request carries a deadline (usually a few days). If the manager does not accept in time, the AurisChat panel pauses for everyone in the clinic until the manager comes in and confirms. Before the deadline, the team sees a notice with the date so nobody is surprised.
+    pt_BR: |-
+      ### ✨ Novidades
+
+      - **Novos termos de uso — a gerente precisa aceitar.** Quando a equipe Auris publica uma versão atualizada dos termos de uso, a gerente da clínica vê uma tela com o novo texto no próximo login. Ela precisa rolar até o fim e confirmar o aceite — mesma ideia do aceite de um novo contrato.
+      - **Prazo para o aceite.** Cada pedido tem uma data de vencimento (normalmente alguns dias). Se a gerente não aceitar dentro do prazo, o painel do AurisChat fica pausado para todos da clínica até ela entrar e confirmar. Antes do prazo, a equipe vê um aviso com a data para ninguém ser pego de surpresa.
 - tag: v4.15.1-auris.1.53.1
   published_at: '2026-09-03T22:15:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.53.1
@@ -291,15 +305,3 @@
 
       - **Um template Meta recém-criado ou editado aparece imediatamente na lista, sem falha.** A release anterior corrigia alguns casos mas não todos — dependendo do timing, a lista às vezes voltava com dados de antes do save e você precisava clicar em Sincronizar. Agora a lista renderiza direto a partir da resposta da ação, sem um refresh subsequente que podia regredir.
       - **O modal "Novidades" não enche mais o console de erros.** Toda vez que aparecia uma nota de versão nova, o console enchia de "Maximum call stack size exceeded" causado pelo modal chamando o próprio fechamento em loop. Corrigido.
-- tag: v4.15.1-auris.1.42.4
-  published_at: '2026-08-12T21:25:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.42.4
-  notes:
-    en: |-
-      ### 🐛 Fixes
-
-      - **A newly created or edited Meta template appears immediately on the list.** Previously, after creating or editing a template, you were sent back to the list without your change reflected, and had to click Sincronizar to see it. The list now renders straight from the response of the action you just took, so what you did is visible right away.
-    pt_BR: |-
-      ### 🐛 Correções
-
-      - **Um template Meta recém-criado ou editado aparece imediatamente na lista.** Antes, ao criar ou editar um template, você era enviado de volta pra lista sem a sua mudança refletida e precisava clicar em Sincronizar pra ver. A lista agora renderiza direto a partir da resposta da ação que você acabou de fazer, então o que você fez fica visível na hora.
