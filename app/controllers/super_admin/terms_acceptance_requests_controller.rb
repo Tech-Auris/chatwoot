@@ -47,20 +47,39 @@ class SuperAdmin::TermsAcceptanceRequestsController < SuperAdmin::ApplicationCon
     render json: { accounts: grouped }
   end
 
-  def create
+  def create # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
     payload = campaign_params
     version = TermsVersion.find(payload[:terms_version_id])
-    result = Terms::CreateCampaignService.new(
-      super_admin: current_super_admin,
-      terms_version: version,
-      document_date: payload[:document_date],
-      deadline_at: payload[:deadline_at],
-      required_signers_by_account: parse_required_signers(payload[:required_signers_by_account])
-    ).perform
 
-    render json: { id: result.campaign.id, acceptance_count: result.acceptance_count }, status: :created
+    conflict = existing_open_campaign_for(payload[:document_date])
+    if conflict.present? && !force_replace?
+      return render json: {
+        error: 'conflict',
+        existing_campaign: serialize_campaign(conflict)
+      }, status: :conflict
+    end
+
+    ApplicationRecord.transaction do
+      Terms::CancelCampaignService.new(conflict).perform if conflict.present? && force_replace?
+
+      result = Terms::CreateCampaignService.new(
+        super_admin: current_super_admin,
+        terms_version: version,
+        document_date: payload[:document_date],
+        deadline_at: payload[:deadline_at],
+        required_signers_by_account: parse_required_signers(payload[:required_signers_by_account])
+      ).perform
+
+      render json: { id: result.campaign.id, acceptance_count: result.acceptance_count }, status: :created
+    end
   rescue ActiveRecord::RecordInvalid => e
     render json: { error: e.record.errors.full_messages.to_sentence }, status: :unprocessable_entity
+  end
+
+  def destroy
+    campaign = TermsAcceptanceRequest.find(params[:id])
+    Terms::CancelCampaignService.new(campaign).perform
+    render json: { id: campaign.id, status: campaign.status }
   end
 
   # Drill-down JSON for the show page: per-account rollup of who signed and who did not.
@@ -95,6 +114,20 @@ class SuperAdmin::TermsAcceptanceRequestsController < SuperAdmin::ApplicationCon
       :terms_version_id, :document_date, :deadline_at,
       required_signers_by_account: {}
     )
+  end
+
+  # A duplicate document_date almost always means the super_admin forgot the
+  # previous campaign was still open. We surface it as a 409 so the wizard
+  # can offer to cancel it before creating the new one; the operator opts in
+  # by re-posting with `force: true`.
+  def existing_open_campaign_for(document_date)
+    return nil if document_date.blank?
+
+    TermsAcceptanceRequest.status_open.find_by(document_date: document_date)
+  end
+
+  def force_replace?
+    ActiveModel::Type::Boolean.new.cast(params[:force])
   end
 
   # `permit(required_signers_by_account: {})` returns an

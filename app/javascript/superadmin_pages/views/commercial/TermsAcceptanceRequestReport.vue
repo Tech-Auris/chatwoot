@@ -10,7 +10,7 @@ const accounts = ref([]);
 const loading = ref(true);
 const error = ref(null);
 
-const KIND_LABELS = { signature: 'Assinatura', update: 'Atualização' };
+const KIND_LABELS = { signature: 'Contratação', update: 'Atualização' };
 const STATUS_LABELS = {
   open: 'Aberta',
   expired: 'Vencida',
@@ -71,6 +71,37 @@ const backToList = () => {
   window.location.href = props.componentData.index_url;
 };
 
+const cancelling = ref(false);
+const csrfToken = () =>
+  document.querySelector('meta[name=csrf-token]')?.getAttribute('content') ||
+  '';
+
+const cancelCampaign = async () => {
+  if (!campaign.value) return;
+  const confirmed = window.confirm(
+    'Cancelar esta campanha? Os aceites ainda pendentes serão marcados como cancelados e o modal deixará de abrir para os gerentes.'
+  );
+  if (!confirmed) return;
+  cancelling.value = true;
+  error.value = null;
+  try {
+    const res = await fetch(props.componentData.cancel_url, {
+      method: 'DELETE',
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json', 'X-CSRF-Token': csrfToken() },
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+    // Refresh the report — status is now `closed` and every pending row
+    // is `cancelled`; the page reflects it without a full navigation.
+    await fetchReport();
+  } catch (e) {
+    error.value = e.message;
+  } finally {
+    cancelling.value = false;
+  }
+};
+
 onMounted(fetchReport);
 </script>
 
@@ -89,11 +120,24 @@ onMounted(fetchReport);
     <p v-if="loading" class="text-sm text-slate-500">Carregando…</p>
 
     <div v-else-if="campaign">
+      <div class="mb-6 flex items-start justify-between">
+        <div>
+          <h1 class="text-xl font-medium text-slate-900">
+            Campanha #{{ campaign.id }}
+          </h1>
+        </div>
+        <button
+          v-if="campaign.status === 'open'"
+          type="button"
+          class="px-3 py-1.5 rounded border border-red-200 text-red-600 text-sm hover:bg-red-50 disabled:opacity-40"
+          :disabled="cancelling"
+          @click="cancelCampaign"
+        >
+          {{ cancelling ? 'Cancelando…' : 'Cancelar campanha' }}
+        </button>
+      </div>
       <div class="mb-6">
-        <h1 class="text-xl font-medium text-slate-900">
-          Campanha #{{ campaign.id }}
-        </h1>
-        <div class="text-sm text-slate-500 mt-1 flex flex-wrap gap-x-4">
+        <div class="text-sm text-slate-500 flex flex-wrap gap-x-4">
           <span
             >Tipo:
             <b>{{ KIND_LABELS[campaign.kind] || campaign.kind }}</b></span
