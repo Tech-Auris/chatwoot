@@ -6,40 +6,57 @@
 #
 # Table name: terms_acceptances
 #
-#  id               :bigint           not null, primary key
-#  ip_address       :string
-#  request_token    :string
-#  requested_at     :datetime
-#  signed_at        :datetime
-#  signer_document  :string
-#  signer_email     :string
-#  signer_name      :string
-#  status           :integer          default("pending"), not null
-#  user_agent       :string
-#  created_at       :datetime         not null
-#  updated_at       :datetime         not null
-#  account_id       :bigint
-#  sales_quote_id   :bigint
-#  terms_version_id :bigint           not null
+#  id                          :bigint           not null, primary key
+#  deadline_at                 :datetime
+#  ip_address                  :string
+#  kind                        :integer          default(0), not null
+#  request_token               :string
+#  requested_at                :datetime
+#  required                    :boolean          default(FALSE), not null
+#  signed_at                   :datetime
+#  signer_document             :string
+#  signer_email                :string
+#  signer_name                 :string
+#  status                      :integer          default("pending"), not null
+#  user_agent                  :string
+#  created_at                  :datetime         not null
+#  updated_at                  :datetime         not null
+#  account_id                  :bigint
+#  account_user_id             :bigint
+#  sales_quote_id              :bigint
+#  terms_acceptance_request_id :bigint
+#  terms_version_id            :bigint           not null
 #
 # Indexes
 #
-#  index_terms_acceptances_on_account_id        (account_id)
-#  index_terms_acceptances_on_request_token     (request_token) UNIQUE
-#  index_terms_acceptances_on_sales_quote_id    (sales_quote_id)
-#  index_terms_acceptances_on_status            (status)
-#  index_terms_acceptances_on_terms_version_id  (terms_version_id)
+#  index_terms_acceptances_on_account_id                   (account_id)
+#  index_terms_acceptances_on_account_user_id              (account_user_id)
+#  index_terms_acceptances_on_deadline_at                  (deadline_at)
+#  index_terms_acceptances_on_kind                         (kind)
+#  index_terms_acceptances_on_request_token                (request_token) UNIQUE
+#  index_terms_acceptances_on_sales_quote_id               (sales_quote_id)
+#  index_terms_acceptances_on_status                       (status)
+#  index_terms_acceptances_on_terms_acceptance_request_id  (terms_acceptance_request_id)
+#  index_terms_acceptances_on_terms_version_id             (terms_version_id)
 #
 # Foreign Keys
 #
 #  fk_rails_...  (account_id => accounts.id)
+#  fk_rails_...  (account_user_id => account_users.id)
 #  fk_rails_...  (sales_quote_id => sales_quotes.id)
+#  fk_rails_...  (terms_acceptance_request_id => terms_acceptance_requests.id)
 #  fk_rails_...  (terms_version_id => terms_versions.id)
 #
 class TermsAcceptance < ApplicationRecord
   belongs_to :terms_version
   belongs_to :sales_quote, optional: true
   belongs_to :account, optional: true
+  belongs_to :account_user, optional: true
+  belongs_to :terms_acceptance_request, optional: true
+
+  # `signature` is the sale-time acceptance; `update` is a super_admin-driven
+  # campaign asking existing managers to re-sign a new version.
+  enum :kind, { signature: 0, update: 1 }, prefix: true
 
   enum :status, { pending: 0, signed: 1, cancelled: 2 }, prefix: true
 

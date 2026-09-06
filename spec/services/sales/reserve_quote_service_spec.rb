@@ -111,4 +111,43 @@ RSpec.describe Sales::ReserveQuoteService do
       expect { reserve(quote, 1.day.ago) }.to raise_error(ArgumentError, /futuro/)
     end
   end
+
+  # A `signature` acceptance inherits the reservation's deadline: the prospect
+  # has until the reservation expires to sign. Moving the reservation moves
+  # the terms deadline with it, so both dates keep telling the same story.
+  # A signed row stays frozen — the audit trail is what it was.
+  describe 'terms deadline cascade' do
+    let(:terms_version) { create(:terms_version) }
+
+    it 'mirrors the reservation deadline onto a pending signature acceptance' do
+      pending = create(:terms_acceptance, sales_quote: quote, terms_version: terms_version,
+                                          status: :pending, kind: :signature, deadline_at: 3.days.from_now)
+
+      reserve(quote, deadline)
+
+      expect(pending.reload.deadline_at).to be_within(1.second).of(deadline)
+    end
+
+    it 'moves the pending deadline on a renewal too' do
+      pending = create(:terms_acceptance, sales_quote: quote, terms_version: terms_version,
+                                          status: :pending, kind: :signature, deadline_at: 3.days.from_now)
+      reserve(quote, deadline)
+      new_deadline = 12.days.from_now.change(usec: 0)
+
+      reserve(quote, new_deadline)
+
+      expect(pending.reload.deadline_at).to be_within(1.second).of(new_deadline)
+    end
+
+    it 'leaves a signed acceptance alone' do
+      signed = create(:terms_acceptance, sales_quote: quote, terms_version: terms_version,
+                                         status: :signed, kind: :signature, deadline_at: 3.days.from_now,
+                                         signer_name: 'A', signer_email: 'a@b.c', signed_at: Time.current, ip_address: '1.1.1.1')
+      original = signed.deadline_at
+
+      reserve(quote, deadline)
+
+      expect(signed.reload.deadline_at).to be_within(1.second).of(original)
+    end
+  end
 end

@@ -7,13 +7,14 @@
 #
 # Table name: terms_versions
 #
-#  id           :bigint           not null, primary key
-#  content      :text             not null
-#  content_hash :string           not null
-#  fetched_at   :datetime         not null
-#  source_url   :string           not null
-#  created_at   :datetime         not null
-#  updated_at   :datetime         not null
+#  id            :bigint           not null, primary key
+#  content       :text             not null
+#  content_hash  :string           not null
+#  document_date :date
+#  fetched_at    :datetime         not null
+#  source_url    :string           not null
+#  created_at    :datetime         not null
+#  updated_at    :datetime         not null
 #
 # Indexes
 #
@@ -35,11 +36,17 @@ class TermsVersion < ApplicationRecord
   before_validation :assign_content_hash
 
   # Two fetches of an unchanged page produce the same hash, so the same version
-  # is reused instead of piling up identical copies.
-  def self.for_content(source_url, content)
+  # is reused instead of piling up identical copies. `document_date` is
+  # backfilled on an existing row the first time a fetch supplies it — the
+  # marketing team may republish the same wording later with the date
+  # correctly stamped.
+  def self.for_content(source_url, content, document_date: nil)
     hash = Digest::SHA256.hexdigest(content.to_s)
-    find_by(content_hash: hash) ||
-      create!(source_url: source_url, content: content, content_hash: hash, fetched_at: Time.current)
+    version = find_by(content_hash: hash) ||
+              create!(source_url: source_url, content: content, content_hash: hash, fetched_at: Time.current,
+                      document_date: document_date)
+    version.update!(document_date: document_date) if document_date.present? && version.document_date.blank?
+    version
   end
 
   private

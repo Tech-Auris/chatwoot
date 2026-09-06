@@ -4,6 +4,7 @@ import { useStore } from 'vuex';
 import { useI18n } from 'vue-i18n';
 import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
+import TermsSignatureBody from './TermsSignatureBody.vue';
 
 // Modal that blocks the user when there is at least one pending
 // Operations Notification. Shows ONE notification at a time; clicking
@@ -41,6 +42,13 @@ const currentNotification = computed(() => {
 
 const isEmergency = computed(
   () => currentNotification.value?.severity === 'emergency'
+);
+
+// A campaign notification renders scroll + checkbox + Sign in place of the
+// generic body + "Entendi" button — the ack is a legal signature there,
+// not a "read receipt".
+const isTermsSignature = computed(
+  () => currentNotification.value?.subject_type === 'TermsAcceptanceRequest'
 );
 
 watch(currentNotification, next => {
@@ -90,7 +98,11 @@ onBeforeUnmount(() => {
     :show-cancel-button="false"
     :show-confirm-button="false"
   >
-    <div v-if="currentNotification" class="flex flex-col gap-4">
+    <TermsSignatureBody
+      v-if="currentNotification && isTermsSignature"
+      :notification="currentNotification"
+    />
+    <div v-else-if="currentNotification" class="flex flex-col gap-4">
       <div
         v-if="isEmergency"
         class="px-3 py-2 text-sm font-medium border rounded-md bg-n-ruby-3 border-n-ruby-7 text-n-ruby-11"
@@ -117,7 +129,7 @@ onBeforeUnmount(() => {
         }}
       </p>
     </div>
-    <template #footer>
+    <template v-if="!isTermsSignature" #footer>
       <div class="flex items-center justify-end w-full">
         <Button
           color="blue"

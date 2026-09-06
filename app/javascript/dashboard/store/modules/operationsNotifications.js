@@ -1,4 +1,5 @@
 import OperationsNotificationsAPI from '../../api/operationsNotifications';
+import TermsAcceptancesAPI from '../../api/termsAcceptances';
 import { throwErrorMessage } from 'dashboard/store/utils/api';
 
 const state = {
@@ -10,6 +11,7 @@ const state = {
     fetchingList: false,
     fetchingPending: false,
     isAcknowledging: false,
+    isSigningTerms: false,
   },
 };
 
@@ -49,6 +51,22 @@ const actions = {
       console.error('[operationsNotifications] pending fetch failed', error);
     } finally {
       commit('SET_UI_FLAG', { fetchingPending: false });
+    }
+  },
+
+  // Signs a re-signature campaign token and removes the parent notification
+  // from `pending` as a side effect — the backend already recorded the ack
+  // when it accepted the signature, so a second acknowledge would be
+  // redundant.
+  async signTerms({ commit }, { notificationId, token }) {
+    commit('SET_UI_FLAG', { isSigningTerms: true });
+    try {
+      await TermsAcceptancesAPI.sign(token);
+      commit('REMOVE_PENDING', notificationId);
+    } catch (error) {
+      throwErrorMessage(error);
+    } finally {
+      commit('SET_UI_FLAG', { isSigningTerms: false });
     }
   },
 

@@ -22,7 +22,7 @@ class Sales::TermsFetcherService
     content = extract_content(response.body)
     raise Unavailable, 'Os termos vieram vazios' if content.blank?
 
-    TermsVersion.for_content(@url, content)
+    TermsVersion.for_content(@url, content, document_date: extract_document_date(content))
   rescue HTTParty::Error, SocketError, Errno::ECONNREFUSED, Net::OpenTimeout, Net::ReadTimeout => e
     raise Unavailable, "Não foi possível carregar os termos: #{e.message}"
   rescue ActiveRecord::RecordInvalid => e
@@ -57,5 +57,40 @@ class Sales::TermsFetcherService
 
   def sanitizer
     @sanitizer ||= Rails::HTML5::SafeListSanitizer.new
+  end
+
+  # The marketing page stamps its own edition as "Última atualização: 3 de
+  # Set de 2026." The date drives the report on Super Admin — knowing the
+  # exact wording is next to it lets the super_admin confirm the version
+  # they are asking managers to sign. Absent or unparseable, the wizard
+  # falls back to a manual input.
+  DATE_PATTERN = /Última atualização:\s*(\d{1,2})\s*de\s*([A-Za-zçãé]+)\s*de\s*(\d{4})/i
+  MONTHS = {
+    'jan' => 1, 'janeiro' => 1,
+    'fev' => 2, 'fevereiro' => 2,
+    'mar' => 3, 'março' => 3, 'marco' => 3,
+    'abr' => 4, 'abril' => 4,
+    'mai' => 5, 'maio' => 5,
+    'jun' => 6, 'junho' => 6,
+    'jul' => 7, 'julho' => 7,
+    'ago' => 8, 'agosto' => 8,
+    'set' => 9, 'setembro' => 9,
+    'out' => 10, 'outubro' => 10,
+    'nov' => 11, 'novembro' => 11,
+    'dez' => 12, 'dezembro' => 12
+  }.freeze
+
+  def extract_document_date(content)
+    match = content.match(DATE_PATTERN)
+    return if match.nil?
+
+    day = match[1].to_i
+    month = MONTHS[match[2].downcase]
+    year = match[3].to_i
+    return if month.nil?
+
+    Date.new(year, month, day)
+  rescue Date::Error
+    nil
   end
 end

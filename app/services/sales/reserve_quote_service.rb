@@ -22,6 +22,7 @@ class Sales::ReserveQuoteService
 
     renewal = quote.reserved?
     quote.update!(reserved_until: reserved_until, status: :reserved)
+    mirror_deadline_to_pending_terms
 
     error = sync_clickup
     record_event(renewal, error)
@@ -46,6 +47,17 @@ class Sales::ReserveQuoteService
     nil
   rescue Integrations::Clickup::Client::Error => e
     e.message
+  end
+
+  # The `signature` terms acceptance for this quote inherits the reservation's
+  # deadline — the prospect has until the reservation expires to sign. A
+  # renewal moves both dates together. A row that is already signed stays
+  # frozen; the audit trail belongs to whichever version was in effect.
+  # Bulk update because the callbacks on TermsAcceptance are about signing,
+  # not about deadline moves — no reason to instantiate rows only to mirror a
+  # single timestamp.
+  def mirror_deadline_to_pending_terms
+    quote.terms_acceptances.status_pending.kind_signature.update_all(deadline_at: reserved_until) # rubocop:disable Rails/SkipsModelValidations
   end
 
   # Posts a comment with the copy-paste WhatsApp message on the task,

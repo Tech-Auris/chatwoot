@@ -179,7 +179,9 @@ class Sales::ProposalsController < ActionController::Base
     signed = @proposal.terms_acceptances.status_signed.find_by(terms_version: version)
     return signed if signed.present?
 
-    acceptance = @proposal.terms_acceptances.create!(terms_version: version, status: :pending)
+    acceptance = @proposal.terms_acceptances.create!(
+      terms_version: version, status: :pending, kind: :signature, deadline_at: @proposal.reserved_until
+    )
     acceptance.sign!(
       signer: { name: @proposal.prospect_name, email: @proposal.prospect_email, document: @proposal.prospect_document },
       ip_address: request.remote_ip,

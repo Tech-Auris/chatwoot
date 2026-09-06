@@ -28,18 +28,20 @@ module SuperAdmin::NavigationHelper
   # finance matter, which is why they sit on their own.
   def operations_open?
     params[:controller].in? %w[super_admin/reports/health_score super_admin/reports/inbox_status
-                               super_admin/terms_acceptances]
+                               super_admin/terms_acceptances super_admin/terms_acceptance_requests]
   end
 
   def operations_pages
     terms = { label: 'Terms of use', url: super_admin_terms_acceptances_url }
+    terms_campaigns = { label: 'Terms campaigns', url: super_admin_terms_acceptance_requests_url }
     # A restricted console reaches the terms audit and nothing else here.
     return [terms] if current_super_admin&.restricted?
 
     [
       { label: 'Health Score', url: super_admin_reports_health_score_url },
       { label: 'Inbox status', url: super_admin_reports_inbox_status_url },
-      terms
+      terms,
+      terms_campaigns
     ]
   end
 
