@@ -5,5 +5,6 @@
 <%= render_vue_component('TermsAcceptanceRequestReport', {
   report_url: report_super_admin_terms_acceptance_request_url(@campaign.id, format: :json),
   cancel_url: super_admin_terms_acceptance_request_url(@campaign.id, format: :json),
+  cancel_account_url: cancel_account_super_admin_terms_acceptance_request_url(@campaign.id, format: :json),
   index_url: super_admin_terms_acceptance_requests_url
 }) %>

@@ -955,6 +955,7 @@ Rails.application.routes.draw do
         end
         member do
           get :report
+          post :cancel_account
         end
       end
 

@@ -32,17 +32,19 @@ class SuperAdmin::TermsAcceptanceRequestsController < SuperAdmin::ApplicationCon
   end
 
   # Feeds step 3 with `[{account_id, account_name, managers: [{id, name, email}]}]`.
-  # Only accounts that HAVE at least one manager appear — a campaign with no
-  # required signer is meaningless.
+  # Includes accounts WITHOUT any manager on purpose: the wizard renders them
+  # as a warning row ("no manager registered — this account will be skipped")
+  # so the super admin is told what the campaign will and won't reach.
   def manager_roster
-    roster = AccountUser.where(role: :manager).includes(:account, :user).order('accounts.name, users.name')
-    grouped = roster.group_by(&:account_id).map do |account_id, account_users|
-      account = account_users.first.account
-      { account_id: account_id, account_name: account.name,
-        managers: account_users.map do |au|
-          { account_user_id: au.id, user_id: au.user_id,
-            name: au.user.available_name, email: au.user.email }
-        end }
+    managers_by_account = AccountUser.where(role: :manager)
+                                     .includes(:user)
+                                     .group_by(&:account_id)
+    grouped = Account.order(:name).map do |account|
+      managers = (managers_by_account[account.id] || []).map do |au|
+        { account_user_id: au.id, user_id: au.user_id,
+          name: au.user.available_name, email: au.user.email }
+      end
+      { account_id: account.id, account_name: account.name, managers: managers }
     end
     render json: { accounts: grouped }
   end
@@ -80,6 +82,20 @@ class SuperAdmin::TermsAcceptanceRequestsController < SuperAdmin::ApplicationCon
     campaign = TermsAcceptanceRequest.find(params[:id])
     Terms::CancelCampaignService.new(campaign).perform
     render json: { id: campaign.id, status: campaign.status }
+  end
+
+  # Cancels the campaign for ONE account only — used when the super_admin
+  # pinned the wrong manager and wants to redo that account. The campaign
+  # itself stays `open`; only the acceptances of that account flip to
+  # `cancelled` and the modal stops opening for the pinned managers of
+  # that account (the pending → cancelled filter already covers it).
+  def cancel_account
+    campaign = TermsAcceptanceRequest.find(params[:id])
+    account_id = params[:account_id].to_i
+    updated = campaign.terms_acceptances.status_pending.where(account_id: account_id)
+                      .update_all(status: TermsAcceptance.statuses[:cancelled]) # rubocop:disable Rails/SkipsModelValidations
+
+    render json: { account_id: account_id, cancelled_count: updated }
   end
 
   # Drill-down JSON for the show page: per-account rollup of who signed and who did not.

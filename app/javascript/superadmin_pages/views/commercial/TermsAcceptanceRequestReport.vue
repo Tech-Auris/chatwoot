@@ -76,6 +76,46 @@ const csrfToken = () =>
   document.querySelector('meta[name=csrf-token]')?.getAttribute('content') ||
   '';
 
+const cancellingAccountId = ref(null);
+
+// Cancels the campaign for one account only — used when the super_admin
+// pinned the wrong manager and wants to redo that account without touching
+// the rest of the campaign.
+const cancelAccount = async account => {
+  const pendingCount = account.signers.filter(
+    s => s.required && s.status === 'pending'
+  ).length;
+  if (!pendingCount) return;
+
+  const confirmed = window.confirm(
+    `Cancelar a assinatura desta campanha para "${account.account_name}"? ` +
+      `Os ${pendingCount} aceite(s) pendente(s) desta conta ficam como cancelados e o modal deixa de abrir para o(s) gerente(s) pinado(s).`
+  );
+  if (!confirmed) return;
+
+  cancellingAccountId.value = account.account_id;
+  error.value = null;
+  try {
+    const res = await fetch(props.componentData.cancel_account_url, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrfToken(),
+      },
+      body: JSON.stringify({ account_id: account.account_id }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+    await fetchReport();
+  } catch (e) {
+    error.value = e.message;
+  } finally {
+    cancellingAccountId.value = null;
+  }
+};
+
 const cancelCampaign = async () => {
   if (!campaign.value) return;
   const confirmed = window.confirm(
@@ -201,6 +241,24 @@ onMounted(fetchReport);
                           : 'Sem assinaturas'
                     }}
                   </div>
+                  <button
+                    v-if="
+                      campaign.status === 'open' &&
+                      account.signers.some(
+                        s => s.required && s.status === 'pending'
+                      )
+                    "
+                    type="button"
+                    class="mt-2 text-xs text-red-600 hover:text-red-700 disabled:opacity-40"
+                    :disabled="cancellingAccountId === account.account_id"
+                    @click="cancelAccount(account)"
+                  >
+                    {{
+                      cancellingAccountId === account.account_id
+                        ? 'Cancelando…'
+                        : 'Cancelar para esta conta'
+                    }}
+                  </button>
                 </template>
               </td>
               <td class="py-3 text-slate-700">
