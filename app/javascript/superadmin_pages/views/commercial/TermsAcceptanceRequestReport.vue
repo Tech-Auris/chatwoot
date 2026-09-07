@@ -211,6 +211,7 @@ onMounted(fetchReport);
             <th class="py-2">Status</th>
             <th class="py-2">Assinou em</th>
             <th class="py-2">Origem</th>
+            <th class="py-2 text-right" />
           </tr>
         </thead>
         <tbody>
@@ -241,24 +242,6 @@ onMounted(fetchReport);
                           : 'Sem assinaturas'
                     }}
                   </div>
-                  <button
-                    v-if="
-                      campaign.status === 'open' &&
-                      account.signers.some(
-                        s => s.required && s.status === 'pending'
-                      )
-                    "
-                    type="button"
-                    class="mt-2 text-xs text-red-600 hover:text-red-700 disabled:opacity-40"
-                    :disabled="cancellingAccountId === account.account_id"
-                    @click="cancelAccount(account)"
-                  >
-                    {{
-                      cancellingAccountId === account.account_id
-                        ? 'Cancelando…'
-                        : 'Cancelar para esta conta'
-                    }}
-                  </button>
                 </template>
               </td>
               <td class="py-3 text-slate-700">
@@ -295,10 +278,31 @@ onMounted(fetchReport);
               <td class="py-3 text-slate-500 text-xs">
                 {{ signer.ip_address || '—' }}
               </td>
+              <td class="py-3 text-right align-top">
+                <button
+                  v-if="
+                    idx === 0 &&
+                    campaign.status === 'open' &&
+                    account.signers.some(
+                      s => s.required && s.status === 'pending'
+                    )
+                  "
+                  type="button"
+                  class="px-2 py-1 rounded border border-red-200 text-red-600 text-xs hover:bg-red-50 disabled:opacity-40"
+                  :disabled="cancellingAccountId === account.account_id"
+                  @click="cancelAccount(account)"
+                >
+                  {{
+                    cancellingAccountId === account.account_id
+                      ? 'Cancelando…'
+                      : 'Cancelar'
+                  }}
+                </button>
+              </td>
             </tr>
           </template>
           <tr v-if="!accounts.length">
-            <td colspan="6" class="py-6 text-center text-slate-400">
+            <td colspan="7" class="py-6 text-center text-slate-400">
               Nenhum assinante nesta campanha.
             </td>
           </tr>
