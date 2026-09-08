@@ -44,6 +44,7 @@ class SuperAdmin::Commercial::ReservationsController < SuperAdmin::ApplicationCo
       scope = scope.where('LOWER(clickup_status) = ?', params[:clickup_status].downcase) if params[:clickup_status].present?
       scope = filter_by_query(scope, params[:q]) if params[:q].present?
       scope = scope.where('clickup_status IS NULL OR LOWER(clickup_status) NOT IN (?)', FINALIZED_STATUSES) unless include_finalized?
+      scope = scope.where('reserved_until IS NULL OR reserved_until >= ?', Time.current) unless include_expired?
       scope.page(params[:page] || 1).per(PER_PAGE)
     end
   end
@@ -54,6 +55,12 @@ class SuperAdmin::Commercial::ReservationsController < SuperAdmin::ApplicationCo
   def include_finalized?
     ActiveModel::Type::Boolean.new.cast(params[:include_finalized]) ||
       FINALIZED_STATUSES.include?(params[:clickup_status].to_s.downcase)
+  end
+
+  # An expired reservation is a deal whose deadline already passed without a
+  # signature; hidden by default and brought back by the header checkbox.
+  def include_expired?
+    ActiveModel::Type::Boolean.new.cast(params[:include_expired])
   end
 
   # Matches the same fields the Quotes autocomplete pretends to match on the

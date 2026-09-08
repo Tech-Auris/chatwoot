@@ -36,6 +36,10 @@ const queryFilter = ref('');
 // default so the screen shows what the team is still working on; a toggle
 // brings them back when the seller wants the full history.
 const showFinalized = ref(false);
+// An expired reservation is a deal whose deadline already passed without
+// a signature. Hidden by default for the same reason as the finalized ones
+// — the screen opens on what is still moving.
+const showExpired = ref(false);
 const page = ref(1);
 let queryDebounce = null;
 const loading = ref(false);
@@ -53,6 +57,7 @@ const fetchData = async () => {
     if (statusFilter.value) params.set('clickup_status', statusFilter.value);
     if (queryFilter.value.trim()) params.set('q', queryFilter.value.trim());
     if (showFinalized.value) params.set('include_finalized', '1');
+    if (showExpired.value) params.set('include_expired', '1');
 
     const res = await fetch(`${props.componentData.data_url}?${params}`, {
       headers: { Accept: 'application/json' },
@@ -74,7 +79,7 @@ const fetchData = async () => {
 onMounted(fetchData);
 
 watch(page, fetchData);
-watch([statusFilter, showFinalized], () => {
+watch([statusFilter, showFinalized, showExpired], () => {
   page.value = 1;
   fetchData();
 });
@@ -205,7 +210,7 @@ const canCopyMessage = reservation =>
       <label class="text-sm text-slate-500">Status no ClickUp</label>
       <select
         v-model="statusFilter"
-        class="text-sm border border-slate-200 rounded px-2 py-1"
+        class="text-sm border border-slate-200 rounded px-2 py-1 w-44"
       >
         <option value="">Todos</option>
         <option v-for="status in statuses" :key="status" :value="status">
@@ -215,6 +220,10 @@ const canCopyMessage = reservation =>
       <label class="text-sm text-slate-600 flex items-center gap-1.5">
         <input v-model="showFinalized" type="checkbox" />
         Mostrar reservas finalizadas
+      </label>
+      <label class="text-sm text-slate-600 flex items-center gap-1.5">
+        <input v-model="showExpired" type="checkbox" />
+        Mostrar reservas vencidas
       </label>
       <span class="text-sm text-slate-400">
         {{ meta.total_count }} proposta(s)

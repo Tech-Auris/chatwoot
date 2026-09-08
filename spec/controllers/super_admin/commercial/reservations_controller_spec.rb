@@ -39,6 +39,27 @@ RSpec.describe 'Super Admin Commercial Reservations', type: :request do
       expect(response.parsed_body['reservations'].pluck('id')).to contain_exactly(negotiating.id, won.id)
     end
 
+    # An expired reservation is a deal whose deadline already passed without
+    # a signature. Hidden by default so the screen opens on what is still
+    # moving; the header checkbox brings them back for the full history.
+    describe 'expired reservations' do
+      let!(:expired) do
+        create(:sales_quote, status: :reserved, clickup_status: 'em análise', reserved_until: 2.days.ago)
+      end
+
+      it 'hides an expired reservation by default' do
+        get '/super_admin/commercial/reservations/data'
+
+        expect(response.parsed_body['reservations'].pluck('id')).not_to include(expired.id)
+      end
+
+      it 'brings the expired one back when include_expired is on' do
+        get '/super_admin/commercial/reservations/data', params: { include_expired: '1' }
+
+        expect(response.parsed_body['reservations'].pluck('id')).to include(expired.id)
+      end
+    end
+
     it 'filters by a chosen status regardless of case' do
       get '/super_admin/commercial/reservations/data', params: { clickup_status: 'GANHO' }
 
