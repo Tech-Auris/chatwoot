@@ -219,11 +219,11 @@ const canCopyMessage = reservation =>
       </select>
       <label class="text-sm text-slate-600 flex items-center gap-1.5">
         <input v-model="showFinalized" type="checkbox" />
-        Mostrar reservas finalizadas
+        Mostrar finalizadas
       </label>
       <label class="text-sm text-slate-600 flex items-center gap-1.5">
         <input v-model="showExpired" type="checkbox" />
-        Mostrar reservas vencidas
+        Mostrar vencidas
       </label>
       <span class="text-sm text-slate-400">
         {{ meta.total_count }} proposta(s)
