@@ -72,9 +72,18 @@ class SuperAdmin::Commercial::QuotesController < SuperAdmin::ApplicationControll
     @quote ||= SalesQuote.find(params[:id])
   end
 
+  # The Vue picker posts a plain date (`YYYY-MM-DD`); parsing that gives
+  # 00:00 of the day, which fails the `past?` guard when the seller picks
+  # today. Coercing to the end of the day keeps the meaning of "the deal
+  # is on hold through this whole day" and matches what the ClickUp task
+  # shows to the sales team.
   def parsed_reserved_until
-    value = params.require(:reserved_until)
-    Time.zone.parse(value.to_s)
+    value = params.require(:reserved_until).to_s
+    parsed = Time.zone.parse(value)
+    return nil if parsed.blank?
+
+    date_only = value.match?(/\A\d{4}-\d{2}-\d{2}\z/)
+    date_only ? parsed.end_of_day : parsed
   rescue ArgumentError
     nil
   end

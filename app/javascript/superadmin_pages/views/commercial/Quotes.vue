@@ -30,7 +30,15 @@ const loading = ref(false);
 const saving = ref(false);
 const error = ref(null);
 const savedQuote = ref(null);
-const reservedUntil = ref('');
+// Reservation deadline is a plain date (the server coerces to end-of-day
+// so "today" isn't a past instant). Default is tomorrow — the common case
+// the seller doesn't have to type.
+const tomorrowIsoDate = () => {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  return d.toISOString().slice(0, 10);
+};
+const reservedUntil = ref(tomorrowIsoDate());
 const reserving = ref(false);
 const reservation = ref(null);
 const copied = ref(false);
@@ -447,7 +455,7 @@ const copyCode = async () => {
 const startOver = () => {
   savedQuote.value = null;
   reservation.value = null;
-  reservedUntil.value = '';
+  reservedUntil.value = tomorrowIsoDate();
   cart.value = [];
   meetingDiscount.value = false;
   couponId.value = '';
@@ -530,7 +538,7 @@ const startOver = () => {
               Vencimento da reserva
               <input
                 v-model="reservedUntil"
-                type="datetime-local"
+                type="date"
                 class="mt-1 block border border-slate-200 rounded px-2 py-1.5 text-sm"
               />
             </label>
@@ -637,7 +645,7 @@ const startOver = () => {
                 v-model="prospectTerm"
                 type="text"
                 autocomplete="off"
-                placeholder="Buscar por nome, e-mail ou telefone…"
+                placeholder="Buscar por nome, clínica, e-mail ou telefone…"
                 class="w-full border border-slate-200 rounded px-3 py-2 text-sm focus:border-woot-500 focus:outline-none"
                 @input="searchProspects"
               />

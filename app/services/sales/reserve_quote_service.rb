@@ -6,6 +6,10 @@
 # the trail and reported back, so nobody assumes the task was updated.
 class Sales::ReserveQuoteService
   RESERVATION_TAG = 'reserva'.freeze
+  # The ClickUp status the deal moves to when the reservation is taken.
+  # Lowercase, with the tilde — matches the naming convention the sales
+  # pipeline uses (see the existing status values in `sales_quotes`).
+  RESERVATION_CLICKUP_STATUS = 'negociação'.freeze
 
   Result = Struct.new(:quote, :clickup_synced, :clickup_error, keyword_init: true)
 
@@ -41,7 +45,11 @@ class Sales::ReserveQuoteService
   def sync_clickup
     return 'ClickUp não está configurado' unless client.configured?
 
-    client.update_task(quote.clickup_task_id, due_date: reserved_until.to_i * 1000, due_date_time: true)
+    client.update_task(quote.clickup_task_id,
+                       due_date: reserved_until.to_i * 1000,
+                       due_date_time: true,
+                       status: RESERVATION_CLICKUP_STATUS)
+    quote.update_column(:clickup_status, RESERVATION_CLICKUP_STATUS) # rubocop:disable Rails/SkipsModelValidations
     client.add_tag(quote.clickup_task_id, RESERVATION_TAG)
     post_reservation_comment
     nil
