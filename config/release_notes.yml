@@ -1,4 +1,16 @@
 ---
+- tag: v4.15.1-auris.1.55
+  published_at: '2026-09-08T19:15:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.55
+  notes:
+    en: |-
+      ### 🐛 Fixes
+
+      - **Buttons at the top of the conversation stop getting cut off on narrow panels.** With the side menu and the contact panel both open, the buttons at the top of a conversation (Resolver, funnel stage, AI badge) were being clipped. They now wrap to a second row when there is no horizontal room.
+    pt_BR: |-
+      ### 🐛 Correções
+
+      - **Botões do topo da conversa deixam de ficar cortados em painéis estreitos.** Com o menu lateral e o painel do contato abertos ao mesmo tempo, os botões do topo de uma conversa (Resolver, etapa do funil, indicador da IA) ficavam cortados. Agora eles quebram para uma segunda linha quando não há espaço horizontal.
 - tag: v4.15.1-auris.1.54
   published_at: '2026-09-06T03:30:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.54
@@ -291,17 +303,3 @@
 
       - **A página Templates Meta reflete os dados mais recentes toda vez que você entra nela.** Depois de criar ou editar um template, a lista às vezes continuava mostrando o estado anterior porque a página era reaproveitada do cache sem atualizar. Agora ela recarrega em toda visita, então a mudança que você acabou de fazer aparece sempre na hora.
       - **A página de Templates não trava mais em "Carregando templates..." após refresh forçado.** Em alguns casos o spinner não sumia. Agora ele resolve independente do carregamento das caixas terminar.
-- tag: v4.15.1-auris.1.42.5
-  published_at: '2026-08-12T23:30:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.42.5
-  notes:
-    en: |-
-      ### 🐛 Fixes
-
-      - **A newly created or edited Meta template appears immediately on the list, always.** The previous release fixed some of the cases but not all — depending on timing, the list still sometimes came back showing pre-write data and you had to click Sincronizar. Now the list renders straight from the action's response, without a follow-up refresh that could regress it.
-      - **The "What's new" modal stops flooding the browser console with errors.** Every time a version note appeared, the console filled with "Maximum call stack size exceeded" caused by the modal calling its own close handler in a loop. Fixed.
-    pt_BR: |-
-      ### 🐛 Correções
-
-      - **Um template Meta recém-criado ou editado aparece imediatamente na lista, sem falha.** A release anterior corrigia alguns casos mas não todos — dependendo do timing, a lista às vezes voltava com dados de antes do save e você precisava clicar em Sincronizar. Agora a lista renderiza direto a partir da resposta da ação, sem um refresh subsequente que podia regredir.
-      - **O modal "Novidades" não enche mais o console de erros.** Toda vez que aparecia uma nota de versão nova, o console enchia de "Maximum call stack size exceeded" causado pelo modal chamando o próprio fechamento em loop. Corrigido.
