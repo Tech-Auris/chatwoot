@@ -207,7 +207,7 @@ const copyConversationId = async () => {
       </div>
     </div>
     <div
-      class="flex flex-row flex-wrap items-center justify-start xl:justify-end gap-2 w-full xl:w-auto xl:flex-shrink-0 xl:flex-nowrap header-actions-wrap"
+      class="flex flex-row flex-wrap items-center justify-start xl:justify-end gap-2 w-full xl:w-auto xl:flex-shrink header-actions-wrap"
     >
       <AiStatusBadge
         v-if="chat?.id"
