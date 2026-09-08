@@ -277,6 +277,39 @@ RSpec.describe 'Super Admin Commercial Quotes', type: :request do
       expect(response).to have_http_status(:created)
       expect(SalesQuote.last.billing_cycle).to be_nil
     end
+
+    # The frontend picker blocks mixing periods, but a stray payload cannot
+    # slip past the backend — a cart with two different recurring periods
+    # has no coherent routing between Stripe and AsaaS.
+    it 'refuses a cart mixing two recurring periods' do
+      mixed = payload.merge(
+        items: [
+          { stripe_price_id: 'price_plan', name: 'Plano', unit_amount: 89_700, quantity: 1,
+            billing_period: 'annual', kind: 'plan' },
+          { stripe_price_id: 'price_addon', name: 'Adicional', unit_amount: 10_000, quantity: 1,
+            billing_period: 'monthly', kind: 'addon' }
+        ]
+      )
+
+      expect { post '/super_admin/commercial/quotes', params: mixed, as: :json }
+        .not_to change(SalesQuote, :count)
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.parsed_body['error']).to match(/periodicidade/i)
+    end
+
+    it 'accepts a cart mixing a recurring plan with a one-off addon' do
+      one_off = payload.merge(
+        items: [
+          payload[:items].first,
+          { stripe_price_id: 'price_setup', name: 'Setup', unit_amount: 50_000, quantity: 1,
+            billing_period: 'one_off', kind: 'addon' }
+        ]
+      )
+
+      post '/super_admin/commercial/quotes', params: one_off, as: :json
+
+      expect(response).to have_http_status(:created)
+    end
   end
 
   describe 'POST /super_admin/commercial/quotes/:id/reserve' do
@@ -287,6 +320,7 @@ RSpec.describe 'Super Admin Commercial Quotes', type: :request do
       allow(Integrations::Clickup::Client).to receive(:new).and_return(clickup_client)
       allow(clickup_client).to receive(:update_task)
       allow(clickup_client).to receive(:add_tag)
+      allow(clickup_client).to receive(:add_comment)
     end
 
     it 'holds the proposal and answers with the link and the QR the seller shares' do

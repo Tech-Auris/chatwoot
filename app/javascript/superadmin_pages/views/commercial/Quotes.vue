@@ -210,15 +210,47 @@ const productList = computed(() => {
   return [...byId.values()];
 });
 
+// A cart is one-periodicity by construction: if there is already a monthly
+// item in it, adding an annual one would give a proposal the backend cannot
+// route (Stripe/AsaaS split by billing_period). The picker enforces it by
+// hiding prices from a different period; one-off items are always allowed
+// because they do not carry a period at all.
+const RECURRING_PERIODS = ['monthly', 'semiannual', 'annual'];
+const activeRecurringPeriod = computed(() => {
+  const recurring = cart.value.find(item =>
+    RECURRING_PERIODS.includes(item.billing_period)
+  );
+  return recurring ? recurring.billing_period : null;
+});
+
+const isPriceAllowed = price => {
+  if (!activeRecurringPeriod.value) return true;
+  if (!RECURRING_PERIODS.includes(price.billing_period)) return true;
+  return price.billing_period === activeRecurringPeriod.value;
+};
+
 const filteredProducts = computed(() => {
   const query = productSearch.value.trim().toLowerCase();
-  if (!query) return productList.value;
-  return productList.value.filter(product => {
+  const matchesQuery = product => {
+    if (!query) return true;
     const haystack =
       `${product.name || ''} ${product.description || ''}`.toLowerCase();
     return haystack.includes(query);
-  });
+  };
+  return productList.value
+    .filter(matchesQuery)
+    .map(product => ({
+      ...product,
+      prices: product.prices.filter(isPriceAllowed),
+    }))
+    .filter(product => product.prices.length > 0);
 });
+
+const PERIOD_HUMAN = {
+  monthly: 'mensal',
+  semiannual: 'semestral',
+  annual: 'anual',
+};
 
 // How Stripe labels the price beside the amount — the seller reads this
 // out loud, so it matches how the plan is spoken: "/mês", "a cada 6
@@ -697,6 +729,15 @@ const startOver = () => {
               class="relative"
               @focusout="onProductPickerFocusOut"
             >
+              <p
+                v-if="activeRecurringPeriod"
+                class="text-xs text-slate-500 mb-2"
+              >
+                Filtrando por planos
+                <b>{{ PERIOD_HUMAN[activeRecurringPeriod] }}</b> — misture
+                periodicidades esvaziando o carrinho primeiro. Itens avulsos
+                continuam disponíveis.
+              </p>
               <input
                 v-model="productSearch"
                 type="search"

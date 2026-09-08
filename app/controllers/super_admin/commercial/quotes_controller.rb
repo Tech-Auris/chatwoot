@@ -56,6 +56,8 @@ class SuperAdmin::Commercial::QuotesController < SuperAdmin::ApplicationControll
   end
 
   def create
+    return render_mixed_period_error if mixed_recurring_periods?
+
     quote = SalesQuote.new(quote_attributes)
     quote.items = item_records
 
@@ -154,6 +156,27 @@ class SuperAdmin::Commercial::QuotesController < SuperAdmin::ApplicationControll
     period = plan_item&.[](:billing_period).to_s
     ALLOWED_BILLING_CYCLES.include?(period) ? period : nil
   end
+
+  # A cart with two different recurring periods (say monthly + annual) has
+  # no coherent routing between Stripe and AsaaS — the picker already
+  # blocks that on the frontend, but the backend refuses too so a stray
+  # payload cannot slip past.
+  RECURRING_PERIODS = %w[monthly semiannual annual].freeze
+  def mixed_recurring_periods?
+    periods = Array(params[:items]).map { |item| item[:billing_period].to_s }
+                                   .select { |p| RECURRING_PERIODS.include?(p) }
+                                   .uniq
+    periods.length > 1
+  end
+
+  def render_mixed_period_error
+    render json: { error: MIXED_PERIODS_MESSAGE }, status: :unprocessable_entity
+  end
+
+  MIXED_PERIODS_MESSAGE = (
+    'O carrinho não pode misturar periodicidades diferentes (mensal, semestral, anual). ' \
+      'Remova os itens de outra periodicidade antes de continuar.'
+  ).freeze
 
   # Totals are frozen on the proposal: the catalogue moves, and what the
   # prospect was shown has to survive that.
