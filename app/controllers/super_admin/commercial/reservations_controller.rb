@@ -44,7 +44,11 @@ class SuperAdmin::Commercial::ReservationsController < SuperAdmin::ApplicationCo
       scope = scope.where('LOWER(clickup_status) = ?', params[:clickup_status].downcase) if params[:clickup_status].present?
       scope = filter_by_query(scope, params[:q]) if params[:q].present?
       scope = scope.where('clickup_status IS NULL OR LOWER(clickup_status) NOT IN (?)', FINALIZED_STATUSES) unless include_finalized?
-      scope = scope.where('reserved_until IS NULL OR reserved_until >= ?', Time.current) unless include_expired?
+      # "Reserva vencida" na UI cobre dois casos: `reserved_until` no
+      # passado e `reserved_until` nulo (nunca reservada). O filtro casa a
+      # mesma semântica — só linhas com deadline futura aparecem quando o
+      # toggle está desligado.
+      scope = scope.where('reserved_until >= ?', Time.current) unless include_expired?
       scope.page(params[:page] || 1).per(PER_PAGE)
     end
   end

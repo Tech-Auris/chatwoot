@@ -21,7 +21,9 @@ RSpec.describe 'Super Admin Commercial Reservations', type: :request do
 
   describe 'GET /super_admin/commercial/reservations/data' do
     let!(:negotiating) { create(:sales_quote, status: :reserved, clickup_status: 'negociação', reserved_until: 5.days.from_now) }
-    let!(:won) { create(:sales_quote, status: :converted, clickup_status: 'ganho') }
+    # A won deal past its original reservation window — needs both toggles
+    # (finalized + expired) to show up on the screen by default.
+    let!(:won) { create(:sales_quote, status: :converted, clickup_status: 'ganho', reserved_until: 2.days.ago) }
 
     # Whatever the team has out is the screen; a status is how they narrow it.
     it 'opens on every proposal' do
@@ -33,8 +35,9 @@ RSpec.describe 'Super Admin Commercial Reservations', type: :request do
       expect(response.parsed_body['meta']['applied_status']).to eq('')
     end
 
-    it 'brings back the closed deals when include_finalized is on' do
-      get '/super_admin/commercial/reservations/data', params: { include_finalized: '1' }
+    it 'brings back the closed deals when both toggles are on' do
+      get '/super_admin/commercial/reservations/data',
+          params: { include_finalized: '1', include_expired: '1' }
 
       expect(response.parsed_body['reservations'].pluck('id')).to contain_exactly(negotiating.id, won.id)
     end
@@ -58,10 +61,25 @@ RSpec.describe 'Super Admin Commercial Reservations', type: :request do
 
         expect(response.parsed_body['reservations'].pluck('id')).to include(expired.id)
       end
+
+      # A draft that was never reserved also carries the "Reserva vencida"
+      # label on the UI (the frontend treats absent deadline as expired);
+      # the filter hides it by default so the two agree.
+      it 'hides a never-reserved draft by default' do
+        never = create(:sales_quote, status: :draft, clickup_status: 'em análise', reserved_until: nil)
+
+        get '/super_admin/commercial/reservations/data'
+
+        expect(response.parsed_body['reservations'].pluck('id')).not_to include(never.id)
+      end
     end
 
     it 'filters by a chosen status regardless of case' do
-      get '/super_admin/commercial/reservations/data', params: { clickup_status: 'GANHO' }
+      # Ganho on this fixture is also past its deadline, so bring the
+      # expired gate down explicitly — the point of the spec is the
+      # case-insensitive status match, not the deadline gate.
+      get '/super_admin/commercial/reservations/data',
+          params: { clickup_status: 'GANHO', include_expired: '1' }
 
       expect(response.parsed_body['reservations'].pluck('id')).to eq([won.id])
     end
@@ -70,17 +88,25 @@ RSpec.describe 'Super Admin Commercial Reservations', type: :request do
     # phone digits. Matches are case-insensitive; phone is normalized to
     # digits so different masks land on the same row.
     describe 'q filter' do
+      # A future `reserved_until` keeps these out of the default expired
+      # filter — the point of these specs is the query filter, not the
+      # deadline gate.
+      let(:active_deadline) { 5.days.from_now }
       let!(:by_name) do
-        create(:sales_quote, prospect_name: 'Camila Vieira', clickup_status: 'proposta enviada')
+        create(:sales_quote, prospect_name: 'Camila Vieira', clickup_status: 'proposta enviada',
+                             reserved_until: active_deadline)
       end
       let!(:by_clinic) do
-        create(:sales_quote, prospect_name: 'Outro', company_name: 'Clínica Andorinha', clickup_status: 'proposta enviada')
+        create(:sales_quote, prospect_name: 'Outro', company_name: 'Clínica Andorinha',
+                             clickup_status: 'proposta enviada', reserved_until: active_deadline)
       end
       let!(:by_email) do
-        create(:sales_quote, prospect_email: 'fulano@exemplo.com', clickup_status: 'proposta enviada')
+        create(:sales_quote, prospect_email: 'fulano@exemplo.com', clickup_status: 'proposta enviada',
+                             reserved_until: active_deadline)
       end
       let!(:by_phone) do
-        create(:sales_quote, prospect_phone: '(11) 91234-5678', clickup_status: 'proposta enviada')
+        create(:sales_quote, prospect_phone: '(11) 91234-5678', clickup_status: 'proposta enviada',
+                             reserved_until: active_deadline)
       end
 
       it 'matches on the prospect name' do
@@ -118,7 +144,10 @@ RSpec.describe 'Super Admin Commercial Reservations', type: :request do
     end
 
     it 'marks only a converted proposal as won' do
-      get '/super_admin/commercial/reservations/data', params: { include_finalized: '1' }
+      # `won` has no reserved_until — the default expired gate hides it too,
+      # so ask for both toggles to bring both rows into the response.
+      get '/super_admin/commercial/reservations/data',
+          params: { include_finalized: '1', include_expired: '1' }
 
       by_id = response.parsed_body['reservations'].index_by { |row| row['id'] }
       expect(by_id[won.id]['won']).to be(true)
@@ -129,7 +158,8 @@ RSpec.describe 'Super Admin Commercial Reservations', type: :request do
     # `signed`; the row now carries it directly, and the screen reads it
     # straight off the status pill.
     it 'passes the details_confirmed status through to the row' do
-      confirmed = create(:sales_quote, status: :details_confirmed, clickup_status: 'em análise')
+      confirmed = create(:sales_quote, status: :details_confirmed, clickup_status: 'em análise',
+                                       reserved_until: 4.days.from_now)
 
       get '/super_admin/commercial/reservations/data'
 
