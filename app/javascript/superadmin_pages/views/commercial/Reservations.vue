@@ -205,7 +205,7 @@ const canCopyMessage = reservation =>
         v-model="queryFilter"
         type="text"
         placeholder="Buscar por nome, clínica, e-mail ou telefone…"
-        class="text-sm border border-slate-200 rounded px-3 py-1.5 w-64 focus:border-woot-500 focus:outline-none"
+        class="text-sm border border-slate-200 rounded px-3 py-1.5 w-96 focus:border-woot-500 focus:outline-none"
       />
       <label class="text-sm text-slate-500">Status no ClickUp</label>
       <select
