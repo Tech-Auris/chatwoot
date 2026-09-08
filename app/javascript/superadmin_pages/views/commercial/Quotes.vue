@@ -23,6 +23,9 @@ const meetingDiscountPercent = ref(10);
 
 const cart = ref([]);
 const meetingDiscount = ref(false);
+// When on, subtracts the whole "Integração via API" line from the total —
+// the seller opts in when the deal was negotiated without that scope.
+const apiIntegrationWaived = ref(false);
 const couponId = ref('');
 const totals = ref({ subtotal: 0, discount: 0, total: 0, summary: null });
 
@@ -393,6 +396,7 @@ const refreshTotals = async () => {
       body: {
         items: payloadItems(),
         meeting_discount: meetingDiscount.value,
+        api_integration_waived: apiIntegrationWaived.value,
         coupon_id: couponId.value,
       },
     });
@@ -401,7 +405,9 @@ const refreshTotals = async () => {
   }
 };
 
-watch([cart, meetingDiscount, couponId], refreshTotals, { deep: true });
+watch([cart, meetingDiscount, apiIntegrationWaived, couponId], refreshTotals, {
+  deep: true,
+});
 
 const canSave = computed(
   () => selectedProspect.value && cart.value.length && !saving.value
@@ -417,6 +423,7 @@ const saveQuote = async () => {
         clickup_task_id: selectedProspect.value.task_id,
         items: payloadItems(),
         meeting_discount: meetingDiscount.value,
+        api_integration_waived: apiIntegrationWaived.value,
         coupon_id: couponId.value,
       },
     });
@@ -490,6 +497,7 @@ const startOver = () => {
   reservedUntil.value = tomorrowIsoDate();
   cart.value = [];
   meetingDiscount.value = false;
+  apiIntegrationWaived.value = false;
   couponId.value = '';
   selectedProspect.value = null;
   prospectTerm.value = '';
@@ -845,6 +853,11 @@ const startOver = () => {
           <label class="flex items-center gap-2 mt-4 text-sm text-slate-700">
             <input v-model="meetingDiscount" type="checkbox" />
             Desconto da reunião ({{ meetingDiscountPercent }}%)
+          </label>
+
+          <label class="flex items-center gap-2 mt-2 text-sm text-slate-700">
+            <input v-model="apiIntegrationWaived" type="checkbox" />
+            Isentar Integração via API
           </label>
 
           <label class="block mt-3 text-sm text-slate-600">

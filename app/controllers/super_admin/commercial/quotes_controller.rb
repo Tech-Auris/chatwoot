@@ -98,13 +98,16 @@ class SuperAdmin::Commercial::QuotesController < SuperAdmin::ApplicationControll
     Sales::QuoteCalculatorService.new(
       items: submitted_items,
       meeting_discount: ActiveModel::Type::Boolean.new.cast(params[:meeting_discount]),
-      coupon: selected_coupon
+      coupon: selected_coupon,
+      api_integration_waived: ActiveModel::Type::Boolean.new.cast(params[:api_integration_waived])
     )
   end
 
   def submitted_items
     Array(params[:items]).map do |item|
-      { unit_amount: item[:unit_amount].to_i, quantity: item[:quantity].presence&.to_i || 1 }
+      { unit_amount: item[:unit_amount].to_i,
+        quantity: item[:quantity].presence&.to_i || 1,
+        name: item[:name] }
     end
   end
 
@@ -138,6 +141,9 @@ class SuperAdmin::Commercial::QuotesController < SuperAdmin::ApplicationControll
       prospect_email: prospect[:email],
       prospect_phone: prospect[:phone],
       meeting_discount: ActiveModel::Type::Boolean.new.cast(params[:meeting_discount]),
+      # `cast(nil)` returns nil — a NOT NULL column needs an explicit false
+      # when the payload omits the flag.
+      api_integration_waived: ActiveModel::Type::Boolean.new.cast(params[:api_integration_waived]) || false,
       coupon_id: params[:coupon_id].presence,
       billing_cycle: billing_cycle_from_items,
       status: :draft

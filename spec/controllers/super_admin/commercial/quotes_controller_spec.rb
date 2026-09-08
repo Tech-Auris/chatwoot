@@ -310,6 +310,32 @@ RSpec.describe 'Super Admin Commercial Quotes', type: :request do
 
       expect(response).to have_http_status(:created)
     end
+
+    # The waiver flag persists on the quote (so the invoice-generation path
+    # keeps the frozen decision) and the calculator subtracts the "Integração
+    # via API" line from the total.
+    it 'persists the API waiver on the quote and subtracts the line from the total' do
+      waived = payload.merge(
+        api_integration_waived: true,
+        items: [
+          payload[:items].first,
+          { stripe_price_id: 'price_api', name: 'Integração via API', unit_amount: 50_000, quantity: 1,
+            billing_period: 'one_off', kind: 'addon' }
+        ]
+      )
+
+      post '/super_admin/commercial/quotes', params: waived, as: :json
+
+      quote = SalesQuote.last
+      # subtotal = 89_700 (plano) + 50_000 (integração) = 139_700
+      # meeting = 10% of 139_700 = 13_970
+      # waiver  = 50_000 (whole "Integração via API" line)
+      expect(quote.api_integration_waived).to be(true)
+      expect(quote.subtotal_amount).to eq(139_700)
+      expect(quote.discount_amount).to eq(13_970 + 50_000)
+      expect(quote.total_amount).to eq(75_730)
+      expect(quote.discount_summary).to include('isenção integração via API')
+    end
   end
 
   describe 'POST /super_admin/commercial/quotes/:id/reserve' do

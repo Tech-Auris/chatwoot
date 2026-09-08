@@ -12,6 +12,7 @@
 #
 #  id                       :bigint           not null, primary key
 #  access_code              :string           not null
+#  api_integration_waived   :boolean          default(FALSE), not null
 #  asaas_payment_link_url   :string
 #  billing_cycle            :integer
 #  billing_name             :string
