@@ -32,6 +32,10 @@ const meta = ref({ current_page: 1, total_pages: 1, total_count: 0 });
 // query narrow it down.
 const statusFilter = ref('');
 const queryFilter = ref('');
+// Ganho and perdido are terminal: the deal is closed either way. Hidden by
+// default so the screen shows what the team is still working on; a toggle
+// brings them back when the seller wants the full history.
+const showFinalized = ref(false);
 const page = ref(1);
 let queryDebounce = null;
 const loading = ref(false);
@@ -48,6 +52,7 @@ const fetchData = async () => {
     const params = new URLSearchParams({ page: page.value });
     if (statusFilter.value) params.set('clickup_status', statusFilter.value);
     if (queryFilter.value.trim()) params.set('q', queryFilter.value.trim());
+    if (showFinalized.value) params.set('include_finalized', '1');
 
     const res = await fetch(`${props.componentData.data_url}?${params}`, {
       headers: { Accept: 'application/json' },
@@ -69,7 +74,7 @@ const fetchData = async () => {
 onMounted(fetchData);
 
 watch(page, fetchData);
-watch(statusFilter, () => {
+watch([statusFilter, showFinalized], () => {
   page.value = 1;
   fetchData();
 });
@@ -195,7 +200,7 @@ const canCopyMessage = reservation =>
         v-model="queryFilter"
         type="text"
         placeholder="Buscar por nome, clínica, e-mail ou telefone…"
-        class="text-sm border border-slate-200 rounded px-3 py-1.5 flex-1 min-w-[260px] focus:border-woot-500 focus:outline-none"
+        class="text-sm border border-slate-200 rounded px-3 py-1.5 w-64 focus:border-woot-500 focus:outline-none"
       />
       <label class="text-sm text-slate-500">Status no ClickUp</label>
       <select
@@ -207,6 +212,10 @@ const canCopyMessage = reservation =>
           {{ status }}
         </option>
       </select>
+      <label class="text-sm text-slate-600 flex items-center gap-1.5">
+        <input v-model="showFinalized" type="checkbox" />
+        Mostrar reservas finalizadas
+      </label>
       <span class="text-sm text-slate-400">
         {{ meta.total_count }} proposta(s)
       </span>

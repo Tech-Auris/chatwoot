@@ -27,8 +27,16 @@ RSpec.describe 'Super Admin Commercial Reservations', type: :request do
     it 'opens on every proposal' do
       get '/super_admin/commercial/reservations/data'
 
-      expect(response.parsed_body['reservations'].pluck('id')).to contain_exactly(negotiating.id, won.id)
+      # Finalized deals (`ganho`/`perdido`) are hidden by default; the screen
+      # opens showing what is still moving.
+      expect(response.parsed_body['reservations'].pluck('id')).to contain_exactly(negotiating.id)
       expect(response.parsed_body['meta']['applied_status']).to eq('')
+    end
+
+    it 'brings back the closed deals when include_finalized is on' do
+      get '/super_admin/commercial/reservations/data', params: { include_finalized: '1' }
+
+      expect(response.parsed_body['reservations'].pluck('id')).to contain_exactly(negotiating.id, won.id)
     end
 
     it 'filters by a chosen status regardless of case' do
@@ -89,7 +97,7 @@ RSpec.describe 'Super Admin Commercial Reservations', type: :request do
     end
 
     it 'marks only a converted proposal as won' do
-      get '/super_admin/commercial/reservations/data'
+      get '/super_admin/commercial/reservations/data', params: { include_finalized: '1' }
 
       by_id = response.parsed_body['reservations'].index_by { |row| row['id'] }
       expect(by_id[won.id]['won']).to be(true)

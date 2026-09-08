@@ -32,13 +32,28 @@ class SuperAdmin::Commercial::ReservationsController < SuperAdmin::ApplicationCo
 
   private
 
+  # Statuses the pipeline treats as closed — the deal is either won or lost
+  # and there is nothing left to work on. Hidden by default so the screen
+  # opens on what is still moving; a checkbox brings them back for the full
+  # history.
+  FINALIZED_STATUSES = %w[ganho perdido].freeze
+
   def paginated_quotes
     @paginated_quotes ||= begin
       scope = SalesQuote.includes(:seller, :items).order(created_at: :desc)
       scope = scope.where('LOWER(clickup_status) = ?', params[:clickup_status].downcase) if params[:clickup_status].present?
       scope = filter_by_query(scope, params[:q]) if params[:q].present?
+      scope = scope.where('clickup_status IS NULL OR LOWER(clickup_status) NOT IN (?)', FINALIZED_STATUSES) unless include_finalized?
       scope.page(params[:page] || 1).per(PER_PAGE)
     end
+  end
+
+  # The seller can explicitly ask for closed deals with a checkbox on the
+  # header; a status picker landing on `ganho`/`perdido` also implies it,
+  # so a manual choice is not silently overridden.
+  def include_finalized?
+    ActiveModel::Type::Boolean.new.cast(params[:include_finalized]) ||
+      FINALIZED_STATUSES.include?(params[:clickup_status].to_s.downcase)
   end
 
   # Matches the same fields the Quotes autocomplete pretends to match on the
