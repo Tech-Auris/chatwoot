@@ -37,6 +37,48 @@ RSpec.describe 'Super Admin Commercial Reservations', type: :request do
       expect(response.parsed_body['reservations'].pluck('id')).to eq([won.id])
     end
 
+    # A single search box narrows the list by name, clinic, e-mail or
+    # phone digits. Matches are case-insensitive; phone is normalized to
+    # digits so different masks land on the same row.
+    describe 'q filter' do
+      let!(:by_name) do
+        create(:sales_quote, prospect_name: 'Camila Vieira', clickup_status: 'proposta enviada')
+      end
+      let!(:by_clinic) do
+        create(:sales_quote, prospect_name: 'Outro', company_name: 'Clínica Andorinha', clickup_status: 'proposta enviada')
+      end
+      let!(:by_email) do
+        create(:sales_quote, prospect_email: 'fulano@exemplo.com', clickup_status: 'proposta enviada')
+      end
+      let!(:by_phone) do
+        create(:sales_quote, prospect_phone: '(11) 91234-5678', clickup_status: 'proposta enviada')
+      end
+
+      it 'matches on the prospect name' do
+        get '/super_admin/commercial/reservations/data', params: { q: 'camila' }
+
+        expect(response.parsed_body['reservations'].pluck('id')).to eq([by_name.id])
+      end
+
+      it 'matches on the clinic name (company_name)' do
+        get '/super_admin/commercial/reservations/data', params: { q: 'Andorinha' }
+
+        expect(response.parsed_body['reservations'].pluck('id')).to eq([by_clinic.id])
+      end
+
+      it 'matches on the e-mail' do
+        get '/super_admin/commercial/reservations/data', params: { q: 'exemplo.com' }
+
+        expect(response.parsed_body['reservations'].pluck('id')).to eq([by_email.id])
+      end
+
+      it 'matches on phone digits regardless of the mask' do
+        get '/super_admin/commercial/reservations/data', params: { q: '91234' }
+
+        expect(response.parsed_body['reservations'].pluck('id')).to eq([by_phone.id])
+      end
+    end
+
     it 'carries the link and the access code the prospect needs' do
       get '/super_admin/commercial/reservations/data', params: { clickup_status: 'negociação' }
 

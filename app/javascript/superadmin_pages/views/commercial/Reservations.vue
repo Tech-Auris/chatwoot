@@ -28,9 +28,12 @@ const STATUS_LABELS = {
 const reservations = ref([]);
 const statuses = ref([]);
 const meta = ref({ current_page: 1, total_pages: 1, total_count: 0 });
-// The screen opens showing every proposal; the status narrows it down.
+// The screen opens showing every proposal; the status and the free-text
+// query narrow it down.
 const statusFilter = ref('');
+const queryFilter = ref('');
 const page = ref(1);
+let queryDebounce = null;
 const loading = ref(false);
 const error = ref(null);
 // Which row was copied and what was taken from it, so the feedback lands on the
@@ -44,6 +47,7 @@ const fetchData = async () => {
   try {
     const params = new URLSearchParams({ page: page.value });
     if (statusFilter.value) params.set('clickup_status', statusFilter.value);
+    if (queryFilter.value.trim()) params.set('q', queryFilter.value.trim());
 
     const res = await fetch(`${props.componentData.data_url}?${params}`, {
       headers: { Accept: 'application/json' },
@@ -68,6 +72,16 @@ watch(page, fetchData);
 watch(statusFilter, () => {
   page.value = 1;
   fetchData();
+});
+
+// Debounced so the fetch does not fire on every keystroke while the seller
+// is still typing the term.
+watch(queryFilter, () => {
+  if (queryDebounce) clearTimeout(queryDebounce);
+  queryDebounce = setTimeout(() => {
+    page.value = 1;
+    fetchData();
+  }, 250);
 });
 
 const formatAmount = amount =>
@@ -176,7 +190,13 @@ const canCopyMessage = reservation =>
       para o status e o vencimento ficarem em dia.
     </div>
 
-    <div class="flex items-center gap-3 mb-4">
+    <div class="flex flex-wrap items-center gap-3 mb-4">
+      <input
+        v-model="queryFilter"
+        type="text"
+        placeholder="Buscar por nome, clínica, e-mail ou telefone…"
+        class="text-sm border border-slate-200 rounded px-3 py-1.5 flex-1 min-w-[260px] focus:border-woot-500 focus:outline-none"
+      />
       <label class="text-sm text-slate-500">Status no ClickUp</label>
       <select
         v-model="statusFilter"

@@ -36,8 +36,30 @@ class SuperAdmin::Commercial::ReservationsController < SuperAdmin::ApplicationCo
     @paginated_quotes ||= begin
       scope = SalesQuote.includes(:seller, :items).order(created_at: :desc)
       scope = scope.where('LOWER(clickup_status) = ?', params[:clickup_status].downcase) if params[:clickup_status].present?
+      scope = filter_by_query(scope, params[:q]) if params[:q].present?
       scope.page(params[:page] || 1).per(PER_PAGE)
     end
+  end
+
+  # Matches the same fields the Quotes autocomplete pretends to match on the
+  # prospect card — name, clinic (company_name), e-mail, phone — so the
+  # seller uses one gesture to find a deal in either screen. Phone is
+  # matched on digits only so `(11) 91234-5678` and `11912345678` hit the
+  # same row.
+  def filter_by_query(scope, raw)
+    q = raw.to_s.strip
+    return scope if q.blank?
+
+    like = "%#{q.downcase}%"
+    digits = q.gsub(/\D/, '')
+    digits_like = digits.present? ? "%#{digits}%" : nil
+
+    scope.where(
+      'LOWER(prospect_name) LIKE :like OR LOWER(company_name) LIKE :like OR ' \
+      'LOWER(prospect_email) LIKE :like OR ' \
+      '(:digits IS NOT NULL AND regexp_replace(coalesce(prospect_phone, \'\'), \'\\D\', \'\', \'g\') LIKE :digits)',
+      like: like, digits: digits_like
+    )
   end
 
   def serialize(quote)
