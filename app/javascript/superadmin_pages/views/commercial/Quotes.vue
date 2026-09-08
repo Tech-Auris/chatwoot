@@ -26,6 +26,16 @@ const meetingDiscount = ref(false);
 // When on, subtracts the whole "Integração via API" line from the total —
 // the seller opts in when the deal was negotiated without that scope.
 const apiIntegrationWaived = ref(false);
+// Matched by exact product name — same constant the backend calculator uses.
+const API_INTEGRATION_ITEM_NAME = 'Integração via API';
+const cartHasApiIntegration = computed(() =>
+  cart.value.some(item => item.name === API_INTEGRATION_ITEM_NAME)
+);
+// When the API line leaves the cart the checkbox no longer makes sense; drop
+// the flag too so a stale "on" state doesn't rebound if the item is re-added.
+watch(cartHasApiIntegration, hasIt => {
+  if (!hasIt) apiIntegrationWaived.value = false;
+});
 const couponId = ref('');
 const totals = ref({ subtotal: 0, discount: 0, total: 0, summary: null });
 
@@ -855,7 +865,10 @@ const startOver = () => {
             Desconto da reunião ({{ meetingDiscountPercent }}%)
           </label>
 
-          <label class="flex items-center gap-2 mt-2 text-sm text-slate-700">
+          <label
+            v-if="cartHasApiIntegration"
+            class="flex items-center gap-2 mt-2 text-sm text-slate-700"
+          >
             <input v-model="apiIntegrationWaived" type="checkbox" />
             Isentar Integração via API
           </label>
