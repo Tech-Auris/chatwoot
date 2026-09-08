@@ -48,8 +48,12 @@ namespace :commercial do
         details: true, reserved_until: 2.days.from_now, cart: :plan_annual, payment_method: :pix },
       { key: 'paid', task_id: 'STUB_isabela_nunes', status: :paid,
         details: true, reserved_until: 4.days.from_now, cart: :plan_semiannual_with_addon, payment_method: :card },
+      # ClickUp status is `ganho` here (overriding the prospect stub) so the
+      # "Mostrar finalizadas" checkbox on the Reservations screen has
+      # something to hide and bring back.
       { key: 'converted', task_id: 'STUB_lucas_almeida', status: :converted,
-        details: true, reserved_until: 6.days.from_now, cart: :plan_monthly, payment_method: :card },
+        details: true, reserved_until: 6.days.from_now, cart: :plan_monthly, payment_method: :card,
+        clickup_status: 'ganho' },
       { key: 'expired', task_id: 'STUB_fernanda_costa', status: :expired,
         details: false, reserved_until: 2.days.ago, cart: :plan_monthly }
     ]
@@ -63,7 +67,7 @@ namespace :commercial do
       quote = SalesQuote.new(
         seller: seller,
         clickup_task_id: "MOCK_#{seed[:key]}",
-        clickup_status: prospect[:status],
+        clickup_status: seed[:clickup_status].presence || prospect[:status],
         clickup_status_synced_at: Time.current,
         # ClickUp already carries name / e-mail / phone by the time the
         # seller creates the proposal, so every quote — confirmed or not —

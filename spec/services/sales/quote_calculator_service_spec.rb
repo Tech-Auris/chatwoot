@@ -67,4 +67,38 @@ RSpec.describe Sales::QuoteCalculatorService do
   it 'has no summary when nothing was discounted' do
     expect(calculate(cart).summary).to be_nil
   end
+
+  # The seller can waive the "Integração via API" line during the meeting;
+  # the whole line comes off the total and the summary names the reason.
+  # Matched by exact product name — that's the fragility the operator opts
+  # into.
+  describe 'api_integration waiver' do
+    let(:cart_with_api) do
+      [{ unit_amount: 89_700, quantity: 1, name: 'Plataforma Auris' },
+       { unit_amount: 50_000, quantity: 1, name: 'Integração via API' }]
+    end
+
+    it 'subtracts the whole line for the waived item' do
+      result = calculate(cart_with_api, api_integration_waived: true)
+
+      expect(result.subtotal).to eq(139_700)
+      expect(result.discount).to eq(50_000)
+      expect(result.total).to eq(89_700)
+      expect(result.summary).to include('isenção integração via API')
+    end
+
+    it 'stacks with the meeting discount' do
+      result = calculate(cart_with_api, meeting_discount: true, api_integration_waived: true)
+
+      expect(result.discount).to eq(13_970 + 50_000)
+      expect(result.summary).to eq('10% reunião + isenção integração via API')
+    end
+
+    it 'is a no-op when the cart has no API integration item' do
+      result = calculate(cart, api_integration_waived: true)
+
+      expect(result.discount).to eq(0)
+      expect(result.summary).to be_nil
+    end
+  end
 end

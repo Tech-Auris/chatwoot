@@ -36,6 +36,17 @@ RSpec.describe Sales::ReserveQuoteService do
     expect(client).to have_received(:add_tag).with('86ak7rd8j', 'reserva')
   end
 
+  # A reservation moves the deal to the "negociação" column so the pipeline
+  # view lines up with reality. The local mirror is refreshed too — the
+  # Reservations report shows the ClickUp status column straight from us.
+  it 'moves the ClickUp status to negociação and mirrors it locally' do
+    reserve
+
+    expect(client).to have_received(:update_task)
+      .with('86ak7rd8j', hash_including(status: 'negociação'))
+    expect(quote.reload.clickup_status).to eq('negociação')
+  end
+
   # After a successful reserve, the ClickUp task gets a comment with the
   # copy-paste WhatsApp message so whoever handles the handoff has the
   # text at hand — same wording the Quotes / Reservations screens copy.

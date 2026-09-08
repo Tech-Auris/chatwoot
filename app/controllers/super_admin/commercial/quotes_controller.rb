@@ -56,6 +56,8 @@ class SuperAdmin::Commercial::QuotesController < SuperAdmin::ApplicationControll
   end
 
   def create
+    return render_mixed_period_error if mixed_recurring_periods?
+
     quote = SalesQuote.new(quote_attributes)
     quote.items = item_records
 
@@ -72,9 +74,18 @@ class SuperAdmin::Commercial::QuotesController < SuperAdmin::ApplicationControll
     @quote ||= SalesQuote.find(params[:id])
   end
 
+  # The Vue picker posts a plain date (`YYYY-MM-DD`); parsing that gives
+  # 00:00 of the day, which fails the `past?` guard when the seller picks
+  # today. Coercing to the end of the day keeps the meaning of "the deal
+  # is on hold through this whole day" and matches what the ClickUp task
+  # shows to the sales team.
   def parsed_reserved_until
-    value = params.require(:reserved_until)
-    Time.zone.parse(value.to_s)
+    value = params.require(:reserved_until).to_s
+    parsed = Time.zone.parse(value)
+    return nil if parsed.blank?
+
+    date_only = value.match?(/\A\d{4}-\d{2}-\d{2}\z/)
+    date_only ? parsed.end_of_day : parsed
   rescue ArgumentError
     nil
   end
@@ -87,13 +98,16 @@ class SuperAdmin::Commercial::QuotesController < SuperAdmin::ApplicationControll
     Sales::QuoteCalculatorService.new(
       items: submitted_items,
       meeting_discount: ActiveModel::Type::Boolean.new.cast(params[:meeting_discount]),
-      coupon: selected_coupon
+      coupon: selected_coupon,
+      api_integration_waived: ActiveModel::Type::Boolean.new.cast(params[:api_integration_waived])
     )
   end
 
   def submitted_items
     Array(params[:items]).map do |item|
-      { unit_amount: item[:unit_amount].to_i, quantity: item[:quantity].presence&.to_i || 1 }
+      { unit_amount: item[:unit_amount].to_i,
+        quantity: item[:quantity].presence&.to_i || 1,
+        name: item[:name] }
     end
   end
 
@@ -127,6 +141,9 @@ class SuperAdmin::Commercial::QuotesController < SuperAdmin::ApplicationControll
       prospect_email: prospect[:email],
       prospect_phone: prospect[:phone],
       meeting_discount: ActiveModel::Type::Boolean.new.cast(params[:meeting_discount]),
+      # `cast(nil)` returns nil — a NOT NULL column needs an explicit false
+      # when the payload omits the flag.
+      api_integration_waived: ActiveModel::Type::Boolean.new.cast(params[:api_integration_waived]) || false,
       coupon_id: params[:coupon_id].presence,
       billing_cycle: billing_cycle_from_items,
       status: :draft
@@ -145,6 +162,27 @@ class SuperAdmin::Commercial::QuotesController < SuperAdmin::ApplicationControll
     period = plan_item&.[](:billing_period).to_s
     ALLOWED_BILLING_CYCLES.include?(period) ? period : nil
   end
+
+  # A cart with two different recurring periods (say monthly + annual) has
+  # no coherent routing between Stripe and AsaaS — the picker already
+  # blocks that on the frontend, but the backend refuses too so a stray
+  # payload cannot slip past.
+  RECURRING_PERIODS = %w[monthly semiannual annual].freeze
+  def mixed_recurring_periods?
+    periods = Array(params[:items]).map { |item| item[:billing_period].to_s }
+                                   .select { |p| RECURRING_PERIODS.include?(p) }
+                                   .uniq
+    periods.length > 1
+  end
+
+  def render_mixed_period_error
+    render json: { error: MIXED_PERIODS_MESSAGE }, status: :unprocessable_entity
+  end
+
+  MIXED_PERIODS_MESSAGE = (
+    'O carrinho não pode misturar periodicidades diferentes (mensal, semestral, anual). ' \
+      'Remova os itens de outra periodicidade antes de continuar.'
+  ).freeze
 
   # Totals are frozen on the proposal: the catalogue moves, and what the
   # prospect was shown has to survive that.

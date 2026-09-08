@@ -23,6 +23,19 @@ const meetingDiscountPercent = ref(10);
 
 const cart = ref([]);
 const meetingDiscount = ref(false);
+// When on, subtracts the whole "Integração via API" line from the total —
+// the seller opts in when the deal was negotiated without that scope.
+const apiIntegrationWaived = ref(false);
+// Matched by exact product name — same constant the backend calculator uses.
+const API_INTEGRATION_ITEM_NAME = 'Integração via API';
+const cartHasApiIntegration = computed(() =>
+  cart.value.some(item => item.name === API_INTEGRATION_ITEM_NAME)
+);
+// When the API line leaves the cart the checkbox no longer makes sense; drop
+// the flag too so a stale "on" state doesn't rebound if the item is re-added.
+watch(cartHasApiIntegration, hasIt => {
+  if (!hasIt) apiIntegrationWaived.value = false;
+});
 const couponId = ref('');
 const totals = ref({ subtotal: 0, discount: 0, total: 0, summary: null });
 
@@ -30,7 +43,15 @@ const loading = ref(false);
 const saving = ref(false);
 const error = ref(null);
 const savedQuote = ref(null);
-const reservedUntil = ref('');
+// Reservation deadline is a plain date (the server coerces to end-of-day
+// so "today" isn't a past instant). Default is tomorrow — the common case
+// the seller doesn't have to type.
+const tomorrowIsoDate = () => {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  return d.toISOString().slice(0, 10);
+};
+const reservedUntil = ref(tomorrowIsoDate());
 const reserving = ref(false);
 const reservation = ref(null);
 const copied = ref(false);
@@ -202,15 +223,47 @@ const productList = computed(() => {
   return [...byId.values()];
 });
 
+// A cart is one-periodicity by construction: if there is already a monthly
+// item in it, adding an annual one would give a proposal the backend cannot
+// route (Stripe/AsaaS split by billing_period). The picker enforces it by
+// hiding prices from a different period; one-off items are always allowed
+// because they do not carry a period at all.
+const RECURRING_PERIODS = ['monthly', 'semiannual', 'annual'];
+const activeRecurringPeriod = computed(() => {
+  const recurring = cart.value.find(item =>
+    RECURRING_PERIODS.includes(item.billing_period)
+  );
+  return recurring ? recurring.billing_period : null;
+});
+
+const isPriceAllowed = price => {
+  if (!activeRecurringPeriod.value) return true;
+  if (!RECURRING_PERIODS.includes(price.billing_period)) return true;
+  return price.billing_period === activeRecurringPeriod.value;
+};
+
 const filteredProducts = computed(() => {
   const query = productSearch.value.trim().toLowerCase();
-  if (!query) return productList.value;
-  return productList.value.filter(product => {
+  const matchesQuery = product => {
+    if (!query) return true;
     const haystack =
       `${product.name || ''} ${product.description || ''}`.toLowerCase();
     return haystack.includes(query);
-  });
+  };
+  return productList.value
+    .filter(matchesQuery)
+    .map(product => ({
+      ...product,
+      prices: product.prices.filter(isPriceAllowed),
+    }))
+    .filter(product => product.prices.length > 0);
 });
+
+const PERIOD_HUMAN = {
+  monthly: 'mensal',
+  semiannual: 'semestral',
+  annual: 'anual',
+};
 
 // How Stripe labels the price beside the amount — the seller reads this
 // out loud, so it matches how the plan is spoken: "/mês", "a cada 6
@@ -353,6 +406,7 @@ const refreshTotals = async () => {
       body: {
         items: payloadItems(),
         meeting_discount: meetingDiscount.value,
+        api_integration_waived: apiIntegrationWaived.value,
         coupon_id: couponId.value,
       },
     });
@@ -361,7 +415,9 @@ const refreshTotals = async () => {
   }
 };
 
-watch([cart, meetingDiscount, couponId], refreshTotals, { deep: true });
+watch([cart, meetingDiscount, apiIntegrationWaived, couponId], refreshTotals, {
+  deep: true,
+});
 
 const canSave = computed(
   () => selectedProspect.value && cart.value.length && !saving.value
@@ -377,6 +433,7 @@ const saveQuote = async () => {
         clickup_task_id: selectedProspect.value.task_id,
         items: payloadItems(),
         meeting_discount: meetingDiscount.value,
+        api_integration_waived: apiIntegrationWaived.value,
         coupon_id: couponId.value,
       },
     });
@@ -447,9 +504,10 @@ const copyCode = async () => {
 const startOver = () => {
   savedQuote.value = null;
   reservation.value = null;
-  reservedUntil.value = '';
+  reservedUntil.value = tomorrowIsoDate();
   cart.value = [];
   meetingDiscount.value = false;
+  apiIntegrationWaived.value = false;
   couponId.value = '';
   selectedProspect.value = null;
   prospectTerm.value = '';
@@ -530,7 +588,7 @@ const startOver = () => {
               Vencimento da reserva
               <input
                 v-model="reservedUntil"
-                type="datetime-local"
+                type="date"
                 class="mt-1 block border border-slate-200 rounded px-2 py-1.5 text-sm"
               />
             </label>
@@ -637,7 +695,7 @@ const startOver = () => {
                 v-model="prospectTerm"
                 type="text"
                 autocomplete="off"
-                placeholder="Buscar por nome, e-mail ou telefone…"
+                placeholder="Buscar por nome, clínica, e-mail ou telefone…"
                 class="w-full border border-slate-200 rounded px-3 py-2 text-sm focus:border-woot-500 focus:outline-none"
                 @input="searchProspects"
               />
@@ -689,6 +747,15 @@ const startOver = () => {
               class="relative"
               @focusout="onProductPickerFocusOut"
             >
+              <p
+                v-if="activeRecurringPeriod"
+                class="text-xs text-slate-500 mb-2"
+              >
+                Filtrando por planos
+                <b>{{ PERIOD_HUMAN[activeRecurringPeriod] }}</b> — misture
+                periodicidades esvaziando o carrinho primeiro. Itens avulsos
+                continuam disponíveis.
+              </p>
               <input
                 v-model="productSearch"
                 type="search"
@@ -796,6 +863,14 @@ const startOver = () => {
           <label class="flex items-center gap-2 mt-4 text-sm text-slate-700">
             <input v-model="meetingDiscount" type="checkbox" />
             Desconto da reunião ({{ meetingDiscountPercent }}%)
+          </label>
+
+          <label
+            v-if="cartHasApiIntegration"
+            class="flex items-center gap-2 mt-2 text-sm text-slate-700"
+          >
+            <input v-model="apiIntegrationWaived" type="checkbox" />
+            Isentar Integração via API
           </label>
 
           <label class="block mt-3 text-sm text-slate-600">

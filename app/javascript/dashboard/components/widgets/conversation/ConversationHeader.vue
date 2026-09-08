@@ -132,7 +132,7 @@ const copyConversationId = async () => {
 <template>
   <div
     ref="conversationHeader"
-    class="flex flex-col gap-3 items-stretch flex-1 w-full min-w-0 xl:flex-row xl:items-center px-3 py-4 min-h-24 xl:min-h-12"
+    class="flex flex-col gap-3 items-stretch flex-1 w-full min-w-0 xl:flex-row xl:items-center px-3 py-4 min-h-fit xl:min-h-12"
   >
     <div
       class="flex items-center justify-start w-full xl:w-auto max-w-full min-w-0 xl:flex-shrink-0"
@@ -207,7 +207,7 @@ const copyConversationId = async () => {
       </div>
     </div>
     <div
-      class="flex flex-row items-center justify-start xl:justify-end gap-2 flex-shrink-0 w-full xl:w-auto header-actions-wrap"
+      class="flex flex-row flex-wrap items-center justify-start xl:justify-end gap-2 w-full xl:w-auto xl:flex-shrink header-actions-wrap"
     >
       <AiStatusBadge
         v-if="chat?.id"
