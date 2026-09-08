@@ -47,6 +47,13 @@ const totalRequired = computed(() =>
   Object.values(requiredByAccount.value).reduce((sum, set) => sum + set.size, 0)
 );
 
+const accountsWithManagers = computed(() =>
+  accounts.value.filter(a => a.managers && a.managers.length)
+);
+const accountsWithoutManagers = computed(() =>
+  accounts.value.filter(a => !a.managers || !a.managers.length)
+);
+
 const fetchPreview = async () => {
   loading.value = true;
   error.value = null;
@@ -289,13 +296,36 @@ onMounted(fetchPreview);
       <div v-else>
         <p class="text-sm text-slate-500 mb-3">
           Todos os gerentes vêm pré-marcados como obrigatórios. Desmarque quem
-          não precisar assinar. Contas sem gerente não aparecem.
+          não precisar assinar. Contas sem gerente cadastrado aparecem abaixo —
+          a campanha não é disparada para elas.
         </p>
+
+        <!-- Warning list up top: accounts the campaign will skip because
+             there is no manager to pin the acceptance to. -->
+        <div
+          v-if="accountsWithoutManagers.length"
+          class="mb-3 border border-yellow-200 bg-yellow-50 rounded p-3"
+        >
+          <div class="text-sm font-medium text-yellow-800 mb-2">
+            {{ accountsWithoutManagers.length }} conta(s) sem gerente — não
+            receberão a campanha
+          </div>
+          <ul class="text-xs text-yellow-700 space-y-1">
+            <li
+              v-for="account in accountsWithoutManagers"
+              :key="account.account_id"
+            >
+              {{ account.account_name }}
+              <span class="text-yellow-500">#{{ account.account_id }}</span>
+            </li>
+          </ul>
+        </div>
+
         <div
           class="border border-slate-200 rounded max-h-[60vh] overflow-y-auto"
         >
           <div
-            v-for="account in accounts"
+            v-for="account in accountsWithManagers"
             :key="account.account_id"
             class="p-3 border-b border-slate-100 last:border-b-0"
           >

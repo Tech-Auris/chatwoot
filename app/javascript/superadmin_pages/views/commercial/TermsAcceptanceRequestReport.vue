@@ -76,6 +76,46 @@ const csrfToken = () =>
   document.querySelector('meta[name=csrf-token]')?.getAttribute('content') ||
   '';
 
+const cancellingAccountId = ref(null);
+
+// Cancels the campaign for one account only — used when the super_admin
+// pinned the wrong manager and wants to redo that account without touching
+// the rest of the campaign.
+const cancelAccount = async account => {
+  const pendingCount = account.signers.filter(
+    s => s.required && s.status === 'pending'
+  ).length;
+  if (!pendingCount) return;
+
+  const confirmed = window.confirm(
+    `Cancelar a assinatura desta campanha para "${account.account_name}"? ` +
+      `Os ${pendingCount} aceite(s) pendente(s) desta conta ficam como cancelados e o modal deixa de abrir para o(s) gerente(s) pinado(s).`
+  );
+  if (!confirmed) return;
+
+  cancellingAccountId.value = account.account_id;
+  error.value = null;
+  try {
+    const res = await fetch(props.componentData.cancel_account_url, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrfToken(),
+      },
+      body: JSON.stringify({ account_id: account.account_id }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+    await fetchReport();
+  } catch (e) {
+    error.value = e.message;
+  } finally {
+    cancellingAccountId.value = null;
+  }
+};
+
 const cancelCampaign = async () => {
   if (!campaign.value) return;
   const confirmed = window.confirm(
@@ -171,6 +211,7 @@ onMounted(fetchReport);
             <th class="py-2">Status</th>
             <th class="py-2">Assinou em</th>
             <th class="py-2">Origem</th>
+            <th class="py-2 text-right" />
           </tr>
         </thead>
         <tbody>
@@ -237,10 +278,31 @@ onMounted(fetchReport);
               <td class="py-3 text-slate-500 text-xs">
                 {{ signer.ip_address || '—' }}
               </td>
+              <td class="py-3 text-right align-top">
+                <button
+                  v-if="
+                    idx === 0 &&
+                    campaign.status === 'open' &&
+                    account.signers.some(
+                      s => s.required && s.status === 'pending'
+                    )
+                  "
+                  type="button"
+                  class="px-2 py-1 rounded border border-red-200 text-red-600 text-xs hover:bg-red-50 disabled:opacity-40"
+                  :disabled="cancellingAccountId === account.account_id"
+                  @click="cancelAccount(account)"
+                >
+                  {{
+                    cancellingAccountId === account.account_id
+                      ? 'Cancelando…'
+                      : 'Cancelar'
+                  }}
+                </button>
+              </td>
             </tr>
           </template>
           <tr v-if="!accounts.length">
-            <td colspan="6" class="py-6 text-center text-slate-400">
+            <td colspan="7" class="py-6 text-center text-slate-400">
               Nenhum assinante nesta campanha.
             </td>
           </tr>

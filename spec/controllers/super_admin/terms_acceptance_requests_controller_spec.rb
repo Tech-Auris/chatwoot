@@ -54,15 +54,45 @@ RSpec.describe 'Super Admin Terms Acceptance Requests', type: :request do
   end
 
   describe 'GET /super_admin/terms_acceptance_requests/manager_roster' do
-    it 'lists accounts that have at least one manager' do
+    it 'lists every account with the managers it has' do
       manager_au
-      other_account = create(:account) # no managers — should not appear
+      other_account = create(:account, name: 'Sem gerente') # no managers
 
       get '/super_admin/terms_acceptance_requests/manager_roster'
 
-      account_ids = response.parsed_body['accounts'].pluck('account_id')
-      expect(account_ids).to include(account.id)
-      expect(account_ids).not_to include(other_account.id)
+      rows = response.parsed_body['accounts']
+      expect(rows.pluck('account_id')).to include(account.id, other_account.id)
+      account_row = rows.find { |r| r['account_id'] == account.id }
+      other_row = rows.find { |r| r['account_id'] == other_account.id }
+      expect(account_row['managers'].length).to eq(1)
+      # Accounts without any manager come with an empty list so the wizard
+      # can render a warning row saying the account will be skipped.
+      expect(other_row['managers']).to eq([])
+    end
+  end
+
+  describe 'POST /super_admin/terms_acceptance_requests/:id/cancel_account' do
+    it 'cancels the acceptances of the account only, keeping the campaign open' do
+      other_account = create(:account)
+      other_manager = create(:user, account: other_account)
+      other_au = other_account.account_users.find_by(user: other_manager).tap { |au| au.update!(role: :manager) }
+
+      campaign = create(:terms_acceptance_request, terms_version: terms_version, created_by: super_admin)
+      create(:terms_acceptance, terms_acceptance_request: campaign, terms_version: terms_version,
+                                account: account, account_user: manager_au, kind: :update,
+                                required: true, status: :pending, deadline_at: campaign.deadline_at)
+      create(:terms_acceptance, terms_acceptance_request: campaign, terms_version: terms_version,
+                                account: other_account, account_user: other_au, kind: :update,
+                                required: true, status: :pending, deadline_at: campaign.deadline_at)
+
+      post "/super_admin/terms_acceptance_requests/#{campaign.id}/cancel_account",
+           params: { account_id: account.id }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body).to include('cancelled_count' => 1)
+      expect(campaign.terms_acceptances.where(account_id: account.id).pluck(:status)).to all(eq('cancelled'))
+      expect(campaign.terms_acceptances.where(account_id: other_account.id).pluck(:status)).to all(eq('pending'))
+      expect(campaign.reload.status).to eq('open')
     end
   end
 
