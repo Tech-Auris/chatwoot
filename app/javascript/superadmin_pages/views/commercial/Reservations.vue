@@ -107,13 +107,15 @@ const formatDate = value =>
 
 const statusLabel = status => STATUS_LABELS[status] || status;
 
-// Green marks the two "the prospect committed" states — a won deal and a
-// details_confirmed one (the prospect actually reserved). Everything else
-// stays neutral so the operator's eye lands on the ones already moving.
+// Green scale that reads as progress: the lighter tone marks the deal as
+// reserved by the prospect, the darker one marks it as paid, and the
+// darkest is the terminal "ganho". Everything else stays neutral so the
+// operator's eye lands on the ones already moving.
 const situationClass = reservation => {
-  if (reservation.won) return 'bg-green-50 text-green-700';
+  if (reservation.won) return 'bg-green-200 text-green-900';
+  if (reservation.status === 'paid') return 'bg-green-100 text-green-800';
   if (reservation.status === 'details_confirmed')
-    return 'bg-green-50 text-green-700';
+    return 'bg-green-50 text-green-600';
   return 'bg-slate-25 text-slate-600';
 };
 
