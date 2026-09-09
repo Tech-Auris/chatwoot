@@ -942,7 +942,7 @@ const startOver = () => {
               class="mt-1 text-right text-slate-900 text-base"
             >
               <div class="font-medium">{{ installmentsHint }}</div>
-              <div v-if="pixCashHint">
+              <div v-if="pixCashHint" class="text-sm">
                 ou à vista {{ formatAmount(pixCashHint.amount) }}
                 <span class="text-xs text-green-700">
                   ({{ pixCashHint.percent }}% de desconto)
