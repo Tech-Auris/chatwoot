@@ -236,6 +236,29 @@ const activeRecurringPeriod = computed(() => {
   return recurring ? recurring.billing_period : null;
 });
 
+// Same hints the public proposal shows on the plan screen: split the total
+// into the natural card instalments (6 or 12) and, when the cycle carries a
+// PIX discount, the à-vista price with the percent tag next to it.
+// Kept in sync with `Sales::CheckoutService::PIX_DISCOUNT_PERCENT` — a
+// bump there needs a bump here too.
+const INSTALLMENTS_BY_PERIOD = { semiannual: 6, annual: 12 };
+const PIX_DISCOUNT_BY_PERIOD = { semiannual: 5, annual: 10 };
+
+const installmentsHint = computed(() => {
+  const parts = INSTALLMENTS_BY_PERIOD[activeRecurringPeriod.value];
+  if (!parts) return null;
+  return `${parts}x de ${formatAmount((totals.value.total || 0) / parts)} no cartão de crédito`;
+});
+
+const pixCashHint = computed(() => {
+  const percent = PIX_DISCOUNT_BY_PERIOD[activeRecurringPeriod.value];
+  if (!percent) return null;
+  const discounted = Math.round(
+    (totals.value.total || 0) * (1 - percent / 100)
+  );
+  return { amount: discounted, percent };
+});
+
 const isPriceAllowed = price => {
   if (!activeRecurringPeriod.value) return true;
   if (!RECURRING_PERIODS.includes(price.billing_period)) return true;
@@ -913,6 +936,18 @@ const startOver = () => {
             >
               <span>Total</span>
               <span>{{ formatAmount(totals.total) }}</span>
+            </div>
+            <div
+              v-if="installmentsHint"
+              class="mt-1 text-right text-slate-900 text-base"
+            >
+              <div class="font-medium">{{ installmentsHint }}</div>
+              <div v-if="pixCashHint" class="text-sm">
+                ou à vista {{ formatAmount(pixCashHint.amount) }}
+                <span class="text-xs text-green-700">
+                  ({{ pixCashHint.percent }}% de desconto)
+                </span>
+              </div>
             </div>
           </div>
 

@@ -1,5 +1,7 @@
+<%= render 'steps', current: :reserve %>
+
 <div class="bg-white rounded-lg shadow p-6">
-  <h1 class="text-lg font-medium text-slate-900">Confirme seus dados</h1>
+  <h1 class="text-lg font-medium text-slate-900">Confirme seus dados para fazer a reserva</h1>
   <p class="text-sm text-slate-500 mt-1">
     Precisamos deles para darmos seguimento.
   </p>
@@ -75,7 +77,7 @@
       </div>
     </div>
 
-    <%= f.submit 'Continuar', class: 'mt-2 w-full px-3 py-2 rounded bg-woot-500 text-white text-sm cursor-pointer' %>
+    <%= f.submit 'Reservar condição', class: 'mt-2 w-full px-3 py-2 rounded bg-woot-500 text-white text-sm cursor-pointer' %>
   <% end %>
 </div>
 

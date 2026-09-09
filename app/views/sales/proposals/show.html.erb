@@ -1,14 +1,20 @@
-<%= render 'steps', current: :plan %>
+<%= render 'steps', current: :sign %>
 
 <div class="bg-white rounded-lg shadow p-6">
+  <% if @proposal.reservation_active? %>
+    <h2 class="text-base font-medium text-green-700 mb-1">
+      ✅ Condição reservada com sucesso!
+    </h2>
+  <% end %>
+
   <h1 class="text-lg font-medium text-slate-900">
     Proposta para <%= @proposal.prospect_name %>
   </h1>
 
   <% if @proposal.reservation_active? %>
     <p class="mt-1 text-sm text-green-700">
-      Condições reservadas até
-      <strong><%= proposal_datetime(@proposal.reserved_until) %></strong>.
+      Reservado até
+      <strong><%= l(@proposal.reserved_until.to_date, format: '%d/%m/%Y') %></strong>.
     </p>
   <% elsif @proposal.reserved_until.present? %>
     <p class="mt-1 text-sm text-yellow-700">
@@ -47,9 +53,29 @@
         <span>− <%= proposal_amount(@proposal.discount_amount) %></span>
       </div>
     <% end %>
-    <div class="flex justify-between text-slate-900 font-medium mt-2 text-base">
+    <%# On a semiannual/annual plan, the Total value is replaced by two
+        payment choices — the card instalments and the PIX à-vista price —
+        so the customer reads what they actually pay next to what the
+        proposal totals. Monthly plans keep the plain total. %>
+    <% installments = proposal_installment_hint(@proposal) %>
+    <% cash = proposal_pix_cash_hint(@proposal) %>
+    <div class="flex justify-between items-start text-slate-900 font-medium mt-2 text-base">
       <span>Total</span>
-      <span><%= proposal_amount(@proposal.total_amount) %></span>
+      <% if installments.present? %>
+        <span class="text-right">
+          <span class="block"><%= installments %></span>
+          <% if cash.present? %>
+            <span class="block font-normal text-sm">
+              ou à vista <%= proposal_amount(cash[:amount]) %>
+              <span class="text-xs text-green-700">
+                (<%= cash[:percent] %>% de desconto)
+              </span>
+            </span>
+          <% end %>
+        </span>
+      <% else %>
+        <span><%= proposal_amount(@proposal.total_amount) %></span>
+      <% end %>
     </div>
 
     <%= render 'monthly_note' %>
@@ -57,21 +83,27 @@
 
   <% if @proposal.reservation_active? %>
     <div class="mt-6 rounded bg-green-50 px-4 py-3" data-testid="countdown">
-      <p class="text-sm text-green-800">
-        Estas condições valem por
-        <strong><%= proposal_time_left(@proposal.reserved_until) %></strong>,
-        até <%= proposal_datetime(@proposal.reserved_until) %>.
-      </p>
       <% if @proposal.discount_amount.positive? %>
-        <p class="text-sm text-green-800 mt-1">
-          São
+        <p class="text-sm text-green-800">
+          Você garantiu
           <strong><%= proposal_amount(@proposal.discount_amount) %></strong>
-          de desconto garantidos até lá.
+          de desconto.
         </p>
       <% end %>
+      <p class="text-sm text-green-800<%= ' mt-1' if @proposal.discount_amount.positive? %>">
+        Essa condição ficará disponível por
+        <strong><%= proposal_time_left(@proposal.reserved_until) %></strong>.
+      </p>
     </div>
   <% end %>
 
-  <%= link_to 'Assinar', sales_proposal_checkout_path(@proposal.public_token),
-        class: 'mt-6 block w-full text-center px-3 py-2 rounded bg-woot-500 text-white text-sm' %>
+  <% if @proposal.reservation_active? %>
+    <p class="mt-6 text-xs text-slate-600 text-center">
+      Quer concluir a contratação agora?<br>
+      Você pode prosseguir para a assinatura agora ou retornar até o encerramento da reserva.
+    </p>
+  <% end %>
+
+  <%= link_to 'Prosseguir para assinatura', sales_proposal_checkout_path(@proposal.public_token),
+        class: 'mt-4 block w-full text-center px-3 py-2 rounded bg-woot-500 text-white text-sm' %>
 </div>
