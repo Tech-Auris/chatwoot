@@ -73,13 +73,13 @@ RSpec.describe Sales::ProposalsHelper do
     it 'splits an annual plan into 12x on the card' do
       quote = build(:sales_quote, billing_cycle: :annual, total_amount: 1_200_000)
 
-      expect(helper.proposal_installment_hint(quote)).to eq('ou 12x de R$ 1.000,00 no cartão')
+      expect(helper.proposal_installment_hint(quote)).to eq('12x de R$ 1.000,00 no cartão')
     end
 
     it 'splits a semiannual plan into 6x on the card' do
       quote = build(:sales_quote, billing_cycle: :semiannual, total_amount: 600_000)
 
-      expect(helper.proposal_installment_hint(quote)).to eq('ou 6x de R$ 1.000,00 no cartão')
+      expect(helper.proposal_installment_hint(quote)).to eq('6x de R$ 1.000,00 no cartão')
     end
 
     it 'has nothing to split on a monthly plan' do
@@ -92,6 +92,26 @@ RSpec.describe Sales::ProposalsHelper do
       quote = build(:sales_quote, billing_cycle: nil, total_amount: 89_700)
 
       expect(helper.proposal_installment_hint(quote)).to be_nil
+    end
+  end
+
+  describe '#proposal_pix_cash_hint' do
+    it 'discounts an annual plan by 10% for PIX' do
+      quote = build(:sales_quote, billing_cycle: :annual, total_amount: 1_000_000)
+
+      expect(helper.proposal_pix_cash_hint(quote)).to eq(amount: 900_000, percent: 10)
+    end
+
+    it 'discounts a semiannual plan by 5% for PIX' do
+      quote = build(:sales_quote, billing_cycle: :semiannual, total_amount: 600_000)
+
+      expect(helper.proposal_pix_cash_hint(quote)).to eq(amount: 570_000, percent: 5)
+    end
+
+    it 'has no PIX discount on monthly' do
+      quote = build(:sales_quote, billing_cycle: :monthly, total_amount: 89_700)
+
+      expect(helper.proposal_pix_cash_hint(quote)).to be_nil
     end
   end
 end

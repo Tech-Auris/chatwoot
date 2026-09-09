@@ -53,19 +53,28 @@
         <span>− <%= proposal_amount(@proposal.discount_amount) %></span>
       </div>
     <% end %>
-    <div class="flex justify-between text-slate-900 font-medium mt-2 text-base">
+    <%# On a semiannual/annual plan, the Total value is replaced by two
+        payment choices — the card instalments and the PIX à-vista price —
+        so the customer reads what they actually pay next to what the
+        proposal totals. Monthly plans keep the plain total. %>
+    <% installments = proposal_installment_hint(@proposal) %>
+    <% cash = proposal_pix_cash_hint(@proposal) %>
+    <div class="flex justify-between items-start text-slate-900 font-medium mt-2 text-base">
       <span>Total</span>
-      <span><%= proposal_amount(@proposal.total_amount) %></span>
+      <% if installments.present? %>
+        <span class="text-right">
+          <span class="block"><%= installments %></span>
+          <% if cash.present? %>
+            <span class="block text-green-700">
+              ou à vista <%= proposal_amount(cash[:amount]) %>
+              (<%= cash[:percent] %>% de desconto)
+            </span>
+          <% end %>
+        </span>
+      <% else %>
+        <span><%= proposal_amount(@proposal.total_amount) %></span>
+      <% end %>
     </div>
-
-    <%# For semiannual/annual plans, the equivalent card instalment gives the
-        prospect a monthly-ish reading of the total — the actual split still
-        happens at checkout. %>
-    <% if proposal_installment_hint(@proposal).present? %>
-      <p class="mt-2 text-xs text-slate-500 text-right">
-        <%= proposal_installment_hint(@proposal) %>
-      </p>
-    <% end %>
 
     <%= render 'monthly_note' %>
   </div>

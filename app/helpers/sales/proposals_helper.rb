@@ -101,6 +101,21 @@ module Sales::ProposalsHelper
     parts = BILLING_CYCLE_INSTALLMENTS[proposal.billing_cycle]
     return nil if parts.blank?
 
-    "ou #{parts}x de #{proposal_amount((proposal.total_amount || 0) / parts)} no cartão"
+    "#{parts}x de #{proposal_amount((proposal.total_amount || 0) / parts)} no cartão"
+  end
+
+  # The "or à vista" hint for plans that carry a PIX discount (semiannual
+  # 5%, annual 10%). Returns a hash `{ amount:, percent: }` with the
+  # already-discounted total in cents and the discount percent, or nil for
+  # plans that offer no à-vista discount (monthly today).
+  def proposal_pix_cash_hint(proposal)
+    return nil if proposal.billing_cycle.blank?
+
+    percent = Sales::CheckoutService.pix_discount_for(proposal.billing_cycle)
+    return nil if percent.to_i.zero?
+
+    total = proposal.total_amount || 0
+    discounted = total - ((total * percent) / 100.0).round
+    { amount: discounted, percent: percent }
   end
 end
