@@ -145,5 +145,22 @@ RSpec.describe 'Super admin restricted to Financeiro', type: :request do
 
       expect(response).to redirect_to('/super_admin/commercial/reservations')
     end
+
+    # The sales role's sidebar has to be trimmed to exactly what they can act
+    # on: the Commercial section, the client-facing app, MFA and logout.
+    # Every other console menu leaks paths their role would just refuse.
+    it 'sees only Commercial, Agent Dashboard, Two-factor auth and Logout' do # rubocop:disable RSpec/MultipleExpectations
+      get '/super_admin/commercial/reservations'
+
+      expect(response.body).to include('Commercial')
+      expect(response.body).to include('Agent Dashboard')
+      expect(response.body).to include('Two-factor auth')
+      expect(response.body).to include('Logout')
+      expect(response.body).not_to include('Financial')
+      expect(response.body).not_to include('Operations')
+      expect(response.body).not_to include('Reports')
+      expect(response.body).not_to include('Sidekiq Dashboard')
+      expect(response.body).not_to include('Platform Apps')
+    end
   end
 end
