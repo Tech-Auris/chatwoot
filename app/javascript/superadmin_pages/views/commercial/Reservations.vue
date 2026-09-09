@@ -107,6 +107,16 @@ const formatDate = value =>
 
 const statusLabel = status => STATUS_LABELS[status] || status;
 
+// Green marks the two "the prospect committed" states — a won deal and a
+// details_confirmed one (the prospect actually reserved). Everything else
+// stays neutral so the operator's eye lands on the ones already moving.
+const situationClass = reservation => {
+  if (reservation.won) return 'bg-green-50 text-green-700';
+  if (reservation.status === 'details_confirmed')
+    return 'bg-green-50 text-green-700';
+  return 'bg-slate-25 text-slate-600';
+};
+
 const isExpiring = reservation =>
   reservation.reservation_active &&
   new Date(reservation.reserved_until) - Date.now() < 3 * 24 * 60 * 60 * 1000;
@@ -347,11 +357,7 @@ const submitRenew = async () => {
           <td class="py-3">
             <span
               class="px-2 py-0.5 rounded text-xs"
-              :class="
-                reservation.won
-                  ? 'bg-green-50 text-green-700'
-                  : 'bg-slate-25 text-slate-600'
-              "
+              :class="situationClass(reservation)"
             >
               {{ reservation.won ? 'Ganho' : statusLabel(reservation.status) }}
             </span>
