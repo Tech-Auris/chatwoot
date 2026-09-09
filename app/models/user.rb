@@ -81,6 +81,19 @@ class User < ApplicationRecord
   validates :name, presence: true
   validates :email, presence: true
 
+  # A `super_admin_role` (Financial / Commercial today) only makes sense on
+  # a SuperAdmin STI row — a plain agent User carrying one would fool the
+  # `restricted?` gate on the console into letting the wrong reader in.
+  validate :super_admin_role_requires_super_admin_type
+
+  def super_admin_role_requires_super_admin_type
+    return if super_admin_role.blank?
+    return if type == 'SuperAdmin'
+
+    errors.add(:super_admin_role,
+               'só pode ser definido em usuários do tipo SuperAdmin')
+  end
+
   serialize :otp_backup_codes, type: Array
 
   # Encrypt sensitive MFA fields

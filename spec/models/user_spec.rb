@@ -370,4 +370,26 @@ RSpec.describe User do
       expect { user_with_tokens.save! }.to change(user_with_tokens.user_sessions, :count).by(-2)
     end
   end
+
+  # `super_admin_role` gates what a console reader can reach; giving one to
+  # a plain User would sneak them past the `restricted?` check without
+  # actually promoting them to SuperAdmin.
+  describe 'super_admin_role guard' do
+    it 'refuses to set a super_admin_role on a plain User' do
+      user = build(:user, super_admin_role: 'financial')
+
+      expect(user).not_to be_valid
+      expect(user.errors[:super_admin_role]).to be_present
+    end
+
+    it 'accepts a super_admin_role on a SuperAdmin' do
+      admin = build(:super_admin, super_admin_role: 'financial')
+
+      expect(admin).to be_valid
+    end
+
+    it 'is unaffected on a plain User with no role assigned' do
+      expect(build(:user)).to be_valid
+    end
+  end
 end
