@@ -76,13 +76,12 @@ RSpec.describe 'Super admin restricted to Financeiro', type: :request do
       expect(response.body).not_to include('Platform Apps')
     end
 
-    # The terms audit is the one Operations page a restricted console reaches;
-    # the health screens are not theirs.
-    it 'sees the terms audit under Operations, and nothing else there' do
+    # Operations sits outside finance's remit; hiding the whole menu keeps
+    # the sidebar to what the role actually acts on.
+    it 'does not see the Operations menu at all' do
       get '/super_admin/financial/invoices'
 
-      expect(response.body).to include('Terms of use')
-      expect(response.body).not_to include('Health Score')
+      expect(response.body).not_to include('Operations')
     end
   end
 
