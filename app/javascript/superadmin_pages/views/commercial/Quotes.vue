@@ -941,7 +941,7 @@ const startOver = () => {
               v-if="installmentsHint"
               class="mt-1 text-right text-slate-900 text-base"
             >
-              <div>{{ installmentsHint }}</div>
+              <div class="font-medium">{{ installmentsHint }}</div>
               <div v-if="pixCashHint">
                 ou à vista {{ formatAmount(pixCashHint.amount) }}
                 <span class="text-xs text-green-700">
