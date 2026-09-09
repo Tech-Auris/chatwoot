@@ -54,6 +54,7 @@ class UserDashboard < Administrate::BaseDashboard
     email
     accounts
     type
+    super_admin_role
   ].freeze
 
   # SHOW_PAGE_ATTRIBUTES
