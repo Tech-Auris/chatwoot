@@ -932,21 +932,22 @@ const startOver = () => {
               {{ totals.summary }}
             </p>
             <div
-              class="flex justify-between items-start text-slate-900 font-medium mt-2 text-base"
+              class="flex justify-between text-slate-900 font-medium mt-2 text-base"
             >
               <span>Total</span>
-              <template v-if="installmentsHint">
-                <span class="text-right">
-                  <span class="block">{{ installmentsHint }}</span>
-                  <span v-if="pixCashHint" class="block">
-                    ou à vista {{ formatAmount(pixCashHint.amount) }}
-                    <span class="text-xs text-green-700">
-                      ({{ pixCashHint.percent }}% de desconto)
-                    </span>
-                  </span>
+              <span>{{ formatAmount(totals.total) }}</span>
+            </div>
+            <div
+              v-if="installmentsHint"
+              class="mt-1 text-right text-slate-900 text-base"
+            >
+              <div>{{ installmentsHint }}</div>
+              <div v-if="pixCashHint">
+                ou à vista {{ formatAmount(pixCashHint.amount) }}
+                <span class="text-xs text-green-700">
+                  ({{ pixCashHint.percent }}% de desconto)
                 </span>
-              </template>
-              <span v-else>{{ formatAmount(totals.total) }}</span>
+              </div>
             </div>
           </div>
 
