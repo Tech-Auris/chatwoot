@@ -107,16 +107,25 @@ const formatDate = value =>
 
 const statusLabel = status => STATUS_LABELS[status] || status;
 
-// Green scale that reads as progress: the lighter tone marks the deal as
-// reserved by the prospect, the darker one marks it as paid, and the
-// darkest is the terminal "ganho". Everything else stays neutral so the
-// operator's eye lands on the ones already moving.
+// "Perdido" is a ClickUp-side terminal state — the proposal itself doesn't
+// carry a `lost` status, so we read it off `clickup_status`. Green scale
+// reads as progress toward "ganho": lighter tone for details_confirmed
+// (reserved), darker for paid, darkest for the terminal won. Everything
+// else stays neutral so the operator's eye lands on the ones moving.
+const isLost = reservation =>
+  reservation.clickup_status?.toLowerCase() === 'perdido';
 const situationClass = reservation => {
+  if (isLost(reservation)) return 'bg-red-50 text-red-700';
   if (reservation.won) return 'bg-green-200 text-green-900';
   if (reservation.status === 'paid') return 'bg-green-100 text-green-800';
   if (reservation.status === 'details_confirmed')
     return 'bg-green-50 text-green-600';
   return 'bg-slate-25 text-slate-600';
+};
+const situationLabel = reservation => {
+  if (isLost(reservation)) return 'Perdido';
+  if (reservation.won) return 'Ganho';
+  return statusLabel(reservation.status);
 };
 
 const isExpiring = reservation =>
@@ -361,7 +370,7 @@ const submitRenew = async () => {
               class="px-2 py-0.5 rounded text-xs"
               :class="situationClass(reservation)"
             >
-              {{ reservation.won ? 'Ganho' : statusLabel(reservation.status) }}
+              {{ situationLabel(reservation) }}
             </span>
           </td>
 
