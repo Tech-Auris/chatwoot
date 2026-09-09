@@ -1,13 +1,19 @@
-<%= render 'steps', current: :plan %>
+<%= render 'steps', current: :sign %>
 
 <div class="bg-white rounded-lg shadow p-6">
+  <% if @proposal.reservation_active? %>
+    <h2 class="text-base font-medium text-green-700 mb-1">
+      ✅ Condição reservada com sucesso!
+    </h2>
+  <% end %>
+
   <h1 class="text-lg font-medium text-slate-900">
     Proposta para <%= @proposal.prospect_name %>
   </h1>
 
   <% if @proposal.reservation_active? %>
     <p class="mt-1 text-sm text-green-700">
-      Condições reservadas até
+      Reservado até
       <strong><%= proposal_datetime(@proposal.reserved_until) %></strong>.
     </p>
   <% elsif @proposal.reserved_until.present? %>
@@ -52,26 +58,41 @@
       <span><%= proposal_amount(@proposal.total_amount) %></span>
     </div>
 
+    <%# For semiannual/annual plans, the equivalent card instalment gives the
+        prospect a monthly-ish reading of the total — the actual split still
+        happens at checkout. %>
+    <% if proposal_installment_hint(@proposal).present? %>
+      <p class="mt-2 text-xs text-slate-500 text-right">
+        <%= proposal_installment_hint(@proposal) %>
+      </p>
+    <% end %>
+
     <%= render 'monthly_note' %>
   </div>
 
   <% if @proposal.reservation_active? %>
     <div class="mt-6 rounded bg-green-50 px-4 py-3" data-testid="countdown">
-      <p class="text-sm text-green-800">
-        Estas condições valem por
-        <strong><%= proposal_time_left(@proposal.reserved_until) %></strong>,
-        até <%= proposal_datetime(@proposal.reserved_until) %>.
-      </p>
       <% if @proposal.discount_amount.positive? %>
-        <p class="text-sm text-green-800 mt-1">
-          São
+        <p class="text-sm text-green-800">
+          Você garantiu
           <strong><%= proposal_amount(@proposal.discount_amount) %></strong>
-          de desconto garantidos até lá.
+          de desconto.
         </p>
       <% end %>
+      <p class="text-sm text-green-800<%= ' mt-1' if @proposal.discount_amount.positive? %>">
+        Essa condição ficará disponível por
+        <strong><%= proposal_time_left(@proposal.reserved_until) %></strong>.
+      </p>
     </div>
   <% end %>
 
-  <%= link_to 'Assinar', sales_proposal_checkout_path(@proposal.public_token),
-        class: 'mt-6 block w-full text-center px-3 py-2 rounded bg-woot-500 text-white text-sm' %>
+  <% if @proposal.reservation_active? %>
+    <p class="mt-6 text-sm text-slate-600">
+      Quer concluir a contratação agora?<br>
+      Você pode prosseguir para a assinatura agora ou retornar até o encerramento da reserva.
+    </p>
+  <% end %>
+
+  <%= link_to 'Prosseguir para assinatura', sales_proposal_checkout_path(@proposal.public_token),
+        class: 'mt-4 block w-full text-center px-3 py-2 rounded bg-woot-500 text-white text-sm' %>
 </div>

@@ -66,7 +66,8 @@ RSpec.describe 'Public sales proposal', type: :request do
       get "/proposals/#{quote.public_token}"
 
       expect(response.body).to include(item.name)
-      expect(response.body).to include('Condições reservadas até')
+      expect(response.body).to include('Reservado até')
+      expect(response.body).to include('Condição reservada com sucesso')
     end
 
     # Whose number this is decides whether the customer can answer at all.
@@ -173,7 +174,7 @@ RSpec.describe 'Public sales proposal', type: :request do
       }
 
       follow_redirect!
-      expect(response.body).to include('Estas condições valem por')
+      expect(response.body).to include('Essa condição ficará disponível por')
       expect(response.body).to include(item.name)
     end
 
@@ -185,7 +186,8 @@ RSpec.describe 'Public sales proposal', type: :request do
       }
 
       follow_redirect!
-      expect(response.body).to include('de desconto garantidos até lá')
+      expect(response.body).to include('Você garantiu')
+      expect(response.body).to include('de desconto')
     end
 
     it 'refuses to take the data from someone who never unlocked the link' do
@@ -233,7 +235,7 @@ RSpec.describe 'Public sales proposal', type: :request do
     it 'shows the plan while there is nothing signed' do
       get "/proposals/#{quote.public_token}"
 
-      expect(response.body).to include('Assinar')
+      expect(response.body).to include('Prosseguir para assinatura')
     end
 
     # This is what sent a customer who had already signed back to the signature.
@@ -306,7 +308,7 @@ RSpec.describe 'Public sales proposal', type: :request do
 
       get "/proposals/#{quote.public_token}/acompanhamento"
 
-      expect(response.body).to include('2. Pagamento')
+      expect(response.body).to include('3. Pagamento')
       expect(response.body).to include('Aguardando a confirmação do seu PIX')
     end
   end

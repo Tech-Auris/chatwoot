@@ -89,4 +89,18 @@ module Sales::ProposalsHelper
     else "mais #{days} dias"
     end
   end
+
+  # The "or in 12x" hint on the plan/reservation card. Reads the natural
+  # split for the billing cycle (semiannual → 6, annual → 12); monthly
+  # plans return nil because the recurrence itself is the split.
+  BILLING_CYCLE_INSTALLMENTS = { 'semiannual' => 6, 'annual' => 12 }.freeze
+
+  def proposal_installment_hint(proposal)
+    return nil if proposal.billing_cycle.blank?
+
+    parts = BILLING_CYCLE_INSTALLMENTS[proposal.billing_cycle]
+    return nil if parts.blank?
+
+    "ou #{parts}x de #{proposal_amount((proposal.total_amount || 0) / parts)} no cartão"
+  end
 end
