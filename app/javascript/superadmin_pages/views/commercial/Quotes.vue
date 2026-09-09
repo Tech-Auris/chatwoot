@@ -247,7 +247,7 @@ const PIX_DISCOUNT_BY_PERIOD = { semiannual: 5, annual: 10 };
 const installmentsHint = computed(() => {
   const parts = INSTALLMENTS_BY_PERIOD[activeRecurringPeriod.value];
   if (!parts) return null;
-  return `${parts}x de ${formatAmount((totals.value.total || 0) / parts)} no cartão`;
+  return `${parts}x de ${formatAmount((totals.value.total || 0) / parts)} no cartão de crédito`;
 });
 
 const pixCashHint = computed(() => {

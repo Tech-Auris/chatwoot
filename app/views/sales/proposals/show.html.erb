@@ -65,7 +65,7 @@
         <span class="text-right">
           <span class="block"><%= installments %></span>
           <% if cash.present? %>
-            <span class="block">
+            <span class="block font-normal">
               ou à vista <%= proposal_amount(cash[:amount]) %>
               <span class="text-xs text-green-700">
                 (<%= cash[:percent] %>% de desconto)

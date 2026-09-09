@@ -73,13 +73,13 @@ RSpec.describe Sales::ProposalsHelper do
     it 'splits an annual plan into 12x on the card' do
       quote = build(:sales_quote, billing_cycle: :annual, total_amount: 1_200_000)
 
-      expect(helper.proposal_installment_hint(quote)).to eq('12x de R$ 1.000,00 no cartão')
+      expect(helper.proposal_installment_hint(quote)).to eq('12x de R$ 1.000,00 no cartão de crédito')
     end
 
     it 'splits a semiannual plan into 6x on the card' do
       quote = build(:sales_quote, billing_cycle: :semiannual, total_amount: 600_000)
 
-      expect(helper.proposal_installment_hint(quote)).to eq('6x de R$ 1.000,00 no cartão')
+      expect(helper.proposal_installment_hint(quote)).to eq('6x de R$ 1.000,00 no cartão de crédito')
     end
 
     it 'has nothing to split on a monthly plan' do

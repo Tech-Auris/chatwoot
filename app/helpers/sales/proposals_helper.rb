@@ -101,7 +101,7 @@ module Sales::ProposalsHelper
     parts = BILLING_CYCLE_INSTALLMENTS[proposal.billing_cycle]
     return nil if parts.blank?
 
-    "#{parts}x de #{proposal_amount((proposal.total_amount || 0) / parts)} no cartão"
+    "#{parts}x de #{proposal_amount((proposal.total_amount || 0) / parts)} no cartão de crédito"
   end
 
   # The "or à vista" hint for plans that carry a PIX discount (semiannual
