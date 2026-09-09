@@ -136,5 +136,14 @@ RSpec.describe 'Super admin restricted to Financeiro', type: :request do
 
       expect(response).to have_http_status(:success)
     end
+
+    # The dashboard isn't on the commercial allowlist, so landing there has to
+    # bounce to a page that IS on it — otherwise a fresh login loops on itself
+    # (ERR_TOO_MANY_REDIRECTS).
+    it 'is bounced from the console dashboard to a commercial page' do
+      get '/super_admin'
+
+      expect(response).to redirect_to('/super_admin/commercial/reservations')
+    end
   end
 end

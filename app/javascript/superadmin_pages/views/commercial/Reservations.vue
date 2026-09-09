@@ -16,8 +16,8 @@ const props = defineProps({
 // is. Only a converted proposal is a customer.
 const STATUS_LABELS = {
   draft: 'Rascunho',
-  reserved: 'Reservada',
-  details_confirmed: 'Dados confirmados',
+  reserved: 'Aguarda reserva',
+  details_confirmed: 'Reservada',
   signed: 'Termos assinados',
   paid: 'Paga',
   converted: 'Conta criada',

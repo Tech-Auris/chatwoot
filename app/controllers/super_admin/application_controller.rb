@@ -69,7 +69,10 @@ class SuperAdmin::ApplicationController < Administrate::ApplicationController
 
     # rubocop:disable Rails/I18nLocaleTexts
     if current_super_admin.commercial_only?
-      redirect_to super_admin_root_path, alert: 'Seu acesso é restrito à seção Comercial.'
+      # The dashboard itself is not on the commercial allowlist, so it can
+      # never be the destination — sending them there just re-triggers this
+      # filter and loops. Land them on the section's home instead.
+      redirect_to super_admin_commercial_reservations_path, alert: 'Seu acesso é restrito à seção Comercial.'
     else
       redirect_to super_admin_financial_invoices_path, alert: 'Seu acesso é restrito à seção Financeiro.'
     end
