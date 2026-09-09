@@ -8,6 +8,7 @@ class SuperAdmin::ApplicationController < Administrate::ApplicationController
   include ActionView::Helpers::TagHelper
   include ActionView::Context
   include SuperAdmin::NavigationHelper
+  include SuperAdminHomeRedirect
 
   helper_method :render_vue_component, :settings_open?, :settings_pages, :reports_open?, :reports_pages,
                 :financial_open?, :financial_pages,
@@ -72,9 +73,9 @@ class SuperAdmin::ApplicationController < Administrate::ApplicationController
       # The dashboard itself is not on the commercial allowlist, so it can
       # never be the destination — sending them there just re-triggers this
       # filter and loops. Land them on the section's home instead.
-      redirect_to super_admin_commercial_reservations_path, alert: 'Seu acesso é restrito à seção Comercial.'
+      redirect_to super_admin_home_path_for(current_super_admin), alert: 'Seu acesso é restrito à seção Comercial.'
     else
-      redirect_to super_admin_financial_invoices_path, alert: 'Seu acesso é restrito à seção Financeiro.'
+      redirect_to super_admin_home_path_for(current_super_admin), alert: 'Seu acesso é restrito à seção Financeiro.'
     end
     # rubocop:enable Rails/I18nLocaleTexts
   end

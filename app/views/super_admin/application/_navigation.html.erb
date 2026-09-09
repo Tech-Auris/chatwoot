@@ -85,10 +85,9 @@ as defined by the routes in the `admin/` namespace
   <div>
     <ul class="my-4">
       <%= render partial: "nav_item", locals: { icon: 'icon-mist-fill', url: sidekiq_web_url, label: 'Sidekiq Dashboard' } unless restricted %>
-      <%# Agent Dashboard is the client-facing app — the commercial role uses %>
-      <%# it to see the account they just closed; only the finance role is %>
-      <%# kept off it, since that role never touches the operations side.    %>
-      <%= render partial: "nav_item", locals: { icon: 'icon-dashboard-line', url: '/', label: 'Agent Dashboard' } unless financial_only %>
+      <%# The client-facing app — both restricted roles need to open the %>
+      <%# account they just handled from the console. %>
+      <%= render partial: "nav_item", locals: { icon: 'icon-dashboard-line', url: '/', label: 'Agent Dashboard' } %>
       <% if Chatwoot.mfa_enabled? %>
         <%= render partial: "nav_item", locals: { icon: 'icon-lock-line', url: super_admin_profile_mfa_url, label: 'Two-factor auth' } %>
       <% end %>
