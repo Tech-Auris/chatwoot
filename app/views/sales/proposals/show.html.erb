@@ -14,7 +14,7 @@
   <% if @proposal.reservation_active? %>
     <p class="mt-1 text-sm text-green-700">
       Reservado até
-      <strong><%= proposal_datetime(@proposal.reserved_until) %></strong>.
+      <strong><%= l(@proposal.reserved_until.to_date, format: '%d/%m/%Y') %></strong>.
     </p>
   <% elsif @proposal.reserved_until.present? %>
     <p class="mt-1 text-sm text-yellow-700">
@@ -87,7 +87,7 @@
   <% end %>
 
   <% if @proposal.reservation_active? %>
-    <p class="mt-6 text-sm text-slate-600">
+    <p class="mt-6 text-xs text-slate-600 text-center">
       Quer concluir a contratação agora?<br>
       Você pode prosseguir para a assinatura agora ou retornar até o encerramento da reserva.
     </p>
