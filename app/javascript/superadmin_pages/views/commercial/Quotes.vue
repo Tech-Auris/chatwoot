@@ -236,6 +236,29 @@ const activeRecurringPeriod = computed(() => {
   return recurring ? recurring.billing_period : null;
 });
 
+// Same hints the public proposal shows on the plan screen: split the total
+// into the natural card instalments (6 or 12) and, when the cycle carries a
+// PIX discount, the à-vista price with the percent tag next to it.
+// Kept in sync with `Sales::CheckoutService::PIX_DISCOUNT_PERCENT` — a
+// bump there needs a bump here too.
+const INSTALLMENTS_BY_PERIOD = { semiannual: 6, annual: 12 };
+const PIX_DISCOUNT_BY_PERIOD = { semiannual: 5, annual: 10 };
+
+const installmentsHint = computed(() => {
+  const parts = INSTALLMENTS_BY_PERIOD[activeRecurringPeriod.value];
+  if (!parts) return null;
+  return `${parts}x de ${formatAmount((totals.value.total || 0) / parts)} no cartão`;
+});
+
+const pixCashHint = computed(() => {
+  const percent = PIX_DISCOUNT_BY_PERIOD[activeRecurringPeriod.value];
+  if (!percent) return null;
+  const discounted = Math.round(
+    (totals.value.total || 0) * (1 - percent / 100)
+  );
+  return { amount: discounted, percent };
+});
+
 const isPriceAllowed = price => {
   if (!activeRecurringPeriod.value) return true;
   if (!RECURRING_PERIODS.includes(price.billing_period)) return true;
@@ -909,10 +932,21 @@ const startOver = () => {
               {{ totals.summary }}
             </p>
             <div
-              class="flex justify-between text-slate-900 font-medium mt-2 text-base"
+              class="flex justify-between items-start text-slate-900 font-medium mt-2 text-base"
             >
               <span>Total</span>
-              <span>{{ formatAmount(totals.total) }}</span>
+              <template v-if="installmentsHint">
+                <span class="text-right">
+                  <span class="block">{{ installmentsHint }}</span>
+                  <span v-if="pixCashHint" class="block">
+                    ou à vista {{ formatAmount(pixCashHint.amount) }}
+                    <span class="text-xs text-green-700">
+                      ({{ pixCashHint.percent }}% de desconto)
+                    </span>
+                  </span>
+                </span>
+              </template>
+              <span v-else>{{ formatAmount(totals.total) }}</span>
             </div>
           </div>
 
