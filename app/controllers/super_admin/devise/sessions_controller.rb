@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class SuperAdmin::Devise::SessionsController < Devise::SessionsController
+  include SuperAdminHomeRedirect
+
   def new
     self.resource = resource_class.new(sign_in_params)
   end
@@ -15,7 +17,7 @@ class SuperAdmin::Devise::SessionsController < Devise::SessionsController
 
     sign_in(:super_admin, @super_admin)
     flash.discard
-    redirect_to super_admin_users_path
+    redirect_to super_admin_home_path_for(@super_admin)
   end
 
   def destroy

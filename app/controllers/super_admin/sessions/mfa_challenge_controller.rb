@@ -1,4 +1,6 @@
 class SuperAdmin::Sessions::MfaChallengeController < ApplicationController
+  include SuperAdminHomeRedirect
+
   layout false
 
   before_action :load_pending_super_admin
@@ -11,7 +13,7 @@ class SuperAdmin::Sessions::MfaChallengeController < ApplicationController
       session.delete(:super_admin_pending_mfa_id)
       sign_in(:super_admin, @pending_super_admin)
       flash.discard
-      redirect_to super_admin_users_path
+      redirect_to super_admin_home_path_for(@pending_super_admin)
     else
       flash.now[:error] = I18n.t('errors.mfa.invalid_code')
       render :show, status: :unauthorized

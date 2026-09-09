@@ -14,7 +14,7 @@ RSpec.describe 'Super admin restricted to Financeiro', type: :request do
     before { sign_in(finance_admin, scope: :super_admin) }
 
     it 'reaches the Financeiro screens' do
-      get '/super_admin/financial/invoices'
+      get '/super_admin/financial/products'
 
       expect(response).to have_http_status(:success)
     end
@@ -24,26 +24,26 @@ RSpec.describe 'Super admin restricted to Financeiro', type: :request do
     it 'is turned away from the rest of the console' do
       get '/super_admin/accounts'
 
-      expect(response).to redirect_to('/super_admin/financial/invoices')
+      expect(response).to redirect_to('/super_admin/financial/products')
       expect(flash[:alert]).to include('Financeiro')
     end
 
     it 'is turned away from the console dashboard' do
       get '/super_admin'
 
-      expect(response).to redirect_to('/super_admin/financial/invoices')
+      expect(response).to redirect_to('/super_admin/financial/products')
     end
 
     it 'is turned away from the instance settings' do
       get '/super_admin/settings'
 
-      expect(response).to redirect_to('/super_admin/financial/invoices')
+      expect(response).to redirect_to('/super_admin/financial/products')
     end
 
     it 'is turned away from the users listing' do
       get '/super_admin/users'
 
-      expect(response).to redirect_to('/super_admin/financial/invoices')
+      expect(response).to redirect_to('/super_admin/financial/products')
     end
 
     # A section added later must not be reachable just because nobody
@@ -51,7 +51,7 @@ RSpec.describe 'Super admin restricted to Financeiro', type: :request do
     it 'is turned away from a section that is not on the list' do
       get '/super_admin/reports/health_score'
 
-      expect(response).to redirect_to('/super_admin/financial/invoices')
+      expect(response).to redirect_to('/super_admin/financial/products')
     end
 
     # Sidekiq Web is mounted outside the Administrate controllers, so the
@@ -69,20 +69,19 @@ RSpec.describe 'Super admin restricted to Financeiro', type: :request do
     end
 
     it 'sees only the Financial menu in the sidebar' do
-      get '/super_admin/financial/invoices'
+      get '/super_admin/financial/products'
 
       expect(response.body).to include('Financial')
       expect(response.body).not_to include('Sidekiq Dashboard')
       expect(response.body).not_to include('Platform Apps')
     end
 
-    # The terms audit is the one Operations page a restricted console reaches;
-    # the health screens are not theirs.
-    it 'sees the terms audit under Operations, and nothing else there' do
-      get '/super_admin/financial/invoices'
+    # Operations sits outside finance's remit; hiding the whole menu keeps
+    # the sidebar to what the role actually acts on.
+    it 'does not see the Operations menu at all' do
+      get '/super_admin/financial/products'
 
-      expect(response.body).to include('Terms of use')
-      expect(response.body).not_to include('Health Score')
+      expect(response.body).not_to include('Operations')
     end
   end
 
@@ -126,7 +125,7 @@ RSpec.describe 'Super admin restricted to Financeiro', type: :request do
     end
 
     it 'is turned away from the finance section' do
-      get '/super_admin/financial/invoices'
+      get '/super_admin/financial/products'
 
       expect(response).to have_http_status(:redirect)
     end
@@ -135,6 +134,32 @@ RSpec.describe 'Super admin restricted to Financeiro', type: :request do
       get '/super_admin/profile/mfa'
 
       expect(response).to have_http_status(:success)
+    end
+
+    # The dashboard isn't on the commercial allowlist, so landing there has to
+    # bounce to a page that IS on it — otherwise a fresh login loops on itself
+    # (ERR_TOO_MANY_REDIRECTS).
+    it 'is bounced from the console dashboard to a commercial page' do
+      get '/super_admin'
+
+      expect(response).to redirect_to('/super_admin/commercial/quotes')
+    end
+
+    # The sales role's sidebar has to be trimmed to exactly what they can act
+    # on: the Commercial section, the client-facing app, MFA and logout.
+    # Every other console menu leaks paths their role would just refuse.
+    it 'sees only Commercial, Agent Dashboard, Two-factor auth and Logout' do # rubocop:disable RSpec/MultipleExpectations
+      get '/super_admin/commercial/reservations'
+
+      expect(response.body).to include('Commercial')
+      expect(response.body).to include('Agent Dashboard')
+      expect(response.body).to include('Two-factor auth')
+      expect(response.body).to include('Logout')
+      expect(response.body).not_to include('Financial')
+      expect(response.body).not_to include('Operations')
+      expect(response.body).not_to include('Reports')
+      expect(response.body).not_to include('Sidekiq Dashboard')
+      expect(response.body).not_to include('Platform Apps')
     end
   end
 end

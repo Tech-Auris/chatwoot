@@ -60,9 +60,11 @@ as defined by the routes in the `admin/` namespace
 
     <ul class="my-4">
       <% financial_only = current_super_admin&.financial_only? %>
-      <%= render partial: "nav_item", locals: { icon: 'icon-grid-line', url: super_admin_root_url, label: 'Dashboard' } unless financial_only %>
+      <% commercial_only = current_super_admin&.commercial_only? %>
+      <% restricted = current_super_admin&.restricted? %>
+      <%= render partial: "nav_item", locals: { icon: 'icon-grid-line', url: super_admin_root_url, label: 'Dashboard' } unless restricted %>
       <% Administrate::Namespace.new(namespace).resources.each do |resource| %>
-        <% next if financial_only %>
+        <% next if restricted %>
         <% next if ["account_users", "access_tokens", "installation_configs", "dashboard", "devise/sessions", "app_configs", "instance_statuses", "settings", "profile/mfa", "sessions/mfa_challenge", "reports/inbox_status", "reports/health_score", "inboxes/baileys_connections", "push_diagnostics", "integrations/clickup", "integrations/stripe", "financial/products", "financial/customer_links", "financial/subscriptions", "financial/invoices", "financial/token_billings", "financial/coupons", "financial/pix_renewals", "commercial/quotes", "commercial/reservations", "terms_acceptances", "terms_acceptance_requests"].include?  resource.resource %>
         <% next if resource.resource == "platform_banners" && !ChatwootApp.chatwoot_cloud? %>
         <%= render partial: "nav_item", locals: {
@@ -73,19 +75,19 @@ as defined by the routes in the `admin/` namespace
         %>
 
       <% end %>
-      <%= render 'section_menu', title: 'Commercial', icon: 'icon-briefcase-line', pages: commercial_pages, open: commercial_open? %>
-      <%= render 'section_menu', title: 'Financial', icon: 'icon-money-dollar-circle-line', pages: financial_pages, open: financial_open? %>
-      <%= render 'section_menu', title: 'Operations', icon: 'icon-health-book-line', pages: operations_pages, open: operations_open? %>
-      <%= render 'section_menu', title: 'Reports', icon: 'icon-bar-chart-2-line', pages: reports_pages, open: reports_open? unless financial_only %>
-      <%= render 'settings_menu', open: settings_open? unless financial_only %>
+      <%= render 'section_menu', title: 'Commercial', icon: 'icon-briefcase-line', pages: commercial_pages, open: commercial_open? unless financial_only %>
+      <%= render 'section_menu', title: 'Financial', icon: 'icon-money-dollar-circle-line', pages: financial_pages, open: financial_open? unless commercial_only %>
+      <%= render 'section_menu', title: 'Operations', icon: 'icon-health-book-line', pages: operations_pages, open: operations_open? unless restricted %>
+      <%= render 'section_menu', title: 'Reports', icon: 'icon-bar-chart-2-line', pages: reports_pages, open: reports_open? unless restricted %>
+      <%= render 'settings_menu', open: settings_open? unless restricted %>
     </ul>
   </div>
   <div>
     <ul class="my-4">
-      <% unless current_super_admin&.financial_only? %>
-        <%= render partial: "nav_item", locals: { icon: 'icon-mist-fill', url: sidekiq_web_url, label: 'Sidekiq Dashboard' } %>
-        <%= render partial: "nav_item", locals: { icon: 'icon-dashboard-line', url: '/', label: 'Agent Dashboard' } %>
-      <% end %>
+      <%= render partial: "nav_item", locals: { icon: 'icon-mist-fill', url: sidekiq_web_url, label: 'Sidekiq Dashboard' } unless restricted %>
+      <%# The client-facing app — both restricted roles need to open the %>
+      <%# account they just handled from the console. %>
+      <%= render partial: "nav_item", locals: { icon: 'icon-dashboard-line', url: '/', label: 'Agent Dashboard' } %>
       <% if Chatwoot.mfa_enabled? %>
         <%= render partial: "nav_item", locals: { icon: 'icon-lock-line', url: super_admin_profile_mfa_url, label: 'Two-factor auth' } %>
       <% end %>

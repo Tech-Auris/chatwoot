@@ -16,8 +16,8 @@ const props = defineProps({
 // is. Only a converted proposal is a customer.
 const STATUS_LABELS = {
   draft: 'Rascunho',
-  reserved: 'Reservada',
-  details_confirmed: 'Dados confirmados',
+  reserved: 'Aguarda reserva',
+  details_confirmed: 'Reservada',
   signed: 'Termos assinados',
   paid: 'Paga',
   converted: 'Conta criada',
@@ -107,6 +107,27 @@ const formatDate = value =>
 
 const statusLabel = status => STATUS_LABELS[status] || status;
 
+// "Perdido" is a ClickUp-side terminal state — the proposal itself doesn't
+// carry a `lost` status, so we read it off `clickup_status`. Green scale
+// reads as progress toward "ganho": lighter tone for details_confirmed
+// (reserved), darker for paid, darkest for the terminal won. Everything
+// else stays neutral so the operator's eye lands on the ones moving.
+const isLost = reservation =>
+  reservation.clickup_status?.toLowerCase() === 'perdido';
+const situationClass = reservation => {
+  if (isLost(reservation)) return 'bg-red-50 text-red-700';
+  if (reservation.won) return 'bg-green-200 text-green-900';
+  if (reservation.status === 'paid') return 'bg-green-100 text-green-800';
+  if (reservation.status === 'details_confirmed')
+    return 'bg-green-50 text-green-600';
+  return 'bg-slate-25 text-slate-600';
+};
+const situationLabel = reservation => {
+  if (isLost(reservation)) return 'Perdido';
+  if (reservation.won) return 'Ganho';
+  return statusLabel(reservation.status);
+};
+
 const isExpiring = reservation =>
   reservation.reservation_active &&
   new Date(reservation.reserved_until) - Date.now() < 3 * 24 * 60 * 60 * 1000;
@@ -177,6 +198,67 @@ const wasCopied = (reservation, field) =>
 const reservationMessage = reservation => buildReservationMessage(reservation);
 const canCopyMessage = reservation =>
   isReservationMessageAvailable(reservation);
+
+// "Vencida" here means the deadline passed AND the deal has not been won yet
+// — a won deal is closed either way, no renewal to offer.
+const isExpired = reservation =>
+  !reservation.won &&
+  reservation.reserved_until &&
+  !reservation.reservation_active;
+
+const tomorrowIso = () => {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
+
+const renewTarget = ref(null);
+const renewDate = ref(tomorrowIso());
+const renewing = ref(false);
+
+const openRenew = reservation => {
+  renewTarget.value = reservation;
+  renewDate.value = tomorrowIso();
+  error.value = null;
+};
+
+const closeRenew = () => {
+  renewTarget.value = null;
+};
+
+const submitRenew = async () => {
+  if (!renewTarget.value || !renewDate.value) return;
+
+  renewing.value = true;
+  error.value = null;
+  try {
+    const res = await fetch(
+      `${props.componentData.quotes_url}/${renewTarget.value.id}/reserve`,
+      {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          'X-CSRF-Token':
+            document.querySelector('meta[name="csrf-token"]')?.content ?? '',
+        },
+        body: JSON.stringify({ reserved_until: renewDate.value }),
+      }
+    );
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+    closeRenew();
+    await fetchData();
+  } catch (e) {
+    error.value = e.message;
+  } finally {
+    renewing.value = false;
+  }
+};
 </script>
 
 <template>
@@ -286,13 +368,9 @@ const canCopyMessage = reservation =>
           <td class="py-3">
             <span
               class="px-2 py-0.5 rounded text-xs"
-              :class="
-                reservation.won
-                  ? 'bg-green-50 text-green-700'
-                  : 'bg-slate-25 text-slate-600'
-              "
+              :class="situationClass(reservation)"
             >
-              {{ reservation.won ? 'Ganho' : statusLabel(reservation.status) }}
+              {{ situationLabel(reservation) }}
             </span>
           </td>
 
@@ -326,7 +404,7 @@ const canCopyMessage = reservation =>
             <button
               v-else
               type="button"
-              class="px-2 py-1 rounded border border-slate-200 text-slate-600 text-xs whitespace-nowrap disabled:opacity-40"
+              class="px-1.5 py-0.5 rounded border border-slate-200 text-slate-600 text-[10px] whitespace-nowrap disabled:opacity-40"
               :disabled="busyId === reservation.id"
               title="Para quem pagou por PIX e não tem cartão. O consumo passa a ser cobrado por fatura."
               @click="waiveTokenCard(reservation)"
@@ -336,7 +414,7 @@ const canCopyMessage = reservation =>
           </td>
 
           <td class="py-3 text-right">
-            <div class="flex gap-2 justify-end">
+            <div class="flex gap-1.5 justify-end">
               <!-- Same composed WhatsApp message the Quotes screen offers,
                    so a seller who needs to re-send the reservation link
                    pastes exactly the copy the team agreed on. Disabled
@@ -344,7 +422,7 @@ const canCopyMessage = reservation =>
                    has a "até X" sentence that only reads right with an X. -->
               <button
                 type="button"
-                class="px-2 py-1 rounded border border-slate-200 text-slate-600 text-xs whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
+                class="px-1.5 py-0.5 rounded border border-slate-200 text-slate-600 text-[10px] whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
                 :disabled="!canCopyMessage(reservation)"
                 :title="
                   canCopyMessage(reservation)
@@ -361,16 +439,14 @@ const canCopyMessage = reservation =>
               </button>
               <button
                 type="button"
-                class="px-2 py-1 rounded border border-slate-200 text-slate-600 text-xs whitespace-nowrap"
+                class="px-1.5 py-0.5 rounded border border-slate-200 text-slate-600 text-[10px] whitespace-nowrap"
                 @click="copy(reservation, 'link', reservation.public_url)"
               >
-                {{
-                  wasCopied(reservation, 'link') ? 'Copiado!' : 'Copiar link'
-                }}
+                {{ wasCopied(reservation, 'link') ? 'Copiado!' : 'Link' }}
               </button>
               <button
                 type="button"
-                class="px-2 py-1 rounded border border-slate-200 text-slate-600 text-xs whitespace-nowrap"
+                class="px-1.5 py-0.5 rounded border border-slate-200 text-slate-600 text-[10px] whitespace-nowrap"
                 :title="`Código de acesso: ${reservation.access_code}`"
                 @click="copy(reservation, 'code', reservation.access_code)"
               >
@@ -379,6 +455,18 @@ const canCopyMessage = reservation =>
                     ? 'Copiado!'
                     : reservation.access_code
                 }}
+              </button>
+              <!-- Only appears on a past-deadline reservation. Opens a modal
+                   with a new deadline; posts to the same reserve endpoint
+                   the wizard uses (Sales::ReserveQuoteService handles both
+                   first-reserve and renewal). -->
+              <button
+                v-if="isExpired(reservation)"
+                type="button"
+                class="px-1.5 py-0.5 rounded border border-woot-200 text-woot-600 text-[10px] whitespace-nowrap"
+                @click="openRenew(reservation)"
+              >
+                Renovar
               </button>
             </div>
           </td>
@@ -419,6 +507,52 @@ const canCopyMessage = reservation =>
       >
         Próxima
       </button>
+    </div>
+
+    <!-- Renew modal: the reserve endpoint (Sales::ReserveQuoteService) handles
+         both first-reserve and re-reserve, so all this needs is a new date. -->
+    <div
+      v-if="renewTarget"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
+      @click.self="closeRenew"
+    >
+      <div class="bg-white rounded shadow-lg w-full max-w-sm p-5">
+        <h2 class="text-base font-medium text-slate-900">
+          Renovar reserva de {{ renewTarget.prospect_name }}
+        </h2>
+        <p class="text-sm text-slate-500 mt-1">
+          Informe a nova data de vencimento da reserva.
+        </p>
+
+        <label class="block mt-4 text-sm text-slate-600">
+          Reservar até
+          <input
+            v-model="renewDate"
+            type="date"
+            class="mt-1 block w-full text-sm border border-slate-200 rounded px-2 py-1.5 focus:border-woot-500 focus:outline-none"
+            :min="tomorrowIso()"
+          />
+        </label>
+
+        <div class="flex justify-end gap-2 mt-5">
+          <button
+            type="button"
+            class="px-3 py-1.5 text-sm rounded border border-slate-200 text-slate-600"
+            :disabled="renewing"
+            @click="closeRenew"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="px-3 py-1.5 text-sm rounded bg-woot-500 text-white disabled:opacity-40"
+            :disabled="renewing || !renewDate"
+            @click="submitRenew"
+          >
+            {{ renewing ? 'Renovando…' : 'Renovar' }}
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
