@@ -35,18 +35,34 @@ class SuperAdmin::TermsAcceptanceRequestsController < SuperAdmin::ApplicationCon
   # Includes accounts WITHOUT any manager on purpose: the wizard renders them
   # as a warning row ("no manager registered — this account will be skipped")
   # so the super admin is told what the campaign will and won't reach.
+  #
+  # Two exclusions: suspended accounts drop entirely (nothing to reach on
+  # them), and internal Auris team members do not count as managers of a
+  # customer account — a campaign that asked them to sign would misplace
+  # the audit trail.
+  INTERNAL_MANAGER_EMAIL_DOMAINS = %w[agenteauris.com.br auris.com.br].freeze
+
   def manager_roster
     managers_by_account = AccountUser.where(role: :manager)
                                      .includes(:user)
                                      .group_by(&:account_id)
-    grouped = Account.order(:name).map do |account|
-      managers = (managers_by_account[account.id] || []).map do |au|
-        { account_user_id: au.id, user_id: au.user_id,
-          name: au.user.available_name, email: au.user.email }
-      end
+    grouped = Account.active.order(:name).map do |account|
+      managers = (managers_by_account[account.id] || [])
+                 .reject { |au| internal_email?(au.user.email) }
+                 .map do |au|
+                   { account_user_id: au.id, user_id: au.user_id,
+                     name: au.user.available_name, email: au.user.email }
+                 end
       { account_id: account.id, account_name: account.name, managers: managers }
     end
     render json: { accounts: grouped }
+  end
+
+  def internal_email?(email)
+    return false if email.blank?
+
+    domain = email.to_s.split('@').last.to_s.downcase
+    INTERNAL_MANAGER_EMAIL_DOMAINS.include?(domain)
   end
 
   def create # rubocop:disable Metrics/MethodLength, Metrics/AbcSize

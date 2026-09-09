@@ -69,6 +69,38 @@ RSpec.describe 'Super Admin Terms Acceptance Requests', type: :request do
       # can render a warning row saying the account will be skipped.
       expect(other_row['managers']).to eq([])
     end
+
+    # A suspended account is not on the roster — the campaign has nothing
+    # to reach on it, so listing it (even as "sem gerente") would only be
+    # noise for the operator.
+    it 'skips suspended accounts entirely' do
+      manager_au
+      dropped = create(:account, name: 'Suspensa', status: :suspended)
+
+      get '/super_admin/terms_acceptance_requests/manager_roster'
+
+      account_ids = response.parsed_body['accounts'].pluck('account_id')
+      expect(account_ids).not_to include(dropped.id)
+    end
+
+    # Internal Auris users are not customer managers; asking them to sign a
+    # customer's terms would misplace the audit trail. Excluded from the
+    # picker even when their account_user role is `manager` on a customer
+    # account.
+    it 'excludes internal Auris team members from the manager list' do
+      manager_au
+      internal = create(:user, account: account, email: 'suporte@agenteauris.com.br')
+      account.account_users.find_by(user: internal).update!(role: :manager)
+      internal_alt = create(:user, account: account, email: 'tech@auris.com.br')
+      account.account_users.find_by(user: internal_alt).update!(role: :manager)
+
+      get '/super_admin/terms_acceptance_requests/manager_roster'
+
+      row = response.parsed_body['accounts'].find { |r| r['account_id'] == account.id }
+      emails = row['managers'].pluck('email')
+      expect(emails).to include(manager.email)
+      expect(emails).not_to include('suporte@agenteauris.com.br', 'tech@auris.com.br')
+    end
   end
 
   describe 'POST /super_admin/terms_acceptance_requests/:id/cancel_account' do
