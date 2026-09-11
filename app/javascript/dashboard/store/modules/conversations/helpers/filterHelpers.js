@@ -79,6 +79,14 @@ const getValueFromConversation = (conversation, attributeKey) => {
       return conversation.inbox_id;
     case 'team_id':
       return conversation.meta?.team?.id;
+    case 'funnel_stage_id':
+      // The serializer nests the stage as `funnel_stage: { id, name, color }`;
+      // there is no top-level `funnel_stage_id`. Without this branch the
+      // helper falls into `default` and returns null, and the client-side
+      // re-filter throws out every conversation the backend has already
+      // matched — the "Etapa do funil" filter and the saved folders that
+      // use it all show empty.
+      return conversation.funnel_stage?.id;
     case 'browser_language':
     case 'referer':
       return conversation.additional_attributes?.[attributeKey];
