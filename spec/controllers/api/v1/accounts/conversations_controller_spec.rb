@@ -1176,6 +1176,21 @@ RSpec.describe 'Conversations API', type: :request do
         expect(response).to have_http_status(:too_many_requests)
         expect(response.headers['Retry-After']).to eq(Conversations::TranscriptPdfService::ACQUIRE_TIMEOUT.to_s)
       end
+
+      # A single bad message used to bubble up as an uncaught 500. The user got a
+      # generic toast and Sentry had a stack trace with no conversation id. Now
+      # the controller logs the conversation id explicitly and returns a
+      # structured JSON error the frontend can key on.
+      it 'returns 500 with a payload identifying the failure when the service raises' do
+        allow(Conversations::TranscriptPdfService).to receive(:new).with(conversation: conversation).and_return(service)
+        allow(service).to receive(:perform).and_raise(StandardError, 'boom')
+
+        get "/api/v1/accounts/#{account.id}/conversations/#{conversation.display_id}/transcript_pdf",
+            headers: agent.create_new_auth_token
+
+        expect(response).to have_http_status(:internal_server_error)
+        expect(response.parsed_body['error']).to eq('transcript_pdf_failed')
+      end
     end
   end
 

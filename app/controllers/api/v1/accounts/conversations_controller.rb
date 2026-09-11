@@ -97,6 +97,15 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
     response.headers['Retry-After'] = Conversations::TranscriptPdfService::ACQUIRE_TIMEOUT.to_s
     render json: { error: 'Too many transcript downloads in flight. Please try again in a few seconds.' },
            status: :too_many_requests
+  rescue StandardError => e
+    # A single bad message or attachment kills the whole PDF, and without the
+    # conversation on the log line the operator has no way to find which one.
+    Rails.logger.error(
+      "TranscriptPdf failed for conversation #{@conversation.display_id} " \
+      "(account #{@conversation.account_id}): #{e.class} - #{e.message}"
+    )
+    ChatwootExceptionTracker.new(e, user: current_user, account: @conversation.account).capture_exception
+    render json: { error: 'transcript_pdf_failed' }, status: :internal_server_error
   end
 
   def toggle_status
