@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_09_08_120000) do
+ActiveRecord::Schema[7.1].define(version: 2026_09_11_120000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -18,13 +18,6 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_08_120000) do
   enable_extension "plpgsql"
   enable_extension "unaccent"
   enable_extension "vector"
-
-  # Custom SQL functions (required before index creation)
-  execute <<~SQL
-    CREATE OR REPLACE FUNCTION f_unaccent(text)
-      RETURNS text LANGUAGE sql IMMUTABLE PARALLEL SAFE STRICT
-      AS $func$ SELECT public.unaccent('public.unaccent', $1) $func$
-  SQL
 
   create_table "access_tokens", force: :cascade do |t|
     t.string "owner_type"
@@ -95,7 +88,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_08_120000) do
     t.jsonb "settings", default: {}
     t.decimal "average_ticket", precision: 12, scale: 2
     t.boolean "funnel_enabled", default: false, null: false
-    t.boolean "ai_status_uses_attribute", default: false, null: false
+    t.boolean "ai_status_uses_attribute", default: true, null: false
     t.boolean "multi_language_ai", default: false, null: false
     t.boolean "inbox_view_menu_enabled", default: false, null: false
     t.boolean "help_center_menu_enabled", default: false, null: false

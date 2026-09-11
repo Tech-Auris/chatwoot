@@ -9,7 +9,7 @@
 #  id                          :bigint           not null, primary key
 #  deadline_at                 :datetime
 #  ip_address                  :string
-#  kind                        :integer          default(0), not null
+#  kind                        :integer          default("signature"), not null
 #  request_token               :string
 #  requested_at                :datetime
 #  required                    :boolean          default(FALSE), not null

@@ -3,7 +3,7 @@
 # Table name: accounts
 #
 #  id                               :integer          not null, primary key
-#  ai_status_uses_attribute         :boolean          default(FALSE), not null
+#  ai_status_uses_attribute         :boolean          default(TRUE), not null
 #  auto_resolve_duration            :integer
 #  average_ticket                   :decimal(12, 2)
 #  campaigns_live_chat_menu_enabled :boolean          default(FALSE), not null

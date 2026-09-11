@@ -54,6 +54,8 @@ RSpec.describe 'Label API', type: :request do
       context 'when the account is still on the label-based AI status' do
         let!(:legacy_label) { create(:label, account: account, title: 'agente-off') }
 
+        before { account.update!(ai_status_uses_attribute: false) }
+
         it 'still returns the agente-off label' do
           get "/api/v1/accounts/#{account.id}/labels",
               headers: agent.create_new_auth_token,

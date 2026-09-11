@@ -597,7 +597,12 @@ describe Conversations::FilterService do
     end
 
     context 'when the account still stores the AI status on the legacy label' do
-      before { ai_off_conversation.update!(label_list: ['agente-off']) }
+      before do
+        # The account default flipped to attribute mode; opt this context back
+        # into the legacy label mode so the branch under test is exercised.
+        account.update!(ai_status_uses_attribute: false)
+        ai_off_conversation.update!(label_list: ['agente-off'])
+      end
 
       it 'returns the conversations carrying the agente-off label' do
         result = filter_service.new(params, admin, account).perform
