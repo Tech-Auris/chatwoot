@@ -104,6 +104,21 @@ RSpec.describe Sales::QuoteCalculatorService do
       expect(result.discount).to eq(0)
       expect(result.summary).to be_nil
     end
+
+    # The same product ships under a second name in Stripe production
+    # ("Desenvolvimento de Integração API"). The waiver has to catch both,
+    # otherwise the checkbox appears but does nothing on the newer name.
+    it 'also waives the line named "Desenvolvimento de Integração API"' do
+      cart_with_alt_name = [
+        { unit_amount: 89_700, quantity: 1, name: 'Plataforma Auris' },
+        { unit_amount: 50_000, quantity: 1, name: 'Desenvolvimento de Integração API' }
+      ]
+      result = calculate(cart_with_alt_name, api_integration_waived: true)
+
+      expect(result.discount).to eq(50_000)
+      expect(result.total).to eq(89_700)
+      expect(result.summary).to include('isenção integração via API')
+    end
   end
 
   # Stripe coupons scoped to specific products (`applies_to.products`) are

@@ -23,13 +23,21 @@ const meetingDiscountPercent = ref(10);
 
 const cart = ref([]);
 const meetingDiscount = ref(false);
-// When on, subtracts the whole "Integração via API" line from the total —
-// the seller opts in when the deal was negotiated without that scope.
+// When on, subtracts the whole API-integration line from the total — the
+// seller opts in when the deal was negotiated without that scope.
 const apiIntegrationWaived = ref(false);
-// Matched by exact product name — same constant the backend calculator uses.
-const API_INTEGRATION_ITEM_NAME = 'Integração via API';
+// Matched by product name (case-insensitive), mirrors the backend list.
+// The same product ships under different names in Stripe historically
+// ("Integração via API") and now ("Desenvolvimento de Integração API");
+// both are eligible for the waiver so the checkbox appears in either case.
+const API_INTEGRATION_ITEM_NAMES = [
+  'integração via api',
+  'desenvolvimento de integração api',
+];
 const cartHasApiIntegration = computed(() =>
-  cart.value.some(item => item.name === API_INTEGRATION_ITEM_NAME)
+  cart.value.some(item =>
+    API_INTEGRATION_ITEM_NAMES.includes((item.name || '').toLowerCase())
+  )
 );
 // When the API line leaves the cart the checkbox no longer makes sense; drop
 // the flag too so a stale "on" state doesn't rebound if the item is re-added.

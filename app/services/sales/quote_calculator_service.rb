@@ -17,11 +17,15 @@
 #   4. PIX runs at the payment step on the sum still on the table.
 class Sales::QuoteCalculatorService
   MEETING_DISCOUNT_PERCENT = 10
-  # Matched by exact product name — the seller opts in through a checkbox
-  # in the plan builder and the whole line comes off the total. A rename
-  # on the Stripe side needs a matching bump here; kept as a constant so
-  # a rename is a one-line change.
-  API_INTEGRATION_ITEM_NAME = 'Integração via API'.freeze
+  # Product names the "Isentar Integração via API" checkbox waives. The list
+  # exists because the same product ships under different names in Stripe —
+  # historically "Integração via API" and, more recently, "Desenvolvimento
+  # de Integração API". Any line whose name matches (case-insensitive, exact)
+  # is subtracted whole; renames or new variants land here as one more entry.
+  API_INTEGRATION_ITEM_NAMES = [
+    'Integração via API',
+    'Desenvolvimento de Integração API'
+  ].map(&:downcase).freeze
 
   Result = Struct.new(:subtotal, :discount, :total, :summary, keyword_init: true)
 
@@ -79,7 +83,7 @@ class Sales::QuoteCalculatorService
   def api_integration_part
     return nil unless api_integration_waived
 
-    amount = items.select { |item| item[:name].to_s == API_INTEGRATION_ITEM_NAME }
+    amount = items.select { |item| API_INTEGRATION_ITEM_NAMES.include?(item[:name].to_s.downcase) }
                   .sum { |item| line_total(item) }
     return nil if amount.zero?
 
