@@ -3,7 +3,7 @@
 # Table name: accounts
 #
 #  id                               :integer          not null, primary key
-#  ai_status_uses_attribute         :boolean          default(FALSE), not null
+#  ai_status_uses_attribute         :boolean          default(TRUE), not null
 #  auto_resolve_duration            :integer
 #  average_ticket                   :decimal(12, 2)
 #  campaigns_live_chat_menu_enabled :boolean          default(FALSE), not null
@@ -17,7 +17,7 @@
 #  inbox_view_menu_enabled          :boolean          default(FALSE), not null
 #  internal_attributes              :jsonb            not null
 #  limits                           :jsonb
-#  locale                           :integer          default("en")
+#  locale                           :integer          default("pt_BR")
 #  multi_language_ai                :boolean          default(FALSE), not null
 #  name                             :string           not null
 #  settings                         :jsonb

@@ -5,6 +5,32 @@
 # (deadline, expiry, closure) independent of the individual signatures it
 # produces — one campaign fans out into many acceptances, one per required
 # manager per account, and the report rolls them up back to the campaign.
+# == Schema Information
+#
+# Table name: terms_acceptance_requests
+#
+#  id               :bigint           not null, primary key
+#  deadline_at      :datetime         not null
+#  document_date    :date             not null
+#  kind             :integer          default("update"), not null
+#  status           :integer          default("open"), not null
+#  created_at       :datetime         not null
+#  updated_at       :datetime         not null
+#  created_by_id    :bigint           not null
+#  terms_version_id :bigint           not null
+#
+# Indexes
+#
+#  index_terms_acceptance_requests_on_created_by_id     (created_by_id)
+#  index_terms_acceptance_requests_on_deadline_at       (deadline_at)
+#  index_terms_acceptance_requests_on_status            (status)
+#  index_terms_acceptance_requests_on_terms_version_id  (terms_version_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (created_by_id => users.id)
+#  fk_rails_...  (terms_version_id => terms_versions.id)
+#
 class TermsAcceptanceRequest < ApplicationRecord
   belongs_to :terms_version
   belongs_to :created_by, class_name: 'SuperAdmin'

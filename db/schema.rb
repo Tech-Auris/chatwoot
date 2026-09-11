@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_09_08_120000) do
+ActiveRecord::Schema[7.1].define(version: 2026_09_11_120001) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -83,7 +83,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_08_120000) do
     t.string "name", null: false
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
-    t.integer "locale", default: 0
+    t.integer "locale", default: 16
     t.string "domain", limit: 100
     t.string "support_email", limit: 100
     t.bigint "feature_flags", default: 0, null: false
@@ -95,7 +95,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_08_120000) do
     t.jsonb "settings", default: {}
     t.decimal "average_ticket", precision: 12, scale: 2
     t.boolean "funnel_enabled", default: false, null: false
-    t.boolean "ai_status_uses_attribute", default: false, null: false
+    t.boolean "ai_status_uses_attribute", default: true, null: false
     t.boolean "multi_language_ai", default: false, null: false
     t.boolean "inbox_view_menu_enabled", default: false, null: false
     t.boolean "help_center_menu_enabled", default: false, null: false

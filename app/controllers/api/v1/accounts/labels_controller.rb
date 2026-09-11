@@ -1,6 +1,12 @@
 class Api::V1::Accounts::LabelsController < Api::V1::Accounts::BaseController
   PROTECTED_LABEL_TITLES = %w[agente-off].freeze
   PROTECTED_LABEL_PREFIXES = %w[kb-].freeze
+  # The label that used to drive the AI on/off contract before the account
+  # migrated to the `ai_enabled` column. Kept in the database (historical
+  # tags on old conversations stay attached), but hidden from the listing so
+  # the picker and the sidebar do not offer a label that no longer wires
+  # anything up.
+  LEGACY_AI_STATUS_LABEL = 'agente-off'.freeze
 
   before_action :current_account
   before_action :fetch_label, except: [:index, :create]
@@ -9,6 +15,7 @@ class Api::V1::Accounts::LabelsController < Api::V1::Accounts::BaseController
 
   def index
     @labels = policy_scope(Current.account.labels)
+    @labels = @labels.where.not(title: LEGACY_AI_STATUS_LABEL) if Current.account.ai_status_uses_attribute?
   end
 
   def show; end
