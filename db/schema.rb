@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_09_11_120000) do
+ActiveRecord::Schema[7.1].define(version: 2026_09_11_120001) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -18,6 +18,13 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_11_120000) do
   enable_extension "plpgsql"
   enable_extension "unaccent"
   enable_extension "vector"
+
+  # Custom SQL functions (required before index creation)
+  execute <<~SQL
+    CREATE OR REPLACE FUNCTION f_unaccent(text)
+      RETURNS text LANGUAGE sql IMMUTABLE PARALLEL SAFE STRICT
+      AS $func$ SELECT public.unaccent('public.unaccent', $1) $func$
+  SQL
 
   create_table "access_tokens", force: :cascade do |t|
     t.string "owner_type"
@@ -76,7 +83,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_11_120000) do
     t.string "name", null: false
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
-    t.integer "locale", default: 0
+    t.integer "locale", default: 16
     t.string "domain", limit: 100
     t.string "support_email", limit: 100
     t.bigint "feature_flags", default: 0, null: false

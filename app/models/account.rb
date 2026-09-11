@@ -17,7 +17,7 @@
 #  inbox_view_menu_enabled          :boolean          default(FALSE), not null
 #  internal_attributes              :jsonb            not null
 #  limits                           :jsonb
-#  locale                           :integer          default("en")
+#  locale                           :integer          default("pt_BR")
 #  multi_language_ai                :boolean          default(FALSE), not null
 #  name                             :string           not null
 #  settings                         :jsonb
