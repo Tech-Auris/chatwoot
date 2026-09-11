@@ -45,7 +45,7 @@ class Sales::ReservationMessageBuilder
   def self.format_deadline(time)
     return '' if time.blank?
 
-    "#{time.strftime('%d/%m/%Y')} às #{time.strftime('%H:%M')}"
+    time.strftime('%d/%m/%Y')
   end
 
   # Services do not carry a `request`, so URL helpers need the host

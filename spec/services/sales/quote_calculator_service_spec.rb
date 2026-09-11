@@ -87,15 +87,59 @@ RSpec.describe Sales::QuoteCalculatorService do
       expect(result.summary).to include('isenção integração via API')
     end
 
-    it 'stacks with the meeting discount' do
+    # The waiver runs before the meeting %, so the 10% only chews the line
+    # that survived it. Otherwise the seller would double-discount the
+    # zeroed-out item.
+    it 'stacks with the meeting discount, calculating the % after the waiver' do
       result = calculate(cart_with_api, meeting_discount: true, api_integration_waived: true)
 
-      expect(result.discount).to eq(13_970 + 50_000)
-      expect(result.summary).to eq('10% reunião + isenção integração via API')
+      # subtotal 139_700 → waiver 50_000 → eligible 89_700 → meeting 8_970.
+      expect(result.discount).to eq(8_970 + 50_000)
+      expect(result.summary).to eq('isenção integração via API + 10% reunião')
     end
 
     it 'is a no-op when the cart has no API integration item' do
       result = calculate(cart, api_integration_waived: true)
+
+      expect(result.discount).to eq(0)
+      expect(result.summary).to be_nil
+    end
+  end
+
+  # Stripe coupons scoped to specific products (`applies_to.products`) are
+  # the way the operator sets up product-level waivers ("Isenção da
+  # Implantação — 100%"). The percentage only touches the lines whose
+  # `stripe_product_id` matches — applying it over the whole cart was
+  # zeroing out unrelated items.
+  describe 'coupon scoped to specific products' do
+    let(:cart_with_setup) do
+      [{ unit_amount: 89_700, quantity: 1, name: 'Plataforma Auris', stripe_product_id: 'prod_platform' },
+       { unit_amount: 30_000, quantity: 1, name: 'Implantação', stripe_product_id: 'prod_setup' }]
+    end
+    let(:scoped_coupon) do
+      { id: 'setup_waiver', name: 'Isenção da Implantação', percent_off: 100, applies_to_products: ['prod_setup'] }
+    end
+
+    it 'only discounts the matching line, not the whole cart' do
+      result = calculate(cart_with_setup, coupon: scoped_coupon)
+
+      # subtotal 119_700; the scoped waiver only takes off the 30_000 setup line.
+      expect(result.discount).to eq(30_000)
+      expect(result.total).to eq(89_700)
+      expect(result.summary).to eq('cupom Isenção da Implantação (100%)')
+    end
+
+    it 'runs the meeting discount on what is left after the scoped waiver' do
+      result = calculate(cart_with_setup, meeting_discount: true, coupon: scoped_coupon)
+
+      # subtotal 119_700 → waiver 30_000 → eligible 89_700 → meeting 8_970.
+      expect(result.discount).to eq(30_000 + 8_970)
+      expect(result.total).to eq(80_730)
+      expect(result.summary).to eq('cupom Isenção da Implantação (100%) + 10% reunião')
+    end
+
+    it 'is a no-op when the cart has none of the coupon products' do
+      result = calculate(cart, coupon: scoped_coupon)
 
       expect(result.discount).to eq(0)
       expect(result.summary).to be_nil

@@ -327,13 +327,13 @@ RSpec.describe 'Super Admin Commercial Quotes', type: :request do
       post '/super_admin/commercial/quotes', params: waived, as: :json
 
       quote = SalesQuote.last
-      # subtotal = 89_700 (plano) + 50_000 (integração) = 139_700
-      # meeting = 10% of 139_700 = 13_970
-      # waiver  = 50_000 (whole "Integração via API" line)
+      # subtotal 139_700 → waiver 50_000 → eligible 89_700 → meeting 8_970.
+      # The waiver runs before the meeting %, so 10% only chews the line
+      # that survived — no double-discount on the zeroed integration.
       expect(quote.api_integration_waived).to be(true)
       expect(quote.subtotal_amount).to eq(139_700)
-      expect(quote.discount_amount).to eq(13_970 + 50_000)
-      expect(quote.total_amount).to eq(75_730)
+      expect(quote.discount_amount).to eq(8_970 + 50_000)
+      expect(quote.total_amount).to eq(80_730)
       expect(quote.discount_summary).to include('isenção integração via API')
     end
   end
