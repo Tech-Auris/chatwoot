@@ -42,7 +42,7 @@ class Conversations::TranscriptPdfService
     raise OverloadError, 'Too many transcript PDF renders in flight' unless acquired
 
     begin
-      Grover.new(render_html, display_url: display_url).to_pdf
+      Grover.new(sanitize_for_grover(render_html), display_url: display_url).to_pdf
     ensure
       SEMAPHORE.release
     end
@@ -54,6 +54,20 @@ class Conversations::TranscriptPdfService
   end
 
   private
+
+  # Grover embeds the HTML into JavaScript source before running it in
+  # Chromium, so any char JS treats as a line terminator inside a string
+  # literal breaks the payload with "Unterminated string in JSON". The two
+  # culprits are U+2028 (LINE SEPARATOR) and U+2029 (PARAGRAPH SEPARATOR) —
+  # both valid Unicode, both smuggled in by anything that pastes copy from
+  # Word / macOS / e-mail signatures (a real production case had them in an
+  # agent name). Rewrite them as HTML numeric entities so the rendered PDF
+  # still shows a paragraph break and the JS bridge no longer chokes.
+  JS_BREAKING_CHARS = { "\u2028" => '&#x2028;', "\u2029" => '&#x2029;' }.freeze
+
+  def sanitize_for_grover(html)
+    html.gsub(/[  ]/, JS_BREAKING_CHARS)
+  end
 
   def render_html
     ApplicationController.renderer.new(

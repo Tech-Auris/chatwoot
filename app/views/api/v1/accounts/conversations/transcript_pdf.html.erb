@@ -130,6 +130,12 @@
     </div>
 
     <% @messages.each do |message| %>
+      <%
+        # A single bad message (attachment blob purged, malformed content_attributes,
+        # markdown that trips Nokogiri) should not kill the whole transcript.
+        # Catch here and skip that one row.
+        begin
+      %>
       <div class="message">
         <div class="sender">
           <%= message.sender&.try(:available_name) || message.sender&.name || 'Sistema' %>
@@ -156,7 +162,11 @@
 
         <% if message.content.present? %>
           <div class="content">
-            <%= ChatwootMarkdownRenderer.new(message.content).render_message %>
+            <% begin %>
+              <%= ChatwootMarkdownRenderer.new(message.content).render_message %>
+            <% rescue StandardError %>
+              <%= message.content %>
+            <% end %>
           </div>
         <% end %>
 
@@ -164,7 +174,19 @@
           <div class="attachments">
             <p>Anexos:</p>
             <% message.attachments.each do |attachment| %>
-              <a href="<%= attachment.file_url %>"><%= attachment.file.filename %></a>
+              <%
+                # The blob may be missing (purged, never uploaded, or a metadata-only
+                # attachment like `location`/`contact`), in which case `file.filename`
+                # blows up. Skip those and only render the ones that still have a file.
+                next unless attachment.file.attached?
+                begin
+                  href = attachment.file_url.presence || '#'
+                  label = attachment.file.filename.to_s.presence || 'anexo'
+                rescue StandardError
+                  next
+                end
+              %>
+              <a href="<%= href %>"><%= label %></a>
             <% end %>
           </div>
         <% end %>
@@ -173,6 +195,14 @@
           <%= format_ts_short.call(message.created_at) %>
         </div>
       </div>
+      <%
+        rescue StandardError => e
+          Rails.logger.warn(
+            "TranscriptPdf skipped message #{message.id} on conversation " \
+            "#{@conversation.display_id}: #{e.class} - #{e.message}"
+          )
+        end
+      %>
     <% end %>
 
     <div class="footer">

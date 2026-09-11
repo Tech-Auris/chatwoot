@@ -41,6 +41,28 @@ RSpec.describe Conversations::TranscriptPdfService do
     ensure
       described_class::SEMAPHORE.release(described_class::MAX_CONCURRENT - described_class::SEMAPHORE.available_permits)
     end
+
+    # Grover embeds the HTML into JavaScript source; U+2028 and U+2029 inside
+    # a JS string literal are treated as line terminators and break the
+    # payload with "Unterminated string in JSON". A real production case had
+    # a U+2028 smuggled into an agent name via copy-paste. The service has to
+    # neutralise them before handing the HTML off.
+    it 'rewrites U+2028 and U+2029 out of the HTML before Grover sees it' do
+      contaminated_html = "<html><body>agent\u2028name\u2029end</body></html>"
+      allow(service).to receive(:render_html).and_return(contaminated_html)
+      seen_by_grover = nil
+      allow(Grover).to receive(:new) do |html, **|
+        seen_by_grover = html
+        grover
+      end
+
+      service.perform
+
+      expect(seen_by_grover).not_to include("\u2028")
+      expect(seen_by_grover).not_to include("\u2029")
+      expect(seen_by_grover).to include('&#x2028;')
+      expect(seen_by_grover).to include('&#x2029;')
+    end
   end
 
   describe '#filename' do
