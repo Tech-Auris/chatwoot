@@ -107,7 +107,10 @@ class SuperAdmin::Commercial::QuotesController < SuperAdmin::ApplicationControll
     Array(params[:items]).map do |item|
       { unit_amount: item[:unit_amount].to_i,
         quantity: item[:quantity].presence&.to_i || 1,
-        name: item[:name] }
+        name: item[:name],
+        # Carried through so the calculator can honour a Stripe coupon
+        # scoped to specific products (`applies_to.products`).
+        stripe_product_id: item[:stripe_product_id] }
     end
   end
 
@@ -291,7 +294,12 @@ class SuperAdmin::Commercial::QuotesController < SuperAdmin::ApplicationControll
     @available_coupons ||= stripe_client.list_coupons.data.filter_map do |coupon|
       next unless coupon.valid
 
-      { id: coupon.id, name: coupon.name, percent_off: coupon.percent_off, amount_off: coupon.amount_off, currency: coupon.currency }
+      # `applies_to.products` is the Stripe-side product scope — when set,
+      # the coupon only touches those products (used for "Isenção da
+      # Implantação — 100%"). Carried through so the calculator can honor
+      # it instead of applying the percentage over the whole cart.
+      { id: coupon.id, name: coupon.name, percent_off: coupon.percent_off, amount_off: coupon.amount_off, currency: coupon.currency,
+        applies_to_products: coupon.respond_to?(:applies_to) ? Array(coupon.applies_to&.products) : [] }
     end
   end
 
