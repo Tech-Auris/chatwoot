@@ -192,6 +192,35 @@ describe('filterHelpers', () => {
       expect(matchesFilters(conversation, filters)).toBe(true);
     });
 
+    // The serializer nests the stage as `funnel_stage: { id, name, color }`,
+    // never `funnel_stage_id`. The client-side re-filter has to know that,
+    // or every conversation the backend has already matched is thrown out.
+    it('should match conversation with equal_to operator for funnel_stage_id', () => {
+      const conversation = { funnel_stage: { id: 7, name: 'No-Show' } };
+      const filters = [
+        {
+          attribute_key: 'funnel_stage_id',
+          filter_operator: 'equal_to',
+          values: [7],
+          query_operator: 'and',
+        },
+      ];
+      expect(matchesFilters(conversation, filters)).toBe(true);
+    });
+
+    it('should not match conversation with equal_to operator when funnel_stage_id differs', () => {
+      const conversation = { funnel_stage: { id: 3, name: 'Agendado' } };
+      const filters = [
+        {
+          attribute_key: 'funnel_stage_id',
+          filter_operator: 'equal_to',
+          values: [7],
+          query_operator: 'and',
+        },
+      ];
+      expect(matchesFilters(conversation, filters)).toBe(false);
+    });
+
     it('should not match conversation with equal_to operator when assignee is null', () => {
       const conversation = { meta: { assignee: null } };
       const filters = [
