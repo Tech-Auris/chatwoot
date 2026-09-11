@@ -25,6 +25,44 @@ RSpec.describe 'Label API', type: :request do
         expect(response).to have_http_status(:success)
         expect(response.body).to include(label.title)
       end
+
+      # Once the account moves to the attribute-based AI status, the `agente-off`
+      # label no longer wires anything up. Historical tags on old conversations
+      # stay in the DB, but the label picker and the sidebar list have to drop
+      # it — otherwise the operator adds it thinking it toggles the AI, and
+      # nothing happens.
+      context 'when the account is on the attribute-based AI status' do
+        let!(:legacy_label) { create(:label, account: account, title: 'agente-off') }
+
+        before { account.update!(ai_status_uses_attribute: true) }
+
+        it 'does not return the legacy agente-off label' do
+          get "/api/v1/accounts/#{account.id}/labels",
+              headers: agent.create_new_auth_token,
+              as: :json
+
+          expect(response).to have_http_status(:success)
+          titles = response.parsed_body['payload'].pluck('title')
+          expect(titles).to include(label.title)
+          expect(titles).not_to include(legacy_label.title)
+        end
+      end
+
+      # Accounts still on the legacy label mode need to keep seeing it — the
+      # label is the on/off switch itself. Hiding it there would break the
+      # only way to turn the AI off for that account.
+      context 'when the account is still on the label-based AI status' do
+        let!(:legacy_label) { create(:label, account: account, title: 'agente-off') }
+
+        it 'still returns the agente-off label' do
+          get "/api/v1/accounts/#{account.id}/labels",
+              headers: agent.create_new_auth_token,
+              as: :json
+
+          titles = response.parsed_body['payload'].pluck('title')
+          expect(titles).to include(legacy_label.title)
+        end
+      end
     end
   end
 
