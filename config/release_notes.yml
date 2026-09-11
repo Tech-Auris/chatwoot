@@ -1,4 +1,26 @@
 ---
+- tag: v4.15.1-auris.1.56
+  published_at: '2026-09-11T22:30:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.56
+  notes:
+    en: |-
+      ### ⚡ Improvements
+
+      - **Fewer labels on the picker.** The internal "agente-off" label no longer clutters the label picker or the sidebar. Existing tags on old conversations stay where they are.
+
+      ### 🐛 Fixes
+
+      - **Filtering conversations by funnel stage.** Picking a stage on the conversation filter (or opening a saved folder built on it) now returns the conversations you see on the funnel board — the list was coming empty by mistake.
+      - **Downloading the PDF transcript.** Some conversations failed to generate the PDF with a generic "could not generate transcript" error. Those cases now download normally.
+    pt_BR: |-
+      ### ⚡ Melhorias
+
+      - **Menos etiquetas no seletor.** A etiqueta interna "agente-off" não aparece mais no seletor de etiquetas nem na barra lateral. As marcações antigas em conversas continuam onde estão.
+
+      ### 🐛 Correções
+
+      - **Filtro de conversas por etapa do funil.** Escolher uma etapa no filtro de conversas (ou abrir uma pasta salva com esse filtro) volta a trazer as conversas que aparecem no quadro do funil — a lista estava vindo vazia por engano.
+      - **Baixar o PDF da transcrição.** Algumas conversas específicas falhavam ao gerar o PDF com um aviso genérico de "não foi possível gerar o PDF da transcrição". Esses casos agora baixam normal.
 - tag: v4.15.1-auris.1.55
   published_at: '2026-09-09T19:15:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.55
@@ -289,17 +311,3 @@
       ### 🐛 Correções
 
       - **Templates do WhatsApp com variáveis nomeadas ({{nome}}) funcionam.** O formulário de criação de templates passa a aceitar placeholders com nome — a Meta rejeitava templates que usavam essa forma.
-- tag: v4.15.1-auris.1.42.6
-  published_at: '2026-08-13T03:20:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.42.6
-  notes:
-    en: |-
-      ### 🐛 Fixes
-
-      - **Meta Templates page reflects the latest data every time you land on it.** After creating or editing a template, the list sometimes still showed the pre-change state because the page was reused from cache without refreshing. It now refreshes on every visit, so the change you just made is always visible right away.
-      - **The Templates page stops hanging on "Loading templates..." after a hard refresh.** In some cases the loading spinner never cleared. It now resolves whether inboxes finish loading or not.
-    pt_BR: |-
-      ### 🐛 Correções
-
-      - **A página Templates Meta reflete os dados mais recentes toda vez que você entra nela.** Depois de criar ou editar um template, a lista às vezes continuava mostrando o estado anterior porque a página era reaproveitada do cache sem atualizar. Agora ela recarrega em toda visita, então a mudança que você acabou de fazer aparece sempre na hora.
-      - **A página de Templates não trava mais em "Carregando templates..." após refresh forçado.** Em alguns casos o spinner não sumia. Agora ele resolve independente do carregamento das caixas terminar.
