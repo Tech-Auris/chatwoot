@@ -674,6 +674,54 @@ describe('filterHelpers', () => {
       expect(matchesFilters(conversation, filters)).toBe(true);
     });
 
+    // Single-day filter — the shortcut the operator uses instead of
+    // "> D-1 AND < D+1". Any conversation whose UTC calendar day matches
+    // the picked date passes; nothing else does.
+    it('matches conversations of a specific day with equal_to on created_at', () => {
+      const conversation = {
+        created_at: Date.UTC(2026, 8, 14, 15, 0, 0) / 1000,
+      };
+      const filters = [
+        {
+          attribute_key: 'created_at',
+          filter_operator: 'equal_to',
+          values: '2026-09-14',
+          query_operator: 'and',
+        },
+      ];
+      expect(matchesFilters(conversation, filters)).toBe(true);
+    });
+
+    it('rejects conversations of another day with equal_to on created_at', () => {
+      const conversation = {
+        created_at: Date.UTC(2026, 8, 13, 23, 0, 0) / 1000,
+      };
+      const filters = [
+        {
+          attribute_key: 'created_at',
+          filter_operator: 'equal_to',
+          values: '2026-09-14',
+          query_operator: 'and',
+        },
+      ];
+      expect(matchesFilters(conversation, filters)).toBe(false);
+    });
+
+    it('accepts the inverse with not_equal_to on created_at', () => {
+      const conversation = {
+        created_at: Date.UTC(2026, 8, 13, 23, 0, 0) / 1000,
+      };
+      const filters = [
+        {
+          attribute_key: 'created_at',
+          filter_operator: 'not_equal_to',
+          values: '2026-09-14',
+          query_operator: 'and',
+        },
+      ];
+      expect(matchesFilters(conversation, filters)).toBe(true);
+    });
+
     // Two calendar-date filters ANDed to pick a single-day window, the
     // exact shape the operator uses on the sidebar "Criado em > X AND
     // Criado em < Y". Backend accepts the middle day via `::date`;

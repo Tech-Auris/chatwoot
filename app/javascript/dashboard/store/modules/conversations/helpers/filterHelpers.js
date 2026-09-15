@@ -181,6 +181,17 @@ const contains = (filterValue, conversationValue) => {
  * @param {Function} compareFn - The comparison function to apply
  * @returns {Boolean} - Returns true if the comparison succeeds, false otherwise
  */
+// Detect a "just a day" filter value — the calendar picker emits
+// `YYYY-MM-DD` strings, either raw or wrapped in a single-element array.
+// When the operator picks equal_to on such a value the intent is
+// day-precision matching, not the default strict equality against the
+// conversation's numeric `created_at` timestamp.
+const DATE_ONLY_STRING_RE = /^\d{4}-\d{2}-\d{2}$/;
+const isDateOnlyFilterValue = filterValue => {
+  const candidate = Array.isArray(filterValue) ? filterValue[0] : filterValue;
+  return typeof candidate === 'string' && DATE_ONLY_STRING_RE.test(candidate);
+};
+
 const compareDates = (conversationValue, filterValue, compareFn) => {
   const conversationDate = coerceToDate(conversationValue);
   if (conversationDate === null) return false;
@@ -199,10 +210,7 @@ const compareDates = (conversationValue, filterValue, compareFn) => {
   // ends up excluding conversations from Sept 14 mid-day, even though the
   // backend keeps them). Comparing YYYYMMDD integers built from the
   // operator's local calendar avoids the drift.
-  const isDateOnly =
-    typeof valueToCompare === 'string' &&
-    /^\d{4}-\d{2}-\d{2}$/.test(valueToCompare);
-  if (isDateOnly) {
+  if (isDateOnlyFilterValue(valueToCompare)) {
     // UTC on both sides so the comparison matches the backend's Postgres
     // `::date` cast exactly. Using local calendar days here would drift
     // by the operator's UTC offset (e.g. a conversation from Sept 14 03:00Z
@@ -239,9 +247,15 @@ const matchesCondition = (conversationValue, filter) => {
 
   switch (filterOperator) {
     case 'equal_to':
+      if (isDateOnlyFilterValue(filterValue)) {
+        return compareDates(conversationValue, filterValue, (a, b) => a === b);
+      }
       return equalTo(filterValue, conversationValue);
 
     case 'not_equal_to':
+      if (isDateOnlyFilterValue(filterValue)) {
+        return compareDates(conversationValue, filterValue, (a, b) => a !== b);
+      }
       return !equalTo(filterValue, conversationValue);
 
     case 'contains':

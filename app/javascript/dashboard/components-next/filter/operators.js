@@ -122,7 +122,12 @@ export function useOperators() {
   ]);
 
   /** @type {import('vue').ComputedRef<Array<Operator>>} */
+  // Equal_to comes first — filtering by a single day is the most common
+  // ask (the operator saves the two "> D-1 AND < D+1" clicks), so it
+  // becomes the default when the operator opens the date attribute.
   const dateOperators = computed(() => [
+    operators.value[FILTER_OPS.EQUAL_TO],
+    operators.value[FILTER_OPS.NOT_EQUAL_TO],
     operators.value[FILTER_OPS.IS_GREATER_THAN],
     operators.value[FILTER_OPS.IS_LESS_THAN],
     operators.value[FILTER_OPS.DAYS_BEFORE],

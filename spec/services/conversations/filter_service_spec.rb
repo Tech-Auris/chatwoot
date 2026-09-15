@@ -417,6 +417,30 @@ describe Conversations::FilterService do
         expect(result[:conversations].length).to be expected_count
       end
 
+      # The single-day shortcut on the sidebar. Falls back on Postgres'
+      # `::date IN (…)` so any conversation whose created_at lands on that
+      # calendar day matches — no need for the "> D-1 AND < D+1" combo.
+      it 'filters by a single day with equal_to on created_at' do
+        target_day = Time.zone.today
+        matching = create(:conversation, account: account, inbox: inbox, created_at: target_day.beginning_of_day + 12.hours)
+        create(:conversation, account: account, inbox: inbox, created_at: target_day - 1.day)
+        create(:conversation, account: account, inbox: inbox, created_at: target_day + 1.day)
+
+        params[:payload] = [
+          {
+            attribute_key: 'created_at',
+            filter_operator: 'equal_to',
+            values: [target_day.iso8601],
+            query_operator: nil,
+            custom_attribute_type: ''
+          }.with_indifferent_access
+        ]
+        result = filter_service.new(params, user_1, account).perform
+
+        expect(result[:conversations].map(&:id)).to include(matching.id)
+        expect(result[:conversations].map(&:id).count { |id| id == matching.id }).to eq(1)
+      end
+
       it 'binds created_at comparison values as dates' do
         date_value = '2024-01-01'
         params[:payload] = [
