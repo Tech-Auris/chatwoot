@@ -20,6 +20,22 @@ class SuperAdmin::Commercial::ReservationsController < SuperAdmin::ApplicationCo
     render json: { reservation: serialize(quote) }
   end
 
+  # An AsaaS instalment sale that landed on the provider — the finance team
+  # confirms it here so the proposal moves the same way a PIX sale does:
+  # Stripe customer, out-of-band invoice, account created. Without this the
+  # quote sits in `signed` forever, no matter that AsaaS already captured
+  # the card.
+  def register_asaas_payment
+    quote = SalesQuote.find(params[:id])
+    result = Sales::RegisterAsaasPaymentService.new(quote: quote).perform
+
+    render json: { reservation: serialize(result.quote), account_name: result.account.name }, status: :created
+  rescue Sales::RegisterAsaasPaymentService::InvalidTransition => e
+    render json: { error: e.message }, status: :unprocessable_entity
+  rescue Integrations::Stripe::Client::Error => e
+    render json: { error: "Stripe recusou: #{e.message}" }, status: :bad_gateway
+  end
+
   def data
     quotes = Sales::ReservationSyncService.new(quotes: paginated_quotes.to_a).perform
 
@@ -105,9 +121,17 @@ class SuperAdmin::Commercial::ReservationsController < SuperAdmin::ApplicationCo
       total_amount: quote.total_amount,
       token_card_saved: quote.token_payment_method_id.present?,
       token_card_waived: quote.token_card_waived_at.present?,
+      # AsaaS instalment sales sit on `signed` until finance confirms the
+      # capture landed on the provider. Surfaced so the reservations grid can
+      # offer the "Registrar pagamento AsaaS" button on exactly those rows.
+      awaiting_asaas_confirmation: awaiting_asaas_confirmation?(quote),
       public_url: sales_proposal_url(quote.public_token, host: ENV.fetch('FRONTEND_URL', request.base_url)),
       access_code: quote.access_code
     }
+  end
+
+  def awaiting_asaas_confirmation?(quote)
+    quote.signed? && quote.payment_method_card? && quote.asaas_payment_link_id.present?
   end
 
   def pagination_meta
