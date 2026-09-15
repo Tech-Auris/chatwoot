@@ -1,4 +1,16 @@
 ---
+- tag: v4.15.1-auris.1.57
+  published_at: '2026-09-15T18:30:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.57
+  notes:
+    en: |-
+      ### 🐛 Fixes
+
+      - **Signing new terms of use after the deadline.** If the deadline for signing a new terms of use passed and the manager only got to it after that, the signature window would not open — the account stayed blocked with no way to unlock it. The window now opens for the manager whenever the terms are still waiting to be signed.
+    pt_BR: |-
+      ### 🐛 Correções
+
+      - **Assinar novos termos de uso depois do prazo.** Se o prazo para assinar novos termos de uso passasse e a gerente só entrasse depois, a janela de assinatura não abria — a conta ficava bloqueada sem como destravar. A janela agora abre para a gerente sempre que os termos ainda estão aguardando assinatura.
 - tag: v4.15.1-auris.1.56
   published_at: '2026-09-11T22:30:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.56
@@ -291,23 +303,3 @@
 
       - **O histórico da conversa mostra quem ligou ou desligou a IA.** Antes, quando a mudança era automática, aparecia só "IA acionada", sem dizer de onde veio.
       - **O funil não mostra mais R$ 0,00.** Quando a conta não tem ticket médio configurado, os valores simplesmente não aparecem, em vez de mostrar zero.
-- tag: v4.15.1-auris.1.43
-  published_at: '2026-08-13T22:40:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.43
-  notes:
-    en: |-
-      ### ✨ What's new
-
-      - **Managers get access to Automations and CSAT reports.** Team managers can now create automations and read the customer satisfaction report on their inboxes without needing an administrator.
-
-      ### 🐛 Fixes
-
-      - **WhatsApp templates using named variables ({{name}}) work.** The template creation form now accepts placeholders with a name — Meta was rejecting templates that used them.
-    pt_BR: |-
-      ### ✨ Novidades
-
-      - **Gerentes têm acesso às Automações e ao Relatório CSAT.** Gerentes de equipe agora criam automações e consultam o relatório de satisfação nas suas caixas sem depender de um administrador.
-
-      ### 🐛 Correções
-
-      - **Templates do WhatsApp com variáveis nomeadas ({{nome}}) funcionam.** O formulário de criação de templates passa a aceitar placeholders com nome — a Meta rejeitava templates que usavam essa forma.
