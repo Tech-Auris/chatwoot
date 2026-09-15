@@ -24,7 +24,22 @@ RSpec.describe Sales::RegisterPixPaymentService do
     expect(result.quote).to have_attributes(status: 'converted', stripe_customer_id: 'cus_9', stripe_invoice_id: 'in_9')
     expect(result.account.name).to eq('Clínica Cinco')
     expect(result.renewal.due_on).to eq(Date.current + 6.months)
-    expect(result.renewal.amount).to eq(478_800)
+    # The renewal carries the PIX-discounted amount (semiannual = 5% off),
+    # so the second period bills the same figure the first invoice did.
+    expect(result.renewal.amount).to eq(478_800 - 23_940)
+  end
+
+  # The Stripe invoice on a PIX proposal has to bill the "à vista" figure
+  # the customer already agreed to on the proposal — not the list total.
+  # For an annual plan the PIX percent is 10%; the invoice unit_amount
+  # follows.
+  it 'invoices the PIX-discounted amount, not the list total' do
+    quote.update!(billing_cycle: :annual, total_amount: 1_512_112) # R$ 15.121,12
+    described_class.new(quote: quote, paid_via: 'inter', client: client).perform
+
+    expect(client).to have_received(:create_invoice).with(
+      hash_including(items: [hash_including(unit_amount: 1_512_112 - 151_211)])
+    )
   end
 
   it 'records where the money came in' do

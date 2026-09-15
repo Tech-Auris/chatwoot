@@ -59,6 +59,34 @@ RSpec.describe SalesQuote do
     end
   end
 
+  describe '#effective_charge_amount' do
+    # A card sale is billed by Stripe/AsaaS at the list total — no PIX
+    # percent applies.
+    it 'is the list total for a card sale' do
+      quote = create(:sales_quote, payment_method: :card, billing_cycle: :annual, total_amount: 1_500_000)
+      expect(quote.effective_charge_amount).to eq(1_500_000)
+    end
+
+    # PIX on a monthly plan carries no à-vista discount (the customer would
+    # be chasing a transfer every month).
+    it 'is the list total for monthly PIX' do
+      quote = create(:sales_quote, payment_method: :pix, billing_cycle: :monthly, total_amount: 89_700)
+      expect(quote.effective_charge_amount).to eq(89_700)
+    end
+
+    it 'discounts semiannual PIX by 5%' do
+      quote = create(:sales_quote, payment_method: :pix, billing_cycle: :semiannual, total_amount: 478_800)
+      expect(quote.effective_charge_amount).to eq(478_800 - 23_940)
+      expect(quote.pix_discount_percent).to eq(5)
+    end
+
+    it 'discounts annual PIX by 10%' do
+      quote = create(:sales_quote, payment_method: :pix, billing_cycle: :annual, total_amount: 1_512_112)
+      expect(quote.effective_charge_amount).to eq(1_512_112 - 151_211)
+      expect(quote.pix_discount_percent).to eq(10)
+    end
+  end
+
   describe 'items' do
     it 'keeps the amount that was offered, not the one Stripe has today' do
       item = create(:sales_quote_item, sales_quote: quote, unit_amount: 89_700, quantity: 2)

@@ -17,7 +17,11 @@ class Sales::PixRenewalService
       account: account,
       sales_quote: quote,
       due_on: from + PixRenewal.months_for(quote.billing_cycle).months,
-      amount: quote.total_amount,
+      # `effective_charge_amount` keeps the PIX percent that the customer
+      # paid on the first invoice — otherwise every recurring PIX renewal
+      # would bill the "list" total and drop the discount from the
+      # second period onwards.
+      amount: quote.effective_charge_amount,
       status: :pending
     )
   end
