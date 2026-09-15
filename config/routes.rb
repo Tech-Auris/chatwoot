@@ -862,6 +862,7 @@ Rails.application.routes.draw do
           end
           member do
             post :waive_token_card
+            post :register_asaas_payment
           end
         end
 
