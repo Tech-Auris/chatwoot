@@ -76,6 +76,19 @@ RSpec.describe Terms::CreateCampaignService do
     expect(result.agent_notification.body).to match(/gerente/i)
   end
 
+  # The signature notification never expires — expiring it at the campaign
+  # deadline would hide the modal exactly when the account starts being
+  # blocked, and the required signer (who is exempted from the login
+  # refusal so they can sign) would find nothing to sign. It stops
+  # appearing when the acceptance is signed or the campaign is cancelled.
+  # The agent notification, on the other hand, is an FYI and does expire.
+  it 'never expires the signature notification, but does expire the agent one' do
+    result = perform(account_a.id => [manager_a1_au.id])
+
+    expect(result.notification.expires_at).to be_nil
+    expect(result.agent_notification.expires_at).to be_present
+  end
+
   # The deadline is what unlocks the block; the job that flips the campaign
   # to `expired` and revokes sessions must be scheduled for exactly that
   # moment.
