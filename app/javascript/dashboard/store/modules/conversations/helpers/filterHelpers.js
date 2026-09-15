@@ -183,15 +183,41 @@ const contains = (filterValue, conversationValue) => {
  */
 const compareDates = (conversationValue, filterValue, compareFn) => {
   const conversationDate = coerceToDate(conversationValue);
+  if (conversationDate === null) return false;
 
   // In saved views, the filterValue might be returned as an Array
   // In conversation list, when filtering, the filterValue will be returned as a string
   const valueToCompare = Array.isArray(filterValue)
     ? filterValue[0]
     : filterValue;
-  const filterDate = coerceToDate(valueToCompare);
 
-  if (conversationDate === null || filterDate === null) return false;
+  // When the filter is a plain calendar date (YYYY-MM-DD, no time), mirror
+  // the backend's `::date` cast and compare calendar days only. Otherwise
+  // `new Date("2026-09-15")` reads as UTC midnight, and the shared
+  // `coerceToDate` then aligns to the operator's local midnight — pushing
+  // the boundary by the user's UTC offset (e.g. Brazil: "< 2026-09-15"
+  // ends up excluding conversations from Sept 14 mid-day, even though the
+  // backend keeps them). Comparing YYYYMMDD integers built from the
+  // operator's local calendar avoids the drift.
+  const isDateOnly =
+    typeof valueToCompare === 'string' &&
+    /^\d{4}-\d{2}-\d{2}$/.test(valueToCompare);
+  if (isDateOnly) {
+    // UTC on both sides so the comparison matches the backend's Postgres
+    // `::date` cast exactly. Using local calendar days here would drift
+    // by the operator's UTC offset (e.g. a conversation from Sept 14 03:00Z
+    // reads as Sept 14 in UTC and Sept 13 in Brazil).
+    const [y, m, d] = valueToCompare.split('-').map(Number);
+    const filterDay = y * 10000 + m * 100 + d;
+    const convDay =
+      conversationDate.getUTCFullYear() * 10000 +
+      (conversationDate.getUTCMonth() + 1) * 100 +
+      conversationDate.getUTCDate();
+    return compareFn(convDay, filterDay);
+  }
+
+  const filterDate = coerceToDate(valueToCompare);
+  if (filterDate === null) return false;
   return compareFn(conversationDate, filterDate);
 };
 
