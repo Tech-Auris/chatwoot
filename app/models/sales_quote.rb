@@ -117,6 +117,30 @@ class SalesQuote < ApplicationRecord
     reserved_until.present? && reserved_until.future?
   end
 
+  # What the customer actually pays on this proposal — `total_amount` is the
+  # cart total (the "list price" of the proposal after the meeting discount
+  # and any product coupons). When the customer picks PIX on a semiannual or
+  # annual plan, a further percent comes off; the invoice and any future
+  # PIX renewal need the discounted number, or we would be billing the "à
+  # vista" hint the proposal already showed and charging something else.
+  # Card sales get the list price back (no PIX percent applies).
+  def effective_charge_amount
+    return total_amount unless payment_method_pix?
+
+    percent = Sales::CheckoutService.pix_discount_for(billing_cycle)
+    return total_amount if percent.to_i.zero?
+
+    total_amount - ((total_amount * percent) / 100.0).round
+  end
+
+  # The PIX percent baked into `effective_charge_amount`, exposed so the
+  # invoice description can say what was discounted.
+  def pix_discount_percent
+    return 0 unless payment_method_pix?
+
+    Sales::CheckoutService.pix_discount_for(billing_cycle).to_i
+  end
+
   # Both halves are sent by the seller over WhatsApp. The phone digits are what
   # a forwarded link does not carry.
   def verify_access(code:, phone_last4:)
