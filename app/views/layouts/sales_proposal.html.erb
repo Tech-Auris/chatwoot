@@ -19,8 +19,9 @@
 
       <%= yield %>
       <p class="mt-8 text-xs text-slate-400 text-center">
-        Ao continuar, seus dados são tratados conforme a nossa política de
-        privacidade.
+        Ao continuar, seus dados são tratados conforme a nossa
+        <%= link_to 'política de privacidade', 'https://www.auris.ia.br/politica-de-privacidade',
+                    target: '_blank', rel: 'noopener', class: 'underline hover:text-slate-600' %>.
       </p>
     </main>
   </body>
