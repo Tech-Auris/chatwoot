@@ -4,12 +4,22 @@
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.57
   notes:
     en: |-
+      ### ✨ What's new
+
+      - **Filter conversations of a specific day with one click.** The "Criado em" and "Última atividade em" filters gained an "É igual a" operator that returns the conversations from the day you pick — a single filter instead of combining "greater than yesterday" and "less than tomorrow".
+
       ### 🐛 Fixes
 
+      - **Date filter on the conversation list returns the right rows again.** Filtering by "Criado em maior que X" and "Criado em menor que Y" could return an empty list even when the top counter showed several matches. The list now matches the counter.
       - **Signing new terms of use after the deadline.** If the deadline for signing a new terms of use passed and the manager only got to it after that, the signature window would not open — the account stayed blocked with no way to unlock it. The window now opens for the manager whenever the terms are still waiting to be signed.
     pt_BR: |-
+      ### ✨ Novidades
+
+      - **Filtrar conversas de um dia específico com um clique.** Os filtros "Criado em" e "Última atividade em" ganharam o operador "É igual a", que traz as conversas do dia escolhido — um filtro só, em vez de combinar "maior que ontem" e "menor que amanhã".
+
       ### 🐛 Correções
 
+      - **Filtro por data na lista de conversas volta a trazer as certas.** Filtrar por "Criado em maior que X" e "Criado em menor que Y" podia devolver a lista vazia mesmo com o contador do topo mostrando várias conversas. A lista volta a bater com o contador.
       - **Assinar novos termos de uso depois do prazo.** Se o prazo para assinar novos termos de uso passasse e a gerente só entrasse depois, a janela de assinatura não abria — a conta ficava bloqueada sem como destravar. A janela agora abre para a gerente sempre que os termos ainda estão aguardando assinatura.
 - tag: v4.15.1-auris.1.56
   published_at: '2026-09-11T22:30:00Z'
