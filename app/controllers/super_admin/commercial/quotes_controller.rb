@@ -294,13 +294,25 @@ class SuperAdmin::Commercial::QuotesController < SuperAdmin::ApplicationControll
     @available_coupons ||= stripe_client.list_coupons.data.filter_map do |coupon|
       next unless coupon.valid
 
-      # `applies_to.products` is the Stripe-side product scope — when set,
-      # the coupon only touches those products (used for "Isenção da
-      # Implantação — 100%"). Carried through so the calculator can honor
-      # it instead of applying the percentage over the whole cart.
       { id: coupon.id, name: coupon.name, percent_off: coupon.percent_off, amount_off: coupon.amount_off, currency: coupon.currency,
-        applies_to_products: coupon.respond_to?(:applies_to) ? Array(coupon.applies_to&.products) : [] }
+        applies_to_products: coupon_applies_to_products(coupon) }
     end
+  end
+
+  # Two sources for the product scope, in priority order:
+  #   1. `applies_to.products` — the official Stripe field, only returned
+  #      when the coupon was created with the scope baked in and Stripe's
+  #      current API version echoes it back.
+  #   2. `metadata['applies_to_products']` — a fallback the operator sets
+  #      on the coupon's metadata (comma-separated stripe product ids).
+  #      Used for coupons whose scope is visible on the Stripe Dashboard
+  #      but does not come back through the API — a real production case
+  #      with "Isenção da Implantação" (id=VtojFZAd).
+  def coupon_applies_to_products(coupon)
+    from_field = coupon.respond_to?(:applies_to) ? Array(coupon.applies_to&.products) : []
+    return from_field if from_field.any?
+
+    coupon.metadata['applies_to_products'].to_s.split(',').map(&:strip).compact_blank
   end
 
   def serialize(quote)

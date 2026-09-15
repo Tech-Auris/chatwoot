@@ -15,13 +15,14 @@ class Sales::RegisterPixPaymentService
     @client = client
   end
 
-  def perform
+  def perform # rubocop:disable Metrics/AbcSize
     raise InvalidTransition, 'Esta proposta não é de pagamento por PIX' unless quote.payment_method_pix?
     raise InvalidTransition, 'Esta proposta já foi paga' if quote.account_id.present?
 
     settle_in_stripe
     quote.update!(status: :paid)
-    quote.events.create!(event: 'pix_payment_registered', metadata: { paid_via: paid_via, total: quote.total_amount })
+    quote.events.create!(event: 'pix_payment_registered',
+                         metadata: { paid_via: paid_via, total: quote.total_amount, charged: quote.effective_charge_amount })
 
     account = Sales::ConvertQuoteService.new(quote: quote).perform.account
     Result.new(quote: quote.reload, account: account, renewal: open_first_renewal(account))
@@ -41,13 +42,23 @@ class Sales::RegisterPixPaymentService
 
     invoice = client.create_invoice(
       customer_id: customer_id,
-      items: [{ description: "AurisChat — #{quote.prospect_name}", unit_amount: quote.total_amount, quantity: 1 }],
+      # `effective_charge_amount` bakes in the PIX percent when the plan
+      # carries one (semiannual 5%, annual 10%), so the invoice matches
+      # the "à vista" figure the proposal already showed the customer.
+      items: [{ description: "AurisChat — #{quote.prospect_name}", unit_amount: quote.effective_charge_amount, quantity: 1 }],
       days_until_due: 1,
-      description: quote.discount_summary.presence,
+      description: invoice_description,
       metadata: { sales_quote_id: quote.id }
     )
     client.pay_invoice_out_of_band(invoice.id, paid_via: paid_via)
     quote.update!(stripe_invoice_id: invoice.id)
+  end
+
+  def invoice_description
+    base = quote.discount_summary.to_s
+    return base.presence if quote.pix_discount_percent.zero?
+
+    [base, "#{quote.pix_discount_percent}% pix"].compact_blank.join(' + ')
   end
 
   # The cycle just paid runs from today, so the next one is due a cycle ahead.

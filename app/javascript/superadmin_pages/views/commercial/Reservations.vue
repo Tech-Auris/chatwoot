@@ -147,6 +147,43 @@ const expiringCount = computed(
 // link alone opens nothing.
 // Somebody who paid the year by PIX may have no card to leave on file. The
 // team says so here, and the customer stops being asked for one.
+// A semiannual/annual card sale sits on `Termos assinados` after AsaaS
+// captures the instalments — the provider has the money, but our books do
+// not know it until finance confirms here. Runs the Stripe customer +
+// invoice + account conversion in one call.
+const registerAsaasPayment = async reservation => {
+  if (
+    !window.confirm(
+      `Registrar pagamento AsaaS de ${reservation.prospect_name}? Isso cria a conta e a fatura no Stripe.`
+    )
+  )
+    return;
+
+  busyId.value = reservation.id;
+  error.value = null;
+  try {
+    const res = await fetch(
+      `${props.componentData.reservations_url}/${reservation.id}/register_asaas_payment`,
+      {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          Accept: 'application/json',
+          'X-CSRF-Token':
+            document.querySelector('meta[name="csrf-token"]')?.content ?? '',
+        },
+      }
+    );
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+    await fetchData();
+  } catch (e) {
+    error.value = e.message;
+  } finally {
+    busyId.value = null;
+  }
+};
+
 const waiveTokenCard = async reservation => {
   if (
     !window.confirm(
@@ -372,6 +409,20 @@ const submitRenew = async () => {
             >
               {{ situationLabel(reservation) }}
             </span>
+            <!-- Semi/annual card sales stay on "Termos assinados" until finance
+                 confirms the AsaaS capture landed. One-click confirmation
+                 creates the Stripe customer + invoice and the AurisChat
+                 account in a single call. -->
+            <button
+              v-if="reservation.awaiting_asaas_confirmation"
+              type="button"
+              class="mt-1 block px-2 py-0.5 rounded border border-green-200 text-green-700 text-[10px] whitespace-nowrap disabled:opacity-40"
+              :disabled="busyId === reservation.id"
+              title="Confirma o pagamento no AsaaS, cria o cliente e a fatura no Stripe, e converte a proposta em conta."
+              @click="registerAsaasPayment(reservation)"
+            >
+              Registrar pagamento AsaaS
+            </button>
           </td>
 
           <td class="py-3 text-right text-slate-700">

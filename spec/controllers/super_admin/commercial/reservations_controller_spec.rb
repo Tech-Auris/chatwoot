@@ -174,5 +174,56 @@ RSpec.describe 'Super Admin Commercial Reservations', type: :request do
 
       expect(negotiating.reload.clickup_status).to eq('proposta enviada')
     end
+
+    # The flag drives the "Registrar pagamento AsaaS" button — one row on the
+    # grid should be able to have it and the neighbouring row not, without
+    # any other coupling.
+    it 'flags AsaaS card sales awaiting confirmation' do
+      awaiting = create(:sales_quote, status: :signed, payment_method: :card, billing_cycle: :semiannual,
+                                      clickup_status: 'em análise', reserved_until: 4.days.from_now,
+                                      asaas_payment_link_id: 'link_abc')
+
+      get '/super_admin/commercial/reservations/data'
+
+      by_id = response.parsed_body['reservations'].index_by { |row| row['id'] }
+      expect(by_id[awaiting.id]['awaiting_asaas_confirmation']).to be(true)
+      expect(by_id[negotiating.id]['awaiting_asaas_confirmation']).to be(false)
+    end
+  end
+
+  describe 'POST /super_admin/commercial/reservations/:id/register_asaas_payment' do
+    let(:client) { instance_double(Integrations::Stripe::Client) }
+    let(:quote) do
+      create(:sales_quote, status: :signed, payment_method: :card, billing_cycle: :semiannual,
+                           total_amount: 570_060, asaas_payment_link_id: 'link_abc',
+                           prospect_name: 'Leonardo Giacon', company_name: 'Clínica Rhoncus',
+                           prospect_email: 'leo@example.com')
+    end
+
+    before do
+      allow(Integrations::Stripe::Client).to receive(:new).and_return(client)
+      allow(client).to receive_messages(create_customer: Struct.new(:id).new('cus_9'),
+                                        create_invoice: Struct.new(:id).new('in_9'))
+      allow(client).to receive(:update_customer)
+      allow(client).to receive(:list_tax_ids).and_return(Struct.new(:data).new([]))
+      allow(client).to receive(:pay_invoice_out_of_band)
+    end
+
+    it 'settles the sale and returns the created account name' do
+      post "/super_admin/commercial/reservations/#{quote.id}/register_asaas_payment"
+
+      expect(response).to have_http_status(:created)
+      expect(response.parsed_body['account_name']).to eq('Clínica Rhoncus')
+      expect(quote.reload.status).to eq('converted')
+    end
+
+    it 'reports a domain error as 422' do
+      quote.update!(payment_method: :pix)
+
+      post "/super_admin/commercial/reservations/#{quote.id}/register_asaas_payment"
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.parsed_body['error']).to match(/não é de pagamento por cartão/)
+    end
   end
 end

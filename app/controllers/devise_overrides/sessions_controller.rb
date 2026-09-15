@@ -181,7 +181,14 @@ class DeviseOverrides::SessionsController < DeviseTokenAuth::SessionsController 
   # chase — the required signers appear in the same page a super_admin uses
   # to run the campaign, but the operator will not know that; the email
   # they should chase is left to their manager to answer.
+  #
+  # A super_admin is exempted: the lock exists to pressure the customer's
+  # manager to sign, and a super_admin is Auris team — barring them from
+  # the customer's dashboard does not pressure anyone, and takes away the
+  # very person who would help resolve the block.
   def refuse_when_blocked_by_terms(user)
+    return false if user.is_a?(SuperAdmin) || user.type == 'SuperAdmin'
+
     blocking = TermsAcceptanceRequest.blocking_login_for(user)
     return false if blocking.empty?
 
