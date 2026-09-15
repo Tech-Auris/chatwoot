@@ -79,7 +79,14 @@ class Terms::CreateCampaignService
       audience_type: :managers,
       trigger_kind: :on_login,
       published_at: Time.current,
-      expires_at: @deadline_at,
+      # No expires_at. The signature notification stays actionable as long
+      # as the acceptance is pending — expiring it at the deadline would
+      # hide the modal exactly when the account starts being blocked, and
+      # the manager would have no way to sign. It stops appearing when
+      # the acceptance flips to `signed` or `cancelled` (the pending-filter
+      # in the notifications controller drops it), and the whole campaign
+      # is torn down when a super_admin cancels it.
+      expires_at: nil,
       created_by: @super_admin,
       subject: campaign
     )
