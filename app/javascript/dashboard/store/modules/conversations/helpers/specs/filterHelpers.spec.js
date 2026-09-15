@@ -674,6 +674,31 @@ describe('filterHelpers', () => {
       expect(matchesFilters(conversation, filters)).toBe(true);
     });
 
+    // Two calendar-date filters ANDed to pick a single-day window, the
+    // exact shape the operator uses on the sidebar "Criado em > X AND
+    // Criado em < Y". Backend accepts the middle day via `::date`;
+    // client has to accept it too.
+    it('accepts a conversation from the day between two date-only bounds', () => {
+      const conversation = {
+        created_at: Date.UTC(2026, 8, 14, 15, 0, 0) / 1000,
+      };
+      const filters = [
+        {
+          attribute_key: 'created_at',
+          filter_operator: 'is_greater_than',
+          values: '2026-09-13',
+          query_operator: 'and',
+        },
+        {
+          attribute_key: 'created_at',
+          filter_operator: 'is_less_than',
+          values: '2026-09-15',
+          query_operator: null,
+        },
+      ];
+      expect(matchesFilters(conversation, filters)).toBe(true);
+    });
+
     // Test parseDate with date string without time (should default to 00:00:00)
     it('should match conversation with is_greater_than operator using date string without time', () => {
       const conversation = { created_at: 1647820800000 }; // March 21, 2022 00:00:00 GMT
