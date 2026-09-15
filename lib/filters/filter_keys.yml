@@ -118,6 +118,8 @@ conversations:
     attribute_type: "standard"
     data_type: "date"
     filter_operators:
+      - "equal_to"
+      - "not_equal_to"
       - "is_greater_than"
       - "is_less_than"
       - "days_before"
@@ -125,6 +127,8 @@ conversations:
     attribute_type: "standard"
     data_type: "date"
     filter_operators:
+      - "equal_to"
+      - "not_equal_to"
       - "is_greater_than"
       - "is_less_than"
       - "days_before"
@@ -207,6 +211,8 @@ contacts:
     attribute_type: "standard"
     data_type: "date"
     filter_operators:
+      - "equal_to"
+      - "not_equal_to"
       - "is_greater_than"
       - "is_less_than"
       - "days_before"
@@ -214,6 +220,8 @@ contacts:
     attribute_type: "standard"
     data_type: "date"
     filter_operators:
+      - "equal_to"
+      - "not_equal_to"
       - "is_greater_than"
       - "is_less_than"
       - "days_before"
