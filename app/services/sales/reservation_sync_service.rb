@@ -33,10 +33,18 @@ class Sales::ReservationSyncService
 
     changes = { clickup_status: task[:status], clickup_status_synced_at: Time.current }
     deadline = deadline_from(task)
-    changes[:reserved_until] = deadline if deadline.present? && deadline != quote.reserved_until
+    changes[:reserved_until] = deadline if deadline.present? && deadline != quote.reserved_until && !locally_touched?(quote)
 
     quote.update!(changes)
     record_deadline_change(quote, deadline) if changes.key?(:reserved_until)
+  end
+
+  # `ReserveQuoteService` writes a marker to the cache right after updating
+  # `reserved_until` locally. The marker lives longer than the prospect-list
+  # cache, so a page load reading a stale ClickUp deadline within that
+  # window keeps our local truth instead of reverting.
+  def locally_touched?(quote)
+    Rails.cache.exist?(Sales::ReserveQuoteService.local_write_marker_key(quote.id))
   end
 
   # ClickUp reports dates in epoch milliseconds.

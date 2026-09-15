@@ -20,12 +20,24 @@ class Sales::ReserveQuoteService
     @client = client
   end
 
+  # Marker key used to tell the reservations sync that this quote just had
+  # its `reserved_until` written locally. See `LOCAL_WRITE_WINDOW`.
+  def self.local_write_marker_key(quote_id)
+    "sales/quote_reserved_until_touched_at/#{quote_id}"
+  end
+
+  # The prospect cache the sync reads from lives for 5 minutes; the marker
+  # has to cover at least that so a page load in the window keeps our
+  # freshly-written deadline.
+  LOCAL_WRITE_WINDOW = 5.minutes
+
   def perform
     raise ArgumentError, 'Informe a data de vencimento da reserva' if reserved_until.blank?
     raise ArgumentError, 'A data da reserva precisa estar no futuro' if reserved_until.past?
 
     renewal = quote.reserved?
     quote.update!(reserved_until: reserved_until, status: :reserved)
+    mark_local_write
     mirror_deadline_to_pending_terms
 
     error = sync_clickup
@@ -52,9 +64,31 @@ class Sales::ReserveQuoteService
     quote.update_column(:clickup_status, RESERVATION_CLICKUP_STATUS) # rubocop:disable Rails/SkipsModelValidations
     client.add_tag(quote.clickup_task_id, RESERVATION_TAG)
     post_reservation_comment
+    invalidate_prospect_cache
     nil
   rescue Integrations::Clickup::Client::Error => e
     e.message
+  end
+
+  # The Reservations page reads ClickUp through a 5-minute list cache, so a
+  # renewal that just wrote to ClickUp can be overwritten by the very next
+  # page load reading the stale cached deadline. Invalidate the cache here
+  # so the next sync pass fetches fresh data. Belt-and-suspenders lives in
+  # `Sales::ReservationSyncService`, which also refuses to overwrite a
+  # very recently written deadline (via `mark_local_write`).
+  def invalidate_prospect_cache
+    list_id = GlobalConfig.get('CLICKUP_PIPELINE_LIST_ID')['CLICKUP_PIPELINE_LIST_ID'].presence
+    return if list_id.blank?
+
+    Rails.cache.delete("sales/clickup_prospects/#{list_id}")
+  end
+
+  # Set right after the DB write and before any external call so a concurrent
+  # `ReservationSyncService.perform` (running for another operator's Reservations
+  # page load) does not read a stale cached ClickUp deadline and overwrite the
+  # freshly-written value.
+  def mark_local_write
+    Rails.cache.write(self.class.local_write_marker_key(quote.id), true, expires_in: LOCAL_WRITE_WINDOW)
   end
 
   # The `signature` terms acceptance for this quote inherits the reservation's
