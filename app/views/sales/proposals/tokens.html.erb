@@ -4,7 +4,7 @@
   <h1 class="text-lg font-medium text-slate-900">Forma de pagamento dos tokens</h1>
   <p class="text-sm text-slate-600 mt-2">
     O consumo de tokens é cobrado mensalmente, conforme o uso. Cadastre o cartão
-    que usaremos para essa cobrança.
+    que deseja para realizar as cobranças.
   </p>
 
   <% if @proposal.billing_cycle_monthly? %>
@@ -21,11 +21,10 @@
   <%= form_with url: sales_proposal_save_token_card_path(@proposal.public_token), method: :post, class: 'mt-5' do |f| %>
     <p class="text-xs text-slate-500">
       <% if @same_card_available %>
-        Você será levado ao ambiente seguro do processador, onde pode usar o
-        mesmo cartão da assinatura ou informar outro.
+        Você será redirecionado ao ambiente da plataforma de pagamentos, onde
+        pode usar o mesmo cartão da assinatura ou informar outro.
       <% else %>
-        Você será levado ao ambiente seguro do processador. Não armazenamos
-        dados do cartão.
+        Você será redirecionado ao ambiente da plataforma de pagamentos.
       <% end %>
     </p>
     <%= f.submit 'Cadastrar cartão', class: 'mt-4 w-full px-3 py-2 rounded bg-woot-500 text-white text-sm cursor-pointer' %>
