@@ -364,6 +364,26 @@ RSpec.describe DeviseOverrides::SessionsController, type: :controller do
 
         expect(response).to have_http_status(:success)
       end
+
+      # The lock exists to pressure the customer's manager to sign, and a
+      # super_admin is Auris team — barring them from the customer's
+      # dashboard would take away the very person who can help resolve
+      # the block. Super admins log in normally regardless of the campaign.
+      it 'lets a super_admin in even when the account is blocked by expired terms' do
+        # A super_admin who is also an account_user of the locked account:
+        # the fork's super admins occasionally have a dashboard membership
+        # for support/testing, and this is the exact scenario that hit the
+        # gate before.
+        SuperAdmin.create!(name: 'Support', email: 'support@auris.example',
+                           password: 'Test@123456', password_confirmation: 'Test@123456',
+                           confirmed_at: Time.current)
+        support_user = User.from_email('support@auris.example')
+        account.account_users.create!(user: support_user, role: :administrator)
+
+        post :create, params: { email: 'support@auris.example', password: 'Test@123456' }
+
+        expect(response).to have_http_status(:success)
+      end
     end
   end
 
