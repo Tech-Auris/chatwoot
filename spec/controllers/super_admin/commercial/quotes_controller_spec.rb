@@ -41,9 +41,13 @@ RSpec.describe 'Super Admin Commercial Quotes', type: :request do
     response.parsed_body['prices']
   end
 
-  def stripe_coupon(id: 'coupon_1', percent_off: 15, valid: true)
-    Struct.new(:id, :name, :percent_off, :amount_off, :currency, :valid)
-          .new(id, 'Parceiro', percent_off, nil, 'brl', valid)
+  # rubocop:disable Metrics/ParameterLists -- test fixture, params read best inline
+  def stripe_coupon(id: 'coupon_1', name: 'Parceiro', percent_off: 15, valid: true,
+                    applies_to_products: nil, metadata: {})
+    # rubocop:enable Metrics/ParameterLists
+    applies_to = applies_to_products && Struct.new(:products).new(Array(applies_to_products))
+    Struct.new(:id, :name, :percent_off, :amount_off, :currency, :valid, :applies_to, :metadata)
+          .new(id, name, percent_off, nil, 'brl', valid, applies_to, metadata)
   end
 
   before do
@@ -161,6 +165,35 @@ RSpec.describe 'Super Admin Commercial Quotes', type: :request do
       get '/super_admin/commercial/quotes/data'
 
       expect(response.parsed_body['coupons']).to be_empty
+    end
+
+    # `applies_to.products` is the canonical Stripe field; when the coupon
+    # was created with a product scope and the API echoes it back, that
+    # list wins.
+    it 'carries the coupon scope from applies_to when Stripe returns it' do
+      coupon = stripe_coupon(id: 'setup_waiver', percent_off: 100, applies_to_products: %w[prod_impl])
+      allow(stripe_client).to receive(:list_coupons).and_return(Struct.new(:data).new([coupon]))
+
+      get '/super_admin/commercial/quotes/data'
+
+      row = response.parsed_body['coupons'].find { |c| c['id'] == 'setup_waiver' }
+      expect(row['applies_to_products']).to eq(['prod_impl'])
+    end
+
+    # Real production case: `applies_to` did not come back through the API
+    # even though the Dashboard clearly showed the coupon scoped to a
+    # product. The operator sets `metadata['applies_to_products']` on the
+    # coupon (comma-separated Stripe product ids) and we honour that as
+    # the fallback.
+    it 'falls back to the metadata scope when applies_to is empty' do
+      coupon = stripe_coupon(id: 'setup_waiver', percent_off: 100,
+                             metadata: { 'applies_to_products' => 'prod_impl, prod_impl_guiada' })
+      allow(stripe_client).to receive(:list_coupons).and_return(Struct.new(:data).new([coupon]))
+
+      get '/super_admin/commercial/quotes/data'
+
+      row = response.parsed_body['coupons'].find { |c| c['id'] == 'setup_waiver' }
+      expect(row['applies_to_products']).to eq(%w[prod_impl prod_impl_guiada])
     end
   end
 
