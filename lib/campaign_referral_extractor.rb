@@ -39,6 +39,31 @@ module CampaignReferralExtractor
     }.compact_blank.presence
   end
 
+  # Baileys `externalAdReply` uses camelCase field names distinct from Cloud's
+  # `referral` object; some carriers (raw Baileys types) serialize `mediaType`
+  # as the proto enum integer (0=none, 1=image, 2=video) while others emit the
+  # string form ("IMAGE"). Normalize both into the same string-keyed hash
+  # Cloud produces so the frontend and the conversation.additional_attributes
+  # write can stay provider-agnostic.
+  BAILEYS_MEDIA_TYPE_ENUM = { 0 => 'none', 1 => 'image', 2 => 'video' }.freeze
+
+  def from_baileys_context_info(context_info)
+    ad = context_info.is_a?(Hash) ? (context_info[:externalAdReply] || context_info['externalAdReply']) : nil
+    return nil if ad.blank?
+
+    ref = ad.with_indifferent_access
+    {
+      'source_type' => ref[:sourceType],
+      'source_id' => ref[:sourceId],
+      'source_url' => ref[:sourceUrl],
+      'ctwa_clid' => ref[:ctwaClid],
+      'title' => ref[:title],
+      'body' => ref[:body],
+      'media_type' => baileys_media_type(ref[:mediaType]),
+      'thumbnail_url' => ref[:thumbnailUrl]
+    }.compact_blank.presence
+  end
+
   # Returns the raw GCLID token found in the body, or nil.
   def gclid_from_body(body)
     return nil if body.blank?
@@ -53,4 +78,12 @@ module CampaignReferralExtractor
     message[:referral] || message['referral']
   end
   private_class_method :referral_from
+
+  def baileys_media_type(value)
+    return nil if value.nil?
+    return BAILEYS_MEDIA_TYPE_ENUM[value] if value.is_a?(Integer)
+
+    value.to_s.downcase.presence
+  end
+  private_class_method :baileys_media_type
 end

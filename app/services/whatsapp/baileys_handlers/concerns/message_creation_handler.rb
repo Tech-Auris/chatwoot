@@ -1,4 +1,4 @@
-module Whatsapp::BaileysHandlers::Concerns::MessageCreationHandler
+module Whatsapp::BaileysHandlers::Concerns::MessageCreationHandler # rubocop:disable Metrics/ModuleLength
   extend ActiveSupport::Concern
 
   private
@@ -21,9 +21,42 @@ module Whatsapp::BaileysHandlers::Concerns::MessageCreationHandler
 
     @message.save!
 
+    attach_campaign_referral_to_conversation(conversation) if incoming?
+    apply_origin_attribution(sender) if incoming?
+
     finalize_after_save(conversation)
 
     @message
+  end
+
+  # First-touch on the conversation — the ad that OPENED the thread. A later
+  # message on the same conversation that carries a fresh externalAdReply
+  # keeps the original attribution (per-message history still lives on
+  # `Message.content_attributes.referral`). Mirrors the Cloud pipeline.
+  def attach_campaign_referral_to_conversation(conversation)
+    referral = baileys_referral
+    return if referral.blank?
+    return if conversation.additional_attributes.is_a?(Hash) && conversation.additional_attributes['campaign_referral'].present?
+
+    conversation.additional_attributes ||= {}
+    conversation.additional_attributes['campaign_referral'] = referral.merge(
+      'captured_at' => baileys_extract_message_timestamp(@raw_message[:messageTimestamp]) || Time.current.to_i
+    )
+    conversation.save!
+  end
+
+  # Sets Contact.additional_attributes.origem on first touch using the same
+  # priority rules the Cloud pipeline uses (referral wins over channel-based
+  # inference). Never overwrites an existing value — manual selections stick.
+  def apply_origin_attribution(sender)
+    return if sender.blank?
+
+    ::Contacts::OriginAttributionService.new(
+      contact: sender,
+      inbox: inbox,
+      message_body: message_content.to_s,
+      referral: baileys_referral
+    ).apply!
   end
 
   def finalize_after_save(conversation)
@@ -119,6 +152,9 @@ module Whatsapp::BaileysHandlers::Concerns::MessageCreationHandler
     elsif type == 'unsupported'
       content_attributes[:is_unsupported] = true
     end
+
+    referral = baileys_referral
+    content_attributes[:referral] = referral if referral.present?
 
     content_attributes
   end
