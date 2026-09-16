@@ -75,13 +75,44 @@ class Whatsapp::IncomingMessageBaseService # rubocop:disable Metrics/ClassLength
 
       ActiveRecord::Base.transaction do
         set_conversation
+        attach_campaign_referral_to_conversation
         create_messages
+        apply_origin_attribution
       end
     end
   ensure
     # Clear lock AFTER transaction commits to prevent race conditions where another request
     # acquires the lock before this transaction is visible to other connections
     clear_message_source_id_from_redis if @lock_acquired
+  end
+
+  # First-touch: the referral belongs to the ad that opened the conversation.
+  # If a later message on the same conversation carries a fresh referral (the
+  # patient clicked another ad and reopened us), keep the original — the
+  # per-message history still lives on `Message.content_attributes.referral`.
+  def attach_campaign_referral_to_conversation
+    return if outgoing_echo
+    return if @conversation.additional_attributes.is_a?(Hash) && @conversation.additional_attributes['campaign_referral'].present?
+
+    referral = ::CampaignReferralExtractor.from_cloud_message(messages_data.first)
+    return if referral.blank?
+
+    @conversation.additional_attributes ||= {}
+    @conversation.additional_attributes['campaign_referral'] = referral.merge('captured_at' => Time.current.to_i)
+    @conversation.save!
+  end
+
+  def apply_origin_attribution
+    return if outgoing_echo
+    return if @contact.blank?
+
+    message = messages_data.first
+    ::Contacts::OriginAttributionService.new(
+      contact: @contact,
+      inbox: @inbox,
+      message_body: message.dig(:text, :body).to_s,
+      referral: ::CampaignReferralExtractor.from_cloud_message(message)
+    ).apply!
   end
 
   def skip_message?
@@ -391,6 +422,8 @@ class Whatsapp::IncomingMessageBaseService # rubocop:disable Metrics/ClassLength
     content_attrs[:in_reply_to_external_id] = @in_reply_to_external_id if @in_reply_to_external_id.present?
     content_attrs[:external_created_at] = message[:timestamp].to_i
     content_attrs[:is_reaction] = true if message_type == 'reaction'
+    referral = ::CampaignReferralExtractor.from_cloud_message(message)
+    content_attrs[:referral] = referral if referral.present?
     content_attrs
   end
 

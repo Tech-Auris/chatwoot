@@ -702,6 +702,18 @@
     "SUBJECT": "Subject",
     "EXPAND": "Expand email"
   },
+  "CONVERSATION_ORIGIN": {
+    "TITLE": "Origin",
+    "NONE": "No origin",
+    "SEARCH_PLACEHOLDER": "Search origin",
+    "NO_RESULT": "No matching origin",
+    "UPDATE_SUCCESS": "Origin updated",
+    "UPDATE_ERROR": "Could not update the origin"
+  },
+  "CAMPAIGN_REFERRAL_CARD": {
+    "TITLE": "Origin ad",
+    "VIEW_AD": "View ad"
+  },
   "CONVERSATION_PARTICIPANTS": {
     "SIDEBAR_MENU_TITLE": "Participating",
     "SIDEBAR_TITLE": "Conversation participants",
