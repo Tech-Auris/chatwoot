@@ -666,7 +666,9 @@
     },
     "FILTERS": {
       "INBOX_ANY": "Todas as caixas",
-      "LABEL_ANY": "Todas as etiquetas"
+      "LABEL_ANY": "Todas as etiquetas",
+      "ORIGEM_ANY": "Todas as origens",
+      "ORIGEM_NONE": "Sem origem"
     }
   },
   "FUNNEL_CONVERSION_REPORTS": {
@@ -696,13 +698,29 @@
     },
     "FILTERS": {
       "INBOX_ANY": "Todas as caixas",
-      "LABEL_ANY": "Todas as etiquetas"
+      "LABEL_ANY": "Todas as etiquetas",
+      "ORIGEM_ANY": "Todas as origens",
+      "ORIGEM_NONE": "Sem origem"
     },
     "LEGEND": {
       "AI": "Atendido pela IA",
       "MANUAL": "Atendido manualmente"
     },
-    "TOOLTIP_STAT": "{label}: {pct} ({count})"
+    "TOOLTIP_STAT": "{label}: {pct} ({count})",
+    "CAMPAIGN_BREAKDOWN": {
+      "HEADER": "Anúncios do período",
+      "EMPTY_STATE": "Nenhum anúncio Meta atribuído às conversas no período.",
+      "UNTITLED_AD": "Anúncio sem título",
+      "HEADERS": {
+        "AD_ID": "ID do anúncio",
+        "AD_TITLE": "Título do anúncio",
+        "LEADS": "Leads",
+        "QUALIFYING": "Em qualificação",
+        "SCHEDULING": "Agendamento",
+        "CONFIRMATION": "Confirmado",
+        "ATTENDANCE": "Comparecimentos"
+      }
+    }
   },
   "IA_HUMAN_DISTRIBUTION_REPORT": {
     "HEADER": "IA → Humano",

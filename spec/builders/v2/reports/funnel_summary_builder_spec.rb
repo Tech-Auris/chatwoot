@@ -121,5 +121,38 @@ RSpec.describe V2::Reports::FunnelSummaryBuilder do
         expect(report.find { |row| row[:name] == stages[:qualified].name }[:entered_count]).to eq(0)
       end
     end
+
+    context 'with the origem filter' do
+      let(:facebook_contact) { create(:contact, account: account, additional_attributes: { 'origem' => 'Facebook' }) }
+      let(:bare_contact) { create(:contact, account: account, additional_attributes: {}) }
+
+      before do
+        fb_conv = create(:conversation, account: account, inbox: inbox, contact: facebook_contact, funnel_stage_id: stages[:qualified].id)
+        bare_conv = create(:conversation, account: account, inbox: inbox, contact: bare_contact, funnel_stage_id: stages[:qualified].id)
+
+        [fb_conv, bare_conv].each do |conv|
+          create(:funnel_stage_change,
+                 account: account, conversation_id: conv.id,
+                 contact: conv.contact, inbox: inbox,
+                 previous_stage: nil, new_stage: stages[:qualified].name, created_at: 1.day.ago)
+        end
+      end
+
+      it 'scopes the snapshot and entries to conversations whose contact has the selected origem' do
+        row = described_class.new(account: account, params: params.merge(origem: 'Facebook')).build
+                             .find { |r| r[:name] == stages[:qualified].name }
+
+        expect(row[:in_stage_count]).to eq(1)
+        expect(row[:entered_count]).to eq(1)
+      end
+
+      it 'the __none__ token surfaces contacts with no origem attributed' do
+        row = described_class.new(account: account, params: params.merge(origem: '__none__')).build
+                             .find { |r| r[:name] == stages[:qualified].name }
+
+        expect(row[:in_stage_count]).to eq(1)
+        expect(row[:entered_count]).to eq(1)
+      end
+    end
   end
 end

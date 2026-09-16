@@ -30,6 +30,9 @@
       "FROM_DATE": "Lead entered from",
       "TO_DATE": "Lead entered until",
       "HIDE_CLOSED": "Hide closed",
+      "ORIGEM": "Lead origin",
+      "ORIGEM_ANY": "All origins",
+      "ORIGEM_NONE": "No origin",
       "RESET": "Clear filters"
     },
     "CARD": {
