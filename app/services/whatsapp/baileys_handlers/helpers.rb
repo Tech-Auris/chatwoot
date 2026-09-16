@@ -230,4 +230,30 @@ module Whatsapp::BaileysHandlers::Helpers # rubocop:disable Metrics/ModuleLength
 
     Whatsapp::MentionConverterService.convert_incoming_mentions(text, context_info, inbox.account, inbox)
   end
+
+  # Baileys nests `contextInfo.externalAdReply` under the message-type wrapper
+  # (extendedTextMessage / imageMessage / videoMessage / ...). Walk each shape
+  # we already recognize and hand the first non-empty contextInfo to the
+  # extractor — this keeps the caller ignorant of the Baileys shape.
+  BAILEYS_CONTEXT_INFO_PATHS = [
+    %i[extendedTextMessage contextInfo],
+    %i[imageMessage contextInfo],
+    %i[videoMessage contextInfo],
+    %i[audioMessage contextInfo],
+    %i[stickerMessage contextInfo],
+    %i[documentMessage contextInfo],
+    [:documentWithCaptionMessage, :message, :documentMessage, :contextInfo],
+    %i[contactMessage contextInfo]
+  ].freeze
+
+  def baileys_referral
+    msg = unwrap_ephemeral_message(@raw_message[:message])
+    context_info = BAILEYS_CONTEXT_INFO_PATHS.each do |path|
+      value = msg.dig(*path)
+      break value if value.present?
+    end
+    return nil unless context_info.is_a?(Hash)
+
+    ::CampaignReferralExtractor.from_baileys_context_info(context_info)
+  end
 end

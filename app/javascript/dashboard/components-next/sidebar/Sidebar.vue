@@ -353,6 +353,11 @@ const newReportRoutes = () => [
     to: accountScopedRoute('label_reports_index'),
   },
   {
+    name: 'Reports Origem',
+    label: t('SIDEBAR.REPORTS_ORIGEM'),
+    to: accountScopedRoute('origem_reports_index'),
+  },
+  {
     name: 'Reports Inbox',
     label: t('SIDEBAR.REPORTS_INBOX'),
     to: accountScopedRoute('inbox_reports_index'),

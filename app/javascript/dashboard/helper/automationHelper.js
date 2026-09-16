@@ -103,6 +103,7 @@ export const getActionOptions = ({
   type,
   addNoneToListFn,
   priorityOptions,
+  origemOptions,
 }) => {
   const actionsMap = {
     assign_agent: addNoneToListFn ? addNoneToListFn(agents) : agents,
@@ -112,6 +113,9 @@ export const getActionOptions = ({
     remove_label: generateConditionOptions(labels, 'title'),
     change_priority: priorityOptions,
     add_sla: slaPolicies,
+    assign_origem: addNoneToListFn
+      ? addNoneToListFn(origemOptions)
+      : origemOptions,
   };
   return actionsMap[type];
 };
@@ -133,6 +137,7 @@ export const getConditionOptions = ({
   type,
   priorityOptions,
   messageTypeOptions,
+  origemOptions,
 }) => {
   if (isCustomAttributeCheckbox(customAttributes, type)) {
     return booleanFilterOptions;
@@ -177,6 +182,7 @@ export const getConditionOptions = ({
         },
       }),
     })),
+    origem: origemOptions,
   };
 
   return conditionFilterMaps[type];

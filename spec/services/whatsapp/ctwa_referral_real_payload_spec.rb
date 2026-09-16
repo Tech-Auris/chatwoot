@@ -15,13 +15,22 @@ describe 'WhatsApp Click-to-WhatsApp referral (real payload shapes)' do # ruboco
 
   describe 'Baileys externalAdReply (numeric mediaType)' do
     let(:webhook_verify_token) { 'valid_token' }
+    let(:provider_config) do
+      { webhook_verify_token: webhook_verify_token, provider_url: 'https://baileys.api', api_key: 'test_key' }
+    end
     let!(:channel) do
-      create(:channel_whatsapp, provider: 'baileys', provider_config: { webhook_verify_token: webhook_verify_token },
+      create(:channel_whatsapp, provider: 'baileys', provider_config: provider_config,
                                 validate_provider_config: false, received_messages: false)
     end
 
     before do
+      # Silence every outbound HTTP the Baileys pipeline makes so the spec stays
+      # focused on the CTWA extraction. `on-whatsapp` (contact probe) and
+      # `connections/{phone}` (channel setup) both fire during inbox creation
+      # and message intake — none is relevant to what the extractor does.
       stub_request(:get, /profile-picture-url/).to_return(status: 200, body: { data: { profilePictureUrl: nil } }.to_json)
+      stub_request(:post, %r{https://baileys\.api/connections/.*/on-whatsapp}).to_return(status: 200, body: '[]')
+      stub_request(:post, %r{https://baileys\.api/connections/[^/]+\z}).to_return(status: 200, body: '{}')
     end
 
     # Scope the dedupe cleanup to this inbox so it can't wipe keys other specs
@@ -30,7 +39,7 @@ describe 'WhatsApp Click-to-WhatsApp referral (real payload shapes)' do # ruboco
       Redis::Alfred.scan_each(match: "MESSAGE_SOURCE_KEY::#{channel.inbox.id}_*") { |key| Redis::Alfred.delete(key) }
     end
 
-    it 'normalizes the real ad payload into referral (message) and entry_point (conversation)' do
+    it 'normalizes the real ad payload into message.content_attributes.referral and first-touches the conversation' do
       params = load_fixture('baileys_ctwa_ad.json').merge(webhookVerifyToken: webhook_verify_token)
 
       Whatsapp::IncomingMessageBaileysService.new(inbox: channel.inbox, params: params).perform
@@ -45,7 +54,10 @@ describe 'WhatsApp Click-to-WhatsApp referral (real payload shapes)' do # ruboco
         'media_type' => 'video',
         'thumbnail_url' => 'https://scontent.xx.fbcdn.net/v/thumb.jpg'
       )
-      expect(message.conversation.additional_attributes['entry_point']).to eq('source' => 'ctwa_ad', 'app' => 'facebook')
+      expect(message.conversation.additional_attributes['campaign_referral']).to include(
+        'source_id' => '1120214541917380261',
+        'ctwa_clid' => 'AaRDg86i-z5_xrIOfs9Adr1example'
+      )
     end
   end
 
@@ -56,7 +68,7 @@ describe 'WhatsApp Click-to-WhatsApp referral (real payload shapes)' do # ruboco
       Redis::Alfred.scan_each(match: "MESSAGE_SOURCE_KEY::#{channel.inbox.id}_*") { |key| Redis::Alfred.delete(key) }
     end
 
-    it 'normalizes the real referral object into the message and conversation' do
+    it 'normalizes the real referral object into the message and first-touches the conversation' do
       params = load_fixture('cloud_ctwa_referral.json')
 
       Whatsapp::IncomingMessageWhatsappCloudService.new(inbox: channel.inbox, params: params).perform
@@ -70,7 +82,10 @@ describe 'WhatsApp Click-to-WhatsApp referral (real payload shapes)' do # ruboco
         'media_type' => 'video',
         'thumbnail_url' => 'https://scontent.xx.fbcdn.net/v/thumb.jpg'
       )
-      expect(message.conversation.additional_attributes['referral']).to include('ctwa_clid' => 'AaRDg86i-z5_xrIOfs9Adr1example')
+      expect(message.conversation.additional_attributes['campaign_referral']).to include(
+        'source_id' => '1120214541917380261',
+        'ctwa_clid' => 'AaRDg86i-z5_xrIOfs9Adr1example'
+      )
     end
   end
 end

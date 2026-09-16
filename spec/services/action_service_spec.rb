@@ -40,6 +40,31 @@ describe ActionService do
     end
   end
 
+  describe '#assign_origem' do
+    let(:contact) { create(:contact, account: account, additional_attributes: {}) }
+    let(:conversation) { create(:conversation, account: account, contact: contact) }
+    let(:action_service) { described_class.new(conversation) }
+
+    it 'writes the given origem to the contact\'s additional_attributes' do
+      action_service.assign_origem(['Facebook'])
+      expect(contact.reload.additional_attributes['origem']).to eq('Facebook')
+    end
+
+    # Operator-triggered rules are allowed to override the auto-attribution,
+    # so an existing value gets replaced when the rule fires.
+    it 'overwrites an existing origem' do
+      contact.update!(additional_attributes: { 'origem' => 'Instagram' })
+      action_service.assign_origem(['Google'])
+      expect(contact.reload.additional_attributes['origem']).to eq('Google')
+    end
+
+    it 'clears the origem when passed nil sentinel' do
+      contact.update!(additional_attributes: { 'origem' => 'Facebook' })
+      action_service.assign_origem(['nil'])
+      expect(contact.reload.additional_attributes['origem']).to be_nil
+    end
+  end
+
   describe '#enable_ai / #disable_ai' do
     let(:conversation) { create(:conversation, account: account) }
     let(:action_service) { described_class.new(conversation) }

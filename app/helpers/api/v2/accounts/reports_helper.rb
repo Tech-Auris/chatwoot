@@ -46,6 +46,17 @@ module Api::V2::Accounts::ReportsHelper
     end
   end
 
+  def generate_origem_report
+    reports = V2::Reports::OrigemSummaryBuilder.new(
+      account: Current.account,
+      params: build_params({})
+    ).build
+
+    reports.map do |report|
+      [report[:name]] + generate_readable_report_metrics(report)
+    end
+  end
+
   def generate_conversations_report
     builder = V2::Reports::Conversations::MetricBuilder.new(Current.account, build_params(type: :account))
     summary = builder.summary

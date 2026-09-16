@@ -35,9 +35,24 @@ module Filters::FilterHelper
     case current_filter['attribute_type']
     when 'additional_attributes'
       handle_additional_attributes(query_hash, filter_operator_value, current_filter['data_type'])
+    when 'contact_additional_attributes'
+      handle_contact_additional_attributes(query_hash, filter_operator_value)
     else
       handle_standard_attributes(current_filter, query_hash, current_index, filter_operator_value)
     end
+  end
+
+  # Same JSON extract as `handle_additional_attributes` but rooted on the joined
+  # `contacts` table. Used by attributes that live on the contact but are
+  # exposed to conversation filters (e.g. `origem`, the lead's attribution).
+  # The caller is responsible for ensuring `contacts` is joined — for
+  # Conversations::FilterService the base relation already `.includes(:contact)`
+  # and the string reference here triggers Rails to switch to a LEFT JOIN.
+  def handle_contact_additional_attributes(query_hash, filter_operator_value)
+    ActiveRecord::Base.sanitize_sql_array(
+      ["contacts.additional_attributes ->> ? #{filter_operator_value} #{query_hash[:query_operator]} ",
+       query_hash[:attribute_key]]
+    )
   end
 
   def handle_nil_filter(query_hash, current_index)

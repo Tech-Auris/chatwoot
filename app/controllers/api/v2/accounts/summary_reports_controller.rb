@@ -1,6 +1,6 @@
 class Api::V2::Accounts::SummaryReportsController < Api::V1::Accounts::BaseController
   before_action :check_authorization
-  before_action :prepare_builder_params, only: [:agent, :team, :inbox, :label, :channel, :funnel, :funnel_conversion]
+  before_action :prepare_builder_params, only: [:agent, :team, :inbox, :label, :origem, :channel, :funnel, :funnel_conversion]
 
   def agent
     render_report_with(V2::Reports::AgentSummaryBuilder, type: :agent)
@@ -16,6 +16,10 @@ class Api::V2::Accounts::SummaryReportsController < Api::V1::Accounts::BaseContr
 
   def label
     render_report_with(V2::Reports::LabelSummaryBuilder)
+  end
+
+  def origem
+    render_report_with(V2::Reports::OrigemSummaryBuilder)
   end
 
   def channel
@@ -43,9 +47,10 @@ class Api::V2::Accounts::SummaryReportsController < Api::V1::Accounts::BaseContr
       since: permitted_params[:since],
       until: permitted_params[:until],
       business_hours: ActiveModel::Type::Boolean.new.cast(permitted_params[:business_hours]),
-      # Funnel reports honor these two; other builders quietly ignore them.
+      # Funnel reports honor these three; other builders quietly ignore them.
       inbox_id: permitted_params[:inbox_id],
-      label: permitted_params[:label]
+      label: permitted_params[:label],
+      origem: permitted_params[:origem]
     }
   end
 
@@ -56,7 +61,7 @@ class Api::V2::Accounts::SummaryReportsController < Api::V1::Accounts::BaseContr
   end
 
   def permitted_params
-    params.permit(:since, :until, :business_hours, :inbox_id, :label)
+    params.permit(:since, :until, :business_hours, :inbox_id, :label, :origem)
   end
 
   def date_range_too_long?

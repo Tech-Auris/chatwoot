@@ -311,6 +311,10 @@
       "CODEPEN": "Open in CodePen",
       "COPY_SUCCESSFUL": "Copied to clipboard"
     },
+    "REFERRAL_CARD": {
+      "AD_LABEL": "From an ad",
+      "VIEW_AD": "View ad"
+    },
     "SHOW_MORE_BLOCK": {
       "SHOW_MORE": "Show More",
       "SHOW_LESS": "Show Less"
@@ -411,6 +415,7 @@
     "REPORTS_BOT": "Bot",
     "REPORTS_AGENT": "Agents",
     "REPORTS_LABEL": "Labels",
+    "REPORTS_ORIGEM": "Lead origin",
     "REPORTS_INBOX": "Inbox",
     "REPORTS_TEAM": "Team",
     "AGENT_ASSIGNMENT": "Agent Assignment",

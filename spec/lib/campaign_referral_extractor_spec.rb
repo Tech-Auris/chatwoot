@@ -123,6 +123,58 @@ RSpec.describe CampaignReferralExtractor do
     end
   end
 
+  describe '.from_baileys_context_info' do
+    # Real payload shape from the wild — Baileys types use camelCase and
+    # `mediaType` is a proto enum integer. Some wrappers (Evolution etc.) emit
+    # the uppercase string form, so both must normalize to the same shape.
+    let(:external_ad_reply) do
+      {
+        sourceType: 'ad',
+        sourceId: '120224217878030096',
+        sourceUrl: 'https://fb.me/xyz',
+        ctwaClid: 'ARZ.abc123',
+        title: 'Agende sua Consulta',
+        body: 'Você olha essas veias aparentes?',
+        mediaType: 1,
+        thumbnailUrl: 'https://scontent.xx.fbcdn.net/thumb.jpg'
+      }
+    end
+
+    it 'normalizes an externalAdReply payload with numeric mediaType' do
+      result = described_class.from_baileys_context_info(externalAdReply: external_ad_reply)
+
+      expect(result).to eq(
+        'source_type' => 'ad',
+        'source_id' => '120224217878030096',
+        'source_url' => 'https://fb.me/xyz',
+        'ctwa_clid' => 'ARZ.abc123',
+        'title' => 'Agende sua Consulta',
+        'body' => 'Você olha essas veias aparentes?',
+        'media_type' => 'image',
+        'thumbnail_url' => 'https://scontent.xx.fbcdn.net/thumb.jpg'
+      )
+    end
+
+    it 'downcases a string mediaType (Evolution and other wrappers)' do
+      payload = external_ad_reply.merge(mediaType: 'VIDEO')
+
+      expect(described_class.from_baileys_context_info(externalAdReply: payload)['media_type']).to eq('video')
+    end
+
+    it 'returns nil when there is no externalAdReply on the contextInfo' do
+      expect(described_class.from_baileys_context_info(stanzaId: 'abc')).to be_nil
+    end
+
+    it 'returns nil when every field is blank' do
+      expect(described_class.from_baileys_context_info(externalAdReply: { sourceId: '' })).to be_nil
+    end
+
+    it 'is safe when given nil or a non-hash context_info' do
+      expect(described_class.from_baileys_context_info(nil)).to be_nil
+      expect(described_class.from_baileys_context_info('oops')).to be_nil
+    end
+  end
+
   describe '.gclid_from_body' do
     it 'extracts the token from a prefilled WhatsApp message body' do
       body = 'Olá, quero informação sobre a promoção. gclid=Cj0KCQ-abc_123'

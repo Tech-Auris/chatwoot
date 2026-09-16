@@ -65,7 +65,8 @@
       "LAST_ACTIVITY": "Last activity",
       "GROUP_TYPE": "Group type",
       "AI_ENABLED": "AI status",
-      "FUNNEL_STAGE": "Funnel stage"
+      "FUNNEL_STAGE": "Funnel stage",
+      "ORIGEM": "Lead origin"
     },
     "ERRORS": {
       "VALUE_REQUIRED": "Value is required",

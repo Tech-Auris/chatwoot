@@ -8,6 +8,7 @@ import {
   CONVERSATION_ATTRIBUTES,
 } from './helper/filterHelper';
 import languages from 'dashboard/components/widgets/conversation/advancedFilterItems/languages.js';
+import { ORIGEM_OPTIONS } from 'dashboard/helper/origemOptions';
 
 /**
  * @typedef {Object} FilterOption
@@ -260,6 +261,21 @@ export function useConversationFilterContext() {
       options: languages,
       dataType: 'text',
       filterOperators: equalityOperators.value,
+      attributeModel: 'additional',
+    },
+    // Contact-scoped attribute exposed here on the conversation filter because
+    // the operator thinks about it while triaging conversations. Backend
+    // resolves via the `contact_additional_attributes` filter type
+    // (see lib/filters/filter_keys.yml).
+    {
+      attributeKey: CONVERSATION_ATTRIBUTES.ORIGEM,
+      value: CONVERSATION_ATTRIBUTES.ORIGEM,
+      attributeName: t('FILTER.ATTRIBUTES.ORIGEM'),
+      label: t('FILTER.ATTRIBUTES.ORIGEM'),
+      inputType: 'multiSelect',
+      options: ORIGEM_OPTIONS.map(name => ({ id: name, name })),
+      dataType: 'text',
+      filterOperators: presenceOperators.value,
       attributeModel: 'additional',
     },
     {

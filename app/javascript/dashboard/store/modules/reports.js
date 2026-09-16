@@ -260,6 +260,19 @@ export const actions = {
         console.error(error);
       });
   },
+  downloadOrigemReports(_, reportObj) {
+    return Report.getOrigemReports(reportObj)
+      .then(response => {
+        downloadCsvFile(reportObj.fileName, response.data);
+        AnalyticsHelper.track(REPORTS_EVENTS.DOWNLOAD_REPORT, {
+          reportType: 'origem',
+          businessHours: reportObj?.businessHours,
+        });
+      })
+      .catch(error => {
+        console.error(error);
+      });
+  },
   downloadInboxReports(_, reportObj) {
     return Report.getInboxReports(reportObj)
       .then(response => {

@@ -205,6 +205,19 @@
       "PLACEHOLDER": "Selecionar intervalo de datas"
     }
   },
+  "ORIGEM_REPORTS": {
+    "HEADER": "Visão Geral por Origem do lead",
+    "DESCRIPTION": "Acompanhe o desempenho das conversas por origem do lead: número de conversas, tempo de primeira resposta, tempos de resolução e casos resolvidos. As linhas espelham as opções fixas de origem, mais uma linha \"Sem origem\" para leads sem atribuição.",
+    "DOWNLOAD": "Baixar relatório de origens",
+    "COLUMNS": {
+      "NAME": "Origem do lead",
+      "CONVERSATIONS": "Nº de Conversas",
+      "AVG_FIRST_RESPONSE_TIME": "Tempo Médio de Primeira Resposta",
+      "AVG_RESOLUTION_TIME": "Tempo Médio de Resolução",
+      "AVG_REPLY_TIME": "Tempo Médio de Espera do Cliente",
+      "RESOLUTION_COUNT": "Contagem de Resolução"
+    }
+  },
   "LABEL_REPORTS": {
     "HEADER": "Visão Geral das Etiquetas",
     "DESCRIPTION": "Acompanhe o desempenho da sua etiqueta com métricas-chave incluindo conversas, tempo de resposta, tempos de resolução e casos resolvidos. Clique no nome da etiqueta para obter detalhes.",
@@ -666,7 +679,9 @@
     },
     "FILTERS": {
       "INBOX_ANY": "Todas as caixas",
-      "LABEL_ANY": "Todas as etiquetas"
+      "LABEL_ANY": "Todas as etiquetas",
+      "ORIGEM_ANY": "Todas as origens",
+      "ORIGEM_NONE": "Sem origem"
     }
   },
   "FUNNEL_CONVERSION_REPORTS": {
@@ -696,13 +711,29 @@
     },
     "FILTERS": {
       "INBOX_ANY": "Todas as caixas",
-      "LABEL_ANY": "Todas as etiquetas"
+      "LABEL_ANY": "Todas as etiquetas",
+      "ORIGEM_ANY": "Todas as origens",
+      "ORIGEM_NONE": "Sem origem"
     },
     "LEGEND": {
       "AI": "Atendido pela IA",
       "MANUAL": "Atendido manualmente"
     },
-    "TOOLTIP_STAT": "{label}: {pct} ({count})"
+    "TOOLTIP_STAT": "{label}: {pct} ({count})",
+    "CAMPAIGN_BREAKDOWN": {
+      "HEADER": "Anúncios do período",
+      "EMPTY_STATE": "Nenhum anúncio Meta atribuído às conversas no período.",
+      "UNTITLED_AD": "Anúncio sem título",
+      "HEADERS": {
+        "AD_ID": "ID do anúncio",
+        "AD_TITLE": "Título do anúncio",
+        "LEADS": "Leads",
+        "QUALIFYING": "Em qualificação",
+        "SCHEDULING": "Agendamento",
+        "CONFIRMATION": "Confirmado",
+        "ATTENDANCE": "Comparecimentos"
+      }
+    }
   },
   "IA_HUMAN_DISTRIBUTION_REPORT": {
     "HEADER": "IA → Humano",

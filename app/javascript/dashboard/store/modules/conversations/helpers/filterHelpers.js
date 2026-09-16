@@ -90,6 +90,13 @@ const getValueFromConversation = (conversation, attributeKey) => {
     case 'browser_language':
     case 'referer':
       return conversation.additional_attributes?.[attributeKey];
+    case 'origem':
+      // Origem lives on the CONTACT (Contact#additional_attributes.origem),
+      // not on the conversation. The conversation partial exposes the contact
+      // under `meta.sender`. Without this branch the client-side re-filter
+      // gets null, drops every row the backend already matched, and the list
+      // renders empty even though the count shows a positive number.
+      return conversation.meta?.sender?.additional_attributes?.origem;
     default:
       // Check if it's a custom attribute
       if (

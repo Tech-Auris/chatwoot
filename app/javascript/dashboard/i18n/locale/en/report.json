@@ -205,6 +205,19 @@
       "PLACEHOLDER": "Select date range"
     }
   },
+  "ORIGEM_REPORTS": {
+    "HEADER": "Lead origin overview",
+    "DESCRIPTION": "Track conversation performance by lead origin: number of conversations, first response time, resolution times, and resolved cases. Rows mirror the fixed origem options, plus a \"No origin\" row for unattributed leads.",
+    "DOWNLOAD": "Download lead origin report",
+    "COLUMNS": {
+      "NAME": "Lead origin",
+      "CONVERSATIONS": "Conversations",
+      "AVG_FIRST_RESPONSE_TIME": "Avg. first response time",
+      "AVG_RESOLUTION_TIME": "Avg. resolution time",
+      "AVG_REPLY_TIME": "Avg. customer wait time",
+      "RESOLUTION_COUNT": "Resolution count"
+    }
+  },
   "LABEL_REPORTS": {
     "HEADER": "Labels Overview",
     "DESCRIPTION": "Track label performance with key metrics including conversations, response times, resolution times, and resolved cases. Click a label name for detailed insights.",
@@ -666,7 +679,9 @@
     },
     "FILTERS": {
       "INBOX_ANY": "All inboxes",
-      "LABEL_ANY": "All labels"
+      "LABEL_ANY": "All labels",
+      "ORIGEM_ANY": "All origins",
+      "ORIGEM_NONE": "No origin"
     }
   },
   "FUNNEL_CONVERSION_REPORTS": {
@@ -696,13 +711,29 @@
     },
     "FILTERS": {
       "INBOX_ANY": "All inboxes",
-      "LABEL_ANY": "All labels"
+      "LABEL_ANY": "All labels",
+      "ORIGEM_ANY": "All origins",
+      "ORIGEM_NONE": "No origin"
     },
     "LEGEND": {
       "AI": "Handled by AI",
       "MANUAL": "Handled manually"
     },
-    "TOOLTIP_STAT": "{label}: {pct} ({count})"
+    "TOOLTIP_STAT": "{label}: {pct} ({count})",
+    "CAMPAIGN_BREAKDOWN": {
+      "HEADER": "Ads in the period",
+      "EMPTY_STATE": "No Meta ad attributed to any conversation in the period.",
+      "UNTITLED_AD": "Untitled ad",
+      "HEADERS": {
+        "AD_ID": "Ad ID",
+        "AD_TITLE": "Ad title",
+        "LEADS": "Leads",
+        "QUALIFYING": "Qualifying",
+        "SCHEDULING": "Scheduling",
+        "CONFIRMATION": "Confirmed",
+        "ATTENDANCE": "Attendance"
+      }
+    }
   },
   "IA_HUMAN_DISTRIBUTION_REPORT": {
     "HEADER": "AI → Human",

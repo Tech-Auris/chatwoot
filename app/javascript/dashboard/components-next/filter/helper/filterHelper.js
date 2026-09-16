@@ -17,6 +17,7 @@ export const CONVERSATION_ATTRIBUTES = {
   GROUP_TYPE: 'group_type',
   AI_ENABLED: 'ai_enabled',
   FUNNEL_STAGE_ID: 'funnel_stage_id',
+  ORIGEM: 'origem',
 };
 
 export const CONTACT_ATTRIBUTES = {

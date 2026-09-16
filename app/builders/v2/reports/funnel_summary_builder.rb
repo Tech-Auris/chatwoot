@@ -1,6 +1,11 @@
 class V2::Reports::FunnelSummaryBuilder
   include DateRangeHelper
 
+  # Sent by the operator to select conversations whose contact has no origem
+  # attributed at all. Same token the frontend sends and the Conversão builder
+  # accepts, so all funnel views agree on one vocabulary.
+  ORIGEM_NONE_TOKEN = '__none__'.freeze
+
   attr_reader :account, :params
 
   def initialize(account:, params:)
@@ -41,20 +46,48 @@ class V2::Reports::FunnelSummaryBuilder
     scope.group(:new_stage).count
   end
 
-  # Single point that applies the optional inbox / label filters. Returns
-  # ActiveRecord scopes so callers can chain freely.
+  # Single point that applies the optional inbox / label / origem filters.
+  # Returns ActiveRecord scopes so callers can chain freely.
   def funnel_stage_changes_scope
     scope = account.funnel_stage_changes
     scope = scope.where(inbox_id: params[:inbox_id]) if params[:inbox_id].present?
-    scope = scope.where(conversation_id: account.conversations.tagged_with(params[:label], on: :labels).select(:id)) if params[:label].present?
+    scope = scope.where(conversation_id: filtered_conversation_ids) if any_conv_filter?
     scope
   end
 
   def filtered_conversations_scope
     scope = account.conversations
     scope = scope.where(inbox_id: params[:inbox_id]) if params[:inbox_id].present?
-    scope = scope.tagged_with(params[:label], on: :labels) if params[:label].present?
+    scope = scope.where(id: filtered_conversation_ids) if any_conv_filter?
     scope
+  end
+
+  # Pre-resolved conversation ids matching the label AND origem filters
+  # combined (empty when neither is set). Kept as a memoized array so the raw
+  # SQL below and the AR scopes above hit the same list without repeated
+  # roundtrips.
+  def filtered_conversation_ids
+    return @filtered_conversation_ids if defined?(@filtered_conversation_ids)
+
+    scope = account.conversations
+    scope = scope.tagged_with(params[:label], on: :labels) if params[:label].present?
+    scope = scope.where(contact_id: contacts_matching_origem) if params[:origem].present?
+    @filtered_conversation_ids = any_conv_filter? ? scope.pluck(:id) : []
+  end
+
+  def any_conv_filter?
+    params[:label].present? || params[:origem].present?
+  end
+
+  def contacts_matching_origem
+    origem = params[:origem].to_s
+    scope = account.contacts
+    scope = if origem == ORIGEM_NONE_TOKEN
+              scope.where("(additional_attributes ->> 'origem') IS NULL OR (additional_attributes ->> 'origem') = ''")
+            else
+              scope.where("additional_attributes ->> 'origem' = ?", origem)
+            end
+    scope.select(:id)
   end
 
   # For each entry into a stage, the time spent equals
@@ -68,8 +101,10 @@ class V2::Reports::FunnelSummaryBuilder
   # in this period, how long did people stay?".
   #
   # `:inbox_id` and `:conv_ids` are pre-resolved by the caller — they're nil
-  # when the filter is off, which collapses the guard into a tautology so the
-  # WHERE clause stays generic and indexable.
+  # or unused when the filter is off, which collapses the guard into a
+  # tautology so the WHERE clause stays generic and indexable. `:has_conv_filter`
+  # covers both label and origem — a single guard because the caller pre-
+  # intersects the two into one id list.
   AVG_TIME_SQL = <<~SQL.squish.freeze
     WITH ordered AS (
       SELECT
@@ -82,7 +117,7 @@ class V2::Reports::FunnelSummaryBuilder
       FROM funnel_stage_changes
       WHERE account_id = :account_id
         AND (CAST(:inbox_id AS bigint) IS NULL OR inbox_id = :inbox_id)
-        AND (:has_label_filter = FALSE OR conversation_id IN (:conv_ids))
+        AND (:has_conv_filter = FALSE OR conversation_id IN (:conv_ids))
     )
     SELECT
       new_stage,
@@ -97,29 +132,20 @@ class V2::Reports::FunnelSummaryBuilder
   def fetch_avg_times_in_stage(stage_names)
     return {} if stage_names.empty? || range_endpoints.nil?
 
-    label_conv_ids = filtered_conversation_ids_for_label
+    conv_ids = filtered_conversation_ids
     sanitized = ActiveRecord::Base.sanitize_sql_array(
       [AVG_TIME_SQL,
        { account_id: account.id, stage_names: stage_names,
          since: range_endpoints.first, until_exclusive: range_endpoints.last,
          inbox_id: params[:inbox_id].presence,
-         has_label_filter: params[:label].present?,
+         has_conv_filter: any_conv_filter?,
          # `IN (:conv_ids)` errors on an empty array — fall back to a single
          # sentinel id that won't match so the guard above stays simple.
-         conv_ids: label_conv_ids.empty? ? [-1] : label_conv_ids }]
+         conv_ids: conv_ids.empty? ? [-1] : conv_ids }]
     )
     ActiveRecord::Base.connection.select_all(sanitized).each_with_object({}) do |row, acc|
       acc[row['new_stage']] = row['avg_seconds'].to_f
     end
-  end
-
-  # Materialized array of conversation_ids matching the label filter, used to
-  # inject into the raw-SQL CTE above. Empty when no label is selected — the
-  # SQL guard short-circuits in that case, so the array isn't consulted.
-  def filtered_conversation_ids_for_label
-    return [] if params[:label].blank?
-
-    account.conversations.tagged_with(params[:label], on: :labels).pluck(:id)
   end
 
   def fetch_exit_counts(stage_names)
