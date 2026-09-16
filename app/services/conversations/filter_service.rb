@@ -78,7 +78,15 @@ class Conversations::FilterService < FilterService
   # in filter_keys.yml — right now only `origem`, but new contact-backed
   # conversation filters can register themselves without touching this method.
   def references_contact_attributes?
-    keys = Array(@params[:payload]).filter_map { |q| q.is_a?(Hash) ? (q['attribute_key'] || q[:attribute_key]) : nil }
+    # Payload entries can arrive as plain Hash (tests, background jobs) or as
+    # ActionController::Parameters (real controller path). The latter is NOT a
+    # subclass of Hash, so an `is_a?(Hash)` guard silently drops every entry
+    # and the JOIN never happens. `respond_to?(:[])` catches both shapes.
+    keys = Array(@params[:payload]).filter_map do |q|
+      next unless q.respond_to?(:[])
+
+      q['attribute_key'] || q[:attribute_key]
+    end
     conversations_filters = @filters['conversations'] || {}
     keys.any? { |k| conversations_filters.dig(k, 'attribute_type') == 'contact_additional_attributes' }
   end
