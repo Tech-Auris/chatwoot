@@ -311,6 +311,10 @@
       "CODEPEN": "Open in CodePen",
       "COPY_SUCCESSFUL": "Copied to clipboard"
     },
+    "REFERRAL_CARD": {
+      "AD_LABEL": "From an ad",
+      "VIEW_AD": "View ad"
+    },
     "SHOW_MORE_BLOCK": {
       "SHOW_MORE": "Show More",
       "SHOW_LESS": "Show Less"

@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 
 import MessageMeta from '../MessageMeta.vue';
+import ReferralCard from './ReferralCard.vue';
 
 import { emitter } from 'shared/helpers/mitt';
 import { useMessageContext } from '../provider.js';
@@ -21,6 +22,7 @@ const {
   inReplyTo,
   shouldGroupWithNext,
   additionalAttributes,
+  contentAttributes,
 } = useMessageContext();
 const { t } = useI18n();
 
@@ -132,6 +134,10 @@ const replyToPreview = computed(() => {
         class="prose prose-bubble line-clamp-2"
       />
     </div>
+    <ReferralCard
+      v-if="contentAttributes?.referral"
+      :referral="contentAttributes.referral"
+    />
     <slot />
     <MessageMeta
       v-if="shouldShowMeta"
