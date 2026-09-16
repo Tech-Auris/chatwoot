@@ -37,6 +37,11 @@ class Conversations::FilterService < FilterService
     conversations = @account.conversations.includes(
       :taggings, :inbox, { assignee: { avatar_attachment: [:blob] } }, { contact: { avatar_attachment: [:blob] } }, :team, :messages, :contact_inbox
     )
+    # Force the `:contact` include to LEFT JOIN so filters that read
+    # `contacts.additional_attributes` (e.g. Origem do lead) can reach the
+    # column without an extra explicit join. Cheap because contact_id is
+    # already a FK — Rails only issues one extra LEFT JOIN per query.
+    conversations = conversations.references(:contact) if references_contact_attributes?
 
     Conversations::PermissionFilterService.new(
       conversations,
@@ -67,6 +72,15 @@ class Conversations::FilterService < FilterService
   end
 
   private
+
+  # Any payload entry that maps to a filter of type `contact_additional_attributes`
+  # in filter_keys.yml — right now only `origem`, but new contact-backed
+  # conversation filters can register themselves without touching this method.
+  def references_contact_attributes?
+    keys = Array(@params[:payload]).filter_map { |q| q.is_a?(Hash) ? (q['attribute_key'] || q[:attribute_key]) : nil }
+    conversations_filters = @filters['conversations'] || {}
+    keys.any? { |k| conversations_filters.dig(k, 'attribute_type') == 'contact_additional_attributes' }
+  end
 
   def legacy_ai_status_filter?(query_hash)
     query_hash['attribute_key'] == 'ai_enabled' && !@account.ai_status_uses_attribute?

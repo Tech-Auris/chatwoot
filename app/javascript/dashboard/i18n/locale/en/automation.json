@@ -165,7 +165,8 @@
       "OPEN_CONVERSATION": "Open conversation",
       "PENDING_CONVERSATION": "Mark conversation as pending",
       "ENABLE_AI": "Enable AI",
-      "DISABLE_AI": "Disable AI"
+      "DISABLE_AI": "Disable AI",
+      "ASSIGN_ORIGEM": "Assign lead origin"
     },
     "MESSAGE_TYPES": {
       "INCOMING": "Incoming Message",
@@ -197,7 +198,8 @@
       "PRIORITY": "Priority",
       "LABELS": "Labels",
       "AI_ENABLED": "AI Status",
-      "FUNNEL_STAGE": "Funnel stage"
+      "FUNNEL_STAGE": "Funnel stage",
+      "ORIGEM": "Lead origin"
     },
     "AI_STATUS_TYPES": {
       "ENABLED": "AI Enabled",

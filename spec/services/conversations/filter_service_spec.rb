@@ -266,6 +266,46 @@ describe Conversations::FilterService do
         expect { filter_service.new(params, user_1, account).perform }.to raise_error(CustomExceptions::CustomFilter::InvalidQueryOperator)
       end
     end
+
+    # `origem` lives on the CONTACT — the filter framework exposes it through
+    # the new `contact_additional_attributes` type so operators can slice
+    # conversations by lead attribution the same way they slice by inbox.
+    context 'with the origem (Origem do lead) filter' do
+      let!(:facebook_contact) { create(:contact, account: account, additional_attributes: { 'origem' => 'Facebook' }) }
+      let!(:instagram_contact) { create(:contact, account: account, additional_attributes: { 'origem' => 'Instagram' }) }
+      let!(:facebook_conversation) do
+        create(:conversation, account: account, inbox: inbox, assignee: user_1, contact: facebook_contact)
+      end
+      let!(:instagram_conversation) do
+        create(:conversation, account: account, inbox: inbox, assignee: user_1, contact: instagram_contact)
+      end
+
+      it 'matches only conversations whose contact has the selected origem' do
+        result = filter_service.new({
+                                      payload: [{
+                                        attribute_key: 'origem', filter_operator: 'equal_to',
+                                        values: ['Facebook'], query_operator: nil
+                                      }.with_indifferent_access],
+                                      page: 1
+                                    }, user_1, account).perform
+
+        expect(result[:conversations].pluck(:id)).to include(facebook_conversation.id)
+        expect(result[:conversations].pluck(:id)).not_to include(instagram_conversation.id)
+      end
+
+      it 'supports not_equal_to' do
+        result = filter_service.new({
+                                      payload: [{
+                                        attribute_key: 'origem', filter_operator: 'not_equal_to',
+                                        values: ['Facebook'], query_operator: nil
+                                      }.with_indifferent_access],
+                                      page: 1
+                                    }, user_1, account).perform
+
+        expect(result[:conversations].pluck(:id)).to include(instagram_conversation.id)
+        expect(result[:conversations].pluck(:id)).not_to include(facebook_conversation.id)
+      end
+    end
   end
 
   describe '#perform on custom attribute' do

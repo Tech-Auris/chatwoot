@@ -140,6 +140,18 @@ conversations:
       - "not_equal_to"
       - "contains"
       - "does_not_contain"
+  # `origem` lives on `contacts.additional_attributes`, not on the conversation
+  # itself — the new `contact_additional_attributes` type routes the JSON extract
+  # to the joined contacts table. Kept in the conversation filter block on
+  # purpose: operators think about it while triaging conversations.
+  origem:
+    attribute_type: "contact_additional_attributes"
+    data_type: "text"
+    filter_operators:
+      - "equal_to"
+      - "not_equal_to"
+      - "is_present"
+      - "is_not_present"
 
 ### ----- End of Conversation Filters ----- ###
 

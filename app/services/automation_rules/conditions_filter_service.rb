@@ -150,6 +150,11 @@ class AutomationRules::ConditionsFilterService < FilterService
     case current_filter['attribute_type']
     when 'additional_attributes'
       " #{table_name}.additional_attributes ->> '#{attribute_key}' #{filter_operator_value} #{query_operator} "
+    when 'contact_additional_attributes'
+      # `base_relation` already LEFT JOINs contacts on conversation.contact_id,
+      # so conversation-scoped filters that live on the contact (like `origem`)
+      # can reach the column directly.
+      " contacts.additional_attributes ->> '#{attribute_key}' #{filter_operator_value} #{query_operator} "
     when 'standard'
       if attribute_key == 'labels'
         build_label_query_string(query_hash, current_index, query_operator)

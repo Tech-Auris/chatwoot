@@ -65,7 +65,8 @@
       "LAST_ACTIVITY": "Última atividade",
       "GROUP_TYPE": "Tipo de conversa",
       "AI_ENABLED": "Status da IA",
-      "FUNNEL_STAGE": "Etapa do funil"
+      "FUNNEL_STAGE": "Etapa do funil",
+      "ORIGEM": "Origem do lead"
     },
     "ERRORS": {
       "VALUE_REQUIRED": "Valor obrigatório",

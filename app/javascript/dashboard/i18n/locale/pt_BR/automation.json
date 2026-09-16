@@ -165,7 +165,8 @@
       "OPEN_CONVERSATION": "Abrir conversa",
       "PENDING_CONVERSATION": "Marcar conversa como pendente",
       "ENABLE_AI": "Ativar IA",
-      "DISABLE_AI": "Desativar IA"
+      "DISABLE_AI": "Desativar IA",
+      "ASSIGN_ORIGEM": "Atribuir Origem do lead"
     },
     "MESSAGE_TYPES": {
       "INCOMING": "Mensagem Recebida",
@@ -197,7 +198,8 @@
       "PRIORITY": "Prioridade",
       "LABELS": "Etiquetas",
       "AI_ENABLED": "Status da IA",
-      "FUNNEL_STAGE": "Etapa do funil"
+      "FUNNEL_STAGE": "Etapa do funil",
+      "ORIGEM": "Origem do lead"
     },
     "AI_STATUS_TYPES": {
       "ENABLED": "IA Ativada",

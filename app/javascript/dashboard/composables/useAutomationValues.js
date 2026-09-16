@@ -12,6 +12,7 @@ import {
   MESSAGE_CONDITION_VALUES,
   PRIORITY_CONDITION_VALUES,
 } from 'dashboard/constants/automation';
+import { ORIGEM_OPTIONS } from 'dashboard/helper/origemOptions';
 
 /**
  * This is a shared composables that holds utilities used to build dropdown and file options
@@ -84,6 +85,14 @@ export default function useAutomationValues() {
     }))
   );
 
+  // Fixed vocabulary from ORIGEM_OPTIONS — same list rendered in the sidebar
+  // dropdown and the funnel filters. Fed into both the condition (multi-select
+  // filter over `contacts.additional_attributes.origem`) and the action
+  // (assign_origem writes the same field).
+  const origemOptions = computed(() =>
+    ORIGEM_OPTIONS.map(name => ({ id: name, name }))
+  );
+
   /**
    * Adds a translated "None" option to the beginning of a list
    * @param {Array} list - The list to add "None" to
@@ -119,6 +128,7 @@ export default function useAutomationValues() {
       funnelStages: funnelStages.value,
       languages,
       countries,
+      origemOptions: origemOptions.value,
       type,
     });
   };
@@ -149,6 +159,7 @@ export default function useAutomationValues() {
       type,
       addNoneToListFn: addNoneToList,
       priorityOptions: priorityOptions.value,
+      origemOptions: origemOptions.value,
     });
   };
 
