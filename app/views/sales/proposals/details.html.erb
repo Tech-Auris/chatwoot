@@ -49,7 +49,9 @@
     <label class="text-sm text-slate-600">
       CPF
       <%= f.text_field :document, value: @proposal.prospect_document, required: true, inputmode: 'numeric',
+            data: { document: 'cpf' }, maxlength: 14,
             class: 'mt-1 w-full border border-slate-200 rounded px-3 py-2 text-sm' %>
+      <span data-document-error="cpf" class="hidden mt-1 text-xs text-red-600">CPF inválido</span>
     </label>
 
     <%# `<details>` felt like an inspector, not an option. A checkbox reads as
@@ -72,7 +74,9 @@
         <label class="text-sm text-slate-600">
           CNPJ
           <%= f.text_field :company_document, value: @proposal.company_document, inputmode: 'numeric',
+                data: { document: 'cnpj' }, maxlength: 18,
                 class: 'mt-1 w-full border border-slate-200 rounded px-3 py-2 text-sm' %>
+          <span data-document-error="cnpj" class="hidden mt-1 text-xs text-red-600">CNPJ inválido</span>
         </label>
       </div>
     </div>
@@ -85,9 +89,114 @@
   (function () {
     var toggle = document.getElementById('cnpj_toggle');
     var fields = document.getElementById('cnpj_fields');
-    if (!toggle || !fields) return;
-    toggle.addEventListener('change', function () {
-      fields.classList.toggle('hidden', !toggle.checked);
+    if (toggle && fields) {
+      toggle.addEventListener('change', function () {
+        fields.classList.toggle('hidden', !toggle.checked);
+      });
+    }
+
+    // Mirrors `lib/br_document_checksum.rb`. Two layers: (1) mask as the
+    // prospect types, (2) refuse submit if either field is present and
+    // fails the check. The server-side model validation is the source of
+    // truth; this is here so the prospect gets feedback in the field
+    // instead of a 422 after clicking "Reservar condição".
+    function digitsOnly(v) { return (v || '').replace(/\D/g, ''); }
+
+    function formatCpf(digits) {
+      digits = digits.slice(0, 11);
+      var parts = [];
+      if (digits.length > 0) parts.push(digits.slice(0, 3));
+      if (digits.length > 3) parts[parts.length - 1] += '.' + digits.slice(3, 6);
+      if (digits.length > 6) parts[parts.length - 1] += '.' + digits.slice(6, 9);
+      if (digits.length > 9) parts[parts.length - 1] += '-' + digits.slice(9, 11);
+      return parts.join('');
+    }
+
+    function formatCnpj(digits) {
+      digits = digits.slice(0, 14);
+      var out = '';
+      if (digits.length > 0) out += digits.slice(0, 2);
+      if (digits.length > 2) out += '.' + digits.slice(2, 5);
+      if (digits.length > 5) out += '.' + digits.slice(5, 8);
+      if (digits.length > 8) out += '/' + digits.slice(8, 12);
+      if (digits.length > 12) out += '-' + digits.slice(12, 14);
+      return out;
+    }
+
+    function calcCheck(digits, weights) {
+      var sum = 0;
+      for (var i = 0; i < weights.length; i++) sum += digits[i] * weights[i];
+      var rem = sum % 11;
+      return rem < 2 ? 0 : 11 - rem;
+    }
+
+    function validCpf(value) {
+      var d = digitsOnly(value);
+      if (d.length !== 11) return false;
+      if (/^(\d)\1+$/.test(d)) return false;
+      var arr = d.split('').map(Number);
+      var w1 = [10, 9, 8, 7, 6, 5, 4, 3, 2];
+      var w2 = [11, 10, 9, 8, 7, 6, 5, 4, 3, 2];
+      var d1 = calcCheck(arr.slice(0, 9), w1);
+      var d2 = calcCheck(arr.slice(0, 10), w2);
+      return arr[9] === d1 && arr[10] === d2;
+    }
+
+    function validCnpj(value) {
+      var d = digitsOnly(value);
+      if (d.length !== 14) return false;
+      if (/^(\d)\1+$/.test(d)) return false;
+      var arr = d.split('').map(Number);
+      var w1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+      var w2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+      var d1 = calcCheck(arr.slice(0, 12), w1);
+      var d2 = calcCheck(arr.slice(0, 13), w2);
+      return arr[12] === d1 && arr[13] === d2;
+    }
+
+    document.querySelectorAll('[data-document]').forEach(function (input) {
+      var kind = input.dataset.document; // "cpf" | "cnpj"
+      var format = kind === 'cpf' ? formatCpf : formatCnpj;
+      var validate = kind === 'cpf' ? validCpf : validCnpj;
+      var errorEl = document.querySelector('[data-document-error="' + kind + '"]');
+
+      function refreshError() {
+        var raw = digitsOnly(input.value);
+        var complete = raw.length === (kind === 'cpf' ? 11 : 14);
+        if (!errorEl) return;
+        errorEl.classList.toggle('hidden', !(complete && !validate(input.value)));
+      }
+
+      input.addEventListener('input', function () {
+        var caret = input.selectionEnd || 0;
+        var before = input.value.length;
+        input.value = format(digitsOnly(input.value));
+        input.setSelectionRange(caret + (input.value.length - before), caret + (input.value.length - before));
+        refreshError();
+      });
+      input.addEventListener('blur', refreshError);
+      // First render already-persisted values
+      input.value = format(digitsOnly(input.value));
+      refreshError();
     });
+
+    // Block submit if any visible document field fails. Hidden CNPJ (toggle
+    // off) is not checked — it will not be sent as active data.
+    var form = document.querySelector('form');
+    if (form) {
+      form.addEventListener('submit', function (e) {
+        var cpfEl = form.querySelector('[data-document="cpf"]');
+        var cnpjEl = form.querySelector('[data-document="cnpj"]');
+        var cpfOk = !cpfEl || validCpf(cpfEl.value);
+        var cnpjEmpty = !cnpjEl || digitsOnly(cnpjEl.value).length === 0;
+        var cnpjHidden = fields && fields.classList.contains('hidden');
+        var cnpjOk = cnpjEmpty || cnpjHidden || validCnpj(cnpjEl.value);
+        if (!cpfOk || !cnpjOk) {
+          e.preventDefault();
+          if (!cpfOk) cpfEl.focus();
+          else cnpjEl.focus();
+        }
+      });
+    }
   })();
 </script>

@@ -27,7 +27,7 @@ RSpec.describe TermsAcceptance do
       acceptance = create(:terms_acceptance, terms_version: version)
 
       acceptance.sign!(
-        signer: { name: 'Maria Souza', email: 'maria@exemplo.com', document: '123.456.789-00' },
+        signer: { name: 'Maria Souza', email: 'maria@exemplo.com', document: '529.982.247-25' },
         ip_address: '201.10.0.1',
         user_agent: 'Mozilla/5.0'
       )

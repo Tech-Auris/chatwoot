@@ -86,6 +86,16 @@ class SalesQuote < ApplicationRecord
   validates :access_code, presence: true
   validates :clickup_task_id, presence: true
 
+  # The prospect fills the CPF on the public form and (optionally) a CNPJ if
+  # they want the invoice on the company. A malformed value used to travel
+  # all the way to Stripe as a `br_cnpj` (or `br_cpf`) and get rejected there,
+  # with the sale already closed and the customer already created without
+  # the tax id — the operator had to notice and clean up. Validate on
+  # change only, so a legacy row with a bad document can still receive
+  # unrelated updates while a new save cannot enter an invalid value.
+  validate :prospect_document_matches_cpf, if: -> { will_save_change_to_prospect_document? && prospect_document.present? }
+  validate :company_document_matches_cnpj, if: -> { will_save_change_to_company_document? && company_document.present? }
+
   before_validation :assign_credentials, on: :create
 
   scope :open_deals, -> { where.not(status: [:converted, :expired, :cancelled]) }
@@ -157,5 +167,17 @@ class SalesQuote < ApplicationRecord
     self.public_token ||= SecureRandom.urlsafe_base64(32)
     self.access_code ||= SecureRandom.random_number(10**ACCESS_CODE_LENGTH).to_s.rjust(ACCESS_CODE_LENGTH, '0')
     self.verification_phone_last4 ||= prospect_phone.to_s.gsub(/\D/, '').last(4).presence
+  end
+
+  def prospect_document_matches_cpf
+    return if BrDocumentChecksum.valid_cpf?(prospect_document)
+
+    errors.add(:prospect_document, 'CPF inválido')
+  end
+
+  def company_document_matches_cnpj
+    return if BrDocumentChecksum.valid_cnpj?(company_document)
+
+    errors.add(:company_document, 'CNPJ inválido')
   end
 end

@@ -4,7 +4,7 @@ RSpec.describe 'Public sales proposal', type: :request do
   let(:quote) do
     create(:sales_quote, prospect_phone: '+55 61 98140-2211', reserved_until: 5.days.from_now,
                          prospect_name: 'Maria Souza', prospect_email: 'maria@clinica.com.br',
-                         prospect_document: '12345678900', company_name: 'Clínica Cinco')
+                         prospect_document: '52998224725', company_name: 'Clínica Cinco')
   end
   # A proposal whose prospect has not filled anything in yet.
   let(:blank_quote) { create(:sales_quote, prospect_phone: '+55 61 98140-2211', reserved_until: 5.days.from_now) }
@@ -170,7 +170,7 @@ RSpec.describe 'Public sales proposal', type: :request do
     it 'moves on to the confirmation once the data is filled' do
       post "/proposals/#{quote.public_token}/details", params: {
         proposal: { name: 'Maria Souza', company_name: 'Clínica Cinco', email: 'maria@clinica.com.br',
-                    phone: quote.prospect_phone, document: '12345678900' }
+                    phone: quote.prospect_phone, document: '52998224725' }
       }
 
       follow_redirect!
@@ -182,7 +182,7 @@ RSpec.describe 'Public sales proposal', type: :request do
       quote.update!(discount_amount: 10_950)
       post "/proposals/#{quote.public_token}/details", params: {
         proposal: { name: 'Maria', company_name: 'Clínica Cinco', email: 'maria@clinica.com.br',
-                    phone: quote.prospect_phone, document: '12345678900' }
+                    phone: quote.prospect_phone, document: '52998224725' }
       }
 
       follow_redirect!
