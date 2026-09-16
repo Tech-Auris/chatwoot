@@ -37,11 +37,12 @@ class Conversations::FilterService < FilterService
     conversations = @account.conversations.includes(
       :taggings, :inbox, { assignee: { avatar_attachment: [:blob] } }, { contact: { avatar_attachment: [:blob] } }, :team, :messages, :contact_inbox
     )
-    # Force the `:contact` include to LEFT JOIN so filters that read
-    # `contacts.additional_attributes` (e.g. Origem do lead) can reach the
-    # column without an extra explicit join. Cheap because contact_id is
-    # already a FK — Rails only issues one extra LEFT JOIN per query.
-    conversations = conversations.references(:contact) if references_contact_attributes?
+    # Add an explicit LEFT JOIN so filters that read `contacts.additional_attributes`
+    # (e.g. Origem do lead) can reach the column. `.includes` alone preloads via a
+    # second SELECT and doesn't put `contacts` in FROM; `.references` on a raw-string
+    # WHERE doesn't reliably upgrade it either, so we join outright. Cheap because
+    # contact_id is already a FK — one extra LEFT JOIN per query.
+    conversations = conversations.left_outer_joins(:contact) if references_contact_attributes?
 
     Conversations::PermissionFilterService.new(
       conversations,

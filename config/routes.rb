@@ -632,6 +632,7 @@ Rails.application.routes.draw do
               get :agents
               get :inboxes
               get :labels
+              get :origem
               get :teams
               get :conversations
               get :conversations_summary

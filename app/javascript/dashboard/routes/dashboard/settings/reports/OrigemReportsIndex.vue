@@ -14,6 +14,8 @@ import ReportHeader from './components/ReportHeader.vue';
 import OverviewReportFilters from './components/OverviewReportFilters.vue';
 import Table from 'dashboard/components/table/Table.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
+import V4Button from 'dashboard/components-next/button/Button.vue';
+import { generateFileName } from 'dashboard/helper/downloadHelper';
 
 // The report is keyed by contact.additional_attributes.origem, which is a
 // fixed vocabulary of 8 options + a synthetic "Sem origem" bucket (surfacing
@@ -110,6 +112,22 @@ const onFilterChange = updatedFilter => {
 
 onMounted(fetchReports);
 
+// Same CSV pipeline the other overview reports use — the backend renders
+// `api/v2/accounts/reports/origem.csv.erb` from the same OrigemSummaryBuilder
+// that fills the table, so the download and the page always agree.
+const onDownloadClick = () => {
+  store.dispatch('downloadOrigemReports', {
+    from: from.value,
+    to: to.value,
+    businessHours: businessHours.value,
+    fileName: generateFileName({
+      type: 'origem',
+      to: to.value,
+      businessHours: businessHours.value,
+    }),
+  });
+};
+
 const table = useVueTable({
   get data() {
     return tableData.value;
@@ -126,7 +144,14 @@ const table = useVueTable({
   <ReportHeader
     :header-title="$t('ORIGEM_REPORTS.HEADER')"
     :header-description="$t('ORIGEM_REPORTS.DESCRIPTION')"
-  />
+  >
+    <V4Button
+      :label="$t('ORIGEM_REPORTS.DOWNLOAD')"
+      icon="i-ph-download-simple"
+      size="sm"
+      @click="onDownloadClick"
+    />
+  </ReportHeader>
 
   <OverviewReportFilters
     :disabled="isLoading"

@@ -79,6 +79,12 @@ class ReportsAPI extends ApiClient {
     });
   }
 
+  getOrigemReports({ from: since, to: until, businessHours }) {
+    return axios.get(`${this.url}/origem`, {
+      params: { since, until, business_hours: businessHours },
+    });
+  }
+
   getInboxReports({ from: since, to: until, businessHours }) {
     return axios.get(`${this.url}/inboxes`, {
       params: { since, until, business_hours: businessHours },

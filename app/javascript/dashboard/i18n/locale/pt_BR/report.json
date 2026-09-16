@@ -208,6 +208,7 @@
   "ORIGEM_REPORTS": {
     "HEADER": "Visão Geral por Origem do lead",
     "DESCRIPTION": "Acompanhe o desempenho das conversas por origem do lead: número de conversas, tempo de primeira resposta, tempos de resolução e casos resolvidos. As linhas espelham as opções fixas de origem, mais uma linha \"Sem origem\" para leads sem atribuição.",
+    "DOWNLOAD": "Baixar relatório de origens",
     "COLUMNS": {
       "NAME": "Origem do lead",
       "CONVERSATIONS": "Nº de Conversas",

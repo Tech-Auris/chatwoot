@@ -208,6 +208,7 @@
   "ORIGEM_REPORTS": {
     "HEADER": "Lead origin overview",
     "DESCRIPTION": "Track conversation performance by lead origin: number of conversations, first response time, resolution times, and resolved cases. Rows mirror the fixed origem options, plus a \"No origin\" row for unattributed leads.",
+    "DOWNLOAD": "Download lead origin report",
     "COLUMNS": {
       "NAME": "Lead origin",
       "CONVERSATIONS": "Conversations",
