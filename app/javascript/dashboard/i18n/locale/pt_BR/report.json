@@ -205,6 +205,18 @@
       "PLACEHOLDER": "Selecionar intervalo de datas"
     }
   },
+  "ORIGEM_REPORTS": {
+    "HEADER": "Visão Geral por Origem do lead",
+    "DESCRIPTION": "Acompanhe o desempenho das conversas por origem do lead: número de conversas, tempo de primeira resposta, tempos de resolução e casos resolvidos. As linhas espelham as opções fixas de origem, mais uma linha \"Sem origem\" para leads sem atribuição.",
+    "COLUMNS": {
+      "NAME": "Origem do lead",
+      "CONVERSATIONS": "Nº de Conversas",
+      "AVG_FIRST_RESPONSE_TIME": "Tempo Médio de Primeira Resposta",
+      "AVG_RESOLUTION_TIME": "Tempo Médio de Resolução",
+      "AVG_REPLY_TIME": "Tempo Médio de Espera do Cliente",
+      "RESOLUTION_COUNT": "Contagem de Resolução"
+    }
+  },
   "LABEL_REPORTS": {
     "HEADER": "Visão Geral das Etiquetas",
     "DESCRIPTION": "Acompanhe o desempenho da sua etiqueta com métricas-chave incluindo conversas, tempo de resposta, tempos de resolução e casos resolvidos. Clique no nome da etiqueta para obter detalhes.",

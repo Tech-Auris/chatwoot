@@ -411,6 +411,7 @@
     "REPORTS_BOT": "Bot",
     "REPORTS_AGENT": "Agents",
     "REPORTS_LABEL": "Labels",
+    "REPORTS_ORIGEM": "Lead origin",
     "REPORTS_INBOX": "Inbox",
     "REPORTS_TEAM": "Team",
     "AGENT_ASSIGNMENT": "Agent Assignment",

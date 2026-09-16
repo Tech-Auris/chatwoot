@@ -22,6 +22,11 @@ const typeMap = {
     apiMethod: 'getLabelReports',
     mutationKey: 'setLabelSummaryReport',
   },
+  origem: {
+    flagKey: 'isFetchingOrigemSummaryReports',
+    apiMethod: 'getOrigemReports',
+    mutationKey: 'setOrigemSummaryReport',
+  },
   funnel: {
     flagKey: 'isFetchingFunnelSummaryReports',
     apiMethod: 'getFunnelReports',
@@ -56,6 +61,7 @@ export const initialState = {
   agentSummaryReports: [],
   teamSummaryReports: [],
   labelSummaryReports: [],
+  origemSummaryReports: [],
   funnelSummaryReports: [],
   funnelConversionReport: { stages: [], kpis: {} },
   uiFlags: {
@@ -63,6 +69,7 @@ export const initialState = {
     isFetchingAgentSummaryReports: false,
     isFetchingTeamSummaryReports: false,
     isFetchingLabelSummaryReports: false,
+    isFetchingOrigemSummaryReports: false,
     isFetchingFunnelSummaryReports: false,
     isFetchingFunnelConversionReports: false,
   },
@@ -80,6 +87,9 @@ export const getters = {
   },
   getLabelSummaryReports(state) {
     return state.labelSummaryReports;
+  },
+  getOrigemSummaryReports(state) {
+    return state.origemSummaryReports;
   },
   getFunnelSummaryReports(state) {
     return state.funnelSummaryReports;
@@ -109,6 +119,10 @@ export const actions = {
     return fetchSummaryReports('label', params, { commit });
   },
 
+  fetchOrigemSummaryReports({ commit }, params) {
+    return fetchSummaryReports('origem', params, { commit });
+  },
+
   fetchFunnelSummaryReports({ commit }, params) {
     return fetchSummaryReports('funnel', params, { commit });
   },
@@ -130,6 +144,9 @@ export const mutations = {
   },
   setLabelSummaryReport(state, data) {
     state.labelSummaryReports = data;
+  },
+  setOrigemSummaryReport(state, data) {
+    state.origemSummaryReports = data;
   },
   setFunnelSummaryReport(state, data) {
     state.funnelSummaryReports = data;

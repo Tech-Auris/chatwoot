@@ -619,6 +619,7 @@ Rails.application.routes.draw do
               get :team
               get :inbox
               get :label
+              get :origem
               get :channel
               get :funnel
               get :funnel_conversion
