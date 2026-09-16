@@ -700,6 +700,18 @@
     "SUBJECT": "Assunto",
     "EXPAND": "Expandir e-mail"
   },
+  "CONVERSATION_ORIGIN": {
+    "TITLE": "Origem do lead",
+    "NONE": "Sem origem",
+    "SEARCH_PLACEHOLDER": "Buscar origem",
+    "NO_RESULT": "Nenhuma origem encontrada",
+    "UPDATE_SUCCESS": "Origem atualizada",
+    "UPDATE_ERROR": "Não foi possível atualizar a origem"
+  },
+  "CAMPAIGN_REFERRAL_CARD": {
+    "TITLE": "Anúncio de origem",
+    "VIEW_AD": "Ver anúncio"
+  },
   "CONVERSATION_PARTICIPANTS": {
     "SIDEBAR_MENU_TITLE": "Participantes",
     "SIDEBAR_TITLE": "Participantes da conversa",
