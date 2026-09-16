@@ -190,6 +190,15 @@ RSpec.describe Conversation do
         .with(described_class::CONVERSATION_UPDATED, kind_of(Time), conversation: conversation, notifiable_assignee_change: true)
     end
 
+    it 'will run conversation_updated event for campaign_referral in additional_attributes' do
+      conversation.additional_attributes[:campaign_referral] = { 'title' => 'Anúncio X', 'thumbnail_url' => 'https://x/thumb.jpg' }
+      conversation.save!
+      changed_attributes = conversation.previous_changes
+      expect(Rails.configuration.dispatcher).to have_received(:dispatch)
+        .with(described_class::CONVERSATION_UPDATED, kind_of(Time), conversation: conversation, notifiable_assignee_change: false,
+                                                                    changed_attributes: changed_attributes, performed_by: nil)
+    end
+
     it 'creates conversation activities' do
       conversation.update!(
         status: :resolved,
