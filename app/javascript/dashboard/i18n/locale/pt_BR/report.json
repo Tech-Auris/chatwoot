@@ -666,7 +666,9 @@
     },
     "FILTERS": {
       "INBOX_ANY": "Todas as caixas",
-      "LABEL_ANY": "Todas as etiquetas"
+      "LABEL_ANY": "Todas as etiquetas",
+      "ORIGEM_ANY": "Todas as origens",
+      "ORIGEM_NONE": "Sem origem"
     }
   },
   "FUNNEL_CONVERSION_REPORTS": {

@@ -30,6 +30,9 @@
       "FROM_DATE": "Lead entrou a partir de",
       "TO_DATE": "Lead entrou até",
       "HIDE_CLOSED": "Ocultar finalizadas",
+      "ORIGEM": "Origem do lead",
+      "ORIGEM_ANY": "Todas as origens",
+      "ORIGEM_NONE": "Sem origem",
       "RESET": "Limpar filtros"
     },
     "CARD": {

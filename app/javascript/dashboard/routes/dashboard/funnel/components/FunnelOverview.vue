@@ -17,6 +17,10 @@ import { DATE_RANGE_TYPES } from 'dashboard/components/ui/DatePicker/helpers/Dat
 import { getUnixStartOfDay, getUnixEndOfDay } from 'helpers/DateHelper';
 import Table from 'dashboard/components/table/Table.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
+import {
+  ORIGEM_OPTIONS,
+  ORIGEM_NONE_TOKEN,
+} from 'dashboard/helper/origemOptions';
 
 const store = useStore();
 const { t } = useI18n();
@@ -27,6 +31,7 @@ const from = ref(getUnixStartOfDay(customDateRange.value[0]));
 const to = ref(getUnixEndOfDay(customDateRange.value[1]));
 const inboxId = ref('');
 const labelName = ref('');
+const origem = ref('');
 
 const uiFlags = useMapGetter('summaryReports/getUIFlags');
 const reportMetrics = useMapGetter('summaryReports/getFunnelSummaryReports');
@@ -43,6 +48,8 @@ const inboxOptions = computed(() =>
 const labelOptions = computed(() =>
   [...labels.value].sort((a, b) => a.title.localeCompare(b.title))
 );
+
+const origemOptions = ORIGEM_OPTIONS;
 
 const renderCount = value =>
   typeof value === 'number' ? value.toLocaleString() : '--';
@@ -128,6 +135,7 @@ const fetchReports = async () => {
     until: to.value,
     inboxId: inboxId.value || undefined,
     label: labelName.value || undefined,
+    origem: origem.value || undefined,
   };
   try {
     await store.dispatch('summaryReports/fetchFunnelSummaryReports', params);
@@ -143,6 +151,11 @@ const onInboxChange = event => {
 
 const onLabelChange = event => {
   labelName.value = event.target.value;
+  fetchReports();
+};
+
+const onOrigemChange = event => {
+  origem.value = event.target.value;
   fetchReports();
 };
 
@@ -225,6 +238,23 @@ const table = useVueTable({
               :value="label.title"
             >
               {{ label.title }}
+            </option>
+          </select>
+        </div>
+        <div class="relative flex-shrink-0">
+          <select
+            :value="origem"
+            class="h-10 text-sm rounded-md border border-n-weak bg-n-input-background px-2 text-n-slate-12 focus:outline-none focus:ring-1 focus:ring-n-blue-9 w-[12rem]"
+            @change="onOrigemChange"
+          >
+            <option value="">
+              {{ $t('FUNNEL_REPORTS.FILTERS.ORIGEM_ANY') }}
+            </option>
+            <option v-for="opt in origemOptions" :key="opt" :value="opt">
+              {{ opt }}
+            </option>
+            <option :value="ORIGEM_NONE_TOKEN">
+              {{ $t('FUNNEL_REPORTS.FILTERS.ORIGEM_NONE') }}
             </option>
           </select>
         </div>

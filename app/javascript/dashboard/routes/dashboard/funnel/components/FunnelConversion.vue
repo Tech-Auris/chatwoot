@@ -14,22 +14,10 @@ import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import FunnelChart from './FunnelChart.vue';
 import LossReasonsDonut from './LossReasonsDonut.vue';
 import CampaignBreakdownTable from './CampaignBreakdownTable.vue';
-
-// Fixed vocabulary — mirrors Contacts::OriginAttributionService::OPTIONS on the
-// backend and the OrigemSelector dropdown on the contact sidebar. The extra
-// __none__ token surfaces contacts that have no origem set ("Sem origem" in
-// the UI) so operators can find un-attributed leads.
-const ORIGEM_OPTIONS = [
-  'Evento',
-  'Facebook',
-  'Google',
-  'Indicação de cliente',
-  'Indicação de colega',
-  'Influenciador',
-  'Instagram',
-  'Orgânico',
-];
-const ORIGEM_NONE_TOKEN = '__none__';
+import {
+  ORIGEM_OPTIONS,
+  ORIGEM_NONE_TOKEN,
+} from 'dashboard/helper/origemOptions';
 
 const store = useStore();
 const { t } = useI18n();
