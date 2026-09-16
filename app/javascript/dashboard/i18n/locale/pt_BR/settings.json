@@ -400,6 +400,7 @@
     "REPORTS_BOT": "Robôs",
     "REPORTS_AGENT": "Agentes",
     "REPORTS_LABEL": "Etiquetas",
+    "REPORTS_ORIGEM": "Origem do lead",
     "REPORTS_INBOX": "Caixa de Entrada",
     "REPORTS_TEAM": "Time",
     "AGENT_ASSIGNMENT": "Atribuição de Agentes",

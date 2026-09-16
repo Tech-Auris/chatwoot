@@ -46,6 +46,16 @@ class SummaryReportsAPI extends ApiClient {
     });
   }
 
+  getOrigemReports({ since, until, businessHours } = {}) {
+    return axios.get(`${this.url}/origem`, {
+      params: {
+        since,
+        until,
+        business_hours: businessHours,
+      },
+    });
+  }
+
   getFunnelReports({ since, until: untilTs, inboxId, label, origem } = {}) {
     return axios.get(`${this.url}/funnel`, {
       params: {

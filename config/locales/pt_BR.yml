@@ -220,6 +220,13 @@ pt_BR:
       avg_resolution_time: Tempo médio de resolução
       avg_reply_time: Tempo médio de resposta
       resolution_count: Contagem de Resolução
+    origem_csv:
+      origem: Origem do lead
+      conversations_count: Nº de Conversas
+      avg_first_response_time: Tempo médio de primeira resposta
+      avg_resolution_time: Tempo médio de resolução
+      avg_reply_time: Tempo médio de resposta
+      resolution_count: Contagem de Resolução
     team_csv:
       team_name: Nome do Time
       conversations_count: Contagem de conversas

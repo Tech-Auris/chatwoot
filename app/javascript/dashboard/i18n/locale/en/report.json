@@ -205,6 +205,19 @@
       "PLACEHOLDER": "Select date range"
     }
   },
+  "ORIGEM_REPORTS": {
+    "HEADER": "Lead origin overview",
+    "DESCRIPTION": "Track conversation performance by lead origin: number of conversations, first response time, resolution times, and resolved cases. Rows mirror the fixed origem options, plus a \"No origin\" row for unattributed leads.",
+    "DOWNLOAD": "Download lead origin report",
+    "COLUMNS": {
+      "NAME": "Lead origin",
+      "CONVERSATIONS": "Conversations",
+      "AVG_FIRST_RESPONSE_TIME": "Avg. first response time",
+      "AVG_RESOLUTION_TIME": "Avg. resolution time",
+      "AVG_REPLY_TIME": "Avg. customer wait time",
+      "RESOLUTION_COUNT": "Resolution count"
+    }
+  },
   "LABEL_REPORTS": {
     "HEADER": "Labels Overview",
     "DESCRIPTION": "Track label performance with key metrics including conversations, response times, resolution times, and resolved cases. Click a label name for detailed insights.",

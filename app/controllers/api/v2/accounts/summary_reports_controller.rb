@@ -1,6 +1,6 @@
 class Api::V2::Accounts::SummaryReportsController < Api::V1::Accounts::BaseController
   before_action :check_authorization
-  before_action :prepare_builder_params, only: [:agent, :team, :inbox, :label, :channel, :funnel, :funnel_conversion]
+  before_action :prepare_builder_params, only: [:agent, :team, :inbox, :label, :origem, :channel, :funnel, :funnel_conversion]
 
   def agent
     render_report_with(V2::Reports::AgentSummaryBuilder, type: :agent)
@@ -16,6 +16,10 @@ class Api::V2::Accounts::SummaryReportsController < Api::V1::Accounts::BaseContr
 
   def label
     render_report_with(V2::Reports::LabelSummaryBuilder)
+  end
+
+  def origem
+    render_report_with(V2::Reports::OrigemSummaryBuilder)
   end
 
   def channel

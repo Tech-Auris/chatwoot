@@ -98,6 +98,12 @@ export const AUTOMATIONS = {
         inputType: 'multi_select',
         filterOperators: OPERATOR_TYPES_1,
       },
+      {
+        key: 'origem',
+        name: 'ORIGEM',
+        inputType: 'multi_select',
+        filterOperators: OPERATOR_TYPES_3,
+      },
     ],
     actions: [
       {
@@ -175,6 +181,10 @@ export const AUTOMATIONS = {
       {
         key: 'disable_ai',
         name: 'DISABLE_AI',
+      },
+      {
+        key: 'assign_origem',
+        name: 'ASSIGN_ORIGEM',
       },
     ],
   },
@@ -264,6 +274,12 @@ export const AUTOMATIONS = {
         inputType: 'multi_select',
         filterOperators: OPERATOR_TYPES_1,
       },
+      {
+        key: 'origem',
+        name: 'ORIGEM',
+        inputType: 'multi_select',
+        filterOperators: OPERATOR_TYPES_3,
+      },
     ],
     actions: [
       {
@@ -333,6 +349,10 @@ export const AUTOMATIONS = {
       {
         key: 'disable_ai',
         name: 'DISABLE_AI',
+      },
+      {
+        key: 'assign_origem',
+        name: 'ASSIGN_ORIGEM',
       },
     ],
   },
@@ -434,6 +454,12 @@ export const AUTOMATIONS = {
         inputType: 'multi_select',
         filterOperators: OPERATOR_TYPES_1,
       },
+      {
+        key: 'origem',
+        name: 'ORIGEM',
+        inputType: 'multi_select',
+        filterOperators: OPERATOR_TYPES_3,
+      },
     ],
     actions: [
       {
@@ -503,6 +529,10 @@ export const AUTOMATIONS = {
       {
         key: 'disable_ai',
         name: 'DISABLE_AI',
+      },
+      {
+        key: 'assign_origem',
+        name: 'ASSIGN_ORIGEM',
       },
     ],
   },
@@ -598,6 +628,12 @@ export const AUTOMATIONS = {
         inputType: 'multi_select',
         filterOperators: OPERATOR_TYPES_1,
       },
+      {
+        key: 'origem',
+        name: 'ORIGEM',
+        inputType: 'multi_select',
+        filterOperators: OPERATOR_TYPES_3,
+      },
     ],
     actions: [
       {
@@ -663,6 +699,10 @@ export const AUTOMATIONS = {
       {
         key: 'disable_ai',
         name: 'DISABLE_AI',
+      },
+      {
+        key: 'assign_origem',
+        name: 'ASSIGN_ORIGEM',
       },
     ],
   },
@@ -752,6 +792,12 @@ export const AUTOMATIONS = {
         inputType: 'multi_select',
         filterOperators: OPERATOR_TYPES_1,
       },
+      {
+        key: 'origem',
+        name: 'ORIGEM',
+        inputType: 'multi_select',
+        filterOperators: OPERATOR_TYPES_3,
+      },
     ],
     actions: [
       {
@@ -801,6 +847,10 @@ export const AUTOMATIONS = {
       {
         key: 'disable_ai',
         name: 'DISABLE_AI',
+      },
+      {
+        key: 'assign_origem',
+        name: 'ASSIGN_ORIGEM',
       },
     ],
   },
@@ -939,6 +989,11 @@ export const AUTOMATION_ACTION_TYPES = [
     key: 'disable_ai',
     label: 'DISABLE_AI',
     inputType: null,
+  },
+  {
+    key: 'assign_origem',
+    label: 'ASSIGN_ORIGEM',
+    inputType: 'search_select',
   },
 ];
 

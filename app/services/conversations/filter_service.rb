@@ -37,6 +37,12 @@ class Conversations::FilterService < FilterService
     conversations = @account.conversations.includes(
       :taggings, :inbox, { assignee: { avatar_attachment: [:blob] } }, { contact: { avatar_attachment: [:blob] } }, :team, :messages, :contact_inbox
     )
+    # Add an explicit LEFT JOIN so filters that read `contacts.additional_attributes`
+    # (e.g. Origem do lead) can reach the column. `.includes` alone preloads via a
+    # second SELECT and doesn't put `contacts` in FROM; `.references` on a raw-string
+    # WHERE doesn't reliably upgrade it either, so we join outright. Cheap because
+    # contact_id is already a FK — one extra LEFT JOIN per query.
+    conversations = conversations.left_outer_joins(:contact) if references_contact_attributes?
 
     Conversations::PermissionFilterService.new(
       conversations,
@@ -67,6 +73,23 @@ class Conversations::FilterService < FilterService
   end
 
   private
+
+  # Any payload entry that maps to a filter of type `contact_additional_attributes`
+  # in filter_keys.yml — right now only `origem`, but new contact-backed
+  # conversation filters can register themselves without touching this method.
+  def references_contact_attributes?
+    # Payload entries can arrive as plain Hash (tests, background jobs) or as
+    # ActionController::Parameters (real controller path). The latter is NOT a
+    # subclass of Hash, so an `is_a?(Hash)` guard silently drops every entry
+    # and the JOIN never happens. `respond_to?(:[])` catches both shapes.
+    keys = Array(@params[:payload]).filter_map do |q|
+      next unless q.respond_to?(:[])
+
+      q['attribute_key'] || q[:attribute_key]
+    end
+    conversations_filters = @filters['conversations'] || {}
+    keys.any? { |k| conversations_filters.dig(k, 'attribute_type') == 'contact_additional_attributes' }
+  end
 
   def legacy_ai_status_filter?(query_hash)
     query_hash['attribute_key'] == 'ai_enabled' && !@account.ai_status_uses_attribute?
