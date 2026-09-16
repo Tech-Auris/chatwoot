@@ -17,6 +17,8 @@ import ComposeConversation from 'dashboard/components-next/NewConversation/Compo
 import NextButton from 'dashboard/components-next/button/Button.vue';
 import VoiceCallButton from 'dashboard/components-next/Contacts/VoiceCallButton.vue';
 import InlineInput from 'dashboard/components-next/inline-input/InlineInput.vue';
+import OrigemSelector from '../origin/OrigemSelector.vue';
+import CampaignReferralCard from '../origin/CampaignReferralCard.vue';
 
 export default {
   components: {
@@ -30,6 +32,8 @@ export default {
     ContactDeleteModal,
     VoiceCallButton,
     InlineInput,
+    OrigemSelector,
+    CampaignReferralCard,
   },
   props: {
     contact: {
@@ -56,9 +60,15 @@ export default {
     };
   },
   computed: {
-    ...mapGetters({ uiFlags: 'contacts/getUIFlags' }),
+    ...mapGetters({
+      uiFlags: 'contacts/getUIFlags',
+      currentChat: 'getSelectedChat',
+    }),
     contactProfileLink() {
       return `/app/accounts/${this.$route.params.accountId}/contacts/${this.contact.id}`;
+    },
+    campaignReferral() {
+      return this.currentChat?.additional_attributes?.campaign_referral || null;
     },
     additionalAttributes() {
       return this.contact.additional_attributes || {};
@@ -289,6 +299,13 @@ export default {
           />
           <SocialIcons :social-profiles="socialProfiles" />
         </div>
+      </div>
+      <div v-if="contact.id" class="flex flex-col w-full gap-2 mt-2">
+        <OrigemSelector :contact-id="contact.id" />
+        <CampaignReferralCard
+          v-if="campaignReferral"
+          :referral="campaignReferral"
+        />
       </div>
       <div class="flex items-center w-full mt-0.5 gap-2">
         <ComposeConversation :contact-id="String(contact.id)">

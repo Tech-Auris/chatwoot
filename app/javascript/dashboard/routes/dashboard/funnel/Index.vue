@@ -49,6 +49,7 @@ const filters = ref({
   fromDate: '',
   toDate: '',
   hideClosed: false,
+  origem: '',
 });
 
 const setViewMode = mode => {
@@ -63,6 +64,7 @@ const buildQueryParams = () => {
     params.from = `${filters.value.fromDate}T00:00:00`;
   if (filters.value.toDate) params.to = `${filters.value.toDate}T23:59:59`;
   if (filters.value.hideClosed) params.hide_closed = 'true';
+  if (filters.value.origem) params.origem = filters.value.origem;
   return params;
 };
 
@@ -205,6 +207,7 @@ const resetFilters = () => {
     fromDate: '',
     toDate: '',
     hideClosed: false,
+    origem: '',
   };
 };
 
@@ -257,6 +260,7 @@ onMounted(fetchFunnel);
         v-model:from-date="filters.fromDate"
         v-model:to-date="filters.toDate"
         v-model:hide-closed="filters.hideClosed"
+        v-model:origem="filters.origem"
         @reset="resetFilters"
       />
 

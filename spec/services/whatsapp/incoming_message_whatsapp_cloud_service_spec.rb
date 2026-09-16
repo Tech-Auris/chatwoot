@@ -647,4 +647,89 @@ describe Whatsapp::IncomingMessageWhatsappCloudService do
   def expect_message_has_attachment
     expect(whatsapp_channel.inbox.messages.first.attachments.present?).to be true
   end
+
+  # Ad-attribution capture is scoped to a fresh describe so the shared params/fixtures
+  # above stay focused on the more common non-CTWA flows.
+  describe 'campaign referral capture' do
+    after do
+      Redis::Alfred.scan_each(match: 'MESSAGE_SOURCE_KEY::*') { |key| Redis::Alfred.delete(key) }
+    end
+
+    let!(:whatsapp_channel) do
+      create(:channel_whatsapp, provider: 'whatsapp_cloud', sync_templates: false, validate_provider_config: false)
+    end
+
+    def build_referral_message(text:, referral:)
+      {
+        from: '5511987654321',
+        id: "wamid.#{SecureRandom.hex(8)}",
+        timestamp: '1734567890',
+        type: 'text',
+        text: { body: text },
+        referral: referral
+      }.compact
+    end
+
+    def perform_with_referral(text:, referral:)
+      params = {
+        phone_number: whatsapp_channel.phone_number,
+        object: 'whatsapp_business_account',
+        entry: [{
+          changes: [{
+            value: {
+              contacts: [{ profile: { name: 'Lead Novo' }, wa_id: '5511987654321' }],
+              messages: [build_referral_message(text: text, referral: referral)]
+            }
+          }]
+        }]
+      }.with_indifferent_access
+      described_class.new(inbox: whatsapp_channel.inbox, params: params).perform
+    end
+
+    it 'persists a normalized referral on the message and first-touches the conversation' do
+      perform_with_referral(
+        text: 'Oi, vim pelo anúncio',
+        referral: { source_url: 'https://fb.me/xyz', source_type: 'ad', source_id: '789',
+                    headline: 'Agende sua Consulta', body: 'Você olha essas veias...',
+                    media_type: 'IMAGE', image_url: 'https://scontent.xx.fbcdn.net/t.jpg', ctwa_clid: 'ARZ.abc' }
+      )
+
+      message = whatsapp_channel.inbox.messages.last
+      conversation = message.conversation
+
+      expect(message.content_attributes['referral']).to include(
+        'source_type' => 'ad',
+        'source_id' => '789',
+        'title' => 'Agende sua Consulta',
+        'media_type' => 'image',
+        'thumbnail_url' => 'https://scontent.xx.fbcdn.net/t.jpg',
+        'ctwa_clid' => 'ARZ.abc'
+      )
+      expect(conversation.additional_attributes['campaign_referral']).to include(
+        'source_id' => '789',
+        'title' => 'Agende sua Consulta'
+      )
+      expect(conversation.additional_attributes['campaign_referral']['captured_at']).to be_a(Integer)
+    end
+
+    # Contacts::OriginAttributionService is invoked from the incoming pipeline; a CTWA
+    # inbound seals the contact's `origem` on first touch — a subsequent operator
+    # change through the dropdown is not exercised here (unit-tested elsewhere).
+    it 'seals the contact origem when the referral maps to a Meta placement' do
+      perform_with_referral(
+        text: 'Oi',
+        referral: { source_url: 'https://fb.me/xyz', source_type: 'ad', source_id: '1' }
+      )
+
+      contact = whatsapp_channel.inbox.contacts.last
+      expect(contact.additional_attributes['origem']).to eq('Facebook')
+    end
+
+    it 'leaves origem null on a plain WhatsApp inbound with no attribution signal' do
+      perform_with_referral(text: 'Oi, tudo bem?', referral: nil)
+
+      contact = whatsapp_channel.inbox.contacts.last
+      expect(contact.additional_attributes['origem']).to be_nil
+    end
+  end
 end

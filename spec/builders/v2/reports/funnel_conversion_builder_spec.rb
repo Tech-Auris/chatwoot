@@ -356,5 +356,114 @@ RSpec.describe V2::Reports::FunnelConversionBuilder do
         expect(lead_row[:count]).to eq(1)
       end
     end
+
+    context 'with origem filter' do
+      before do
+        facebook_contact = create(:contact, account: account, additional_attributes: { 'origem' => 'Facebook' })
+        instagram_contact = create(:contact, account: account, additional_attributes: { 'origem' => 'Instagram' })
+        bare_contact = create(:contact, account: account, additional_attributes: {})
+
+        fb_conv = create(:conversation, account: account, inbox: inbox, contact: facebook_contact)
+        ig_conv = create(:conversation, account: account, inbox: inbox, contact: instagram_contact)
+        bare_conv = create(:conversation, account: account, inbox: inbox, contact: bare_contact)
+
+        [fb_conv, ig_conv, bare_conv].each do |conv|
+          create(:funnel_stage_change,
+                 account: account, conversation_id: conv.id,
+                 contact: conv.contact, inbox: inbox,
+                 previous_stage: nil, new_stage: stages[:lead].name)
+        end
+      end
+
+      it 'only counts stage changes for conversations whose contact has the selected origem' do
+        filtered = described_class.new(account: account, params: params.merge(origem: 'Facebook')).build
+        lead_row = filtered[:stages].find { |row| row[:name] == stages[:lead].name }
+
+        expect(lead_row[:count]).to eq(1)
+      end
+
+      # The Sem Origem token surfaces contacts that never got attributed — auto
+      # or manual — which is the way operators find "leaks" in the pipeline.
+      it 'maps the __none__ token to contacts with no origem set' do
+        filtered = described_class.new(account: account, params: params.merge(origem: '__none__')).build
+        lead_row = filtered[:stages].find { |row| row[:name] == stages[:lead].name }
+
+        expect(lead_row[:count]).to eq(1)
+      end
+    end
+
+    context 'with campaign_referral attached to conversations' do
+      let!(:qualifying) { create(:funnel_stage, name: 'Em Qualificação', position: 10) }
+      let!(:agendado) { create(:funnel_stage, name: 'Agendado', position: 20, chart_group: 'Agendamento') }
+      let!(:reagendado) { create(:funnel_stage, name: 'Reagendado', position: 21, chart_group: 'Agendamento') }
+      let!(:confirmado) { create(:funnel_stage, name: 'Confirmado', position: 30) }
+      let!(:comparecimento) { create(:funnel_stage, name: 'Comparecimento (ganho)', position: 40, closed: true) }
+
+      def ad_conversation(source_id:, title: 'Anúncio', source_url: 'https://fb.me/x')
+        create(
+          :conversation,
+          account: account,
+          inbox: inbox,
+          contact: contact,
+          additional_attributes: {
+            'campaign_referral' => {
+              'source_id' => source_id,
+              'title' => title,
+              'source_url' => source_url
+            }
+          }
+        )
+      end
+
+      it 'aggregates leads and stage buckets per Meta ad, sorted by leads desc' do # rubocop:disable RSpec/MultipleExpectations
+        # Ad A: 2 leads (both qualify), 1 reaches "Agendado", 1 reaches "Confirmado".
+        conv_a1 = ad_conversation(source_id: 'FB-1', title: 'Campanha A', source_url: 'https://fb.me/a')
+        conv_a2 = ad_conversation(source_id: 'FB-1', title: 'Campanha A', source_url: 'https://fb.me/a')
+        [conv_a1, conv_a2].each do |conv|
+          stage_change(conv_id: conv.id, new_stage: qualifying.name)
+        end
+        stage_change(conv_id: conv_a1.id, previous_stage: qualifying.name, new_stage: agendado.name)
+        stage_change(conv_id: conv_a1.id, previous_stage: agendado.name, new_stage: confirmado.name)
+
+        # Ad B: 1 lead, all the way to "Comparecimento (ganho)".
+        conv_b = ad_conversation(source_id: 'IG-2', title: 'Campanha B', source_url: 'https://ig.me/b')
+        stage_change(conv_id: conv_b.id, new_stage: qualifying.name)
+        stage_change(conv_id: conv_b.id, previous_stage: qualifying.name, new_stage: reagendado.name)
+        stage_change(conv_id: conv_b.id, previous_stage: reagendado.name, new_stage: confirmado.name)
+        stage_change(conv_id: conv_b.id, previous_stage: confirmado.name, new_stage: comparecimento.name)
+
+        # No-ad conversation — must be ignored (no source_id on the referral).
+        no_ad_conv = conversation_with_id
+        stage_change(conv_id: no_ad_conv.id, new_stage: qualifying.name)
+
+        result = builder.build
+        rows = result[:campaign_breakdown]
+
+        expect(rows.map { |row| row[:source_id] }).to eq(%w[FB-1 IG-2])
+
+        ad_a = rows.find { |row| row[:source_id] == 'FB-1' }
+        expect(ad_a).to include(
+          title: 'Campanha A',
+          source_url: 'https://fb.me/a',
+          leads: 2
+        )
+        expect(ad_a[:qualifying]).to eq(count: 2, rate: 100.0)
+        expect(ad_a[:scheduling]).to eq(count: 1, rate: 50.0)
+        expect(ad_a[:confirmation]).to eq(count: 1, rate: 50.0)
+        expect(ad_a[:attendance]).to eq(count: 0, rate: 0.0)
+
+        ad_b = rows.find { |row| row[:source_id] == 'IG-2' }
+        expect(ad_b[:leads]).to eq(1)
+        expect(ad_b[:scheduling]).to eq(count: 1, rate: 100.0)
+        expect(ad_b[:attendance]).to eq(count: 1, rate: 100.0)
+      end
+
+      it 'returns an empty campaign_breakdown when no conversations carry an ad tag' do
+        conv = conversation_with_id
+        stage_change(conv_id: conv.id, new_stage: qualifying.name)
+
+        expect(builder.build[:campaign_breakdown]).to eq([])
+      end
+    end
   end
 end
