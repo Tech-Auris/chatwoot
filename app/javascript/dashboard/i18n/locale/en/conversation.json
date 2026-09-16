@@ -703,7 +703,7 @@
     "EXPAND": "Expand email"
   },
   "CONVERSATION_ORIGIN": {
-    "TITLE": "Origin",
+    "TITLE": "Lead origin",
     "NONE": "No origin",
     "SEARCH_PLACEHOLDER": "Search origin",
     "NO_RESULT": "No matching origin",

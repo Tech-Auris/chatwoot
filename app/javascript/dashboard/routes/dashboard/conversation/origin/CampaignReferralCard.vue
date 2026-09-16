@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Icon from 'next/icon/Icon.vue';
+import { formatUnixDate } from 'shared/helpers/DateHelper';
 
 // Reads what `Whatsapp::IncomingMessageBaseService#attach_campaign_referral_to_conversation`
 // persists on `Conversation.additional_attributes.campaign_referral` — the same
@@ -45,12 +46,17 @@ const showImage = computed(
   () => Boolean(imageUrl.value) && !hasImageError.value
 );
 
+// `captured_at` is the unix timestamp Meta reports for the lead's first
+// message — the closest thing to "when the ad was engaged" the webhook
+// exposes (the click itself is not surfaced by Meta).
 const capturedAt = computed(() => {
   const value = props.referral?.captured_at;
-  if (!value) return null;
-  const ms = value * 1000;
-  const date = new Date(ms);
-  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+  if (!Number.isFinite(value) || value <= 0) return null;
+  try {
+    return formatUnixDate(value, "dd/MM/yyyy 'às' HH:mm");
+  } catch {
+    return null;
+  }
 });
 </script>
 
@@ -92,10 +98,7 @@ const capturedAt = computed(() => {
             {{ referral.body }}
           </p>
         </div>
-        <div
-          v-if="capturedAt"
-          class="text-2xs text-n-slate-10 font-mono tracking-tight"
-        >
+        <div v-if="capturedAt" class="text-xs text-n-slate-12">
           {{ capturedAt }}
         </div>
         <div

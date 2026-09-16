@@ -701,7 +701,7 @@
     "EXPAND": "Expandir e-mail"
   },
   "CONVERSATION_ORIGIN": {
-    "TITLE": "Origem",
+    "TITLE": "Origem do lead",
     "NONE": "Sem origem",
     "SEARCH_PLACEHOLDER": "Buscar origem",
     "NO_RESULT": "Nenhuma origem encontrada",
