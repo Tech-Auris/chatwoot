@@ -696,13 +696,29 @@
     },
     "FILTERS": {
       "INBOX_ANY": "All inboxes",
-      "LABEL_ANY": "All labels"
+      "LABEL_ANY": "All labels",
+      "ORIGEM_ANY": "All origins",
+      "ORIGEM_NONE": "No origin"
     },
     "LEGEND": {
       "AI": "Handled by AI",
       "MANUAL": "Handled manually"
     },
-    "TOOLTIP_STAT": "{label}: {pct} ({count})"
+    "TOOLTIP_STAT": "{label}: {pct} ({count})",
+    "CAMPAIGN_BREAKDOWN": {
+      "HEADER": "Ads in the period",
+      "EMPTY_STATE": "No Meta ad attributed to any conversation in the period.",
+      "UNTITLED_AD": "Untitled ad",
+      "HEADERS": {
+        "AD_ID": "Ad ID",
+        "AD_TITLE": "Ad title",
+        "LEADS": "Leads",
+        "QUALIFYING": "Qualifying",
+        "SCHEDULING": "Scheduling",
+        "CONFIRMATION": "Confirmed",
+        "ATTENDANCE": "Attendance"
+      }
+    }
   },
   "IA_HUMAN_DISTRIBUTION_REPORT": {
     "HEADER": "AI → Human",

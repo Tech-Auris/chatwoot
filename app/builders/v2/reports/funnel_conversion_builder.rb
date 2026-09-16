@@ -15,6 +15,16 @@ class V2::Reports::FunnelConversionBuilder
   ATTENDANCE_STAGE_NAME = 'Comparecimento (ganho)'.freeze
   NO_SHOW_STAGE_NAME = 'No-Show'.freeze
 
+  # Per-ad breakdown columns. Same funnel canon as the KPI strip; kept as
+  # separate constants so a rename of a stage forces an explicit tick here.
+  QUALIFYING_STAGE_NAME = 'Em Qualificação'.freeze
+
+  # Special origem value that means "conversations whose contact has no origem
+  # set" (Sem Origem in the UI). Kept lexically distinct from the operator-
+  # facing labels to avoid a collision if someone ever names a real origin
+  # "none".
+  ORIGEM_NONE_TOKEN = '__none__'.freeze
+
   attr_reader :account, :params
 
   def initialize(account:, params:)
@@ -24,7 +34,7 @@ class V2::Reports::FunnelConversionBuilder
 
   def build
     all_stages = FunnelStage.active.ordered.to_a
-    return { stages: [], kpis: empty_kpis, loss_reasons: [] } if all_stages.empty?
+    return { stages: [], kpis: empty_kpis, loss_reasons: [], campaign_breakdown: [] } if all_stages.empty?
 
     # KPIs always look at the FULL set of active stages — visibility/merge
     # rules are presentation-only and shouldn't change "completed" or "won"
@@ -46,7 +56,8 @@ class V2::Reports::FunnelConversionBuilder
     {
       stages: stage_rows,
       kpis: build_kpis(all_stages, universe[:count]),
-      loss_reasons: build_loss_reasons_breakdown
+      loss_reasons: build_loss_reasons_breakdown,
+      campaign_breakdown: build_campaign_breakdown(all_stages)
     }
   end
 
@@ -141,15 +152,32 @@ class V2::Reports::FunnelConversionBuilder
          .pluck(:new_stage, :conversation_id, Arel.sql('conversations.ai_enabled'))
   end
 
-  # Single point that applies the optional inbox / label filters used by both
-  # `Visão geral` and `Conversão`. Returns an ActiveRecord scope so callers
-  # can chain `.where(...)` / `.group(...)` like they did before. Filters
-  # default to OFF when the param is blank.
+  # Single point that applies the optional inbox / label / origem filters used
+  # by both `Visão geral` and `Conversão`. Returns an ActiveRecord scope so
+  # callers can chain `.where(...)` / `.group(...)` like they did before.
+  # Filters default to OFF when the param is blank.
   def funnel_stage_changes_scope
     scope = account.funnel_stage_changes
     scope = scope.where(inbox_id: params[:inbox_id]) if params[:inbox_id].present?
     scope = scope.where(conversation_id: account.conversations.tagged_with(params[:label], on: :labels).select(:id)) if params[:label].present?
+    scope = scope.where(conversation_id: conversations_for_origem_scope) if params[:origem].present?
     scope
+  end
+
+  # Contact-level attribute filter — the operator picks from a fixed vocabulary
+  # of origins in the sidebar dropdown, and the report scopes to conversations
+  # whose contact carries that origem. The ORIGEM_NONE_TOKEN maps to "no origem
+  # set" so the operator can see conversations that never got attributed
+  # (auto or manual).
+  def conversations_for_origem_scope
+    origem = params[:origem].to_s
+    contacts = account.contacts
+    contacts = if origem == ORIGEM_NONE_TOKEN
+                 contacts.where("(additional_attributes ->> 'origem') IS NULL OR (additional_attributes ->> 'origem') = ''")
+               else
+                 contacts.where("additional_attributes ->> 'origem' = ?", origem)
+               end
+    account.conversations.where(contact_id: contacts.select(:id)).select(:id)
   end
 
   # The two buckets are disjoint by construction (a conversation has a single
@@ -289,6 +317,94 @@ class V2::Reports::FunnelConversionBuilder
       count: count,
       percentage: total.zero? ? 0 : ((count.to_f / total) * 100).round(2)
     }
+  end
+
+  # Per-ad rows for the report grid. Each row aggregates every distinct
+  # conversation attributed to a Meta ad (Cloud referral's `source_id`) that
+  # touched the funnel during the period, honoring the base filters + optional
+  # origem. Only ads with at least one lead show up — an ad that generated a
+  # click but not a conversation stays off the grid instead of muddling the
+  # "top ads by leads" view. Buckets mirror the KPI strip, so a value in the
+  # grid always reconciles with the aggregate above it.
+  def build_campaign_breakdown(all_stages)
+    rows = fetch_campaign_breakdown_rows
+    return [] if rows.blank?
+
+    by_ad = accumulate_campaign_rows(rows, all_stages)
+    by_ad.values.map { |entry| campaign_row_from(entry) }.sort_by { |row| -row[:leads] }
+  end
+
+  # Pulls one row per (stage change × conversation) that carries an ad tag on
+  # the conversation, joined with the ad's normalized fields so the grid can
+  # render title / source_url without a second lookup.
+  def fetch_campaign_breakdown_rows
+    scope = funnel_stage_changes_scope
+    scope = scope.where(created_at: range) if range.present?
+    scope.joins('INNER JOIN conversations ON conversations.id = funnel_stage_changes.conversation_id')
+         .where("conversations.additional_attributes -> 'campaign_referral' ->> 'source_id' IS NOT NULL")
+         .where("conversations.additional_attributes -> 'campaign_referral' ->> 'source_id' <> ''")
+         .distinct
+         .pluck(
+           :new_stage,
+           :conversation_id,
+           Arel.sql("conversations.additional_attributes -> 'campaign_referral' ->> 'source_id'"),
+           Arel.sql("conversations.additional_attributes -> 'campaign_referral' ->> 'title'"),
+           Arel.sql("conversations.additional_attributes -> 'campaign_referral' ->> 'source_url'")
+         )
+  end
+
+  def accumulate_campaign_rows(rows, all_stages)
+    scheduling_names = scheduling_member_names(all_stages).to_set
+    by_ad = {}
+    rows.each do |new_stage, conv_id, source_id, title, source_url|
+      entry = (by_ad[source_id] ||= new_campaign_entry(source_id, title, source_url))
+      entry[:lead_ids] << conv_id
+      bucket = bucket_for_stage(new_stage, scheduling_names)
+      entry[:bucket_ids][bucket] << conv_id if bucket
+    end
+    by_ad
+  end
+
+  def new_campaign_entry(source_id, title, source_url)
+    {
+      source_id: source_id,
+      title: title,
+      source_url: source_url,
+      lead_ids: Set.new,
+      bucket_ids: {
+        qualifying: Set.new,
+        scheduling: Set.new,
+        confirmation: Set.new,
+        attendance: Set.new
+      }
+    }
+  end
+
+  def bucket_for_stage(stage_name, scheduling_names)
+    return :qualifying if stage_name == QUALIFYING_STAGE_NAME
+    return :scheduling if scheduling_names.include?(stage_name)
+    return :confirmation if stage_name == CONFIRMATION_STAGE_NAME
+    return :attendance if stage_name == ATTENDANCE_STAGE_NAME
+
+    nil
+  end
+
+  def campaign_row_from(entry)
+    leads = entry[:lead_ids].size
+    {
+      source_id: entry[:source_id],
+      title: entry[:title],
+      source_url: entry[:source_url],
+      leads: leads,
+      qualifying: bucket_metric(entry[:bucket_ids][:qualifying].size, leads),
+      scheduling: bucket_metric(entry[:bucket_ids][:scheduling].size, leads),
+      confirmation: bucket_metric(entry[:bucket_ids][:confirmation].size, leads),
+      attendance: bucket_metric(entry[:bucket_ids][:attendance].size, leads)
+    }
+  end
+
+  def bucket_metric(count, leads)
+    { count: count, rate: leads.zero? ? nil : ((count.to_f / leads) * 100).round(1) }
   end
 
   def empty_kpis

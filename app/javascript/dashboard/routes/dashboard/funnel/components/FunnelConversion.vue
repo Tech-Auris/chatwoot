@@ -13,6 +13,23 @@ import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 
 import FunnelChart from './FunnelChart.vue';
 import LossReasonsDonut from './LossReasonsDonut.vue';
+import CampaignBreakdownTable from './CampaignBreakdownTable.vue';
+
+// Fixed vocabulary — mirrors Contacts::OriginAttributionService::OPTIONS on the
+// backend and the OrigemSelector dropdown on the contact sidebar. The extra
+// __none__ token surfaces contacts that have no origem set ("Sem origem" in
+// the UI) so operators can find un-attributed leads.
+const ORIGEM_OPTIONS = [
+  'Evento',
+  'Facebook',
+  'Google',
+  'Indicação de cliente',
+  'Indicação de colega',
+  'Influenciador',
+  'Instagram',
+  'Orgânico',
+];
+const ORIGEM_NONE_TOKEN = '__none__';
 
 const store = useStore();
 const { t } = useI18n();
@@ -23,6 +40,7 @@ const from = ref(getUnixStartOfDay(customDateRange.value[0]));
 const to = ref(getUnixEndOfDay(customDateRange.value[1]));
 const inboxId = ref('');
 const labelName = ref('');
+const origem = ref('');
 
 const uiFlags = useMapGetter('summaryReports/getUIFlags');
 const report = useMapGetter('summaryReports/getFunnelConversionReport');
@@ -35,6 +53,7 @@ const isLoading = computed(
 const stages = computed(() => report.value?.stages || []);
 const kpis = computed(() => report.value?.kpis || {});
 const lossReasons = computed(() => report.value?.lossReasons || []);
+const campaignBreakdown = computed(() => report.value?.campaignBreakdown || []);
 
 const inboxOptions = computed(() =>
   [...inboxes.value].sort((a, b) => a.name.localeCompare(b.name))
@@ -43,6 +62,8 @@ const inboxOptions = computed(() =>
 const labelOptions = computed(() =>
   [...labels.value].sort((a, b) => a.title.localeCompare(b.title))
 );
+
+const origemOptions = ORIGEM_OPTIONS;
 
 const formatRate = value => {
   if (value === null || value === undefined) return '--';
@@ -55,12 +76,18 @@ const fetchReports = async () => {
     until: to.value,
     inboxId: inboxId.value || undefined,
     label: labelName.value || undefined,
+    origem: origem.value || undefined,
   };
   try {
     await store.dispatch('summaryReports/fetchFunnelConversionReports', params);
   } catch {
     useAlert(t('REPORT.SUMMARY_FETCHING_FAILED'));
   }
+};
+
+const onOrigemChange = event => {
+  origem.value = event.target.value;
+  fetchReports();
 };
 
 const onDateRangeChange = value => {
@@ -141,6 +168,23 @@ onMounted(fetchReports);
               :value="label.title"
             >
               {{ label.title }}
+            </option>
+          </select>
+        </div>
+        <div class="relative flex-shrink-0">
+          <select
+            :value="origem"
+            class="h-10 text-sm rounded-md border border-n-weak bg-n-input-background px-2 text-n-slate-12 focus:outline-none focus:ring-1 focus:ring-n-blue-9 w-[12rem]"
+            @change="onOrigemChange"
+          >
+            <option value="">
+              {{ $t('FUNNEL_CONVERSION_REPORTS.FILTERS.ORIGEM_ANY') }}
+            </option>
+            <option v-for="opt in origemOptions" :key="opt" :value="opt">
+              {{ opt }}
+            </option>
+            <option :value="ORIGEM_NONE_TOKEN">
+              {{ $t('FUNNEL_CONVERSION_REPORTS.FILTERS.ORIGEM_NONE') }}
             </option>
           </select>
         </div>
@@ -243,6 +287,16 @@ onMounted(fetchReports);
           <Spinner :size="32" class="text-n-brand" />
         </div>
       </Transition>
+    </div>
+
+    <div
+      class="mt-2 px-6 py-5 shadow outline-1 outline outline-n-container rounded-xl bg-n-solid-2"
+      :class="{ 'pointer-events-none opacity-50': isLoading }"
+    >
+      <div class="text-sm font-medium text-n-slate-12 mb-4">
+        {{ $t('FUNNEL_CONVERSION_REPORTS.CAMPAIGN_BREAKDOWN.HEADER') }}
+      </div>
+      <CampaignBreakdownTable :rows="campaignBreakdown" />
     </div>
   </div>
 </template>
