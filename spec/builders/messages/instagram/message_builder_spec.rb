@@ -341,5 +341,50 @@ describe Messages::Instagram::MessageBuilder do
       expect(message.content).to eq('This story is no longer available.')
       expect(message.attachments.count).to eq(0)
     end
+
+    # Click-to-Instagram-DM ads arrive with a top-level `messaging.referral`.
+    # Mirrors the Facebook builder behavior: normalized referral goes on the
+    # message and first-touches the conversation. Origem sits at "Instagram"
+    # because the inbox channel is the placement.
+    context 'when the DM arrives with a Meta ad referral' do
+      let(:ad_messaging) do
+        base = dm_params[:entry][0]['messaging'][0].deep_dup
+        base['referral'] = {
+          'ref' => 'META_IG_TOKEN',
+          'source' => 'ADS',
+          'type' => 'OPEN_THREAD',
+          'ads_context_data' => {
+            'ad_title' => 'Escleroterapia',
+            'photo_url' => 'https://scontent.xx.fbcdn.net/ig-ad-thumb.jpg',
+            'post_id' => '17841400002222'
+          }
+        }
+        base
+      end
+
+      it 'persists the normalized referral on the message and first-touches the conversation' do
+        create_instagram_contact_for_sender(ad_messaging['sender']['id'], instagram_inbox)
+        described_class.new(ad_messaging, instagram_inbox).perform
+
+        message = instagram_inbox.messages.last
+        expect(message.content_attributes['referral']).to include(
+          'source_type' => 'ad',
+          'source_id' => '17841400002222',
+          'title' => 'Escleroterapia',
+          'thumbnail_url' => 'https://scontent.xx.fbcdn.net/ig-ad-thumb.jpg'
+        )
+        expect(message.conversation.additional_attributes['campaign_referral']).to include(
+          'source_id' => '17841400002222',
+          'ctwa_clid' => 'META_IG_TOKEN'
+        )
+      end
+
+      it 'attributes the contact origem to Instagram (channel takes precedence over the Meta referral)' do
+        contact = create_instagram_contact_for_sender(ad_messaging['sender']['id'], instagram_inbox)
+        described_class.new(ad_messaging, instagram_inbox).perform
+
+        expect(contact.reload.additional_attributes['origem']).to eq('Instagram')
+      end
+    end
   end
 end

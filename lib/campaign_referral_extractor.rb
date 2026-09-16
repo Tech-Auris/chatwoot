@@ -39,6 +39,35 @@ module CampaignReferralExtractor
     }.compact_blank.presence
   end
 
+  # Meta's Instagram DM and Facebook Messenger webhooks carry click-to-chat ad
+  # attribution as `messaging.referral` with a different shape than WhatsApp
+  # CTWA — no `sourceUrl`, no `ctwaClid`; the ad copy lives under
+  # `ads_context_data` (`ad_title`, `photo_url`/`video_url`, `post_id`). Normalize
+  # to the same string-keyed hash Cloud produces so the frontend renders the
+  # same card across channels.
+  #
+  # `ref` is preserved as the CAPI-equivalent click token — Meta uses it in the
+  # Messenger CAPI callback the same way `ctwa_clid` is used for WA.
+  def from_meta_messaging(messaging) # rubocop:disable Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
+    raw = messaging.is_a?(Hash) ? (messaging[:referral] || messaging['referral']) : nil
+    return nil if raw.blank?
+
+    ref = raw.with_indifferent_access
+    ads = (ref[:ads_context_data] || {}).with_indifferent_access
+    return nil unless ref[:source].to_s.upcase == 'ADS' || ads.present?
+
+    {
+      'source_type' => 'ad',
+      'source_id' => ads[:post_id] || ads[:product_id] || ref[:ref],
+      'source_url' => nil,
+      'ctwa_clid' => ref[:ref],
+      'title' => ads[:ad_title],
+      'body' => nil,
+      'media_type' => meta_media_type(ads),
+      'thumbnail_url' => ads[:photo_url] || ads[:video_url]
+    }.compact_blank.presence
+  end
+
   # Returns the raw GCLID token found in the body, or nil.
   def gclid_from_body(body)
     return nil if body.blank?
@@ -53,4 +82,12 @@ module CampaignReferralExtractor
     message[:referral] || message['referral']
   end
   private_class_method :referral_from
+
+  def meta_media_type(ads)
+    return 'video' if ads[:video_url].present?
+    return 'image' if ads[:photo_url].present?
+
+    nil
+  end
+  private_class_method :meta_media_type
 end

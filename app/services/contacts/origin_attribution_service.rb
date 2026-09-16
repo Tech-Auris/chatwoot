@@ -7,13 +7,14 @@
 #
 # Priority (first match wins):
 #   1. Google  — a `gclid=` token in the first message body.
-#   2. Meta CTWA referral present:
+#   2. Inbox channel is `Channel::Instagram` → Instagram. The channel itself
+#      is the placement here, stronger than a same-webhook Meta referral.
+#   3. Inbox channel is `Channel::FacebookPage` → Facebook. Same reasoning.
+#   4. Meta CTWA referral present (WhatsApp path — IG/FB already handled):
 #      * `source_url` clearly Instagram (ig.me / instagram.com) → Instagram.
 #      * Anything else → Facebook (Meta does not expose IG vs FB placement
 #        reliably on CTWA; FB is the more common placement in practice, and
 #        the operator can flip the dropdown to Instagram when they know).
-#   3. Inbox channel is `Channel::Instagram` → Instagram.
-#   4. Inbox channel is `Channel::FacebookPage` → Facebook.
 #   5. None of the above → leave null (Sem Origem). "Orgânico" stays a
 #      manual selection — we do not want to claim an organic attribution
 #      for a contact that might have come from an unmapped source.
@@ -52,9 +53,9 @@ class Contacts::OriginAttributionService
 
   def infer_origem
     return 'Google' if gclid_present?
-    return referral_derived_origem if referral.present?
     return 'Instagram' if inbox.instagram_direct?
     return 'Facebook' if inbox.facebook?
+    return referral_derived_origem if referral.present?
 
     nil
   end

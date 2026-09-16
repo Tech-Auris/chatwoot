@@ -225,5 +225,63 @@ describe Messages::Facebook::MessageBuilder do
         end
       end
     end
+
+    # Meta ads that route to Messenger arrive with a top-level `messaging.referral`.
+    # The message keeps the normalized referral on `content_attributes.referral`
+    # and the conversation gets a first-touch `campaign_referral` so the sidebar
+    # dropdown and the funnel report can attribute it — same contract as WA.
+    context 'when the message arrives with a Meta ad referral' do
+      let(:ad_message_object) do
+        {
+          messaging: {
+            sender: { id: 'FB_SENDER_ID' },
+            recipient: { id: 'FB_PAGE_ID' },
+            timestamp: 1_734_567_890_000,
+            message: { mid: 'm_ad_1', text: 'oi, quero saber sobre a promoção' },
+            referral: {
+              ref: 'META_CLICK_TOKEN',
+              source: 'ADS',
+              type: 'OPEN_THREAD',
+              ads_context_data: {
+                ad_title: 'Consulta Facial',
+                photo_url: 'https://scontent.xx.fbcdn.net/ad-thumb.jpg',
+                post_id: '17841400000001'
+              }
+            }
+          }
+        }.to_json
+      end
+      let(:ad_message) { Integrations::Facebook::MessageParser.new(ad_message_object) }
+
+      before do
+        allow(Koala::Facebook::API).to receive(:new).and_return(fb_object)
+        allow(fb_object).to receive(:get_object).and_return({ first_name: 'Ana', last_name: 'Ferreira',
+                                                              profile_pic: 'https://x/y.png' }.with_indifferent_access)
+      end
+
+      it 'persists the normalized referral on the message and first-touches the conversation' do
+        described_class.new(ad_message, facebook_channel.inbox).perform
+
+        message = facebook_channel.inbox.messages.last
+        expect(message.content_attributes['referral']).to include(
+          'source_type' => 'ad',
+          'source_id' => '17841400000001',
+          'title' => 'Consulta Facial',
+          'media_type' => 'image',
+          'thumbnail_url' => 'https://scontent.xx.fbcdn.net/ad-thumb.jpg'
+        )
+        expect(message.conversation.additional_attributes['campaign_referral']).to include(
+          'source_id' => '17841400000001',
+          'ctwa_clid' => 'META_CLICK_TOKEN'
+        )
+      end
+
+      it 'attributes the contact origem to Facebook via the OriginAttributionService' do
+        described_class.new(ad_message, facebook_channel.inbox).perform
+
+        contact = facebook_channel.inbox.contacts.last
+        expect(contact.additional_attributes['origem']).to eq('Facebook')
+      end
+    end
   end
 end
