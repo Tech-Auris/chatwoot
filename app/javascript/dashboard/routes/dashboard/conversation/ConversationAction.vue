@@ -6,8 +6,6 @@ import { useAgentsList } from 'dashboard/composables/useAgentsList';
 import ContactDetailsItem from './ContactDetailsItem.vue';
 import MultiselectDropdown from 'shared/components/ui/MultiselectDropdown.vue';
 import ConversationLabels from './labels/LabelBox.vue';
-import OrigemSelector from './origin/OrigemSelector.vue';
-import CampaignReferralCard from './origin/CampaignReferralCard.vue';
 import { CONVERSATION_PRIORITY } from '../../../../shared/constants/messages';
 import { CONVERSATION_EVENTS } from '../../../helper/AnalyticsHelper/events';
 import { useTrack } from 'dashboard/composables';
@@ -19,8 +17,6 @@ export default {
     MultiselectDropdown,
     ConversationLabels,
     NextButton,
-    OrigemSelector,
-    CampaignReferralCard,
   },
   props: {
     conversationId: {
@@ -71,12 +67,6 @@ export default {
       currentUser: 'getCurrentUser',
       teams: 'teams/getTeams',
     }),
-    contactId() {
-      return this.currentChat?.meta?.sender?.id;
-    },
-    campaignReferral() {
-      return this.currentChat?.additional_attributes?.campaign_referral || null;
-    },
     hasAnAssignedTeam() {
       return !!this.currentChat?.meta?.team;
     },
@@ -291,15 +281,10 @@ export default {
         @select="onClickAssignPriority"
       />
     </div>
-    <OrigemSelector v-if="contactId" :contact-id="contactId" />
     <ContactDetailsItem
       compact
       :title="$t('CONVERSATION_SIDEBAR.ACCORDION.CONVERSATION_LABELS')"
     />
     <ConversationLabels :conversation-id="conversationId" />
-    <CampaignReferralCard
-      v-if="campaignReferral"
-      :referral="campaignReferral"
-    />
   </div>
 </template>
