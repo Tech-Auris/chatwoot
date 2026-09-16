@@ -63,5 +63,24 @@ RSpec.describe 'Assignable Agents API', type: :request do
         expect(response_data.pluck(:role)).to include('agent', 'administrator')
       end
     end
+
+    # Managers can be assigned to any conversation in the account (User#assigned_inboxes
+    # returns every inbox for the manager role), so they must show up in the assignable
+    # pool even for inboxes they are not explicit members of.
+    context 'when a manager is not part of any queried inbox' do
+      let!(:manager) { create(:user, account: account, role: :manager) }
+
+      it 'still returns the manager alongside members and administrators' do
+        get "/api/v1/accounts/#{account.id}/assignable_agents",
+            params: { inbox_ids: [inbox1.id, inbox2.id] },
+            headers: admin.create_new_auth_token,
+            as: :json
+
+        expect(response).to have_http_status(:success)
+        response_data = JSON.parse(response.body, symbolize_names: true)[:payload]
+        expect(response_data.pluck(:id)).to include(manager.id)
+        expect(response_data.pluck(:role)).to include('manager')
+      end
+    end
   end
 end
