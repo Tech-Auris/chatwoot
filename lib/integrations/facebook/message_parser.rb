@@ -67,6 +67,13 @@ class Integrations::Facebook::MessageParser
   def in_reply_to_external_id
     @messaging.dig('message', 'reply_to', 'mid')
   end
+
+  # Meta delivers click-to-Messenger ad attribution as top-level
+  # `messaging.referral` (alongside `sender`, `recipient`, `message`). Exposed
+  # here so the message builder can hand it to CampaignReferralExtractor.
+  def referral
+    @messaging['referral']
+  end
 end
 
 # Sample Response

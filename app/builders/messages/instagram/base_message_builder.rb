@@ -103,9 +103,22 @@ class Messages::Instagram::BaseMessageBuilder < Messages::Messenger::MessageBuil
     @message = conversation.messages.create!(message_params)
     save_story_id
 
+    unless @outgoing_echo
+      attach_meta_campaign_referral!(
+        referral: meta_referral,
+        conversation: conversation,
+        contact: contact,
+        inbox: @inbox
+      )
+    end
+
     attachments.each do |attachment|
       process_attachment(attachment)
     end
+  end
+
+  def meta_referral
+    @meta_referral ||= ::CampaignReferralExtractor.from_meta_messaging(@messaging)
   end
 
   def save_story_id
@@ -169,6 +182,7 @@ class Messages::Instagram::BaseMessageBuilder < Messages::Messenger::MessageBuil
 
     params[:content_attributes][:external_echo] = true if @outgoing_echo
     params[:content_attributes][:is_unsupported] = true if message_is_unsupported?
+    params[:content_attributes][:referral] = meta_referral if meta_referral.present?
     params
   end
 

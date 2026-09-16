@@ -1,6 +1,29 @@
 class Messages::Messenger::MessageBuilder
   include ::FileTypeHelper
 
+  # First-touch: writes `campaign_referral` to the conversation's
+  # `additional_attributes` when a Meta ad opened this thread, and hands the
+  # contact to the OriginAttributionService — mirroring the WhatsApp Cloud
+  # pipeline so the sidebar dropdown and the funnel report agree across all
+  # three Meta surfaces (WA / IG / FB).
+  def attach_meta_campaign_referral!(referral:, conversation:, contact:, inbox:)
+    return if referral.blank?
+    return if contact.blank?
+
+    unless conversation.additional_attributes.is_a?(Hash) && conversation.additional_attributes['campaign_referral'].present?
+      conversation.additional_attributes ||= {}
+      conversation.additional_attributes['campaign_referral'] = referral.merge('captured_at' => Time.current.to_i)
+      conversation.save!
+    end
+
+    ::Contacts::OriginAttributionService.new(
+      contact: contact,
+      inbox: inbox,
+      message_body: '',
+      referral: referral
+    ).apply!
+  end
+
   def process_attachment(attachment)
     # This check handles very rare case if there are multiple files to attach with only one unsupported file
     return if unsupported_file_type?(attachment['type'])

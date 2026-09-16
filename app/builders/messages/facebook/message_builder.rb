@@ -47,9 +47,22 @@ class Messages::Facebook::MessageBuilder < Messages::Messenger::MessageBuilder
   def build_message
     @message = conversation.messages.create!(message_params)
 
+    unless @outgoing_echo
+      attach_meta_campaign_referral!(
+        referral: meta_referral,
+        conversation: conversation,
+        contact: @contact_inbox.contact,
+        inbox: @inbox
+      )
+    end
+
     @attachments.each do |attachment|
       process_attachment(attachment)
     end
+  end
+
+  def meta_referral
+    @meta_referral ||= ::CampaignReferralExtractor.from_meta_messaging(referral: @response.referral)
   end
 
   def conversation
@@ -109,6 +122,7 @@ class Messages::Facebook::MessageBuilder < Messages::Messenger::MessageBuilder
       in_reply_to_external_id: response.in_reply_to_external_id
     }
     content_attributes[:external_echo] = true if @outgoing_echo
+    content_attributes[:referral] = meta_referral if meta_referral.present?
 
     {
       account_id: conversation.account_id,

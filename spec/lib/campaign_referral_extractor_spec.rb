@@ -64,6 +64,65 @@ RSpec.describe CampaignReferralExtractor do
     end
   end
 
+  describe '.from_meta_messaging' do
+    # Real Meta payload for a click-to-Messenger / click-to-IG-DM ad — top-level
+    # `messaging.referral` with ad copy under `ads_context_data`. Different
+    # from WhatsApp CTWA (no source_url, no ctwa_clid; the ad's opaque token
+    # is `ref`).
+    let(:ig_ad_messaging) do
+      {
+        sender: { id: 'IGSID' },
+        recipient: { id: 'IG_PAGE_ID' },
+        referral: {
+          ref: 'AaRDg86i-z5_xrIOfs9Adr1example',
+          source: 'ADS',
+          type: 'OPEN_THREAD',
+          ads_context_data: {
+            ad_title: 'Agende sua Consulta',
+            photo_url: 'https://scontent.xx.fbcdn.net/thumb.jpg',
+            post_id: '17841400000000',
+            product_id: nil
+          }
+        }
+      }
+    end
+
+    it 'normalizes an Instagram / Messenger ad referral into the shared shape' do
+      result = described_class.from_meta_messaging(ig_ad_messaging)
+
+      expect(result).to eq(
+        'source_type' => 'ad',
+        'source_id' => '17841400000000',
+        'ctwa_clid' => 'AaRDg86i-z5_xrIOfs9Adr1example',
+        'title' => 'Agende sua Consulta',
+        'media_type' => 'image',
+        'thumbnail_url' => 'https://scontent.xx.fbcdn.net/thumb.jpg'
+      )
+    end
+
+    # A referral with source SHORTLINK / CUSTOMER_CHAT_PLUGIN is not an ad —
+    # skip it so the operator's Origem stays undecided instead of picking
+    # up the wrong attribution.
+    it 'returns nil for a non-ad referral source' do
+      messaging = ig_ad_messaging.deep_merge(referral: { source: 'SHORTLINK', ads_context_data: nil })
+      expect(described_class.from_meta_messaging(messaging)).to be_nil
+    end
+
+    it 'returns nil when there is no referral on the messaging object' do
+      expect(described_class.from_meta_messaging(sender: { id: 'x' })).to be_nil
+    end
+
+    it 'is safe when given nil or a non-hash messaging object' do
+      expect(described_class.from_meta_messaging(nil)).to be_nil
+      expect(described_class.from_meta_messaging('oops')).to be_nil
+    end
+
+    it 'reports video when the ad carries a video_url' do
+      messaging = ig_ad_messaging.deep_merge(referral: { ads_context_data: { video_url: 'https://x/vid.mp4', photo_url: nil } })
+      expect(described_class.from_meta_messaging(messaging)['media_type']).to eq('video')
+    end
+  end
+
   describe '.from_baileys_context_info' do
     # Real payload shape from the wild — Baileys types use camelCase and
     # `mediaType` is a proto enum integer. Some wrappers (Evolution etc.) emit
