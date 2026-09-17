@@ -29,6 +29,7 @@ import funnel from './funnel.json';
 import internalChat from './internalChat.json';
 import kanban from './kanban.json';
 import labelsMgmt from './labelsMgmt.json';
+import marketingAnalytics from './marketingAnalytics.json';
 import login from './login.json';
 import macros from './macros.json';
 import metaTemplates from './metaTemplates.json';
@@ -83,6 +84,7 @@ export default {
   ...internalChat,
   ...kanban,
   ...labelsMgmt,
+  ...marketingAnalytics,
   ...login,
   ...macros,
   ...metaTemplates,

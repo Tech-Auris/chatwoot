@@ -1,0 +1,67 @@
+{
+  "MARKETING_ANALYTICS": {
+    "TITLE": "Marketing Analytics",
+    "DESCRIPTION": "Send conversion events to Meta and Google when leads reach a funnel stage, get labeled, or trigger an automation.",
+    "STATUS": "Status",
+    "STATUSES": {
+      "DISABLED": "Disabled",
+      "TEST_MODE": "Test mode",
+      "ACTIVE": "Active"
+    },
+    "SAVE": "Save",
+    "SAVE_SUCCESS": "Saved",
+    "SAVE_ERROR": "Could not save",
+    "CONNECT": "Connect",
+    "DISCONNECT": "Disconnect",
+    "DISCONNECT_CONFIRM": "Disconnect this integration? Existing dispatches stay in history.",
+    "DISCONNECT_SUCCESS": "Disconnected",
+    "CANCEL": "Cancel",
+    "EDIT": "Edit",
+    "DELETE": "Delete",
+    "PROVIDERS": {
+      "META_CAPI": {
+        "DESCRIPTION": "Meta Conversions API. Used for WhatsApp / Instagram DM / Facebook Messenger ads. Fires with the ctwa_clid captured on the first inbound."
+      },
+      "GOOGLE_ADS_ENHANCED": {
+        "DESCRIPTION": "Google Ads uploadClickConversions. Uses the gclid captured by the landing page snippet in the first message."
+      }
+    },
+    "FIELDS": {
+      "PIXEL_ID": "Pixel ID",
+      "ACCESS_TOKEN": "Access Token",
+      "TEST_EVENT_CODE": "Test Event Code",
+      "CUSTOMER_ID": "Customer ID",
+      "CONVERSION_ACTION_ID": "Conversion Action ID",
+      "DEVELOPER_TOKEN": "Developer Token",
+      "OAUTH_REFRESH_TOKEN": "OAuth Refresh Token",
+      "LOGIN_CUSTOMER_ID": "Login Customer ID (MCC)"
+    },
+    "EVENTS": {
+      "TITLE": "Conversion events",
+      "DESCRIPTION": "Map a Chatwoot trigger to a Meta event name and/or a Google conversion action.",
+      "NEW": "New event",
+      "EMPTY": "No conversion events configured yet.",
+      "NAME": "Name",
+      "TRIGGER": "Trigger",
+      "TRIGGER_TYPES": {
+        "FUNNEL_STAGE_REACHED": "Funnel stage",
+        "LABEL_ADDED": "Label added",
+        "AUTOMATION_ACTION": "Automation action"
+      },
+      "FUNNEL_STAGE": "Funnel stage",
+      "LABEL": "Label",
+      "META_LABEL": "Meta",
+      "GOOGLE_LABEL": "· Google",
+      "META_EVENT": "Meta event name",
+      "META_EVENT_PLACEHOLDER": "Lead / Schedule / Purchase …",
+      "GOOGLE_EVENT": "Google event name",
+      "GOOGLE_EVENT_PLACEHOLDER": "book_appointment / purchase …",
+      "ENABLED": "Enabled",
+      "DISABLED_TAG": "disabled",
+      "SAVE_SUCCESS": "Event saved",
+      "SAVE_ERROR": "Could not save event",
+      "DELETE_CONFIRM": "Delete the event \"{name}\"? Existing dispatches stay in history.",
+      "DELETE_SUCCESS": "Event deleted"
+    }
+  }
+}
