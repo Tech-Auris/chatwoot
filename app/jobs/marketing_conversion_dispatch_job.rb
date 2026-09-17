@@ -1,10 +1,9 @@
-# Persists a `ConversionEventDispatch` for a matched trigger. Idempotent via
-# `event_id` so a Sidekiq retry (default exponential backoff) does not create
-# a duplicate row.
+# Persists a `ConversionEventDispatch` for a matched trigger and hands it to
+# the right provider dispatcher. Idempotent via `event_id` — a Sidekiq
+# retry (default exponential backoff) reuses the same row and Meta/Google
+# dedup on their side.
 #
-# PR B stub — only writes the DB row and logs. The actual Meta CAPI POST
-# (PR C) and the Google Ads Enhanced Conversions upload (PR D) plug into
-# `dispatch_via_provider` in follow-up PRs.
+# Meta CAPI wired in this PR; Google Ads Enhanced Conversions ships in PR D.
 class MarketingConversionDispatchJob < ApplicationJob
   queue_as :default
 
@@ -36,13 +35,13 @@ class MarketingConversionDispatchJob < ApplicationJob
 
   private
 
-  # Stubbed for PR B. PR C wires Meta CAPI; PR D wires Google Ads.
-  # Leaving the row in `pending` on purpose so the follow-up worker knows
-  # what still needs to be sent when the real dispatcher ships.
   def dispatch_via_provider(dispatch)
-    Rails.logger.info(
-      "[MarketingConversionDispatchJob] dispatch ##{dispatch.id} pending — " \
-      "provider=#{dispatch.provider} event_id=#{dispatch.event_id}"
-    )
+    case dispatch.provider
+    when 'meta_capi'
+      ::Marketing::MetaCapiDispatcher.new(dispatch: dispatch).perform
+    when 'google_ads_enhanced'
+      # Wired in PR D. The dispatch row stays `pending` until then.
+      Rails.logger.info("[MarketingConversionDispatchJob] google_ads_enhanced dispatcher not wired yet — dispatch ##{dispatch.id}")
+    end
   end
 end
