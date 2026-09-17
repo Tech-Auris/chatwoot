@@ -186,6 +186,10 @@ export const AUTOMATIONS = {
         key: 'assign_origem',
         name: 'ASSIGN_ORIGEM',
       },
+      {
+        key: 'trigger_conversion_event',
+        name: 'TRIGGER_CONVERSION_EVENT',
+      },
     ],
   },
   conversation_created: {
@@ -353,6 +357,10 @@ export const AUTOMATIONS = {
       {
         key: 'assign_origem',
         name: 'ASSIGN_ORIGEM',
+      },
+      {
+        key: 'trigger_conversion_event',
+        name: 'TRIGGER_CONVERSION_EVENT',
       },
     ],
   },
@@ -534,6 +542,10 @@ export const AUTOMATIONS = {
         key: 'assign_origem',
         name: 'ASSIGN_ORIGEM',
       },
+      {
+        key: 'trigger_conversion_event',
+        name: 'TRIGGER_CONVERSION_EVENT',
+      },
     ],
   },
   conversation_opened: {
@@ -704,6 +716,10 @@ export const AUTOMATIONS = {
         key: 'assign_origem',
         name: 'ASSIGN_ORIGEM',
       },
+      {
+        key: 'trigger_conversion_event',
+        name: 'TRIGGER_CONVERSION_EVENT',
+      },
     ],
   },
   conversation_resolved: {
@@ -852,6 +868,10 @@ export const AUTOMATIONS = {
         key: 'assign_origem',
         name: 'ASSIGN_ORIGEM',
       },
+      {
+        key: 'trigger_conversion_event',
+        name: 'TRIGGER_CONVERSION_EVENT',
+      },
     ],
   },
 };
@@ -994,6 +1014,11 @@ export const AUTOMATION_ACTION_TYPES = [
     key: 'assign_origem',
     label: 'ASSIGN_ORIGEM',
     inputType: 'search_select',
+  },
+  {
+    key: 'trigger_conversion_event',
+    label: 'TRIGGER_CONVERSION_EVENT',
+    inputType: 'multi_select',
   },
 ];
 

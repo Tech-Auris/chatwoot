@@ -93,6 +93,17 @@ export default function useAutomationValues() {
     ORIGEM_OPTIONS.map(name => ({ id: name, name }))
   );
 
+  // Conversion events configured in Settings → Marketing Analytics. Only the
+  // ones flagged as `automation_action` triggers show here — funnel-stage /
+  // label events fire on their own path and picking them here would double-
+  // dispatch on the same conversation.
+  const conversionEvents = useMapGetter('conversionEvents/getConversionEvents');
+  const conversionEventOptions = computed(() =>
+    (conversionEvents.value || [])
+      .filter(ev => ev.trigger_type === 'automation_action' && ev.enabled)
+      .map(ev => ({ id: ev.id, name: ev.name }))
+  );
+
   /**
    * Adds a translated "None" option to the beginning of a list
    * @param {Array} list - The list to add "None" to
@@ -160,6 +171,7 @@ export default function useAutomationValues() {
       addNoneToListFn: addNoneToList,
       priorityOptions: priorityOptions.value,
       origemOptions: origemOptions.value,
+      conversionEventOptions: conversionEventOptions.value,
     });
   };
 
