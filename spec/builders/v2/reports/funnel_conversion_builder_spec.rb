@@ -461,6 +461,37 @@ RSpec.describe V2::Reports::FunnelConversionBuilder do
 
         expect(builder.build[:campaign_breakdown]).to eq([])
       end
+
+      # Fase 3 · F4: campaign_breakdown rows carry spend / CPL / CPA / ROAS
+      # aggregated from campaign_spends for the same source_id in the period.
+      it 'enriches each ad row with spend, CPL, CPA and ROAS' do
+        account.update!(average_ticket: 500)
+
+        conv = ad_conversation(source_id: 'FB-SPEND', title: 'Campanha $', source_url: 'https://fb.me/z')
+        stage_change(conv_id: conv.id, new_stage: qualifying.name)
+        stage_change(conv_id: conv.id, previous_stage: qualifying.name, new_stage: comparecimento.name)
+
+        create(:campaign_spend, account: account, provider: :meta, source_id: 'FB-SPEND',
+                                source_type: 'meta_ad', period_start: Date.current, period_end: Date.current,
+                                amount_cents: 10_000, currency: 'BRL')
+
+        row = builder.build[:campaign_breakdown].find { |r| r[:source_id] == 'FB-SPEND' }
+        expect(row).to include(spend_cents: 10_000)
+        expect(row[:cpl_cents]).to eq(10_000) # 10_000 cents / 1 lead
+        expect(row[:cpa_cents]).to eq(10_000) # 10_000 cents / 1 attendance
+        expect(row[:roas]).to eq(5.0)         # 500.00 revenue / 100.00 spend
+      end
+
+      it 'leaves derived metrics nil when there is no spend for an ad' do
+        conv = ad_conversation(source_id: 'FB-NOSPEND', title: 'Órfã', source_url: 'https://fb.me/o')
+        stage_change(conv_id: conv.id, new_stage: qualifying.name)
+
+        row = builder.build[:campaign_breakdown].find { |r| r[:source_id] == 'FB-NOSPEND' }
+        expect(row[:spend_cents]).to eq(0)
+        expect(row[:cpl_cents]).to be_nil
+        expect(row[:cpa_cents]).to be_nil
+        expect(row[:roas]).to be_nil
+      end
     end
   end
 end

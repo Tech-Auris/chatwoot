@@ -31,6 +31,19 @@ const formatRate = value => {
   if (value === null || value === undefined) return '--';
   return `${Number(value).toFixed(1)}%`;
 };
+
+const currencyFormatter = new Intl.NumberFormat('pt-BR', {
+  style: 'currency',
+  currency: 'BRL',
+});
+
+const formatMoney = cents => {
+  if (cents === null || cents === undefined) return '--';
+  return currencyFormatter.format(cents / 100);
+};
+
+const formatRoas = roas =>
+  roas === null || roas === undefined ? '--' : `${Number(roas).toFixed(2)}×`;
 </script>
 
 <template>
@@ -82,11 +95,31 @@ const formatRate = value => {
                 )
               }}
             </th>
-            <th class="py-2 pr-0 whitespace-nowrap text-right">
+            <th class="py-2 pr-3 whitespace-nowrap text-right">
               {{
                 t(
                   'FUNNEL_CONVERSION_REPORTS.CAMPAIGN_BREAKDOWN.HEADERS.ATTENDANCE'
                 )
+              }}
+            </th>
+            <th class="py-2 pr-3 whitespace-nowrap text-right">
+              {{
+                t('FUNNEL_CONVERSION_REPORTS.CAMPAIGN_BREAKDOWN.HEADERS.SPEND')
+              }}
+            </th>
+            <th class="py-2 pr-3 whitespace-nowrap text-right">
+              {{
+                t('FUNNEL_CONVERSION_REPORTS.CAMPAIGN_BREAKDOWN.HEADERS.CPL')
+              }}
+            </th>
+            <th class="py-2 pr-3 whitespace-nowrap text-right">
+              {{
+                t('FUNNEL_CONVERSION_REPORTS.CAMPAIGN_BREAKDOWN.HEADERS.CPA')
+              }}
+            </th>
+            <th class="py-2 pr-0 whitespace-nowrap text-right">
+              {{
+                t('FUNNEL_CONVERSION_REPORTS.CAMPAIGN_BREAKDOWN.HEADERS.ROAS')
               }}
             </th>
           </tr>
@@ -149,13 +182,25 @@ const formatRate = value => {
                 {{ formatRate(row.confirmation.rate) }}
               </div>
             </td>
-            <td class="py-3 pr-0 whitespace-nowrap text-right">
+            <td class="py-3 pr-3 whitespace-nowrap text-right">
               <div class="font-medium leading-tight">
                 {{ row.attendance.count }}
               </div>
               <div class="text-xs text-n-slate-11 leading-tight">
                 {{ formatRate(row.attendance.rate) }}
               </div>
+            </td>
+            <td class="py-3 pr-3 whitespace-nowrap text-right font-medium">
+              {{ formatMoney(row.spendCents) }}
+            </td>
+            <td class="py-3 pr-3 whitespace-nowrap text-right">
+              {{ formatMoney(row.cplCents) }}
+            </td>
+            <td class="py-3 pr-3 whitespace-nowrap text-right">
+              {{ formatMoney(row.cpaCents) }}
+            </td>
+            <td class="py-3 pr-0 whitespace-nowrap text-right font-medium">
+              {{ formatRoas(row.roas) }}
             </td>
           </tr>
         </tbody>

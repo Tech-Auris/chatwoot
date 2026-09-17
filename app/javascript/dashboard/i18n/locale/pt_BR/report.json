@@ -731,7 +731,11 @@
         "QUALIFYING": "Em qualificação",
         "SCHEDULING": "Agendamento",
         "CONFIRMATION": "Confirmado",
-        "ATTENDANCE": "Comparecimentos"
+        "ATTENDANCE": "Comparecimentos",
+        "SPEND": "Gasto",
+        "CPL": "CPL",
+        "CPA": "CPA",
+        "ROAS": "ROAS"
       }
     }
   },

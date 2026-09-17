@@ -330,8 +330,21 @@ class V2::Reports::FunnelConversionBuilder
     rows = fetch_campaign_breakdown_rows
     return [] if rows.blank?
 
+    spend_by_ad = meta_spend_by_ad
     by_ad = accumulate_campaign_rows(rows, all_stages)
-    by_ad.values.map { |entry| campaign_row_from(entry) }.sort_by { |row| -row[:leads] }
+    by_ad.values.map { |entry| campaign_row_from(entry, spend_by_ad) }.sort_by { |row| -row[:leads] }
+  end
+
+  # Meta ad spend per source_id in the current range. Mirrors the same
+  # `campaign_spends` query the Marketing Analytics page uses (F3 builder).
+  def meta_spend_by_ad
+    scope = account.campaign_spends.where(provider: :meta, source_type: 'meta_ad')
+    scope = scope.in_period(range.first.to_date, range.last.to_date) if range.present?
+    scope.group(:source_id).sum(:amount_cents)
+  end
+
+  def average_ticket_cents
+    (account.average_ticket.to_f * 100).round
   end
 
   # Pulls one row per (stage change × conversation) that carries an ad tag on
@@ -389,8 +402,11 @@ class V2::Reports::FunnelConversionBuilder
     nil
   end
 
-  def campaign_row_from(entry)
+  def campaign_row_from(entry, spend_by_ad) # rubocop:disable Metrics/AbcSize
     leads = entry[:lead_ids].size
+    attendance_count = entry[:bucket_ids][:attendance].size
+    spend_cents = spend_by_ad[entry[:source_id]] || 0
+    revenue_cents = attendance_count * average_ticket_cents
     {
       source_id: entry[:source_id],
       title: entry[:title],
@@ -399,8 +415,18 @@ class V2::Reports::FunnelConversionBuilder
       qualifying: bucket_metric(entry[:bucket_ids][:qualifying].size, leads),
       scheduling: bucket_metric(entry[:bucket_ids][:scheduling].size, leads),
       confirmation: bucket_metric(entry[:bucket_ids][:confirmation].size, leads),
-      attendance: bucket_metric(entry[:bucket_ids][:attendance].size, leads)
+      attendance: bucket_metric(attendance_count, leads),
+      spend_cents: spend_cents,
+      cpl_cents: cost_per(spend_cents, leads),
+      cpa_cents: cost_per(spend_cents, attendance_count),
+      roas: (spend_cents.positive? && revenue_cents.positive? ? (revenue_cents.to_f / spend_cents).round(2) : nil)
     }
+  end
+
+  def cost_per(spend_cents, denominator)
+    return nil if spend_cents.to_i.zero? || denominator.to_i.zero?
+
+    (spend_cents / denominator).round
   end
 
   def bucket_metric(count, leads)
