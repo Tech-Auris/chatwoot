@@ -36,6 +36,10 @@ class Api::V2::Accounts::SummaryReportsController < Api::V1::Accounts::BaseContr
     render_report_with(V2::Reports::FunnelConversionBuilder)
   end
 
+  def campaign_analytics
+    render_report_with(V2::Reports::CampaignAnalyticsBuilder)
+  end
+
   private
 
   def check_authorization

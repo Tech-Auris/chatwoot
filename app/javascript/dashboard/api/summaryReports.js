@@ -56,6 +56,15 @@ class SummaryReportsAPI extends ApiClient {
     });
   }
 
+  getCampaignAnalytics({ since, until: untilTs } = {}) {
+    return axios.get(`${this.url}/campaign_analytics`, {
+      params: {
+        since,
+        until: untilTs,
+      },
+    });
+  }
+
   getFunnelReports({ since, until: untilTs, inboxId, label, origem } = {}) {
     return axios.get(`${this.url}/funnel`, {
       params: {

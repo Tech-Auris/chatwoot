@@ -626,6 +626,7 @@ Rails.application.routes.draw do
               get :channel
               get :funnel
               get :funnel_conversion
+              get :campaign_analytics
             end
           end
           resources :reports, only: [:index] do
