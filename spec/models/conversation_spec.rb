@@ -25,6 +25,16 @@ RSpec.describe Conversation do
     it_behaves_like 'auto_assignment_handler'
   end
 
+  # Guards the sidebar / filter / automation / report against orphan values —
+  # the frontend selector lists a fixed vocabulary and the OPTIONS constant is
+  # the single source of truth (mirrored in origemOptions.js).
+  describe 'origem validation' do
+    it { is_expected.to allow_value(nil).for(:origem) }
+    it { is_expected.to allow_value('Google').for(:origem) }
+    it { is_expected.to allow_value('Instagram').for(:origem) }
+    it { is_expected.not_to allow_value('anything-not-in-options').for(:origem) }
+  end
+
   describe '.before_create' do
     let(:conversation) { build(:conversation, display_id: nil) }
 

@@ -14,6 +14,7 @@
 #  group_type             :integer          default("individual"), not null
 #  identifier             :string
 #  last_activity_at       :datetime         not null
+#  origem                 :string
 #  priority               :integer
 #  snoozed_until          :datetime
 #  status                 :integer          default("open"), not null
@@ -40,6 +41,7 @@
 #  index_conversations_on_account_id                  (account_id)
 #  index_conversations_on_account_id_and_display_id   (account_id,display_id) UNIQUE
 #  index_conversations_on_account_id_and_group_type   (account_id,group_type)
+#  index_conversations_on_account_id_and_origem       (account_id,origem)
 #  index_conversations_on_assignee_id_and_account_id  (assignee_id,account_id)
 #  index_conversations_on_campaign_id                 (campaign_id)
 #  index_conversations_on_contact_id                  (contact_id)
@@ -81,6 +83,7 @@ class Conversation < ApplicationRecord
   validates :additional_attributes, jsonb_attributes_length: true
   validates :custom_attributes, jsonb_attributes_length: true
   validates :uuid, uniqueness: true
+  validates :origem, inclusion: { in: ::Contacts::OriginAttributionService::OPTIONS }, allow_nil: true
   validate :validate_referer_url
 
   enum status: { open: 0, resolved: 1, pending: 2, snoozed: 3 }

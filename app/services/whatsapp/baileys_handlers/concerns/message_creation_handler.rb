@@ -22,7 +22,7 @@ module Whatsapp::BaileysHandlers::Concerns::MessageCreationHandler # rubocop:dis
     @message.save!
 
     attach_campaign_referral_to_conversation(conversation) if incoming?
-    apply_origin_attribution(sender) if incoming?
+    apply_origin_attribution(sender, conversation) if incoming?
 
     finalize_after_save(conversation)
 
@@ -45,15 +45,16 @@ module Whatsapp::BaileysHandlers::Concerns::MessageCreationHandler # rubocop:dis
     conversation.save!
   end
 
-  # Sets Contact.additional_attributes.origem on first touch using the same
-  # priority rules the Cloud pipeline uses (referral wins over channel-based
-  # inference). Never overwrites an existing value — manual selections stick.
-  def apply_origin_attribution(sender)
+  # Sets `Conversation.origem` (first-touch on the conversation) and mirrors
+  # the value on `Contact.additional_attributes.origem` during the dual-write
+  # migration window. Priority mirrors Cloud (gclid → channel → referral).
+  def apply_origin_attribution(sender, conversation)
     return if sender.blank?
 
     ::Contacts::OriginAttributionService.new(
       contact: sender,
       inbox: inbox,
+      conversation: conversation,
       message_body: message_content.to_s,
       referral: baileys_referral
     ).apply!

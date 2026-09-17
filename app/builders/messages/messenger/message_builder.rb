@@ -19,6 +19,7 @@ class Messages::Messenger::MessageBuilder
     ::Contacts::OriginAttributionService.new(
       contact: contact,
       inbox: inbox,
+      conversation: conversation,
       message_body: '',
       referral: referral
     ).apply!
