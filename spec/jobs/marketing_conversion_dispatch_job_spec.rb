@@ -6,10 +6,11 @@ RSpec.describe MarketingConversionDispatchJob do
   let(:conversation) { create(:conversation, account: account) }
 
   before do
-    # Job hands off to Marketing::MetaCapiDispatcher which does the real
-    # network call — that's tested in its own spec, so mock it here to keep
-    # the job spec focused on find_or_create + dispatch routing.
+    # Job hands off to provider dispatchers that do the real network calls —
+    # those are tested in their own specs. Mock both here so the job spec
+    # stays focused on find_or_create + provider routing.
     allow(Marketing::MetaCapiDispatcher).to receive(:new).and_return(instance_double(Marketing::MetaCapiDispatcher, perform: nil))
+    allow(Marketing::GoogleAdsDispatcher).to receive(:new).and_return(instance_double(Marketing::GoogleAdsDispatcher, perform: nil))
   end
 
   describe '#perform' do
@@ -55,14 +56,13 @@ RSpec.describe MarketingConversionDispatchJob do
       end.not_to change(ConversionEventDispatch, :count)
     end
 
-    # Google Ads Enhanced Conversions dispatcher is wired in PR D. Until then
-    # the job creates the row but the dispatch stays pending — the follow-up
-    # PR's dispatcher will pick it up from the `retryable` scope.
-    it 'leaves the row pending for google_ads_enhanced (no dispatcher yet)' do
+    it 'routes google_ads_enhanced dispatches to Marketing::GoogleAdsDispatcher' do
       described_class.new.perform(conversion_event_id: conversion_event.id,
                                   conversation_id: conversation.id, provider: 'google_ads_enhanced')
 
-      expect(ConversionEventDispatch.last).to have_attributes(provider: 'google_ads_enhanced', status: 'pending')
+      row = ConversionEventDispatch.last
+      expect(row.provider).to eq('google_ads_enhanced')
+      expect(Marketing::GoogleAdsDispatcher).to have_received(:new).with(dispatch: row)
       expect(Marketing::MetaCapiDispatcher).not_to have_received(:new)
     end
   end

@@ -40,7 +40,15 @@ class MarketingIntegration < ApplicationRecord
   STATUSES = { disabled: 0, test_mode: 1, active: 2 }.freeze
 
   META_CAPI_KEYS = %w[pixel_id access_token test_event_code].freeze
-  GOOGLE_ADS_KEYS = %w[customer_id conversion_id conversion_label developer_token oauth_refresh_token].freeze
+  # `conversion_action_id` is the numeric id of the Google Ads Conversion
+  # Action (Configurações → Conversões → click into an action → the id shows in
+  # the URL). The gtag-oriented `conversion_id` / `conversion_label` fields
+  # don't apply to the offline upload API — the resource name is built from
+  # (customer_id, conversion_action_id).
+  #
+  # `login_customer_id` is optional; only required when the developer token
+  # is registered under a Google Ads MCC that isn't the same as `customer_id`.
+  GOOGLE_ADS_KEYS = %w[customer_id conversion_action_id developer_token oauth_refresh_token login_customer_id].freeze
 
   encrypts :credentials_ciphertext if Chatwoot.encryption_configured?
 
@@ -67,7 +75,7 @@ class MarketingIntegration < ApplicationRecord
   private
 
   def required_credentials_present
-    required = meta_capi? ? %w[pixel_id access_token] : %w[customer_id conversion_id developer_token oauth_refresh_token]
+    required = meta_capi? ? %w[pixel_id access_token] : %w[customer_id conversion_action_id developer_token oauth_refresh_token]
     missing = required.select { |k| credentials[k].to_s.strip.empty? }
     return if missing.empty?
 
