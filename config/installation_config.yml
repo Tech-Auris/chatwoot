@@ -492,6 +492,25 @@
   type: boolean
 ## ------ End of Configs added for Google OAuth ------ ##
 
+## ------ Configs added for Marketing Analytics (Google Ads Enhanced Conversions) ------ ##
+# Auris-wide OAuth 2.0 app credentials used by the Marketing Analytics
+# integration to refresh the per-account `oauth_refresh_token` on every
+# spend-sync run and every conversion dispatch. Register the OAuth app
+# once at https://console.cloud.google.com/apis/credentials with the
+# Google Ads API scope; every clinic authorises against the same app.
+- name: GOOGLE_ADS_OAUTH_CLIENT_ID
+  display_title: 'Google Ads OAuth Client ID'
+  value:
+  locked: false
+  description: 'OAuth 2.0 Client ID for the Google Ads API app used by Marketing Analytics.'
+- name: GOOGLE_ADS_OAUTH_CLIENT_SECRET
+  display_title: 'Google Ads OAuth Client Secret'
+  value:
+  locked: false
+  description: 'OAuth 2.0 Client Secret for the Google Ads API app used by Marketing Analytics.'
+  type: secret
+## ------ End of Configs added for Marketing Analytics ------ ##
+
 ## ------ Configs added for SAML SSO ------ ##
 - name: ENABLE_SAML_SSO_LOGIN
   display_title: 'Enable SAML SSO login'
