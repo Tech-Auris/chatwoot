@@ -613,6 +613,19 @@ const actions = {
     commit(types.ASSIGN_PRIORITY, { priority, conversationId });
   },
 
+  // Origem lives on the conversation now. The endpoint returns the updated
+  // conversation payload; we reuse UPDATE_CONVERSATION so the sidebar +
+  // filter re-application pick up the new value from the same source of
+  // truth as any other conversation update.
+  updateOrigem: async ({ commit }, { conversationId, origem }) => {
+    const { data } = await ConversationApi.updateOrigem({
+      conversationId,
+      origem,
+    });
+    commit(types.UPDATE_CONVERSATION, data);
+    return data;
+  },
+
   toggleAiStatus: async ({ commit }, { conversationId }) => {
     const { data } = await ConversationApi.toggleAiStatus({ conversationId });
     commit(types.UPDATE_CONVERSATION_AI_ENABLED, {

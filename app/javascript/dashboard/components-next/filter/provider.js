@@ -263,10 +263,8 @@ export function useConversationFilterContext() {
       filterOperators: equalityOperators.value,
       attributeModel: 'additional',
     },
-    // Contact-scoped attribute exposed here on the conversation filter because
-    // the operator thinks about it while triaging conversations. Backend
-    // resolves via the `contact_additional_attributes` filter type
-    // (see lib/filters/filter_keys.yml).
+    // Per-conversation attribute — `conversations.origem` column
+    // (see lib/filters/filter_keys.yml, `standard` type).
     {
       attributeKey: CONVERSATION_ATTRIBUTES.ORIGEM,
       value: CONVERSATION_ATTRIBUTES.ORIGEM,

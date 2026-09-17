@@ -81,6 +81,7 @@ else
 end
 json.last_activity_at conversation.last_activity_at.to_i
 json.group_type conversation.group_type
+json.origem conversation.origem
 json.priority conversation.priority
 json.summary conversation.summary
 json.ai_enabled conversation.ai_status_enabled?

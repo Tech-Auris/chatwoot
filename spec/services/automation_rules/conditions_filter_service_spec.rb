@@ -257,23 +257,24 @@ RSpec.describe AutomationRules::ConditionsFilterService do
       end
     end
 
-    # `origem` is a conversation-scoped filter that resolves against the joined
-    # contact — same path an operator uses in "Filtrar conversas".
+    # `origem` is a per-conversation column (see feat/conversation-origem-foundation).
+    # The condition matches this specific conversation's own origem, not the
+    # contact-level attribution.
     context 'when a condition targets Origem do lead' do
       before do
-        conversation.contact.update!(additional_attributes: { 'origem' => 'Facebook' })
+        conversation.update!(origem: 'Facebook')
         rule.conditions = [
           { 'values': ['Facebook'], 'attribute_key': 'origem', 'query_operator': nil, 'filter_operator': 'equal_to' }
         ]
         rule.save!
       end
 
-      it 'matches when the contact origem equals the condition value' do
+      it 'matches when the conversation origem equals the condition value' do
         expect(described_class.new(rule, conversation, { changed_attributes: {} }).perform).to be(true)
       end
 
       it 'does not match when the origem differs' do
-        conversation.contact.update!(additional_attributes: { 'origem' => 'Instagram' })
+        conversation.update!(origem: 'Instagram')
         expect(described_class.new(rule, conversation, { changed_attributes: {} }).perform).to be(false)
       end
     end

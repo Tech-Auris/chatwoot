@@ -64,6 +64,13 @@ class ConversationApi extends ApiClient {
     });
   }
 
+  updateOrigem({ conversationId, origem }) {
+    // Uses the generic `conversations#update` endpoint (permits :origem).
+    // Origem is per-conversation so the sidebar dropdown patches the
+    // conversation directly instead of the contact.
+    return axios.patch(`${this.url}/${conversationId}`, { origem });
+  }
+
   toggleAiStatus({ conversationId }) {
     return axios.post(`${this.url}/${conversationId}/toggle_ai_status`);
   }

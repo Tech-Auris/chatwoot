@@ -267,20 +267,18 @@ describe Conversations::FilterService do
       end
     end
 
-    # `origem` lives on the CONTACT — the filter framework exposes it through
-    # the new `contact_additional_attributes` type so operators can slice
-    # conversations by lead attribution the same way they slice by inbox.
+    # `origem` is a per-conversation column now — the filter matches the
+    # conversation's own attribution, not the contact-level one. Two conversations
+    # of the same contact with different origens end up in different filter buckets.
     context 'with the origem (Origem do lead) filter' do
-      let!(:facebook_contact) { create(:contact, account: account, additional_attributes: { 'origem' => 'Facebook' }) }
-      let!(:instagram_contact) { create(:contact, account: account, additional_attributes: { 'origem' => 'Instagram' }) }
       let!(:facebook_conversation) do
-        create(:conversation, account: account, inbox: inbox, assignee: user_1, contact: facebook_contact)
+        create(:conversation, account: account, inbox: inbox, assignee: user_1, origem: 'Facebook')
       end
       let!(:instagram_conversation) do
-        create(:conversation, account: account, inbox: inbox, assignee: user_1, contact: instagram_contact)
+        create(:conversation, account: account, inbox: inbox, assignee: user_1, origem: 'Instagram')
       end
 
-      it 'matches only conversations whose contact has the selected origem' do
+      it 'matches only conversations whose own origem equals the selected value' do
         result = filter_service.new({
                                       payload: [{
                                         attribute_key: 'origem', filter_operator: 'equal_to',

@@ -164,20 +164,20 @@ class V2::Reports::FunnelConversionBuilder
     scope
   end
 
-  # Contact-level attribute filter — the operator picks from a fixed vocabulary
-  # of origins in the sidebar dropdown, and the report scopes to conversations
-  # whose contact carries that origem. The ORIGEM_NONE_TOKEN maps to "no origem
-  # set" so the operator can see conversations that never got attributed
-  # (auto or manual).
+  # Per-conversation attribute filter — the operator picks from a fixed
+  # vocabulary in the sidebar dropdown, and the report scopes to the
+  # conversations that carry that origem on their own column. The
+  # ORIGEM_NONE_TOKEN maps to "no origem set" so the operator can see
+  # conversations that never got attributed (auto or manual).
   def conversations_for_origem_scope
     origem = params[:origem].to_s
-    contacts = account.contacts
-    contacts = if origem == ORIGEM_NONE_TOKEN
-                 contacts.where("(additional_attributes ->> 'origem') IS NULL OR (additional_attributes ->> 'origem') = ''")
-               else
-                 contacts.where("additional_attributes ->> 'origem' = ?", origem)
-               end
-    account.conversations.where(contact_id: contacts.select(:id)).select(:id)
+    scope = account.conversations
+    scope = if origem == ORIGEM_NONE_TOKEN
+              scope.where('conversations.origem IS NULL OR conversations.origem = ?', '')
+            else
+              scope.where(conversations: { origem: origem })
+            end
+    scope.select(:id)
   end
 
   # The two buckets are disjoint by construction (a conversation has a single

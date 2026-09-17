@@ -708,7 +708,9 @@
     "SEARCH_PLACEHOLDER": "Search origin",
     "NO_RESULT": "No matching origin",
     "UPDATE_SUCCESS": "Origin updated",
-    "UPDATE_ERROR": "Could not update the origin"
+    "UPDATE_ERROR": "Could not update the origin",
+    "HISTORY_TITLE": "Contact's origins",
+    "HISTORY_COUNT": "({count})"
   },
   "CAMPAIGN_REFERRAL_CARD": {
     "TITLE": "Origin ad",
