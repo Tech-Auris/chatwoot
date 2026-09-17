@@ -49,6 +49,13 @@ RSpec.describe Sales::RegisterPixPaymentService do
     expect(event.metadata['paid_via']).to eq('asaas')
   end
 
+  # The paid-side CRM write on the deal task is what the finance team fills
+  # by hand today.
+  it 'enqueues the ClickUp CRM sync for the paid-fields phase' do
+    expect { described_class.new(quote: quote, paid_via: 'inter', client: client).perform }
+      .to have_enqueued_job(Sales::ClickupCrmSyncJob).with(quote.id, 'paid_fields')
+  end
+
   it 'refuses a proposal that is being paid by card' do
     quote.update!(payment_method: :card)
 

@@ -238,4 +238,24 @@ RSpec.describe 'Super Admin Commercial Reservations', type: :request do
       expect(response.parsed_body['error']).to match(/não é de pagamento pelo AsaaS/)
     end
   end
+
+  describe 'POST /super_admin/commercial/reservations/:id/waive_token_card' do
+    let(:quote) { create(:sales_quote, status: :paid) }
+
+    it 'stamps the waiver and records the audit event' do
+      post "/super_admin/commercial/reservations/#{quote.id}/waive_token_card"
+
+      expect(response).to have_http_status(:success)
+      expect(quote.reload.token_card_waived_at).to be_present
+      expect(quote.events.pluck(:event)).to include('token_card_waived')
+    end
+
+    # The waiver is the last step of the closing checklist when the customer
+    # has no card to leave — the CK task must flip to "negócio fechado" just
+    # as it does after the token card is saved.
+    it 'enqueues the ClickUp status flip after waiving' do
+      expect { post "/super_admin/commercial/reservations/#{quote.id}/waive_token_card" }
+        .to have_enqueued_job(Sales::ClickupCrmSyncJob).with(quote.id, 'closed')
+    end
+  end
 end
