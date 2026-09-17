@@ -658,10 +658,15 @@ const menuItems = computed(() => {
       ],
     },
     {
-      name: 'Campaigns',
-      label: t('SIDEBAR.CAMPAIGNS'),
+      name: 'Marketing',
+      label: t('SIDEBAR.MARKETING'),
       icon: 'i-lucide-megaphone',
       children: [
+        {
+          name: 'WhatsApp',
+          label: t('SIDEBAR.WHATSAPP'),
+          to: accountScopedRoute('campaigns_whatsapp_index'),
+        },
         ...(isCampaignsLiveChatMenuEnabled.value
           ? [
               {
@@ -680,10 +685,24 @@ const menuItems = computed(() => {
               },
             ]
           : []),
+        ...(hasCloudWhatsappInbox.value
+          ? [
+              {
+                name: 'Meta Templates',
+                label: t('SIDEBAR.META_TEMPLATES'),
+                to: accountScopedRoute('meta_templates_index'),
+              },
+            ]
+          : []),
         {
-          name: 'WhatsApp',
-          label: t('SIDEBAR.WHATSAPP'),
-          to: accountScopedRoute('campaigns_whatsapp_index'),
+          name: 'Pixel',
+          label: t('SIDEBAR.PIXEL'),
+          to: accountScopedRoute('marketing_settings_index'),
+        },
+        {
+          name: 'Analytics',
+          label: t('SIDEBAR.ANALYTICS'),
+          to: accountScopedRoute('marketing_analytics_index'),
         },
       ],
     },
@@ -850,22 +869,6 @@ const menuItems = computed(() => {
           icon: 'i-lucide-blocks',
           to: accountScopedRoute('settings_applications'),
         },
-        {
-          name: 'Settings Marketing Analytics',
-          label: t('SIDEBAR.MARKETING_ANALYTICS'),
-          icon: 'i-lucide-target',
-          to: accountScopedRoute('marketing_settings_index'),
-        },
-        ...(hasCloudWhatsappInbox.value
-          ? [
-              {
-                name: 'Settings Meta Templates',
-                label: t('SIDEBAR.META_TEMPLATES'),
-                icon: 'i-lucide-message-square-share',
-                to: accountScopedRoute('meta_templates_index'),
-              },
-            ]
-          : []),
         {
           name: 'Settings Audit Logs',
           label: t('SIDEBAR.AUDIT_LOGS'),

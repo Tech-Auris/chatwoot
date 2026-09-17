@@ -1,4 +1,8 @@
 {
+  "MARKETING_ANALYTICS_REPORT": {
+    "TITLE": "Campaign Analytics",
+    "COMING_SOON": "Cost, CPL and ROAS breakdown per campaign and ad is on the way. The dispatcher already writes every conversion event to Meta and Google — this page is coming next."
+  },
   "MARKETING_ANALYTICS": {
     "TITLE": "Marketing Analytics",
     "DESCRIPTION": "Send conversion events to Meta and Google when leads reach a funnel stage, get labeled, or trigger an automation.",

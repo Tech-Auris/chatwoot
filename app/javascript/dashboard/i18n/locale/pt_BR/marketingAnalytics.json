@@ -1,4 +1,8 @@
 {
+  "MARKETING_ANALYTICS_REPORT": {
+    "TITLE": "Analytics de campanhas",
+    "COMING_SOON": "O detalhamento de custo, CPL e ROAS por campanha e anúncio está chegando. O dispatcher já grava cada evento de conversão no Meta e no Google — esta página é a próxima."
+  },
   "MARKETING_ANALYTICS": {
     "TITLE": "Marketing Analytics",
     "DESCRIPTION": "Envie eventos de conversão para o Meta e o Google quando um lead atinge uma etapa do funil, recebe uma etiqueta ou uma automação dispara.",
