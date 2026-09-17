@@ -13,6 +13,7 @@
 #  id                       :bigint           not null, primary key
 #  access_code              :string           not null
 #  api_integration_waived   :boolean          default(FALSE), not null
+#  asaas_invoice_url        :string
 #  asaas_payment_link_url   :string
 #  billing_cycle            :integer
 #  billing_name             :string
@@ -39,6 +40,8 @@
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
 #  account_id               :bigint
+#  asaas_customer_id        :string
+#  asaas_installment_id     :string
 #  asaas_payment_link_id    :string
 #  clickup_task_id          :string           not null
 #  coupon_id                :string
@@ -79,12 +82,14 @@ class SalesQuote < ApplicationRecord
   # the enum's declared order carries the lifecycle, the underlying
   # numbers only need to stay unique.
   enum :status, { draft: 0, reserved: 1, details_confirmed: 7, signed: 2, paid: 3, converted: 4, expired: 5, cancelled: 6 }
-  # Boleto is a paid-once AsaaS payment link (same shape as the semiannual /
-  # annual card, `billingType: BOLETO` instead of `CREDIT_CARD`). Not offered on
-  # monthly plans because renewing a monthly boleto every month is more manual
-  # work than it saves. Boleto sits at list price like the card — the PIX
-  # à-vista discount is a courtesy for a customer paying us directly, not for
-  # one whose bank compensates the boleto D+1.
+  # Boleto is a parcelled AsaaS instalment book — one boleto per month, N
+  # boletos for a plan of N months (6 for semiannual, 12 for annual). Same
+  # shape as the card path (which is the card auth split into N by AsaaS);
+  # `billingType` picks between the two on the AsaaS side. Not offered on
+  # monthly plans because a monthly PIX/boleto would mean chasing a transfer
+  # every month. Boleto sits at list price like the card — the PIX à-vista
+  # discount is a courtesy for a customer paying us directly, not for one
+  # whose bank compensates the boleto D+1.
   enum :payment_method, { pix: 0, card: 1, boleto: 2 }, prefix: true
   enum :billing_cycle, { monthly: 0, semiannual: 1, annual: 2 }, prefix: true
 

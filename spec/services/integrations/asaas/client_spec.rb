@@ -3,57 +3,127 @@ require 'rails_helper'
 RSpec.describe Integrations::Asaas::Client do
   subject(:client) { described_class.new(api_key: '$aact_prod_key') }
 
-  let(:link) { { 'id' => 'pay_link_1', 'url' => 'https://www.asaas.com/c/pay_link_1' } }
+  let(:customer) { { 'id' => 'cus_pl6ye1o01', 'name' => 'Clínica Cinco', 'cpfCnpj' => '52998224725' } }
+  let(:installment) { { 'id' => 'inst_kf3ndj7q1', 'installmentCount' => 6, 'totalValue' => 5382.00, 'billingType' => 'BOLETO' } }
 
-  describe '#create_payment_link' do
-    # The shape AsaaS documents for an instalment link: credit card only, with
-    # the cap the customer may split into.
-    it 'asks for a card link split into instalments' do
-      request = stub_request(:post, 'https://api.asaas.com/v3/paymentLinks')
-                .with(body: hash_including('billingType' => 'CREDIT_CARD', 'chargeType' => 'INSTALLMENT',
-                                           'maxInstallmentCount' => 12, 'notificationEnabled' => false))
-                .to_return(status: 200, body: link.to_json, headers: { 'Content-Type' => 'application/json' })
+  describe '#find_customer' do
+    it 'looks the customer up by document, digits only' do
+      request = stub_request(:get, 'https://api.asaas.com/v3/customers')
+                .with(query: hash_including('cpfCnpj' => '52998224725'))
+                .to_return(status: 200, body: { data: [customer] }.to_json,
+                           headers: { 'Content-Type' => 'application/json' })
 
-      client.create_payment_link(name: 'AurisChat — Clínica Cinco', value_cents: 1_286_760, max_installment_count: 12)
+      expect(client.find_customer(cpf_cnpj: '529.982.247-25')).to eq(customer)
+      expect(request).to have_been_requested
+    end
+
+    # A blank document is not a lookup we want to make — AsaaS would answer
+    # every customer they have on file.
+    it 'answers nil for a blank document without hitting AsaaS' do
+      expect(client.find_customer(cpf_cnpj: '')).to be_nil
+    end
+
+    it 'answers nil when the customer is not on file' do
+      stub_request(:get, 'https://api.asaas.com/v3/customers')
+        .with(query: hash_including('cpfCnpj' => '52998224725'))
+        .to_return(status: 200, body: { data: [] }.to_json,
+                   headers: { 'Content-Type' => 'application/json' })
+
+      expect(client.find_customer(cpf_cnpj: '52998224725')).to be_nil
+    end
+  end
+
+  describe '#create_customer' do
+    it 'sends the prospect through with notifications off' do
+      request = stub_request(:post, 'https://api.asaas.com/v3/customers')
+                .with(body: hash_including('name' => 'Clínica Cinco', 'email' => 'contato@clinica.com',
+                                           'cpfCnpj' => '52998224725', 'notificationDisabled' => true))
+                .to_return(status: 200, body: customer.to_json,
+                           headers: { 'Content-Type' => 'application/json' })
+
+      client.create_customer(name: 'Clínica Cinco', email: 'contato@clinica.com', cpf_cnpj: '529.982.247-25')
+
+      expect(request).to have_been_requested
+    end
+
+    it 'answers with the customer AsaaS created' do
+      stub_request(:post, 'https://api.asaas.com/v3/customers')
+        .to_return(status: 200, body: customer.to_json, headers: { 'Content-Type' => 'application/json' })
+
+      expect(client.create_customer(name: 'Clínica Cinco', email: 'contato@clinica.com', cpf_cnpj: '52998224725')['id'])
+        .to eq('cus_pl6ye1o01')
+    end
+  end
+
+  describe '#create_installment' do
+    # The number of parcels is locked at N: AsaaS creates N payments under one
+    # instalment id, one due date per month.
+    it 'asks for an instalment of the plan against the customer' do
+      request = stub_request(:post, 'https://api.asaas.com/v3/installments')
+                .with(body: hash_including('customer' => 'cus_pl6ye1o01', 'billingType' => 'BOLETO',
+                                           'installmentCount' => 6, 'totalValue' => 5382.00))
+                .to_return(status: 200, body: installment.to_json,
+                           headers: { 'Content-Type' => 'application/json' })
+
+      client.create_installment(customer_id: 'cus_pl6ye1o01', billing_type: 'BOLETO',
+                                total_value_cents: 538_200, installment_count: 6,
+                                due_date: Date.new(2026, 9, 20))
 
       expect(request).to have_been_requested
     end
 
     # AsaaS counts in reais where Stripe counts in cents.
-    it 'sends the amount in reais' do
-      request = stub_request(:post, 'https://api.asaas.com/v3/paymentLinks')
-                .with(body: hash_including('value' => 12_867.60))
-                .to_return(status: 200, body: link.to_json, headers: { 'Content-Type' => 'application/json' })
+    it 'sends the total in reais' do
+      request = stub_request(:post, 'https://api.asaas.com/v3/installments')
+                .with(body: hash_including('totalValue' => 12_867.60))
+                .to_return(status: 200, body: installment.to_json,
+                           headers: { 'Content-Type' => 'application/json' })
 
-      client.create_payment_link(name: 'Proposta', value_cents: 1_286_760)
-
-      expect(request).to have_been_requested
-    end
-
-    it 'answers with the link the customer opens' do
-      stub_request(:post, 'https://api.asaas.com/v3/paymentLinks')
-        .to_return(status: 200, body: link.to_json, headers: { 'Content-Type' => 'application/json' })
-
-      expect(client.create_payment_link(name: 'Proposta', value_cents: 50_000)['url'])
-        .to eq('https://www.asaas.com/c/pay_link_1')
-    end
-
-    it 'carries the key on the header AsaaS reads' do
-      request = stub_request(:post, 'https://api.asaas.com/v3/paymentLinks')
-                .with(headers: { 'access_token' => '$aact_prod_key' })
-                .to_return(status: 200, body: link.to_json, headers: { 'Content-Type' => 'application/json' })
-
-      client.create_payment_link(name: 'Proposta', value_cents: 50_000)
+      client.create_installment(customer_id: 'cus_x', billing_type: 'CREDIT_CARD',
+                                total_value_cents: 1_286_760, installment_count: 12,
+                                due_date: Date.new(2026, 9, 20))
 
       expect(request).to have_been_requested
     end
 
-    it 'asks for a boleto link when the sale is paid by boleto' do
-      request = stub_request(:post, 'https://api.asaas.com/v3/paymentLinks')
-                .with(body: hash_including('billingType' => 'BOLETO', 'chargeType' => 'INSTALLMENT'))
-                .to_return(status: 200, body: link.to_json, headers: { 'Content-Type' => 'application/json' })
+    it 'sends the first due date as an ISO calendar date' do
+      request = stub_request(:post, 'https://api.asaas.com/v3/installments')
+                .with(body: hash_including('dueDate' => '2026-09-20'))
+                .to_return(status: 200, body: installment.to_json,
+                           headers: { 'Content-Type' => 'application/json' })
 
-      client.create_payment_link(name: 'Proposta', value_cents: 50_000, billing_type: 'BOLETO')
+      client.create_installment(customer_id: 'cus_x', billing_type: 'BOLETO',
+                                total_value_cents: 100_000, installment_count: 6,
+                                due_date: Date.new(2026, 9, 20))
+
+      expect(request).to have_been_requested
+    end
+  end
+
+  describe '#list_installment_payments' do
+    let(:payments) do
+      [
+        { 'id' => 'pay_1', 'dueDate' => '2026-09-20', 'invoiceUrl' => 'https://www.asaas.com/i/1' },
+        { 'id' => 'pay_2', 'dueDate' => '2026-10-20', 'invoiceUrl' => 'https://www.asaas.com/i/2' }
+      ]
+    end
+
+    it 'answers with the payments AsaaS opened under the instalment' do
+      stub_request(:get, 'https://api.asaas.com/v3/installments/inst_kf3ndj7q1/payments')
+        .to_return(status: 200, body: { data: payments }.to_json,
+                   headers: { 'Content-Type' => 'application/json' })
+
+      expect(client.list_installment_payments('inst_kf3ndj7q1')).to eq(payments)
+    end
+  end
+
+  describe '#delete_installment' do
+    it 'asks AsaaS to cancel the whole book' do
+      request = stub_request(:delete, 'https://api.asaas.com/v3/installments/inst_kf3ndj7q1')
+                .to_return(status: 200, body: { deleted: true }.to_json,
+                           headers: { 'Content-Type' => 'application/json' })
+
+      client.delete_installment('inst_kf3ndj7q1')
 
       expect(request).to have_been_requested
     end
@@ -77,27 +147,30 @@ RSpec.describe Integrations::Asaas::Client do
 
   describe 'when the call fails' do
     it 'says the credential was refused' do
-      stub_request(:post, 'https://api.asaas.com/v3/paymentLinks').to_return(status: 401, body: '{}')
+      stub_request(:post, 'https://api.asaas.com/v3/customers').to_return(status: 401, body: '{}')
 
-      expect { client.create_payment_link(name: 'Proposta', value_cents: 50_000) }
+      expect { client.create_customer(name: 'X', email: 'x@x.com', cpf_cnpj: '52998224725') }
         .to raise_error(described_class::Unauthorized, /credencial/)
     end
 
     # AsaaS explains a refusal in `errors`, and that explanation is what the
     # page can show the customer.
     it 'repeats what AsaaS complained about' do
-      stub_request(:post, 'https://api.asaas.com/v3/paymentLinks')
+      stub_request(:post, 'https://api.asaas.com/v3/installments')
         .to_return(status: 400, body: { errors: [{ description: 'O valor mínimo é R$ 5,00' }] }.to_json,
                    headers: { 'Content-Type' => 'application/json' })
 
-      expect { client.create_payment_link(name: 'Proposta', value_cents: 100) }
-        .to raise_error(described_class::ProviderUnavailable, /valor mínimo/)
+      expect do
+        client.create_installment(customer_id: 'cus_x', billing_type: 'BOLETO',
+                                  total_value_cents: 100, installment_count: 2,
+                                  due_date: Date.new(2026, 9, 20))
+      end.to raise_error(described_class::ProviderUnavailable, /valor mínimo/)
     end
 
     it 'says the provider is unreachable when the call cannot be made' do
-      stub_request(:post, 'https://api.asaas.com/v3/paymentLinks').to_raise(SocketError.new('getaddrinfo'))
+      stub_request(:post, 'https://api.asaas.com/v3/customers').to_raise(SocketError.new('getaddrinfo'))
 
-      expect { client.create_payment_link(name: 'Proposta', value_cents: 50_000) }
+      expect { client.create_customer(name: 'X', email: 'x@x.com', cpf_cnpj: '52998224725') }
         .to raise_error(described_class::ProviderUnavailable)
     end
   end

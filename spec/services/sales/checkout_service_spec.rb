@@ -202,32 +202,36 @@ RSpec.describe Sales::CheckoutService do
     end
   end
 
-  # A long plan paid by card is charged in instalments through AsaaS; Stripe
-  # carries the monthly subscription and nothing else.
+  # A long plan paid by card is charged in a locked instalment book through
+  # AsaaS; Stripe carries the monthly subscription and nothing else.
   describe 'paying a long plan by card' do
     let(:asaas) { instance_double(Integrations::Asaas::Client) }
 
     before do
       sign_terms
       allow(Integrations::Asaas::Client).to receive(:new).and_return(asaas)
-      allow(asaas).to receive(:create_payment_link)
-        .and_return({ 'id' => 'pay_link_1', 'url' => 'https://www.asaas.com/c/pay_link_1' })
+      allow(asaas).to receive(:find_customer).and_return(nil)
+      allow(asaas).to receive(:create_customer).and_return({ 'id' => 'cus_1' })
+      allow(asaas).to receive(:create_installment).and_return({ 'id' => 'inst_1' })
+      allow(asaas).to receive(:list_installment_payments)
+        .and_return([{ 'id' => 'pay_1', 'dueDate' => '2026-09-20', 'invoiceUrl' => 'https://www.asaas.com/i/1' }])
     end
 
-    it 'sends the customer to an AsaaS payment link' do
+    it 'sends the customer to the first invoice URL' do
       result = checkout
 
-      expect(result.checkout_url).to eq('https://www.asaas.com/c/pay_link_1')
+      expect(result.checkout_url).to eq('https://www.asaas.com/i/1')
       expect(quote.reload).to have_attributes(status: 'signed', payment_method: 'card',
-                                              asaas_payment_link_id: 'pay_link_1',
-                                              asaas_payment_link_url: 'https://www.asaas.com/c/pay_link_1')
+                                              asaas_customer_id: 'cus_1',
+                                              asaas_installment_id: 'inst_1',
+                                              asaas_invoice_url: 'https://www.asaas.com/i/1')
     end
 
-    it 'charges the agreed total and offers the instalments of the plan' do
+    it 'locks the number of parcels at what the plan covers' do
       checkout
 
-      expect(asaas).to have_received(:create_payment_link)
-        .with(hash_including(value_cents: 89_700, max_installment_count: 12))
+      expect(asaas).to have_received(:create_installment)
+        .with(hash_including(billing_type: 'CREDIT_CARD', total_value_cents: 89_700, installment_count: 12))
     end
 
     it 'never opens a Stripe checkout' do
@@ -238,47 +242,44 @@ RSpec.describe Sales::CheckoutService do
       expect(client).not_to have_received(:create_checkout_session)
     end
 
-    it 'records the link on the proposal history' do
+    it 'records the instalment on the proposal history' do
       checkout
 
-      expect(quote.events.pluck(:event)).to include('asaas_link_created')
-    end
-
-    it 'asks AsaaS for a credit-card link' do
-      checkout
-
-      expect(asaas).to have_received(:create_payment_link)
-        .with(hash_including(billing_type: 'CREDIT_CARD'))
+      expect(quote.events.pluck(:event)).to include('asaas_installment_created')
     end
   end
 
-  # A long plan paid by boleto rides the same AsaaS link a card sale does — the
-  # only difference is the billing type. The finance team confirms the payment
-  # in the AsaaS dashboard the same way the card sale is confirmed.
+  # A long plan paid by boleto rides the same AsaaS instalment a card sale
+  # rides — the only difference is the billing type, and boleto becomes a
+  # book of N boletos, one per month.
   describe 'paying a long plan by boleto' do
     let(:asaas) { instance_double(Integrations::Asaas::Client) }
 
     before do
       sign_terms
       allow(Integrations::Asaas::Client).to receive(:new).and_return(asaas)
-      allow(asaas).to receive(:create_payment_link)
-        .and_return({ 'id' => 'pay_link_boleto', 'url' => 'https://www.asaas.com/c/pay_link_boleto' })
+      allow(asaas).to receive(:find_customer).and_return(nil)
+      allow(asaas).to receive(:create_customer).and_return({ 'id' => 'cus_1' })
+      allow(asaas).to receive(:create_installment).and_return({ 'id' => 'inst_boleto' })
+      allow(asaas).to receive(:list_installment_payments)
+        .and_return([{ 'id' => 'pay_b1', 'dueDate' => '2026-09-20',
+                       'invoiceUrl' => 'https://www.asaas.com/i/boleto_1' }])
     end
 
-    it 'sends the customer to an AsaaS payment link' do
+    it 'sends the customer to the first boleto invoice URL' do
       result = checkout(method: 'boleto')
 
-      expect(result.checkout_url).to eq('https://www.asaas.com/c/pay_link_boleto')
+      expect(result.checkout_url).to eq('https://www.asaas.com/i/boleto_1')
       expect(quote.reload).to have_attributes(status: 'signed', payment_method: 'boleto',
-                                              asaas_payment_link_id: 'pay_link_boleto',
-                                              asaas_payment_link_url: 'https://www.asaas.com/c/pay_link_boleto')
+                                              asaas_installment_id: 'inst_boleto',
+                                              asaas_invoice_url: 'https://www.asaas.com/i/boleto_1')
     end
 
-    it 'asks AsaaS for a boleto link at the full agreed total' do
+    it 'asks AsaaS for a BOLETO instalment locked at the plan count' do
       checkout(method: 'boleto')
 
-      expect(asaas).to have_received(:create_payment_link)
-        .with(hash_including(billing_type: 'BOLETO', value_cents: 89_700, max_installment_count: 12))
+      expect(asaas).to have_received(:create_installment)
+        .with(hash_including(billing_type: 'BOLETO', total_value_cents: 89_700, installment_count: 12))
     end
 
     it 'never touches Stripe' do
@@ -289,15 +290,14 @@ RSpec.describe Sales::CheckoutService do
       expect(client).not_to have_received(:create_checkout_session)
     end
 
-    it 'records the link on the proposal history with its billing type' do
+    it 'records the instalment on the proposal history with its billing type' do
       checkout(method: 'boleto')
 
-      link_event = quote.events.find_by(event: 'asaas_link_created')
-      expect(link_event.metadata['billing_type']).to eq('BOLETO')
+      event = quote.events.find_by(event: 'asaas_installment_created')
+      expect(event.metadata['billing_type']).to eq('BOLETO')
+      expect(event.metadata['installment_count']).to eq(12)
     end
 
-    # A monthly boleto would mean reissuing a slip every month; the monthly plan
-    # is a subscription and lives on the card. Kept in line with the PIX rule.
     it 'refuses boleto on the monthly plan' do
       quote.update!(billing_cycle: :monthly)
 
@@ -305,68 +305,99 @@ RSpec.describe Sales::CheckoutService do
     end
   end
 
-  # A customer who changes their mind leaves an instalment link behind, and a
+  # AsaaS customers are keyed by document, so a retried checkout must land on
+  # the same customer id instead of spawning a new one for the same CPF.
+  describe 'the AsaaS customer behind the sale' do
+    let(:asaas) { instance_double(Integrations::Asaas::Client) }
+
+    before do
+      sign_terms
+      allow(Integrations::Asaas::Client).to receive(:new).and_return(asaas)
+      allow(asaas).to receive(:create_customer).and_return({ 'id' => 'cus_new' })
+      allow(asaas).to receive(:create_installment).and_return({ 'id' => 'inst_1' })
+      allow(asaas).to receive(:list_installment_payments)
+        .and_return([{ 'id' => 'pay_1', 'dueDate' => '2026-09-20', 'invoiceUrl' => 'https://www.asaas.com/i/1' }])
+    end
+
+    it 'reuses the customer AsaaS already has for that document' do
+      allow(asaas).to receive(:find_customer).and_return({ 'id' => 'cus_existing' })
+
+      checkout
+
+      expect(asaas).not_to have_received(:create_customer)
+      expect(quote.reload.asaas_customer_id).to eq('cus_existing')
+    end
+
+    it 'creates one when the document is not on file' do
+      allow(asaas).to receive(:find_customer).and_return(nil)
+      quote.update!(prospect_document: '529.982.247-25')
+
+      checkout
+
+      expect(asaas).to have_received(:create_customer)
+        .with(hash_including(cpf_cnpj: '529.982.247-25'))
+      expect(quote.reload.asaas_customer_id).to eq('cus_new')
+    end
+
+    it 'keeps the customer id on the proposal so a retry does not spawn a second one' do
+      allow(asaas).to receive(:find_customer).and_return(nil)
+      quote.update!(asaas_customer_id: 'cus_saved')
+
+      checkout
+
+      expect(asaas).not_to have_received(:find_customer)
+      expect(asaas).not_to have_received(:create_customer)
+    end
+  end
+
+  # A customer who changes their mind leaves an open instalment behind, and a
   # payment on it would arrive against terms nobody is holding.
   describe 'when the payment method changes' do
     let(:asaas) { instance_double(Integrations::Asaas::Client) }
 
     before do
       sign_terms
-      quote.update!(asaas_payment_link_id: 'pay_link_old', asaas_payment_link_url: 'https://www.asaas.com/c/old')
+      quote.update!(asaas_installment_id: 'inst_old', asaas_invoice_url: 'https://www.asaas.com/i/old')
       allow(Integrations::Asaas::Client).to receive(:new).and_return(asaas)
-      allow(asaas).to receive(:delete_payment_link)
-      allow(asaas).to receive(:create_payment_link)
-        .and_return({ 'id' => 'pay_link_new', 'url' => 'https://www.asaas.com/c/new' })
+      allow(asaas).to receive(:delete_installment)
+      allow(asaas).to receive(:find_customer).and_return({ 'id' => 'cus_existing' })
+      allow(asaas).to receive(:create_installment).and_return({ 'id' => 'inst_new' })
+      allow(asaas).to receive(:list_installment_payments)
+        .and_return([{ 'id' => 'pay_1', 'dueDate' => '2026-09-20', 'invoiceUrl' => 'https://www.asaas.com/i/new' }])
     end
 
-    it 'takes the old link down when the customer switches to pix' do
+    it 'cancels the old instalment when the customer switches to pix' do
       checkout(method: 'pix')
 
-      expect(asaas).to have_received(:delete_payment_link).with('pay_link_old')
-      expect(quote.reload.asaas_payment_link_id).to be_nil
+      expect(asaas).to have_received(:delete_installment).with('inst_old')
+      expect(quote.reload.asaas_installment_id).to be_nil
     end
 
-    it 'leaves only the newest link standing when they pick the card again' do
+    it 'leaves only the newest instalment standing when they pick the card again' do
       checkout
 
-      expect(asaas).to have_received(:delete_payment_link).with('pay_link_old')
-      expect(quote.reload.asaas_payment_link_id).to eq('pay_link_new')
+      expect(asaas).to have_received(:delete_installment).with('inst_old')
+      expect(quote.reload.asaas_installment_id).to eq('inst_new')
     end
 
-    # A link we cannot take down is a mess to sort out later, but stopping the
-    # customer from paying is worse.
-    it 'carries on when the old link cannot be removed' do
-      allow(asaas).to receive(:delete_payment_link).and_raise(Integrations::Asaas::Client::ProviderUnavailable, 'timeout')
+    # An instalment we cannot take down is a mess to sort out later, but
+    # stopping the customer from paying is worse.
+    it 'carries on when the old instalment cannot be removed' do
+      allow(asaas).to receive(:delete_installment).and_raise(Integrations::Asaas::Client::ProviderUnavailable, 'timeout')
 
       expect { checkout(method: 'pix') }.not_to raise_error
     end
   end
 
-  describe 'how many instalments are offered' do
-    after { GlobalConfig.clear_cache }
-
-    def configure(installments)
-      InstallationConfig.where(name: 'ASAAS_MAX_INSTALLMENTS').first_or_create!(value: installments)
-      GlobalConfig.clear_cache
+  describe '.installments_for' do
+    it 'locks a semiannual plan at six and an annual at twelve' do
+      expect(described_class.installments_for(:semiannual)).to eq(6)
+      expect(described_class.installments_for(:annual)).to eq(12)
     end
 
-    it 'follows what Settings says' do
-      configure('10')
-
-      expect(described_class.max_installments_for(:annual)).to eq(10)
-    end
-
-    # Splitting a semiannual plan into ten would run past the period it pays for.
-    it 'never runs past the months the plan covers' do
-      configure('10')
-
-      expect(described_class.max_installments_for(:semiannual)).to eq(6)
-    end
-
-    it 'has none to offer on a monthly plan' do
-      configure('10')
-
-      expect(described_class.max_installments_for(:monthly)).to eq(1)
+    it 'is one on a monthly plan or when no cycle was chosen' do
+      expect(described_class.installments_for(:monthly)).to eq(1)
+      expect(described_class.installments_for(nil)).to eq(1)
     end
   end
 
