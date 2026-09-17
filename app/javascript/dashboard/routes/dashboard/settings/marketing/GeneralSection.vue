@@ -4,10 +4,10 @@
 // use this value to compute Revenue and ROAS when a per-Comparecimento
 // value isn't stored on the conversation.
 //
-// The input is a masked text field: raw keystrokes are stripped to digits
-// and reformatted as pt-BR decimal (dot thousands + comma decimals) on
-// every keypress, so the operator types "150000" and sees "1.500,00".
-// The unmasked Number is what goes to the backend.
+// The input is a masked text field: every keystroke gets stripped to
+// digits, treated as cents, and re-rendered as "R$ 1.500,00". The R$
+// prefix lives inside the value itself so vertical alignment isn't a
+// concern — the browser handles it like any single-line text input.
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAccount } from 'dashboard/composables/useAccount';
@@ -17,30 +17,24 @@ const { t } = useI18n();
 const { currentAccount, updateAccount } = useAccount();
 
 const isSaving = ref(false);
-// Display string in pt-BR format ("1.500,00"). The numeric source of
-// truth is derived from stripping non-digits and treating the result as
-// cents.
 const displayValue = ref('');
 
 const brlFormatter = new Intl.NumberFormat('pt-BR', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
+  style: 'currency',
+  currency: 'BRL',
 });
 
-const formatFromNumber = value => {
-  const cents = Math.round((Number(value) || 0) * 100);
-  return brlFormatter.format(cents / 100);
-};
+const formatFromNumber = value => brlFormatter.format(Number(value) || 0);
 
 const parseFromMasked = masked => {
   const digits = (masked || '').replace(/\D/g, '');
-  if (!digits) return 0;
-  return Number(digits) / 100;
+  return digits ? Number(digits) / 100 : 0;
 };
 
 const syncFromAccount = () => {
-  const stored = Number(currentAccount.value?.average_ticket) || 0;
-  displayValue.value = formatFromNumber(stored);
+  displayValue.value = formatFromNumber(
+    Number(currentAccount.value?.average_ticket) || 0
+  );
 };
 
 watch(
@@ -52,8 +46,7 @@ watch(
 );
 
 const onInput = event => {
-  const parsed = parseFromMasked(event.target.value);
-  displayValue.value = formatFromNumber(parsed);
+  displayValue.value = formatFromNumber(parseFromMasked(event.target.value));
 };
 
 const currentNumber = computed(() => parseFromMasked(displayValue.value));
@@ -98,20 +91,13 @@ const save = async () => {
         <span class="text-n-slate-11">
           {{ t('MARKETING_ANALYTICS.GENERAL.AVERAGE_TICKET') }}
         </span>
-        <div class="relative">
-          <span
-            class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-n-slate-11 text-sm"
-          >
-            {{ t('MARKETING_ANALYTICS.GENERAL.CURRENCY_PREFIX') }}
-          </span>
-          <input
-            :value="displayValue"
-            type="text"
-            inputmode="numeric"
-            class="w-full rounded border border-n-strong bg-n-solid-2 pl-10 pr-3 py-1.5 text-n-slate-12 text-right"
-            @input="onInput"
-          />
-        </div>
+        <input
+          :value="displayValue"
+          type="text"
+          inputmode="numeric"
+          class="w-full rounded border border-n-strong bg-n-solid-2 px-3 py-1.5 text-n-slate-12 text-right"
+          @input="onInput"
+        />
       </label>
 
       <div class="col-span-full flex justify-end">
