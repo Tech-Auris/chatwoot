@@ -18,6 +18,7 @@ import NextButton from 'dashboard/components-next/button/Button.vue';
 import VoiceCallButton from 'dashboard/components-next/Contacts/VoiceCallButton.vue';
 import InlineInput from 'dashboard/components-next/inline-input/InlineInput.vue';
 import OrigemSelector from '../origin/OrigemSelector.vue';
+import ContactOrigensSummary from '../origin/ContactOrigensSummary.vue';
 import CampaignReferralCard from '../origin/CampaignReferralCard.vue';
 
 export default {
@@ -33,6 +34,7 @@ export default {
     VoiceCallButton,
     InlineInput,
     OrigemSelector,
+    ContactOrigensSummary,
     CampaignReferralCard,
   },
   props: {
@@ -301,7 +303,8 @@ export default {
         </div>
       </div>
       <div v-if="contact.id" class="flex flex-col w-full gap-2 mt-2">
-        <OrigemSelector :contact-id="contact.id" />
+        <OrigemSelector />
+        <ContactOrigensSummary :contact-id="contact.id" />
         <CampaignReferralCard
           v-if="campaignReferral"
           :referral="campaignReferral"

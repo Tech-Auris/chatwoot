@@ -70,18 +70,13 @@ class ActionService
     @conversation.update!(label_list: labels)
   end
 
-  # Writes to Contact.additional_attributes.origem — the same field the sidebar
-  # dropdown and the OriginAttributionService use. Passing 'nil' clears it
-  # (unlike the auto-attribution service, an operator-triggered rule is allowed
-  # to overwrite an existing value; the operator was explicit about wanting it).
+  # Writes to Conversation.origem — the same column the sidebar dropdown and
+  # the OriginAttributionService use. Passing 'nil' clears it (unlike the
+  # auto-attribution service, an operator-triggered rule is allowed to
+  # overwrite an existing value; the operator was explicit about wanting it).
   def assign_origem(values = [])
-    contact = @conversation.contact
-    return if contact.nil?
-
     incoming = values[0]
-    contact.additional_attributes ||= {}
-    contact.additional_attributes['origem'] = incoming == 'nil' ? nil : incoming
-    contact.save!
+    @conversation.update!(origem: incoming == 'nil' ? nil : incoming)
   end
 
   def assign_team(team_ids = [])

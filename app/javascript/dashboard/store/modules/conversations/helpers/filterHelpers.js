@@ -91,12 +91,11 @@ const getValueFromConversation = (conversation, attributeKey) => {
     case 'referer':
       return conversation.additional_attributes?.[attributeKey];
     case 'origem':
-      // Origem lives on the CONTACT (Contact#additional_attributes.origem),
-      // not on the conversation. The conversation partial exposes the contact
-      // under `meta.sender`. Without this branch the client-side re-filter
-      // gets null, drops every row the backend already matched, and the list
-      // renders empty even though the count shows a positive number.
-      return conversation.meta?.sender?.additional_attributes?.origem;
+      // Origem lives on the CONVERSATION (dedicated column, exposed by the
+      // partial serializer). Filter by-conversation matches what "conversas
+      // do Google" should really mean: this specific engagement came from
+      // Google, not "this contact was ever attributed to Google".
+      return conversation.origem;
     default:
       // Check if it's a custom attribute
       if (

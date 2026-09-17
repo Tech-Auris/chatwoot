@@ -71,7 +71,7 @@ class V2::Reports::FunnelSummaryBuilder
 
     scope = account.conversations
     scope = scope.tagged_with(params[:label], on: :labels) if params[:label].present?
-    scope = scope.where(contact_id: contacts_matching_origem) if params[:origem].present?
+    scope = apply_origem_filter(scope) if params[:origem].present?
     @filtered_conversation_ids = any_conv_filter? ? scope.pluck(:id) : []
   end
 
@@ -79,15 +79,15 @@ class V2::Reports::FunnelSummaryBuilder
     params[:label].present? || params[:origem].present?
   end
 
-  def contacts_matching_origem
+  # Origem is a per-conversation column now — filter directly instead of
+  # resolving through contacts. See feat/conversation-origem-foundation.
+  def apply_origem_filter(scope)
     origem = params[:origem].to_s
-    scope = account.contacts
-    scope = if origem == ORIGEM_NONE_TOKEN
-              scope.where("(additional_attributes ->> 'origem') IS NULL OR (additional_attributes ->> 'origem') = ''")
-            else
-              scope.where("additional_attributes ->> 'origem' = ?", origem)
-            end
-    scope.select(:id)
+    if origem == ORIGEM_NONE_TOKEN
+      scope.where('conversations.origem IS NULL OR conversations.origem = ?', '')
+    else
+      scope.where(conversations: { origem: origem })
+    end
   end
 
   # For each entry into a stage, the time spent equals

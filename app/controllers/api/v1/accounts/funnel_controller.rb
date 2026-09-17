@@ -52,24 +52,22 @@ class Api::V1::Accounts::FunnelController < Api::V1::Accounts::BaseController
     relation = relation.where('conversations.created_at >= ?', from_date) if from_date.present?
     relation = relation.where('conversations.created_at <= ?', to_date) if to_date.present?
     relation = relation.where(inbox_id: params[:inbox_id]) if params[:inbox_id].present?
-    relation = relation.where(contact_id: contacts_matching_origem) if params[:origem].present?
+    relation = apply_origem_filter(relation) if params[:origem].present?
     relation = relation.where.not(funnel_stage_id: closed_stage_ids) if hide_closed?
     relation
   end
 
-  # The origem filter scopes the board / list to conversations whose CONTACT
-  # carries the selected origem (or, with ORIGEM_NONE_TOKEN, contacts that
-  # never got attributed). Mirrors what the Conversão and Visão geral reports
-  # already do so the four funnel views agree on the same scope.
-  def contacts_matching_origem
+  # The origem filter scopes the board / list to conversations that carry the
+  # selected origem on their own column (or, with ORIGEM_NONE_TOKEN, that
+  # have no origem attributed yet). Per-conversation matches what "conversas
+  # do Google" means to the operator — see feat/conversation-origem-foundation.
+  def apply_origem_filter(relation)
     origem = params[:origem].to_s
-    scope = Current.account.contacts
-    scope = if origem == ORIGEM_NONE_TOKEN
-              scope.where("(additional_attributes ->> 'origem') IS NULL OR (additional_attributes ->> 'origem') = ''")
-            else
-              scope.where("additional_attributes ->> 'origem' = ?", origem)
-            end
-    scope.select(:id)
+    if origem == ORIGEM_NONE_TOKEN
+      relation.where('conversations.origem IS NULL OR conversations.origem = ?', '')
+    else
+      relation.where(conversations: { origem: origem })
+    end
   end
 
   def scoped_conversations

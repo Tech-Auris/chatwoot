@@ -1,11 +1,11 @@
 # Aggregates the reporting metrics rendered by the "Origem do lead" overview
 # report. Mirrors LabelSummaryBuilder in shape (one row per bucket, same set of
 # metrics) so the frontend table can reuse the same rendering, but the bucket
-# key is `contacts.additional_attributes ->> 'origem'` instead of a tag name.
+# key is `conversations.origem` (per-conversation column) instead of a tag name.
 #
 # The bucket vocabulary is the fixed set the sidebar dropdown offers plus a
-# synthetic "Sem origem" row aggregating contacts with no origem attributed —
-# operators need to see those leaks explicitly, not have them silently drop
+# synthetic "Sem origem" row aggregating conversations with no origem attributed
+# — operators need to see those leaks explicitly, not have them silently drop
 # out of the totals.
 class V2::Reports::OrigemSummaryBuilder
   include DateRangeHelper
@@ -81,11 +81,10 @@ class V2::Reports::OrigemSummaryBuilder
   # SQL COALESCE + NULLIF collapses "no origem attributed" (nil or empty string)
   # into the NONE_TOKEN so it becomes a first-class bucket the report can group
   # on, instead of silently disappearing under GROUP BY.
-  ORIGEM_EXPR = "COALESCE(NULLIF(contacts.additional_attributes ->> 'origem', ''), '#{NONE_TOKEN}')".freeze
+  ORIGEM_EXPR = "COALESCE(NULLIF(conversations.origem, ''), '#{NONE_TOKEN}')".freeze
 
   def fetch_conversation_counts(conversation_filter)
     account.conversations
-           .joins(:contact)
            .where(conversation_filter)
            .group(Arel.sql(ORIGEM_EXPR))
            .count
@@ -96,7 +95,7 @@ class V2::Reports::OrigemSummaryBuilder
     filter[:created_at] = range if range.present?
 
     ReportingEvent
-      .joins(conversation: :contact)
+      .joins(:conversation)
       .where(filter)
       .group(Arel.sql(ORIGEM_EXPR))
       .count
@@ -106,7 +105,7 @@ class V2::Reports::OrigemSummaryBuilder
     value_column = use_business_hours ? 'reporting_events.value_in_business_hours' : 'reporting_events.value'
 
     ReportingEvent
-      .joins(conversation: :contact)
+      .joins(:conversation)
       .where(conversations: conversation_filter, name: event_name)
       .group(Arel.sql(ORIGEM_EXPR))
       .pluck(Arel.sql("#{ORIGEM_EXPR} AS bucket"), Arel.sql("AVG(#{value_column}) AS avg_value"))

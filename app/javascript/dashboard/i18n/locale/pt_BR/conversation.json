@@ -706,7 +706,9 @@
     "SEARCH_PLACEHOLDER": "Buscar origem",
     "NO_RESULT": "Nenhuma origem encontrada",
     "UPDATE_SUCCESS": "Origem atualizada",
-    "UPDATE_ERROR": "Não foi possível atualizar a origem"
+    "UPDATE_ERROR": "Não foi possível atualizar a origem",
+    "HISTORY_TITLE": "origens anteriores",
+    "HISTORY_COUNT": "({count})"
   },
   "CAMPAIGN_REFERRAL_CARD": {
     "TITLE": "Anúncio de origem",

@@ -4,41 +4,22 @@ import { useI18n } from 'vue-i18n';
 import { useStore, useMapGetter } from 'dashboard/composables/store';
 import { useAlert } from 'dashboard/composables';
 import MultiselectDropdown from 'shared/components/ui/MultiselectDropdown.vue';
+import { ORIGEM_OPTIONS } from 'dashboard/helper/origemOptions';
 import ContactDetailsItem from '../ContactDetailsItem.vue';
 
-const props = defineProps({
-  contactId: {
-    type: [Number, String],
-    required: true,
-  },
-});
-
-// Fixed vocabulary — must stay in sync with Contacts::OriginAttributionService::OPTIONS
-// on the backend. Order carries no meaning; the empty first item is the
-// "Sem Origem" reset that clears whatever the incoming pipeline auto-picked.
-const OPTIONS = [
-  'Evento',
-  'Facebook',
-  'Google',
-  'Indicação de cliente',
-  'Indicação de colega',
-  'Influenciador',
-  'Instagram',
-  'Orgânico',
-];
+// Scoped to the CURRENT conversation — origem is per-conversation now
+// (see feat/conversation-origem-foundation). State comes straight from
+// the open chat, no props needed.
 
 const store = useStore();
 const { t } = useI18n();
-const contactGetter = useMapGetter('contacts/getContact');
+const currentChat = useMapGetter('getSelectedChat');
 
-const contact = computed(() => contactGetter.value(props.contactId));
-const currentOrigem = computed(
-  () => contact.value?.additional_attributes?.origem || null
-);
+const currentOrigem = computed(() => currentChat.value?.origem || null);
 
 const dropdownOptions = computed(() => [
   { id: null, name: t('CONVERSATION_ORIGIN.NONE') },
-  ...OPTIONS.map(value => ({ id: value, name: value })),
+  ...ORIGEM_OPTIONS.map(value => ({ id: value, name: value })),
 ]);
 
 const selectedItem = computed(
@@ -50,14 +31,12 @@ const selectedItem = computed(
 const onSelect = async selected => {
   const nextValue = selected?.id ?? null;
   if (nextValue === currentOrigem.value) return;
+  if (!currentChat.value?.id) return;
 
   try {
-    await store.dispatch('contacts/update', {
-      id: props.contactId,
-      additional_attributes: {
-        ...(contact.value?.additional_attributes || {}),
-        origem: nextValue,
-      },
+    await store.dispatch('updateOrigem', {
+      conversationId: currentChat.value.id,
+      origem: nextValue,
     });
     useAlert(t('CONVERSATION_ORIGIN.UPDATE_SUCCESS'));
   } catch {

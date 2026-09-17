@@ -359,13 +359,9 @@ RSpec.describe V2::Reports::FunnelConversionBuilder do
 
     context 'with origem filter' do
       before do
-        facebook_contact = create(:contact, account: account, additional_attributes: { 'origem' => 'Facebook' })
-        instagram_contact = create(:contact, account: account, additional_attributes: { 'origem' => 'Instagram' })
-        bare_contact = create(:contact, account: account, additional_attributes: {})
-
-        fb_conv = create(:conversation, account: account, inbox: inbox, contact: facebook_contact)
-        ig_conv = create(:conversation, account: account, inbox: inbox, contact: instagram_contact)
-        bare_conv = create(:conversation, account: account, inbox: inbox, contact: bare_contact)
+        fb_conv = create(:conversation, account: account, inbox: inbox, origem: 'Facebook')
+        ig_conv = create(:conversation, account: account, inbox: inbox, origem: 'Instagram')
+        bare_conv = create(:conversation, account: account, inbox: inbox)
 
         [fb_conv, ig_conv, bare_conv].each do |conv|
           create(:funnel_stage_change,
@@ -375,16 +371,17 @@ RSpec.describe V2::Reports::FunnelConversionBuilder do
         end
       end
 
-      it 'only counts stage changes for conversations whose contact has the selected origem' do
+      it 'only counts stage changes for conversations whose own origem matches' do
         filtered = described_class.new(account: account, params: params.merge(origem: 'Facebook')).build
         lead_row = filtered[:stages].find { |row| row[:name] == stages[:lead].name }
 
         expect(lead_row[:count]).to eq(1)
       end
 
-      # The Sem Origem token surfaces contacts that never got attributed — auto
-      # or manual — which is the way operators find "leaks" in the pipeline.
-      it 'maps the __none__ token to contacts with no origem set' do
+      # The Sem Origem token surfaces conversations that never got attributed
+      # — auto or manual — which is the way operators find "leaks" in the
+      # pipeline.
+      it 'maps the __none__ token to conversations with no origem set' do
         filtered = described_class.new(account: account, params: params.merge(origem: '__none__')).build
         lead_row = filtered[:stages].find { |row| row[:name] == stages[:lead].name }
 
