@@ -132,6 +132,7 @@ class Conversation < ApplicationRecord
   has_many :notifications, as: :primary_actor, dependent: :destroy_async
   has_many :attachments, through: :messages
   has_many :reporting_events, dependent: :destroy_async
+  has_many :conversion_event_dispatches, dependent: :destroy_async
   has_many :scheduled_messages, dependent: :destroy
   has_many :recurring_scheduled_messages, dependent: :destroy
 
