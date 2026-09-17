@@ -32,6 +32,7 @@ class Sales::RegisterAsaasPaymentService
                          metadata: { asaas_installment_id: quote.asaas_installment_id, total: quote.total_amount })
 
     account = Sales::ConvertQuoteService.new(quote: quote).perform.account
+    Sales::ClickupCrmSyncJob.perform_later(quote.id, 'paid_fields')
     Result.new(quote: quote.reload, account: account)
   end
 

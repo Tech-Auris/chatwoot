@@ -43,6 +43,13 @@ RSpec.describe 'Commercial Stripe webhook', type: :request do
 
       expect(Account.count).to eq(1)
     end
+
+    # The paid-side CRM write on the deal task rides Sidekiq so a slow CK
+    # write does not slow the customer's confirmation page.
+    it 'enqueues the ClickUp CRM sync for the paid-fields phase' do
+      expect { post_event(event) }
+        .to have_enqueued_job(Sales::ClickupCrmSyncJob).with(quote.id, 'paid_fields')
+    end
   end
 
   describe 'a saved card' do
@@ -50,6 +57,13 @@ RSpec.describe 'Commercial Stripe webhook', type: :request do
       post_event(event(mode: 'setup'))
 
       expect(quote.reload.token_payment_method_id).to eq('seti_1')
+    end
+
+    # The last step of the closing checklist — the token card is what turns
+    # the deal into "negócio fechado" on the pipeline.
+    it 'enqueues the ClickUp status flip once the card is on file' do
+      expect { post_event(event(mode: 'setup')) }
+        .to have_enqueued_job(Sales::ClickupCrmSyncJob).with(quote.id, 'closed')
     end
   end
 

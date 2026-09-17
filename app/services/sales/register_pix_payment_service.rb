@@ -25,6 +25,7 @@ class Sales::RegisterPixPaymentService
                          metadata: { paid_via: paid_via, total: quote.total_amount, charged: quote.effective_charge_amount })
 
     account = Sales::ConvertQuoteService.new(quote: quote).perform.account
+    Sales::ClickupCrmSyncJob.perform_later(quote.id, 'paid_fields')
     Result.new(quote: quote.reload, account: account, renewal: open_first_renewal(account))
   end
 
