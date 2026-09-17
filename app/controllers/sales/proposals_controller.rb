@@ -204,6 +204,7 @@ class Sales::ProposalsController < ActionController::Base
     @monthly_charge = Sales::CheckoutService.monthly_charge_for(@proposal)
     @pix_available = Sales::CheckoutService.offers?('pix', @proposal.billing_cycle)
     @pix_discount = Sales::CheckoutService.pix_discount_for(@proposal.billing_cycle)
+    @boleto_available = Sales::CheckoutService.offers?('boleto', @proposal.billing_cycle)
     @max_installments = Sales::CheckoutService.max_installments_for(@proposal.billing_cycle)
     @terms_version = Sales::TermsFetcherService.new.perform
   end

@@ -243,6 +243,66 @@ RSpec.describe Sales::CheckoutService do
 
       expect(quote.events.pluck(:event)).to include('asaas_link_created')
     end
+
+    it 'asks AsaaS for a credit-card link' do
+      checkout
+
+      expect(asaas).to have_received(:create_payment_link)
+        .with(hash_including(billing_type: 'CREDIT_CARD'))
+    end
+  end
+
+  # A long plan paid by boleto rides the same AsaaS link a card sale does — the
+  # only difference is the billing type. The finance team confirms the payment
+  # in the AsaaS dashboard the same way the card sale is confirmed.
+  describe 'paying a long plan by boleto' do
+    let(:asaas) { instance_double(Integrations::Asaas::Client) }
+
+    before do
+      sign_terms
+      allow(Integrations::Asaas::Client).to receive(:new).and_return(asaas)
+      allow(asaas).to receive(:create_payment_link)
+        .and_return({ 'id' => 'pay_link_boleto', 'url' => 'https://www.asaas.com/c/pay_link_boleto' })
+    end
+
+    it 'sends the customer to an AsaaS payment link' do
+      result = checkout(method: 'boleto')
+
+      expect(result.checkout_url).to eq('https://www.asaas.com/c/pay_link_boleto')
+      expect(quote.reload).to have_attributes(status: 'signed', payment_method: 'boleto',
+                                              asaas_payment_link_id: 'pay_link_boleto',
+                                              asaas_payment_link_url: 'https://www.asaas.com/c/pay_link_boleto')
+    end
+
+    it 'asks AsaaS for a boleto link at the full agreed total' do
+      checkout(method: 'boleto')
+
+      expect(asaas).to have_received(:create_payment_link)
+        .with(hash_including(billing_type: 'BOLETO', value_cents: 89_700, max_installment_count: 12))
+    end
+
+    it 'never touches Stripe' do
+      allow(client).to receive(:create_checkout_session)
+
+      checkout(method: 'boleto')
+
+      expect(client).not_to have_received(:create_checkout_session)
+    end
+
+    it 'records the link on the proposal history with its billing type' do
+      checkout(method: 'boleto')
+
+      link_event = quote.events.find_by(event: 'asaas_link_created')
+      expect(link_event.metadata['billing_type']).to eq('BOLETO')
+    end
+
+    # A monthly boleto would mean reissuing a slip every month; the monthly plan
+    # is a subscription and lives on the card. Kept in line with the PIX rule.
+    it 'refuses boleto on the monthly plan' do
+      quote.update!(billing_cycle: :monthly)
+
+      expect { checkout(method: 'boleto') }.to raise_error(described_class::UnsupportedPaymentMethod, /mensal/)
+    end
   end
 
   # A customer who changes their mind leaves an instalment link behind, and a
@@ -324,6 +384,12 @@ RSpec.describe Sales::CheckoutService do
       expect(described_class.offers?('pix', :semiannual)).to be(true)
       expect(described_class.offers?('pix', :annual)).to be(true)
       expect(described_class.offers?('pix', :monthly)).to be(false)
+    end
+
+    it 'takes boleto on the longer plans and nowhere else' do
+      expect(described_class.offers?('boleto', :semiannual)).to be(true)
+      expect(described_class.offers?('boleto', :annual)).to be(true)
+      expect(described_class.offers?('boleto', :monthly)).to be(false)
     end
 
     it 'sends the card of a monthly plan to stripe and of a long plan to asaas' do

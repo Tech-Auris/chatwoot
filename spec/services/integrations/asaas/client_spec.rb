@@ -47,6 +47,16 @@ RSpec.describe Integrations::Asaas::Client do
 
       expect(request).to have_been_requested
     end
+
+    it 'asks for a boleto link when the sale is paid by boleto' do
+      request = stub_request(:post, 'https://api.asaas.com/v3/paymentLinks')
+                .with(body: hash_including('billingType' => 'BOLETO', 'chargeType' => 'INSTALLMENT'))
+                .to_return(status: 200, body: link.to_json, headers: { 'Content-Type' => 'application/json' })
+
+      client.create_payment_link(name: 'Proposta', value_cents: 50_000, billing_type: 'BOLETO')
+
+      expect(request).to have_been_requested
+    end
   end
 
   # The same account has a sandbox key and a production key, each answering on
