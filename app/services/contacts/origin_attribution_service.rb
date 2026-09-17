@@ -1,9 +1,8 @@
-# Sets `Contact.additional_attributes["origem"]` on the first inbound message
-# from a contact whose origin has not been decided yet, using signals the
-# incoming pipeline hands us. The rule set is deliberately conservative — we
-# only assign a positive value when the signal is unambiguous; everything
-# else stays null and shows as "Sem Origem" in the UI for the operator to
-# fill in manually.
+# Sets `origem` on the first inbound message from a contact whose origin has
+# not been decided yet, using signals the incoming pipeline hands us. The rule
+# set is deliberately conservative — we only assign a positive value when the
+# signal is unambiguous; everything else stays null and shows as "Sem Origem"
+# in the UI for the operator to fill in manually.
 #
 # Priority (first match wins):
 #   1. Google  — a `gclid=` token in the first message body.
@@ -20,7 +19,12 @@
 #      for a contact that might have come from an unmapped source.
 #
 # Manual selections through the dropdown always win: this service never
-# overwrites an existing `origem` value.
+# overwrites an existing origem value.
+#
+# Dual-write phase: this PR writes to BOTH `contact.additional_attributes.origem`
+# (legacy, still read by sidebar/filters/automation/report) and the new
+# `conversation.origem` column. A follow-up PR flips readers to the conversation
+# column, and a third PR removes the contact write.
 class Contacts::OriginAttributionService
   # Fixed vocabulary shown in the `Origem` dropdown — must stay in sync
   # with the frontend selector and both i18n files. Any edit here needs a
@@ -36,20 +40,32 @@ class Contacts::OriginAttributionService
     'Orgânico'
   ].freeze
 
-  pattr_initialize [:contact!, :inbox!, :message_body, :referral]
+  pattr_initialize [:contact!, :inbox!, :message_body, :referral, :conversation]
 
   def apply!
-    return if contact.additional_attributes.is_a?(Hash) && contact.additional_attributes['origem'].present?
-
     attributed = infer_origem
-    return unless attributed
+    return if attributed.nil?
 
-    contact.additional_attributes ||= {}
-    contact.additional_attributes['origem'] = attributed
-    contact.save!
+    write_conversation_origem(attributed)
+    write_contact_origem(attributed)
   end
 
   private
+
+  def write_conversation_origem(value)
+    return if conversation.blank?
+    return if conversation.origem.present?
+
+    conversation.update!(origem: value)
+  end
+
+  def write_contact_origem(value)
+    return if contact.additional_attributes.is_a?(Hash) && contact.additional_attributes['origem'].present?
+
+    contact.additional_attributes ||= {}
+    contact.additional_attributes['origem'] = value
+    contact.save!
+  end
 
   def infer_origem
     return 'Google' if gclid_present?

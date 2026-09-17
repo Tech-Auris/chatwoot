@@ -118,6 +118,7 @@ class Whatsapp::IncomingMessageBaseService # rubocop:disable Metrics/ClassLength
     ::Contacts::OriginAttributionService.new(
       contact: @contact,
       inbox: @inbox,
+      conversation: @conversation,
       message_body: message.dig(:text, :body).to_s,
       referral: ::CampaignReferralExtractor.from_cloud_message(message)
     ).apply!
