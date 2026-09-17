@@ -1,16 +1,17 @@
 # Thin HTTP wrapper around the AsaaS REST API, which is where a long plan paid
 # in instalments is charged — Stripe carries the monthly subscription, and PIX
-# à-vista comes in through Banco Inter. AsaaS covers both the card link and
-# the boleto link — same endpoint, `billingType` picks which.
+# à-vista comes in through Banco Inter. AsaaS covers both card in instalments
+# and the boleto book (carnê) — same installment endpoint, `billingType` picks
+# which.
 #
-# Only the payment link endpoint is exposed, which is all the sales flow needs:
-# the customer opens the link, picks how many instalments, and the finance team
-# confirms the money the same way it confirms a PIX.
+# The endpoints exposed here mirror what the sales flow needs: cadastre the
+# prospect as an AsaaS customer, open an instalment charge locked at the plan's
+# N (6 for semiannual, 12 for annual), and pull the invoice URL of the first
+# instalment so the customer can pay right away.
 class Integrations::Asaas::Client
   PRODUCTION_URL = 'https://api.asaas.com/v3'.freeze
   SANDBOX_URL = 'https://api-sandbox.asaas.com/v3'.freeze
   DEFAULT_TIMEOUT = 15
-  DEFAULT_MAX_INSTALLMENTS = 12
 
   class Error < StandardError; end
   class Unauthorized < Error; end
@@ -35,30 +36,62 @@ class Integrations::Asaas::Client
     sandbox? ? SANDBOX_URL : PRODUCTION_URL
   end
 
-  # A link the customer opens to pay a long plan in up to
-  # `max_installment_count` instalments — by credit card (default) or by
-  # boleto, according to `billing_type`. Amounts here are in reais, unlike
-  # Stripe, which counts cents.
-  #
-  # Notifications are off: the prospect is not a registered AsaaS customer and
-  # the sales team is the one talking to them.
-  def create_payment_link(name:, value_cents:, max_installment_count: DEFAULT_MAX_INSTALLMENTS, description: nil, billing_type: 'CREDIT_CARD')
-    post_json('/paymentLinks', {
-      billingType: billing_type,
-      chargeType: 'INSTALLMENT',
+  # Finds the AsaaS customer whose document matches — used to keep the flow
+  # idempotent. AsaaS returns 200 with `{ data: [...] }` even when nothing
+  # matched, so an empty `data` means "no customer with that document".
+  def find_customer(cpf_cnpj:)
+    digits = cpf_cnpj.to_s.gsub(/\D/, '')
+    return nil if digits.blank?
+
+    body = get_json('/customers', cpfCnpj: digits)
+    Array(body.is_a?(Hash) ? body['data'] : nil).first
+  end
+
+  # Cadastres the prospect on AsaaS so their instalments can hang off it.
+  # Notifications are off: the sales team is the one talking to the prospect,
+  # and AsaaS's own e-mail template does not match our tone.
+  def create_customer(name:, email:, cpf_cnpj:, phone: nil)
+    post_json('/customers', {
       name: name,
-      description: description.presence,
-      value: (value_cents.to_i / 100.0).round(2),
-      maxInstallmentCount: max_installment_count.to_i,
-      notificationEnabled: false
+      email: email,
+      cpfCnpj: cpf_cnpj.to_s.gsub(/\D/, ''),
+      phone: phone.presence,
+      mobilePhone: phone.presence,
+      notificationDisabled: true
     }.compact)
   end
 
-  # A link of a sale that changed its mind is money with nowhere to land, so it
-  # is taken down rather than left open.
-  def delete_payment_link(payment_link_id)
+  # Opens an instalment charge with the number of parcels locked at N —
+  # AsaaS creates N `payments` under the returned `installment.id`, each with
+  # its own due date and its own invoice URL. Card + boleto share the shape;
+  # for boleto this is a carnê, for card a single card auth split into N.
+  # Amounts here are in reais, unlike Stripe, which counts cents.
+  def create_installment(customer_id:, billing_type:, total_value_cents:, installment_count:, due_date:, description: nil) # rubocop:disable Metrics/ParameterLists
+    post_json('/installments', {
+      customer: customer_id,
+      billingType: billing_type,
+      installmentCount: installment_count.to_i,
+      totalValue: (total_value_cents.to_i / 100.0).round(2),
+      dueDate: due_date.to_date.iso8601,
+      description: description.presence
+    }.compact)
+  end
+
+  # Lists the payments AsaaS created under an instalment charge, ordered by
+  # due date. The first one's `invoiceUrl` is what the customer opens right
+  # after signing — the AsaaS-hosted page that shows the first boleto (with
+  # every following one attached) or the card checkout for the whole book.
+  def list_installment_payments(installment_id)
+    body = get_json("/installments/#{installment_id}/payments")
+    Array(body.is_a?(Hash) ? body['data'] : nil)
+  end
+
+  # An instalment charge of a sale that changed its mind is a book of boletos
+  # with nowhere to land, so it is taken down rather than left open. AsaaS
+  # cancels the parent and every child payment in one call.
+  def delete_installment(installment_id)
     response = HTTParty.delete(
-      "#{base_url}/paymentLinks/#{payment_link_id}",
+      "#{base_url}/installments/#{installment_id}",
       headers: default_headers,
       timeout: DEFAULT_TIMEOUT
     )
@@ -68,6 +101,18 @@ class Integrations::Asaas::Client
   end
 
   private
+
+  def get_json(path, query = {})
+    response = HTTParty.get(
+      "#{base_url}#{path}",
+      headers: default_headers,
+      query: query.compact,
+      timeout: DEFAULT_TIMEOUT
+    )
+    parse(response)
+  rescue HTTParty::Error, SocketError, Errno::ECONNREFUSED, Net::OpenTimeout, Net::ReadTimeout => e
+    raise ProviderUnavailable, e.message
+  end
 
   def post_json(path, body)
     response = HTTParty.post(

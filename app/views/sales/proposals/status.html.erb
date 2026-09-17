@@ -39,14 +39,14 @@
     <%# Still here, and not only on the page right after the choice: somebody
         who closed the tab before paying comes back to this one. %>
     <%= render 'pix_instructions' %>
-  <% elsif @proposal.payment_method_boleto? && @proposal.asaas_payment_link_url.present? %>
+  <% elsif @proposal.payment_method_boleto? && @proposal.asaas_invoice_url.present? %>
     <p class="text-sm text-slate-600 mt-2">
       Aguardando a confirmação do boleto. Se ainda não pagou ou fechou a aba,
       reabra o boleto abaixo para ver o código de barras e o PDF.
     </p>
 
     <%= link_to 'Abrir o boleto',
-          @proposal.asaas_payment_link_url,
+          @proposal.asaas_invoice_url,
           target: '_blank', rel: 'noopener noreferrer',
           class: 'mt-4 block w-full text-center px-3 py-2 rounded border border-slate-200 text-slate-700 text-sm' %>
   <% else %>

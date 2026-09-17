@@ -181,7 +181,7 @@ RSpec.describe 'Super Admin Commercial Reservations', type: :request do
     it 'flags AsaaS card sales awaiting confirmation' do
       awaiting = create(:sales_quote, status: :signed, payment_method: :card, billing_cycle: :semiannual,
                                       clickup_status: 'em análise', reserved_until: 4.days.from_now,
-                                      asaas_payment_link_id: 'link_abc')
+                                      asaas_installment_id: 'inst_abc')
 
       get '/super_admin/commercial/reservations/data'
 
@@ -194,7 +194,7 @@ RSpec.describe 'Super Admin Commercial Reservations', type: :request do
     it 'flags AsaaS boleto sales awaiting confirmation' do
       boleto = create(:sales_quote, status: :signed, payment_method: :boleto, billing_cycle: :annual,
                                     clickup_status: 'em análise', reserved_until: 4.days.from_now,
-                                    asaas_payment_link_id: 'link_boleto')
+                                    asaas_installment_id: 'inst_boleto')
 
       get '/super_admin/commercial/reservations/data'
 
@@ -207,7 +207,7 @@ RSpec.describe 'Super Admin Commercial Reservations', type: :request do
     let(:client) { instance_double(Integrations::Stripe::Client) }
     let(:quote) do
       create(:sales_quote, status: :signed, payment_method: :card, billing_cycle: :semiannual,
-                           total_amount: 570_060, asaas_payment_link_id: 'link_abc',
+                           total_amount: 570_060, asaas_installment_id: 'inst_abc',
                            prospect_name: 'Leonardo Giacon', company_name: 'Clínica Rhoncus',
                            prospect_email: 'leo@example.com')
     end

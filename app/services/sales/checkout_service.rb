@@ -10,6 +10,9 @@ class Sales::CheckoutService
   CYCLE_MONTHS = { monthly: 1, semiannual: 6, annual: 12 }.freeze
   # PIX is paid outside Stripe, so the discount is ours to grant.
   PIX_DISCOUNT_PERCENT = { semiannual: 5, annual: 10 }.freeze
+  # Buffer between signing and the first AsaaS instalment falling due, so the
+  # customer has time to open the link and pay the first boleto.
+  FIRST_DUE_DATE_DAYS = 3
 
   Result = Struct.new(:quote, :checkout_url, :awaiting_manual_payment, keyword_init: true)
 
@@ -32,7 +35,7 @@ class Sales::CheckoutService
 
     raise UnsupportedPaymentMethod, 'O plano mensal é pago no cartão' unless self.class.offers?(payment_method, quote.billing_cycle)
 
-    discard_open_asaas_link
+    discard_open_asaas_installment
     quote.update!(payment_method: payment_method)
 
     return await_manual_payment if payment_method == 'pix'
@@ -77,19 +80,12 @@ class Sales::CheckoutService
     PIX_DISCOUNT_PERCENT[billing_cycle&.to_sym] || 0
   end
 
-  # What the AsaaS link offers, which is the configured cap held down to the
-  # months the plan covers: twelve instalments on a semiannual plan would run
-  # past the period being paid for.
-  def self.max_installments_for(billing_cycle)
-    months = CYCLE_MONTHS[billing_cycle&.to_sym].to_i
-    return 1 if months <= 1
-
-    [configured_max_installments, months].min
-  end
-
-  def self.configured_max_installments
-    configured = GlobalConfig.get('ASAAS_MAX_INSTALLMENTS')['ASAAS_MAX_INSTALLMENTS'].to_i
-    configured.positive? ? configured : Integrations::Asaas::Client::DEFAULT_MAX_INSTALLMENTS
+  # How many parcels the AsaaS charge is split into for this plan — locked, not
+  # a cap. Semiannual pays in six, annual in twelve; the monthly plan is a
+  # Stripe subscription and never reaches AsaaS at all. The number the CRM
+  # reads on `Forma de Pagamento` mirrors this.
+  def self.installments_for(billing_cycle)
+    CYCLE_MONTHS[billing_cycle&.to_sym].to_i.clamp(1, 12)
   end
 
   private
@@ -111,37 +107,84 @@ class Sales::CheckoutService
     Result.new(quote: quote, awaiting_manual_payment: true)
   end
 
-  # A customer who comes back to change how they pay leaves an instalment link
-  # behind. Taking it down keeps exactly one live link per proposal — a
-  # payment on the old one would arrive against terms nobody is holding.
-  def discard_open_asaas_link
-    return if quote.asaas_payment_link_id.blank?
+  # A customer who comes back to change how they pay leaves an open instalment
+  # behind. Cancelling it keeps exactly one live book per proposal — a payment
+  # on the old one would arrive against terms nobody is holding.
+  def discard_open_asaas_installment
+    return if quote.asaas_installment_id.blank?
 
-    asaas_client.delete_payment_link(quote.asaas_payment_link_id)
-    quote.update!(asaas_payment_link_id: nil, asaas_payment_link_url: nil)
+    asaas_client.delete_installment(quote.asaas_installment_id)
+    quote.update!(asaas_installment_id: nil, asaas_invoice_url: nil)
   rescue Integrations::Asaas::Client::Error => e
-    # A link we could not take down must not stop the customer from paying.
-    Rails.logger.info("[sales] asaas link #{quote.asaas_payment_link_id} not removed: #{e.message}")
+    # An instalment we could not take down must not stop the customer from
+    # paying with the new method.
+    Rails.logger.info("[sales] asaas installment #{quote.asaas_installment_id} not removed: #{e.message}")
   end
 
-  # The long plan charged by AsaaS — in instalments on a credit card
-  # (`billing_type: 'CREDIT_CARD'`) or as a parcelled boleto
-  # (`billing_type: 'BOLETO'`). The link is generic — it carries no customer —
-  # so the payment comes back to us through the same manual confirmation a
-  # PIX does.
-  def start_asaas_checkout(billing_type:)
-    link = asaas_client.create_payment_link(
-      name: "AurisChat — #{quote.prospect_name}",
-      description: quote.discount_summary.presence,
-      value_cents: quote.total_amount,
-      max_installment_count: self.class.max_installments_for(quote.billing_cycle),
-      billing_type: billing_type
+  # The long plan charged by AsaaS: a card auth split into N or a book of N
+  # boletos, with N locked to the plan's months (6 for semiannual, 12 for
+  # annual). The customer is registered as an AsaaS customer up-front so the
+  # instalment book hangs off a real identity — that is what lets AsaaS
+  # notify the finance team and reconcile per instalment down the line.
+  def start_asaas_checkout(billing_type:) # rubocop:disable Metrics/AbcSize
+    customer_id = ensure_asaas_customer_id
+    installment = asaas_client.create_installment(
+      customer_id: customer_id,
+      billing_type: billing_type,
+      total_value_cents: quote.total_amount,
+      installment_count: self.class.installments_for(quote.billing_cycle),
+      due_date: Time.zone.today + FIRST_DUE_DATE_DAYS,
+      description: asaas_description
     )
 
-    quote.update!(status: :signed, asaas_payment_link_id: link['id'], asaas_payment_link_url: link['url'])
-    quote.events.create!(event: 'asaas_link_created', metadata: { link_id: link['id'], url: link['url'], billing_type: billing_type })
+    invoice_url = first_invoice_url_for(installment['id'])
+    quote.update!(status: :signed, asaas_customer_id: customer_id,
+                  asaas_installment_id: installment['id'], asaas_invoice_url: invoice_url)
+    quote.events.create!(event: 'asaas_installment_created',
+                         metadata: { installment_id: installment['id'], invoice_url: invoice_url,
+                                     billing_type: billing_type,
+                                     installment_count: self.class.installments_for(quote.billing_cycle) })
 
-    Result.new(quote: quote, checkout_url: link['url'], awaiting_manual_payment: false)
+    Result.new(quote: quote, checkout_url: invoice_url, awaiting_manual_payment: false)
+  end
+
+  # The prospect's e-mail is used to look up the AsaaS customer that may
+  # already be there from a previous try — otherwise a new one is created.
+  # Idempotent so a retried checkout does not spawn a second customer for the
+  # same document.
+  def ensure_asaas_customer_id
+    return quote.asaas_customer_id if quote.asaas_customer_id.present?
+
+    document = quote.company_document.presence || quote.prospect_document
+    existing = asaas_client.find_customer(cpf_cnpj: document)
+    return existing['id'] if existing.is_a?(Hash) && existing['id'].present?
+
+    asaas_client.create_customer(name: asaas_billing_name, email: quote.prospect_email,
+                                 cpf_cnpj: document, phone: quote.prospect_phone)['id']
+  end
+
+  # The billing name goes onto AsaaS the same way it goes onto Stripe — the
+  # invoice is issued against the company when the customer asked for it, and
+  # against the person otherwise.
+  def asaas_billing_name
+    quote.billing_name.presence || quote.company_name.presence || quote.prospect_name
+  end
+
+  # AsaaS hosts the payment page for the first boleto (or the card checkout
+  # for the full card auth). The URL is per-payment, so we grab it from the
+  # first payment under the instalment right after creation — that is the one
+  # the customer opens now.
+  def first_invoice_url_for(installment_id)
+    payments = asaas_client.list_installment_payments(installment_id)
+    first = payments.min_by { |payment| payment['dueDate'].to_s }
+    first && first['invoiceUrl']
+  end
+
+  # AsaaS shows this on the payment page and on the boleto description. The
+  # discount summary the seller wrote already reads well for the customer, so
+  # it doubles as the sentence here when present.
+  def asaas_description
+    ["AurisChat — #{quote.prospect_name}", quote.discount_summary.presence].compact.join(' · ')
   end
 
   def asaas_client
@@ -153,7 +196,7 @@ class Sales::CheckoutService
       customer_id: customer_id,
       line_items: line_items,
       urls: urls,
-      max_installments: self.class.max_installments_for(quote.billing_cycle),
+      max_installments: self.class.installments_for(quote.billing_cycle),
       metadata: { sales_quote_id: quote.id },
       **subscription_payload
     )

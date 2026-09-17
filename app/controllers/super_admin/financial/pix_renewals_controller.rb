@@ -122,7 +122,7 @@ class SuperAdmin::Financial::PixRenewalsController < SuperAdmin::ApplicationCont
       amount: quote.total_amount,
       billing_cycle: quote.billing_cycle,
       payment_method: quote.payment_method,
-      asaas_payment_link_url: quote.asaas_payment_link_url,
+      asaas_invoice_url: quote.asaas_invoice_url,
       signed_at: quote.terms_acceptances.status_signed.maximum(:signed_at)
     }
   end

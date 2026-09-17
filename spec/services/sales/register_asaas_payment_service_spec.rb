@@ -4,8 +4,9 @@ RSpec.describe Sales::RegisterAsaasPaymentService do
   let(:client) { instance_double(Integrations::Stripe::Client) }
   let(:quote) do
     create(:sales_quote, status: :signed, payment_method: :card, billing_cycle: :semiannual, total_amount: 570_060,
-                         asaas_payment_link_id: 'iggk1oa9g9u3is4p',
-                         asaas_payment_link_url: 'https://www.asaas.com/c/iggk1oa9g9u3is4p',
+                         asaas_customer_id: 'cus_pl6ye1o01',
+                         asaas_installment_id: 'inst_iggk1oa9g9u3is4p',
+                         asaas_invoice_url: 'https://www.asaas.com/i/iggk1oa9g9u3is4p',
                          prospect_name: 'Leonardo Giacon', prospect_email: 'leo@example.com', company_name: 'Clínica Rhoncus')
   end
 
@@ -31,7 +32,7 @@ RSpec.describe Sales::RegisterAsaasPaymentService do
     described_class.new(quote: quote, client: client).perform
 
     event = quote.events.find_by(event: 'asaas_payment_registered')
-    expect(event.metadata['asaas_payment_link_id']).to eq('iggk1oa9g9u3is4p')
+    expect(event.metadata['asaas_installment_id']).to eq('inst_iggk1oa9g9u3is4p')
     expect(event.metadata['total']).to eq(570_060)
   end
 
@@ -51,7 +52,7 @@ RSpec.describe Sales::RegisterAsaasPaymentService do
   end
 
   it 'refuses a proposal that never reached AsaaS' do
-    quote.update!(asaas_payment_link_id: nil)
+    quote.update!(asaas_installment_id: nil)
 
     expect { described_class.new(quote: quote, client: client).perform }
       .to raise_error(described_class::InvalidTransition, /não passou pelo fluxo AsaaS/)
