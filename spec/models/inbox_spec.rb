@@ -96,6 +96,26 @@ RSpec.describe Inbox do
     end
   end
 
+  describe '#assignable_agents' do
+    let(:account) { create(:account) }
+    let(:inbox) { create(:inbox, account: account) }
+    let!(:member_agent) { create(:user, account: account, role: :agent) }
+    let!(:outsider_agent) { create(:user, account: account, role: :agent) }
+    let!(:administrator) { create(:user, account: account, role: :administrator) }
+
+    before { create(:inbox_member, user: member_agent, inbox: inbox) }
+
+    # Managers behave like administrators for authorization (see User#assigned_inboxes);
+    # the assignable pool used to only fold administrators in, leaving managers invisible
+    # in the "Selecionar agente" dropdown for every inbox they were not explicitly a member of.
+    it 'includes managers even when they are not inbox members' do
+      manager = create(:user, account: account, role: :manager)
+
+      expect(inbox.assignable_agents).to include(member_agent, administrator, manager)
+      expect(inbox.assignable_agents).not_to include(outsider_agent)
+    end
+  end
+
   describe '#facebook?' do
     let(:inbox) do
       FactoryBot.build(:inbox, channel: channel_val)
