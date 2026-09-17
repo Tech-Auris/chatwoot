@@ -309,6 +309,38 @@ class Conversation < ApplicationRecord
     notify_status_change
     create_activity
     notify_conversation_updation
+    trigger_marketing_conversion_for_added_labels
+  end
+
+  # Fires the `label_added` marketing trigger for each label that was
+  # ADDED in this update (deltas only, never removals). Relies on
+  # `cached_label_list` being a real column — the taggable gem keeps it in
+  # sync when `label_list` changes, so `saved_change_to_cached_label_list?`
+  # is the reliable signal. Silently swallows errors so a broken integration
+  # never blocks the label edit itself.
+  def trigger_marketing_conversion_for_added_labels
+    return unless saved_change_to_cached_label_list?
+
+    added = added_labels_in_last_save
+    return if added.empty?
+
+    added.each { |label| fire_marketing_label_trigger(label) }
+  rescue StandardError => e
+    ChatwootExceptionTracker.new(e, account: account).capture_exception
+  end
+
+  def added_labels_in_last_save
+    before, after = saved_changes['cached_label_list']
+    to_list = ->(csv) { (csv || '').split(',').map(&:strip).reject(&:empty?) }
+    to_list.call(after) - to_list.call(before)
+  end
+
+  def fire_marketing_label_trigger(label)
+    ::Marketing::TriggerConversionEventsService.new(
+      conversation: self,
+      trigger_type: 'label_added',
+      trigger_config: { 'label' => label }
+    ).perform
   end
 
   def handle_resolved_status_change

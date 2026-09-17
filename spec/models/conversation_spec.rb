@@ -1194,6 +1194,58 @@ RSpec.describe Conversation do
     end
   end
 
+  # Fase 2 · PR B: labeling a conversation fires the `label_added` marketing
+  # trigger for each DELTA (never for labels that were already there and never
+  # for removals). Wiring test — the actual match logic is exercised in
+  # TriggerConversionEventsService spec.
+  describe 'marketing conversion trigger on label add' do
+    let(:account) { create(:account) }
+    let(:conversation) { create(:conversation, account: account) }
+
+    it 'fires once per newly-added label' do
+      trigger = instance_double(Marketing::TriggerConversionEventsService, perform: nil)
+      allow(Marketing::TriggerConversionEventsService).to receive(:new).and_return(trigger)
+
+      conversation.update!(label_list: %w[first second])
+
+      expect(Marketing::TriggerConversionEventsService).to have_received(:new).with(
+        conversation: conversation,
+        trigger_type: 'label_added',
+        trigger_config: { 'label' => 'first' }
+      )
+      expect(Marketing::TriggerConversionEventsService).to have_received(:new).with(
+        conversation: conversation,
+        trigger_type: 'label_added',
+        trigger_config: { 'label' => 'second' }
+      )
+    end
+
+    it 'ignores label REMOVALS' do
+      conversation.update!(label_list: %w[first second])
+      allow(Marketing::TriggerConversionEventsService).to receive(:new).and_call_original
+
+      conversation.update!(label_list: %w[first])
+
+      expect(Marketing::TriggerConversionEventsService).not_to have_received(:new)
+    end
+
+    it 'does not fire for labels that were already present' do
+      conversation.update!(label_list: %w[first])
+      allow(Marketing::TriggerConversionEventsService).to receive(:new).and_call_original
+
+      conversation.update!(label_list: %w[first second])
+
+      expect(Marketing::TriggerConversionEventsService).to have_received(:new).with(
+        conversation: conversation,
+        trigger_type: 'label_added',
+        trigger_config: { 'label' => 'second' }
+      )
+      expect(Marketing::TriggerConversionEventsService).not_to have_received(:new).with(
+        hash_including(trigger_config: { 'label' => 'first' })
+      )
+    end
+  end
+
   describe 'group_type' do
     it 'provides type check methods' do
       individual_conversation = create(:conversation, group_type: :individual)

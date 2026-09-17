@@ -47,7 +47,7 @@ class AutomationRule < ApplicationRecord
     %w[send_message add_label remove_label send_email_to_team assign_team assign_agent remove_assigned_agent
        remove_assigned_team send_webhook_event mute_conversation send_attachment change_status resolve_conversation
        open_conversation pending_conversation snooze_conversation change_priority send_email_transcript
-       add_private_note create_scheduled_message enable_ai disable_ai assign_origem].freeze
+       add_private_note create_scheduled_message enable_ai disable_ai assign_origem trigger_conversion_event].freeze
   end
 
   def file_base_data

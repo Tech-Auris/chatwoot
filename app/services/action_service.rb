@@ -70,6 +70,21 @@ class ActionService
     @conversation.update!(label_list: labels)
   end
 
+  # Fires marketing-conversion events (Meta CAPI / Google Ads) that the
+  # operator wired to a specific `ConversionEvent` in Settings. `values` is
+  # the array of conversion_event ids the automation rule picked; each id
+  # short-circuits the trigger matching in TriggerConversionEventsService.
+  def trigger_conversion_event(values = [])
+    event_ids = Array(values).map(&:to_i).reject(&:zero?)
+    return if event_ids.empty?
+
+    ::Marketing::TriggerConversionEventsService.new(
+      conversation: @conversation,
+      trigger_type: 'automation_action',
+      explicit_event_ids: event_ids
+    ).perform
+  end
+
   # Writes to Conversation.origem — the same column the sidebar dropdown and
   # the OriginAttributionService use. Passing 'nil' clears it (unlike the
   # auto-attribution service, an operator-triggered rule is allowed to
