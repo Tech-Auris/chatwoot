@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_09_16_230002) do
+ActiveRecord::Schema[7.1].define(version: 2026_09_17_000003) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -810,6 +810,41 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_16_230002) do
     t.index ["waiting_since"], name: "index_conversations_on_waiting_since"
   end
 
+  create_table "conversion_event_dispatches", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "conversion_event_id", null: false
+    t.bigint "conversation_id", null: false
+    t.integer "provider", null: false
+    t.integer "status", default: 0, null: false
+    t.string "event_id", null: false
+    t.jsonb "payload", default: {}, null: false
+    t.jsonb "response", default: {}, null: false
+    t.integer "attempts", default: 0, null: false
+    t.datetime "last_attempted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "status"], name: "index_conversion_event_dispatches_on_account_id_and_status"
+    t.index ["conversation_id"], name: "index_conversion_event_dispatches_on_conversation_id"
+    t.index ["conversion_event_id", "conversation_id"], name: "idx_on_conversion_event_id_conversation_id_43f6b9e96e"
+    t.index ["conversion_event_id"], name: "index_conversion_event_dispatches_on_conversion_event_id"
+    t.index ["provider", "event_id"], name: "index_dispatches_on_provider_and_event_id", unique: true
+  end
+
+  create_table "conversion_events", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "name", null: false
+    t.integer "trigger_type", null: false
+    t.jsonb "trigger_config", default: {}, null: false
+    t.string "meta_event_name"
+    t.string "google_event_name"
+    t.boolean "enabled", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "enabled"], name: "index_conversion_events_on_account_id_and_enabled"
+    t.index ["account_id", "name"], name: "index_conversion_events_on_account_id_and_name", unique: true
+    t.index ["account_id", "trigger_type"], name: "index_conversion_events_on_account_id_and_trigger_type"
+  end
+
   create_table "copilot_messages", force: :cascade do |t|
     t.bigint "copilot_thread_id", null: false
     t.bigint "account_id", null: false
@@ -1292,6 +1327,17 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_16_230002) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["account_id"], name: "index_macros_on_account_id"
+  end
+
+  create_table "marketing_integrations", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.integer "provider", null: false
+    t.integer "status", default: 0, null: false
+    t.text "credentials_ciphertext"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "provider"], name: "index_marketing_integrations_on_account_and_provider", unique: true
+    t.index ["status"], name: "index_marketing_integrations_on_status"
   end
 
   create_table "mentions", force: :cascade do |t|
@@ -1946,6 +1992,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_16_230002) do
   add_foreign_key "canned_responses", "inboxes"
   add_foreign_key "contacts", "languages"
   add_foreign_key "conversations", "funnel_stages", on_delete: :nullify
+  add_foreign_key "conversion_event_dispatches", "accounts"
+  add_foreign_key "conversion_event_dispatches", "conversations"
+  add_foreign_key "conversion_event_dispatches", "conversion_events"
+  add_foreign_key "conversion_events", "accounts"
   add_foreign_key "funnel_stage_changes", "accounts", on_delete: :cascade
   add_foreign_key "funnel_stage_changes", "loss_reasons", on_delete: :nullify
   add_foreign_key "funnel_stage_changes", "users", on_delete: :nullify
@@ -1971,6 +2021,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_16_230002) do
   add_foreign_key "internal_chat_polls", "internal_chat_messages"
   add_foreign_key "internal_chat_reactions", "internal_chat_messages"
   add_foreign_key "internal_chat_reactions", "users", on_delete: :cascade
+  add_foreign_key "marketing_integrations", "accounts"
   add_foreign_key "operations_notification_acks", "accounts"
   add_foreign_key "operations_notification_acks", "operations_notifications", on_delete: :cascade
   add_foreign_key "operations_notification_acks", "users"
