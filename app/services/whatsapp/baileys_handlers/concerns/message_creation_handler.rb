@@ -22,7 +22,7 @@ module Whatsapp::BaileysHandlers::Concerns::MessageCreationHandler # rubocop:dis
     @message.save!
 
     attach_campaign_referral_to_conversation(conversation) if incoming?
-    apply_origin_attribution(sender, conversation) if incoming?
+    apply_origin_attribution(conversation) if incoming?
 
     finalize_after_save(conversation)
 
@@ -45,14 +45,11 @@ module Whatsapp::BaileysHandlers::Concerns::MessageCreationHandler # rubocop:dis
     conversation.save!
   end
 
-  # Sets `Conversation.origem` (first-touch on the conversation) and mirrors
-  # the value on `Contact.additional_attributes.origem` during the dual-write
-  # migration window. Priority mirrors Cloud (gclid → channel → referral).
-  def apply_origin_attribution(sender, conversation)
-    return if sender.blank?
-
+  # Sets `Conversation.origem` on first touch using the shared priority
+  # (gclid → channel → referral). First-touch is per-conversation, so a
+  # reengagement in a new conversation captures its own origem.
+  def apply_origin_attribution(conversation)
     ::Contacts::OriginAttributionService.new(
-      contact: sender,
       inbox: inbox,
       conversation: conversation,
       message_body: message_content.to_s,
