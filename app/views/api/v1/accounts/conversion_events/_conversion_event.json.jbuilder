@@ -1,0 +1,9 @@
+json.id event.id
+json.name event.name
+json.trigger_type event.trigger_type
+json.trigger_config event.trigger_config
+json.meta_event_name event.meta_event_name
+json.google_event_name event.google_event_name
+json.enabled event.enabled
+json.created_at event.created_at.to_i
+json.updated_at event.updated_at.to_i

@@ -383,6 +383,9 @@ Rails.application.routes.draw do
           end
           resources :labels, only: [:index, :show, :create, :update, :destroy]
 
+          resources :marketing_integrations, only: [:index, :show, :create, :update, :destroy]
+          resources :conversion_events, only: [:index, :show, :create, :update, :destroy]
+
           resources :notifications, only: [:index, :update, :destroy] do
             collection do
               post :read_all
