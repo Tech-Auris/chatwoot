@@ -1,0 +1,67 @@
+{
+  "MARKETING_ANALYTICS": {
+    "TITLE": "Marketing Analytics",
+    "DESCRIPTION": "Envie eventos de conversão para o Meta e o Google quando um lead atinge uma etapa do funil, recebe uma etiqueta ou uma automação dispara.",
+    "STATUS": "Status",
+    "STATUSES": {
+      "DISABLED": "Desativado",
+      "TEST_MODE": "Modo de teste",
+      "ACTIVE": "Ativo"
+    },
+    "SAVE": "Salvar",
+    "SAVE_SUCCESS": "Salvo",
+    "SAVE_ERROR": "Não foi possível salvar",
+    "CONNECT": "Conectar",
+    "DISCONNECT": "Desconectar",
+    "DISCONNECT_CONFIRM": "Desconectar essa integração? Disparos anteriores ficam no histórico.",
+    "DISCONNECT_SUCCESS": "Desconectado",
+    "CANCEL": "Cancelar",
+    "EDIT": "Editar",
+    "DELETE": "Excluir",
+    "PROVIDERS": {
+      "META_CAPI": {
+        "DESCRIPTION": "Meta Conversions API. Usado para anúncios de WhatsApp / DM do Instagram / Facebook Messenger. Envia junto com o ctwa_clid capturado na primeira mensagem."
+      },
+      "GOOGLE_ADS_ENHANCED": {
+        "DESCRIPTION": "Google Ads uploadClickConversions. Usa o gclid capturado pelo snippet da landing page na primeira mensagem."
+      }
+    },
+    "FIELDS": {
+      "PIXEL_ID": "Pixel ID",
+      "ACCESS_TOKEN": "Access Token",
+      "TEST_EVENT_CODE": "Test Event Code",
+      "CUSTOMER_ID": "Customer ID",
+      "CONVERSION_ACTION_ID": "Conversion Action ID",
+      "DEVELOPER_TOKEN": "Developer Token",
+      "OAUTH_REFRESH_TOKEN": "OAuth Refresh Token",
+      "LOGIN_CUSTOMER_ID": "Login Customer ID (MCC)"
+    },
+    "EVENTS": {
+      "TITLE": "Eventos de conversão",
+      "DESCRIPTION": "Mapeie um gatilho do Chatwoot para um evento do Meta e/ou uma ação de conversão do Google.",
+      "NEW": "Novo evento",
+      "EMPTY": "Nenhum evento de conversão configurado ainda.",
+      "NAME": "Nome",
+      "TRIGGER": "Gatilho",
+      "TRIGGER_TYPES": {
+        "FUNNEL_STAGE_REACHED": "Etapa do funil",
+        "LABEL_ADDED": "Etiqueta aplicada",
+        "AUTOMATION_ACTION": "Ação de automação"
+      },
+      "FUNNEL_STAGE": "Etapa do funil",
+      "LABEL": "Etiqueta",
+      "META_LABEL": "Meta",
+      "GOOGLE_LABEL": "· Google",
+      "META_EVENT": "Nome do evento no Meta",
+      "META_EVENT_PLACEHOLDER": "Lead / Schedule / Purchase …",
+      "GOOGLE_EVENT": "Nome do evento no Google",
+      "GOOGLE_EVENT_PLACEHOLDER": "book_appointment / purchase …",
+      "ENABLED": "Ativado",
+      "DISABLED_TAG": "desativado",
+      "SAVE_SUCCESS": "Evento salvo",
+      "SAVE_ERROR": "Não foi possível salvar o evento",
+      "DELETE_CONFIRM": "Excluir o evento \"{name}\"? Disparos anteriores ficam no histórico.",
+      "DELETE_SUCCESS": "Evento excluído"
+    }
+  }
+}

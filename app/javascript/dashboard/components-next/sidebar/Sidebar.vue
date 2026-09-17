@@ -850,6 +850,12 @@ const menuItems = computed(() => {
           icon: 'i-lucide-blocks',
           to: accountScopedRoute('settings_applications'),
         },
+        {
+          name: 'Settings Marketing Analytics',
+          label: t('SIDEBAR.MARKETING_ANALYTICS'),
+          icon: 'i-lucide-target',
+          to: accountScopedRoute('marketing_settings_index'),
+        },
         ...(hasCloudWhatsappInbox.value
           ? [
               {
