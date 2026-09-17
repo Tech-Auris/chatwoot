@@ -40,8 +40,7 @@ class MarketingConversionDispatchJob < ApplicationJob
     when 'meta_capi'
       ::Marketing::MetaCapiDispatcher.new(dispatch: dispatch).perform
     when 'google_ads_enhanced'
-      # Wired in PR D. The dispatch row stays `pending` until then.
-      Rails.logger.info("[MarketingConversionDispatchJob] google_ads_enhanced dispatcher not wired yet — dispatch ##{dispatch.id}")
+      ::Marketing::GoogleAdsDispatcher.new(dispatch: dispatch).perform
     end
   end
 end

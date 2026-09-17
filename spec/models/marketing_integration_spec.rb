@@ -47,7 +47,7 @@ RSpec.describe MarketingIntegration do
     it 'requires the Google Ads keys on an active Google integration' do
       integration = build(:marketing_integration, :google_ads, status: :active, credentials: {})
       expect(integration).to be_invalid
-      expect(integration.errors[:credentials].first).to include('customer_id', 'conversion_id', 'developer_token', 'oauth_refresh_token')
+      expect(integration.errors[:credentials].first).to include('customer_id', 'conversion_action_id', 'developer_token', 'oauth_refresh_token')
     end
 
     it 'is valid on a disabled row with empty credentials' do

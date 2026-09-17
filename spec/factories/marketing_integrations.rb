@@ -17,9 +17,8 @@ FactoryBot.define do
       provider { :google_ads_enhanced }
       credentials do
         {
-          'customer_id' => '123-456-7890',
-          'conversion_id' => 'AW-1234567890',
-          'conversion_label' => 'abc_label',
+          'customer_id' => '1234567890',
+          'conversion_action_id' => '9876543210',
           'developer_token' => 'DEV_TOKEN',
           'oauth_refresh_token' => '1//refresh_token'
         }
