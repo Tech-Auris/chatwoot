@@ -1,8 +1,8 @@
-# Sets `origem` on the first inbound message from a contact whose origin has
-# not been decided yet, using signals the incoming pipeline hands us. The rule
-# set is deliberately conservative — we only assign a positive value when the
-# signal is unambiguous; everything else stays null and shows as "Sem Origem"
-# in the UI for the operator to fill in manually.
+# Sets `Conversation.origem` on the first inbound message of a conversation
+# whose origin has not been decided yet, using signals the incoming pipeline
+# hands us. The rule set is deliberately conservative — we only assign a
+# positive value when the signal is unambiguous; everything else stays null
+# and shows as "Sem Origem" in the UI for the operator to fill in manually.
 #
 # Priority (first match wins):
 #   1. Google  — a `gclid=` token in the first message body.
@@ -16,15 +16,13 @@
 #        the operator can flip the dropdown to Instagram when they know).
 #   5. None of the above → leave null (Sem Origem). "Orgânico" stays a
 #      manual selection — we do not want to claim an organic attribution
-#      for a contact that might have come from an unmapped source.
+#      for a conversation that might have come from an unmapped source.
 #
 # Manual selections through the dropdown always win: this service never
-# overwrites an existing origem value.
-#
-# Dual-write phase: this PR writes to BOTH `contact.additional_attributes.origem`
-# (legacy, still read by sidebar/filters/automation/report) and the new
-# `conversation.origem` column. A follow-up PR flips readers to the conversation
-# column, and a third PR removes the contact write.
+# overwrites an existing origem value on the conversation. First-touch is
+# per-conversation now (no cross-conversation guard) so a contact who
+# reengages later from a different source captures that source on the new
+# conversation without touching the old one.
 class Contacts::OriginAttributionService
   # Fixed vocabulary shown in the `Origem` dropdown — must stay in sync
   # with the frontend selector and both i18n files. Any edit here needs a
@@ -40,32 +38,18 @@ class Contacts::OriginAttributionService
     'Orgânico'
   ].freeze
 
-  pattr_initialize [:contact!, :inbox!, :message_body, :referral, :conversation]
+  pattr_initialize [:inbox!, :conversation!, :message_body, :referral]
 
   def apply!
+    return if conversation.origem.present?
+
     attributed = infer_origem
     return if attributed.nil?
 
-    write_conversation_origem(attributed)
-    write_contact_origem(attributed)
+    conversation.update!(origem: attributed)
   end
 
   private
-
-  def write_conversation_origem(value)
-    return if conversation.blank?
-    return if conversation.origem.present?
-
-    conversation.update!(origem: value)
-  end
-
-  def write_contact_origem(value)
-    return if contact.additional_attributes.is_a?(Hash) && contact.additional_attributes['origem'].present?
-
-    contact.additional_attributes ||= {}
-    contact.additional_attributes['origem'] = value
-    contact.save!
-  end
 
   def infer_origem
     return 'Google' if gclid_present?

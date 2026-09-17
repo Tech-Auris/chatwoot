@@ -713,23 +713,23 @@ describe Whatsapp::IncomingMessageWhatsappCloudService do
     end
 
     # Contacts::OriginAttributionService is invoked from the incoming pipeline; a CTWA
-    # inbound seals the contact's `origem` on first touch — a subsequent operator
+    # inbound seals the conversation's `origem` on first touch — a subsequent operator
     # change through the dropdown is not exercised here (unit-tested elsewhere).
-    it 'seals the contact origem when the referral maps to a Meta placement' do
+    it 'seals the conversation origem when the referral maps to a Meta placement' do
       perform_with_referral(
         text: 'Oi',
         referral: { source_url: 'https://fb.me/xyz', source_type: 'ad', source_id: '1' }
       )
 
-      contact = whatsapp_channel.inbox.contacts.last
-      expect(contact.additional_attributes['origem']).to eq('Facebook')
+      conversation = whatsapp_channel.inbox.conversations.last
+      expect(conversation.origem).to eq('Facebook')
     end
 
     it 'leaves origem null on a plain WhatsApp inbound with no attribution signal' do
       perform_with_referral(text: 'Oi, tudo bem?', referral: nil)
 
-      contact = whatsapp_channel.inbox.contacts.last
-      expect(contact.additional_attributes['origem']).to be_nil
+      conversation = whatsapp_channel.inbox.conversations.last
+      expect(conversation.origem).to be_nil
     end
   end
 end

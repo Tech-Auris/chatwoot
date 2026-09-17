@@ -17,7 +17,6 @@ class Messages::Messenger::MessageBuilder
     end
 
     ::Contacts::OriginAttributionService.new(
-      contact: contact,
       inbox: inbox,
       conversation: conversation,
       message_body: '',
