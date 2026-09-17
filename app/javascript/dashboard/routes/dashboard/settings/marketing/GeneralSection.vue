@@ -4,8 +4,10 @@
 // use this value to compute Revenue and ROAS when a per-Comparecimento
 // value isn't stored on the conversation.
 //
-// Backend permits `average_ticket` on the account update endpoint
-// (see PR G) so the manager doesn't need super_admin access to update it.
+// The input is a masked text field: raw keystrokes are stripped to digits
+// and reformatted as pt-BR decimal (dot thousands + comma decimals) on
+// every keypress, so the operator types "150000" and sees "1.500,00".
+// The unmasked Number is what goes to the backend.
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAccount } from 'dashboard/composables/useAccount';
@@ -14,11 +16,31 @@ import { useAlert } from 'dashboard/composables';
 const { t } = useI18n();
 const { currentAccount, updateAccount } = useAccount();
 
-const averageTicket = ref(0);
 const isSaving = ref(false);
+// Display string in pt-BR format ("1.500,00"). The numeric source of
+// truth is derived from stripping non-digits and treating the result as
+// cents.
+const displayValue = ref('');
+
+const brlFormatter = new Intl.NumberFormat('pt-BR', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+const formatFromNumber = value => {
+  const cents = Math.round((Number(value) || 0) * 100);
+  return brlFormatter.format(cents / 100);
+};
+
+const parseFromMasked = masked => {
+  const digits = (masked || '').replace(/\D/g, '');
+  if (!digits) return 0;
+  return Number(digits) / 100;
+};
 
 const syncFromAccount = () => {
-  averageTicket.value = Number(currentAccount.value?.average_ticket) || 0;
+  const stored = Number(currentAccount.value?.average_ticket) || 0;
+  displayValue.value = formatFromNumber(stored);
 };
 
 watch(
@@ -29,16 +51,22 @@ watch(
   { immediate: true }
 );
 
+const onInput = event => {
+  const parsed = parseFromMasked(event.target.value);
+  displayValue.value = formatFromNumber(parsed);
+};
+
+const currentNumber = computed(() => parseFromMasked(displayValue.value));
+
 const isDirty = computed(
   () =>
-    Number(averageTicket.value) !==
-    (Number(currentAccount.value?.average_ticket) || 0)
+    currentNumber.value !== (Number(currentAccount.value?.average_ticket) || 0)
 );
 
 const save = async () => {
   isSaving.value = true;
   try {
-    await updateAccount({ average_ticket: Number(averageTicket.value) || 0 });
+    await updateAccount({ average_ticket: currentNumber.value });
     useAlert(t('MARKETING_ANALYTICS.GENERAL.SAVE_SUCCESS'));
     syncFromAccount();
   } catch (error) {
@@ -72,16 +100,16 @@ const save = async () => {
         </span>
         <div class="relative">
           <span
-            class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2 text-n-slate-11 text-sm"
+            class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-n-slate-11 text-sm"
           >
             {{ t('MARKETING_ANALYTICS.GENERAL.CURRENCY_PREFIX') }}
           </span>
           <input
-            v-model.number="averageTicket"
-            type="number"
-            step="0.01"
-            min="0"
-            class="w-full rounded border border-n-strong bg-n-solid-2 pl-8 pr-2 py-1.5 text-n-slate-12"
+            :value="displayValue"
+            type="text"
+            inputmode="numeric"
+            class="w-full rounded border border-n-strong bg-n-solid-2 pl-10 pr-3 py-1.5 text-n-slate-12 text-right"
+            @input="onInput"
           />
         </div>
       </label>
