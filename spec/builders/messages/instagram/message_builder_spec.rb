@@ -379,11 +379,12 @@ describe Messages::Instagram::MessageBuilder do
         )
       end
 
-      it 'attributes the contact origem to Instagram (channel takes precedence over the Meta referral)' do
-        contact = create_instagram_contact_for_sender(ad_messaging['sender']['id'], instagram_inbox)
+      it 'attributes the conversation origem to Instagram (channel takes precedence over the Meta referral)' do
+        create_instagram_contact_for_sender(ad_messaging['sender']['id'], instagram_inbox)
         described_class.new(ad_messaging, instagram_inbox).perform
 
-        expect(contact.reload.additional_attributes['origem']).to eq('Instagram')
+        conversation = instagram_inbox.conversations.last
+        expect(conversation.origem).to eq('Instagram')
       end
     end
   end

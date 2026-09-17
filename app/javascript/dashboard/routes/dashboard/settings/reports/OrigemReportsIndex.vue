@@ -17,11 +17,12 @@ import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import V4Button from 'dashboard/components-next/button/Button.vue';
 import { generateFileName } from 'dashboard/helper/downloadHelper';
 
-// The report is keyed by contact.additional_attributes.origem, which is a
-// fixed vocabulary of 8 options + a synthetic "Sem origem" bucket (surfacing
-// contacts that never got attributed — the operator needs to see those, not
-// have them silently disappear from the totals). The metrics layout mirrors
-// the Etiquetas overview report so operators get the same reading pattern.
+// The report is keyed by `conversations.origem` (per-conversation), a fixed
+// vocabulary of 8 options + a synthetic "Sem origem" bucket surfacing
+// conversations that never got attributed — the operator needs to see those,
+// not have them silently disappear from the totals. The metrics layout
+// mirrors the Etiquetas overview report so operators get the same reading
+// pattern.
 
 const store = useStore();
 const { t } = useI18n();

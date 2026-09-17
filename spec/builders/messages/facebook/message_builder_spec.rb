@@ -276,11 +276,11 @@ describe Messages::Facebook::MessageBuilder do
         )
       end
 
-      it 'attributes the contact origem to Facebook via the OriginAttributionService' do
+      it 'attributes the conversation origem to Facebook via the OriginAttributionService' do
         described_class.new(ad_message, facebook_channel.inbox).perform
 
-        contact = facebook_channel.inbox.contacts.last
-        expect(contact.additional_attributes['origem']).to eq('Facebook')
+        conversation = facebook_channel.inbox.conversations.last
+        expect(conversation.origem).to eq('Facebook')
       end
     end
   end

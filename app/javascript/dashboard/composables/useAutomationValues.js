@@ -87,8 +87,8 @@ export default function useAutomationValues() {
 
   // Fixed vocabulary from ORIGEM_OPTIONS — same list rendered in the sidebar
   // dropdown and the funnel filters. Fed into both the condition (multi-select
-  // filter over `contacts.additional_attributes.origem`) and the action
-  // (assign_origem writes the same field).
+  // filter over `conversations.origem`) and the action (assign_origem writes
+  // the same column on the conversation).
   const origemOptions = computed(() =>
     ORIGEM_OPTIONS.map(name => ({ id: name, name }))
   );
