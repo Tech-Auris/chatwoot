@@ -16,6 +16,16 @@ super_admin_health_score_daily_snapshot_job:
   cron: '0 3 * * *'
   class: 'SuperAdmin::HealthScore::DailySnapshotJob'
   queue: scheduled_jobs
+
+# executed daily at 0400 UTC
+# pulls the last 7 days of ad spend from Meta Marketing API and Google Ads
+# API into `campaign_spends` for each account with an active integration.
+# 7-day window because both providers can revise today's numbers up to
+# their timezone cutoff.
+marketing_spend_sync_job:
+  cron: '0 4 * * *'
+  class: 'Marketing::SpendSyncJob'
+  queue: low
 # # executed At every 5th minute..
 trigger_scheduled_items_job:
   cron: '*/5 * * * *'
