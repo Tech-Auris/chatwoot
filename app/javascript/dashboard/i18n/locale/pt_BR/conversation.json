@@ -707,7 +707,7 @@
     "NO_RESULT": "Nenhuma origem encontrada",
     "UPDATE_SUCCESS": "Origem atualizada",
     "UPDATE_ERROR": "Não foi possível atualizar a origem",
-    "HISTORY_TITLE": "Origens deste contato",
+    "HISTORY_TITLE": "origens anteriores",
     "HISTORY_COUNT": "({count})"
   },
   "CAMPAIGN_REFERRAL_CARD": {

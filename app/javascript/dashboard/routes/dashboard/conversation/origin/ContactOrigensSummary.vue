@@ -9,7 +9,6 @@
 import { computed, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useStore, useMapGetter } from 'dashboard/composables/store';
-import ContactDetailsItem from '../ContactDetailsItem.vue';
 
 const props = defineProps({
   contactId: {
@@ -57,10 +56,9 @@ const hasMultipleOrigens = computed(() => origemBreakdown.value.length > 1);
 <template>
   <div>
     <template v-if="hasMultipleOrigens">
-      <ContactDetailsItem
-        compact
-        :title="t('CONVERSATION_ORIGIN.HISTORY_TITLE')"
-      />
+      <span class="text-[11px] normal-case text-n-slate-11">
+        {{ t('CONVERSATION_ORIGIN.HISTORY_TITLE') }}
+      </span>
       <div class="flex flex-wrap gap-1.5 mt-1">
         <span
           v-for="entry in origemBreakdown"
