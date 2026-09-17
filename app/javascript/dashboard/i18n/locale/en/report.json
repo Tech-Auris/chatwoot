@@ -731,7 +731,11 @@
         "QUALIFYING": "Qualifying",
         "SCHEDULING": "Scheduling",
         "CONFIRMATION": "Confirmed",
-        "ATTENDANCE": "Attendance"
+        "ATTENDANCE": "Attendance",
+        "SPEND": "Spend",
+        "CPL": "CPL",
+        "CPA": "CPA",
+        "ROAS": "ROAS"
       }
     }
   },
