@@ -244,4 +244,46 @@ describe ActionService do
       expect(conversation.scheduled_messages.last.attachment).to be_attached
     end
   end
+
+  # Fase 2 · PR B: the `trigger_conversion_event` automation action fans out
+  # to the marketing trigger service with explicit conversion_event ids.
+  describe '#trigger_conversion_event' do
+    let(:conversation) { create(:conversation, account: account) }
+    let(:action_service) { described_class.new(conversation) }
+
+    it 'delegates to Marketing::TriggerConversionEventsService with the ids and automation_action trigger' do
+      trigger = instance_double(Marketing::TriggerConversionEventsService, perform: nil)
+      allow(Marketing::TriggerConversionEventsService).to receive(:new).and_return(trigger)
+
+      action_service.trigger_conversion_event([42, 99])
+
+      expect(Marketing::TriggerConversionEventsService).to have_received(:new).with(
+        conversation: conversation,
+        trigger_type: 'automation_action',
+        explicit_event_ids: [42, 99]
+      )
+      expect(trigger).to have_received(:perform)
+    end
+
+    it 'is a no-op when the ids array is empty' do
+      allow(Marketing::TriggerConversionEventsService).to receive(:new)
+
+      action_service.trigger_conversion_event([])
+
+      expect(Marketing::TriggerConversionEventsService).not_to have_received(:new)
+    end
+
+    # Automation values arrive as strings from the form; ints and zero-padding
+    # both need to survive the cast.
+    it 'coerces string ids to integers and drops zeros' do
+      trigger = instance_double(Marketing::TriggerConversionEventsService, perform: nil)
+      allow(Marketing::TriggerConversionEventsService).to receive(:new).and_return(trigger)
+
+      action_service.trigger_conversion_event(['7', '0', 'not-a-number'])
+
+      expect(Marketing::TriggerConversionEventsService).to have_received(:new).with(
+        hash_including(explicit_event_ids: [7])
+      )
+    end
+  end
 end

@@ -17,6 +17,7 @@ class Funnel::MoveConversationService
     end
 
     dispatch_funnel_updated_event(previous_stage)
+    trigger_marketing_conversion_events!
 
     Result.new(
       conversation: conversation,
@@ -72,6 +73,19 @@ class Funnel::MoveConversationService
 
   def apply_stage_change!
     conversation.update!(funnel_stage_id: target_stage.id)
+  end
+
+  # Fires marketing-conversion triggers configured for this funnel stage.
+  # Runs outside the transaction so a downstream failure (integration
+  # config, Redis) never rolls the actual stage move back.
+  def trigger_marketing_conversion_events!
+    ::Marketing::TriggerConversionEventsService.new(
+      conversation: conversation,
+      trigger_type: 'funnel_stage_reached',
+      trigger_config: { 'funnel_stage_id' => target_stage.id }
+    ).perform
+  rescue StandardError => e
+    ChatwootExceptionTracker.new(e, account: account).capture_exception
   end
 
   def record_audit!(previous_stage_name)

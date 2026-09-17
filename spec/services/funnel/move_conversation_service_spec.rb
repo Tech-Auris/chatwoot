@@ -59,4 +59,22 @@ RSpec.describe Funnel::MoveConversationService do
 
     expect(conversation.reload.funnel_stage).to eq(lost)
   end
+
+  # Fase 2 · PR B: moving into a stage fires the marketing-conversion trigger
+  # with the destination stage id. The service takes it from there — provider
+  # gating, event matching, dispatch. Wiring test is deliberately narrow: we
+  # only assert the trigger service was called with the right args.
+  it 'fires the marketing conversion trigger for the target stage' do
+    trigger = instance_double(Marketing::TriggerConversionEventsService, perform: nil)
+    allow(Marketing::TriggerConversionEventsService).to receive(:new).and_return(trigger)
+
+    move(target_stage_id: stage.id)
+
+    expect(Marketing::TriggerConversionEventsService).to have_received(:new).with(
+      conversation: conversation,
+      trigger_type: 'funnel_stage_reached',
+      trigger_config: { 'funnel_stage_id' => stage.id }
+    )
+    expect(trigger).to have_received(:perform)
+  end
 end
