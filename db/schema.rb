@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_09_17_000003) do
+ActiveRecord::Schema[7.1].define(version: 2026_09_18_000000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -332,6 +332,23 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_17_000003) do
     t.index ["account_id", "conversation_id"], name: "index_calls_on_account_id_and_conversation_id"
     t.index ["message_id"], name: "index_calls_on_message_id"
     t.index ["provider", "provider_call_id"], name: "index_calls_on_provider_and_provider_call_id", unique: true
+  end
+
+  create_table "campaign_spends", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.integer "provider", null: false
+    t.string "source_id", null: false
+    t.string "source_type", null: false
+    t.date "period_start", null: false
+    t.date "period_end", null: false
+    t.integer "amount_cents", default: 0, null: false
+    t.string "currency", null: false
+    t.datetime "last_synced_at", null: false
+    t.jsonb "external_metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "period_start", "period_end"], name: "idx_on_account_id_period_start_period_end_7b6f75a74c"
+    t.index ["account_id", "provider", "source_id", "source_type", "period_start", "period_end"], name: "index_campaign_spends_unique", unique: true
   end
 
   create_table "campaigns", force: :cascade do |t|
@@ -1989,6 +2006,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_17_000003) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "ai_assignment_attempts", "conversations", on_delete: :cascade
+  add_foreign_key "campaign_spends", "accounts"
   add_foreign_key "canned_responses", "inboxes"
   add_foreign_key "contacts", "languages"
   add_foreign_key "conversations", "funnel_stages", on_delete: :nullify

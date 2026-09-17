@@ -102,6 +102,7 @@ class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
   has_many :marketing_integrations, dependent: :destroy_async
   has_many :conversion_events, dependent: :destroy_async
   has_many :conversion_event_dispatches, dependent: :destroy_async
+  has_many :campaign_spends, dependent: :destroy_async
   has_many :line_channels, dependent: :destroy_async, class_name: '::Channel::Line'
   has_many :mentions, dependent: :destroy_async
   has_many :messages, dependent: :destroy_async
