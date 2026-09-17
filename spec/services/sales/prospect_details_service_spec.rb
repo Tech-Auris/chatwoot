@@ -4,7 +4,7 @@ RSpec.describe Sales::ProspectDetailsService do
   let(:client) { instance_double(Integrations::Clickup::Client, configured?: true) }
   let(:details) do
     { name: 'Maria Souza', company_name: 'Clínica Cinco', email: 'maria@clinica.com.br',
-      phone: '+55 61 98140-2211', document: '123.456.789-00' }
+      phone: '+55 61 98140-2211', document: '529.982.247-25' }
   end
 
   def fill(quote, attributes = details)
@@ -22,7 +22,7 @@ RSpec.describe Sales::ProspectDetailsService do
     fill(quote)
 
     expect(quote.reload).to have_attributes(
-      prospect_name: 'Maria Souza', prospect_email: 'maria@clinica.com.br', prospect_document: '123.456.789-00'
+      prospect_name: 'Maria Souza', prospect_email: 'maria@clinica.com.br', prospect_document: '529.982.247-25'
     )
   end
 
@@ -181,7 +181,7 @@ RSpec.describe Sales::ProspectDetailsService do
     it 'stays silent when a customer edits an already-complete proposal' do
       quote = create(:sales_quote, status: :details_confirmed, prospect_name: 'Maria',
                                    prospect_email: 'maria@clinica.com.br', prospect_phone: '+5561981402211',
-                                   prospect_document: '12345678900', company_name: 'Clínica Cinco')
+                                   prospect_document: '52998224725', company_name: 'Clínica Cinco')
 
       fill(quote, details.merge(name: 'Maria Correção'))
 

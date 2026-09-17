@@ -143,7 +143,7 @@ RSpec.describe Sales::CheckoutService do
     before do
       quote.update!(billing_cycle: :monthly)
       sign_terms
-      quote.update!(prospect_name: 'Maria Souza', prospect_phone: '+5561981402211', prospect_document: '123.456.789-00')
+      quote.update!(prospect_name: 'Maria Souza', prospect_phone: '+5561981402211', prospect_document: '529.982.247-25')
       allow(client).to receive(:create_customer).and_return(Struct.new(:id).new('cus_1'))
       allow(client).to receive(:update_customer)
       allow(client).to receive(:list_tax_ids).and_return(Struct.new(:data).new([]))
@@ -163,15 +163,15 @@ RSpec.describe Sales::CheckoutService do
     it 'attaches the CPF when there is no company document' do
       checkout
 
-      expect(client).to have_received(:create_tax_id).with('cus_1', type: 'br_cpf', value: '123.456.789-00')
+      expect(client).to have_received(:create_tax_id).with('cus_1', type: 'br_cpf', value: '529.982.247-25')
     end
 
     it 'prefers the CNPJ when the customer asked for an invoice against it' do
-      quote.update!(company_document: '12.345.678/0001-90', billing_name: 'Clínica Cinco Ltda')
+      quote.update!(company_document: '11.222.333/0001-81', billing_name: 'Clínica Cinco Ltda')
 
       checkout
 
-      expect(client).to have_received(:create_tax_id).with('cus_1', type: 'br_cnpj', value: '12.345.678/0001-90')
+      expect(client).to have_received(:create_tax_id).with('cus_1', type: 'br_cnpj', value: '11.222.333/0001-81')
     end
 
     it 'bills the company name when the invoice goes to a CNPJ' do
@@ -186,7 +186,7 @@ RSpec.describe Sales::CheckoutService do
     # document.
     it 'does not attach a document the customer already carries' do
       allow(client).to receive(:list_tax_ids)
-        .and_return(Struct.new(:data).new([Struct.new(:value).new('12345678900')]))
+        .and_return(Struct.new(:data).new([Struct.new(:value).new('52998224725')]))
 
       checkout
 
