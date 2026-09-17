@@ -166,7 +166,8 @@
       "PENDING_CONVERSATION": "Mark conversation as pending",
       "ENABLE_AI": "Enable AI",
       "DISABLE_AI": "Disable AI",
-      "ASSIGN_ORIGEM": "Assign lead origin"
+      "ASSIGN_ORIGEM": "Assign lead origin",
+      "TRIGGER_CONVERSION_EVENT": "Trigger marketing conversion event"
     },
     "MESSAGE_TYPES": {
       "INCOMING": "Incoming Message",

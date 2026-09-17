@@ -166,7 +166,8 @@
       "PENDING_CONVERSATION": "Marcar conversa como pendente",
       "ENABLE_AI": "Ativar IA",
       "DISABLE_AI": "Desativar IA",
-      "ASSIGN_ORIGEM": "Atribuir Origem do lead"
+      "ASSIGN_ORIGEM": "Atribuir Origem do lead",
+      "TRIGGER_CONVERSION_EVENT": "Disparar evento de conversão"
     },
     "MESSAGE_TYPES": {
       "INCOMING": "Mensagem Recebida",
