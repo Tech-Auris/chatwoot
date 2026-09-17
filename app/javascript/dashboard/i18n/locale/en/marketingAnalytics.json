@@ -1,7 +1,33 @@
 {
   "MARKETING_ANALYTICS_REPORT": {
     "TITLE": "Campaign Analytics",
-    "COMING_SOON": "Cost, CPL and ROAS breakdown per campaign and ad is on the way. The dispatcher already writes every conversion event to Meta and Google — this page is coming next."
+    "SUBTITLE": "Cost, CPL and ROAS by Meta ad and Google campaign.",
+    "COMING_SOON": "Cost, CPL and ROAS breakdown per campaign and ad is on the way.",
+    "LOADING": "Loading…",
+    "EMPTY": "No campaign data in the selected range.",
+    "LOAD_ERROR": "Could not load the report.",
+    "TOTAL": "Total",
+    "PRESETS": {
+      "LAST_7_DAYS": "Last 7 days",
+      "LAST_30_DAYS": "Last 30 days",
+      "LAST_90_DAYS": "Last 90 days"
+    },
+    "SOURCE": {
+      "META": "Meta ad",
+      "GOOGLE": "Google campaign"
+    },
+    "COLUMNS": {
+      "CAMPAIGN": "Campaign",
+      "CONVERSATIONS": "Conversations",
+      "QUALIFIED": "Qualified",
+      "SCHEDULED": "Scheduled",
+      "ATTENDANCE": "Attendance",
+      "REVENUE": "Revenue",
+      "SPEND": "Spend",
+      "CPL": "CPL",
+      "CPA": "CPA",
+      "ROAS": "ROAS"
+    }
   },
   "MARKETING_ANALYTICS": {
     "TITLE": "Marketing Analytics",

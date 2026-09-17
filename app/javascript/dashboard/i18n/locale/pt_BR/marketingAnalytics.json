@@ -1,7 +1,33 @@
 {
   "MARKETING_ANALYTICS_REPORT": {
     "TITLE": "Analytics de campanhas",
-    "COMING_SOON": "O detalhamento de custo, CPL e ROAS por campanha e anúncio está chegando. O dispatcher já grava cada evento de conversão no Meta e no Google — esta página é a próxima."
+    "SUBTITLE": "Custo, CPL e ROAS por anúncio Meta e campanha Google.",
+    "COMING_SOON": "O detalhamento de custo, CPL e ROAS por campanha e anúncio está chegando.",
+    "LOADING": "Carregando…",
+    "EMPTY": "Sem dados de campanha no período selecionado.",
+    "LOAD_ERROR": "Não foi possível carregar o relatório.",
+    "TOTAL": "Total",
+    "PRESETS": {
+      "LAST_7_DAYS": "Últimos 7 dias",
+      "LAST_30_DAYS": "Últimos 30 dias",
+      "LAST_90_DAYS": "Últimos 90 dias"
+    },
+    "SOURCE": {
+      "META": "Anúncio Meta",
+      "GOOGLE": "Campanha Google"
+    },
+    "COLUMNS": {
+      "CAMPAIGN": "Campanha",
+      "CONVERSATIONS": "Conversas",
+      "QUALIFIED": "Qualificados",
+      "SCHEDULED": "Agendados",
+      "ATTENDANCE": "Compareceram",
+      "REVENUE": "Receita",
+      "SPEND": "Gasto",
+      "CPL": "CPL",
+      "CPA": "CPA",
+      "ROAS": "ROAS"
+    }
   },
   "MARKETING_ANALYTICS": {
     "TITLE": "Marketing Analytics",
