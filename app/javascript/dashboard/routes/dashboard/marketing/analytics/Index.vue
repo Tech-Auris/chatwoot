@@ -117,7 +117,7 @@ watch(selectedPreset, fetchData);
       {{ errorMessage }}
     </div>
 
-    <div v-if="isLoading" class="text-sm text-n-slate-11 text-center py-8">
+    <div v-else-if="isLoading" class="text-sm text-n-slate-11 text-center py-8">
       {{ t('MARKETING_ANALYTICS_REPORT.LOADING') }}
     </div>
 

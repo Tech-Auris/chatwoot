@@ -17,7 +17,10 @@ let globalCloseTimeout = null;
 export function useSidebarResize() {
   const { uiSettings, updateUISettings } = useUISettings();
 
-  const sidebarWidth = ref(uiSettings.value.sidebar_width || DEFAULT_WIDTH);
+  // First-time users start collapsed so the conversation area gets the
+  // full width by default. Anyone who has already sized their sidebar
+  // (uiSettings.sidebar_width persisted) keeps that width.
+  const sidebarWidth = ref(uiSettings.value.sidebar_width ?? MIN_WIDTH);
   const isCollapsed = computed(() => sidebarWidth.value < COLLAPSED_THRESHOLD);
 
   const setSidebarWidth = width => {

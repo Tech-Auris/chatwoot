@@ -333,9 +333,15 @@ const onHeaderFileSelected = async event => {
   }
 };
 
+// Meta rejects names with spaces, accents, uppercase or symbols — the API
+// only accepts lowercase alphanumeric + underscore. Surface the reason
+// inline near the field so the operator doesn't hit an invisible "Save
+// disabled" wall.
+const isNameValid = computed(() => /^[a-z0-9_]{1,512}$/.test(name.value));
+
 const isValid = computed(() => {
   if (!selectedInboxId.value) return false;
-  if (!/^[a-z0-9_]{1,512}$/.test(name.value)) return false;
+  if (!isNameValid.value) return false;
 
   if (templateFormatIssues.value.length > 0) return false;
 
@@ -512,7 +518,10 @@ const cancel = () => emit('cancel');
             class="bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg px-3 h-10 text-sm text-n-slate-12 focus:outline-n-brand placeholder:text-n-slate-10 disabled:opacity-70 disabled:cursor-not-allowed"
             :placeholder="t('META_TEMPLATES.NEW.FIELDS.NAME_PLACEHOLDER')"
           />
-          <span class="text-xxs text-n-slate-10">
+          <span v-if="name && !isNameValid" class="text-xxs text-n-ruby-11">
+            {{ t('META_TEMPLATES.NEW.FIELDS.NAME_INVALID') }}
+          </span>
+          <span v-else class="text-xxs text-n-slate-10">
             {{
               isEdit
                 ? t('META_TEMPLATES.NEW.FIELDS.NAME_IMMUTABLE')

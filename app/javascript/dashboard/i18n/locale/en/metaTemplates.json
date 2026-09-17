@@ -100,6 +100,7 @@
         "NAME": "Template name",
         "NAME_PLACEHOLDER": "e.g. confirmacao_agenda",
         "NAME_HINT": "Lowercase letters, numbers and underscores only. Must be unique on this inbox.",
+        "NAME_INVALID": "Only lowercase letters, numbers and underscores. No spaces, accents, uppercase or symbols.",
         "NAME_IMMUTABLE": "Name, language and inbox cannot be changed after creation (Meta rule).",
         "LANGUAGE": "Language",
         "CATEGORY": "Category",

@@ -55,7 +55,7 @@ class Api::V1::AccountsController < Api::BaseController
   end
 
   def update
-    @account.assign_attributes(account_params.slice(:name, :locale, :domain, :support_email))
+    @account.assign_attributes(account_params.slice(:name, :locale, :domain, :support_email, :average_ticket))
     @account.custom_attributes.merge!(custom_attributes_params)
     @account.settings.merge!(settings_params)
     @account.custom_attributes.delete('onboarding_step') if @account.custom_attributes['onboarding_step'] == 'account_details'
@@ -126,7 +126,7 @@ class Api::V1::AccountsController < Api::BaseController
   end
 
   def account_params
-    params.permit(:account_name, :email, :name, :password, :locale, :domain, :support_email, :user_full_name)
+    params.permit(:account_name, :email, :name, :password, :locale, :domain, :support_email, :user_full_name, :average_ticket)
   end
 
   def custom_attributes_params
