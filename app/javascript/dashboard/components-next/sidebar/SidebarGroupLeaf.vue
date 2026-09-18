@@ -65,7 +65,7 @@ const TREE_CONNECTOR =
         <div class="flex-1 truncate min-w-0 text-sm">{{ label }}</div>
         <span
           v-if="tag"
-          class="text-[10px] leading-none font-bold uppercase tracking-wide text-n-slate-12 bg-lime-300 rounded-full px-1.5 py-0.5"
+          class="text-[10px] leading-none font-bold uppercase tracking-wide text-black bg-[#c8f52d] rounded-full px-1.5 py-0.5"
         >
           {{ tag }}
         </span>
