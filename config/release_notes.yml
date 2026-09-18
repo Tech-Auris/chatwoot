@@ -1,6 +1,6 @@
 ---
 - tag: v4.15.1-auris.1.58
-  published_at: '2026-09-18T02:00:00Z'
+  published_at: '2026-09-18T17:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.58
   notes:
     en: |-
@@ -8,11 +8,13 @@
 
       - **Sidebar starts collapsed.** New accounts open with the menu tucked to the left, giving the conversation area more room. Pin it open if you prefer.
       - **Meta template name checked as you type.** When you create a WhatsApp Meta template, the page tells you right away if the name breaks the format Meta requires — no more surprises on save.
+      - **Meta template body grows with the message.** The body field now expands as the message grows — long templates stop scrolling inside a small box while you're editing.
     pt_BR: |-
       ### ⚡ Melhorias
 
       - **Menu lateral inicia recolhido.** Contas novas abrem com o menu encolhido à esquerda, sobrando mais espaço para as conversas. Se preferir, você pode fixar aberto.
       - **Nome do template Meta conferido ao digitar.** Ao criar um template Meta pro WhatsApp, a página avisa na hora se o nome não segue o formato exigido pela Meta — sem sustos na hora de salvar.
+      - **Texto do corpo do template Meta cresce com a mensagem.** O campo aumenta conforme a mensagem fica maior — template longo deixa de rolar dentro de uma caixinha pequena enquanto você edita.
 - tag: v4.15.1-auris.1.57
   published_at: '2026-09-15T18:30:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.57
