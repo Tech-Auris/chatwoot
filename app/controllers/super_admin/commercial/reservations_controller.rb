@@ -21,21 +21,27 @@ class SuperAdmin::Commercial::ReservationsController < SuperAdmin::ApplicationCo
     render json: { reservation: serialize(quote) }
   end
 
-  # An AsaaS instalment sale that landed on the provider — the finance team
-  # confirms it here so the proposal moves the same way a PIX sale does:
-  # Stripe customer, out-of-band invoice, account created. Without this the
-  # quote sits in `signed` forever, no matter that AsaaS already captured
-  # the card.
-  def register_asaas_payment
+  # A manual sale confirmation — the finance team clicks this when the money
+  # landed on AsaaS (card / boleto) or Inter (PIX) and the webhook has not
+  # closed the sale on its own. Routes to the right service based on the
+  # quote's payment method; PIX also needs a `paid_via` (inter / asaas) to
+  # know where the transfer came in.
+  #
+  # Kept `register_asaas_payment` as an alias below so any UI reading the
+  # old route keeps working after the deploy — this endpoint is the one to
+  # link to from now on.
+  def register_payment
     quote = SalesQuote.find(params[:id])
-    result = Sales::RegisterAsaasPaymentService.new(quote: quote).perform
+    result = dispatch_registration(quote)
 
     render json: { reservation: serialize(result.quote), account_name: result.account.name }, status: :created
-  rescue Sales::RegisterAsaasPaymentService::InvalidTransition => e
+  rescue Sales::RegisterAsaasPaymentService::InvalidTransition,
+         Sales::RegisterPixPaymentService::InvalidTransition => e
     render json: { error: e.message }, status: :unprocessable_entity
   rescue Integrations::Stripe::Client::Error => e
     render json: { error: "Stripe recusou: #{e.message}" }, status: :bad_gateway
   end
+  alias register_asaas_payment register_payment
 
   def data
     quotes = Sales::ReservationSyncService.new(quotes: paginated_quotes.to_a).perform
@@ -48,6 +54,17 @@ class SuperAdmin::Commercial::ReservationsController < SuperAdmin::ApplicationCo
   end
 
   private
+
+  # Picks the right service by the quote's payment method. PIX also carries
+  # a `paid_via` because the money can come in through Inter (default) or
+  # AsaaS — the finance team knows which and passes it on the request.
+  def dispatch_registration(quote)
+    if quote.payment_method_pix?
+      Sales::RegisterPixPaymentService.new(quote: quote, paid_via: params.fetch(:paid_via, 'inter')).perform
+    else
+      Sales::RegisterAsaasPaymentService.new(quote: quote).perform
+    end
+  end
 
   # Statuses the pipeline treats as closed — the deal is either won or lost
   # and there is nothing left to work on. Hidden by default so the screen
@@ -105,7 +122,7 @@ class SuperAdmin::Commercial::ReservationsController < SuperAdmin::ApplicationCo
     )
   end
 
-  def serialize(quote)
+  def serialize(quote) # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
     {
       id: quote.id,
       prospect_name: quote.company_name.presence || quote.prospect_name,
@@ -122,10 +139,16 @@ class SuperAdmin::Commercial::ReservationsController < SuperAdmin::ApplicationCo
       total_amount: quote.total_amount,
       token_card_saved: quote.token_payment_method_id.present?,
       token_card_waived: quote.token_card_waived_at.present?,
-      # AsaaS instalment sales sit on `signed` until finance confirms the
-      # capture landed on the provider. Surfaced so the reservations grid can
-      # offer the "Registrar pagamento AsaaS" button on exactly those rows.
+      payment_method: quote.payment_method,
+      # A single flag the grid reads to show the "Registrar pagamento" button
+      # for any sale still waiting on a manual confirmation — AsaaS card /
+      # boleto and PIX, but not the monthly Stripe subscription (that one
+      # closes on its own through the Stripe webhook).
+      awaiting_manual_payment_confirmation: awaiting_manual_payment_confirmation?(quote),
+      # Kept for the previous UI version until every client is on the new
+      # bundle. Same meaning as before — only the AsaaS-side sales.
       awaiting_asaas_confirmation: awaiting_asaas_confirmation?(quote),
+      register_payment_label: register_payment_label(quote),
       public_url: sales_proposal_url(quote.public_token, host: ENV.fetch('FRONTEND_URL', request.base_url)),
       access_code: quote.access_code
     }
@@ -133,6 +156,32 @@ class SuperAdmin::Commercial::ReservationsController < SuperAdmin::ApplicationCo
 
   def awaiting_asaas_confirmation?(quote)
     quote.signed? && (quote.payment_method_card? || quote.payment_method_boleto?) && quote.asaas_installment_id.present?
+  end
+
+  # Every sale that lands on `signed` and never got its money confirmed by
+  # a webhook or a manual click needs this button. Monthly Stripe cards are
+  # excluded — Stripe closes the sale on its own.
+  def awaiting_manual_payment_confirmation?(quote) # rubocop:disable Metrics/CyclomaticComplexity
+    return false unless quote.signed?
+    return false if quote.account_id.present?
+    return false if quote.payment_method_card? && quote.billing_cycle_monthly?
+
+    quote.payment_method_pix? ||
+      ((quote.payment_method_card? || quote.payment_method_boleto?) && quote.asaas_installment_id.present?)
+  end
+
+  # Short human label the grid appends to the button so the operator sees
+  # which flow will run before clicking: "PIX", "Cartão 12x", "Boleto 6x",
+  # "Cartão". Nil when the row would not show the button.
+  def register_payment_label(quote)
+    return nil unless awaiting_manual_payment_confirmation?(quote)
+    return 'PIX' if quote.payment_method_pix?
+    return 'Cartão' if quote.payment_method_card? && quote.billing_cycle_monthly?
+
+    n = Sales::CheckoutService.installments_for(quote.billing_cycle)
+    return "Cartão #{n}x" if quote.payment_method_card?
+
+    "Boleto #{n}x"
   end
 
   def pagination_meta
