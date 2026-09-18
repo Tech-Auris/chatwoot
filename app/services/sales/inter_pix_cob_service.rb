@@ -69,6 +69,6 @@ class Sales::InterPixCobService
   end
 
   def description
-    ["AurisChat — #{quote.prospect_name}", quote.discount_summary.presence].compact.join(' · ')[0, DESCRIPTION_MAX_LENGTH]
+    ['Pagamento Auris', quote.discount_summary.presence].compact.join(' · ')[0, DESCRIPTION_MAX_LENGTH]
   end
 end

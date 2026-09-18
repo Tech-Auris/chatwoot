@@ -48,6 +48,21 @@ const error = ref(null);
 // button that was actually pressed.
 const copied = ref({ id: null, field: null });
 const busyId = ref(null);
+// Rows the operator opened by clicking on them — the sub-row shows the cart
+// lines exactly like the proposal reads them.
+const expandedIds = ref(new Set());
+const isExpanded = reservation => expandedIds.value.has(reservation.id);
+const toggleExpanded = (reservation, event) => {
+  // Clicks that started on a button or a link stay with those controls;
+  // only clicks on the row body itself toggle the sub-row.
+  if (event?.target?.closest('button, a, input')) return;
+  const next = new Set(expandedIds.value);
+  if (next.has(reservation.id)) next.delete(reservation.id);
+  else next.add(reservation.id);
+  expandedIds.value = next;
+};
+const itemPeriodLabel = item =>
+  item.recurring_interval ? 'recorrente' : 'avulso';
 
 const fetchData = async () => {
   loading.value = true;
@@ -392,157 +407,229 @@ const submitRenew = async () => {
         </tr>
       </thead>
       <tbody>
-        <tr
-          v-for="reservation in reservations"
-          :key="reservation.id"
-          class="border-b border-slate-50"
-        >
-          <td class="py-3">
-            <div class="text-slate-900">{{ reservation.prospect_name }}</div>
-            <div
-              v-if="reservation.contact_name !== reservation.prospect_name"
-              class="text-xs text-slate-400 mt-1"
-            >
-              {{ reservation.contact_name }}
-            </div>
-          </td>
+        <template v-for="reservation in reservations" :key="reservation.id">
+          <tr
+            class="border-b border-slate-50 cursor-pointer hover:bg-slate-50"
+            @click="toggleExpanded(reservation, $event)"
+          >
+            <td class="py-3">
+              <div class="text-slate-900">{{ reservation.prospect_name }}</div>
+              <div
+                v-if="reservation.contact_name !== reservation.prospect_name"
+                class="text-xs text-slate-400 mt-1"
+              >
+                {{ reservation.contact_name }}
+              </div>
+            </td>
 
-          <td class="py-3 text-slate-700">
-            {{ reservation.seller_name || '—' }}
-          </td>
+            <td class="py-3 text-slate-700">
+              {{ reservation.seller_name || '—' }}
+            </td>
 
-          <td class="py-3">
-            <a
-              :href="reservation.clickup_url"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="text-woot-500 underline"
-            >
-              {{ reservation.clickup_status || 'Sem status' }}
-            </a>
-          </td>
+            <td class="py-3">
+              <a
+                :href="reservation.clickup_url"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-woot-500 underline"
+              >
+                {{ reservation.clickup_status || 'Sem status' }}
+              </a>
+            </td>
 
-          <td class="py-3">
-            <span
-              class="px-2 py-0.5 rounded text-xs"
-              :class="situationClass(reservation)"
-            >
-              {{ situationLabel(reservation) }}
-            </span>
-            <!-- A sale that never had its money confirmed on the webhook
+            <td class="py-3">
+              <span
+                class="px-2 py-0.5 rounded text-xs"
+                :class="situationClass(reservation)"
+              >
+                {{ situationLabel(reservation) }}
+              </span>
+              <!-- A sale that never had its money confirmed on the webhook
                  (PIX, AsaaS card or AsaaS boleto) needs somebody to click
                  here. One click creates the Stripe customer + invoice and
                  the AurisChat account. PIX opens a small modal first to
                  pick where the transfer came in. -->
-            <button
-              v-if="reservation.awaiting_manual_payment_confirmation"
-              type="button"
-              class="mt-1 block px-2 py-0.5 rounded border border-green-200 text-green-700 text-[10px] whitespace-nowrap disabled:opacity-40"
-              :disabled="busyId === reservation.id"
-              title="Confirma o pagamento, cria o cliente e a fatura no Stripe, e converte a proposta em conta."
-              @click="openRegisterPayment(reservation)"
-            >
-              Registrar pagamento · {{ reservation.register_payment_label }}
-            </button>
-          </td>
+              <button
+                v-if="reservation.awaiting_manual_payment_confirmation"
+                type="button"
+                class="mt-1 block px-2 py-0.5 rounded border border-green-200 text-green-700 text-[10px] whitespace-nowrap disabled:opacity-40"
+                :disabled="busyId === reservation.id"
+                title="Confirma o pagamento, cria o cliente e a fatura no Stripe, e converte a proposta em conta."
+                @click="openRegisterPayment(reservation)"
+              >
+                Registrar pagamento · {{ reservation.register_payment_label }}
+              </button>
+            </td>
 
-          <td class="py-3 text-right text-slate-700">
-            {{ formatAmount(reservation.total_amount) }}
-          </td>
+            <td class="py-3 text-right text-slate-700">
+              {{ formatAmount(reservation.total_amount) }}
+            </td>
 
-          <td class="py-3 text-right" :class="deadlineClass(reservation)">
-            {{ formatDate(reservation.reserved_until) }}
-            <div
-              v-if="!reservation.won && !reservation.reservation_active"
-              class="text-xs mt-1"
-            >
-              Reserva vencida
-            </div>
-          </td>
+            <td class="py-3 text-right" :class="deadlineClass(reservation)">
+              {{ formatDate(reservation.reserved_until) }}
+              <div
+                v-if="!reservation.won && !reservation.reservation_active"
+                class="text-xs mt-1"
+              >
+                Reserva vencida
+              </div>
+            </td>
 
-          <td class="py-3">
-            <span
-              v-if="reservation.token_card_saved"
-              class="text-xs text-slate-500"
-            >
-              Cartão cadastrado
-            </span>
-            <span
-              v-else-if="reservation.token_card_waived"
-              class="text-xs text-slate-500"
-            >
-              Cobrança por fatura
-            </span>
-            <button
-              v-else
-              type="button"
-              class="px-1.5 py-0.5 rounded border border-slate-200 text-slate-600 text-[10px] whitespace-nowrap disabled:opacity-40"
-              :disabled="busyId === reservation.id"
-              title="Para quem pagou por PIX e não tem cartão. O consumo passa a ser cobrado por fatura."
-              @click="waiveTokenCard(reservation)"
-            >
-              Dispensar cartão
-            </button>
-          </td>
+            <td class="py-3">
+              <span
+                v-if="reservation.token_card_saved"
+                class="text-xs text-slate-500"
+              >
+                Cartão cadastrado
+              </span>
+              <span
+                v-else-if="reservation.token_card_waived"
+                class="text-xs text-slate-500"
+              >
+                Cobrança por fatura
+              </span>
+              <button
+                v-else
+                type="button"
+                class="px-1.5 py-0.5 rounded border border-slate-200 text-slate-600 text-[10px] whitespace-nowrap disabled:opacity-40"
+                :disabled="busyId === reservation.id"
+                title="Para quem pagou por PIX e não tem cartão. O consumo passa a ser cobrado por fatura."
+                @click="waiveTokenCard(reservation)"
+              >
+                Dispensar cartão
+              </button>
+            </td>
 
-          <td class="py-3 text-right">
-            <div class="flex gap-1.5 justify-end">
-              <!-- Same composed WhatsApp message the Quotes screen offers,
+            <td class="py-3 text-right">
+              <div class="flex gap-1.5 justify-end">
+                <!-- Same composed WhatsApp message the Quotes screen offers,
                    so a seller who needs to re-send the reservation link
                    pastes exactly the copy the team agreed on. Disabled
                    when there is no `reserved_until` yet — the message
                    has a "até X" sentence that only reads right with an X. -->
-              <button
-                type="button"
-                class="px-1.5 py-0.5 rounded border border-slate-200 text-slate-600 text-[10px] whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
-                :disabled="!canCopyMessage(reservation)"
-                :title="
-                  canCopyMessage(reservation)
-                    ? ''
-                    : 'Reserve a proposta para gerar a mensagem.'
-                "
-                @click="
-                  copy(reservation, 'message', reservationMessage(reservation))
-                "
-              >
-                {{
-                  wasCopied(reservation, 'message') ? 'Copiada!' : 'Mensagem'
-                }}
-              </button>
-              <button
-                type="button"
-                class="px-1.5 py-0.5 rounded border border-slate-200 text-slate-600 text-[10px] whitespace-nowrap"
-                @click="copy(reservation, 'link', reservation.public_url)"
-              >
-                {{ wasCopied(reservation, 'link') ? 'Copiado!' : 'Link' }}
-              </button>
-              <button
-                type="button"
-                class="px-1.5 py-0.5 rounded border border-slate-200 text-slate-600 text-[10px] whitespace-nowrap"
-                :title="`Código de acesso: ${reservation.access_code}`"
-                @click="copy(reservation, 'code', reservation.access_code)"
-              >
-                {{
-                  wasCopied(reservation, 'code')
-                    ? 'Copiado!'
-                    : reservation.access_code
-                }}
-              </button>
-              <!-- Only appears on a past-deadline reservation. Opens a modal
+                <button
+                  type="button"
+                  class="px-1.5 py-0.5 rounded border border-slate-200 text-slate-600 text-[10px] whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
+                  :disabled="!canCopyMessage(reservation)"
+                  :title="
+                    canCopyMessage(reservation)
+                      ? ''
+                      : 'Reserve a proposta para gerar a mensagem.'
+                  "
+                  @click="
+                    copy(
+                      reservation,
+                      'message',
+                      reservationMessage(reservation)
+                    )
+                  "
+                >
+                  {{
+                    wasCopied(reservation, 'message') ? 'Copiada!' : 'Mensagem'
+                  }}
+                </button>
+                <button
+                  type="button"
+                  class="px-1.5 py-0.5 rounded border border-slate-200 text-slate-600 text-[10px] whitespace-nowrap"
+                  @click="copy(reservation, 'link', reservation.public_url)"
+                >
+                  {{ wasCopied(reservation, 'link') ? 'Copiado!' : 'Link' }}
+                </button>
+                <button
+                  type="button"
+                  class="px-1.5 py-0.5 rounded border border-slate-200 text-slate-600 text-[10px] whitespace-nowrap"
+                  :title="`Código de acesso: ${reservation.access_code}`"
+                  @click="copy(reservation, 'code', reservation.access_code)"
+                >
+                  {{
+                    wasCopied(reservation, 'code')
+                      ? 'Copiado!'
+                      : reservation.access_code
+                  }}
+                </button>
+                <!-- Only appears on a past-deadline reservation. Opens a modal
                    with a new deadline; posts to the same reserve endpoint
                    the wizard uses (Sales::ReserveQuoteService handles both
                    first-reserve and renewal). -->
-              <button
-                v-if="isExpired(reservation)"
-                type="button"
-                class="px-1.5 py-0.5 rounded border border-woot-200 text-woot-600 text-[10px] whitespace-nowrap"
-                @click="openRenew(reservation)"
+                <button
+                  v-if="isExpired(reservation)"
+                  type="button"
+                  class="px-1.5 py-0.5 rounded border border-woot-200 text-woot-600 text-[10px] whitespace-nowrap"
+                  @click="openRenew(reservation)"
+                >
+                  Renovar
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <tr
+            v-if="isExpanded(reservation)"
+            class="bg-slate-50 border-b border-slate-100"
+          >
+            <td colspan="8" class="px-4 py-3">
+              <div
+                class="text-[10px] uppercase tracking-wide text-slate-500 mb-2"
               >
-                Renovar
-              </button>
-            </div>
-          </td>
-        </tr>
+                Itens contratados
+              </div>
+              <ul v-if="reservation.items?.length" class="space-y-1 text-sm">
+                <li
+                  v-for="item in reservation.items"
+                  :key="item.id"
+                  class="flex justify-between text-slate-700"
+                >
+                  <span>
+                    {{ item.name }}
+                    <span v-if="item.quantity > 1" class="text-slate-400">
+                      × {{ item.quantity }}
+                    </span>
+                    <span class="text-slate-400 ml-1">
+                      ({{ itemPeriodLabel(item) }})
+                    </span>
+                  </span>
+                  <span class="text-slate-700 whitespace-nowrap ml-4">
+                    {{ formatAmount(item.total_amount) }}
+                  </span>
+                </li>
+              </ul>
+              <p v-else class="text-xs text-slate-400">
+                Nenhum item na proposta.
+              </p>
+              <div
+                class="mt-3 pt-2 border-t border-slate-200 text-xs flex justify-between text-slate-500"
+              >
+                <span>Subtotal</span>
+                <span class="whitespace-nowrap">
+                  {{ formatAmount(reservation.subtotal_amount) }}
+                </span>
+              </div>
+              <div
+                v-if="reservation.discount_amount > 0"
+                class="mt-1 text-xs flex justify-between text-green-700"
+              >
+                <span>
+                  Desconto{{
+                    reservation.discount_summary
+                      ? ` (${reservation.discount_summary})`
+                      : ''
+                  }}
+                </span>
+                <span class="whitespace-nowrap ml-4">
+                  − {{ formatAmount(reservation.discount_amount) }}
+                </span>
+              </div>
+              <div
+                class="mt-1 text-sm font-medium flex justify-between text-slate-900"
+              >
+                <span>Total</span>
+                <span class="whitespace-nowrap">
+                  {{ formatAmount(reservation.total_amount) }}
+                </span>
+              </div>
+            </td>
+          </tr>
+        </template>
 
         <tr v-if="!reservations.length">
           <td colspan="8" class="py-6 text-center text-slate-400">
