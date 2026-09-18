@@ -26,10 +26,14 @@ module Sales::ProposalsHelper
     GlobalConfig.get('INSTALLATION_NAME')['INSTALLATION_NAME'].presence || 'AurisChat'
   end
 
-  # The company's own static PIX code, configured once in Settings, carrying the
-  # total of this proposal — so the customer confirms an amount instead of
-  # typing one they read minutes ago.
+  # Prefers the dynamic PIX cob Inter issued for this proposal — it already
+  # carries the txid the Inter webhook uses to auto-reconcile the payment.
+  # Falls back to the company's static PIX code (configured in Settings),
+  # with the proposal's amount injected so the customer confirms an amount
+  # instead of typing one they read minutes ago.
   def pix_payload(proposal)
+    return proposal.inter_pix_payload if proposal.inter_pix_payload.present?
+
     configured = GlobalConfig.get('SALES_PIX_PAYLOAD')['SALES_PIX_PAYLOAD'].presence
     return nil if configured.blank?
 

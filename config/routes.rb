@@ -790,6 +790,7 @@ Rails.application.routes.draw do
   # Cloud billing webhook, which listens on the enterprise namespace.
   post 'webhooks/commercial/stripe', to: 'webhooks/commercial/stripe#process_payload'
   post 'webhooks/commercial/asaas', to: 'webhooks/commercial/asaas#process_payload'
+  post 'webhooks/commercial/inter/:token', to: 'webhooks/commercial/inter#process_payload'
 
   namespace :twitter do
     resource :callback, only: [:show]

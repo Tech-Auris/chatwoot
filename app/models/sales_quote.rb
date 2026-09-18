@@ -24,6 +24,8 @@
 #  currency                 :string           default("brl"), not null
 #  discount_amount          :integer          default(0), not null
 #  discount_summary         :string
+#  inter_pix_payload        :text
+#  inter_txid               :string
 #  meeting_discount         :boolean          default(FALSE), not null
 #  payment_method           :integer
 #  prospect_document        :string
@@ -55,6 +57,7 @@
 #
 #  index_sales_quotes_on_account_id       (account_id)
 #  index_sales_quotes_on_clickup_task_id  (clickup_task_id)
+#  index_sales_quotes_on_inter_txid       (inter_txid) UNIQUE WHERE (inter_txid IS NOT NULL)
 #  index_sales_quotes_on_public_token     (public_token) UNIQUE
 #  index_sales_quotes_on_seller_id        (seller_id)
 #  index_sales_quotes_on_status           (status)

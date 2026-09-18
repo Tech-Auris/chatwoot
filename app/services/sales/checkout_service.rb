@@ -103,6 +103,7 @@ class Sales::CheckoutService
   def await_manual_payment
     quote.update!(status: :signed)
     quote.events.create!(event: 'awaiting_pix_payment', metadata: { total: quote.total_amount })
+    Sales::InterPixCobService.new(quote: quote).ensure_cob!
 
     Result.new(quote: quote, awaiting_manual_payment: true)
   end
