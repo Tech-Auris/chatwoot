@@ -22,12 +22,15 @@ RSpec.describe Sales::ReserveQuoteService do
     expect(result.quote.reload).to have_attributes(status: 'reserved', reserved_until: deadline)
   end
 
-  # ClickUp takes epoch milliseconds; sending seconds would date the task to 1970.
-  it 'mirrors the deadline onto the ClickUp task in milliseconds' do
+  # ClickUp takes epoch milliseconds; sending seconds would date the task
+  # to 1970. The reservation deadline is a day, not a moment, so it goes
+  # normalised to midnight of that day with `due_date_time: false` — the
+  # task on the pipeline reads "Sep 25" instead of "Sep 25, 20:59".
+  it 'mirrors the deadline onto the ClickUp task as a date-only field' do
     reserve
 
     expect(client).to have_received(:update_task)
-      .with('86ak7rd8j', hash_including(due_date: deadline.to_i * 1000))
+      .with('86ak7rd8j', hash_including(due_date: deadline.beginning_of_day.to_i * 1000, due_date_time: false))
   end
 
   it 'tags the task so the pipeline shows it is reserved' do
@@ -100,7 +103,8 @@ RSpec.describe Sales::ReserveQuoteService do
       reserve(quote, new_deadline)
 
       expect(quote.reload.reserved_until).to eq(new_deadline)
-      expect(client).to have_received(:update_task).with('86ak7rd8j', hash_including(due_date: new_deadline.to_i * 1000))
+      expect(client).to have_received(:update_task)
+        .with('86ak7rd8j', hash_including(due_date: new_deadline.beginning_of_day.to_i * 1000, due_date_time: false))
     end
 
     # The trail separates the first hold from a renewal, which is what the
