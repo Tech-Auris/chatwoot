@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Spinner from 'shared/components/Spinner.vue';
@@ -89,6 +89,19 @@ const headerFileInput = ref(null);
 
 const bodyText = ref('');
 const bodySamples = ref({});
+// Auto-grow: the body sits fixed at six rows by default, but long templates
+// need more room without forcing the operator to hand-drag the corner. We
+// reset the height to `auto` first so shrinking on delete works, then set
+// it back to whatever the browser reports as the content's scrollHeight.
+const bodyTextarea = ref(null);
+const resizeBodyTextarea = () => {
+  const el = bodyTextarea.value;
+  if (!el) return;
+  el.style.height = 'auto';
+  el.style.height = `${el.scrollHeight}px`;
+};
+watch(bodyText, () => nextTick(resizeBodyTextarea));
+onMounted(() => nextTick(resizeBodyTextarea));
 
 const footerEnabled = ref(false);
 const footerText = ref('');
@@ -671,10 +684,11 @@ const cancel = () => emit('cancel');
       <label class="flex flex-col gap-1 text-xs text-n-slate-11">
         {{ t('META_TEMPLATES.NEW.FIELDS.BODY') }}
         <textarea
+          ref="bodyTextarea"
           v-model="bodyText"
           rows="6"
           :maxlength="BODY_MAX"
-          class="bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg px-3 py-2 text-sm text-n-slate-12 focus:outline-n-brand placeholder:text-n-slate-10 resize-y"
+          class="bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg px-3 py-2 text-sm text-n-slate-12 focus:outline-n-brand placeholder:text-n-slate-10 resize-y overflow-hidden"
           :placeholder="t('META_TEMPLATES.NEW.FIELDS.BODY_PLACEHOLDER')"
         />
         <span class="text-xxs text-n-slate-10">
