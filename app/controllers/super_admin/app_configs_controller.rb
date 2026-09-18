@@ -49,9 +49,20 @@ class SuperAdmin::AppConfigsController < SuperAdmin::ApplicationController
       # installation — every Financeiro screen reads it through
       # Integrations::Stripe::Client.
       'stripe' => %w[STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET],
-      # AsaaS is one of the two places PIX money comes in through, next to
-      # Banco Inter, and today it is only recorded by hand on the invoices.
-      'asaas' => %w[ASAAS_API_KEY ASAAS_MAX_INSTALLMENTS],
+      # AsaaS is where card and boleto instalment sales are charged. The
+      # webhook token guards the endpoint that auto-reconciles each parcel
+      # so the finance team stops confirming boleto carnês by hand.
+      'asaas' => %w[ASAAS_API_KEY ASAAS_MAX_INSTALLMENTS ASAAS_WEBHOOK_TOKEN],
+      # Banco Inter is where PIX à-vista sales are charged. Every PIX sale
+      # opens a dynamic cob tied to its own txid, and the webhook lands with
+      # that same txid so the sale converts on its own. mTLS credentials
+      # live here too — production terminates the webhook mTLS at the
+      # reverse proxy on top of the shared secret in the URL path.
+      'inter' => %w[INTER_CLIENT_ID INTER_CLIENT_SECRET INTER_CERT_PEM INTER_KEY_PEM INTER_PIX_KEY INTER_WEBHOOK_TOKEN],
+      # Google Ads OAuth app credentials the Marketing Analytics integration
+      # uses to refresh per-account tokens on spend syncs and conversion
+      # uploads. Separate from GOOGLE_OAUTH_* (used for user login).
+      'google_ads' => %w[GOOGLE_ADS_OAUTH_CLIENT_ID GOOGLE_ADS_OAUTH_CLIENT_SECRET],
       # The page a prospect opens. It is not the console and not the product:
       # it carries the sales logo and the PIX code the company is paid to.
       'commercial' => %w[SALES_PROPOSAL_LOGO SALES_PIX_PAYLOAD SALES_TERMS_URL]

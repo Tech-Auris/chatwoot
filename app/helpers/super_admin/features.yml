@@ -164,7 +164,19 @@ commercial:
   config_key: 'commercial'
 asaas:
   name: 'AsaaS'
-  description: 'API key of the AsaaS account money comes in through'
+  description: 'API key of the AsaaS account money comes in through, plus the webhook token that auto-reconciles each parcel of a card or boleto sale.'
   enabled: true
   icon: 'icon-money-dollar-circle-line'
   config_key: 'asaas'
+inter:
+  name: 'Banco Inter'
+  description: 'OAuth credentials, mTLS material and PIX key for the Banco Inter integration that opens a dynamic PIX cob per sale and auto-reconciles payments through the webhook.'
+  enabled: true
+  icon: 'icon-money-dollar-circle-line'
+  config_key: 'inter'
+google_ads:
+  name: 'Google Ads'
+  description: 'OAuth app credentials the Marketing Analytics integration uses to refresh per-account tokens on spend sync and conversion uploads.'
+  enabled: true
+  icon: 'icon-google-fill'
+  config_key: 'google_ads'
