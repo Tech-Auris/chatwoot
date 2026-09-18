@@ -3,6 +3,33 @@
 # every time AsaaS reports a status change on a payment, so the audit trail
 # holds the full history of every parcel (paid, overdue, refunded) without
 # the finance team having to poll AsaaS by hand.
+# == Schema Information
+#
+# Table name: sales_asaas_installment_payments
+#
+#  id                   :bigint           not null, primary key
+#  amount_cents         :integer          default(0), not null
+#  due_date             :date
+#  installment_number   :integer
+#  paid_at              :datetime
+#  payload              :jsonb            not null
+#  status               :integer          default("pending"), not null
+#  created_at           :datetime         not null
+#  updated_at           :datetime         not null
+#  asaas_installment_id :string           not null
+#  asaas_payment_id     :string           not null
+#  sales_quote_id       :bigint           not null
+#
+# Indexes
+#
+#  index_sales_asaas_installment_payments_on_asaas_installment_id  (asaas_installment_id)
+#  index_sales_asaas_installment_payments_on_asaas_payment_id      (asaas_payment_id) UNIQUE
+#  index_sales_asaas_installment_payments_on_sales_quote_id        (sales_quote_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (sales_quote_id => sales_quotes.id)
+#
 class SalesAsaasInstallmentPayment < ApplicationRecord
   belongs_to :sales_quote
 
