@@ -698,11 +698,13 @@ const menuItems = computed(() => {
           name: 'Pixel',
           label: t('SIDEBAR.PIXEL'),
           to: accountScopedRoute('marketing_settings_index'),
+          tag: 'BETA',
         },
         {
           name: 'Analytics',
           label: t('SIDEBAR.ANALYTICS'),
           to: accountScopedRoute('marketing_analytics_index'),
+          tag: 'BETA',
         },
       ],
     },
