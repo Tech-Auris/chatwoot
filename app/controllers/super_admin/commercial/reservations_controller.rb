@@ -16,6 +16,7 @@ class SuperAdmin::Commercial::ReservationsController < SuperAdmin::ApplicationCo
     quote = SalesQuote.find(params[:id])
     quote.update!(token_card_waived_at: Time.current)
     quote.events.create!(event: 'token_card_waived', metadata: { super_admin_id: current_super_admin.id })
+    Sales::ClickupCrmSyncJob.perform_later(quote.id, 'closed')
 
     render json: { reservation: serialize(quote) }
   end

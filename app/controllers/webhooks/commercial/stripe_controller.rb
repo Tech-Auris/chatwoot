@@ -44,10 +44,12 @@ class Webhooks::Commercial::StripeController < ActionController::API
     quote.update!(status: :paid)
     quote.events.create!(event: 'payment_confirmed', metadata: { session_id: session['id'] })
     Sales::ConvertQuoteService.new(quote: quote).perform
+    Sales::ClickupCrmSyncJob.perform_later(quote.id, 'paid_fields')
   end
 
   def record_token_card(quote, session)
     quote.update!(token_payment_method_id: session['setup_intent'])
     quote.events.create!(event: 'token_card_saved', metadata: { session_id: session['id'] })
+    Sales::ClickupCrmSyncJob.perform_later(quote.id, 'closed')
   end
 end
