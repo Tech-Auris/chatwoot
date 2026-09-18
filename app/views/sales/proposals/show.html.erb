@@ -50,7 +50,7 @@
     <% if @proposal.discount_amount.positive? %>
       <div class="flex justify-between text-green-700 mt-1">
         <span>Desconto<%= " (#{@proposal.discount_summary})" if @proposal.discount_summary %></span>
-        <span>− <%= proposal_amount(@proposal.discount_amount) %></span>
+        <span class="whitespace-nowrap">− <%= proposal_amount(@proposal.discount_amount) %></span>
       </div>
     <% end %>
     <%# On a semiannual/annual plan, the Total value is replaced by two
