@@ -452,6 +452,32 @@ RSpec.describe 'Public sales proposal', type: :request do
       expect(response).to redirect_to('https://www.asaas.com/c/pay_link_1')
     end
 
+    it 'offers boleto as a third option on a long plan' do
+      get "/proposals/#{quote.public_token}/pagamento"
+
+      expect(response.body).to include('Boleto')
+    end
+
+    it 'sends a long plan paid by boleto to an AsaaS boleto link' do
+      asaas = instance_double(Integrations::Asaas::Client)
+      allow(Integrations::Asaas::Client).to receive(:new).and_return(asaas)
+      allow(asaas).to receive(:create_payment_link)
+        .and_return({ 'id' => 'pay_link_boleto', 'url' => 'https://www.asaas.com/c/pay_link_boleto' })
+
+      sign_and_pay(method: 'boleto')
+
+      expect(response).to redirect_to('https://www.asaas.com/c/pay_link_boleto')
+      expect(asaas).to have_received(:create_payment_link).with(hash_including(billing_type: 'BOLETO'))
+    end
+
+    it 'does not offer boleto on a monthly plan' do
+      quote.update!(billing_cycle: :monthly)
+
+      get "/proposals/#{quote.public_token}/pagamento"
+
+      expect(response.body).not_to include('Boleto')
+    end
+
     it 'sends a monthly plan paid by card to the Stripe checkout' do
       quote.update!(billing_cycle: :monthly)
 
@@ -589,6 +615,18 @@ RSpec.describe 'Public sales proposal', type: :request do
       get "/proposals/#{quote.public_token}/acompanhamento"
 
       expect(response.body).to include('Aguardando a confirmação do seu PIX')
+    end
+
+    # A customer who closed the AsaaS tab needs a way back to their barcode /
+    # PDF; the button on the status page is that way back.
+    it 'lets a boleto customer reopen the AsaaS link' do
+      quote.update!(status: :signed, payment_method: :boleto,
+                    asaas_payment_link_url: 'https://www.asaas.com/c/pay_link_boleto')
+
+      get "/proposals/#{quote.public_token}/acompanhamento"
+
+      expect(response.body).to include('Abrir o boleto')
+      expect(response.body).to include('https://www.asaas.com/c/pay_link_boleto')
     end
 
     it 'says the access is being created once the payment landed' do

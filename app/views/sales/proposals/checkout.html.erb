@@ -64,6 +64,18 @@
           <% end %>
         </span>
       </label>
+
+      <% if @boleto_available %>
+        <label class="flex items-center gap-2 mt-3 text-sm text-slate-700">
+          <%= f.radio_button :payment_method, 'boleto' %>
+          <span>
+            Boleto
+            <% if @max_installments > 1 %>
+              <span class="text-slate-500">— em até <%= @max_installments %>x</span>
+            <% end %>
+          </span>
+        </label>
+      <% end %>
     </fieldset>
 
     <div>

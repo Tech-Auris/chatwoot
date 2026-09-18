@@ -36,8 +36,9 @@ class Sales::CheckoutService
     quote.update!(payment_method: payment_method)
 
     return await_manual_payment if payment_method == 'pix'
+    return start_asaas_checkout(billing_type: 'BOLETO') if payment_method == 'boleto'
 
-    return start_asaas_checkout if self.class.card_provider_for(quote.billing_cycle) == :asaas
+    return start_asaas_checkout(billing_type: 'CREDIT_CARD') if self.class.card_provider_for(quote.billing_cycle) == :asaas
 
     start_card_checkout
   end
@@ -62,13 +63,13 @@ class Sales::CheckoutService
     billing_cycle.to_s == 'monthly' ? :stripe : :asaas
   end
 
-  # PIX is settled by hand against a period the customer already paid for, so
-  # it is offered on the long plans only — a monthly one would mean chasing a
-  # transfer every month.
+  # PIX and boleto are settled by hand against a period the customer already
+  # paid for, so both are offered on the long plans only — a monthly one would
+  # mean chasing a transfer every month, or reissuing a boleto every month.
   def self.offers?(payment_method, billing_cycle)
     return true if payment_method.to_s == 'card'
 
-    payment_method.to_s == 'pix' && billing_cycle.to_s != 'monthly'
+    %w[pix boleto].include?(payment_method.to_s) && billing_cycle.to_s != 'monthly'
   end
 
   # What the customer saves by paying with PIX on a longer plan.
@@ -123,19 +124,22 @@ class Sales::CheckoutService
     Rails.logger.info("[sales] asaas link #{quote.asaas_payment_link_id} not removed: #{e.message}")
   end
 
-  # The card in instalments, charged by AsaaS. The link is generic — it carries
-  # no customer — so the payment comes back to us through the same manual
-  # confirmation a PIX does.
-  def start_asaas_checkout
+  # The long plan charged by AsaaS — in instalments on a credit card
+  # (`billing_type: 'CREDIT_CARD'`) or as a parcelled boleto
+  # (`billing_type: 'BOLETO'`). The link is generic — it carries no customer —
+  # so the payment comes back to us through the same manual confirmation a
+  # PIX does.
+  def start_asaas_checkout(billing_type:)
     link = asaas_client.create_payment_link(
       name: "AurisChat — #{quote.prospect_name}",
       description: quote.discount_summary.presence,
       value_cents: quote.total_amount,
-      max_installment_count: self.class.max_installments_for(quote.billing_cycle)
+      max_installment_count: self.class.max_installments_for(quote.billing_cycle),
+      billing_type: billing_type
     )
 
     quote.update!(status: :signed, asaas_payment_link_id: link['id'], asaas_payment_link_url: link['url'])
-    quote.events.create!(event: 'asaas_link_created', metadata: { link_id: link['id'], url: link['url'] })
+    quote.events.create!(event: 'asaas_link_created', metadata: { link_id: link['id'], url: link['url'], billing_type: billing_type })
 
     Result.new(quote: quote, checkout_url: link['url'], awaiting_manual_payment: false)
   end

@@ -79,7 +79,13 @@ class SalesQuote < ApplicationRecord
   # the enum's declared order carries the lifecycle, the underlying
   # numbers only need to stay unique.
   enum :status, { draft: 0, reserved: 1, details_confirmed: 7, signed: 2, paid: 3, converted: 4, expired: 5, cancelled: 6 }
-  enum :payment_method, { pix: 0, card: 1 }, prefix: true
+  # Boleto is a paid-once AsaaS payment link (same shape as the semiannual /
+  # annual card, `billingType: BOLETO` instead of `CREDIT_CARD`). Not offered on
+  # monthly plans because renewing a monthly boleto every month is more manual
+  # work than it saves. Boleto sits at list price like the card — the PIX
+  # à-vista discount is a courtesy for a customer paying us directly, not for
+  # one whose bank compensates the boleto D+1.
+  enum :payment_method, { pix: 0, card: 1, boleto: 2 }, prefix: true
   enum :billing_cycle, { monthly: 0, semiannual: 1, annual: 2 }, prefix: true
 
   validates :public_token, presence: true, uniqueness: true

@@ -1,6 +1,6 @@
-# The first AsaaS card payment of a sale: the customer paid the instalment
-# plan on the AsaaS link and the finance team confirmed it in the AsaaS
-# dashboard. From here the proposal becomes an account.
+# The first AsaaS payment of a sale — card in instalments or parcelled
+# boleto: the customer paid on the AsaaS link and the finance team confirmed
+# it in the AsaaS dashboard. From here the proposal becomes an account.
 #
 # Runs the same conversion the PIX flow does — creates a Stripe customer,
 # rides a one-off "paid out of band" invoice through Stripe so the books
@@ -19,7 +19,7 @@ class Sales::RegisterAsaasPaymentService
   end
 
   def perform # rubocop:disable Metrics/AbcSize
-    raise InvalidTransition, 'Esta proposta não é de pagamento por cartão' unless quote.payment_method_card?
+    raise InvalidTransition, 'Esta proposta não é de pagamento pelo AsaaS' unless quote.payment_method_card? || quote.payment_method_boleto?
     raise InvalidTransition, 'Esta proposta já foi paga' if quote.account_id.present?
     # The link has to exist for AsaaS to have taken the payment; running this
     # on a proposal that never reached AsaaS would mean confirming a payment

@@ -189,6 +189,18 @@ RSpec.describe 'Super Admin Commercial Reservations', type: :request do
       expect(by_id[awaiting.id]['awaiting_asaas_confirmation']).to be(true)
       expect(by_id[negotiating.id]['awaiting_asaas_confirmation']).to be(false)
     end
+
+    # Boleto sits on the same AsaaS link a card sale sits on — same button.
+    it 'flags AsaaS boleto sales awaiting confirmation' do
+      boleto = create(:sales_quote, status: :signed, payment_method: :boleto, billing_cycle: :annual,
+                                    clickup_status: 'em análise', reserved_until: 4.days.from_now,
+                                    asaas_payment_link_id: 'link_boleto')
+
+      get '/super_admin/commercial/reservations/data'
+
+      by_id = response.parsed_body['reservations'].index_by { |row| row['id'] }
+      expect(by_id[boleto.id]['awaiting_asaas_confirmation']).to be(true)
+    end
   end
 
   describe 'POST /super_admin/commercial/reservations/:id/register_asaas_payment' do
@@ -223,7 +235,7 @@ RSpec.describe 'Super Admin Commercial Reservations', type: :request do
       post "/super_admin/commercial/reservations/#{quote.id}/register_asaas_payment"
 
       expect(response).to have_http_status(:unprocessable_entity)
-      expect(response.parsed_body['error']).to match(/não é de pagamento por cartão/)
+      expect(response.parsed_body['error']).to match(/não é de pagamento pelo AsaaS/)
     end
   end
 end

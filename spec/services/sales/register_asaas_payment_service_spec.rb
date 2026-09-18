@@ -39,7 +39,15 @@ RSpec.describe Sales::RegisterAsaasPaymentService do
     quote.update!(payment_method: :pix)
 
     expect { described_class.new(quote: quote, client: client).perform }
-      .to raise_error(described_class::InvalidTransition, /não é de pagamento por cartão/)
+      .to raise_error(described_class::InvalidTransition, /não é de pagamento pelo AsaaS/)
+  end
+
+  # Boleto rides the same AsaaS link the card sale rides — same reconciliation.
+  it 'accepts a proposal paid by boleto' do
+    quote.update!(payment_method: :boleto)
+
+    expect { described_class.new(quote: quote, client: client).perform }.not_to raise_error
+    expect(quote.reload.status).to eq('converted')
   end
 
   it 'refuses a proposal that never reached AsaaS' do

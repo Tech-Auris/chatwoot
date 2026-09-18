@@ -1,6 +1,7 @@
 # Thin HTTP wrapper around the AsaaS REST API, which is where a long plan paid
-# by card in instalments is charged — Stripe carries the monthly subscription,
-# and PIX comes in through Banco Inter.
+# in instalments is charged — Stripe carries the monthly subscription, and PIX
+# à-vista comes in through Banco Inter. AsaaS covers both the card link and
+# the boleto link — same endpoint, `billingType` picks which.
 #
 # Only the payment link endpoint is exposed, which is all the sales flow needs:
 # the customer opens the link, picks how many instalments, and the finance team
@@ -34,14 +35,16 @@ class Integrations::Asaas::Client
     sandbox? ? SANDBOX_URL : PRODUCTION_URL
   end
 
-  # A link the customer opens to pay by card in up to `max_installment_count`
-  # instalments. Amounts here are in reais, unlike Stripe, which counts cents.
+  # A link the customer opens to pay a long plan in up to
+  # `max_installment_count` instalments — by credit card (default) or by
+  # boleto, according to `billing_type`. Amounts here are in reais, unlike
+  # Stripe, which counts cents.
   #
   # Notifications are off: the prospect is not a registered AsaaS customer and
   # the sales team is the one talking to them.
-  def create_payment_link(name:, value_cents:, max_installment_count: DEFAULT_MAX_INSTALLMENTS, description: nil)
+  def create_payment_link(name:, value_cents:, max_installment_count: DEFAULT_MAX_INSTALLMENTS, description: nil, billing_type: 'CREDIT_CARD')
     post_json('/paymentLinks', {
-      billingType: 'CREDIT_CARD',
+      billingType: billing_type,
       chargeType: 'INSTALLMENT',
       name: name,
       description: description.presence,
