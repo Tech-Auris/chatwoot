@@ -149,8 +149,24 @@ class SuperAdmin::Commercial::ReservationsController < SuperAdmin::ApplicationCo
       # bundle. Same meaning as before — only the AsaaS-side sales.
       awaiting_asaas_confirmation: awaiting_asaas_confirmation?(quote),
       register_payment_label: register_payment_label(quote),
+      subtotal_amount: quote.subtotal_amount,
+      discount_amount: quote.discount_amount,
+      discount_summary: quote.discount_summary,
+      items: quote.items.map { |item| serialize_item(item) },
       public_url: sales_proposal_url(quote.public_token, host: ENV.fetch('FRONTEND_URL', request.base_url)),
       access_code: quote.access_code
+    }
+  end
+
+  # What the grid's expandable row needs to render the cart lines exactly
+  # like the public proposal reads them.
+  def serialize_item(item)
+    {
+      id: item.id,
+      name: item.name,
+      quantity: item.quantity,
+      total_amount: item.total_amount,
+      recurring_interval: item.recurring_interval
     }
   end
 

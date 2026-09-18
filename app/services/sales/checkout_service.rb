@@ -182,10 +182,12 @@ class Sales::CheckoutService
   end
 
   # AsaaS shows this on the payment page and on the boleto description. The
-  # discount summary the seller wrote already reads well for the customer, so
-  # it doubles as the sentence here when present.
+  # customer is already carried on the AsaaS customer record (name +
+  # cpfCnpj), so keeping the description generic avoids leaking the
+  # ClickUp task name — often "Nome | Demonstração | 5511XXXXX" — into
+  # the AsaaS dashboard as the payment link name.
   def asaas_description
-    ["AurisChat — #{quote.prospect_name}", quote.discount_summary.presence].compact.join(' · ')
+    ['Pagamento Auris', quote.discount_summary.presence].compact.join(' · ')
   end
 
   def asaas_client
