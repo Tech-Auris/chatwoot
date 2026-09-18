@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_09_19_000000) do
+ActiveRecord::Schema[7.1].define(version: 2026_09_19_000001) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -1639,6 +1639,23 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_19_000000) do
     t.index ["account_id", "metric", "date"], name: "index_rollup_timeseries"
   end
 
+  create_table "sales_asaas_installment_payments", force: :cascade do |t|
+    t.bigint "sales_quote_id", null: false
+    t.string "asaas_payment_id", null: false
+    t.string "asaas_installment_id", null: false
+    t.integer "installment_number"
+    t.integer "amount_cents", default: 0, null: false
+    t.integer "status", default: 0, null: false
+    t.date "due_date"
+    t.datetime "paid_at"
+    t.jsonb "payload", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["asaas_installment_id"], name: "index_sales_asaas_installment_payments_on_asaas_installment_id"
+    t.index ["asaas_payment_id"], name: "index_sales_asaas_installment_payments_on_asaas_payment_id", unique: true
+    t.index ["sales_quote_id"], name: "index_sales_asaas_installment_payments_on_sales_quote_id"
+  end
+
   create_table "sales_quote_events", force: :cascade do |t|
     t.bigint "sales_quote_id", null: false
     t.bigint "user_id"
@@ -2051,6 +2068,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_19_000000) do
   add_foreign_key "recurring_scheduled_messages", "accounts"
   add_foreign_key "recurring_scheduled_messages", "conversations"
   add_foreign_key "recurring_scheduled_messages", "inboxes"
+  add_foreign_key "sales_asaas_installment_payments", "sales_quotes"
   add_foreign_key "sales_quote_events", "sales_quotes"
   add_foreign_key "sales_quote_events", "users"
   add_foreign_key "sales_quote_items", "sales_quotes"
