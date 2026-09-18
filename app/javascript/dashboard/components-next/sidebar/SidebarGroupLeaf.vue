@@ -12,6 +12,10 @@ const props = defineProps({
   active: { type: Boolean, default: false },
   component: { type: Function, default: null },
   badgeCount: { type: [Number, String], default: 0 },
+  // Short static pill rendered after the label — used today for "BETA" on
+  // menu items still shipping under a soft launch. Prefer the numeric
+  // badgeCount for anything that changes at runtime.
+  tag: { type: String, default: null },
   hideTreeLine: { type: Boolean, default: false },
   thinTreeLine: { type: Boolean, default: false },
 });
@@ -59,6 +63,12 @@ const TREE_CONNECTOR =
           <Icon :icon="icon" class="size-4 inline-block" />
         </span>
         <div class="flex-1 truncate min-w-0 text-sm">{{ label }}</div>
+        <span
+          v-if="tag"
+          class="text-[10px] leading-none font-bold uppercase tracking-wide text-n-slate-12 bg-lime-300 rounded-full px-1.5 py-0.5"
+        >
+          {{ tag }}
+        </span>
         <SidebarUnreadBadge :count="badgeCount" />
       </template>
     </component>
