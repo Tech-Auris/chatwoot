@@ -1,4 +1,18 @@
 ---
+- tag: v4.15.1-auris.1.58
+  published_at: '2026-09-18T02:00:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.58
+  notes:
+    en: |-
+      ### ⚡ Improvements
+
+      - **Sidebar starts collapsed.** New accounts open with the menu tucked to the left, giving the conversation area more room. Pin it open if you prefer.
+      - **Meta template name checked as you type.** When you create a WhatsApp Meta template, the page tells you right away if the name breaks the format Meta requires — no more surprises on save.
+    pt_BR: |-
+      ### ⚡ Melhorias
+
+      - **Menu lateral inicia recolhido.** Contas novas abrem com o menu encolhido à esquerda, sobrando mais espaço para as conversas. Se preferir, você pode fixar aberto.
+      - **Nome do template Meta conferido ao digitar.** Ao criar um template Meta pro WhatsApp, a página avisa na hora se o nome não segue o formato exigido pela Meta — sem sustos na hora de salvar.
 - tag: v4.15.1-auris.1.57
   published_at: '2026-09-15T18:30:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.57
@@ -283,33 +297,3 @@
       ### 🐛 Correções
 
       - **Ouvir um áudio de novo voltou a funcionar.** Pouco depois de a mensagem de voz chegar, o player passava a mostrar "Áudio indisponível" e só voltava recarregando a página. Agora dá para ouvir quantas vezes precisar.
-- tag: v4.15.1-auris.1.44
-  published_at: '2026-08-15T03:00:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.44
-  notes:
-    en: |-
-      ### ✨ What's new
-
-      - **Filter by AI status.** In the inbox you can now show only the conversations with the AI on, or only the ones with the AI off.
-
-      ### ⚡ Improvements
-
-      - **The new WhatsApp campaign window no longer closes on its own.** Clicking outside it doesn't erase what you filled in — it only closes on Cancel or Create.
-
-      ### 🐛 Fixes
-
-      - **The conversation history shows who turned the AI on or off.** Before, when the change was automatic, it only read "AI turned on", without saying where it came from.
-      - **The funnel no longer shows R$ 0,00.** When the account has no average ticket set, the amounts simply don't appear instead of showing zero.
-    pt_BR: |-
-      ### ✨ Novidades
-
-      - **Filtro por status da IA.** Na caixa de entrada você já pode mostrar só as conversas que estão com a IA ligada, ou só as que estão com a IA desligada.
-
-      ### ⚡ Melhorias
-
-      - **A janela de nova campanha do WhatsApp não fecha mais sozinha.** Clicar fora dela não apaga mais o que você preencheu — ela só fecha em Cancelar ou Criar.
-
-      ### 🐛 Correções
-
-      - **O histórico da conversa mostra quem ligou ou desligou a IA.** Antes, quando a mudança era automática, aparecia só "IA acionada", sem dizer de onde veio.
-      - **O funil não mostra mais R$ 0,00.** Quando a conta não tem ticket médio configurado, os valores simplesmente não aparecem, em vez de mostrar zero.
