@@ -31,7 +31,16 @@
   },
   "MARKETING_ANALYTICS": {
     "TITLE": "Marketing Analytics",
+    "PAGE_TITLE": "Pixel & Data",
     "DESCRIPTION": "Send conversion events to Meta and Google when leads reach a funnel stage, get labeled, or trigger an automation.",
+    "GENERAL": {
+      "TITLE": "General",
+      "DESCRIPTION": "Values used to compute Revenue and ROAS in the Analytics report.",
+      "AVERAGE_TICKET": "Average sale ticket",
+      "CURRENCY_PREFIX": "R$",
+      "SAVE_SUCCESS": "General settings saved",
+      "SAVE_ERROR": "Could not save general settings"
+    },
     "STATUS": "Status",
     "STATUSES": {
       "DISABLED": "Disabled",

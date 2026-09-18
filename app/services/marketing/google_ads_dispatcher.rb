@@ -73,8 +73,8 @@ class Marketing::GoogleAdsDispatcher
     response = HTTParty.post(
       OAUTH_ENDPOINT,
       body: {
-        client_id: ENV.fetch('GOOGLE_ADS_OAUTH_CLIENT_ID'),
-        client_secret: ENV.fetch('GOOGLE_ADS_OAUTH_CLIENT_SECRET'),
+        client_id: GlobalConfigService.load('GOOGLE_ADS_OAUTH_CLIENT_ID', ENV.fetch('GOOGLE_ADS_OAUTH_CLIENT_ID', nil)),
+        client_secret: GlobalConfigService.load('GOOGLE_ADS_OAUTH_CLIENT_SECRET', ENV.fetch('GOOGLE_ADS_OAUTH_CLIENT_SECRET', nil)),
         refresh_token: integration.credentials['oauth_refresh_token'],
         grant_type: 'refresh_token'
       },

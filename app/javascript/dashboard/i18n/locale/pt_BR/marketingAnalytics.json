@@ -31,7 +31,16 @@
   },
   "MARKETING_ANALYTICS": {
     "TITLE": "Marketing Analytics",
+    "PAGE_TITLE": "Pixel e Dados",
     "DESCRIPTION": "Envie eventos de conversão para o Meta e o Google quando um lead atinge uma etapa do funil, recebe uma etiqueta ou uma automação dispara.",
+    "GENERAL": {
+      "TITLE": "Geral",
+      "DESCRIPTION": "Valores usados para calcular Receita e ROAS no relatório de Analytics.",
+      "AVERAGE_TICKET": "Ticket médio de venda",
+      "CURRENCY_PREFIX": "R$",
+      "SAVE_SUCCESS": "Configuração geral salva",
+      "SAVE_ERROR": "Não foi possível salvar as configurações gerais"
+    },
     "STATUS": "Status",
     "STATUSES": {
       "DISABLED": "Desativado",

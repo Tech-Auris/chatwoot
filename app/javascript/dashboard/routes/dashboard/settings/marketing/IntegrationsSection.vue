@@ -231,7 +231,7 @@ const providers = computed(() => [
           <button
             type="submit"
             :disabled="isSaving(provider.key) || !isFormValid(provider.key)"
-            class="rounded bg-n-brand-solid text-white px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+            class="rounded bg-n-brand hover:bg-n-brand/90 text-white px-3 py-1.5 text-sm font-medium disabled:opacity-50"
           >
             {{
               findByProvider(provider.key)

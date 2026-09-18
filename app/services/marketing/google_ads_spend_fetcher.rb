@@ -7,8 +7,9 @@
 # (there's no gclid attribution to a specific ad group ad inside Google Ads
 # offline uploads).
 #
-# OAuth refresh mirrors Marketing::GoogleAdsDispatcher — same env-based OAuth
-# app (GOOGLE_ADS_OAUTH_CLIENT_ID / GOOGLE_ADS_OAUTH_CLIENT_SECRET), same
+# OAuth refresh mirrors Marketing::GoogleAdsDispatcher — same OAuth app
+# whose credentials (GOOGLE_ADS_OAUTH_CLIENT_ID / GOOGLE_ADS_OAUTH_CLIENT_SECRET)
+# live in InstallationConfig (super_admin) with ENV as fallback — and the same
 # per-account refresh_token in `credentials.oauth_refresh_token`.
 class Marketing::GoogleAdsSpendFetcher
   GOOGLE_ADS_API_VERSION = 'v20'.freeze
@@ -44,8 +45,8 @@ class Marketing::GoogleAdsSpendFetcher
     response = HTTParty.post(
       OAUTH_ENDPOINT,
       body: {
-        client_id: ENV.fetch('GOOGLE_ADS_OAUTH_CLIENT_ID'),
-        client_secret: ENV.fetch('GOOGLE_ADS_OAUTH_CLIENT_SECRET'),
+        client_id: GlobalConfigService.load('GOOGLE_ADS_OAUTH_CLIENT_ID', ENV.fetch('GOOGLE_ADS_OAUTH_CLIENT_ID', nil)),
+        client_secret: GlobalConfigService.load('GOOGLE_ADS_OAUTH_CLIENT_SECRET', ENV.fetch('GOOGLE_ADS_OAUTH_CLIENT_SECRET', nil)),
         refresh_token: integration.credentials['oauth_refresh_token'],
         grant_type: 'refresh_token'
       },
