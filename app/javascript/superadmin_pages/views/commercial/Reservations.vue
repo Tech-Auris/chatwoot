@@ -498,7 +498,7 @@ const submitRenew = async () => {
               <button
                 v-else
                 type="button"
-                class="reset-base px-1.5 py-0.5 rounded border border-slate-200 text-slate-600 text-[10px] leading-tight whitespace-nowrap bg-white hover:bg-slate-50 disabled:opacity-40"
+                class="reset-base px-1.5 py-0.5 rounded border border-woot-200 text-woot-600 text-[10px] leading-tight whitespace-nowrap bg-white hover:bg-woot-50 disabled:opacity-40"
                 :disabled="busyId === reservation.id"
                 title="Para quem pagou por PIX e não tem cartão. O consumo passa a ser cobrado por fatura."
                 @click="waiveTokenCard(reservation)"
@@ -516,7 +516,7 @@ const submitRenew = async () => {
                    has a "até X" sentence that only reads right with an X. -->
                 <button
                   type="button"
-                  class="reset-base px-1.5 py-0.5 rounded border border-slate-200 text-slate-600 text-[10px] leading-tight whitespace-nowrap bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                  class="reset-base px-1.5 py-0.5 rounded border border-woot-200 text-woot-600 text-[10px] leading-tight whitespace-nowrap bg-white hover:bg-woot-50 disabled:opacity-40 disabled:cursor-not-allowed"
                   :disabled="!canCopyMessage(reservation)"
                   :title="
                     canCopyMessage(reservation)
@@ -537,14 +537,14 @@ const submitRenew = async () => {
                 </button>
                 <button
                   type="button"
-                  class="reset-base px-1.5 py-0.5 rounded border border-slate-200 text-slate-600 text-[10px] leading-tight whitespace-nowrap bg-white hover:bg-slate-50"
+                  class="reset-base px-1.5 py-0.5 rounded border border-woot-200 text-woot-600 text-[10px] leading-tight whitespace-nowrap bg-white hover:bg-woot-50"
                   @click="copy(reservation, 'link', reservation.public_url)"
                 >
                   {{ wasCopied(reservation, 'link') ? 'Copiado!' : 'Link' }}
                 </button>
                 <button
                   type="button"
-                  class="reset-base px-1.5 py-0.5 rounded border border-slate-200 text-slate-600 text-[10px] leading-tight whitespace-nowrap bg-white hover:bg-slate-50"
+                  class="reset-base px-1.5 py-0.5 rounded border border-woot-200 text-woot-600 text-[10px] leading-tight whitespace-nowrap bg-white hover:bg-woot-50"
                   :title="`Código de acesso: ${reservation.access_code}`"
                   @click="copy(reservation, 'code', reservation.access_code)"
                 >
