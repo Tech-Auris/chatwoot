@@ -789,6 +789,7 @@ Rails.application.routes.draw do
   # Payment confirmations for the commercial flow. Kept apart from the Chatwoot
   # Cloud billing webhook, which listens on the enterprise namespace.
   post 'webhooks/commercial/stripe', to: 'webhooks/commercial/stripe#process_payload'
+  post 'webhooks/commercial/asaas', to: 'webhooks/commercial/asaas#process_payload'
 
   namespace :twitter do
     resource :callback, only: [:show]
