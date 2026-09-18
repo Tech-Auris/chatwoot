@@ -361,7 +361,7 @@ RSpec.describe 'Public sales proposal', type: :request do
       get "/proposals/#{quote.public_token}/pagamento"
 
       expect(response.body).to include('10% de desconto')
-      expect(response.body).to include('em até 12x')
+      expect(response.body).to include('em 12x')
     end
 
     # The signature has to exist before the payment starts, and it has to say
@@ -414,7 +414,7 @@ RSpec.describe 'Public sales proposal', type: :request do
       get "/proposals/#{quote.public_token}/pagamento"
 
       expect(response.body).to include('PIX')
-      expect(response.body).to include('em até 12x')
+      expect(response.body).to include('em 12x')
     end
 
     # "Total" on a monthly plan is the first invoice, setup fee included; what
@@ -437,19 +437,27 @@ RSpec.describe 'Public sales proposal', type: :request do
       get "/proposals/#{quote.public_token}/pagamento"
 
       expect(response.body).to include('Cartão de crédito')
-      expect(response.body).not_to include('em até')
+      expect(response.body).not_to include('em 12x')
       expect(response.body).not_to include('% de desconto')
     end
 
-    it 'sends a long plan paid by card to an AsaaS link' do
+    def stub_asaas_installment(invoice_url:)
       asaas = instance_double(Integrations::Asaas::Client)
       allow(Integrations::Asaas::Client).to receive(:new).and_return(asaas)
-      allow(asaas).to receive(:create_payment_link)
-        .and_return({ 'id' => 'pay_link_1', 'url' => 'https://www.asaas.com/c/pay_link_1' })
+      allow(asaas).to receive(:find_customer).and_return(nil)
+      allow(asaas).to receive(:create_customer).and_return({ 'id' => 'cus_1' })
+      allow(asaas).to receive(:create_installment).and_return({ 'id' => 'inst_1' })
+      allow(asaas).to receive(:list_installment_payments)
+        .and_return([{ 'id' => 'pay_1', 'dueDate' => '2026-09-20', 'invoiceUrl' => invoice_url }])
+      asaas
+    end
+
+    it 'sends a long plan paid by card to the AsaaS invoice URL' do
+      stub_asaas_installment(invoice_url: 'https://www.asaas.com/i/1')
 
       sign_and_pay(method: 'card')
 
-      expect(response).to redirect_to('https://www.asaas.com/c/pay_link_1')
+      expect(response).to redirect_to('https://www.asaas.com/i/1')
     end
 
     it 'offers boleto as a third option on a long plan' do
@@ -458,16 +466,13 @@ RSpec.describe 'Public sales proposal', type: :request do
       expect(response.body).to include('Boleto')
     end
 
-    it 'sends a long plan paid by boleto to an AsaaS boleto link' do
-      asaas = instance_double(Integrations::Asaas::Client)
-      allow(Integrations::Asaas::Client).to receive(:new).and_return(asaas)
-      allow(asaas).to receive(:create_payment_link)
-        .and_return({ 'id' => 'pay_link_boleto', 'url' => 'https://www.asaas.com/c/pay_link_boleto' })
+    it 'sends a long plan paid by boleto to the AsaaS boleto invoice URL' do
+      asaas = stub_asaas_installment(invoice_url: 'https://www.asaas.com/i/boleto_1')
 
       sign_and_pay(method: 'boleto')
 
-      expect(response).to redirect_to('https://www.asaas.com/c/pay_link_boleto')
-      expect(asaas).to have_received(:create_payment_link).with(hash_including(billing_type: 'BOLETO'))
+      expect(response).to redirect_to('https://www.asaas.com/i/boleto_1')
+      expect(asaas).to have_received(:create_installment).with(hash_including(billing_type: 'BOLETO'))
     end
 
     it 'does not offer boleto on a monthly plan' do
@@ -619,14 +624,14 @@ RSpec.describe 'Public sales proposal', type: :request do
 
     # A customer who closed the AsaaS tab needs a way back to their barcode /
     # PDF; the button on the status page is that way back.
-    it 'lets a boleto customer reopen the AsaaS link' do
+    it 'lets a boleto customer reopen the AsaaS invoice link' do
       quote.update!(status: :signed, payment_method: :boleto,
-                    asaas_payment_link_url: 'https://www.asaas.com/c/pay_link_boleto')
+                    asaas_invoice_url: 'https://www.asaas.com/i/boleto_1')
 
       get "/proposals/#{quote.public_token}/acompanhamento"
 
       expect(response.body).to include('Abrir o boleto')
-      expect(response.body).to include('https://www.asaas.com/c/pay_link_boleto')
+      expect(response.body).to include('https://www.asaas.com/i/boleto_1')
     end
 
     it 'says the access is being created once the payment landed' do

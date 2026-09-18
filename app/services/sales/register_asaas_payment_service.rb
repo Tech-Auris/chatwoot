@@ -24,12 +24,12 @@ class Sales::RegisterAsaasPaymentService
     # The link has to exist for AsaaS to have taken the payment; running this
     # on a proposal that never reached AsaaS would mean confirming a payment
     # that has no home in the provider.
-    raise InvalidTransition, 'Esta proposta não passou pelo fluxo AsaaS' if quote.asaas_payment_link_id.blank?
+    raise InvalidTransition, 'Esta proposta não passou pelo fluxo AsaaS' if quote.asaas_installment_id.blank?
 
     settle_in_stripe
     quote.update!(status: :paid)
     quote.events.create!(event: 'asaas_payment_registered',
-                         metadata: { asaas_payment_link_id: quote.asaas_payment_link_id, total: quote.total_amount })
+                         metadata: { asaas_installment_id: quote.asaas_installment_id, total: quote.total_amount })
 
     account = Sales::ConvertQuoteService.new(quote: quote).perform.account
     Result.new(quote: quote.reload, account: account)
@@ -56,7 +56,7 @@ class Sales::RegisterAsaasPaymentService
       items: [{ description: "AurisChat — #{quote.prospect_name}", unit_amount: quote.total_amount, quantity: 1 }],
       days_until_due: 1,
       description: quote.discount_summary.presence,
-      metadata: { sales_quote_id: quote.id, asaas_payment_link_id: quote.asaas_payment_link_id }
+      metadata: { sales_quote_id: quote.id, asaas_installment_id: quote.asaas_installment_id }
     )
     client.pay_invoice_out_of_band(invoice.id, paid_via: 'asaas')
     quote.update!(stripe_invoice_id: invoice.id)

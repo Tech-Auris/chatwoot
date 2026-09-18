@@ -59,8 +59,8 @@
         <%= f.radio_button :payment_method, 'card', checked: !@pix_available %>
         <span>
           Cartão de crédito
-          <% if @max_installments > 1 %>
-            <span class="text-slate-500">— em até <%= @max_installments %>x</span>
+          <% if @installments > 1 %>
+            <span class="text-slate-500">— em <%= @installments %>x</span>
           <% end %>
         </span>
       </label>
@@ -70,8 +70,8 @@
           <%= f.radio_button :payment_method, 'boleto' %>
           <span>
             Boleto
-            <% if @max_installments > 1 %>
-              <span class="text-slate-500">— em até <%= @max_installments %>x</span>
+            <% if @installments > 1 %>
+              <span class="text-slate-500">— <%= @installments %> parcelas mensais</span>
             <% end %>
           </span>
         </label>

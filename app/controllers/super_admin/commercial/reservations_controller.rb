@@ -131,7 +131,7 @@ class SuperAdmin::Commercial::ReservationsController < SuperAdmin::ApplicationCo
   end
 
   def awaiting_asaas_confirmation?(quote)
-    quote.signed? && (quote.payment_method_card? || quote.payment_method_boleto?) && quote.asaas_payment_link_id.present?
+    quote.signed? && (quote.payment_method_card? || quote.payment_method_boleto?) && quote.asaas_installment_id.present?
   end
 
   def pagination_meta
