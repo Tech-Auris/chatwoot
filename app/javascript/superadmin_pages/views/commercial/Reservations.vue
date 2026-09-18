@@ -398,12 +398,12 @@ const submitRenew = async () => {
         <tr class="text-left text-slate-500 border-b border-slate-100">
           <th class="py-2">Cliente</th>
           <th class="py-2">Vendedor</th>
-          <th class="py-2">Status no ClickUp</th>
+          <th class="py-2 whitespace-nowrap">Status Ck</th>
           <th class="py-2">Situação</th>
-          <th class="py-2 text-right">Valor</th>
+          <th class="py-2 text-right whitespace-nowrap">Valor</th>
           <th class="py-2 text-right">Reserva até</th>
           <th class="py-2">Tokens</th>
-          <th class="py-2 text-right">Envio ao cliente</th>
+          <th class="py-2">Envio ao cliente</th>
         </tr>
       </thead>
       <tbody>
@@ -426,7 +426,7 @@ const submitRenew = async () => {
               {{ reservation.seller_name || '—' }}
             </td>
 
-            <td class="py-3">
+            <td class="py-3 whitespace-nowrap">
               <a
                 :href="reservation.clickup_url"
                 target="_blank"
@@ -448,20 +448,27 @@ const submitRenew = async () => {
                  (PIX, AsaaS card or AsaaS boleto) needs somebody to click
                  here. One click creates the Stripe customer + invoice and
                  the AurisChat account. PIX opens a small modal first to
-                 pick where the transfer came in. -->
-              <button
+                 pick where the transfer came in. The wrapping <div> keeps
+                 the button on its own line under the situation pill; the
+                 `reset-base` opts out of the admin's default filled-blue
+                 button styling so the inline utility classes take. -->
+              <div
                 v-if="reservation.awaiting_manual_payment_confirmation"
-                type="button"
-                class="mt-1 block px-2 py-0.5 rounded border border-green-200 text-green-700 text-[10px] whitespace-nowrap disabled:opacity-40"
-                :disabled="busyId === reservation.id"
-                title="Confirma o pagamento, cria o cliente e a fatura no Stripe, e converte a proposta em conta."
-                @click="openRegisterPayment(reservation)"
+                class="mt-1"
               >
-                Registrar pagamento · {{ reservation.register_payment_label }}
-              </button>
+                <button
+                  type="button"
+                  class="reset-base px-1.5 py-0.5 rounded border border-green-200 text-green-700 text-[10px] leading-tight whitespace-nowrap bg-white hover:bg-green-50 disabled:opacity-40"
+                  :disabled="busyId === reservation.id"
+                  title="Confirma o pagamento, cria o cliente e a fatura no Stripe, e converte a proposta em conta."
+                  @click="openRegisterPayment(reservation)"
+                >
+                  Registrar pagamento · {{ reservation.register_payment_label }}
+                </button>
+              </div>
             </td>
 
-            <td class="py-3 text-right text-slate-700">
+            <td class="py-3 text-right text-slate-700 whitespace-nowrap">
               {{ formatAmount(reservation.total_amount) }}
             </td>
 
@@ -491,7 +498,7 @@ const submitRenew = async () => {
               <button
                 v-else
                 type="button"
-                class="px-1.5 py-0.5 rounded border border-slate-200 text-slate-600 text-[10px] whitespace-nowrap disabled:opacity-40"
+                class="reset-base px-1.5 py-0.5 rounded border border-slate-200 text-slate-600 text-[10px] leading-tight whitespace-nowrap bg-white hover:bg-slate-50 disabled:opacity-40"
                 :disabled="busyId === reservation.id"
                 title="Para quem pagou por PIX e não tem cartão. O consumo passa a ser cobrado por fatura."
                 @click="waiveTokenCard(reservation)"
@@ -500,8 +507,8 @@ const submitRenew = async () => {
               </button>
             </td>
 
-            <td class="py-3 text-right">
-              <div class="flex gap-1.5 justify-end">
+            <td class="py-3">
+              <div class="flex gap-1.5">
                 <!-- Same composed WhatsApp message the Quotes screen offers,
                    so a seller who needs to re-send the reservation link
                    pastes exactly the copy the team agreed on. Disabled
@@ -509,7 +516,7 @@ const submitRenew = async () => {
                    has a "até X" sentence that only reads right with an X. -->
                 <button
                   type="button"
-                  class="px-1.5 py-0.5 rounded border border-slate-200 text-slate-600 text-[10px] whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
+                  class="reset-base px-1.5 py-0.5 rounded border border-slate-200 text-slate-600 text-[10px] leading-tight whitespace-nowrap bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
                   :disabled="!canCopyMessage(reservation)"
                   :title="
                     canCopyMessage(reservation)
@@ -530,14 +537,14 @@ const submitRenew = async () => {
                 </button>
                 <button
                   type="button"
-                  class="px-1.5 py-0.5 rounded border border-slate-200 text-slate-600 text-[10px] whitespace-nowrap"
+                  class="reset-base px-1.5 py-0.5 rounded border border-slate-200 text-slate-600 text-[10px] leading-tight whitespace-nowrap bg-white hover:bg-slate-50"
                   @click="copy(reservation, 'link', reservation.public_url)"
                 >
                   {{ wasCopied(reservation, 'link') ? 'Copiado!' : 'Link' }}
                 </button>
                 <button
                   type="button"
-                  class="px-1.5 py-0.5 rounded border border-slate-200 text-slate-600 text-[10px] whitespace-nowrap"
+                  class="reset-base px-1.5 py-0.5 rounded border border-slate-200 text-slate-600 text-[10px] leading-tight whitespace-nowrap bg-white hover:bg-slate-50"
                   :title="`Código de acesso: ${reservation.access_code}`"
                   @click="copy(reservation, 'code', reservation.access_code)"
                 >
@@ -554,7 +561,7 @@ const submitRenew = async () => {
                 <button
                   v-if="isExpired(reservation)"
                   type="button"
-                  class="px-1.5 py-0.5 rounded border border-woot-200 text-woot-600 text-[10px] whitespace-nowrap"
+                  class="reset-base px-1.5 py-0.5 rounded border border-woot-200 text-woot-600 text-[10px] leading-tight whitespace-nowrap bg-white hover:bg-woot-50"
                   @click="openRenew(reservation)"
                 >
                   Renovar
@@ -649,7 +656,7 @@ const submitRenew = async () => {
     >
       <button
         type="button"
-        class="px-2 py-1 rounded border border-slate-200 disabled:opacity-40"
+        class="reset-base px-2 py-1 rounded border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 disabled:opacity-40"
         :disabled="page <= 1"
         @click="page -= 1"
       >
@@ -660,7 +667,7 @@ const submitRenew = async () => {
       </span>
       <button
         type="button"
-        class="px-2 py-1 rounded border border-slate-200 disabled:opacity-40"
+        class="reset-base px-2 py-1 rounded border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 disabled:opacity-40"
         :disabled="page >= meta.total_pages"
         @click="page += 1"
       >
@@ -696,7 +703,7 @@ const submitRenew = async () => {
         <div class="flex justify-end gap-2 mt-5">
           <button
             type="button"
-            class="px-3 py-1.5 text-sm rounded border border-slate-200 text-slate-600"
+            class="reset-base px-3 py-1.5 text-sm rounded border border-slate-200 text-slate-600 bg-white hover:bg-slate-50"
             :disabled="renewing"
             @click="closeRenew"
           >
@@ -734,14 +741,14 @@ const submitRenew = async () => {
           </button>
           <button
             type="button"
-            class="w-full px-3 py-2 text-sm rounded border border-slate-200 text-slate-700 hover:bg-slate-50"
+            class="reset-base justify-center w-full px-3 py-2 text-sm rounded border border-slate-200 text-slate-700 bg-white hover:bg-slate-50"
             @click="confirmPixRegister('asaas')"
           >
             AsaaS
           </button>
           <button
             type="button"
-            class="w-full px-3 py-2 text-xs text-slate-500 hover:text-slate-700"
+            class="reset-base justify-center w-full px-3 py-2 text-xs bg-transparent text-slate-500 hover:text-slate-700"
             @click="cancelPixRegister"
           >
             Cancelar
