@@ -870,6 +870,8 @@ Rails.application.routes.draw do
           end
           member do
             post :waive_token_card
+            post :register_payment
+            # kept until every operator is on the new UI bundle
             post :register_asaas_payment
           end
         end

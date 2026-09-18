@@ -142,36 +142,29 @@ const expiringCount = computed(
   () => reservations.value.filter(r => !r.won && isExpiring(r)).length
 );
 
-// The link and the code are copied apart on purpose: sending both in the same
-// message would make the code pointless, since it exists so that a forwarded
-// link alone opens nothing.
-// Somebody who paid the year by PIX may have no card to leave on file. The
-// team says so here, and the customer stops being asked for one.
-// A semiannual/annual card sale sits on `Termos assinados` after AsaaS
-// captures the instalments — the provider has the money, but our books do
-// not know it until finance confirms here. Runs the Stripe customer +
-// invoice + account conversion in one call.
-const registerAsaasPayment = async reservation => {
-  if (
-    !window.confirm(
-      `Registrar pagamento AsaaS de ${reservation.prospect_name}? Isso cria a conta e a fatura no Stripe.`
-    )
-  )
-    return;
+// A sale that is `signed` and never had its money confirmed on the webhook
+// needs somebody to click here. AsaaS card/boleto: one click, no modal.
+// PIX: modal first so the operator picks whether the money came in through
+// Inter (default) or AsaaS — the two places PIX can land.
+const pixModal = ref({ open: false, reservation: null });
 
+// Defined before the wrappers below to satisfy no-use-before-define.
+const registerPayment = async (reservation, extraBody) => {
   busyId.value = reservation.id;
   error.value = null;
   try {
     const res = await fetch(
-      `${props.componentData.reservations_url}/${reservation.id}/register_asaas_payment`,
+      `${props.componentData.reservations_url}/${reservation.id}/register_payment`,
       {
         method: 'POST',
         credentials: 'same-origin',
         headers: {
           Accept: 'application/json',
+          'Content-Type': 'application/json',
           'X-CSRF-Token':
             document.querySelector('meta[name="csrf-token"]')?.content ?? '',
         },
+        body: JSON.stringify(extraBody || {}),
       }
     );
     const body = await res.json().catch(() => ({}));
@@ -182,6 +175,33 @@ const registerAsaasPayment = async reservation => {
   } finally {
     busyId.value = null;
   }
+};
+
+const openRegisterPayment = reservation => {
+  if (reservation.payment_method === 'pix') {
+    pixModal.value = { open: true, reservation };
+    return;
+  }
+
+  const label = reservation.register_payment_label || 'pagamento';
+  if (
+    !window.confirm(
+      `Registrar ${label} de ${reservation.prospect_name}? Isso cria a conta e a fatura no Stripe.`
+    )
+  )
+    return;
+
+  registerPayment(reservation, {});
+};
+
+const confirmPixRegister = paidVia => {
+  const reservation = pixModal.value.reservation;
+  pixModal.value = { open: false, reservation: null };
+  if (reservation) registerPayment(reservation, { paid_via: paidVia });
+};
+
+const cancelPixRegister = () => {
+  pixModal.value = { open: false, reservation: null };
 };
 
 const waiveTokenCard = async reservation => {
@@ -409,19 +429,20 @@ const submitRenew = async () => {
             >
               {{ situationLabel(reservation) }}
             </span>
-            <!-- Semi/annual card sales stay on "Termos assinados" until finance
-                 confirms the AsaaS capture landed. One-click confirmation
-                 creates the Stripe customer + invoice and the AurisChat
-                 account in a single call. -->
+            <!-- A sale that never had its money confirmed on the webhook
+                 (PIX, AsaaS card or AsaaS boleto) needs somebody to click
+                 here. One click creates the Stripe customer + invoice and
+                 the AurisChat account. PIX opens a small modal first to
+                 pick where the transfer came in. -->
             <button
-              v-if="reservation.awaiting_asaas_confirmation"
+              v-if="reservation.awaiting_manual_payment_confirmation"
               type="button"
               class="mt-1 block px-2 py-0.5 rounded border border-green-200 text-green-700 text-[10px] whitespace-nowrap disabled:opacity-40"
               :disabled="busyId === reservation.id"
-              title="Confirma o pagamento no AsaaS, cria o cliente e a fatura no Stripe, e converte a proposta em conta."
-              @click="registerAsaasPayment(reservation)"
+              title="Confirma o pagamento, cria o cliente e a fatura no Stripe, e converte a proposta em conta."
+              @click="openRegisterPayment(reservation)"
             >
-              Registrar pagamento AsaaS
+              Registrar pagamento · {{ reservation.register_payment_label }}
             </button>
           </td>
 
@@ -601,6 +622,42 @@ const submitRenew = async () => {
             @click="submitRenew"
           >
             {{ renewing ? 'Renovando…' : 'Renovar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div
+      v-if="pixModal.open"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      @click.self="cancelPixRegister"
+    >
+      <div class="bg-white rounded-lg shadow-lg w-80 p-5">
+        <h3 class="text-base font-medium text-slate-900 mb-1">
+          Registrar pagamento PIX
+        </h3>
+        <p class="text-sm text-slate-600 mb-4">Onde o dinheiro caiu?</p>
+        <div class="flex flex-col gap-2">
+          <button
+            type="button"
+            class="w-full px-3 py-2 text-sm rounded bg-woot-500 text-white hover:bg-woot-600"
+            @click="confirmPixRegister('inter')"
+          >
+            Banco Inter
+          </button>
+          <button
+            type="button"
+            class="w-full px-3 py-2 text-sm rounded border border-slate-200 text-slate-700 hover:bg-slate-50"
+            @click="confirmPixRegister('asaas')"
+          >
+            AsaaS
+          </button>
+          <button
+            type="button"
+            class="w-full px-3 py-2 text-xs text-slate-500 hover:text-slate-700"
+            @click="cancelPixRegister"
+          >
+            Cancelar
           </button>
         </div>
       </div>

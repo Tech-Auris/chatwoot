@@ -201,16 +201,49 @@ RSpec.describe 'Super Admin Commercial Reservations', type: :request do
       by_id = response.parsed_body['reservations'].index_by { |row| row['id'] }
       expect(by_id[boleto.id]['awaiting_asaas_confirmation']).to be(true)
     end
+
+    # The unified flag covers PIX too — every signed sale that never had its
+    # money confirmed shows the same button, regardless of the method.
+    describe 'awaiting_manual_payment_confirmation flag' do
+      it 'is true for a signed PIX sale' do
+        pix = create(:sales_quote, status: :signed, payment_method: :pix, billing_cycle: :annual,
+                                   reserved_until: 4.days.from_now)
+
+        get '/super_admin/commercial/reservations/data'
+
+        row = response.parsed_body['reservations'].find { |r| r['id'] == pix.id }
+        expect(row['awaiting_manual_payment_confirmation']).to be(true)
+        expect(row['register_payment_label']).to eq('PIX')
+      end
+
+      it 'is true for an AsaaS boleto sale with the parcel count on the label' do
+        boleto = create(:sales_quote, status: :signed, payment_method: :boleto, billing_cycle: :annual,
+                                      reserved_until: 4.days.from_now, asaas_installment_id: 'inst_x')
+
+        get '/super_admin/commercial/reservations/data'
+
+        row = response.parsed_body['reservations'].find { |r| r['id'] == boleto.id }
+        expect(row['awaiting_manual_payment_confirmation']).to be(true)
+        expect(row['register_payment_label']).to eq('Boleto 12x')
+      end
+
+      # The monthly Stripe subscription closes on its own through the Stripe
+      # webhook — no button needed.
+      it 'is false for a monthly card sale (Stripe subscription closes on its own)' do
+        monthly = create(:sales_quote, status: :signed, payment_method: :card, billing_cycle: :monthly,
+                                       reserved_until: 4.days.from_now)
+
+        get '/super_admin/commercial/reservations/data'
+
+        row = response.parsed_body['reservations'].find { |r| r['id'] == monthly.id }
+        expect(row['awaiting_manual_payment_confirmation']).to be(false)
+        expect(row['register_payment_label']).to be_nil
+      end
+    end
   end
 
-  describe 'POST /super_admin/commercial/reservations/:id/register_asaas_payment' do
+  describe 'POST /super_admin/commercial/reservations/:id/register_payment' do
     let(:client) { instance_double(Integrations::Stripe::Client) }
-    let(:quote) do
-      create(:sales_quote, status: :signed, payment_method: :card, billing_cycle: :semiannual,
-                           total_amount: 570_060, asaas_installment_id: 'inst_abc',
-                           prospect_name: 'Leonardo Giacon', company_name: 'Clínica Rhoncus',
-                           prospect_email: 'leo@example.com')
-    end
 
     before do
       allow(Integrations::Stripe::Client).to receive(:new).and_return(client)
@@ -219,23 +252,72 @@ RSpec.describe 'Super Admin Commercial Reservations', type: :request do
       allow(client).to receive(:update_customer)
       allow(client).to receive(:list_tax_ids).and_return(Struct.new(:data).new([]))
       allow(client).to receive(:pay_invoice_out_of_band)
+      allow(Sales::ClickupCrmSyncJob).to receive(:perform_later)
     end
 
-    it 'settles the sale and returns the created account name' do
-      post "/super_admin/commercial/reservations/#{quote.id}/register_asaas_payment"
+    context 'when the sale was paid on AsaaS' do
+      let(:quote) do
+        create(:sales_quote, status: :signed, payment_method: :card, billing_cycle: :semiannual,
+                             total_amount: 570_060, asaas_installment_id: 'inst_abc',
+                             prospect_name: 'Leonardo Giacon', company_name: 'Clínica Rhoncus',
+                             prospect_email: 'leo@example.com')
+      end
 
-      expect(response).to have_http_status(:created)
-      expect(response.parsed_body['account_name']).to eq('Clínica Rhoncus')
-      expect(quote.reload.status).to eq('converted')
+      it 'settles the sale and returns the created account name' do
+        post "/super_admin/commercial/reservations/#{quote.id}/register_payment"
+
+        expect(response).to have_http_status(:created)
+        expect(response.parsed_body['account_name']).to eq('Clínica Rhoncus')
+        expect(quote.reload.status).to eq('converted')
+      end
+
+      # Kept for backward compat while every operator is on the new bundle.
+      it 'still works via the legacy register_asaas_payment alias' do
+        post "/super_admin/commercial/reservations/#{quote.id}/register_asaas_payment"
+
+        expect(response).to have_http_status(:created)
+      end
+    end
+
+    context 'when the sale was paid on PIX' do
+      let(:quote) do
+        create(:sales_quote, status: :signed, payment_method: :pix, billing_cycle: :annual,
+                             total_amount: 1_076_400, prospect_name: 'Fábio Rocha',
+                             company_name: 'Clínica Cinco', prospect_email: 'fabio@clinica.com')
+      end
+
+      it 'settles the sale and passes paid_via from the request' do
+        allow(Sales::RegisterPixPaymentService).to receive(:new).and_call_original
+
+        post "/super_admin/commercial/reservations/#{quote.id}/register_payment",
+             params: { paid_via: 'asaas' }
+
+        expect(response).to have_http_status(:created)
+        expect(Sales::RegisterPixPaymentService).to have_received(:new)
+          .with(hash_including(paid_via: 'asaas'))
+      end
+
+      # Inter is the default when the operator opens the modal — most PIX
+      # sales are paid through the company's Inter key.
+      it 'defaults paid_via to inter when the request omits it' do
+        allow(Sales::RegisterPixPaymentService).to receive(:new).and_call_original
+
+        post "/super_admin/commercial/reservations/#{quote.id}/register_payment"
+
+        expect(response).to have_http_status(:created)
+        expect(Sales::RegisterPixPaymentService).to have_received(:new)
+          .with(hash_including(paid_via: 'inter'))
+      end
     end
 
     it 'reports a domain error as 422' do
-      quote.update!(payment_method: :pix)
+      quote = create(:sales_quote, status: :converted, payment_method: :card, billing_cycle: :semiannual,
+                                   asaas_installment_id: 'inst_x', account: create(:account))
 
-      post "/super_admin/commercial/reservations/#{quote.id}/register_asaas_payment"
+      post "/super_admin/commercial/reservations/#{quote.id}/register_payment"
 
       expect(response).to have_http_status(:unprocessable_entity)
-      expect(response.parsed_body['error']).to match(/não é de pagamento pelo AsaaS/)
+      expect(response.parsed_body['error']).to match(/já foi paga/)
     end
   end
 
