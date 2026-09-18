@@ -578,6 +578,40 @@
   value: ''
   locked: false
   type: secret
+- name: INTER_CLIENT_ID
+  display_title: 'Inter — Client ID'
+  description: 'OAuth Client ID from the Banco Inter integration used for the dynamic PIX cobs opened at every PIX sale. Get it in Internet Banking PJ → Aplicações → API → Sua integração. Leave blank to disable Inter automation (the sales flow falls back to the static PIX code).'
+  value: ''
+  locked: false
+- name: INTER_CLIENT_SECRET
+  display_title: 'Inter — Client Secret'
+  description: 'OAuth Client Secret paired with INTER_CLIENT_ID.'
+  value: ''
+  locked: false
+  type: secret
+- name: INTER_CERT_PEM
+  display_title: 'Inter — certificado (PEM)'
+  description: 'Full PEM contents of the client certificate Inter issued for the integration. Every call to Inter (OAuth + PIX cob) rides mutual TLS with this cert + INTER_KEY_PEM.'
+  value: ''
+  locked: false
+  type: secret
+- name: INTER_KEY_PEM
+  display_title: 'Inter — chave privada (PEM)'
+  description: 'Full PEM contents of the private key paired with INTER_CERT_PEM.'
+  value: ''
+  locked: false
+  type: secret
+- name: INTER_PIX_KEY
+  display_title: 'Inter — chave PIX'
+  description: 'PIX key of the receiving account (CNPJ, e-mail, phone or EVP) the cob is opened against. Same key that receives the money on the static QR code.'
+  value: ''
+  locked: false
+- name: INTER_WEBHOOK_TOKEN
+  display_title: 'Inter — token do webhook'
+  description: 'Shared secret used in the webhook URL path (/webhooks/commercial/inter/<token>). Inter mandates mutual TLS on the webhook — production is expected to terminate it at the reverse proxy — but this token stays as a second line of defence in case the URL leaks. Leaving it blank refuses every payload.'
+  value: ''
+  locked: false
+  type: secret
 - name: SALES_PROPOSAL_LOGO
   display_title: 'Logo da proposta'
   description: 'Image shown at the top of the pages a prospect opens — path under public (for example /brand-assets/auris_sales_logo.png) or a full URL. Left blank, the proposal carries the same logo as the product.'
