@@ -13,7 +13,11 @@
       "CLOSING": "Fechando",
       "TOOLTIP_CTWA_72H": "Conversa iniciada por anúncio. Toda resposta é gratuita até {when}.",
       "TOOLTIP_STANDARD_24H": "Janela padrão aberta até {when}. Depois de 01/10/2026, mensagens de serviço dentro dessa janela consomem a franquia de 1000/mês por número.",
-      "TOOLTIP_CLOSED": "Nenhuma janela aberta. Só um template aprovado inicia nova conversa."
+      "TOOLTIP_CLOSED": "Nenhuma janela aberta. Só um template aprovado inicia nova conversa.",
+      "HINT_CTWA_72H": "Janela grátis de 72h aberta por clique no anúncio. Todas as mensagens dentro dela são gratuitas.",
+      "HINT_STANDARD_24H": "Janela de atendimento aberta pela última resposta do cliente. Termina 24h depois — depois disso só template.",
+      "HINT_CLOSING": "A janela expira em breve. Depois disso você só consegue responder por template pago.",
+      "HINT_CLOSED": "Janela expirada. Só é possível iniciar contato via template — pode gerar custo."
     },
     "FUNNEL_STAGE": {
       "EMPTY": "Sem etapa",

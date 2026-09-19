@@ -13,7 +13,11 @@
       "CLOSING": "Closing soon",
       "TOOLTIP_CTWA_72H": "Ad-originated conversation. Every reply is free until {when}.",
       "TOOLTIP_STANDARD_24H": "Standard reply window open until {when}. After Meta pricing kicks in (01/10/2026), service messages within this window count against the 1000/month free tier.",
-      "TOOLTIP_CLOSED": "No open window. Only an approved template can start a new conversation."
+      "TOOLTIP_CLOSED": "No open window. Only an approved template can start a new conversation.",
+      "HINT_CTWA_72H": "72h free window opened by an ad click. Every message inside it is free.",
+      "HINT_STANDARD_24H": "Reply window opened by the customer's last message. Ends 24h later — after that, template only.",
+      "HINT_CLOSING": "The window is about to expire. After that you can only reply via paid template.",
+      "HINT_CLOSED": "Window expired. You can only reach out through a template — it may incur a fee."
     },
     "FUNNEL_STAGE": {
       "EMPTY": "No stage",

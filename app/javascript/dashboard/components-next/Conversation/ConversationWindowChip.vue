@@ -2,7 +2,6 @@
 import { computed, toRef } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useConversationWindow } from 'dashboard/composables/useConversationWindow';
-import Icon from 'next/icon/Icon.vue';
 
 // The backend serializes `Conversation#messaging_window`. `null` is a
 // legitimate value (non-Cloud channels) — parent decides whether to
@@ -12,17 +11,6 @@ const props = defineProps({
   window: {
     type: Object,
     default: null,
-  },
-  // Where the "?" icon points on a closed window. Parent already computes
-  // this for the reply-window banner (per-channel Chatwoot docs URL); we
-  // reuse the same link so the atendente lands on the same explainer.
-  helpUrl: {
-    type: String,
-    default: '',
-  },
-  helpLabel: {
-    type: String,
-    default: '',
   },
 });
 
@@ -42,28 +30,29 @@ const label = computed(() => {
 const tooltip = computed(() => {
   const s = state.value;
   if (!s) return null;
-  const parts = [];
   if (s.expiresAt) {
     const when = new Date(s.expiresAt).toLocaleString();
-    parts.push(
-      t(`CONVERSATION.MESSAGING_WINDOW.TOOLTIP_${s.kind.toUpperCase()}`, {
-        when,
-      })
-    );
-  } else {
-    parts.push(t('CONVERSATION.MESSAGING_WINDOW.TOOLTIP_CLOSED'));
+    return t(`CONVERSATION.MESSAGING_WINDOW.TOOLTIP_${s.kind.toUpperCase()}`, {
+      when,
+    });
   }
-  // On the closed state we surface the docs link inline in the tooltip so
-  // the "?" icon has something to reveal on hover / focus.
-  if (s.tone === 'closed' && props.helpLabel) {
-    parts.push(props.helpLabel);
-  }
-  return parts.join(' — ');
+  return t('CONVERSATION.MESSAGING_WINDOW.TOOLTIP_CLOSED');
 });
 
-const showHelp = computed(
-  () => state.value?.tone === 'closed' && Boolean(props.helpUrl)
-);
+// Every state carries its own explainer text so the atendente can hover
+// the "?" and learn what that particular window means without having to
+// leave the conversation.
+const HINT_KEYS = {
+  free: 'HINT_CTWA_72H',
+  std: 'HINT_STANDARD_24H',
+  warn: 'HINT_CLOSING',
+  closed: 'HINT_CLOSED',
+};
+
+const hint = computed(() => {
+  const key = HINT_KEYS[state.value?.tone];
+  return key ? t(`CONVERSATION.MESSAGING_WINDOW.${key}`) : null;
+});
 
 // Inline styles instead of Tailwind classes for the tone palette. During
 // integration we hit a case where the color classes rendered as an
@@ -96,12 +85,17 @@ const TONE_STYLES = {
 
 const chipStyle = computed(() => TONE_STYLES[state.value?.tone] || {});
 
-// Help "?" button uses the closed tone but a bit stronger so it reads
-// as interactive against the pill fill.
-const HELP_STYLE = {
-  backgroundColor: 'rgba(220, 38, 38, 0.30)',
-  color: '#7F1D1D',
+// Help "?" badge picks up the chip tone but a shade darker so it reads
+// as a distinct element against the pill fill without introducing a new
+// color.
+const HELP_STYLES = {
+  free: { backgroundColor: 'rgba(16, 185, 129, 0.35)', color: '#065F46' },
+  std: { backgroundColor: 'rgba(37, 99, 235, 0.32)', color: '#1E3A8A' },
+  warn: { backgroundColor: 'rgba(217, 119, 6, 0.40)', color: '#78350F' },
+  closed: { backgroundColor: 'rgba(220, 38, 38, 0.30)', color: '#7F1D1D' },
 };
+
+const helpStyle = computed(() => HELP_STYLES[state.value?.tone] || {});
 
 // Dot colors follow the tone but stay fully saturated. The warn state
 // also pulses to grab the atendente's eye — inline animation so it lands
@@ -143,24 +137,15 @@ const dotStyle = computed(() => {
     >
       {{ clock }}
     </span>
-    <Icon
-      v-if="state.tone === 'closed' && !showHelp"
-      icon="i-lucide-lock"
-      class="size-3 opacity-80"
-    />
-    <a
-      v-if="showHelp"
-      :href="helpUrl"
-      target="_blank"
-      rel="noopener noreferrer"
-      :title="helpLabel"
-      class="inline-flex items-center justify-center w-4 h-4 rounded-full text-[10px] font-bold no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
-      :style="HELP_STYLE"
+    <span
+      v-if="hint"
+      :title="hint"
+      :style="helpStyle"
+      class="inline-flex items-center justify-center w-4 h-4 rounded-full text-[10px] font-bold cursor-help"
       data-testid="conversation-window-chip-help"
-      @click.stop
     >
       ?
-    </a>
+    </span>
   </div>
 </template>
 

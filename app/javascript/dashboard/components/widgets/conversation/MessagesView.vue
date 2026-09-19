@@ -965,8 +965,6 @@ export default {
       <ConversationWindowChip
         v-if="shouldShowWindowChip"
         :window="currentChat.messaging_window"
-        :help-url="replyWindowLink"
-        :help-label="replyWindowLinkText"
         class="absolute top-3 right-3 z-10 shadow-sm"
       />
       <MessageList
