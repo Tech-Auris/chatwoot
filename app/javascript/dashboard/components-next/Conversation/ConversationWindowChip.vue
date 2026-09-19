@@ -95,6 +95,36 @@ const TONE_STYLES = {
 };
 
 const chipStyle = computed(() => TONE_STYLES[state.value?.tone] || {});
+
+// Help "?" button uses the closed tone but a bit stronger so it reads
+// as interactive against the pill fill.
+const HELP_STYLE = {
+  backgroundColor: 'rgba(220, 38, 38, 0.30)',
+  color: '#7F1D1D',
+};
+
+// Dot colors follow the tone but stay fully saturated. The warn state
+// also pulses to grab the atendente's eye — inline animation so it lands
+// regardless of whether Tailwind's `animate-pulse` shipped in this
+// build's CSS.
+const DOT_COLORS = {
+  free: '#10B981',
+  std: '#2563EB',
+  warn: '#D97706',
+  closed: '#DC2626',
+};
+
+const dotStyle = computed(() => {
+  const tone = state.value?.tone;
+  const base = { backgroundColor: DOT_COLORS[tone] || '#94A3B8' };
+  if (tone === 'free') {
+    base.boxShadow = '0 0 0 3px rgba(16, 185, 129, 0.25)';
+  }
+  if (tone === 'warn') {
+    base.animation = 'auris-window-chip-pulse 1.4s ease-in-out infinite';
+  }
+  return base;
+});
 </script>
 
 <template>
@@ -105,19 +135,7 @@ const chipStyle = computed(() => TONE_STYLES[state.value?.tone] || {});
     class="inline-flex items-center gap-1.5 pl-2 pr-2 py-1 rounded-full text-xs font-semibold leading-none border transition-colors"
     data-testid="conversation-window-chip"
   >
-    <span
-      class="w-1.5 h-1.5 rounded-full"
-      :class="[
-        {
-          'bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.25)]':
-            state.tone === 'free',
-          'bg-blue-500': state.tone === 'std',
-          'bg-amber-500 animate-pulse motion-reduce:animate-none':
-            state.tone === 'warn',
-          'bg-red-500': state.tone === 'closed',
-        },
-      ]"
-    />
+    <span class="w-1.5 h-1.5 rounded-full flex-none" :style="dotStyle" />
     <span>{{ label }}</span>
     <span
       v-if="clock"
@@ -136,7 +154,8 @@ const chipStyle = computed(() => TONE_STYLES[state.value?.tone] || {});
       target="_blank"
       rel="noopener noreferrer"
       :title="helpLabel"
-      class="inline-flex items-center justify-center w-4 h-4 rounded-full text-[10px] font-bold no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 bg-red-500/25 dark:bg-red-500/35 text-red-800 dark:text-red-100 hover:bg-red-500/40 dark:hover:bg-red-500/50"
+      class="inline-flex items-center justify-center w-4 h-4 rounded-full text-[10px] font-bold no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+      :style="HELP_STYLE"
       data-testid="conversation-window-chip-help"
       @click.stop
     >
@@ -144,3 +163,23 @@ const chipStyle = computed(() => TONE_STYLES[state.value?.tone] || {});
     </a>
   </div>
 </template>
+
+<style>
+@keyframes auris-window-chip-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 0.5;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-testid='conversation-window-chip']
+    > span[style*='auris-window-chip-pulse'] {
+    animation: none !important;
+  }
+}
+</style>
