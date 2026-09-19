@@ -7,7 +7,7 @@
       "TOGGLE_ERROR": "Could not toggle AI on this conversation. Please try again."
     },
     "MESSAGING_WINDOW": {
-      "LABEL_CTWA_72H": "CTWA · free",
+      "LABEL_CTWA_72H": "72h window - CTWA",
       "LABEL_STANDARD_24H": "24h window",
       "LABEL_CLOSED": "Window closed",
       "CLOSING": "Closing window",
