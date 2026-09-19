@@ -96,5 +96,8 @@ if conversation.account.funnel_enabled? && conversation.funnel_stage.present?
   end
 end
 json.waiting_since conversation.waiting_since.to_i.to_i
+# WhatsApp Cloud messaging-window snapshot the dashboard chip reads. `nil` on
+# non-Cloud channels (Baileys/legacy) so the chip stays hidden there.
+json.messaging_window conversation.messaging_window
 json.sla_policy_id conversation.sla_policy_id
 json.partial! 'enterprise/api/v1/conversations/partials/conversation', conversation: conversation if ChatwootApp.enterprise?
