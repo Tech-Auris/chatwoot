@@ -201,9 +201,20 @@ class Message < ApplicationRecord
 
   def webhook_push_event_data
     push_event_data.merge(
-      content: Messages::WebhookContentNormalizer.normalize(content),
-      processed_message_content: Messages::WebhookContentNormalizer.normalize(processed_message_content)
+      content: webhook_safe_content(content),
+      processed_message_content: webhook_safe_content(processed_message_content)
     )
+  end
+
+  # WhatsApp `type: unsupported` messages carry a localized placeholder
+  # ("Esta mensagem não é suportada...") so the dashboard has something to
+  # render, but that string leaks into external webhooks (n8n, AI agents)
+  # as if it were the customer's message. Strip it on the way out — the
+  # `content_attributes.is_unsupported` flag stays for consumers to branch on.
+  def webhook_safe_content(source)
+    return '' if content_attributes.is_a?(Hash) && content_attributes['is_unsupported']
+
+    Messages::WebhookContentNormalizer.normalize(source)
   end
 
   def webhook_data

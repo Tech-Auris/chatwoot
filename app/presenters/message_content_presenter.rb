@@ -7,7 +7,18 @@ class MessageContentPresenter < SimpleDelegator
     ).render
   end
 
+  # WhatsApp Cloud delivers messages it cannot render as `type: unsupported`
+  # with no real content, and we persist the localized "Esta mensagem não é
+  # suportada..." placeholder so the operator UI has something to render.
+  # That placeholder was leaking into every downstream webhook (n8n, AI
+  # agents), where consumers took it for a real customer message. Sending
+  # blank keeps the placeholder in the dashboard while signalling "no
+  # content" to whoever reads the payload — the
+  # `content_attributes.is_unsupported` flag on the same payload is what
+  # a webhook consumer should branch on.
   def webhook_content
+    return '' if content_attributes.is_a?(Hash) && content_attributes['is_unsupported']
+
     Messages::WebhookContentNormalizer.normalize(content_with_survey_link)
   end
 
