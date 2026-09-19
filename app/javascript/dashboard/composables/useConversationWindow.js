@@ -19,11 +19,12 @@ function formatClock(remainingMs) {
   return `${pad(minutes)}:${pad(seconds)}`;
 }
 
-// Poll the wall clock every 30s so the countdown re-derives without
-// waiting for a Cable update — the backend only pushes when the
-// conversation itself changes, and the chip needs to tick down between
-// events.
-const TICK_MS = 30_000;
+// Poll the wall clock every second so the MM:SS display used under an
+// hour ticks visibly. Above an hour the clock format is HH:MM and only
+// changes once per minute, but keeping the tick at 1s means no code path
+// has to reason about "which resolution am I in" — the compute just
+// re-derives the format from the same remainingMs each time.
+const TICK_MS = 1_000;
 
 // Below these thresholds the chip flips to the "warn" tone and starts
 // pulsing. The atendente should still be able to answer for free within
