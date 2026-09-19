@@ -168,6 +168,24 @@ class Conversation < ApplicationRecord
     messages.where(account_id: account_id)&.incoming&.last
   end
 
+  # WhatsApp Cloud API messaging window state (nil for non-Cloud channels).
+  # A CTWA-originated conversation carries a 72h free-response window; a
+  # regular reply from the customer opens the standard 24h window. Outside
+  # both, only an approved template can start a new one — Meta charges per
+  # template category, and from 01/10/2026 service messages sent inside a
+  # standard window also cost R$ 0,035 each (after a 1000/month free tier
+  # per phone number).
+  #
+  # Baileys and legacy providers don't share that pricing model, so the
+  # method returns nil there and the front hides the chip.
+  def messaging_window
+    return nil unless whatsapp_cloud_channel?
+
+    active_messaging_window(72.hours, last_ctwa_referral_at, 'ctwa_72h') ||
+      active_messaging_window(24.hours, last_inbound_reply_at, 'standard_24h') ||
+      { kind: 'closed', opened_at: nil, expires_at: nil }
+  end
+
   def toggle_status
     # FIXME: implement state machine with aasm
     self.status = open? ? :resolved : :open
@@ -215,6 +233,40 @@ class Conversation < ApplicationRecord
 
     new_labels = desired ? labels - ['agente-off'] : labels + ['agente-off']
     update!(label_list: new_labels)
+  end
+
+  def active_messaging_window(duration, opened_at, kind)
+    return nil if opened_at.blank?
+
+    expires_at = opened_at + duration
+    return nil if expires_at <= Time.current
+
+    { kind: kind, opened_at: opened_at, expires_at: expires_at }
+  end
+
+  def whatsapp_cloud_channel?
+    channel = inbox&.channel
+    channel.is_a?(Channel::Whatsapp) && channel.provider == 'whatsapp_cloud'
+  end
+
+  # Last inbound message that carried a `content_attributes.referral` payload.
+  # Fast path: skip the scan if the conversation has never received a CTWA.
+  # `additional_attributes.campaign_referral` gets rewritten on every new
+  # CTWA touch, so a blank value here means the conversation has no CTWA
+  # history to look up.
+  def last_ctwa_referral_at
+    return nil if additional_attributes&.dig('campaign_referral').blank?
+
+    # `#>>'{}'` unwraps the legacy double-encoded `content_attributes` json
+    # (Rails' `store coder: JSON` on the Message model) before jsonb traversal.
+    # Same pattern as Message.hide_removed_reactions.
+    messages.incoming
+            .where("((content_attributes#>>'{}')::jsonb -> 'referral') IS NOT NULL")
+            .maximum(:created_at)
+  end
+
+  def last_inbound_reply_at
+    messages.incoming.where(private: false).maximum(:created_at)
   end
 
   public

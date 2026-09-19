@@ -180,3 +180,9 @@ google_ads:
   enabled: true
   icon: 'icon-google-fill'
   config_key: 'google_ads'
+whatsapp_pricing:
+  name: 'WhatsApp Pricing Indicator'
+  description: 'Toggle the messaging-window chip on WhatsApp Cloud conversations (CTWA 72h · standard 24h · closed). Turn on to give the atendente visibility into when a response is free vs paid — Meta starts charging R$ 0,035 per service message on 01/10/2026 after a 1000/month free tier per phone number.'
+  enabled: true
+  icon: 'icon-time-line'
+  config_key: 'whatsapp_pricing'
