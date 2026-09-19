@@ -11,6 +11,7 @@ import { useAlert, usePendingAlert } from 'dashboard/composables';
 // components
 import ReplyBox from './ReplyBox.vue';
 import MessageList from 'next/message/MessageList.vue';
+import ConversationWindowChip from 'dashboard/components-next/Conversation/ConversationWindowChip.vue';
 import ConversationLabelSuggestion from './conversation/LabelSuggestion.vue';
 import Banner from 'dashboard/components/ui/Banner.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
@@ -51,6 +52,7 @@ import {
 
 export default {
   components: {
+    ConversationWindowChip,
     MessageList,
     ReplyBox,
     Banner,
@@ -130,6 +132,16 @@ export default {
     }),
     currentInbox() {
       return this.$store.getters['inboxes/getInbox'](this.currentChat.inbox_id);
+    },
+    // The backend only emits `messaging_window` on WhatsApp Cloud inboxes;
+    // anywhere else the payload is `null` and the chip should stay hidden.
+    // The Super Admin toggle gates the render before 01/10, so the code ships
+    // idle and turns on globally when Meta's per-message pricing kicks in.
+    shouldShowWindowChip() {
+      return (
+        this.globalConfig.whatsappMessagingWindowIndicatorEnabled &&
+        Boolean(this.currentChat?.messaging_window)
+      );
     },
     isOpen() {
       return this.currentChat?.status === wootConstants.STATUS_TYPE.OPEN;
@@ -943,51 +955,58 @@ export default {
         :banner-message="$t('CONVERSATION.GROUPS_DISABLED_BANNER_NON_ADMIN')"
       />
     </div>
-    <MessageList
-      ref="conversationPanelRef"
-      class="conversation-panel flex-shrink flex-grow basis-px flex flex-col overflow-y-auto relative h-full m-0 pb-4"
-      :current-user-id="currentUserId"
-      :first-unread-id="unReadMessages[0]?.id"
-      :is-an-email-channel="isAnEmailChannel"
-      :inbox-supports-reply-to="inboxSupportsReplyTo"
-      :inbox-supports-edit="inboxSupportsEdit"
-      :inbox-supports-reactions="inboxSupportsReactions"
-      :inbox-reaction-requires-source-id="inboxReactionRequiresSourceId"
-      :messages="getMessages"
-      @retry="handleMessageRetry"
-      @toggle-reaction="handleToggleReaction"
-    >
-      <template #beforeAll>
-        <transition name="slide-up">
-          <!-- eslint-disable-next-line vue/require-toggle-inside-transition -->
+    <div class="relative flex-shrink flex-grow basis-px flex flex-col min-h-0">
+      <ConversationWindowChip
+        v-if="shouldShowWindowChip"
+        :window="currentChat.messaging_window"
+        class="absolute top-3 right-3 z-10 backdrop-blur-sm shadow-sm"
+      />
+      <MessageList
+        ref="conversationPanelRef"
+        class="conversation-panel flex-shrink flex-grow basis-px flex flex-col overflow-y-auto relative h-full m-0 pb-4"
+        :current-user-id="currentUserId"
+        :first-unread-id="unReadMessages[0]?.id"
+        :is-an-email-channel="isAnEmailChannel"
+        :inbox-supports-reply-to="inboxSupportsReplyTo"
+        :inbox-supports-edit="inboxSupportsEdit"
+        :inbox-supports-reactions="inboxSupportsReactions"
+        :inbox-reaction-requires-source-id="inboxReactionRequiresSourceId"
+        :messages="getMessages"
+        @retry="handleMessageRetry"
+        @toggle-reaction="handleToggleReaction"
+      >
+        <template #beforeAll>
+          <transition name="slide-up">
+            <!-- eslint-disable-next-line vue/require-toggle-inside-transition -->
+            <li
+              class="min-h-[4rem] flex flex-shrink-0 flex-grow-0 items-center flex-auto justify-center max-w-full mt-0 mr-0 mb-1 ml-0 relative first:mt-auto last:mb-0"
+            >
+              <Spinner v-if="shouldShowSpinner" class="text-n-brand" />
+            </li>
+          </transition>
+        </template>
+        <template #unreadBadge>
           <li
-            class="min-h-[4rem] flex flex-shrink-0 flex-grow-0 items-center flex-auto justify-center max-w-full mt-0 mr-0 mb-1 ml-0 relative first:mt-auto last:mb-0"
+            v-show="unreadMessageCount != 0"
+            class="list-none flex justify-center items-center"
           >
-            <Spinner v-if="shouldShowSpinner" class="text-n-brand" />
+            <span
+              class="shadow-lg rounded-full bg-n-brand text-white text-xs font-medium my-2.5 mx-auto px-2.5 py-1.5"
+            >
+              {{ unreadMessageLabel }}
+            </span>
           </li>
-        </transition>
-      </template>
-      <template #unreadBadge>
-        <li
-          v-show="unreadMessageCount != 0"
-          class="list-none flex justify-center items-center"
-        >
-          <span
-            class="shadow-lg rounded-full bg-n-brand text-white text-xs font-medium my-2.5 mx-auto px-2.5 py-1.5"
-          >
-            {{ unreadMessageLabel }}
-          </span>
-        </li>
-      </template>
-      <template #after>
-        <ConversationLabelSuggestion
-          v-if="shouldShowLabelSuggestions"
-          :suggested-labels="labelSuggestions"
-          :chat-labels="currentChat.labels"
-          :conversation-id="currentChat.id"
-        />
-      </template>
-    </MessageList>
+        </template>
+        <template #after>
+          <ConversationLabelSuggestion
+            v-if="shouldShowLabelSuggestions"
+            :suggested-labels="labelSuggestions"
+            :chat-labels="currentChat.labels"
+            :conversation-id="currentChat.id"
+          />
+        </template>
+      </MessageList>
+    </div>
     <div class="flex relative flex-col bg-n-surface-1">
       <div
         v-if="isAnyoneTyping"

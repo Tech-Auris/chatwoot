@@ -6,6 +6,15 @@
       "TOGGLE_OFF_TOOLTIP": "Clique para desativar a IA nesta conversa",
       "TOGGLE_ERROR": "Não foi possível alternar a IA nesta conversa. Tente novamente."
     },
+    "MESSAGING_WINDOW": {
+      "LABEL_CTWA_72H": "CTWA · grátis",
+      "LABEL_STANDARD_24H": "Janela 24h",
+      "LABEL_CLOSED": "Só template",
+      "CLOSING": "Fechando",
+      "TOOLTIP_CTWA_72H": "Conversa iniciada por anúncio. Toda resposta é gratuita até {when}.",
+      "TOOLTIP_STANDARD_24H": "Janela padrão aberta até {when}. Depois de 01/10/2026, mensagens de serviço dentro dessa janela consomem a franquia de 1000/mês por número.",
+      "TOOLTIP_CLOSED": "Nenhuma janela aberta. Só um template aprovado inicia nova conversa."
+    },
     "FUNNEL_STAGE": {
       "EMPTY": "Sem etapa",
       "TOOLTIP": "Etapa do funil — clique para alterar",
