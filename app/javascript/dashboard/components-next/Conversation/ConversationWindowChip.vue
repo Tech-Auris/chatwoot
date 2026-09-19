@@ -73,13 +73,13 @@ const showHelp = computed(
     class="inline-flex items-center gap-1.5 pl-2 pr-2 py-1 rounded-full text-xs font-semibold leading-none border transition-colors"
     :class="[
       {
-        'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800':
+        'bg-emerald-500/20 dark:bg-emerald-500/25 text-emerald-800 dark:text-emerald-200 border-emerald-500/40 dark:border-emerald-400/40':
           state.tone === 'free',
-        'bg-blue-100 dark:bg-blue-950/50 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-800':
+        'bg-blue-500/20 dark:bg-blue-500/25 text-blue-800 dark:text-blue-200 border-blue-500/40 dark:border-blue-400/40':
           state.tone === 'std',
-        'bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800':
+        'bg-amber-500/25 dark:bg-amber-500/30 text-amber-900 dark:text-amber-200 border-amber-500/50 dark:border-amber-400/50':
           state.tone === 'warn',
-        'bg-red-100 dark:bg-red-950/50 text-red-800 dark:text-red-300 border-red-300 dark:border-red-800':
+        'bg-red-500/20 dark:bg-red-500/25 text-red-800 dark:text-red-200 border-red-500/40 dark:border-red-400/40':
           state.tone === 'closed',
       },
     ]"
@@ -116,7 +116,7 @@ const showHelp = computed(
       target="_blank"
       rel="noopener noreferrer"
       :title="helpLabel"
-      class="inline-flex items-center justify-center w-4 h-4 rounded-full text-[10px] font-bold no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 bg-red-200 dark:bg-red-900/60 text-red-800 dark:text-red-200 hover:bg-red-300 dark:hover:bg-red-900"
+      class="inline-flex items-center justify-center w-4 h-4 rounded-full text-[10px] font-bold no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 bg-red-500/25 dark:bg-red-500/35 text-red-800 dark:text-red-100 hover:bg-red-500/40 dark:hover:bg-red-500/50"
       data-testid="conversation-window-chip-help"
       @click.stop
     >
