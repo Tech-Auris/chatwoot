@@ -64,25 +64,45 @@ const tooltip = computed(() => {
 const showHelp = computed(
   () => state.value?.tone === 'closed' && Boolean(props.helpUrl)
 );
+
+// Inline styles instead of Tailwind classes for the tone palette. During
+// integration we hit a case where the color classes rendered as an
+// outline-only pill (bg swallowed by an upstream rule or missed by the
+// Tailwind JIT scan against this file); switching to inline rgba tokens
+// bypasses that whole class of problems and keeps the chip readable on
+// any panel ground.
+const TONE_STYLES = {
+  free: {
+    backgroundColor: 'rgba(16, 185, 129, 0.22)',
+    borderColor: 'rgba(16, 185, 129, 0.45)',
+    color: '#065F46',
+  },
+  std: {
+    backgroundColor: 'rgba(37, 99, 235, 0.20)',
+    borderColor: 'rgba(37, 99, 235, 0.45)',
+    color: '#1E3A8A',
+  },
+  warn: {
+    backgroundColor: 'rgba(217, 119, 6, 0.28)',
+    borderColor: 'rgba(217, 119, 6, 0.55)',
+    color: '#78350F',
+  },
+  closed: {
+    backgroundColor: 'rgba(220, 38, 38, 0.20)',
+    borderColor: 'rgba(220, 38, 38, 0.45)',
+    color: '#7F1D1D',
+  },
+};
+
+const chipStyle = computed(() => TONE_STYLES[state.value?.tone] || {});
 </script>
 
 <template>
   <div
     v-if="state"
     :title="tooltip"
+    :style="chipStyle"
     class="inline-flex items-center gap-1.5 pl-2 pr-2 py-1 rounded-full text-xs font-semibold leading-none border transition-colors"
-    :class="[
-      {
-        'bg-emerald-500/20 dark:bg-emerald-500/25 text-emerald-800 dark:text-emerald-200 border-emerald-500/40 dark:border-emerald-400/40':
-          state.tone === 'free',
-        'bg-blue-500/20 dark:bg-blue-500/25 text-blue-800 dark:text-blue-200 border-blue-500/40 dark:border-blue-400/40':
-          state.tone === 'std',
-        'bg-amber-500/25 dark:bg-amber-500/30 text-amber-900 dark:text-amber-200 border-amber-500/50 dark:border-amber-400/50':
-          state.tone === 'warn',
-        'bg-red-500/20 dark:bg-red-500/25 text-red-800 dark:text-red-200 border-red-500/40 dark:border-red-400/40':
-          state.tone === 'closed',
-      },
-    ]"
     data-testid="conversation-window-chip"
   >
     <span
