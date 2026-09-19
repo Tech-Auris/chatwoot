@@ -9,8 +9,8 @@
     "MESSAGING_WINDOW": {
       "LABEL_CTWA_72H": "CTWA · free",
       "LABEL_STANDARD_24H": "24h window",
-      "LABEL_CLOSED": "Template only",
-      "CLOSING": "Closing soon",
+      "LABEL_CLOSED": "Window closed",
+      "CLOSING": "Closing window",
       "TOOLTIP_CTWA_72H": "Ad-originated conversation. Every reply is free until {when}.",
       "TOOLTIP_STANDARD_24H": "Standard reply window open until {when}. After Meta pricing kicks in (01/10/2026), service messages within this window count against the 1000/month free tier.",
       "TOOLTIP_CLOSED": "No open window. Only an approved template can start a new conversation.",
