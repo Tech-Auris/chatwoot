@@ -913,8 +913,14 @@ export default {
           :banner-message="messageCapMessage"
         />
       </template>
+      <!--
+        Legacy 24h banner. Suppressed on WhatsApp Cloud conversations when
+        the window chip is active — the chip already carries the state and
+        exposes the same docs link through its "?" button, so the banner
+        becomes noise. Non-Cloud channels keep the banner as before.
+      -->
       <Banner
-        v-if="!currentChat.can_reply"
+        v-if="!currentChat.can_reply && !shouldShowWindowChip"
         color-scheme="alert"
         class="mx-2 mt-2 overflow-hidden rounded-lg"
         :banner-message="replyWindowBannerMessage"
@@ -959,7 +965,9 @@ export default {
       <ConversationWindowChip
         v-if="shouldShowWindowChip"
         :window="currentChat.messaging_window"
-        class="absolute top-3 right-3 z-10 backdrop-blur-sm shadow-sm"
+        :help-url="replyWindowLink"
+        :help-label="replyWindowLinkText"
+        class="absolute top-3 right-3 z-10 shadow-sm"
       />
       <MessageList
         ref="conversationPanelRef"
