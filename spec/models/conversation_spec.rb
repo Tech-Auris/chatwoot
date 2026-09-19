@@ -1311,4 +1311,76 @@ RSpec.describe Conversation do
       end
     end
   end
+
+  # WhatsApp Cloud messaging window used by the dashboard chip and by any
+  # downstream (n8n, webhook) that needs to know whether a response is free.
+  describe '#messaging_window' do
+    let(:cloud_channel) { create(:channel_whatsapp, provider: 'whatsapp_cloud', sync_templates: false, validate_provider_config: false) }
+    let(:cloud_inbox)   { cloud_channel.inbox }
+    let(:conversation)  { create(:conversation, inbox: cloud_inbox, account: cloud_inbox.account) }
+
+    it 'returns nil on non-Cloud channels' do
+      web_conv = create(:conversation)
+      expect(web_conv.messaging_window).to be_nil
+    end
+
+    it 'returns nil on Baileys inboxes' do
+      baileys_channel = create(:channel_whatsapp, provider: 'baileys', sync_templates: false, validate_provider_config: false)
+      baileys_conv = create(:conversation, inbox: baileys_channel.inbox, account: baileys_channel.inbox.account)
+
+      expect(baileys_conv.messaging_window).to be_nil
+    end
+
+    it 'returns closed when there is no inbound history' do
+      # The conversation was created but the customer never wrote — no
+      # window is open on Meta's side, so the chip must not lie about it.
+      expect(conversation.messaging_window).to include(kind: 'closed', opened_at: nil, expires_at: nil)
+    end
+
+    it 'returns standard_24h when the customer replied recently' do
+      travel_to(2.hours.ago) do
+        create(:message, conversation: conversation, inbox: cloud_inbox, account: cloud_inbox.account, message_type: :incoming)
+      end
+
+      window = conversation.messaging_window
+      expect(window[:kind]).to eq('standard_24h')
+      expect(window[:expires_at]).to be_within(1.minute).of(22.hours.from_now)
+    end
+
+    it 'returns closed once the 24h window has passed' do
+      travel_to(25.hours.ago) do
+        create(:message, conversation: conversation, inbox: cloud_inbox, account: cloud_inbox.account, message_type: :incoming)
+      end
+
+      expect(conversation.messaging_window[:kind]).to eq('closed')
+    end
+
+    # CTWA wins over the standard window even when the customer has replied
+    # more recently — the 72h free clock runs from the ad-originated message,
+    # not from the most recent reply.
+    it 'returns ctwa_72h when the last CTWA touch is inside 72h' do
+      conversation.update!(additional_attributes: { 'campaign_referral' => { 'title' => 'Ad X' } })
+      travel_to(10.hours.ago) do
+        create(:message, conversation: conversation, inbox: cloud_inbox, account: cloud_inbox.account, message_type: :incoming,
+                         content_attributes: { referral: { title: 'Ad X' } })
+      end
+
+      window = conversation.messaging_window
+      expect(window[:kind]).to eq('ctwa_72h')
+      expect(window[:expires_at]).to be_within(1.minute).of(62.hours.from_now)
+    end
+
+    it 'falls back to standard_24h once the CTWA 72h has expired' do
+      conversation.update!(additional_attributes: { 'campaign_referral' => { 'title' => 'Ad X' } })
+      travel_to(80.hours.ago) do
+        create(:message, conversation: conversation, inbox: cloud_inbox, account: cloud_inbox.account, message_type: :incoming,
+                         content_attributes: { referral: { title: 'Ad X' } })
+      end
+      travel_to(2.hours.ago) do
+        create(:message, conversation: conversation, inbox: cloud_inbox, account: cloud_inbox.account, message_type: :incoming)
+      end
+
+      expect(conversation.messaging_window[:kind]).to eq('standard_24h')
+    end
+  end
 end

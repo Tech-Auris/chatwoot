@@ -65,7 +65,13 @@ class SuperAdmin::AppConfigsController < SuperAdmin::ApplicationController
       'google_ads' => %w[GOOGLE_ADS_OAUTH_CLIENT_ID GOOGLE_ADS_OAUTH_CLIENT_SECRET],
       # The page a prospect opens. It is not the console and not the product:
       # it carries the sales logo and the PIX code the company is paid to.
-      'commercial' => %w[SALES_PROPOSAL_LOGO SALES_PIX_PAYLOAD SALES_TERMS_URL]
+      'commercial' => %w[SALES_PROPOSAL_LOGO SALES_PIX_PAYLOAD SALES_TERMS_URL],
+      # Toggle that gates the messaging-window chip on WhatsApp Cloud
+      # conversations. The backend always computes `Conversation#messaging_window`
+      # so downstream consumers (n8n, webhooks) see the state; this flag only
+      # decides whether the dashboard renders the chip. Turn on globally on
+      # 01/10/2026 when Meta's per-message service pricing kicks in.
+      'whatsapp_pricing' => %w[WHATSAPP_MESSAGING_WINDOW_INDICATOR_ENABLED]
     }
   end
 

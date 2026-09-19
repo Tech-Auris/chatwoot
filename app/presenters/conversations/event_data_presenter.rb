@@ -21,6 +21,7 @@ class Conversations::EventDataPresenter < SimpleDelegator
       summary: summary,
       ai_enabled: ai_status_enabled?,
       waiting_since: waiting_since.to_i,
+      messaging_window: messaging_window,
       **push_timestamps
     }
   end
