@@ -29,8 +29,11 @@ const subtitle = computed(() => {
   return 'Links de todas as conversas';
 });
 
-// Bucket everything into human-friendly date groups so the layout matches
-// the WhatsApp Business reference the operator already knows.
+// Bucket by date the same way WhatsApp Business does — Hoje, Ontem,
+// Semana passada (the previous 7 days), then straight into monthly
+// buckets. The intermediate "Esta semana" label we had before is gone;
+// anything from earlier this week that isn't today or yesterday joins
+// "Semana passada" so the sections read the way the operator expects.
 const groupedItems = computed(() => {
   const buckets = new Map();
   const now = new Date();
@@ -42,17 +45,14 @@ const groupedItems = computed(() => {
   const today = startOfDay(now);
   const yesterday = new Date(today);
   yesterday.setDate(today.getDate() - 1);
-  const startOfThisWeek = new Date(today);
-  startOfThisWeek.setDate(today.getDate() - today.getDay());
-  const startOfLastWeek = new Date(startOfThisWeek);
-  startOfLastWeek.setDate(startOfThisWeek.getDate() - 7);
+  const sevenDaysAgo = new Date(today);
+  sevenDaysAgo.setDate(today.getDate() - 7);
 
   const bucketFor = date => {
     const d = startOfDay(date);
     if (d.getTime() === today.getTime()) return 'Hoje';
     if (d.getTime() === yesterday.getTime()) return 'Ontem';
-    if (d >= startOfThisWeek) return 'Esta semana';
-    if (d >= startOfLastWeek) return 'Semana passada';
+    if (d >= sevenDaysAgo) return 'Semana passada';
     return d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
   };
 
@@ -135,6 +135,88 @@ const closeMenu = () => {
   openMenuFor.value = null;
 };
 
+// Multi-select — the bottom shelf appears the moment there is anything
+// ticked. Docs / Links show the checkbox all the time; the media grid
+// only reveals it on hover unless something is already selected. The
+// context menu's "Selecionar" seeds the first tick.
+const selectedIds = ref(new Set());
+
+const isSelected = id => selectedIds.value.has(id);
+
+const toggleSelect = id => {
+  const next = new Set(selectedIds.value);
+  if (next.has(id)) next.delete(id);
+  else next.add(id);
+  selectedIds.value = next;
+};
+
+const enterSelectMode = id => toggleSelect(id);
+
+const clearSelection = () => {
+  selectedIds.value = new Set();
+};
+
+// Everything in view that the operator has ticked. Drives the count,
+// size and enabled-state of the bulk-action buttons in the bar.
+const selectedItems = computed(() =>
+  items.value.filter(it => selectedIds.value.has(it.id))
+);
+
+const selectedSize = computed(() =>
+  selectedItems.value.reduce((sum, it) => sum + (it.file_size || 0), 0)
+);
+
+// Human-readable file size — "731 KB" / "1.6 MB" like WhatsApp.
+const humanSize = bytes => {
+  if (!bytes) return null;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+// Reset selection whenever the operator flips to another tab — the
+// bar's labels/actions differ between tabs and stray selections would
+// confuse the totals.
+watch(activeTab, () => clearSelection());
+
+const showSelectionBar = computed(() => selectedIds.value.size > 0);
+
+// Media grid also needs to know when to force-show the checkbox — the
+// bar is up (something's selected) OR the operator explicitly entered
+// select-mode via the context menu, both cases collapse into "we have
+// at least one selection".
+const forceCheckboxes = computed(() => selectedIds.value.size > 0);
+
+// Bulk actions — Baixar opens each URL on a new tab so the browser
+// handles the concurrent download the same way it would if the operator
+// clicked each row individually. Encaminhar / Favoritar / Apagar still
+// route to the coming-soon toast; each needs its own endpoint and is
+// tracked as a follow-up.
+const bulkDownload = () => {
+  selectedItems.value.forEach(item => {
+    openInNewTab(item.file_url || item.url);
+  });
+};
+
+// Handles a click on the row body: in select mode it ticks the row;
+// otherwise it opens the target URL.
+const handleRowClick = item => {
+  if (selectedIds.value.size > 0) {
+    toggleSelect(item.id);
+    return;
+  }
+  openInNewTab(activeTab.value === 'link' ? item.url : item.file_url);
+};
+
+// Same for the media thumbnail — click toggles in select mode, opens
+// the full-size image / video on a new tab otherwise.
+const handleMediaClick = item => {
+  if (selectedIds.value.size > 0) {
+    toggleSelect(item.id);
+    return;
+  }
+  openInNewTab(item.file_url);
+};
+
 // Actions that need dedicated endpoints / UX flows (multi-select, forward,
 // favorites, delete) surface as toast placeholders for now so the menu
 // shape matches the WhatsApp Business reference. Each has a follow-up PR
@@ -152,7 +234,7 @@ const menuItems = item => {
       key: 'select',
       label: t('MEDIA_HUB.MENU.SELECT'),
       icon: 'i-lucide-square-check',
-      action: showComingSoon,
+      action: () => enterSelectMode(item.id),
     },
     {
       key: 'open-link',
@@ -259,8 +341,17 @@ const runMenuAction = mi => {
             {{ tab.label }}
           </button>
         </nav>
-        <div class="flex justify-end gap-1 pb-3">
+        <div class="flex justify-end items-center gap-2 pb-3">
           <button
+            v-if="showSelectionBar"
+            type="button"
+            class="text-sm text-n-slate-12 hover:text-n-slate-11 px-2 py-1"
+            @click="clearSelection"
+          >
+            {{ t('MEDIA_HUB.SELECTION.CANCEL') }}
+          </button>
+          <button
+            v-else
             type="button"
             class="w-8 h-8 inline-flex items-center justify-center rounded-md text-n-slate-11 hover:bg-n-alpha-2"
             :title="t('MEDIA_HUB.CLOSE')"
@@ -305,10 +396,13 @@ const runMenuAction = mi => {
                 v-for="item in group.rows"
                 :key="item.id"
                 class="relative group"
+                :class="{
+                  'ring-2 ring-woot-500 ring-offset-1': isSelected(item.id),
+                }"
               >
                 <div
                   class="aspect-square bg-n-slate-3 overflow-hidden cursor-pointer"
-                  @click.stop="openInNewTab(item.file_url)"
+                  @click.stop="handleMediaClick(item)"
                 >
                   <img
                     v-if="item.thumb_url || item.file_url"
@@ -319,7 +413,7 @@ const runMenuAction = mi => {
                   />
                   <span
                     v-if="item.file_type === 'video'"
-                    class="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[10px] bg-black/50 text-white"
+                    class="absolute top-2 left-14 px-1.5 py-0.5 rounded text-[10px] bg-black/50 text-white"
                   >
                     {{ t('MEDIA_HUB.VIDEO') }}
                   </span>
@@ -333,6 +427,27 @@ const runMenuAction = mi => {
                     </span>
                   </div>
                 </div>
+                <!-- Multi-select checkbox — top-left, visible on hover
+                     always, or full-time once anything on the tab is
+                     selected. Clicking the checkbox toggles the row and
+                     enters selection mode. -->
+                <button
+                  type="button"
+                  class="absolute top-2 left-2 w-6 h-6 inline-flex items-center justify-center rounded border bg-white/90 text-n-slate-11 shadow-sm transition-opacity"
+                  :class="{
+                    'opacity-0 group-hover:opacity-100':
+                      !forceCheckboxes && !isSelected(item.id),
+                    'bg-n-brand text-white border-n-brand': isSelected(item.id),
+                    'border-n-slate-6': !isSelected(item.id),
+                  }"
+                  :title="t('MEDIA_HUB.MENU.SELECT')"
+                  @click.stop="toggleSelect(item.id)"
+                >
+                  <span
+                    v-if="isSelected(item.id)"
+                    class="i-lucide-check size-4"
+                  />
+                </button>
                 <!-- Chevron overlay — top-right corner, visible on hover
                      or while the menu is open. Matches the WhatsApp
                      Business pattern. -->
@@ -382,7 +497,8 @@ const runMenuAction = mi => {
             <table v-else class="w-full text-sm table-fixed">
               <thead>
                 <tr class="text-left text-n-slate-11 border-b border-n-slate-4">
-                  <th class="py-2 font-medium w-[38%]">
+                  <th class="py-2 font-medium w-10" />
+                  <th class="py-2 font-medium w-[34%]">
                     {{ activeTab === 'document' ? 'Documento' : 'Link' }}
                   </th>
                   <th class="py-2 font-medium w-[32%]">
@@ -399,12 +515,27 @@ const runMenuAction = mi => {
                   v-for="item in group.rows"
                   :key="item.id"
                   class="border-b border-n-slate-3 hover:bg-n-slate-2 align-top cursor-pointer"
-                  @click="
-                    openInNewTab(
-                      activeTab === 'link' ? item.url : item.file_url
-                    )
-                  "
+                  :class="{ 'bg-n-brand/5': isSelected(item.id) }"
+                  @click="handleRowClick(item)"
                 >
+                  <td class="py-3 pl-2 pr-2 align-middle">
+                    <button
+                      type="button"
+                      class="w-6 h-6 inline-flex items-center justify-center rounded border border-n-slate-6 bg-white text-n-slate-11"
+                      :class="{
+                        'bg-n-brand text-white border-n-brand': isSelected(
+                          item.id
+                        ),
+                      }"
+                      :title="t('MEDIA_HUB.MENU.SELECT')"
+                      @click.stop="toggleSelect(item.id)"
+                    >
+                      <span
+                        v-if="isSelected(item.id)"
+                        class="i-lucide-check size-4"
+                      />
+                    </button>
+                  </td>
                   <td class="py-3 pr-2">
                     <div class="flex items-center gap-3">
                       <span
@@ -521,6 +652,62 @@ const runMenuAction = mi => {
             </table>
           </div>
         </template>
+      </div>
+
+      <!-- Selection bar. Mirrors the WhatsApp Business bottom shelf:
+           per-tab counts and size stats on the center, action pills to
+           the right. The delete pill is red-tinted; the bar itself
+           only mounts while the operator has anything selected. -->
+      <div
+        v-if="showSelectionBar"
+        class="border-t border-n-slate-4 bg-n-solid-1 px-6 py-3 flex items-center gap-3"
+        @click.stop
+      >
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-n-ruby-3 text-n-ruby-11 hover:bg-n-ruby-4 disabled:opacity-40"
+          :disabled="!selectedIds.size"
+          :title="t('MEDIA_HUB.MENU.DELETE')"
+          @click="showComingSoon"
+        >
+          <span class="i-lucide-trash-2 size-4" />
+          <span v-if="selectedSize > 0">{{ humanSize(selectedSize) }}</span>
+        </button>
+        <div class="flex-1 text-center text-sm text-n-slate-11">
+          {{
+            selectedIds.size === 1
+              ? t('MEDIA_HUB.SELECTION.ONE_SELECTED')
+              : t('MEDIA_HUB.SELECTION.MANY_SELECTED', { n: selectedIds.size })
+          }}
+        </div>
+        <button
+          type="button"
+          class="w-9 h-9 inline-flex items-center justify-center rounded-full text-n-slate-11 hover:bg-n-alpha-2 disabled:opacity-40"
+          :disabled="!selectedIds.size"
+          :title="t('MEDIA_HUB.MENU.FAVORITE')"
+          @click="showComingSoon"
+        >
+          <span class="i-lucide-star size-4" />
+        </button>
+        <button
+          v-if="activeTab !== 'link'"
+          type="button"
+          class="w-9 h-9 inline-flex items-center justify-center rounded-full text-n-slate-11 hover:bg-n-alpha-2 disabled:opacity-40"
+          :disabled="!selectedIds.size"
+          :title="t('MEDIA_HUB.MENU.DOWNLOAD')"
+          @click="bulkDownload"
+        >
+          <span class="i-lucide-download size-4" />
+        </button>
+        <button
+          type="button"
+          class="w-10 h-10 inline-flex items-center justify-center rounded-full bg-n-slate-12 text-white hover:bg-n-slate-11 disabled:opacity-40"
+          :disabled="!selectedIds.size"
+          :title="t('MEDIA_HUB.MENU.FORWARD')"
+          @click="showComingSoon"
+        >
+          <span class="i-lucide-forward size-4" />
+        </button>
       </div>
     </div>
   </div>

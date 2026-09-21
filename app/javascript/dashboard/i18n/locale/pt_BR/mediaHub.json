@@ -10,6 +10,11 @@
     "CLOSE": "Fechar",
     "VIDEO": "Vídeo",
     "COMING_SOON": "Em breve",
+    "SELECTION": {
+      "CANCEL": "Cancelar",
+      "ONE_SELECTED": "1 selecionada",
+      "MANY_SELECTED": "{n} itens selecionados"
+    },
     "MENU": {
       "CONTEXT_MENU": "Menu de contexto da mensagem",
       "SELECT": "Selecionar",
