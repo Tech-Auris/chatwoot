@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_09_19_000002) do
+ActiveRecord::Schema[7.1].define(version: 2026_09_21_171637) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -1324,6 +1324,26 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_19_000002) do
     t.index ["user_id"], name: "index_leaves_on_user_id"
   end
 
+  create_table "login_events", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "account_id"
+    t.integer "role"
+    t.string "ip_address"
+    t.string "user_agent"
+    t.string "browser_name"
+    t.string "browser_version"
+    t.string "platform_name"
+    t.string "platform_version"
+    t.string "device_name"
+    t.string "city"
+    t.string "country"
+    t.string "country_code"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "created_at"], name: "index_login_events_on_account_id_and_created_at", order: { created_at: :desc }
+    t.index ["user_id", "created_at"], name: "index_login_events_on_user_id_and_created_at", order: { created_at: :desc }
+  end
+
   create_table "loss_reasons", force: :cascade do |t|
     t.string "name", null: false
     t.integer "position", default: 0, null: false
@@ -2062,6 +2082,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_19_000002) do
   add_foreign_key "internal_chat_polls", "internal_chat_messages"
   add_foreign_key "internal_chat_reactions", "internal_chat_messages"
   add_foreign_key "internal_chat_reactions", "users", on_delete: :cascade
+  add_foreign_key "login_events", "accounts"
+  add_foreign_key "login_events", "users"
   add_foreign_key "marketing_integrations", "accounts"
   add_foreign_key "operations_notification_acks", "accounts"
   add_foreign_key "operations_notification_acks", "operations_notifications", on_delete: :cascade

@@ -28,7 +28,8 @@ module SuperAdmin::NavigationHelper
   # finance matter, which is why they sit on their own.
   def operations_open?
     params[:controller].in? %w[super_admin/reports/health_score super_admin/reports/inbox_status
-                               super_admin/terms_acceptances super_admin/terms_acceptance_requests]
+                               super_admin/terms_acceptances super_admin/terms_acceptance_requests
+                               super_admin/login_events]
   end
 
   def operations_pages
@@ -41,7 +42,8 @@ module SuperAdmin::NavigationHelper
       { label: 'Health Score', url: super_admin_reports_health_score_url },
       { label: 'Inbox status', url: super_admin_reports_inbox_status_url },
       terms,
-      terms_campaigns
+      terms_campaigns,
+      { label: 'Login events', url: super_admin_login_events_url }
     ]
   end
 

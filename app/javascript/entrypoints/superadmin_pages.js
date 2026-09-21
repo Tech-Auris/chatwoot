@@ -19,6 +19,7 @@ import TermsAcceptancesIndex from '../superadmin_pages/views/commercial/TermsAcc
 import TermsAcceptanceRequestsIndex from '../superadmin_pages/views/commercial/TermsAcceptanceRequestsIndex.vue';
 import TermsAcceptanceRequestWizard from '../superadmin_pages/views/commercial/TermsAcceptanceRequestWizard.vue';
 import TermsAcceptanceRequestReport from '../superadmin_pages/views/commercial/TermsAcceptanceRequestReport.vue';
+import LoginEventsIndex from '../superadmin_pages/views/operations/LoginEvents.vue';
 
 const ComponentMapping = {
   PlaygroundIndex: PlaygroundIndex,
@@ -38,6 +39,7 @@ const ComponentMapping = {
   TermsAcceptanceRequestsIndex: TermsAcceptanceRequestsIndex,
   TermsAcceptanceRequestWizard: TermsAcceptanceRequestWizard,
   TermsAcceptanceRequestReport: TermsAcceptanceRequestReport,
+  LoginEventsIndex: LoginEventsIndex,
 };
 
 const renderComponent = (componentName, props) => {
