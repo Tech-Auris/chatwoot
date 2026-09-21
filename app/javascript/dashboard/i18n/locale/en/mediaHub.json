@@ -1,0 +1,16 @@
+{
+  "MEDIA_HUB": {
+    "LOADING": "Loading…",
+    "EMPTY": "Nothing here yet.",
+    "ITEMS_LABEL": "item(s)",
+    "SENT_BY": "Sent by",
+    "OPEN": "Open",
+    "DOWNLOAD": "Download",
+    "MORE": "More actions",
+    "CLOSE": "Close",
+    "VIDEO": "Video",
+    "OPEN_LINK_NEW_TAB": "Open link in new tab",
+    "GO_TO_MESSAGE": "Go to message",
+    "COPY": "Copy"
+  }
+}

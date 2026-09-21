@@ -9,6 +9,7 @@ import { frontendURL } from '../../helper/URLHelper';
 import helpcenterRoutes from './helpcenter/helpcenter.routes';
 import campaignsRoutes from './campaigns/campaigns.routes';
 import marketingRoutes from './marketing/marketing.routes';
+import mediaRoutes from './media/media.routes';
 import { routes as captainRoutes } from './captain/captain.routes';
 import { routes as kanbanRoutes } from './kanban/kanban.routes';
 import funnelRoutes from './funnel/funnel.routes';
@@ -41,6 +42,7 @@ export default {
         ...helpcenterRoutes.routes,
         ...campaignsRoutes.routes,
         ...marketingRoutes.routes,
+        ...mediaRoutes.routes,
         ...funnelRoutes.routes,
         ...operationsNotificationsRoutes.routes,
         ...releaseNotesRoutes.routes,
