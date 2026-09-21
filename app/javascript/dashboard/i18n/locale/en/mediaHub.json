@@ -9,8 +9,18 @@
     "MORE": "More actions",
     "CLOSE": "Close",
     "VIDEO": "Video",
-    "OPEN_LINK_NEW_TAB": "Open link in new tab",
-    "GO_TO_MESSAGE": "Go to message",
-    "COPY": "Copy"
+    "COMING_SOON": "Coming soon",
+    "MENU": {
+      "CONTEXT_MENU": "Message context menu",
+      "SELECT": "Select",
+      "OPEN_LINK_NEW_TAB": "Open link in new tab",
+      "GO_TO_MESSAGE": "Go to message",
+      "REPLY": "Reply",
+      "DOWNLOAD": "Download",
+      "COPY": "Copy",
+      "FORWARD": "Forward",
+      "FAVORITE": "Favorite",
+      "DELETE": "Delete"
+    }
   }
 }
