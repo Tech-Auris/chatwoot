@@ -397,7 +397,7 @@ const runMenuAction = mi => {
                 :key="item.id"
                 class="relative group"
                 :class="{
-                  'ring-2 ring-woot-500 ring-offset-1': isSelected(item.id),
+                  'ring-2 ring-n-slate-12 ring-offset-1': isSelected(item.id),
                 }"
               >
                 <div
@@ -427,17 +427,20 @@ const runMenuAction = mi => {
                     </span>
                   </div>
                 </div>
-                <!-- Multi-select checkbox — top-left, visible on hover
-                     always, or full-time once anything on the tab is
-                     selected. Clicking the checkbox toggles the row and
-                     enters selection mode. -->
+                <!-- Multi-select checkbox — top-left. Never shows on
+                     hover alone; only appears after the operator taps
+                     "Selecionar" in the context menu (which flips
+                     `forceCheckboxes` via the first tick) or when the
+                     row is already selected. Matches WhatsApp Business.
+                -->
                 <button
+                  v-if="forceCheckboxes || isSelected(item.id)"
                   type="button"
-                  class="absolute top-2 left-2 w-6 h-6 inline-flex items-center justify-center rounded border bg-white/90 text-n-slate-11 shadow-sm transition-opacity"
+                  class="absolute top-2 left-2 w-5 h-5 inline-flex items-center justify-center rounded-md border bg-white/95 text-n-slate-11 shadow-sm"
                   :class="{
-                    'opacity-0 group-hover:opacity-100':
-                      !forceCheckboxes && !isSelected(item.id),
-                    'bg-n-brand text-white border-n-brand': isSelected(item.id),
+                    'bg-n-slate-12 text-white border-n-slate-12': isSelected(
+                      item.id
+                    ),
                     'border-n-slate-6': !isSelected(item.id),
                   }"
                   :title="t('MEDIA_HUB.MENU.SELECT')"
@@ -445,7 +448,7 @@ const runMenuAction = mi => {
                 >
                   <span
                     v-if="isSelected(item.id)"
-                    class="i-lucide-check size-4"
+                    class="i-lucide-check size-3.5"
                   />
                 </button>
                 <!-- Chevron overlay — top-right corner, visible on hover
@@ -515,24 +518,24 @@ const runMenuAction = mi => {
                   v-for="item in group.rows"
                   :key="item.id"
                   class="border-b border-n-slate-3 hover:bg-n-slate-2 align-top cursor-pointer"
-                  :class="{ 'bg-n-brand/5': isSelected(item.id) }"
+                  :class="{ 'bg-n-slate-3': isSelected(item.id) }"
                   @click="handleRowClick(item)"
                 >
                   <td class="py-3 pl-2 pr-2 align-middle">
                     <button
                       type="button"
-                      class="w-6 h-6 inline-flex items-center justify-center rounded border border-n-slate-6 bg-white text-n-slate-11"
+                      class="w-5 h-5 inline-flex items-center justify-center rounded-md border bg-white text-n-slate-11"
                       :class="{
-                        'bg-n-brand text-white border-n-brand': isSelected(
-                          item.id
-                        ),
+                        'bg-n-slate-12 text-white border-n-slate-12':
+                          isSelected(item.id),
+                        'border-n-slate-6': !isSelected(item.id),
                       }"
                       :title="t('MEDIA_HUB.MENU.SELECT')"
                       @click.stop="toggleSelect(item.id)"
                     >
                       <span
                         v-if="isSelected(item.id)"
-                        class="i-lucide-check size-4"
+                        class="i-lucide-check size-3.5"
                       />
                     </button>
                   </td>
