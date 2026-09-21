@@ -197,23 +197,15 @@ const bulkDownload = () => {
   });
 };
 
-// Handles a click on the row body: in select mode it ticks the row;
-// otherwise it opens the target URL.
+// A click on the row body / thumbnail body always opens the target —
+// the operator explicitly ticks the checkbox to select. This matches
+// WhatsApp Business: clicking a photo previews it, clicking the box
+// selects it. The two intents never bleed into each other.
 const handleRowClick = item => {
-  if (selectedIds.value.size > 0) {
-    toggleSelect(item.id);
-    return;
-  }
   openInNewTab(activeTab.value === 'link' ? item.url : item.file_url);
 };
 
-// Same for the media thumbnail — click toggles in select mode, opens
-// the full-size image / video on a new tab otherwise.
 const handleMediaClick = item => {
-  if (selectedIds.value.size > 0) {
-    toggleSelect(item.id);
-    return;
-  }
   openInNewTab(item.file_url);
 };
 
@@ -521,21 +513,22 @@ const runMenuAction = mi => {
                   :class="{ 'bg-n-slate-3': isSelected(item.id) }"
                   @click="handleRowClick(item)"
                 >
-                  <td class="py-3 pl-2 pr-2 align-middle">
+                  <td class="py-3 pl-3 pr-2 align-middle">
                     <button
                       type="button"
-                      class="w-5 h-5 inline-flex items-center justify-center rounded-md border bg-white text-n-slate-11"
+                      class="block w-5 h-5 rounded-md border-2 bg-n-solid-1 relative"
                       :class="{
-                        'bg-n-slate-12 text-white border-n-slate-12':
-                          isSelected(item.id),
-                        'border-n-slate-6': !isSelected(item.id),
+                        'bg-n-slate-12 border-n-slate-12': isSelected(item.id),
+                        'border-n-slate-8 hover:border-n-slate-11': !isSelected(
+                          item.id
+                        ),
                       }"
                       :title="t('MEDIA_HUB.MENU.SELECT')"
                       @click.stop="toggleSelect(item.id)"
                     >
                       <span
                         v-if="isSelected(item.id)"
-                        class="i-lucide-check size-3.5"
+                        class="i-lucide-check size-3.5 text-white absolute inset-0 m-auto"
                       />
                     </button>
                   </td>
