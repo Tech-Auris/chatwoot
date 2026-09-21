@@ -154,8 +154,26 @@ class SuperAdmin::Commercial::ReservationsController < SuperAdmin::ApplicationCo
       discount_summary: quote.discount_summary,
       items: quote.items.map { |item| serialize_item(item) },
       public_url: sales_proposal_url(quote.public_token, host: ENV.fetch('FRONTEND_URL', request.base_url)),
-      access_code: quote.access_code
+      access_code: quote.access_code,
+      # Payment links generated during the sale — surfaced in the expanded
+      # row so the sales team can resend the exact link the customer got.
+      payment_links: payment_links(quote)
     }
+  end
+
+  # Handful of URLs we may have collected along the sale, per provider.
+  # `nil` entries are dropped so the UI only paints what actually exists.
+  def payment_links(quote)
+    {
+      asaas_payment_link: quote.asaas_payment_link_url.presence,
+      asaas_invoice: quote.asaas_invoice_url.presence,
+      # Stripe hosted invoice URL is not persisted; the dashboard link is
+      # what the internal team needs to reconcile the sale.
+      stripe_dashboard: quote.stripe_invoice_id.present? ? "https://dashboard.stripe.com/invoices/#{quote.stripe_invoice_id}" : nil,
+      # Inter PIX has no public cobrança URL. Surfacing the txid is enough
+      # for the finance team to look it up in the Inter panel.
+      inter_pix_txid: quote.inter_txid.presence
+    }.compact
   end
 
   # What the grid's expandable row needs to render the cart lines exactly
