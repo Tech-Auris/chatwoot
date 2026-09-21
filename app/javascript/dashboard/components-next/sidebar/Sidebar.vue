@@ -708,6 +708,15 @@ const menuItems = computed(() => {
         },
       ],
     },
+    // Mídia — hub central com todas as imagens, documentos e links que a
+    // conta trocou nas conversas. Fica logo abaixo do Marketing porque é
+    // um recurso operacional, não de configuração.
+    {
+      name: 'Media',
+      label: t('SIDEBAR.MEDIA'),
+      icon: 'i-lucide-image',
+      to: accountScopedRoute('media_hub_index'),
+    },
     ...(isHelpCenterMenuEnabled.value
       ? [
           {

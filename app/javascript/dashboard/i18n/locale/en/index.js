@@ -32,6 +32,7 @@ import labelsMgmt from './labelsMgmt.json';
 import marketingAnalytics from './marketingAnalytics.json';
 import login from './login.json';
 import macros from './macros.json';
+import mediaHub from './mediaHub.json';
 import metaTemplates from './metaTemplates.json';
 import operationsNotifications from './operationsNotifications.json';
 import releaseNotes from './releaseNotes.json';
@@ -87,6 +88,7 @@ export default {
   ...marketingAnalytics,
   ...login,
   ...macros,
+  ...mediaHub,
   ...metaTemplates,
   ...operationsNotifications,
   ...releaseNotes,

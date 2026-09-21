@@ -1,0 +1,16 @@
+{
+  "MEDIA_HUB": {
+    "LOADING": "Carregando…",
+    "EMPTY": "Nada encontrado por aqui ainda.",
+    "ITEMS_LABEL": "item(ns)",
+    "SENT_BY": "Enviado por",
+    "OPEN": "Abrir",
+    "DOWNLOAD": "Baixar",
+    "MORE": "Mais ações",
+    "CLOSE": "Fechar",
+    "VIDEO": "Vídeo",
+    "OPEN_LINK_NEW_TAB": "Abrir link em nova aba",
+    "GO_TO_MESSAGE": "Ir para a mensagem",
+    "COPY": "Copiar"
+  }
+}

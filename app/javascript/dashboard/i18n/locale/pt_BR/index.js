@@ -33,6 +33,7 @@ import labelsMgmt from './labelsMgmt.json';
 import marketingAnalytics from './marketingAnalytics.json';
 import login from './login.json';
 import macros from './macros.json';
+import mediaHub from './mediaHub.json';
 import metaTemplates from './metaTemplates.json';
 import mfa from './mfa.json';
 import onboarding from './onboarding.json';
@@ -88,6 +89,7 @@ export default {
   ...marketingAnalytics,
   ...login,
   ...macros,
+  ...mediaHub,
   ...metaTemplates,
   ...mfa,
   ...onboarding,
