@@ -4,11 +4,12 @@ import { useToggle } from '@vueuse/core';
 import { useStore } from 'vuex';
 import { useAlert } from 'dashboard/composables';
 import { useI18n } from 'vue-i18n';
+import { useUISettings } from 'dashboard/composables/useUISettings';
 import { emitter } from 'shared/helpers/mitt';
+
 import EmailTranscriptModal from './EmailTranscriptModal.vue';
 import ResolveAction from '../../buttons/ResolveAction.vue';
-import ButtonV4 from 'dashboard/components-next/button/Button.vue';
-import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu.vue';
+import Button from 'dashboard/components-next/button/Button.vue';
 
 import {
   CMD_MUTE_CONVERSATION,
@@ -16,49 +17,33 @@ import {
   CMD_UNMUTE_CONVERSATION,
 } from 'dashboard/helper/commandbar/events';
 
-// No props needed as we're getting currentChat from the store directly
 const store = useStore();
 const { t } = useI18n();
+const { uiSettings, updateUISettings } = useUISettings();
 
 const [showEmailActionsModal, toggleEmailModal] = useToggle(false);
-const [showActionsDropdown, toggleDropdown] = useToggle(false);
 
 const currentChat = computed(() => store.getters.getSelectedChat);
+const isMuted = computed(() => currentChat.value.muted);
+const isContactSidebarOpen = computed(
+  () => uiSettings.value.is_contact_sidebar_open
+);
 
-const actionMenuItems = computed(() => {
-  const items = [];
+const mute = () => {
+  store.dispatch('muteConversation', currentChat.value.id);
+  useAlert(t('CONTACT_PANEL.MUTED_SUCCESS'));
+};
 
-  if (!currentChat.value.muted) {
-    items.push({
-      icon: 'i-lucide-volume-off',
-      label: t('CONTACT_PANEL.MUTE_CONTACT'),
-      action: 'mute',
-      value: 'mute',
-    });
-  } else {
-    items.push({
-      icon: 'i-lucide-volume-1',
-      label: t('CONTACT_PANEL.UNMUTE_CONTACT'),
-      action: 'unmute',
-      value: 'unmute',
-    });
-  }
+const unmute = () => {
+  store.dispatch('unmuteConversation', currentChat.value.id);
+  useAlert(t('CONTACT_PANEL.UNMUTED_SUCCESS'));
+};
 
-  // Auris: replace the upstream "send transcript by email" flow with a PDF
-  // download since our installs don't have SMTP configured — the email
-  // silently no-ops and users assume the feature is broken. The old flow's
-  // controller action + macro/automation hook stay in place for anyone who
-  // does have SMTP; we just don't expose the email UI from this menu.
-  items.push({
-    icon: 'i-lucide-download',
-    label: t('CONTACT_PANEL.DOWNLOAD_TRANSCRIPT'),
-    action: 'download_transcript',
-    value: 'download_transcript',
-  });
+const toggleMute = () => (isMuted.value ? unmute() : mute());
 
-  return items;
-});
-
+// Auris: kept the PDF-download route from the old kebab (this fork skips
+// upstream's "send transcript by email" flow because our installs have no
+// SMTP; the email UI would silently fail).
 const downloadTranscript = async () => {
   try {
     await store.dispatch(
@@ -75,29 +60,14 @@ const downloadTranscript = async () => {
   }
 };
 
-const handleActionClick = ({ action }) => {
-  toggleDropdown(false);
-
-  if (action === 'mute') {
-    store.dispatch('muteConversation', currentChat.value.id);
-    useAlert(t('CONTACT_PANEL.MUTED_SUCCESS'));
-  } else if (action === 'unmute') {
-    store.dispatch('unmuteConversation', currentChat.value.id);
-    useAlert(t('CONTACT_PANEL.UNMUTED_SUCCESS'));
-  } else if (action === 'download_transcript') {
-    downloadTranscript();
-  }
-};
-
-// These functions are needed for the event listeners
-const mute = () => {
-  store.dispatch('muteConversation', currentChat.value.id);
-  useAlert(t('CONTACT_PANEL.MUTED_SUCCESS'));
-};
-
-const unmute = () => {
-  store.dispatch('unmuteConversation', currentChat.value.id);
-  useAlert(t('CONTACT_PANEL.UNMUTED_SUCCESS'));
+// Same behaviour as the (now hidden) SidepanelSwitch contact toggle:
+// open the contact panel and always close the copilot panel — the two
+// panels share the same rail on the right.
+const toggleContactSidebar = () => {
+  updateUISettings({
+    is_contact_sidebar_open: !isContactSidebarOpen.value,
+    is_copilot_panel_open: false,
+  });
 };
 
 emitter.on(CMD_MUTE_CONVERSATION, mute);
@@ -112,31 +82,43 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="relative flex items-center gap-2 actions--container">
+  <div class="flex items-center gap-1 actions--container">
     <ResolveAction
       :conversation-id="currentChat.id"
       :status="currentChat.status"
     />
-    <div
-      v-on-clickaway="() => toggleDropdown(false)"
-      class="relative flex items-center group"
-    >
-      <ButtonV4
-        v-tooltip="$t('CONVERSATION.HEADER.MORE_ACTIONS')"
-        size="sm"
-        variant="ghost"
-        color="slate"
-        icon="i-lucide-more-vertical"
-        class="rounded-md group-hover:bg-n-alpha-2"
-        @click="toggleDropdown()"
-      />
-      <DropdownMenu
-        v-if="showActionsDropdown"
-        :menu-items="actionMenuItems"
-        class="mt-1 ltr:right-0 rtl:left-0 top-full"
-        @action="handleActionClick"
-      />
-    </div>
+    <Button
+      v-tooltip.top="
+        isMuted
+          ? t('CONTACT_PANEL.UNMUTE_CONTACT')
+          : t('CONTACT_PANEL.MUTE_CONTACT')
+      "
+      size="sm"
+      variant="ghost"
+      color="slate"
+      :icon="isMuted ? 'i-lucide-volume-1' : 'i-lucide-volume-off'"
+      class="rounded-md"
+      @click="toggleMute"
+    />
+    <Button
+      v-tooltip.top="t('CONTACT_PANEL.DOWNLOAD_TRANSCRIPT')"
+      size="sm"
+      variant="ghost"
+      color="slate"
+      icon="i-lucide-download"
+      class="rounded-md"
+      @click="downloadTranscript"
+    />
+    <Button
+      v-tooltip.top="t('CONVERSATION.SIDEBAR.CONTACT')"
+      size="sm"
+      variant="ghost"
+      color="slate"
+      icon="i-ph-user-bold"
+      class="rounded-md"
+      :class="[isContactSidebarOpen ? 'bg-n-alpha-2 text-n-slate-12' : '']"
+      @click="toggleContactSidebar"
+    />
     <EmailTranscriptModal
       v-if="showEmailActionsModal"
       :show="showEmailActionsModal"

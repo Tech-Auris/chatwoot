@@ -1,22 +1,18 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { useAlert } from 'dashboard/composables';
-import { useToggle } from '@vueuse/core';
 import { useI18n } from 'vue-i18n';
 import { useStore, useStoreGetters } from 'dashboard/composables/store';
 import { useEmitter } from 'dashboard/composables/emitter';
 import { useKeyboardEvents } from 'dashboard/composables/useKeyboardEvents';
 import { useConversationRequiredAttributes } from 'dashboard/composables/useConversationRequiredAttributes';
 
-import WootDropdownItem from 'shared/components/ui/dropdown/DropdownItem.vue';
-import WootDropdownMenu from 'shared/components/ui/dropdown/DropdownMenu.vue';
 import wootConstants from 'dashboard/constants/globals';
 import {
   CMD_REOPEN_CONVERSATION,
   CMD_RESOLVE_CONVERSATION,
 } from 'dashboard/helper/commandbar/events';
 
-import ButtonGroup from 'dashboard/components-next/buttonGroup/ButtonGroup.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
 import ConversationResolveAttributesModal from 'dashboard/components-next/ConversationWorkflow/ConversationResolveAttributesModal.vue';
 
@@ -25,13 +21,8 @@ const getters = useStoreGetters();
 const { t } = useI18n();
 const { checkMissingAttributes } = useConversationRequiredAttributes();
 
-const arrowDownButtonRef = ref(null);
 const isLoading = ref(false);
 const resolveAttributesModalRef = ref(null);
-
-const [showActionsDropdown, toggleDropdown] = useToggle();
-const closeDropdown = () => toggleDropdown(false);
-const openDropdown = () => toggleDropdown(true);
 
 const currentChat = computed(() => getters.getSelectedChat.value);
 
@@ -48,13 +39,14 @@ const isSnoozed = computed(
   () => currentChat.value.status === wootConstants.STATUS_TYPE.SNOOZED
 );
 
+// Only in the two "active" states does it make sense to show the snooze
+// and mark-pending shortcuts — a pending / snoozed conversation lives on
+// the single "reopen" affordance.
 const showAdditionalActions = computed(
   () => !isPending.value && !isSnoozed.value
 );
 
-const showOpenButton = computed(() => {
-  return isPending.value || isSnoozed.value;
-});
+const showOpenButton = computed(() => isPending.value || isSnoozed.value);
 
 const getConversationParams = () => {
   const allConversations = document.querySelectorAll(
@@ -82,7 +74,6 @@ const openSnoozeModal = () => {
 };
 
 const toggleStatus = (status, snoozedUntil, customAttributes = null) => {
-  closeDropdown();
   isLoading.value = true;
 
   const payload = {
@@ -138,18 +129,20 @@ const onCmdResolveConversation = () => {
   }
 };
 
+const markPending = () => toggleStatus(wootConstants.STATUS_TYPE.PENDING);
+
 const keyboardEvents = {
+  // Alt+M previously opened the dropdown for snooze — with the dropdown
+  // gone, the shortcut jumps straight to the snooze modal.
   'Alt+KeyM': {
-    action: () => arrowDownButtonRef.value?.$el.click(),
+    action: () => openSnoozeModal(),
     allowOnFocusedInput: true,
   },
   'Alt+KeyE': {
-    action: async () => {
-      onCmdResolveConversation();
-    },
+    action: () => onCmdResolveConversation(),
   },
   '$mod+Alt+KeyE': {
-    action: async event => {
+    action: event => {
       const { all, activeIndex, lastIndex } = getConversationParams();
       onCmdResolveConversation();
 
@@ -171,85 +164,64 @@ useEmitter(CMD_RESOLVE_CONVERSATION, onCmdResolveConversation);
 </script>
 
 <template>
-  <div class="flex relative justify-end items-center resolve-actions">
-    <ButtonGroup
-      class="flex-shrink-0 rounded-lg shadow outline-1 outline"
-      :class="!showOpenButton ? 'outline-n-container' : 'outline-transparent'"
-    >
-      <Button
-        v-if="isOpen"
-        :label="t('CONVERSATION.HEADER.RESOLVE_ACTION')"
-        size="sm"
-        color="slate"
-        no-animation
-        class="ltr:rounded-r-none rtl:rounded-l-none !outline-0"
-        :is-loading="isLoading"
-        @click="onCmdResolveConversation"
-      />
-      <Button
-        v-else-if="isResolved"
-        :label="t('CONVERSATION.HEADER.REOPEN_ACTION')"
-        size="sm"
-        color="slate"
-        no-animation
-        class="ltr:rounded-r-none rtl:rounded-l-none !outline-0"
-        :is-loading="isLoading"
-        @click="onCmdOpenConversation"
-      />
-      <Button
-        v-else-if="showOpenButton"
-        :label="t('CONVERSATION.HEADER.OPEN_ACTION')"
-        size="sm"
-        color="slate"
-        no-animation
-        :is-loading="isLoading"
-        @click="onCmdOpenConversation"
-      />
-      <Button
-        v-if="showAdditionalActions"
-        ref="arrowDownButtonRef"
-        icon="i-lucide-chevron-down"
-        :disabled="isLoading"
-        size="sm"
-        no-animation
-        class="ltr:rounded-l-none rtl:rounded-r-none !outline-0"
-        color="slate"
-        trailing-icon
-        @click="openDropdown"
-      />
-    </ButtonGroup>
-    <div
-      v-if="showActionsDropdown"
-      v-on-clickaway="closeDropdown"
-      class="border rounded-lg shadow-lg border-n-strong dark:border-n-strong box-content p-2 w-fit z-10 bg-n-alpha-3 backdrop-blur-[100px] absolute block left-auto top-full mt-0.5 start-0 xl:start-auto xl:end-0 max-w-[12.5rem] min-w-[9.75rem] [&_ul>li]:mb-0"
-    >
-      <WootDropdownMenu class="mb-0">
-        <WootDropdownItem v-if="!isPending">
-          <Button
-            :label="t('CONVERSATION.RESOLVE_DROPDOWN.SNOOZE_UNTIL')"
-            ghost
-            slate
-            sm
-            start
-            icon="i-lucide-alarm-clock-minus"
-            class="w-full"
-            @click="() => openSnoozeModal()"
-          />
-        </WootDropdownItem>
-        <WootDropdownItem v-if="!isPending">
-          <Button
-            :label="t('CONVERSATION.RESOLVE_DROPDOWN.MARK_PENDING')"
-            ghost
-            slate
-            sm
-            start
-            icon="i-lucide-circle-dot-dashed"
-            class="w-full"
-            @click="() => toggleStatus(wootConstants.STATUS_TYPE.PENDING)"
-          />
-        </WootDropdownItem>
-      </WootDropdownMenu>
-    </div>
+  <div class="flex items-center gap-1 resolve-actions">
+    <!-- Primary status action — check when open (resolve), rotate-ccw when
+         resolved (reopen), play when pending/snoozed (return to open). -->
+    <Button
+      v-if="isOpen"
+      v-tooltip.top="t('CONVERSATION.HEADER.RESOLVE_ACTION')"
+      icon="i-lucide-check"
+      size="sm"
+      color="slate"
+      variant="ghost"
+      :is-loading="isLoading"
+      class="rounded-md"
+      @click="onCmdResolveConversation"
+    />
+    <Button
+      v-else-if="isResolved"
+      v-tooltip.top="t('CONVERSATION.HEADER.REOPEN_ACTION')"
+      icon="i-lucide-rotate-ccw"
+      size="sm"
+      color="slate"
+      variant="ghost"
+      :is-loading="isLoading"
+      class="rounded-md"
+      @click="onCmdOpenConversation"
+    />
+    <Button
+      v-else-if="showOpenButton"
+      v-tooltip.top="t('CONVERSATION.HEADER.OPEN_ACTION')"
+      icon="i-lucide-play"
+      size="sm"
+      color="slate"
+      variant="ghost"
+      :is-loading="isLoading"
+      class="rounded-md"
+      @click="onCmdOpenConversation"
+    />
+    <Button
+      v-if="showAdditionalActions"
+      v-tooltip.top="t('CONVERSATION.RESOLVE_DROPDOWN.SNOOZE_UNTIL')"
+      icon="i-lucide-alarm-clock-minus"
+      size="sm"
+      color="slate"
+      variant="ghost"
+      :disabled="isLoading"
+      class="rounded-md"
+      @click="openSnoozeModal"
+    />
+    <Button
+      v-if="showAdditionalActions"
+      v-tooltip.top="t('CONVERSATION.RESOLVE_DROPDOWN.MARK_PENDING')"
+      icon="i-lucide-circle-dot-dashed"
+      size="sm"
+      color="slate"
+      variant="ghost"
+      :disabled="isLoading"
+      class="rounded-md"
+      @click="markPending"
+    />
     <ConversationResolveAttributesModal
       ref="resolveAttributesModalRef"
       @submit="handleResolveWithAttributes"
