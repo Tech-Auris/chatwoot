@@ -141,14 +141,12 @@ const closeMenu = () => {
 // planned; the toast is what the operator sees until then.
 const showComingSoon = () => useAlert(t('MEDIA_HUB.COMING_SOON'));
 
-// One flat list per row so the same markup renders on media grid, docs
-// table and links table. `show` filters items that only make sense in a
-// specific tab; `divider` inserts a spacer above the entry.
+// Same order as the WhatsApp Business media panel. Each tab only hides
+// the items that don't make sense for its rows (Copiar on links only,
+// Baixar off links); everything else stays put so muscle memory holds.
 const menuItems = item => {
   const isLink = activeTab.value === 'link';
-  const isMedia = activeTab.value === 'media';
   const downloadUrl = item.file_url || item.url;
-  const copyable = item.url || item.file_url || item.fallback_title;
   return [
     {
       key: 'select',
@@ -180,6 +178,15 @@ const menuItems = item => {
       action: () => goToMessage(item),
     },
     {
+      key: 'reply-private',
+      label: t('MEDIA_HUB.MENU.REPLY_PRIVATE'),
+      icon: 'i-lucide-user-round',
+      // Group private reply — not exposed in our conversation UI yet, so
+      // the entry sits behind the same "coming soon" toast until we ship
+      // the private-reply intent on the ReplyBox.
+      action: showComingSoon,
+    },
+    {
       key: 'download',
       label: t('MEDIA_HUB.MENU.DOWNLOAD'),
       icon: 'i-lucide-download',
@@ -190,13 +197,13 @@ const menuItems = item => {
       key: 'copy',
       label: t('MEDIA_HUB.MENU.COPY'),
       icon: 'i-lucide-copy',
-      action: () => copyToClipboard(copyable),
+      show: isLink,
+      action: () => copyToClipboard(item.url),
     },
     {
       key: 'forward',
       label: t('MEDIA_HUB.MENU.FORWARD'),
       icon: 'i-lucide-forward',
-      divider: true,
       action: showComingSoon,
     },
     {
@@ -211,7 +218,6 @@ const menuItems = item => {
       icon: 'i-lucide-trash-2',
       danger: true,
       divider: true,
-      show: isMedia || activeTab.value === 'document',
       action: showComingSoon,
     },
   ].filter(mi => mi.show === undefined || mi.show);
@@ -323,16 +329,17 @@ const runMenuAction = mi => {
                     {{ item.sender_name }}
                   </span>
                 </div>
-                <!-- Chevron overlay — visible on hover or while menu is
-                     open, matches the WhatsApp Business pattern. -->
+                <!-- Chevron overlay — top-right corner, visible on hover
+                     or while the menu is open. Matches the WhatsApp
+                     Business pattern. -->
                 <button
                   type="button"
-                  class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-9 h-9 inline-flex items-center justify-center rounded-full bg-white/85 text-n-slate-11 shadow opacity-0 group-hover:opacity-100 transition-opacity"
+                  class="absolute top-2 right-2 w-8 h-8 inline-flex items-center justify-center rounded-full bg-white/90 text-n-slate-11 shadow opacity-0 group-hover:opacity-100 transition-opacity"
                   :class="{ '!opacity-100': openMenuFor === item.id }"
                   :title="t('MEDIA_HUB.MENU.CONTEXT_MENU')"
                   @click.stop="toggleMenu(item.id)"
                 >
-                  <span class="i-lucide-chevron-down size-5" />
+                  <span class="i-lucide-chevron-down size-4" />
                 </button>
                 <div
                   v-if="openMenuFor === item.id"
@@ -377,7 +384,7 @@ const runMenuAction = mi => {
                   <th class="py-2 font-medium">
                     {{ t('MEDIA_HUB.SENT_BY') }}
                   </th>
-                  <th class="py-2 w-16" />
+                  <th class="py-2 w-24" />
                 </tr>
               </thead>
               <tbody>
@@ -433,38 +440,40 @@ const runMenuAction = mi => {
                       {{ formatDate(item.created_at) }}
                     </div>
                   </td>
-                  <td class="py-3 text-right relative">
-                    <button
-                      type="button"
-                      class="w-8 h-8 inline-flex items-center justify-center rounded-md text-n-slate-11 hover:bg-n-alpha-2"
-                      :title="
-                        activeTab === 'document'
-                          ? t('MEDIA_HUB.DOWNLOAD')
-                          : t('MEDIA_HUB.OPEN')
-                      "
-                      @click.stop="
-                        openInNewTab(
-                          activeTab === 'document' ? item.file_url : item.url
-                        )
-                      "
-                    >
-                      <span
-                        class="size-4"
-                        :class="[
+                  <td class="py-3 relative whitespace-nowrap">
+                    <div class="flex items-center justify-end gap-1">
+                      <button
+                        type="button"
+                        class="w-8 h-8 inline-flex items-center justify-center rounded-md text-n-slate-11 hover:bg-n-alpha-2"
+                        :title="
                           activeTab === 'document'
-                            ? 'i-lucide-download'
-                            : 'i-lucide-external-link',
-                        ]"
-                      />
-                    </button>
-                    <button
-                      type="button"
-                      class="w-8 h-8 inline-flex items-center justify-center rounded-md text-n-slate-11 hover:bg-n-alpha-2"
-                      :title="t('MEDIA_HUB.MORE')"
-                      @click.stop="toggleMenu(item.id)"
-                    >
-                      <span class="i-lucide-chevron-down size-4" />
-                    </button>
+                            ? t('MEDIA_HUB.DOWNLOAD')
+                            : t('MEDIA_HUB.OPEN')
+                        "
+                        @click.stop="
+                          openInNewTab(
+                            activeTab === 'document' ? item.file_url : item.url
+                          )
+                        "
+                      >
+                        <span
+                          class="size-4"
+                          :class="[
+                            activeTab === 'document'
+                              ? 'i-lucide-download'
+                              : 'i-lucide-external-link',
+                          ]"
+                        />
+                      </button>
+                      <button
+                        type="button"
+                        class="w-8 h-8 inline-flex items-center justify-center rounded-md text-n-slate-11 hover:bg-n-alpha-2"
+                        :title="t('MEDIA_HUB.MORE')"
+                        @click.stop="toggleMenu(item.id)"
+                      >
+                        <span class="i-lucide-chevron-down size-4" />
+                      </button>
+                    </div>
                     <div
                       v-if="openMenuFor === item.id"
                       class="absolute right-2 top-11 z-30 py-1 min-w-[240px] rounded-lg border border-n-slate-4 bg-n-solid-1 shadow-lg text-left"
