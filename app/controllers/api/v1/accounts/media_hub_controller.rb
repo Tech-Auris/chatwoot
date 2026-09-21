@@ -99,10 +99,12 @@ class Api::V1::Accounts::MediaHubController < Api::V1::Accounts::BaseController
   def serialize_links
     return @serialize_links if defined?(@serialize_links)
 
+    # Message has a `default_scope { order(created_at: :asc) }` — we need
+    # `reorder` (not `order`) to actually get the newest messages first.
     rows = Current.account.messages
                   .where.not(content: [nil, ''])
                   .includes(:conversation, :sender)
-                  .order(created_at: :desc)
+                  .reorder(created_at: :desc)
                   .limit(1000)
                   .flat_map { |m| link_rows_for(m) }
 
