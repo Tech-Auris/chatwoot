@@ -702,7 +702,7 @@ const submitRenew = async () => {
                     </span>
                     <button
                       type="button"
-                      class="ml-auto text-slate-400 hover:text-slate-600"
+                      class="reset-base bg-transparent border-0 p-0 text-woot-500 hover:text-woot-700"
                       title="Copiar"
                       @click.stop="copyLink(row.value)"
                     >
