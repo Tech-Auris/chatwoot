@@ -990,6 +990,9 @@ Rails.application.routes.draw do
       resources :operations_notifications, only: [:index, :new, :create, :show, :destroy] do
         get :acks, on: :member
       end
+      resources :login_events, only: [:index] do
+        get :data, on: :collection
+      end
       resources :platform_banners
       resource :instance_status, only: [:show]
       namespace :reports do

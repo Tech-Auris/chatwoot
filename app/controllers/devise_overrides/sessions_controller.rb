@@ -256,6 +256,7 @@ class DeviseOverrides::SessionsController < DeviseTokenAuth::SessionsController 
       request: request,
       client_id: client_id
     ).create_or_update!
+    LoginEventTrackingService.new(user: @resource, request: request).perform
   rescue StandardError => e
     Rails.logger.warn "Session tracking failed: #{e.message}"
   end

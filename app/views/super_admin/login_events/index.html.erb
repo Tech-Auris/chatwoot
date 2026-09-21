@@ -1,0 +1,8 @@
+<% content_for(:title) do %>
+  Login events
+<% end %>
+
+<%= render_vue_component('LoginEventsIndex', {
+  data_url: data_super_admin_login_events_url(format: :json),
+  accounts: @accounts.map { |id, name| { id: id, name: name } }
+}) %>
