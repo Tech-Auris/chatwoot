@@ -264,6 +264,23 @@ const copy = async (reservation, field, value) => {
 const wasCopied = (reservation, field) =>
   copied.value.id === reservation.id && copied.value.field === field;
 
+// The expanded row shows the payment-link section only when at least one
+// provider (AsaaS / Stripe / Inter) has produced something. Filtering
+// here so the block collapses to zero markup on the common case.
+const hasPaymentLinks = reservation =>
+  Boolean(
+    reservation.payment_links &&
+      Object.values(reservation.payment_links).some(Boolean)
+  );
+
+// Lightweight clipboard for the payment-link buttons — no toast so the
+// row stays quiet; the operator sees the URL selected in the address bar
+// when they paste.
+const copyLink = value => {
+  if (!value) return;
+  navigator.clipboard?.writeText(value);
+};
+
 // Reuses the shared builder so the wording is the same as the Quotes
 // screen; disabled when no reservation date is set — the message has
 // a "reservada até X" sentence that only reads right with an X.
@@ -633,6 +650,110 @@ const submitRenew = async () => {
                 <span class="whitespace-nowrap">
                   {{ formatAmount(reservation.total_amount) }}
                 </span>
+              </div>
+
+              <div
+                v-if="hasPaymentLinks(reservation)"
+                class="mt-4 pt-3 border-t border-slate-200"
+              >
+                <div
+                  class="text-[10px] uppercase tracking-wide text-slate-500 mb-2"
+                >
+                  Links de pagamento
+                </div>
+                <ul class="space-y-1 text-xs">
+                  <li
+                    v-if="reservation.payment_links?.asaas_payment_link"
+                    class="flex items-center gap-2"
+                  >
+                    <span class="text-slate-500 w-32">AsaaS · Link</span>
+                    <a
+                      :href="reservation.payment_links.asaas_payment_link"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="text-woot-500 underline truncate max-w-md"
+                    >
+                      {{ reservation.payment_links.asaas_payment_link }}
+                    </a>
+                    <button
+                      type="button"
+                      class="ml-auto text-slate-400 hover:text-slate-600"
+                      title="Copiar"
+                      @click.stop="
+                        copyLink(reservation.payment_links.asaas_payment_link)
+                      "
+                    >
+                      Copiar
+                    </button>
+                  </li>
+                  <li
+                    v-if="reservation.payment_links?.asaas_invoice"
+                    class="flex items-center gap-2"
+                  >
+                    <span class="text-slate-500 w-32">AsaaS · Fatura</span>
+                    <a
+                      :href="reservation.payment_links.asaas_invoice"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="text-woot-500 underline truncate max-w-md"
+                    >
+                      {{ reservation.payment_links.asaas_invoice }}
+                    </a>
+                    <button
+                      type="button"
+                      class="ml-auto text-slate-400 hover:text-slate-600"
+                      title="Copiar"
+                      @click.stop="
+                        copyLink(reservation.payment_links.asaas_invoice)
+                      "
+                    >
+                      Copiar
+                    </button>
+                  </li>
+                  <li
+                    v-if="reservation.payment_links?.stripe_dashboard"
+                    class="flex items-center gap-2"
+                  >
+                    <span class="text-slate-500 w-32">Stripe · Fatura</span>
+                    <a
+                      :href="reservation.payment_links.stripe_dashboard"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="text-woot-500 underline truncate max-w-md"
+                    >
+                      {{ reservation.payment_links.stripe_dashboard }}
+                    </a>
+                    <button
+                      type="button"
+                      class="ml-auto text-slate-400 hover:text-slate-600"
+                      title="Copiar"
+                      @click.stop="
+                        copyLink(reservation.payment_links.stripe_dashboard)
+                      "
+                    >
+                      Copiar
+                    </button>
+                  </li>
+                  <li
+                    v-if="reservation.payment_links?.inter_pix_txid"
+                    class="flex items-center gap-2"
+                  >
+                    <span class="text-slate-500 w-32">Inter · PIX txid</span>
+                    <span class="text-slate-700 font-mono truncate max-w-md">
+                      {{ reservation.payment_links.inter_pix_txid }}
+                    </span>
+                    <button
+                      type="button"
+                      class="ml-auto text-slate-400 hover:text-slate-600"
+                      title="Copiar"
+                      @click.stop="
+                        copyLink(reservation.payment_links.inter_pix_txid)
+                      "
+                    >
+                      Copiar
+                    </button>
+                  </li>
+                </ul>
               </div>
             </td>
           </tr>
