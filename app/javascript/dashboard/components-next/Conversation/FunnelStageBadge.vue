@@ -139,7 +139,7 @@ const onLossReasonClose = () => {
             :style="{ backgroundColor: stage?.color || 'var(--s-300)' }"
           />
         </template>
-        <span class="truncate">{{ currentStageName }}</span>
+        <span class="truncate text-xs">{{ currentStageName }}</span>
       </Button>
       <Button
         v-tooltip="
@@ -167,7 +167,7 @@ const onLossReasonClose = () => {
         v-for="option in stages"
         :key="option.id"
         type="button"
-        class="flex items-center gap-2 w-full px-3 py-1.5 text-sm text-left text-n-slate-12 hover:bg-n-alpha-1"
+        class="flex items-center gap-2 w-full px-3 py-1 text-xs text-left text-n-slate-12 hover:bg-n-alpha-1"
         @click.stop.prevent="selectStage(option)"
       >
         <span
