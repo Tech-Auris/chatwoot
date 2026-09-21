@@ -9,8 +9,18 @@
     "MORE": "Mais ações",
     "CLOSE": "Fechar",
     "VIDEO": "Vídeo",
-    "OPEN_LINK_NEW_TAB": "Abrir link em nova aba",
-    "GO_TO_MESSAGE": "Ir para a mensagem",
-    "COPY": "Copiar"
+    "COMING_SOON": "Em breve",
+    "MENU": {
+      "CONTEXT_MENU": "Menu de contexto da mensagem",
+      "SELECT": "Selecionar",
+      "OPEN_LINK_NEW_TAB": "Abrir link em nova aba",
+      "GO_TO_MESSAGE": "Ir para a mensagem",
+      "REPLY": "Responder",
+      "DOWNLOAD": "Baixar",
+      "COPY": "Copiar",
+      "FORWARD": "Encaminhar",
+      "FAVORITE": "Favoritar",
+      "DELETE": "Apagar"
+    }
   }
 }

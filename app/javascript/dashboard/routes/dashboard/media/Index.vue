@@ -3,6 +3,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useMapGetter } from 'dashboard/composables/store';
+import { useAlert } from 'dashboard/composables';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
@@ -133,6 +134,93 @@ const toggleMenu = id => {
 const closeMenu = () => {
   openMenuFor.value = null;
 };
+
+// Actions that need dedicated endpoints / UX flows (multi-select, forward,
+// favorites, delete) surface as toast placeholders for now so the menu
+// shape matches the WhatsApp Business reference. Each has a follow-up PR
+// planned; the toast is what the operator sees until then.
+const showComingSoon = () => useAlert(t('MEDIA_HUB.COMING_SOON'));
+
+// One flat list per row so the same markup renders on media grid, docs
+// table and links table. `show` filters items that only make sense in a
+// specific tab; `divider` inserts a spacer above the entry.
+const menuItems = item => {
+  const isLink = activeTab.value === 'link';
+  const isMedia = activeTab.value === 'media';
+  const downloadUrl = item.file_url || item.url;
+  const copyable = item.url || item.file_url || item.fallback_title;
+  return [
+    {
+      key: 'select',
+      label: t('MEDIA_HUB.MENU.SELECT'),
+      icon: 'i-lucide-square-check',
+      action: showComingSoon,
+    },
+    {
+      key: 'open-link',
+      label: t('MEDIA_HUB.MENU.OPEN_LINK_NEW_TAB'),
+      icon: 'i-lucide-external-link',
+      show: isLink,
+      divider: true,
+      action: () => openInNewTab(item.url),
+    },
+    {
+      key: 'go-to-message',
+      label: t('MEDIA_HUB.MENU.GO_TO_MESSAGE'),
+      icon: 'i-lucide-message-square',
+      divider: !isLink,
+      action: () => goToMessage(item),
+    },
+    {
+      key: 'reply',
+      label: t('MEDIA_HUB.MENU.REPLY'),
+      icon: 'i-lucide-corner-up-left',
+      // For now the reply intent lands the operator on the message; the
+      // ReplyBox itself is where they pick up. Focus-on-quote is a v2.
+      action: () => goToMessage(item),
+    },
+    {
+      key: 'download',
+      label: t('MEDIA_HUB.MENU.DOWNLOAD'),
+      icon: 'i-lucide-download',
+      show: !isLink,
+      action: () => openInNewTab(downloadUrl),
+    },
+    {
+      key: 'copy',
+      label: t('MEDIA_HUB.MENU.COPY'),
+      icon: 'i-lucide-copy',
+      action: () => copyToClipboard(copyable),
+    },
+    {
+      key: 'forward',
+      label: t('MEDIA_HUB.MENU.FORWARD'),
+      icon: 'i-lucide-forward',
+      divider: true,
+      action: showComingSoon,
+    },
+    {
+      key: 'favorite',
+      label: t('MEDIA_HUB.MENU.FAVORITE'),
+      icon: 'i-lucide-star',
+      action: showComingSoon,
+    },
+    {
+      key: 'delete',
+      label: t('MEDIA_HUB.MENU.DELETE'),
+      icon: 'i-lucide-trash-2',
+      danger: true,
+      divider: true,
+      show: isMedia || activeTab.value === 'document',
+      action: showComingSoon,
+    },
+  ].filter(mi => mi.show === undefined || mi.show);
+};
+
+const runMenuAction = mi => {
+  closeMenu();
+  mi.action();
+};
 </script>
 
 <template>
@@ -210,27 +298,69 @@ const closeMenu = () => {
               <div
                 v-for="item in group.rows"
                 :key="item.id"
-                class="relative aspect-square bg-n-slate-3 overflow-hidden group cursor-pointer"
-                @click="openInNewTab(item.file_url)"
+                class="relative group"
               >
-                <img
-                  v-if="item.thumb_url || item.file_url"
-                  :src="item.thumb_url || item.file_url"
-                  :alt="item.fallback_title || ''"
-                  loading="lazy"
-                  class="w-full h-full object-cover"
-                />
-                <span
-                  v-if="item.file_type === 'video'"
-                  class="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[10px] bg-black/50 text-white"
+                <div
+                  class="aspect-square bg-n-slate-3 overflow-hidden cursor-pointer"
+                  @click.stop="openInNewTab(item.file_url)"
                 >
-                  {{ t('MEDIA_HUB.VIDEO') }}
-                </span>
-                <span
-                  class="absolute bottom-0 left-0 right-0 px-2 py-1 text-[11px] text-white bg-gradient-to-t from-black/55 to-transparent truncate"
+                  <img
+                    v-if="item.thumb_url || item.file_url"
+                    :src="item.thumb_url || item.file_url"
+                    :alt="item.fallback_title || ''"
+                    loading="lazy"
+                    class="w-full h-full object-cover"
+                  />
+                  <span
+                    v-if="item.file_type === 'video'"
+                    class="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[10px] bg-black/50 text-white"
+                  >
+                    {{ t('MEDIA_HUB.VIDEO') }}
+                  </span>
+                  <span
+                    class="absolute bottom-0 left-0 right-0 px-2 py-1 text-[11px] text-white bg-gradient-to-t from-black/55 to-transparent truncate"
+                  >
+                    {{ item.sender_name }}
+                  </span>
+                </div>
+                <!-- Chevron overlay — visible on hover or while menu is
+                     open, matches the WhatsApp Business pattern. -->
+                <button
+                  type="button"
+                  class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-9 h-9 inline-flex items-center justify-center rounded-full bg-white/85 text-n-slate-11 shadow opacity-0 group-hover:opacity-100 transition-opacity"
+                  :class="{ '!opacity-100': openMenuFor === item.id }"
+                  :title="t('MEDIA_HUB.MENU.CONTEXT_MENU')"
+                  @click.stop="toggleMenu(item.id)"
                 >
-                  {{ item.sender_name }}
-                </span>
+                  <span class="i-lucide-chevron-down size-5" />
+                </button>
+                <div
+                  v-if="openMenuFor === item.id"
+                  class="absolute top-12 right-2 z-30 py-1 min-w-[240px] rounded-lg border border-n-slate-4 bg-n-solid-1 shadow-lg text-left"
+                  @click.stop
+                >
+                  <template v-for="mi in menuItems(item)" :key="mi.key">
+                    <div
+                      v-if="mi.divider"
+                      class="my-1 border-t border-n-slate-3"
+                    />
+                    <button
+                      type="button"
+                      class="flex items-center gap-3 w-full px-3 py-2 text-sm hover:bg-n-slate-2"
+                      :class="mi.danger ? 'text-n-ruby-11' : 'text-n-slate-12'"
+                      @click="runMenuAction(mi)"
+                    >
+                      <span
+                        class="size-4"
+                        :class="[
+                          mi.icon,
+                          mi.danger ? 'text-n-ruby-11' : 'text-n-slate-11',
+                        ]"
+                      />
+                      {{ mi.label }}
+                    </button>
+                  </template>
+                </div>
               </div>
             </div>
 
@@ -337,51 +467,32 @@ const closeMenu = () => {
                     </button>
                     <div
                       v-if="openMenuFor === item.id"
-                      class="absolute right-2 top-11 z-10 py-1 min-w-[220px] rounded-lg border border-n-slate-4 bg-n-solid-1 shadow-lg text-left"
+                      class="absolute right-2 top-11 z-30 py-1 min-w-[240px] rounded-lg border border-n-slate-4 bg-n-solid-1 shadow-lg text-left"
                       @click.stop
                     >
-                      <button
-                        v-if="activeTab === 'link'"
-                        type="button"
-                        class="flex items-center gap-2 w-full px-3 py-1.5 text-sm text-n-slate-12 hover:bg-n-slate-2"
-                        @click="
-                          openInNewTab(item.url);
-                          closeMenu();
-                        "
-                      >
-                        <span
-                          class="i-lucide-external-link size-4 text-n-slate-11"
+                      <template v-for="mi in menuItems(item)" :key="mi.key">
+                        <div
+                          v-if="mi.divider"
+                          class="my-1 border-t border-n-slate-3"
                         />
-                        {{ t('MEDIA_HUB.OPEN_LINK_NEW_TAB') }}
-                      </button>
-                      <button
-                        type="button"
-                        class="flex items-center gap-2 w-full px-3 py-1.5 text-sm text-n-slate-12 hover:bg-n-slate-2"
-                        @click="
-                          goToMessage(item);
-                          closeMenu();
-                        "
-                      >
-                        <span
-                          class="i-lucide-message-square size-4 text-n-slate-11"
-                        />
-                        {{ t('MEDIA_HUB.GO_TO_MESSAGE') }}
-                      </button>
-                      <button
-                        type="button"
-                        class="flex items-center gap-2 w-full px-3 py-1.5 text-sm text-n-slate-12 hover:bg-n-slate-2"
-                        @click="
-                          copyToClipboard(
-                            activeTab === 'link'
-                              ? item.url
-                              : item.fallback_title
-                          );
-                          closeMenu();
-                        "
-                      >
-                        <span class="i-lucide-copy size-4 text-n-slate-11" />
-                        {{ t('MEDIA_HUB.COPY') }}
-                      </button>
+                        <button
+                          type="button"
+                          class="flex items-center gap-3 w-full px-3 py-2 text-sm hover:bg-n-slate-2"
+                          :class="
+                            mi.danger ? 'text-n-ruby-11' : 'text-n-slate-12'
+                          "
+                          @click="runMenuAction(mi)"
+                        >
+                          <span
+                            class="size-4"
+                            :class="[
+                              mi.icon,
+                              mi.danger ? 'text-n-ruby-11' : 'text-n-slate-11',
+                            ]"
+                          />
+                          {{ mi.label }}
+                        </button>
+                      </template>
                     </div>
                   </td>
                 </tr>
