@@ -272,7 +272,7 @@ const runMenuAction = mi => {
       </div>
 
       <!-- Content -->
-      <div class="flex-1 overflow-y-auto px-6 py-5">
+      <div class="flex-1 overflow-y-auto pl-6 pr-8 py-5">
         <p v-if="loading" class="text-sm text-n-slate-11">
           {{ t('MEDIA_HUB.LOADING') }}
         </p>
@@ -323,11 +323,15 @@ const runMenuAction = mi => {
                   >
                     {{ t('MEDIA_HUB.VIDEO') }}
                   </span>
-                  <span
-                    class="absolute bottom-0 left-0 right-0 px-2 py-1 text-[11px] text-white bg-gradient-to-t from-black/55 to-transparent truncate"
+                  <div
+                    class="absolute inset-x-0 bottom-0 pt-6 pb-1.5 px-2 bg-gradient-to-t from-black/80 via-black/40 to-transparent"
                   >
-                    {{ item.sender_name }}
-                  </span>
+                    <span
+                      class="block text-[11px] font-semibold text-white truncate drop-shadow"
+                    >
+                      {{ item.sender_name }}
+                    </span>
+                  </div>
                 </div>
                 <!-- Chevron overlay — top-right corner, visible on hover
                      or while the menu is open. Matches the WhatsApp
@@ -391,7 +395,12 @@ const runMenuAction = mi => {
                 <tr
                   v-for="item in group.rows"
                   :key="item.id"
-                  class="border-b border-n-slate-3 hover:bg-n-slate-2 align-top"
+                  class="border-b border-n-slate-3 hover:bg-n-slate-2 align-top cursor-pointer"
+                  @click="
+                    openInNewTab(
+                      activeTab === 'link' ? item.url : item.file_url
+                    )
+                  "
                 >
                   <td class="py-3 pr-2">
                     <div class="flex items-center gap-3">
