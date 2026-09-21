@@ -273,6 +273,23 @@ const hasPaymentLinks = reservation =>
       Object.values(reservation.payment_links).some(Boolean)
   );
 
+// Rendering order + labels for each provider slot the sale might have
+// produced. Kept next to the filter so a new provider is one entry away.
+// `isTxid` on Inter tells the template to skip the anchor (Inter has no
+// public cob URL, only the txid the finance team looks up).
+const PAYMENT_LINK_ROWS = [
+  { key: 'asaas_payment_link', label: 'AsaaS · Link' },
+  { key: 'asaas_invoice', label: 'AsaaS · Fatura' },
+  { key: 'stripe_dashboard', label: 'Stripe · Fatura' },
+  { key: 'inter_pix_txid', label: 'Inter · PIX txid', isTxid: true },
+];
+
+const paymentLinkRows = reservation =>
+  PAYMENT_LINK_ROWS.map(row => ({
+    ...row,
+    value: reservation.payment_links?.[row.key],
+  })).filter(row => row.value);
+
 // Lightweight clipboard for the payment-link buttons — no toast so the
 // row stays quiet; the operator sees the URL selected in the address bar
 // when they paste.
@@ -663,94 +680,55 @@ const submitRenew = async () => {
                 </div>
                 <ul class="space-y-1 text-xs">
                   <li
-                    v-if="reservation.payment_links?.asaas_payment_link"
+                    v-for="row in paymentLinkRows(reservation)"
+                    :key="row.key"
                     class="flex items-center gap-2"
                   >
-                    <span class="text-slate-500 w-32">AsaaS · Link</span>
+                    <span class="text-slate-500 w-32">{{ row.label }}</span>
                     <a
-                      :href="reservation.payment_links.asaas_payment_link"
+                      v-if="!row.isTxid"
+                      :href="row.value"
                       target="_blank"
                       rel="noopener noreferrer"
                       class="text-woot-500 underline truncate max-w-md"
                     >
-                      {{ reservation.payment_links.asaas_payment_link }}
+                      {{ row.value }}
                     </a>
-                    <button
-                      type="button"
-                      class="ml-auto text-slate-400 hover:text-slate-600"
-                      title="Copiar"
-                      @click.stop="
-                        copyLink(reservation.payment_links.asaas_payment_link)
-                      "
+                    <span
+                      v-else
+                      class="text-slate-700 font-mono truncate max-w-md"
                     >
-                      Copiar
-                    </button>
-                  </li>
-                  <li
-                    v-if="reservation.payment_links?.asaas_invoice"
-                    class="flex items-center gap-2"
-                  >
-                    <span class="text-slate-500 w-32">AsaaS · Fatura</span>
-                    <a
-                      :href="reservation.payment_links.asaas_invoice"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="text-woot-500 underline truncate max-w-md"
-                    >
-                      {{ reservation.payment_links.asaas_invoice }}
-                    </a>
-                    <button
-                      type="button"
-                      class="ml-auto text-slate-400 hover:text-slate-600"
-                      title="Copiar"
-                      @click.stop="
-                        copyLink(reservation.payment_links.asaas_invoice)
-                      "
-                    >
-                      Copiar
-                    </button>
-                  </li>
-                  <li
-                    v-if="reservation.payment_links?.stripe_dashboard"
-                    class="flex items-center gap-2"
-                  >
-                    <span class="text-slate-500 w-32">Stripe · Fatura</span>
-                    <a
-                      :href="reservation.payment_links.stripe_dashboard"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="text-woot-500 underline truncate max-w-md"
-                    >
-                      {{ reservation.payment_links.stripe_dashboard }}
-                    </a>
-                    <button
-                      type="button"
-                      class="ml-auto text-slate-400 hover:text-slate-600"
-                      title="Copiar"
-                      @click.stop="
-                        copyLink(reservation.payment_links.stripe_dashboard)
-                      "
-                    >
-                      Copiar
-                    </button>
-                  </li>
-                  <li
-                    v-if="reservation.payment_links?.inter_pix_txid"
-                    class="flex items-center gap-2"
-                  >
-                    <span class="text-slate-500 w-32">Inter · PIX txid</span>
-                    <span class="text-slate-700 font-mono truncate max-w-md">
-                      {{ reservation.payment_links.inter_pix_txid }}
+                      {{ row.value }}
                     </span>
                     <button
                       type="button"
                       class="ml-auto text-slate-400 hover:text-slate-600"
                       title="Copiar"
-                      @click.stop="
-                        copyLink(reservation.payment_links.inter_pix_txid)
-                      "
+                      @click.stop="copyLink(row.value)"
                     >
-                      Copiar
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <rect
+                          x="9"
+                          y="9"
+                          width="13"
+                          height="13"
+                          rx="2"
+                          ry="2"
+                        />
+                        <path
+                          d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                        />
+                      </svg>
                     </button>
                   </li>
                 </ul>
