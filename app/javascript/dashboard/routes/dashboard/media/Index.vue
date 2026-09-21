@@ -375,20 +375,23 @@ const runMenuAction = mi => {
               </div>
             </div>
 
-            <!-- DOCUMENTS / LINKS TABLE -->
-            <table v-else class="w-full text-sm">
+            <!-- DOCUMENTS / LINKS TABLE. `table-fixed` locks the columns
+                 to the widths declared on the header so long URLs / names
+                 truncate instead of forcing horizontal scroll on the
+                 whole modal. -->
+            <table v-else class="w-full text-sm table-fixed">
               <thead>
                 <tr class="text-left text-n-slate-11 border-b border-n-slate-4">
-                  <th class="py-2 font-medium">
+                  <th class="py-2 font-medium w-[38%]">
                     {{ activeTab === 'document' ? 'Documento' : 'Link' }}
                   </th>
-                  <th class="py-2 font-medium">
+                  <th class="py-2 font-medium w-[32%]">
                     {{ activeTab === 'document' ? 'Legenda' : 'Mensagem' }}
                   </th>
-                  <th class="py-2 font-medium">
+                  <th class="py-2 font-medium w-[22%]">
                     {{ t('MEDIA_HUB.SENT_BY') }}
                   </th>
-                  <th class="py-2 w-24" />
+                  <th class="py-2 w-[8%]" />
                 </tr>
               </thead>
               <tbody>
@@ -418,8 +421,8 @@ const runMenuAction = mi => {
                       >
                         <span class="i-lucide-link size-4" />
                       </span>
-                      <div class="min-w-0">
-                        <div class="text-n-slate-12 truncate max-w-md">
+                      <div class="min-w-0 flex-1">
+                        <div class="text-n-slate-12 truncate">
                           {{
                             activeTab === 'document'
                               ? item.fallback_title || 'Arquivo'
@@ -437,7 +440,7 @@ const runMenuAction = mi => {
                     </div>
                   </td>
                   <td class="py-3 pr-2 text-n-slate-11">
-                    <p class="line-clamp-2 max-w-md">
+                    <p class="line-clamp-2 break-words">
                       {{ item.caption || 'Sem legenda' }}
                     </p>
                   </td>
