@@ -63,8 +63,11 @@ class Api::V1::Accounts::MediaHubController < Api::V1::Accounts::BaseController
       file_type: attachment.file_type,
       file_size: attachment.meta&.dig('file_size'),
       extension: attachment.extension,
-      file_url: attachment.download_url,
-      thumb_url: attachment.thumb_url,
+      # `download_url` is empty when the attachment is a link (external_url,
+      # WhatsApp media, etc.); fall back to the raw external URL so the hub
+      # keeps working across the full mix of upload styles.
+      file_url: attachment.download_url.presence || attachment.external_url,
+      thumb_url: attachment.thumb_url.presence || attachment.external_url,
       fallback_title: attachment.fallback_title,
       caption: message&.content.to_s.strip.presence,
       sender_name: sender_name(message, sender),
