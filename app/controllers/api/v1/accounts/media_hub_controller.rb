@@ -73,11 +73,11 @@ class Api::V1::Accounts::MediaHubController < Api::V1::Accounts::BaseController
   end
 
   def paginated_attachments
-    scope = Current.account.attachments
-                   .where(file_type: attachment_types_for_kind)
-                   .joins(:message)
-                   .includes(message: [:conversation, :sender])
-                   .order('messages.created_at DESC')
+    scope = Attachment.where(account_id: Current.account.id)
+                      .where(file_type: attachment_types_for_kind)
+                      .joins(:message)
+                      .includes(message: [:conversation, :sender])
+                      .order('messages.created_at DESC')
 
     @attachment_total = scope.count
     scope.offset((current_page - 1) * PER_PAGE).limit(PER_PAGE)
