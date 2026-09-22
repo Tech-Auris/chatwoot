@@ -386,17 +386,17 @@ const runMenuAction = mi => {
           <template v-else>
             <div
               v-if="searchMode"
-              class="flex items-center gap-2 px-3 py-1.5 rounded-full border-2 border-slate-900 w-72 max-w-full"
+              class="flex items-center gap-2 px-3 py-0.5 rounded-full border-2 border-slate-900 w-72 max-w-full"
             >
               <span
-                class="i-lucide-search size-4 text-n-slate-12 flex-shrink-0"
+                class="i-lucide-search size-3.5 text-n-slate-12 flex-shrink-0"
               />
               <input
                 v-model="searchQuery"
                 type="text"
                 autofocus
                 :placeholder="searchPlaceholder"
-                class="!bg-transparent !border-0 !outline-0 !p-0 !m-0 !w-full !h-auto text-sm text-n-slate-12"
+                class="!bg-transparent !border-0 !outline-0 !p-0 !m-0 !w-full !h-auto text-xs text-n-slate-12"
               />
             </div>
             <button
