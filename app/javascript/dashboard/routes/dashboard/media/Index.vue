@@ -145,16 +145,18 @@ const fetchData = async () => {
 onMounted(fetchData);
 watch(activeTab, fetchData);
 
+// "Ir para a mensagem" — jumps straight to the origin conversation.
+// Uses the plain path (not a named route) because the inbox-scoped route
+// requires an `inboxId` param we don't carry here. The `#message-X` hash
+// is left in for future auto-scroll; the conversation view ignores it
+// today, but every URL that eventually goes to that message has this
+// same fragment.
 const goToMessage = item => {
   if (!item.conversation_id) return;
-  router.push({
-    name: 'inbox_conversation',
-    params: {
-      accountId: accountId.value,
-      conversationId: item.conversation_id,
-    },
-    hash: item.message_id ? `#message-${item.message_id}` : '',
-  });
+  const hash = item.message_id ? `#message-${item.message_id}` : '';
+  router.push(
+    `/app/accounts/${accountId.value}/conversations/${item.conversation_id}${hash}`
+  );
 };
 
 const openInNewTab = url => {
@@ -307,23 +309,6 @@ const menuItems = item => {
       action: () => goToMessage(item),
     },
     {
-      key: 'reply',
-      label: t('MEDIA_HUB.MENU.REPLY'),
-      icon: 'i-lucide-corner-up-left',
-      // For now the reply intent lands the operator on the message; the
-      // ReplyBox itself is where they pick up. Focus-on-quote is a v2.
-      action: () => goToMessage(item),
-    },
-    {
-      key: 'reply-private',
-      label: t('MEDIA_HUB.MENU.REPLY_PRIVATE'),
-      icon: 'i-lucide-user-round',
-      // Group private reply — not exposed in our conversation UI yet, so
-      // the entry sits behind the same "coming soon" toast until we ship
-      // the private-reply intent on the ReplyBox.
-      action: showComingSoon,
-    },
-    {
       key: 'download',
       label: t('MEDIA_HUB.MENU.DOWNLOAD'),
       icon: 'i-lucide-download',
@@ -336,18 +321,6 @@ const menuItems = item => {
       icon: 'i-lucide-copy',
       show: isLink,
       action: () => copyToClipboard(item.url),
-    },
-    {
-      key: 'forward',
-      label: t('MEDIA_HUB.MENU.FORWARD'),
-      icon: 'i-lucide-forward',
-      action: showComingSoon,
-    },
-    {
-      key: 'favorite',
-      label: t('MEDIA_HUB.MENU.FAVORITE'),
-      icon: 'i-lucide-star',
-      action: showComingSoon,
     },
     {
       key: 'delete',
@@ -370,31 +343,16 @@ const runMenuAction = mi => {
   <div class="w-full h-full overflow-hidden bg-n-slate-1" @click="closeMenu">
     <div class="mx-auto max-w-6xl h-full flex flex-col bg-n-solid-1 shadow-sm">
       <!-- Header -->
-      <div class="flex items-end gap-3 border-b border-n-slate-4 px-6 pt-5">
-        <div class="flex-1 min-w-0">
-          <template v-if="!searchMode">
-            <h1 class="text-2xl font-semibold text-n-slate-12 leading-tight">
-              {{ t('SIDEBAR.MEDIA') }}
-            </h1>
-            <p class="text-sm text-n-slate-11 mt-1 mb-4">
-              {{ subtitle }}
-            </p>
-          </template>
-          <div
-            v-else
-            class="flex items-center gap-2 mt-2 mb-4 px-4 py-2 rounded-full border-2 border-slate-900"
-          >
-            <span
-              class="i-lucide-search size-4 text-n-slate-12 flex-shrink-0"
-            />
-            <input
-              v-model="searchQuery"
-              type="text"
-              autofocus
-              :placeholder="searchPlaceholder"
-              class="!bg-transparent !border-0 !outline-0 !p-0 !m-0 !w-full !h-auto text-sm text-n-slate-12"
-            />
-          </div>
+      <div
+        class="grid grid-cols-[1fr_auto_1fr] items-end gap-3 border-b border-n-slate-4 px-6 pt-5"
+      >
+        <div>
+          <h1 class="text-2xl font-semibold text-n-slate-12 leading-tight">
+            {{ t('SIDEBAR.MEDIA') }}
+          </h1>
+          <p class="text-sm text-n-slate-11 mt-1 mb-4">
+            {{ subtitle }}
+          </p>
         </div>
         <nav v-if="!searchMode" class="flex gap-8 mb-[-1px]">
           <button
@@ -424,6 +382,21 @@ const runMenuAction = mi => {
             </button>
           </template>
           <template v-else>
+            <div
+              v-if="searchMode"
+              class="flex items-center gap-2 px-3 py-1.5 rounded-full border-2 border-slate-900 w-72 max-w-full"
+            >
+              <span
+                class="i-lucide-search size-4 text-n-slate-12 flex-shrink-0"
+              />
+              <input
+                v-model="searchQuery"
+                type="text"
+                autofocus
+                :placeholder="searchPlaceholder"
+                class="!bg-transparent !border-0 !outline-0 !p-0 !m-0 !w-full !h-auto text-sm text-n-slate-12"
+              />
+            </div>
             <button
               v-if="!searchMode"
               type="button"
@@ -434,7 +407,6 @@ const runMenuAction = mi => {
               <span class="i-lucide-search size-4" />
             </button>
             <button
-              v-if="!searchMode"
               type="button"
               class="!p-0 w-8 h-8 inline-flex items-center justify-center rounded-md text-n-slate-11 hover:bg-n-alpha-2"
               :class="{ 'bg-n-alpha-2 text-n-slate-12': sortMenuOpen }"
@@ -444,7 +416,6 @@ const runMenuAction = mi => {
               <span class="i-lucide-align-left size-4 rotate-180" />
             </button>
             <button
-              v-if="!searchMode"
               type="button"
               class="!p-0 w-8 h-8 inline-flex items-center justify-center rounded-md text-n-slate-11 hover:bg-n-alpha-2"
               :title="t('MEDIA_HUB.MENU.SELECT')"
@@ -571,13 +542,27 @@ const runMenuAction = mi => {
                   class="aspect-square bg-n-slate-3 overflow-hidden cursor-pointer"
                   @click.stop="handleMediaClick(item)"
                 >
+                  <!-- Only render an <img> when we actually have a raster
+                       source (image attachment OR a video that shipped a
+                       thumb_url). A video with no thumb would try to load
+                       the mp4 as an image and render the alt text; show a
+                       play placeholder instead. -->
                   <img
-                    v-if="item.thumb_url || item.file_url"
+                    v-if="
+                      item.thumb_url ||
+                      (item.file_type === 'image' && item.file_url)
+                    "
                     :src="item.thumb_url || item.file_url"
                     :alt="item.fallback_title || ''"
                     loading="lazy"
                     class="w-full h-full object-cover"
                   />
+                  <div
+                    v-else-if="item.file_type === 'video'"
+                    class="w-full h-full flex items-center justify-center bg-n-slate-4 text-n-slate-11"
+                  >
+                    <span class="i-lucide-play-circle size-10" />
+                  </div>
                   <span
                     v-if="item.file_type === 'video'"
                     class="absolute top-2 left-14 px-1.5 py-0.5 rounded text-[10px] bg-black/50 text-white"
@@ -880,15 +865,6 @@ const runMenuAction = mi => {
             }}
           </template>
         </div>
-        <button
-          type="button"
-          class="w-9 h-9 inline-flex items-center justify-center rounded-full text-n-slate-11 hover:bg-n-alpha-2 disabled:opacity-40"
-          :disabled="!selectedIds.size"
-          :title="t('MEDIA_HUB.MENU.FAVORITE')"
-          @click="showComingSoon"
-        >
-          <span class="i-lucide-star size-4" />
-        </button>
         <button
           v-if="activeTab !== 'link'"
           type="button"
