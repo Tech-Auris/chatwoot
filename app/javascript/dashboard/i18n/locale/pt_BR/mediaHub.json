@@ -18,7 +18,8 @@
     },
     "SEARCH": {
       "LABEL": "Buscar",
-      "PLACEHOLDER": "Pesquisar por remetente ou legenda"
+      "PLACEHOLDER": "Pesquisar por remetente ou legenda",
+      "PLACEHOLDER_DOCUMENT": "Pesquisar por remetente, legenda ou nome do arquivo"
     },
     "SORT": {
       "LABEL": "Ordenar",
