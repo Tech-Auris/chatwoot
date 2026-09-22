@@ -370,10 +370,8 @@ const runMenuAction = mi => {
   <div class="w-full h-full overflow-hidden bg-n-slate-1" @click="closeMenu">
     <div class="mx-auto max-w-6xl h-full flex flex-col bg-n-solid-1 shadow-sm">
       <!-- Header -->
-      <div
-        class="grid grid-cols-[1fr_auto_1fr] items-end border-b border-n-slate-4 px-6 pt-5"
-      >
-        <div>
+      <div class="flex items-end gap-3 border-b border-n-slate-4 px-6 pt-5">
+        <div class="flex-1 min-w-0">
           <template v-if="!searchMode">
             <h1 class="text-2xl font-semibold text-n-slate-12 leading-tight">
               {{ t('SIDEBAR.MEDIA') }}
@@ -384,10 +382,10 @@ const runMenuAction = mi => {
           </template>
           <div
             v-else
-            class="flex items-center gap-2 mt-2 mb-4 px-3 py-2 rounded-full border border-n-slate-6"
+            class="flex items-center gap-2 mt-2 mb-4 px-4 py-2 rounded-full border-2 border-slate-900"
           >
             <span
-              class="i-lucide-search size-4 text-n-slate-11 flex-shrink-0"
+              class="i-lucide-search size-4 text-n-slate-12 flex-shrink-0"
             />
             <input
               v-model="searchQuery"
@@ -413,11 +411,9 @@ const runMenuAction = mi => {
             {{ tab.label }}
           </button>
         </nav>
-        <div v-else />
-        <!-- Placeholder keeps the 3-col grid intact when tabs are hidden.
-             Center column becomes empty; search input expands via the
-             title cell on the left. -->
-        <div class="flex justify-end items-center gap-1 pb-3 relative">
+        <div
+          class="flex justify-end items-center gap-1 pb-3 relative flex-shrink-0"
+        >
           <template v-if="selectMode">
             <button
               type="button"
