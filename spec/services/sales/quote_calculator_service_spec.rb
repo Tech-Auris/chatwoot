@@ -159,5 +159,32 @@ RSpec.describe Sales::QuoteCalculatorService do
       expect(result.discount).to eq(0)
       expect(result.summary).to be_nil
     end
+
+    context 'when the scoped coupon carries an amount_off instead of a percent' do
+      let(:fixed_scoped_coupon) do
+        { id: 'setup_r2k', name: 'Desconto Implantação Semestral', amount_off: 200_000, applies_to_products: ['prod_setup'] }
+      end
+
+      it 'applies the fixed amount only against the scoped product line' do
+        result = calculate(cart_with_setup, coupon: fixed_scoped_coupon)
+
+        # subtotal 119_700 → 200_000 off setup line, capped at line total 30_000.
+        expect(result.discount).to eq(30_000)
+        expect(result.total).to eq(89_700)
+        expect(result.summary).to eq('cupom Desconto Implantação Semestral')
+      end
+
+      it 'takes the coupon amount when it fits under the scoped line' do
+        cart_with_bigger_setup = [
+          { unit_amount: 598_200, quantity: 1, name: 'Plataforma Auris', stripe_product_id: 'prod_platform' },
+          { unit_amount: 300_000, quantity: 1, name: 'Implantação', stripe_product_id: 'prod_setup' }
+        ]
+        result = calculate(cart_with_bigger_setup, coupon: fixed_scoped_coupon)
+
+        # subtotal 898_200 → 200_000 off (fits under the 300_000 setup line).
+        expect(result.discount).to eq(200_000)
+        expect(result.total).to eq(698_200)
+      end
+    end
   end
 end

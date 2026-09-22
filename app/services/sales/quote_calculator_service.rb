@@ -90,23 +90,39 @@ class Sales::QuoteCalculatorService
     { amount: amount, label: 'isenção integração via API' }
   end
 
-  # Stripe coupons scoped to a specific product with 100% off are the way
-  # the operator sets up product-level waivers (e.g. "Isenção da
-  # Implantação — 100%"). Treat them as waivers, not as an untargeted
-  # percentage over the whole cart — the coupon percentage only touches
-  # the lines whose `stripe_product_id` matches the coupon's
-  # `applies_to.products`.
+  # Stripe coupons scoped to a specific product are the way the operator
+  # sets up product-level waivers (e.g. "Isenção da Implantação — 100%"
+  # or "Desconto Implantação Semestral — R$ 2.000,00"). Treat them as
+  # waivers, not as an untargeted discount over the whole cart — the
+  # coupon only touches the lines whose `stripe_product_id` matches the
+  # coupon's `applies_to.products`. Handles both flavors:
+  #   • percent_off → percentage of the scoped subtotal;
+  #   • amount_off  → fixed cut capped at the scoped subtotal so the
+  #     line never goes negative.
   def scoped_coupon_waiver_part
     return nil if coupon.blank?
     return nil unless coupon_scoped_to_products?
-    return nil if coupon[:percent_off].to_f.zero?
 
-    scoped_subtotal = items.select { |item| coupon_products.include?(item[:stripe_product_id].to_s) }
-                           .sum { |item| line_total(item) }
+    scoped_subtotal = scoped_line_subtotal
     return nil if scoped_subtotal.zero?
 
-    amount = percent_of(scoped_subtotal, coupon[:percent_off])
-    { amount: [amount, scoped_subtotal].min, label: "cupom #{coupon_name} (#{format_percent(coupon[:percent_off])}%)" }
+    scoped_coupon_part(scoped_subtotal)
+  end
+
+  def scoped_line_subtotal
+    items.select { |item| coupon_products.include?(item[:stripe_product_id].to_s) }
+         .sum { |item| line_total(item) }
+  end
+
+  def scoped_coupon_part(scoped_subtotal)
+    if coupon[:percent_off].to_f.positive?
+      amount = percent_of(scoped_subtotal, coupon[:percent_off])
+      { amount: [amount, scoped_subtotal].min,
+        label: "cupom #{coupon_name} (#{format_percent(coupon[:percent_off])}%)" }
+    elsif coupon[:amount_off].to_i.positive?
+      { amount: [coupon[:amount_off].to_i, scoped_subtotal].min,
+        label: "cupom #{coupon_name}" }
+    end
   end
 
   def meeting_part(base)
