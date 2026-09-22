@@ -389,7 +389,7 @@ const runMenuAction = mi => {
                 :key="item.id"
                 class="relative group"
                 :class="{
-                  'ring-2 ring-n-slate-12 ring-offset-1': isSelected(item.id),
+                  'ring-2 ring-slate-900 ring-offset-1': isSelected(item.id),
                 }"
               >
                 <div
@@ -428,19 +428,18 @@ const runMenuAction = mi => {
                 <button
                   v-if="forceCheckboxes || isSelected(item.id)"
                   type="button"
-                  class="absolute top-2 left-2 w-5 h-5 inline-flex items-center justify-center rounded-md border bg-white/95 text-n-slate-11 shadow-sm"
-                  :class="{
-                    'bg-n-slate-12 text-white border-n-slate-12': isSelected(
-                      item.id
-                    ),
-                    'border-n-slate-6': !isSelected(item.id),
-                  }"
+                  class="absolute top-2 left-2 w-5 h-5 inline-flex items-center justify-center rounded-md border-2 shadow-sm"
+                  :class="
+                    isSelected(item.id)
+                      ? 'bg-slate-900 border-slate-900 text-white'
+                      : 'bg-white border-slate-400 text-slate-500'
+                  "
                   :title="t('MEDIA_HUB.MENU.SELECT')"
                   @click.stop="toggleSelect(item.id)"
                 >
                   <span
                     v-if="isSelected(item.id)"
-                    class="i-lucide-check size-3.5"
+                    class="i-lucide-check size-3"
                   />
                 </button>
                 <!-- Chevron overlay — top-right corner, visible on hover
@@ -510,25 +509,24 @@ const runMenuAction = mi => {
                   v-for="item in group.rows"
                   :key="item.id"
                   class="border-b border-n-slate-3 hover:bg-n-slate-2 align-top cursor-pointer"
-                  :class="{ 'bg-n-slate-3': isSelected(item.id) }"
+                  :class="{ 'bg-slate-100': isSelected(item.id) }"
                   @click="handleRowClick(item)"
                 >
                   <td class="py-3 pl-3 pr-2 align-middle">
                     <button
                       type="button"
-                      class="block w-5 h-5 rounded-md border-2 bg-n-solid-1 relative"
-                      :class="{
-                        'bg-n-slate-12 border-n-slate-12': isSelected(item.id),
-                        'border-n-slate-8 hover:border-n-slate-11': !isSelected(
-                          item.id
-                        ),
-                      }"
+                      class="inline-flex items-center justify-center w-5 h-5 rounded-md border-2 shadow-sm"
+                      :class="
+                        isSelected(item.id)
+                          ? 'bg-slate-900 border-slate-900 text-white'
+                          : 'bg-white border-slate-400 text-slate-500 hover:border-slate-600'
+                      "
                       :title="t('MEDIA_HUB.MENU.SELECT')"
                       @click.stop="toggleSelect(item.id)"
                     >
                       <span
                         v-if="isSelected(item.id)"
-                        class="i-lucide-check size-3.5 text-white absolute inset-0 m-auto"
+                        class="i-lucide-check size-3"
                       />
                     </button>
                   </td>
