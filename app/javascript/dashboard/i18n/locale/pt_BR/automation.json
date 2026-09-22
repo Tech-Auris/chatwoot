@@ -141,7 +141,8 @@
       "CONVERSATION_UPDATED": "Conversa Atualizada",
       "MESSAGE_CREATED": "Mensagem Criada",
       "CONVERSATION_RESOLVED": "Conversa Resolvida",
-      "CONVERSATION_OPENED": "Conversa Aberta"
+      "CONVERSATION_OPENED": "Conversa Aberta",
+      "FUNNEL_UPDATED": "Funil Atualizado"
     },
     "ACTIONS": {
       "ASSIGN_AGENT": "Atribuir ao Agente",
