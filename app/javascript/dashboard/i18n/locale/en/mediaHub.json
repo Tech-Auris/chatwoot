@@ -10,6 +10,12 @@
     "CLOSE": "Close",
     "VIDEO": "Video",
     "COMING_SOON": "Coming soon",
+    "DELETE": {
+      "CONFIRM_ONE": "Delete this item? This can't be undone.",
+      "CONFIRM": "Delete {n} item(s)? This can't be undone.",
+      "DONE": "Item(s) deleted.",
+      "FAILED": "Couldn't delete. Try again."
+    },
     "SELECTION": {
       "CANCEL": "Cancel",
       "ONE_SELECTED": "1 selected",

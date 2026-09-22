@@ -26,7 +26,44 @@ class Api::V1::Accounts::MediaHubController < Api::V1::Accounts::BaseController
     }
   end
 
+  # Bulk-delete driven by the Media Hub's context menu / bottom shelf.
+  # Media and Document rows carry attachment ids; Links carry message
+  # ids (a link "row" is a URL extracted from a message's content, so
+  # deleting it means dropping the parent message). Attachments whose
+  # host message ends up empty are cleaned up along the way so we don't
+  # leave dangling ghost messages behind.
+  def destroy
+    ids = Array(params[:ids]).map(&:to_i).uniq
+    return render(json: { deleted: 0 }) if ids.empty?
+
+    deleted = kind == 'link' ? delete_link_messages(ids) : delete_attachments(ids)
+    render json: { deleted: deleted }
+  end
+
   private
+
+  def delete_attachments(attachment_ids)
+    scope = Attachment.where(account_id: Current.account.id, id: attachment_ids)
+                      .includes(:message)
+    count = 0
+    scope.find_each do |att|
+      message = att.message
+      att.destroy!
+      # Drop the parent message when it becomes empty — no other
+      # attachments and no text content. Prevents orphan bubbles that
+      # only carried the one asset the operator just removed.
+      message.destroy! if message && message.reload.attachments.empty? && message.content.to_s.strip.empty?
+      count += 1
+    end
+    count
+  end
+
+  def delete_link_messages(message_ids)
+    scope = Current.account.messages.where(id: message_ids)
+    count = scope.count
+    scope.find_each(&:destroy!)
+    count
+  end
 
   def kind
     @kind ||= (params[:type].presence || 'media').to_s

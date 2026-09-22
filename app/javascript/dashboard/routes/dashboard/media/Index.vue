@@ -253,13 +253,50 @@ const toggleSortMenu = () => {
 
 // Bulk actions — Baixar opens each URL on a new tab so the browser
 // handles the concurrent download the same way it would if the operator
-// clicked each row individually. Encaminhar / Favoritar / Apagar still
-// route to the coming-soon toast; each needs its own endpoint and is
-// tracked as a follow-up.
+// clicked each row individually.
 const bulkDownload = () => {
   selectedItems.value.forEach(item => {
     openInNewTab(item.file_url || item.url);
   });
+};
+
+// Apagar — hits the backend delete endpoint. Media / Document rows send
+// attachment ids, Links send the parent message id (a link "row" is a
+// URL mined out of a message's content, so removing the URL means
+// dropping the message). Confirmation is required either way; a single
+// row uses the context menu, multi-row uses the bottom shelf.
+const deleteMediaHubItems = async rows => {
+  if (!rows.length) return;
+  const ids =
+    activeTab.value === 'link'
+      ? rows.map(i => i.message_id).filter(Boolean)
+      : rows.map(i => i.id).filter(Boolean);
+  if (!ids.length) return;
+  try {
+    await axios.delete(`/api/v1/accounts/${accountId.value}/media_hub`, {
+      data: { type: activeTab.value, ids },
+    });
+    useAlert(t('MEDIA_HUB.DELETE.DONE'));
+    clearSelection();
+    fetchData();
+  } catch (e) {
+    useAlert(e.message || t('MEDIA_HUB.DELETE.FAILED'));
+  }
+};
+
+const bulkDelete = () => {
+  const count = selectedItems.value.length;
+  if (!count) return;
+  const message = t('MEDIA_HUB.DELETE.CONFIRM', { n: count });
+  // eslint-disable-next-line no-alert
+  if (!window.confirm(message)) return;
+  deleteMediaHubItems(selectedItems.value);
+};
+
+const deleteOne = item => {
+  // eslint-disable-next-line no-alert
+  if (!window.confirm(t('MEDIA_HUB.DELETE.CONFIRM_ONE'))) return;
+  deleteMediaHubItems([item]);
 };
 
 // A click on the row body / thumbnail body always opens the target —
@@ -273,12 +310,6 @@ const handleRowClick = item => {
 const handleMediaClick = item => {
   openInNewTab(item.file_url);
 };
-
-// Actions that need dedicated endpoints / UX flows (multi-select, forward,
-// favorites, delete) surface as toast placeholders for now so the menu
-// shape matches the WhatsApp Business reference. Each has a follow-up PR
-// planned; the toast is what the operator sees until then.
-const showComingSoon = () => useAlert(t('MEDIA_HUB.COMING_SOON'));
 
 // Same order as the WhatsApp Business media panel. Each tab only hides
 // the items that don't make sense for its rows (Copiar on links only,
@@ -328,7 +359,7 @@ const menuItems = item => {
       icon: 'i-lucide-trash-2',
       danger: true,
       divider: true,
-      action: showComingSoon,
+      action: () => deleteOne(item),
     },
   ].filter(mi => mi.show === undefined || mi.show);
 };
@@ -849,7 +880,7 @@ const runMenuAction = mi => {
           class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-n-ruby-3 text-n-ruby-11 hover:bg-n-ruby-4 disabled:opacity-40"
           :disabled="!selectedIds.size"
           :title="t('MEDIA_HUB.MENU.DELETE')"
-          @click="showComingSoon"
+          @click="bulkDelete"
         >
           <span class="i-lucide-trash-2 size-4" />
           <span v-if="selectedSize > 0">{{ humanSize(selectedSize) }}</span>
@@ -876,15 +907,6 @@ const runMenuAction = mi => {
           @click="bulkDownload"
         >
           <span class="i-lucide-download size-4" />
-        </button>
-        <button
-          type="button"
-          class="w-10 h-10 inline-flex items-center justify-center rounded-full bg-n-slate-12 text-white hover:bg-n-slate-11 disabled:opacity-40"
-          :disabled="!selectedIds.size"
-          :title="t('MEDIA_HUB.MENU.FORWARD')"
-          @click="showComingSoon"
-        >
-          <span class="i-lucide-forward size-4" />
         </button>
       </div>
     </div>
