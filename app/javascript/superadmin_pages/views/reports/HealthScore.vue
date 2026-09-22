@@ -37,7 +37,7 @@ const METRIC_LABELS = {
   ai_active_rate: 'IA ativa rolling',
   handoff_rate: 'Taxa de handoff IA→humano',
   inbox_uptime: 'Uptime das inboxes WhatsApp',
-  daily_agent_activity: 'Uso diário pelos agentes',
+  daily_agent_activity: 'Uso diário pela equipe',
   manager_engagement: 'Engajamento do manager',
 };
 
