@@ -18,7 +18,8 @@
     },
     "SEARCH": {
       "LABEL": "Search",
-      "PLACEHOLDER": "Search by sender or caption"
+      "PLACEHOLDER": "Search by sender or caption",
+      "PLACEHOLDER_DOCUMENT": "Search by sender, caption or file name"
     },
     "SORT": {
       "LABEL": "Sort",

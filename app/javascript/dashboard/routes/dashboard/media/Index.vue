@@ -29,6 +29,14 @@ const subtitle = computed(() => {
   return 'Links de todas as conversas';
 });
 
+// The search box's help text picks up "nome do arquivo" on the docs tab
+// since documents are the one place a filename is the primary handle.
+const searchPlaceholder = computed(() => {
+  if (activeTab.value === 'document')
+    return t('MEDIA_HUB.SEARCH.PLACEHOLDER_DOCUMENT');
+  return t('MEDIA_HUB.SEARCH.PLACEHOLDER');
+});
+
 // Search / sort state kept up here because the display pipeline below
 // (displayItems → groupedItems) depends on them. Toggle helpers live
 // next to the multi-select state below.
@@ -385,12 +393,12 @@ const runMenuAction = mi => {
               v-model="searchQuery"
               type="text"
               autofocus
-              :placeholder="t('MEDIA_HUB.SEARCH.PLACEHOLDER')"
+              :placeholder="searchPlaceholder"
               class="!bg-transparent !border-0 !outline-0 !p-0 !m-0 !w-full !h-auto text-sm text-n-slate-12"
             />
           </div>
         </div>
-        <nav class="flex gap-8 mb-[-1px]">
+        <nav v-if="!searchMode" class="flex gap-8 mb-[-1px]">
           <button
             v-for="tab in TABS"
             :key="tab.id"
@@ -405,6 +413,10 @@ const runMenuAction = mi => {
             {{ tab.label }}
           </button>
         </nav>
+        <div v-else />
+        <!-- Placeholder keeps the 3-col grid intact when tabs are hidden.
+             Center column becomes empty; search input expands via the
+             title cell on the left. -->
         <div class="flex justify-end items-center gap-1 pb-3 relative">
           <template v-if="selectMode">
             <button
@@ -417,15 +429,16 @@ const runMenuAction = mi => {
           </template>
           <template v-else>
             <button
+              v-if="!searchMode"
               type="button"
               class="!p-0 w-8 h-8 inline-flex items-center justify-center rounded-md text-n-slate-11 hover:bg-n-alpha-2"
-              :class="{ 'bg-n-alpha-2 text-n-slate-12': searchMode }"
               :title="t('MEDIA_HUB.SEARCH.LABEL')"
               @click="toggleSearchMode"
             >
               <span class="i-lucide-search size-4" />
             </button>
             <button
+              v-if="!searchMode"
               type="button"
               class="!p-0 w-8 h-8 inline-flex items-center justify-center rounded-md text-n-slate-11 hover:bg-n-alpha-2"
               :class="{ 'bg-n-alpha-2 text-n-slate-12': sortMenuOpen }"
@@ -435,6 +448,7 @@ const runMenuAction = mi => {
               <span class="i-lucide-align-left size-4 rotate-180" />
             </button>
             <button
+              v-if="!searchMode"
               type="button"
               class="!p-0 w-8 h-8 inline-flex items-center justify-center rounded-md text-n-slate-11 hover:bg-n-alpha-2"
               :title="t('MEDIA_HUB.MENU.SELECT')"
@@ -446,7 +460,7 @@ const runMenuAction = mi => {
               type="button"
               class="!p-0 w-8 h-8 inline-flex items-center justify-center rounded-md text-n-slate-11 hover:bg-n-alpha-2"
               :title="t('MEDIA_HUB.CLOSE')"
-              @click="close"
+              @click="searchMode ? toggleSearchMode() : close()"
             >
               <span class="i-lucide-x size-4" />
             </button>
@@ -669,7 +683,7 @@ const runMenuAction = mi => {
             <table v-else class="w-full text-sm table-fixed">
               <thead>
                 <tr class="text-left text-n-slate-11 border-b border-n-slate-4">
-                  <th class="py-2 font-medium w-12" />
+                  <th v-if="forceCheckboxes" class="py-2 font-medium w-12" />
                   <th class="py-2 font-medium w-[34%]">
                     {{ activeTab === 'document' ? 'Documento' : 'Link' }}
                   </th>
@@ -690,7 +704,10 @@ const runMenuAction = mi => {
                   :class="{ 'bg-slate-100': isSelected(item.id) }"
                   @click="handleRowClick(item)"
                 >
-                  <td class="py-3 pl-3 pr-2 align-middle">
+                  <td
+                    v-if="forceCheckboxes"
+                    class="py-3 pl-3 pr-2 align-middle"
+                  >
                     <button
                       type="button"
                       class="!p-0 inline-flex items-center justify-center w-4 h-4 rounded-md"
