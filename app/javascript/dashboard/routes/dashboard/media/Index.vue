@@ -425,12 +425,8 @@ const runMenuAction = mi => {
                 <button
                   v-if="forceCheckboxes || isSelected(item.id)"
                   type="button"
-                  class="absolute top-2 left-2 w-6 h-6 inline-flex items-center justify-center rounded-lg shadow"
-                  :class="
-                    isSelected(item.id)
-                      ? 'bg-slate-900'
-                      : 'bg-white ring-1 ring-slate-300'
-                  "
+                  class="absolute top-2 left-2 w-6 h-6 inline-flex items-center justify-center rounded-lg shadow bg-white"
+                  :class="{ 'ring-1 ring-slate-300': !isSelected(item.id) }"
                   :title="t('MEDIA_HUB.MENU.SELECT')"
                   @click.stop="toggleSelect(item.id)"
                 >
@@ -441,7 +437,7 @@ const runMenuAction = mi => {
                     height="14"
                     viewBox="0 0 24 24"
                     fill="none"
-                    stroke="#ffffff"
+                    stroke="#111827"
                     stroke-width="3"
                     stroke-linecap="round"
                     stroke-linejoin="round"
