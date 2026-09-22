@@ -447,41 +447,49 @@ const runMenuAction = mi => {
                 <!-- Chevron overlay — top-right corner, visible on hover
                      or while the menu is open. Matches the WhatsApp
                      Business pattern. -->
-                <button
-                  type="button"
-                  class="absolute top-2 right-2 w-8 h-8 inline-flex items-center justify-center rounded-full bg-white/90 text-n-slate-11 shadow opacity-0 group-hover:opacity-100 transition-opacity"
-                  :class="{ '!opacity-100': openMenuFor === item.id }"
-                  :title="t('MEDIA_HUB.MENU.CONTEXT_MENU')"
-                  @click.stop="toggleMenu(item.id)"
-                >
-                  <span class="i-lucide-chevron-down size-4" />
-                </button>
-                <div
-                  v-if="openMenuFor === item.id"
-                  class="absolute top-12 left-2 z-30 py-1 min-w-[240px] rounded-lg border border-n-slate-4 bg-n-solid-1 shadow-lg text-left"
-                  @click.stop
-                >
-                  <template v-for="mi in menuItems(item)" :key="mi.key">
-                    <div
-                      v-if="mi.divider"
-                      class="my-1 border-t border-n-slate-3"
-                    />
-                    <button
-                      type="button"
-                      class="flex items-center gap-3 w-full px-3 py-2 text-sm hover:bg-n-slate-2"
-                      :class="mi.danger ? 'text-n-ruby-11' : 'text-n-slate-12'"
-                      @click="runMenuAction(mi)"
-                    >
-                      <span
-                        class="size-4"
-                        :class="[
-                          mi.icon,
-                          mi.danger ? 'text-n-ruby-11' : 'text-n-slate-11',
-                        ]"
+                <!-- Chevron + menu share a small anchor at the top-right
+                     corner of the thumbnail so the menu drops below the
+                     arrow and grows rightward — even when that overflows
+                     the current thumbnail into the next one. -->
+                <div class="absolute top-2 right-2">
+                  <button
+                    type="button"
+                    class="w-8 h-8 inline-flex items-center justify-center rounded-full bg-white/90 text-n-slate-11 shadow opacity-0 group-hover:opacity-100 transition-opacity"
+                    :class="{ '!opacity-100': openMenuFor === item.id }"
+                    :title="t('MEDIA_HUB.MENU.CONTEXT_MENU')"
+                    @click.stop="toggleMenu(item.id)"
+                  >
+                    <span class="i-lucide-chevron-down size-4" />
+                  </button>
+                  <div
+                    v-if="openMenuFor === item.id"
+                    class="absolute top-full left-0 mt-1 z-30 py-1 min-w-[240px] rounded-lg border border-n-slate-4 bg-n-solid-1 shadow-lg text-left"
+                    @click.stop
+                  >
+                    <template v-for="mi in menuItems(item)" :key="mi.key">
+                      <div
+                        v-if="mi.divider"
+                        class="my-1 border-t border-n-slate-3"
                       />
-                      {{ mi.label }}
-                    </button>
-                  </template>
+                      <button
+                        type="button"
+                        class="flex items-center gap-3 w-full px-3 py-2 text-sm hover:bg-n-slate-2"
+                        :class="
+                          mi.danger ? 'text-n-ruby-11' : 'text-n-slate-12'
+                        "
+                        @click="runMenuAction(mi)"
+                      >
+                        <span
+                          class="size-4"
+                          :class="[
+                            mi.icon,
+                            mi.danger ? 'text-n-ruby-11' : 'text-n-slate-11',
+                          ]"
+                        />
+                        {{ mi.label }}
+                      </button>
+                    </template>
+                  </div>
                 </div>
               </div>
             </div>
