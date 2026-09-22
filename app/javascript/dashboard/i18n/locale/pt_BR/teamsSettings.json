@@ -117,8 +117,12 @@
       },
       "AUTO_ASSIGN": {
         "LABEL": "Permitir atribuição automática para este time.",
+        "SCOPE_ONLINE": "Permitir apenas a agentes online",
+        "SCOPE_ALL": "Permitir também a agentes offline",
         "INFO_TITLE": "Como funciona a atribuição automática",
         "INFO_BODY_ENABLED": "Quando ativada, a Auris atribui automaticamente cada nova conversa a um agente disponível da equipe, seguindo a regra de distribuição configurada. Apenas agentes que pertencem a essa caixa de entrada e estão online serão considerados. Se não houver nenhum agente online no momento, a conversa permanecerá sem responsável atribuído.",
+        "INFO_BODY_SCOPE_ONLINE": "Quando ativada, a Auris atribui automaticamente cada nova conversa a um agente disponível da equipe, seguindo a regra de distribuição configurada. Apenas agentes que pertencem a essa caixa de entrada e estão online serão considerados. Se não houver nenhum agente online no momento, a conversa permanecerá sem responsável atribuído.",
+        "INFO_BODY_SCOPE_ALL": "Quando ativada, a Auris atribui automaticamente cada nova conversa a um agente da equipe, mesmo que ele esteja offline. Se não houver nenhum agente online, um agente offline recebe a conversa e vê o novo atendimento assim que voltar. Serve pra times pequenos onde ficar Não Atribuída não é opção.",
         "INFO_BODY_DISABLED": "Quando desativada, a Auris não atribui a conversa automaticamente. Nesse caso, a conversa ficará na lista de Não Atribuídas para que um agente a assuma manualmente."
       },
       "SUBMIT_CREATE": "Criar novo time"

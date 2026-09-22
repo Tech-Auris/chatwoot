@@ -2,10 +2,14 @@ class AutoAssignment::AgentAssignmentService
   # Allowed agent ids: array
   # This is the list of agents from which an agent can be assigned to this conversation
   # examples: Agents with assignment capacity, Agents who are members of a team etc
-  pattr_initialize [:conversation!, :allowed_agent_ids!]
+  # `include_offline` opens the pool to offline members too — set by
+  # team-scoped callers when the team's `auto_assign_include_offline`
+  # flag is on. Defaults to `false` to preserve the online-only behavior.
+  pattr_initialize [:conversation!, :allowed_agent_ids!, { include_offline: false }]
 
   def find_assignee
-    round_robin_manage_service.available_agent(allowed_agent_ids: allowed_online_agent_ids)
+    ids = include_offline ? allowed_agent_ids&.map(&:to_s) : allowed_online_agent_ids
+    round_robin_manage_service.available_agent(allowed_agent_ids: ids)
   end
 
   def perform
