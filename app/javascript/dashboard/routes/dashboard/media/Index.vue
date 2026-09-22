@@ -458,7 +458,7 @@ const runMenuAction = mi => {
                 </button>
                 <div
                   v-if="openMenuFor === item.id"
-                  class="absolute top-12 right-2 z-30 py-1 min-w-[240px] rounded-lg border border-n-slate-4 bg-n-solid-1 shadow-lg text-left"
+                  class="absolute top-12 left-2 z-30 py-1 min-w-[240px] rounded-lg border border-n-slate-4 bg-n-solid-1 shadow-lg text-left"
                   @click.stop
                 >
                   <template v-for="mi in menuItems(item)" :key="mi.key">
