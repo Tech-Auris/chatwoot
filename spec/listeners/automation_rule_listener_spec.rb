@@ -58,6 +58,26 @@ describe AutomationRuleListener do
     end
   end
 
+  describe 'funnel_updated' do
+    let!(:automation_rule) { create(:automation_rule, event_name: 'funnel_updated', account: account) }
+    let(:event) do
+      Events::Base.new('funnel_updated', Time.zone.now, { conversation: conversation })
+    end
+
+    it 'calls AutomationRules::ActionService when conditions match' do
+      allow(condition_match).to receive(:present?).and_return(true)
+      listener.funnel_updated(event)
+      expect(AutomationRules::ActionService).to have_received(:new).with(automation_rule, account, conversation)
+    end
+
+    it 'skips the ActionService when the event was performed by another rule' do
+      event.data[:performed_by] = automation_rule
+      allow(condition_match).to receive(:present?).and_return(true)
+      listener.funnel_updated(event)
+      expect(AutomationRules::ActionService).not_to have_received(:new)
+    end
+  end
+
   describe 'conversation_updated' do
     let!(:automation_rule) { create(:automation_rule, event_name: 'conversation_updated', account: account) }
     let(:event) do

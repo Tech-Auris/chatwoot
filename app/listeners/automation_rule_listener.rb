@@ -15,6 +15,14 @@ class AutomationRuleListener < BaseListener
     process_conversation_event(event, 'conversation_resolved')
   end
 
+  # `funnel.updated` fires from Funnel::MoveConversationService whenever a
+  # conversation moves between funnel stages. Reuse the standard
+  # conversation-scoped pipeline so any condition (funnel_stage_id
+  # included) evaluates like it does on conversation_updated.
+  def funnel_updated(event)
+    process_conversation_event(event, 'funnel_updated')
+  end
+
   def message_created(event)
     message = event.data[:message]
 

@@ -876,6 +876,15 @@ export const AUTOMATIONS = {
   },
 };
 
+// `funnel_updated` fires when a conversation moves between funnel stages.
+// It shares the same condition + action set as `conversation_updated`
+// because the same shape of match / act rules apply — the only
+// difference is when the rule is evaluated.
+AUTOMATIONS.funnel_updated = {
+  conditions: AUTOMATIONS.conversation_updated.conditions,
+  actions: AUTOMATIONS.conversation_updated.actions,
+};
+
 export const AUTOMATION_RULE_EVENTS = [
   {
     key: 'conversation_created',
@@ -896,6 +905,10 @@ export const AUTOMATION_RULE_EVENTS = [
   {
     key: 'conversation_opened',
     value: 'CONVERSATION_OPENED',
+  },
+  {
+    key: 'funnel_updated',
+    value: 'FUNNEL_UPDATED',
   },
 ];
 
