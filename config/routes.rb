@@ -77,6 +77,7 @@ Rails.application.routes.draw do
             post :bulk_create, on: :collection
           end
           get 'media_hub', to: 'media_hub#index', defaults: { format: :json }
+          delete 'media_hub', to: 'media_hub#destroy', defaults: { format: :json }
           namespace :captain do
             resource :preferences, only: [:show, :update]
             resources :assistants do

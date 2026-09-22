@@ -10,6 +10,12 @@
     "CLOSE": "Fechar",
     "VIDEO": "Vídeo",
     "COMING_SOON": "Em breve",
+    "DELETE": {
+      "CONFIRM_ONE": "Apagar este item? A ação não pode ser desfeita.",
+      "CONFIRM": "Apagar {n} item(ns)? A ação não pode ser desfeita.",
+      "DONE": "Item(ns) apagado(s).",
+      "FAILED": "Não foi possível apagar. Tente novamente."
+    },
     "SELECTION": {
       "CANCEL": "Cancelar",
       "ONE_SELECTED": "1 selecionada",
