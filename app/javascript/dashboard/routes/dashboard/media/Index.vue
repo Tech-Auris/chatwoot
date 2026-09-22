@@ -425,11 +425,11 @@ const runMenuAction = mi => {
                 <button
                   v-if="forceCheckboxes || isSelected(item.id)"
                   type="button"
-                  class="absolute top-2 left-2 w-5 h-5 inline-flex items-center justify-center rounded-md border-2 shadow"
+                  class="absolute top-2 left-2 w-6 h-6 inline-flex items-center justify-center rounded-lg shadow"
                   :class="
                     isSelected(item.id)
-                      ? 'bg-slate-900 border-slate-900'
-                      : 'bg-white border-slate-500'
+                      ? 'bg-slate-900'
+                      : 'bg-white ring-1 ring-slate-300'
                   "
                   :title="t('MEDIA_HUB.MENU.SELECT')"
                   @click.stop="toggleSelect(item.id)"
@@ -437,8 +437,8 @@ const runMenuAction = mi => {
                   <svg
                     v-if="isSelected(item.id)"
                     xmlns="http://www.w3.org/2000/svg"
-                    width="12"
-                    height="12"
+                    width="14"
+                    height="14"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="#ffffff"
@@ -522,11 +522,11 @@ const runMenuAction = mi => {
                   <td class="py-3 pl-3 pr-2 align-middle">
                     <button
                       type="button"
-                      class="inline-flex items-center justify-center w-5 h-5 rounded-md border-2 shadow"
+                      class="inline-flex items-center justify-center w-6 h-6 rounded-lg"
                       :class="
                         isSelected(item.id)
-                          ? 'bg-slate-900 border-slate-900'
-                          : 'bg-white border-slate-500 hover:border-slate-700'
+                          ? 'bg-slate-900'
+                          : 'bg-transparent ring-2 ring-slate-400 hover:ring-slate-600'
                       "
                       :title="t('MEDIA_HUB.MENU.SELECT')"
                       @click.stop="toggleSelect(item.id)"
@@ -534,8 +534,8 @@ const runMenuAction = mi => {
                       <svg
                         v-if="isSelected(item.id)"
                         xmlns="http://www.w3.org/2000/svg"
-                        width="12"
-                        height="12"
+                        width="14"
+                        height="14"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="#ffffff"
