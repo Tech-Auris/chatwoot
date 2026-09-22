@@ -12,6 +12,7 @@ RSpec.describe Sales::ReserveQuoteService do
 
   before do
     allow(client).to receive(:update_task)
+    allow(client).to receive(:set_custom_field)
     allow(client).to receive(:add_tag)
     allow(client).to receive(:add_comment)
   end
@@ -24,13 +25,24 @@ RSpec.describe Sales::ReserveQuoteService do
 
   # ClickUp takes epoch milliseconds; sending seconds would date the task
   # to 1970. The reservation deadline is a day, not a moment, so it goes
-  # normalised to midnight of that day with `due_date_time: false` — the
-  # task on the pipeline reads "Sep 25" instead of "Sep 25, 20:59".
-  it 'mirrors the deadline onto the ClickUp task as a date-only field' do
+  # normalised to midnight of that day. The value lands on the dedicated
+  # "Vencimento da Reserva" custom field, kept apart from the task's own
+  # due_date so the sales-story deadline can move independently.
+  it 'writes the deadline onto the "Vencimento da Reserva" custom field' do
     reserve
 
-    expect(client).to have_received(:update_task)
-      .with('86ak7rd8j', hash_including(due_date: deadline.beginning_of_day.to_i * 1000, due_date_time: false))
+    expect(client).to have_received(:set_custom_field).with(
+      '86ak7rd8j',
+      Sales::ClickupProspectSearchService::RESERVATION_DUE_FIELD_ID,
+      deadline.beginning_of_day.to_i * 1000
+    )
+  end
+
+  it 'leaves the task native due_date untouched' do
+    reserve
+
+    expect(client).not_to have_received(:update_task)
+      .with('86ak7rd8j', hash_including(:due_date))
   end
 
   it 'tags the task so the pipeline shows it is reserved' do
@@ -96,15 +108,18 @@ RSpec.describe Sales::ReserveQuoteService do
   end
 
   describe 'renewal' do
-    it 'writes the new deadline to the task, keeping it a mirror' do
+    it 'writes the new deadline to the custom field, keeping it a mirror' do
       reserve
       new_deadline = 12.days.from_now.change(usec: 0)
 
       reserve(quote, new_deadline)
 
       expect(quote.reload.reserved_until).to eq(new_deadline)
-      expect(client).to have_received(:update_task)
-        .with('86ak7rd8j', hash_including(due_date: new_deadline.beginning_of_day.to_i * 1000, due_date_time: false))
+      expect(client).to have_received(:set_custom_field).with(
+        '86ak7rd8j',
+        Sales::ClickupProspectSearchService::RESERVATION_DUE_FIELD_ID,
+        new_deadline.beginning_of_day.to_i * 1000
+      )
     end
 
     # The trail separates the first hold from a renewal, which is what the

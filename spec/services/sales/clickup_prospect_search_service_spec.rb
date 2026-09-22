@@ -13,9 +13,10 @@ RSpec.describe Sales::ClickupProspectSearchService do
   end
 
   def task(overrides = {})
-    id, name, email, phone, clinic, status =
-      { email: nil, phone: nil, clinic: nil, status: 'negociação' }.merge(overrides)
-                                                                   .values_at(:id, :name, :email, :phone, :clinic, :status)
+    defaults = { email: nil, phone: nil, clinic: nil, status: 'negociação', reservation_due: nil }
+    merged = defaults.merge(overrides)
+    id, name, email, phone, clinic, status, reservation_due =
+      merged.values_at(:id, :name, :email, :phone, :clinic, :status, :reservation_due)
 
     {
       'id' => id, 'name' => name, 'url' => "https://app.clickup.com/t/#{id}",
@@ -23,7 +24,8 @@ RSpec.describe Sales::ClickupProspectSearchService do
       'custom_fields' => [
         { 'id' => described_class::EMAIL_FIELD_ID, 'value' => email },
         { 'id' => described_class::PHONE_FIELD_ID, 'value' => phone },
-        { 'id' => described_class::CLINIC_FIELD_ID, 'value' => clinic }
+        { 'id' => described_class::CLINIC_FIELD_ID, 'value' => clinic },
+        { 'id' => described_class::RESERVATION_DUE_FIELD_ID, 'value' => reservation_due }
       ]
     }
   end
@@ -98,6 +100,16 @@ RSpec.describe Sales::ClickupProspectSearchService do
 
     it 'returns nothing for a task outside the pipeline' do
       expect(service.find('desconhecida')).to be_nil
+    end
+
+    it 'reads the reservation deadline from the "Vencimento da Reserva" custom field' do
+      epoch_ms = 1_760_000_000_000
+      allow(client).to receive(:list_tasks).and_return({
+                                                         'tasks' => [task(id: '86a4', name: 'Rita', reservation_due: epoch_ms.to_s)],
+                                                         'last_page' => true
+                                                       })
+
+      expect(service.find('86a4')).to include(due_date: epoch_ms)
     end
   end
 
