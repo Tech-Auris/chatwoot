@@ -13,7 +13,23 @@
     "SELECTION": {
       "CANCEL": "Cancelar",
       "ONE_SELECTED": "1 selecionada",
-      "MANY_SELECTED": "{n} itens selecionados"
+      "MANY_SELECTED": "{n} itens selecionados",
+      "EMPTY_SELECTED": "0 item selecionado"
+    },
+    "SEARCH": {
+      "LABEL": "Buscar",
+      "PLACEHOLDER": "Pesquisar por remetente ou legenda"
+    },
+    "SORT": {
+      "LABEL": "Ordenar",
+      "SENDER": "Enviado por",
+      "SENDER_ALL": "Todas",
+      "SENDER_ME": "Você",
+      "SENDER_OTHERS": "Outros",
+      "ORDER": "Ordenar por",
+      "ORDER_NEWEST": "Mais recentes",
+      "ORDER_OLDEST": "Mais antigas",
+      "ORDER_LARGEST": "Maior"
     },
     "MENU": {
       "CONTEXT_MENU": "Menu de contexto da mensagem",

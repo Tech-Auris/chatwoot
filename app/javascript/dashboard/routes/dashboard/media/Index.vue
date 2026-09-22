@@ -29,6 +29,43 @@ const subtitle = computed(() => {
   return 'Links de todas as conversas';
 });
 
+// Search / sort state kept up here because the display pipeline below
+// (displayItems → groupedItems) depends on them. Toggle helpers live
+// next to the multi-select state below.
+const searchMode = ref(false);
+const searchQuery = ref('');
+const sortMenuOpen = ref(false);
+const senderFilter = ref('all');
+const sortOrder = ref('newest');
+
+// Filtered + sorted items feed the grouping. Kept as one computed so
+// the group headers update in lockstep with the sender / order picks.
+const displayItems = computed(() => {
+  let list = items.value;
+  if (searchQuery.value.trim()) {
+    const needle = searchQuery.value.trim().toLowerCase();
+    list = list.filter(it =>
+      [it.sender_name, it.caption, it.url, it.fallback_title]
+        .filter(Boolean)
+        .some(v => v.toLowerCase().includes(needle))
+    );
+  }
+  if (senderFilter.value === 'me') {
+    list = list.filter(it => (it.sender_name || '').toLowerCase() === 'você');
+  } else if (senderFilter.value === 'others') {
+    list = list.filter(it => (it.sender_name || '').toLowerCase() !== 'você');
+  }
+  const sorted = [...list];
+  if (sortOrder.value === 'oldest') {
+    sorted.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  } else if (sortOrder.value === 'largest') {
+    sorted.sort((a, b) => (b.file_size || 0) - (a.file_size || 0));
+  } else {
+    sorted.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  }
+  return sorted;
+});
+
 // Bucket by date the same way WhatsApp Business does — Hoje, Ontem,
 // Semana passada (the previous 7 days), then straight into monthly
 // buckets. The intermediate "Esta semana" label we had before is gone;
@@ -56,7 +93,7 @@ const groupedItems = computed(() => {
     return d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
   };
 
-  items.value.forEach(item => {
+  displayItems.value.forEach(item => {
     const key = bucketFor(item.created_at);
     if (!buckets.has(key)) buckets.set(key, []);
     buckets.get(key).push(item);
@@ -133,12 +170,14 @@ const toggleMenu = id => {
 };
 const closeMenu = () => {
   openMenuFor.value = null;
+  sortMenuOpen.value = false;
 };
 
-// Multi-select — the bottom shelf appears the moment there is anything
-// ticked. Docs / Links show the checkbox all the time; the media grid
-// only reveals it on hover unless something is already selected. The
-// context menu's "Selecionar" seeds the first tick.
+// Multi-select — explicit mode toggled by the toolbar's check icon or
+// by the "Selecionar" entry in a row's context menu. While it's off,
+// checkboxes are hidden on every tab; while it's on, they render on
+// every row and the bottom shelf is up so the operator can act in bulk.
+const selectMode = ref(false);
 const selectedIds = ref(new Set());
 
 const isSelected = id => selectedIds.value.has(id);
@@ -150,9 +189,18 @@ const toggleSelect = id => {
   selectedIds.value = next;
 };
 
-const enterSelectMode = id => toggleSelect(id);
+const enterSelectMode = id => {
+  selectMode.value = true;
+  toggleSelect(id);
+};
+
+const toggleSelectMode = () => {
+  selectMode.value = !selectMode.value;
+  if (!selectMode.value) selectedIds.value = new Set();
+};
 
 const clearSelection = () => {
+  selectMode.value = false;
   selectedIds.value = new Set();
 };
 
@@ -178,13 +226,20 @@ const humanSize = bytes => {
 // confuse the totals.
 watch(activeTab, () => clearSelection());
 
-const showSelectionBar = computed(() => selectedIds.value.size > 0);
+const showSelectionBar = computed(() => selectMode.value);
 
-// Media grid also needs to know when to force-show the checkbox — the
-// bar is up (something's selected) OR the operator explicitly entered
-// select-mode via the context menu, both cases collapse into "we have
-// at least one selection".
-const forceCheckboxes = computed(() => selectedIds.value.size > 0);
+// Alias kept because the template already references it. Now that
+// select-mode is explicit, both names return the same signal.
+const forceCheckboxes = computed(() => selectMode.value);
+
+// Toggle helpers for the toolbar's search / sort icons.
+const toggleSearchMode = () => {
+  searchMode.value = !searchMode.value;
+  if (!searchMode.value) searchQuery.value = '';
+};
+const toggleSortMenu = () => {
+  sortMenuOpen.value = !sortMenuOpen.value;
+};
 
 // Bulk actions — Baixar opens each URL on a new tab so the browser
 // handles the concurrent download the same way it would if the operator
@@ -311,12 +366,29 @@ const runMenuAction = mi => {
         class="grid grid-cols-[1fr_auto_1fr] items-end border-b border-n-slate-4 px-6 pt-5"
       >
         <div>
-          <h1 class="text-2xl font-semibold text-n-slate-12 leading-tight">
-            {{ t('SIDEBAR.MEDIA') }}
-          </h1>
-          <p class="text-sm text-n-slate-11 mt-1 mb-4">
-            {{ subtitle }}
-          </p>
+          <template v-if="!searchMode">
+            <h1 class="text-2xl font-semibold text-n-slate-12 leading-tight">
+              {{ t('SIDEBAR.MEDIA') }}
+            </h1>
+            <p class="text-sm text-n-slate-11 mt-1 mb-4">
+              {{ subtitle }}
+            </p>
+          </template>
+          <div
+            v-else
+            class="flex items-center gap-2 mt-2 mb-4 px-3 py-2 rounded-full border border-n-slate-6"
+          >
+            <span
+              class="i-lucide-search size-4 text-n-slate-11 flex-shrink-0"
+            />
+            <input
+              v-model="searchQuery"
+              type="text"
+              autofocus
+              :placeholder="t('MEDIA_HUB.SEARCH.PLACEHOLDER')"
+              class="!bg-transparent !border-0 !outline-0 !p-0 !m-0 !w-full !h-auto text-sm text-n-slate-12"
+            />
+          </div>
         </div>
         <nav class="flex gap-8 mb-[-1px]">
           <button
@@ -333,24 +405,120 @@ const runMenuAction = mi => {
             {{ tab.label }}
           </button>
         </nav>
-        <div class="flex justify-end items-center gap-2 pb-3">
-          <button
-            v-if="showSelectionBar"
-            type="button"
-            class="text-sm text-n-slate-12 hover:text-n-slate-11 px-2 py-1"
-            @click="clearSelection"
+        <div class="flex justify-end items-center gap-1 pb-3 relative">
+          <template v-if="selectMode">
+            <button
+              type="button"
+              class="text-sm text-n-slate-12 hover:text-n-slate-11 px-3 py-1"
+              @click="clearSelection"
+            >
+              {{ t('MEDIA_HUB.SELECTION.CANCEL') }}
+            </button>
+          </template>
+          <template v-else>
+            <button
+              type="button"
+              class="!p-0 w-8 h-8 inline-flex items-center justify-center rounded-md text-n-slate-11 hover:bg-n-alpha-2"
+              :class="{ 'bg-n-alpha-2 text-n-slate-12': searchMode }"
+              :title="t('MEDIA_HUB.SEARCH.LABEL')"
+              @click="toggleSearchMode"
+            >
+              <span class="i-lucide-search size-4" />
+            </button>
+            <button
+              type="button"
+              class="!p-0 w-8 h-8 inline-flex items-center justify-center rounded-md text-n-slate-11 hover:bg-n-alpha-2"
+              :class="{ 'bg-n-alpha-2 text-n-slate-12': sortMenuOpen }"
+              :title="t('MEDIA_HUB.SORT.LABEL')"
+              @click.stop="toggleSortMenu"
+            >
+              <span class="i-lucide-align-left size-4 rotate-180" />
+            </button>
+            <button
+              type="button"
+              class="!p-0 w-8 h-8 inline-flex items-center justify-center rounded-md text-n-slate-11 hover:bg-n-alpha-2"
+              :title="t('MEDIA_HUB.MENU.SELECT')"
+              @click="toggleSelectMode"
+            >
+              <span class="i-lucide-check-square size-4" />
+            </button>
+            <button
+              type="button"
+              class="!p-0 w-8 h-8 inline-flex items-center justify-center rounded-md text-n-slate-11 hover:bg-n-alpha-2"
+              :title="t('MEDIA_HUB.CLOSE')"
+              @click="close"
+            >
+              <span class="i-lucide-x size-4" />
+            </button>
+          </template>
+          <!-- Sort dropdown — anchored just below the sort icon. -->
+          <div
+            v-if="sortMenuOpen"
+            class="absolute right-2 top-12 z-40 py-2 min-w-[220px] rounded-lg border border-n-slate-4 bg-n-solid-1 shadow-lg text-left"
+            @click.stop
           >
-            {{ t('MEDIA_HUB.SELECTION.CANCEL') }}
-          </button>
-          <button
-            v-else
-            type="button"
-            class="w-8 h-8 inline-flex items-center justify-center rounded-md text-n-slate-11 hover:bg-n-alpha-2"
-            :title="t('MEDIA_HUB.CLOSE')"
-            @click="close"
-          >
-            <span class="i-lucide-x size-4" />
-          </button>
+            <p
+              class="px-3 py-1 text-xs uppercase tracking-wide text-n-slate-11"
+            >
+              {{ t('MEDIA_HUB.SORT.SENDER') }}
+            </p>
+            <button
+              v-for="opt in [
+                { id: 'all', label: t('MEDIA_HUB.SORT.SENDER_ALL') },
+                { id: 'me', label: t('MEDIA_HUB.SORT.SENDER_ME') },
+                { id: 'others', label: t('MEDIA_HUB.SORT.SENDER_OTHERS') },
+              ]"
+              :key="opt.id"
+              type="button"
+              class="!p-0 flex items-center gap-3 w-full px-3 py-2 text-sm hover:bg-n-slate-2 text-n-slate-12"
+              @click="senderFilter = opt.id"
+            >
+              <span
+                class="w-4 h-4 rounded-full border-2 inline-flex items-center justify-center"
+                :class="
+                  senderFilter === opt.id
+                    ? 'border-slate-900'
+                    : 'border-slate-400'
+                "
+              >
+                <span
+                  v-if="senderFilter === opt.id"
+                  class="w-2 h-2 rounded-full bg-slate-900"
+                />
+              </span>
+              {{ opt.label }}
+            </button>
+            <div class="my-1 border-t border-n-slate-3" />
+            <p
+              class="px-3 py-1 text-xs uppercase tracking-wide text-n-slate-11"
+            >
+              {{ t('MEDIA_HUB.SORT.ORDER') }}
+            </p>
+            <button
+              v-for="opt in [
+                { id: 'newest', label: t('MEDIA_HUB.SORT.ORDER_NEWEST') },
+                { id: 'oldest', label: t('MEDIA_HUB.SORT.ORDER_OLDEST') },
+                { id: 'largest', label: t('MEDIA_HUB.SORT.ORDER_LARGEST') },
+              ]"
+              :key="opt.id"
+              type="button"
+              class="!p-0 flex items-center gap-3 w-full px-3 py-2 text-sm hover:bg-n-slate-2 text-n-slate-12"
+              @click="sortOrder = opt.id"
+            >
+              <span
+                class="w-4 h-4 rounded-full border-2 inline-flex items-center justify-center"
+                :class="
+                  sortOrder === opt.id ? 'border-slate-900' : 'border-slate-400'
+                "
+              >
+                <span
+                  v-if="sortOrder === opt.id"
+                  class="w-2 h-2 rounded-full bg-slate-900"
+                />
+              </span>
+              {{ opt.label }}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -687,11 +855,17 @@ const runMenuAction = mi => {
           <span v-if="selectedSize > 0">{{ humanSize(selectedSize) }}</span>
         </button>
         <div class="flex-1 text-center text-sm text-n-slate-11">
-          {{
-            selectedIds.size === 1
-              ? t('MEDIA_HUB.SELECTION.ONE_SELECTED')
-              : t('MEDIA_HUB.SELECTION.MANY_SELECTED', { n: selectedIds.size })
-          }}
+          <template v-if="selectedIds.size === 0">
+            {{ t('MEDIA_HUB.SELECTION.EMPTY_SELECTED') }}
+          </template>
+          <template v-else-if="selectedIds.size === 1">
+            {{ t('MEDIA_HUB.SELECTION.ONE_SELECTED') }}
+          </template>
+          <template v-else>
+            {{
+              t('MEDIA_HUB.SELECTION.MANY_SELECTED', { n: selectedIds.size })
+            }}
+          </template>
         </div>
         <button
           type="button"
