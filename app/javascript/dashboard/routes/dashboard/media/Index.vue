@@ -388,9 +388,6 @@ const runMenuAction = mi => {
                 v-for="item in group.rows"
                 :key="item.id"
                 class="relative group"
-                :class="{
-                  'ring-2 ring-slate-900 ring-offset-1': isSelected(item.id),
-                }"
               >
                 <div
                   class="aspect-square bg-n-slate-3 overflow-hidden cursor-pointer"
@@ -428,19 +425,29 @@ const runMenuAction = mi => {
                 <button
                   v-if="forceCheckboxes || isSelected(item.id)"
                   type="button"
-                  class="absolute top-2 left-2 w-5 h-5 inline-flex items-center justify-center rounded-md border-2 shadow-sm"
+                  class="absolute top-2 left-2 w-5 h-5 inline-flex items-center justify-center rounded-md border-2 shadow"
                   :class="
                     isSelected(item.id)
-                      ? 'bg-slate-900 border-slate-900 text-white'
-                      : 'bg-white border-slate-400 text-slate-500'
+                      ? 'bg-slate-900 border-slate-900'
+                      : 'bg-white border-slate-500'
                   "
                   :title="t('MEDIA_HUB.MENU.SELECT')"
                   @click.stop="toggleSelect(item.id)"
                 >
-                  <span
+                  <svg
                     v-if="isSelected(item.id)"
-                    class="i-lucide-check size-3"
-                  />
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#ffffff"
+                    stroke-width="3"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
                 </button>
                 <!-- Chevron overlay — top-right corner, visible on hover
                      or while the menu is open. Matches the WhatsApp
@@ -491,7 +498,7 @@ const runMenuAction = mi => {
             <table v-else class="w-full text-sm table-fixed">
               <thead>
                 <tr class="text-left text-n-slate-11 border-b border-n-slate-4">
-                  <th class="py-2 font-medium w-10" />
+                  <th class="py-2 font-medium w-12" />
                   <th class="py-2 font-medium w-[34%]">
                     {{ activeTab === 'document' ? 'Documento' : 'Link' }}
                   </th>
@@ -515,19 +522,29 @@ const runMenuAction = mi => {
                   <td class="py-3 pl-3 pr-2 align-middle">
                     <button
                       type="button"
-                      class="inline-flex items-center justify-center w-5 h-5 rounded-md border-2 shadow-sm"
+                      class="inline-flex items-center justify-center w-5 h-5 rounded-md border-2 shadow"
                       :class="
                         isSelected(item.id)
-                          ? 'bg-slate-900 border-slate-900 text-white'
-                          : 'bg-white border-slate-400 text-slate-500 hover:border-slate-600'
+                          ? 'bg-slate-900 border-slate-900'
+                          : 'bg-white border-slate-500 hover:border-slate-700'
                       "
                       :title="t('MEDIA_HUB.MENU.SELECT')"
                       @click.stop="toggleSelect(item.id)"
                     >
-                      <span
+                      <svg
                         v-if="isSelected(item.id)"
-                        class="i-lucide-check size-3"
-                      />
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#ffffff"
+                        stroke-width="3"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
                     </button>
                   </td>
                   <td class="py-3 pr-2">
