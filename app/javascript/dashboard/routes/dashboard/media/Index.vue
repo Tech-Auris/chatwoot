@@ -369,9 +369,11 @@ const runMenuAction = mi => {
             {{ tab.label }}
           </button>
         </nav>
-        <div
-          class="flex justify-end items-center gap-1 pb-3 relative flex-shrink-0"
-        >
+        <div v-else />
+        <!-- Empty placeholder keeps the toolbar pinned to column 3.
+             Without it, hiding the nav collapses the grid and the
+             toolbar (auto-sized) drifts into the middle. -->
+        <div class="flex justify-end items-center gap-1 pb-3 relative">
           <template v-if="selectMode">
             <button
               type="button"
