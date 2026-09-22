@@ -35,12 +35,16 @@ export default {
       description = '',
       name: title = '',
       allow_auto_assign: allowAutoAssign = true,
+      auto_assign_include_offline: autoAssignIncludeOffline = false,
     } = formData;
 
     const state = reactive({
       description,
       title,
       allowAutoAssign,
+      // Mirrors the boolean but kept as a string ("online" | "all") so
+      // the two radio buttons bind directly. Converted back on submit.
+      autoAssignScope: autoAssignIncludeOffline ? 'all' : 'online',
     });
 
     const rules = validations;
@@ -57,6 +61,8 @@ export default {
         description: this.state.description,
         name: this.state.title,
         allow_auto_assign: this.state.allowAutoAssign,
+        auto_assign_include_offline:
+          this.state.allowAutoAssign && this.state.autoAssignScope === 'all',
       });
     },
   },
@@ -94,6 +100,19 @@ export default {
           {{ $t('TEAMS_SETTINGS.FORM.AUTO_ASSIGN.LABEL') }}
         </label>
       </div>
+      <!-- Scope of the auto-assignment: kept out of the DOM when the
+           parent checkbox is off, so the info block just below reads
+           the "disabled" copy without radio noise around it. -->
+      <div v-if="state.allowAutoAssign" class="w-full flex flex-col gap-2 pl-6">
+        <label class="flex items-center gap-2 text-sm text-n-slate-12">
+          <input v-model="state.autoAssignScope" type="radio" value="online" />
+          {{ $t('TEAMS_SETTINGS.FORM.AUTO_ASSIGN.SCOPE_ONLINE') }}
+        </label>
+        <label class="flex items-center gap-2 text-sm text-n-slate-12">
+          <input v-model="state.autoAssignScope" type="radio" value="all" />
+          {{ $t('TEAMS_SETTINGS.FORM.AUTO_ASSIGN.SCOPE_ALL') }}
+        </label>
+      </div>
       <div
         class="w-full flex gap-3 p-4 rounded-xl outline outline-1 outline-n-weak bg-n-alpha-1"
       >
@@ -102,10 +121,15 @@ export default {
           <span class="text-n-slate-12 font-medium">
             {{ $t('TEAMS_SETTINGS.FORM.AUTO_ASSIGN.INFO_TITLE') }}
           </span>
-          <p class="m-0">
-            {{ $t('TEAMS_SETTINGS.FORM.AUTO_ASSIGN.INFO_BODY_ENABLED') }}
-          </p>
-          <p class="m-0">
+          <template v-if="state.allowAutoAssign">
+            <p v-if="state.autoAssignScope === 'online'" class="m-0">
+              {{ $t('TEAMS_SETTINGS.FORM.AUTO_ASSIGN.INFO_BODY_SCOPE_ONLINE') }}
+            </p>
+            <p v-else class="m-0">
+              {{ $t('TEAMS_SETTINGS.FORM.AUTO_ASSIGN.INFO_BODY_SCOPE_ALL') }}
+            </p>
+          </template>
+          <p v-else class="m-0">
             {{ $t('TEAMS_SETTINGS.FORM.AUTO_ASSIGN.INFO_BODY_DISABLED') }}
           </p>
         </div>

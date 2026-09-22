@@ -61,7 +61,16 @@ class AutoAssignment::AssignmentService
     return nil if team.blank? || team.allow_auto_assign.blank?
 
     team_member_ids = team.members.ids
-    agents.where(user_id: team_member_ids)
+    # When the team opted in to include offline members, we skip the
+    # "must be online" filter that `inbox.available_agents` applies.
+    # The pool becomes every inbox member that also belongs to the team,
+    # regardless of presence — matches "Permitir também a agentes
+    # offline" in the team settings.
+    if team.auto_assign_include_offline?
+      inbox.inbox_members.where(user_id: team_member_ids).includes(:user)
+    else
+      agents.where(user_id: team_member_ids)
+    end
   end
 
   def filter_agents_by_rate_limit(agents)

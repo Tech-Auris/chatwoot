@@ -117,8 +117,12 @@
       },
       "AUTO_ASSIGN": {
         "LABEL": "Allow auto assign for this team.",
+        "SCOPE_ONLINE": "Only assign to online agents",
+        "SCOPE_ALL": "Also assign to offline agents",
         "INFO_TITLE": "How automatic assignment works",
         "INFO_BODY_ENABLED": "When enabled, Auris automatically assigns each new conversation to an available team member following the configured distribution rule. Only agents who belong to that inbox and are online are considered. If nobody is online at the moment, the conversation stays unassigned.",
+        "INFO_BODY_SCOPE_ONLINE": "When enabled, Auris automatically assigns each new conversation to an available team member following the configured distribution rule. Only agents who belong to that inbox and are online are considered. If nobody is online at the moment, the conversation stays unassigned.",
+        "INFO_BODY_SCOPE_ALL": "When enabled, Auris automatically assigns each new conversation to a team member even when nobody is online. If no online agent is available, an offline agent still receives the conversation and sees it when they come back. Useful for small teams where letting it sit Unassigned isn't an option.",
         "INFO_BODY_DISABLED": "When disabled, Auris does not auto-assign the conversation. It will stay in the Unassigned list so an agent can pick it up manually."
       },
       "SUBMIT_CREATE": "Create team"

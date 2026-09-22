@@ -24,7 +24,11 @@ module AssignmentHandler
     return if team&.allow_auto_assign.blank?
 
     team_members_with_capacity = inbox.member_ids_with_assignment_capacity & team.members.ids
-    ::AutoAssignment::AgentAssignmentService.new(conversation: self, allowed_agent_ids: team_members_with_capacity).find_assignee
+    ::AutoAssignment::AgentAssignmentService.new(
+      conversation: self,
+      allowed_agent_ids: team_members_with_capacity,
+      include_offline: team.auto_assign_include_offline?
+    ).find_assignee
   end
 
   def notify_assignment_change
