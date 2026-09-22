@@ -57,14 +57,16 @@ class Sales::ReserveQuoteService
   def sync_clickup
     return 'ClickUp não está configurado' unless client.configured?
 
-    # `due_date_time: false` tells ClickUp to render the field as a plain
-    # date, no clock — the reservation deadline is a day, not a moment. The
-    # epoch is normalised to midnight of that day so a task written from any
-    # timezone still displays the same date on the pipeline.
-    client.update_task(quote.clickup_task_id,
-                       due_date: reserved_until.beginning_of_day.to_i * 1000,
-                       due_date_time: false,
-                       status: RESERVATION_CLICKUP_STATUS)
+    # The deadline lives in the dedicated "Vencimento da Reserva" custom
+    # field so it can move independently from the task's native due_date
+    # (which the sales team uses for the story deadline). Epoch is
+    # normalised to midnight so any timezone shows the same day.
+    client.update_task(quote.clickup_task_id, status: RESERVATION_CLICKUP_STATUS)
+    client.set_custom_field(
+      quote.clickup_task_id,
+      Sales::ClickupProspectSearchService::RESERVATION_DUE_FIELD_ID,
+      reserved_until.beginning_of_day.to_i * 1000
+    )
     quote.update_column(:clickup_status, RESERVATION_CLICKUP_STATUS) # rubocop:disable Rails/SkipsModelValidations
     client.add_tag(quote.clickup_task_id, RESERVATION_TAG)
     post_reservation_comment

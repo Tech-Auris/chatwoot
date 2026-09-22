@@ -15,6 +15,11 @@ class Sales::ClickupProspectSearchService
   EMAIL_FIELD_ID = 'b1b10c7f-c17a-417c-b746-f8036956d44e'.freeze
   PHONE_FIELD_ID = '4e7406d4-8122-4547-a24d-d9d060920d58'.freeze
   CLINIC_FIELD_ID = '07e5b8ee-e9ab-416b-92a4-bff90aacce9c'.freeze
+  # Reservation deadline lives in this dedicated ClickUp custom field
+  # ("Vencimento da Reserva") — kept apart from the task's native
+  # due_date so the story deadline and the reservation deadline can
+  # move independently.
+  RESERVATION_DUE_FIELD_ID = '709b1aad-9f10-4e5c-bfb5-3601b6200e91'.freeze
 
   # A deal that was won or lost is not somebody to build a plan for. ClickUp
   # only hides what it considers closed, and these two are open columns there.
@@ -79,8 +84,11 @@ class Sales::ClickupProspectSearchService
       phone: custom_field(task, PHONE_FIELD_ID),
       status: task.dig('status', 'status'),
       status_color: task.dig('status', 'color'),
-      # ClickUp owns the deadline; the reservation report mirrors it from here.
-      due_date: task['due_date'].presence&.to_i,
+      # Reservation deadline mirrored from the "Vencimento da Reserva"
+      # ClickUp custom field. The task's native `due_date` used to feed
+      # this — moved so operators can edit the story deadline in ClickUp
+      # without moving the reservation with it.
+      due_date: custom_field(task, RESERVATION_DUE_FIELD_ID)&.to_i,
       url: task['url']
     }
   end
