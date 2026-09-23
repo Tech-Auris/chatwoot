@@ -1,4 +1,28 @@
 ---
+- tag: v4.15.1-auris.1.60
+  published_at: '2026-09-23T21:00:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.60
+  notes:
+    en: |-
+      ### 🐛 Fixes
+
+      - **Funil opens on busy accounts.** The Funil screen was showing an error on accounts with a lot of leads. Every column now brings the 25 most recent leads and offers a *Carregar mais* button at the bottom to page through the rest.
+
+      ### ✨ What's new
+
+      - **Mídia split by type.** The Mídia screen now has five tabs — Imagens, Vídeos, Áudios, Documentos and Links — so you jump straight to what you're looking for.
+      - **Real thumbnails on Mídia.** Audio rows show a sound-wave icon; video rows try to show the first frame from the file itself, with a play icon as a fallback when the browser can't preview it.
+      - **Mídia scrolls to older items.** Reaching the end of the list now brings more items automatically — before, only the first batch was loaded.
+    pt_BR: |-
+      ### 🐛 Correções
+
+      - **Funil abre em contas com muitos leads.** A tela do Funil estava dando erro em contas com muitos leads. Cada coluna agora traz os 25 leads mais recentes com um botão *Carregar mais* no rodapé para trazer os próximos aos poucos.
+
+      ### ✨ Novidades
+
+      - **Mídia separada por tipo.** A tela Mídia agora tem cinco abas — Imagens, Vídeos, Áudios, Documentos e Links — para você ir direto no que procura.
+      - **Miniaturas de verdade na Mídia.** Áudios ganharam ícone de onda sonora; vídeos tentam mostrar o primeiro frame do arquivo, com um ícone de play como alternativa quando o navegador não consegue.
+      - **Mídia rola para itens mais antigos.** Ao chegar no fim da lista, mais mídias aparecem automaticamente — antes só a primeira leva era carregada.
 - tag: v4.15.1-auris.1.59
   published_at: '2026-09-22T21:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.59
@@ -287,25 +311,3 @@
 
       - **O relatório mostra quando cada mensagem realmente saiu.** Antes mostrava o momento em que a mensagem foi preparada, que é o mesmo para a campanha inteira — uma campanha espaçada de 1 minuto parecia ter saído tudo junto.
       - **Contatos vindos de planilha ficam com o nome que você informou.** Quando o telefone já existia no sistema sem nome, ou com o próprio número no lugar do nome, o nome do arquivo passa a ser aplicado em vez de descartado.
-- tag: v4.15.1-auris.1.46
-  published_at: '2026-08-18T22:00:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.46
-  notes:
-    en: |-
-      ### ✨ What's new
-
-      - **Quick replies can now belong to a single inbox.** When creating one you choose whether it shows up everywhere or only in one inbox. Typing "/" in a conversation offers the general ones plus that inbox's, so the list stops filling up with replies meant for another channel.
-      - **WhatsApp campaigns send at your pace.** You choose the interval between one message and the next, from 10 seconds up to 5 minutes, instead of everything leaving at once. Replies you are typing no longer wait in line behind a campaign.
-      - **Campaign audience from a spreadsheet.** Besides picking customer labels, you can upload a CSV with the contacts. New ones are created and the ones already in the system are matched by phone number. There is a sample file to download.
-      - **Check who will receive the campaign.** A "Ver público" button lists everyone before you schedule it, and points out who has no phone number and therefore won't receive it.
-      - **Campaign report.** Each campaign now has a report with the totals — sent, delivered, read and failed — and one line per contact, with the reason when something failed and a link that opens the conversation.
-      - **Tag the campaign conversations.** You can choose a label to be applied to every conversation the campaign touches, making them easy to find afterwards.
-    pt_BR: |-
-      ### ✨ Novidades
-
-      - **Respostas prontas agora podem ser de uma caixa de entrada só.** Ao criar, você escolhe se ela aparece em todas ou apenas em uma caixa. Digitando "/" na conversa aparecem as gerais mais as daquela caixa, então a lista para de encher com respostas de outro canal.
-      - **Campanhas de WhatsApp enviam no seu ritmo.** Você escolhe o intervalo entre uma mensagem e a próxima, de 10 segundos até 5 minutos, em vez de sair tudo de uma vez. As respostas que você está digitando deixam de ficar na fila atrás da campanha.
-      - **Público da campanha por planilha.** Além de escolher etiquetas dos clientes, dá para enviar um CSV com os contatos. Os novos são criados e os que já existem são reconhecidos pelo telefone. Tem um arquivo de exemplo para baixar.
-      - **Conferir quem vai receber a campanha.** O botão "Ver público" lista todo mundo antes de agendar, e avisa quem está sem telefone e por isso não vai receber.
-      - **Relatório da campanha.** Cada campanha passa a ter um relatório com os totais — enviadas, entregues, lidas e falhas — e uma linha por contato, com o motivo quando algo falhou e um link que abre a conversa.
-      - **Etiquetar as conversas da campanha.** Você pode escolher uma etiqueta para ser aplicada em todas as conversas que a campanha tocar, o que facilita encontrá-las depois.
