@@ -60,12 +60,14 @@ class Sales::ReserveQuoteService
     # The deadline lives in the dedicated "Vencimento da Reserva" custom
     # field so it can move independently from the task's native due_date
     # (which the sales team uses for the story deadline). Epoch is
-    # normalised to midnight so any timezone shows the same day.
+    # normalised to midnight in the sales-team timezone — ClickUp renders
+    # this field as a date, so UTC midnight would slide back a day for a
+    # reader east of UTC.
     client.update_task(quote.clickup_task_id, status: RESERVATION_CLICKUP_STATUS)
     client.set_custom_field(
       quote.clickup_task_id,
       Sales::ClickupProspectSearchService::RESERVATION_DUE_FIELD_ID,
-      reserved_until.beginning_of_day.to_i * 1000
+      reserved_until.in_time_zone(Sales::ClickupProspectSearchService::SALES_TIMEZONE).beginning_of_day.to_i * 1000
     )
     quote.update_column(:clickup_status, RESERVATION_CLICKUP_STATUS) # rubocop:disable Rails/SkipsModelValidations
     client.add_tag(quote.clickup_task_id, RESERVATION_TAG)

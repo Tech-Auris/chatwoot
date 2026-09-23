@@ -20,6 +20,10 @@ class Sales::ClickupProspectSearchService
   # due_date so the story deadline and the reservation deadline can
   # move independently.
   RESERVATION_DUE_FIELD_ID = '709b1aad-9f10-4e5c-bfb5-3601b6200e91'.freeze
+  # The sales team, ClickUp instance and public proposal all speak São
+  # Paulo local time — the reservation deadline is anchored to that day
+  # regardless of where the Rails server is.
+  SALES_TIMEZONE = 'America/Sao_Paulo'.freeze
 
   # A deal that was won or lost is not somebody to build a plan for. ClickUp
   # only hides what it considers closed, and these two are open columns there.

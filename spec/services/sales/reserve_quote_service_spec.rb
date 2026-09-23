@@ -25,16 +25,19 @@ RSpec.describe Sales::ReserveQuoteService do
 
   # ClickUp takes epoch milliseconds; sending seconds would date the task
   # to 1970. The reservation deadline is a day, not a moment, so it goes
-  # normalised to midnight of that day. The value lands on the dedicated
-  # "Vencimento da Reserva" custom field, kept apart from the task's own
-  # due_date so the sales-story deadline can move independently.
-  it 'writes the deadline onto the "Vencimento da Reserva" custom field' do
+  # normalised to midnight of that day *in São Paulo* — the sales team,
+  # ClickUp workspace and public proposal all read that day. Using UTC
+  # midnight would render as the previous day for a reader east of UTC.
+  # The value lands on the dedicated "Vencimento da Reserva" custom
+  # field, kept apart from the task's own due_date so the sales-story
+  # deadline can move independently.
+  it 'writes the deadline onto the "Vencimento da Reserva" custom field, anchored to São Paulo midnight' do
     reserve
 
     expect(client).to have_received(:set_custom_field).with(
       '86ak7rd8j',
       Sales::ClickupProspectSearchService::RESERVATION_DUE_FIELD_ID,
-      deadline.beginning_of_day.to_i * 1000
+      deadline.in_time_zone('America/Sao_Paulo').beginning_of_day.to_i * 1000
     )
   end
 
@@ -118,7 +121,7 @@ RSpec.describe Sales::ReserveQuoteService do
       expect(client).to have_received(:set_custom_field).with(
         '86ak7rd8j',
         Sales::ClickupProspectSearchService::RESERVATION_DUE_FIELD_ID,
-        new_deadline.beginning_of_day.to_i * 1000
+        new_deadline.in_time_zone('America/Sao_Paulo').beginning_of_day.to_i * 1000
       )
     end
 
