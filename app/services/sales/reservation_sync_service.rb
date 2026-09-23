@@ -33,7 +33,7 @@ class Sales::ReservationSyncService
 
     changes = { clickup_status: task[:status], clickup_status_synced_at: Time.current }
     deadline = deadline_from(task)
-    changes[:reserved_until] = deadline if deadline.present? && deadline != quote.reserved_until && !locally_touched?(quote)
+    changes[:reserved_until] = deadline if deadline_changed?(quote, deadline)
 
     quote.update!(changes)
     record_deadline_change(quote, deadline) if changes.key?(:reserved_until)
@@ -47,11 +47,28 @@ class Sales::ReservationSyncService
     Rails.cache.exist?(Sales::ReserveQuoteService.local_write_marker_key(quote.id))
   end
 
-  # ClickUp reports dates in epoch milliseconds.
+  # Compare by São Paulo calendar day, not by absolute Time. The value the
+  # controller stores is `.end_of_day` in the app timezone (UTC), while the
+  # value we mirror to ClickUp is São Paulo midnight — the two Times differ
+  # by a few hours but represent the same day for the sales team.
+  def deadline_changed?(quote, deadline)
+    return false if deadline.blank?
+    return false if locally_touched?(quote)
+
+    deadline_day(deadline) != deadline_day(quote.reserved_until)
+  end
+
+  def deadline_day(time)
+    time&.in_time_zone(Sales::ClickupProspectSearchService::SALES_TIMEZONE)&.to_date
+  end
+
+  # ClickUp reports dates in epoch milliseconds — normalised to São Paulo
+  # end-of-day so a locally-stored deadline still means "reserved through
+  # this whole day" in the sales-team timezone.
   def deadline_from(task)
     return nil if task[:due_date].blank?
 
-    Time.zone.at(task[:due_date].to_i / 1000).change(usec: 0)
+    Time.zone.at(task[:due_date].to_i / 1000).in_time_zone(Sales::ClickupProspectSearchService::SALES_TIMEZONE).end_of_day
   end
 
   def record_deadline_change(quote, deadline)

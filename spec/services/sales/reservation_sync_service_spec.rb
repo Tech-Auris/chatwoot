@@ -17,18 +17,28 @@ RSpec.describe Sales::ReservationSyncService do
     expect(quote.clickup_status_synced_at).to be_present
   end
 
+  # ClickUp stores the deadline as an epoch of São Paulo midnight for the
+  # picked day. Locally we keep "reserved through the whole day", so the
+  # value that lands on `reserved_until` is the São Paulo end-of-day of
+  # the same date the epoch points at.
   it 'moves the deadline when it was changed in clickup' do
-    new_deadline = 10.days.from_now.change(usec: 0)
-    allow(search_service).to receive(:find).and_return(task(due_date: (new_deadline.to_f * 1000).to_i))
+    new_deadline_epoch_ms = 10.days.from_now.in_time_zone('America/Sao_Paulo').beginning_of_day.to_i * 1000
+    allow(search_service).to receive(:find).and_return(task(due_date: new_deadline_epoch_ms))
 
     described_class.new(quotes: [quote], search_service: search_service).perform
 
-    expect(quote.reload.reserved_until).to be_within(1.second).of(new_deadline)
+    expected = Time.zone.at(new_deadline_epoch_ms / 1000).in_time_zone('America/Sao_Paulo').end_of_day
+    expect(quote.reload.reserved_until).to be_within(1.second).of(expected)
     expect(quote.events.pluck(:event)).to include('deadline_synced_from_clickup')
   end
 
-  it 'keeps the deadline when clickup carries the same date' do
-    allow(search_service).to receive(:find).and_return(task(due_date: (quote.reserved_until.to_f * 1000).to_i))
+  it 'keeps the deadline when clickup carries the same day (even at a different time)' do
+    # Local deadline sits at UTC end-of-day for the picked date; ClickUp
+    # carries São Paulo midnight of the same date. Different absolute Time,
+    # same São Paulo calendar day — the sync must leave the row alone.
+    picked_day = quote.reserved_until.in_time_zone('America/Sao_Paulo').to_date
+    clickup_epoch_ms = picked_day.in_time_zone('America/Sao_Paulo').to_i * 1000
+    allow(search_service).to receive(:find).and_return(task(due_date: clickup_epoch_ms))
 
     described_class.new(quotes: [quote], search_service: search_service).perform
 
