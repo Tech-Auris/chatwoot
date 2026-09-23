@@ -3,6 +3,10 @@
     "TITLE": "Funnel",
     "EMPTY_STATE": "No stages configured for this account yet.",
     "LOAD_ERROR": "Could not load the funnel. Please try again.",
+    "LOAD_MORE": {
+      "LABEL": "Load more ({remaining})",
+      "LOADING": "Loading…"
+    },
     "VIEW_MODE": {
       "ARIA_LABEL": "Switch funnel view",
       "BOARD": "Board",

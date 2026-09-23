@@ -1,9 +1,14 @@
+# `loss_reason` is passed in from the controller as an already-resolved
+# LossReason (or nil) — the board hydrates it in a single batched query
+# for every card on screen, so this partial no longer runs a per-card
+# `funnel_stage_changes` lookup. The fallback keeps the partial callable
+# from paths that render one conversation at a time.
+loss_reason = local_assigns.fetch(:loss_reason, nil)
 contact = conversation.contact
 inbox = conversation.inbox
-labels = Array(conversation.label_list)
+labels = conversation.cached_label_list_array
 funnel_stage = conversation.funnel_stage
-loss_reason = nil
-if funnel_stage&.requires_loss_reason?
+if loss_reason.nil? && funnel_stage&.requires_loss_reason? && !local_assigns.key?(:loss_reason)
   latest_change = conversation.account.funnel_stage_changes
                               .where(conversation_id: conversation.id, new_stage: funnel_stage.name)
                               .order(created_at: :desc)

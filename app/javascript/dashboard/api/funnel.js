@@ -44,6 +44,14 @@ class FunnelAPI extends ApiClient {
       params: { conversation_id: conversationId },
     });
   }
+
+  // Next page of a single kanban column — the board calls this from a
+  // per-column "Carregar mais" button once `has_more` on the stage is true.
+  stageConversations(stageId, page, extraParams = {}) {
+    return axios.get(`${this.url}/stages/${stageId}/conversations`, {
+      params: { page, ...extraParams },
+    });
+  }
 }
 
 export default new FunnelAPI();

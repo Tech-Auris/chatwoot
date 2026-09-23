@@ -161,6 +161,10 @@ Rails.application.routes.draw do
               post :move
               get :history
               get :conversation_status
+              # Per-stage pagination — the board fetches the first page of
+              # every stage on load and asks this endpoint for the rest as
+              # the operator scrolls / clicks "Carregar mais".
+              get 'stages/:stage_id/conversations', to: 'funnel#stage_conversations'
             end
           end
           resources :dashboard_apps, only: [:index, :show, :create, :update, :destroy]
