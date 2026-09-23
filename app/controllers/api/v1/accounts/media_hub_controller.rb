@@ -1,18 +1,25 @@
 # Powers the "Mídia" screen on the left-nav — pulls every attachment / link
-# the account has produced across all conversations so an agent can find
-# "that PDF the customer sent last week" without opening every thread.
+# the account has produced across the conversations the current user can
+# see, so the operator finds "that PDF the customer sent last week" without
+# opening every thread.
 #
-# One endpoint, three faces via `type`:
-#   - media    → image / video / audio attachments (grid view)
-#   - document → file attachments (table view)
-#   - link     → URLs mined from message content (table view)
+# One endpoint, five faces via `type`:
+#   - image / video / audio → attachment grids per media kind
+#   - document              → file attachments (table view)
+#   - link                  → URLs mined from message content (table view)
 #
 # Kept as an index-only controller so the client never has to hit a second
 # call; grouping into "Hoje / Ontem / Esta semana / …" happens on the front
 # because it's a display concern (localized labels).
+#
+# Inbox scoping matches the rest of the dashboard: `assigned_inboxes` gives
+# a manager / administrator every inbox in the account, and an agent only
+# the inboxes they are a member of — so an agent can't discover attachments
+# from a conversation they cannot open.
 class Api::V1::Accounts::MediaHubController < Api::V1::Accounts::BaseController
   PER_PAGE = 60
   URL_REGEX = %r{https?://[^\s<>"']+}
+  MEDIA_KINDS = %w[image video audio].freeze
 
   def index
     render json: {
@@ -44,6 +51,8 @@ class Api::V1::Accounts::MediaHubController < Api::V1::Accounts::BaseController
 
   def delete_attachments(attachment_ids)
     scope = Attachment.where(account_id: Current.account.id, id: attachment_ids)
+                      .joins(message: :conversation)
+                      .where(conversations: { inbox_id: accessible_inbox_ids })
                       .includes(:message)
     count = 0
     scope.find_each do |att|
@@ -59,14 +68,25 @@ class Api::V1::Accounts::MediaHubController < Api::V1::Accounts::BaseController
   end
 
   def delete_link_messages(message_ids)
-    scope = Current.account.messages.where(id: message_ids)
+    scope = Current.account.messages
+                   .joins(:conversation)
+                   .where(id: message_ids, conversations: { inbox_id: accessible_inbox_ids })
     count = scope.count
     scope.find_each(&:destroy!)
     count
   end
 
   def kind
-    @kind ||= (params[:type].presence || 'media').to_s
+    @kind ||= (params[:type].presence || 'image').to_s
+  end
+
+  # Inboxes the current user can see. Manager / administrator get every
+  # inbox in the account; an agent gets only the inboxes they belong to
+  # via `inbox_members`. See `User#assigned_inboxes` for the source of
+  # this rule — reused here so the Media Hub matches the same access
+  # boundary the conversation list enforces.
+  def accessible_inbox_ids
+    @accessible_inbox_ids ||= Current.user.assigned_inboxes.pluck(:id)
   end
 
   def current_page
@@ -115,8 +135,9 @@ class Api::V1::Accounts::MediaHubController < Api::V1::Accounts::BaseController
   def paginated_attachments
     scope = Attachment.where(account_id: Current.account.id)
                       .where(file_type: attachment_types_for_kind)
-                      .joins(:message)
-                      .includes(message: [:conversation, :sender])
+                      .joins(message: :conversation)
+                      .where(conversations: { inbox_id: accessible_inbox_ids })
+                      .preload(message: [:conversation, :sender])
                       .order('messages.created_at DESC')
 
     @attachment_total = scope.count
@@ -126,7 +147,9 @@ class Api::V1::Accounts::MediaHubController < Api::V1::Accounts::BaseController
   def attachment_types_for_kind
     case kind
     when 'document' then [Attachment.file_types[:file]]
-    else [Attachment.file_types[:image], Attachment.file_types[:video], Attachment.file_types[:audio]]
+    when 'video'    then [Attachment.file_types[:video]]
+    when 'audio'    then [Attachment.file_types[:audio]]
+    else                 [Attachment.file_types[:image]]
     end
   end
 
@@ -138,9 +161,14 @@ class Api::V1::Accounts::MediaHubController < Api::V1::Accounts::BaseController
 
     # Message has a `default_scope { order(created_at: :asc) }` — we need
     # `reorder` (not `order`) to actually get the newest messages first.
+    # `preload` (not `includes`) — the join on `conversations` combined with
+    # a polymorphic `:sender` would trip `ActiveRecord::EagerLoadPolymorphicError`
+    # if we let Rails infer a JOIN-based eager load.
     rows = Current.account.messages
+                  .joins(:conversation)
+                  .where(conversations: { inbox_id: accessible_inbox_ids })
                   .where.not(content: [nil, ''])
-                  .includes(:conversation, :sender)
+                  .preload(:conversation, :sender)
                   .reorder(created_at: :desc)
                   .limit(1000)
                   .flat_map { |m| link_rows_for(m) }

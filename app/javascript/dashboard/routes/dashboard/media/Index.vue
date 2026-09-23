@@ -1,6 +1,13 @@
 <script setup>
 /* global axios */
-import { ref, computed, onMounted, watch } from 'vue';
+import {
+  ref,
+  computed,
+  onMounted,
+  onBeforeUnmount,
+  watch,
+  nextTick,
+} from 'vue';
 import { useRouter } from 'vue-router';
 import { useMapGetter } from 'dashboard/composables/store';
 import { useAlert } from 'dashboard/composables';
@@ -10,23 +17,53 @@ const { t } = useI18n();
 const router = useRouter();
 const accountId = useMapGetter('getCurrentAccountId');
 
-// Tabs mirror the mockup: image/video grid, docs table, links table.
+// One tab per attachment kind — the umbrella "Mídias" was split so the
+// operator jumps straight to Imagens / Vídeos / Áudios instead of scrolling
+// past unrelated types to find what they want.
 const TABS = [
-  { id: 'media', label: 'Mídias' },
+  { id: 'image', label: 'Imagens' },
+  { id: 'video', label: 'Vídeos' },
+  { id: 'audio', label: 'Áudios' },
   { id: 'document', label: 'Documentos' },
   { id: 'link', label: 'Links' },
 ];
 
-const activeTab = ref('media');
+const activeTab = ref('image');
 const items = ref([]);
 const meta = ref({ current_page: 1, total_pages: 1, total_count: 0 });
+const currentPage = ref(1);
 const loading = ref(false);
 const error = ref(null);
+// Videos that failed to load a first-frame poster — the placeholder icon
+// takes over for those ids. `<video preload="metadata">` extracts a frame
+// natively when the file is served by our own domain and CORS lets it
+// through; a WhatsApp CDN URL often fails silently, which is what this
+// set catches.
+const videoErrors = ref(new Set());
+const markVideoError = id => {
+  const next = new Set(videoErrors.value);
+  next.add(id);
+  videoErrors.value = next;
+};
+const videoErrored = id => videoErrors.value.has(id);
+
+const isMediaGrid = computed(() =>
+  ['image', 'video', 'audio'].includes(activeTab.value)
+);
 
 const subtitle = computed(() => {
-  if (activeTab.value === 'media') return 'Mídias de todas as conversas';
-  if (activeTab.value === 'document') return 'Documentos de todas as conversas';
-  return 'Links de todas as conversas';
+  switch (activeTab.value) {
+    case 'image':
+      return 'Imagens de todas as conversas';
+    case 'video':
+      return 'Vídeos de todas as conversas';
+    case 'audio':
+      return 'Áudios de todas as conversas';
+    case 'document':
+      return 'Documentos de todas as conversas';
+    default:
+      return 'Links de todas as conversas';
+  }
 });
 
 // The search box's help text picks up "nome do arquivo" on the docs tab
@@ -122,28 +159,75 @@ const formatBytes = value => {
 const formatDate = value =>
   value ? new Date(value).toLocaleString('pt-BR') : '';
 
-const fetchData = async () => {
+// The list loads one page at a time; the sentinel below the grid asks
+// for the next page whenever it scrolls into view. Without this we were
+// showing only the 60 most recent items — enough that on a busy account
+// every visible row was from "hoje", giving the impression the hub only
+// held today's media.
+const fetchData = async ({ append = false } = {}) => {
   loading.value = true;
   error.value = null;
   try {
     const res = await axios.get(
       `/api/v1/accounts/${accountId.value}/media_hub`,
       {
-        params: { type: activeTab.value },
+        params: { type: activeTab.value, page: currentPage.value },
       }
     );
-    items.value = res.data.items || [];
+    const incoming = res.data.items || [];
+    items.value = append ? [...items.value, ...incoming] : incoming;
     meta.value = res.data.meta || meta.value;
   } catch (e) {
     error.value = e.message;
-    items.value = [];
+    if (!append) items.value = [];
   } finally {
     loading.value = false;
   }
 };
 
-onMounted(fetchData);
-watch(activeTab, fetchData);
+const resetAndFetch = () => {
+  currentPage.value = 1;
+  videoErrors.value = new Set();
+  fetchData({ append: false });
+};
+
+const canLoadMore = computed(
+  () => !loading.value && meta.value.current_page < meta.value.total_pages
+);
+
+const loadMore = () => {
+  if (!canLoadMore.value) return;
+  currentPage.value += 1;
+  fetchData({ append: true });
+};
+
+// The sentinel div sits at the very bottom of the list and triggers the
+// next page when it scrolls into view. `rootMargin` fires the request
+// ~400px before the user reaches the edge so the next batch is already
+// in place when they get there.
+const sentinel = ref(null);
+let observer = null;
+const rebindObserver = () => {
+  observer?.disconnect();
+  if (sentinel.value) observer?.observe(sentinel.value);
+};
+
+onMounted(() => {
+  observer = new IntersectionObserver(
+    entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) loadMore();
+      });
+    },
+    { rootMargin: '400px' }
+  );
+  resetAndFetch();
+});
+
+onBeforeUnmount(() => observer?.disconnect());
+
+watch(sentinel, () => nextTick(rebindObserver));
+watch(activeTab, resetAndFetch);
 
 // "Ir para a mensagem" — jumps straight to the origin conversation.
 // Uses the plain path (not a named route) because the inbox-scoped route
@@ -561,9 +645,13 @@ const runMenuAction = mi => {
               {{ group.rows.length }} {{ t('MEDIA_HUB.ITEMS_LABEL') }}
             </p>
 
-            <!-- MEDIA GRID -->
+            <!-- MEDIA GRID: rendered for image / video / audio tabs. Each
+                 kind gets its own thumbnail treatment — a video tries the
+                 browser's native first-frame poster and falls back to a
+                 play icon; an audio always renders a sound-wave icon since
+                 there's nothing rasterizable. -->
             <div
-              v-if="activeTab === 'media'"
+              v-if="isMediaGrid"
               class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-1"
             >
               <div
@@ -575,26 +663,43 @@ const runMenuAction = mi => {
                   class="aspect-square bg-n-slate-3 overflow-hidden cursor-pointer"
                   @click.stop="handleMediaClick(item)"
                 >
-                  <!-- Only render an <img> when we actually have a raster
-                       source (image attachment OR a video that shipped a
-                       thumb_url). A video with no thumb would try to load
-                       the mp4 as an image and render the alt text; show a
-                       play placeholder instead. -->
                   <img
                     v-if="
-                      item.thumb_url ||
-                      (item.file_type === 'image' && item.file_url)
+                      item.file_type === 'image' &&
+                      (item.thumb_url || item.file_url)
                     "
                     :src="item.thumb_url || item.file_url"
                     :alt="item.fallback_title || ''"
                     loading="lazy"
                     class="w-full h-full object-cover"
                   />
+                  <template v-else-if="item.file_type === 'video'">
+                    <!-- The browser extracts the first frame natively when
+                         it can decode the URL and CORS lets it through.
+                         When it can't (a WhatsApp CDN URL is the usual
+                         case), the `error` event flips the row to the
+                         play-icon placeholder. -->
+                    <video
+                      v-if="item.file_url && !videoErrored(item.id)"
+                      :src="item.file_url"
+                      preload="metadata"
+                      muted
+                      playsinline
+                      class="w-full h-full object-cover bg-n-slate-4"
+                      @error="markVideoError(item.id)"
+                    />
+                    <div
+                      v-else
+                      class="w-full h-full flex items-center justify-center bg-n-slate-4 text-n-slate-11"
+                    >
+                      <span class="i-lucide-play-circle size-10" />
+                    </div>
+                  </template>
                   <div
-                    v-else-if="item.file_type === 'video'"
+                    v-else-if="item.file_type === 'audio'"
                     class="w-full h-full flex items-center justify-center bg-n-slate-4 text-n-slate-11"
                   >
-                    <span class="i-lucide-play-circle size-10" />
+                    <span class="i-lucide-audio-lines size-10" />
                   </div>
                   <span
                     v-if="item.file_type === 'video'"
@@ -863,6 +968,17 @@ const runMenuAction = mi => {
               </tbody>
             </table>
           </div>
+          <!-- Infinite-scroll sentinel — sits below the last group and
+               triggers a page bump whenever it comes into view. The
+               observer honours `canLoadMore` so it goes idle once the
+               last page has been fetched. -->
+          <div ref="sentinel" class="h-4" />
+          <p
+            v-if="loading && items.length"
+            class="py-4 text-center text-xs text-n-slate-11"
+          >
+            {{ t('MEDIA_HUB.LOADING') }}
+          </p>
         </template>
       </div>
 
