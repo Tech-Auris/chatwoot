@@ -18,4 +18,8 @@ class FunnelPolicy < ApplicationPolicy
   def conversation_status?
     index?
   end
+
+  def stage_conversations?
+    index?
+  end
 end

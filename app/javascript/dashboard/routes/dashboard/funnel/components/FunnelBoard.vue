@@ -11,9 +11,13 @@ const props = defineProps({
   conversationsByStage: { type: Object, required: true },
   averageTicket: { type: Number, default: 0 },
   locale: { type: String, default: 'en' },
+  // Stage ids currently fetching their next page — the button shows a
+  // "carregando" state while the request is in flight so a busy click
+  // doesn't stack extra fetches.
+  loadingMoreStageIds: { type: Array, default: () => [] },
 });
 
-const emit = defineEmits(['move']);
+const emit = defineEmits(['move', 'loadMore']);
 
 const { t } = useI18n();
 
@@ -46,6 +50,10 @@ const onDragEnd = (event, targetStage) => {
     stage: targetStage.name,
   });
 };
+
+const isLoadingMore = stage => props.loadingMoreStageIds.includes(stage.id);
+const canLoadMore = stage => stage.has_more && !isLoadingMore(stage);
+const requestMore = stage => emit('loadMore', stage);
 </script>
 
 <template>
@@ -75,18 +83,41 @@ const onDragEnd = (event, targetStage) => {
           </span>
         </header>
 
-        <Draggable
-          :model-value="cardsFor(stage)"
-          :group="{ name: 'funnel', pull: true, put: true }"
-          item-key="id"
-          class="flex-1 flex flex-col gap-2 p-2 overflow-y-auto"
-          ghost-class="opacity-50"
-          @change="event => onDragEnd(event, stage)"
-        >
-          <template #item="{ element }">
-            <FunnelCard :conversation="element" />
-          </template>
-        </Draggable>
+        <div class="flex-1 flex flex-col overflow-y-auto">
+          <Draggable
+            :model-value="cardsFor(stage)"
+            :group="{ name: 'funnel', pull: true, put: true }"
+            item-key="id"
+            class="flex flex-col gap-2 p-2"
+            ghost-class="opacity-50"
+            @change="event => onDragEnd(event, stage)"
+          >
+            <template #item="{ element }">
+              <FunnelCard :conversation="element" />
+            </template>
+          </Draggable>
+
+          <!-- Per-column "Carregar mais" — the first page comes down with
+               the board fetch; a stage with more cards is walked on demand,
+               so a busy pipeline no longer serialises thousands of cards
+               up front (which was blowing the DB statement timeout). -->
+          <div v-if="stage.has_more" class="px-2 pb-3 pt-1">
+            <button
+              type="button"
+              class="w-full text-xs text-n-slate-11 hover:text-n-slate-12 border border-n-weak rounded-md py-1.5 disabled:opacity-50"
+              :disabled="!canLoadMore(stage)"
+              @click="requestMore(stage)"
+            >
+              {{
+                isLoadingMore(stage)
+                  ? t('FUNNEL.LOAD_MORE.LOADING')
+                  : t('FUNNEL.LOAD_MORE.LABEL', {
+                      remaining: (stage.count || 0) - cardsFor(stage).length,
+                    })
+              }}
+            </button>
+          </div>
+        </div>
       </section>
     </div>
   </div>

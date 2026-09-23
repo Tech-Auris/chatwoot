@@ -34,6 +34,11 @@ const viewMode = ref('board');
 const isLoading = ref(false);
 const stages = ref([]);
 const conversationsByStage = ref({});
+// Per-stage pagination cursor — used by the `load-more` handler to know
+// which page of a column to fetch next. Reset whenever the whole board
+// reloads (a filter change, a manual refresh, an error retry).
+const stagePageByStageId = ref({});
+const loadingMoreStageIds = ref([]);
 
 const accountId = computed(() => getters.getCurrentAccountId.value);
 const account = computed(() =>
@@ -74,14 +79,53 @@ const fetchFunnel = async () => {
     const { data } = await FunnelAPI.get(buildQueryParams());
     stages.value = data?.payload?.stages || [];
     const grouped = {};
+    const pages = {};
     stages.value.forEach(stage => {
       grouped[stage.name] = stage.conversations || [];
+      pages[stage.id] = 1;
     });
     conversationsByStage.value = grouped;
+    stagePageByStageId.value = pages;
+    loadingMoreStageIds.value = [];
   } catch (error) {
     useAlert(t('FUNNEL.LOAD_ERROR'));
   } finally {
     isLoading.value = false;
+  }
+};
+
+// Called when the operator clicks "Carregar mais" at the bottom of a
+// column. Fetches the next page of that column only and appends the
+// incoming cards to `conversationsByStage[stage.name]`.
+const loadMoreForStage = async stage => {
+  if (!stage || loadingMoreStageIds.value.includes(stage.id)) return;
+  loadingMoreStageIds.value = [...loadingMoreStageIds.value, stage.id];
+  const nextPage = (stagePageByStageId.value[stage.id] || 1) + 1;
+  try {
+    const { data } = await FunnelAPI.stageConversations(
+      stage.id,
+      nextPage,
+      buildQueryParams()
+    );
+    const incoming = data?.payload?.conversations || [];
+    const existing = conversationsByStage.value[stage.name] || [];
+    conversationsByStage.value = {
+      ...conversationsByStage.value,
+      [stage.name]: [...existing, ...incoming],
+    };
+    stagePageByStageId.value = {
+      ...stagePageByStageId.value,
+      [stage.id]: nextPage,
+    };
+    stages.value = stages.value.map(s =>
+      s.id === stage.id ? { ...s, has_more: data?.payload?.meta?.has_more } : s
+    );
+  } catch (error) {
+    useAlert(t('FUNNEL.LOAD_ERROR'));
+  } finally {
+    loadingMoreStageIds.value = loadingMoreStageIds.value.filter(
+      id => id !== stage.id
+    );
   }
 };
 
@@ -284,7 +328,9 @@ onMounted(fetchFunnel);
         :conversations-by-stage="conversationsByStage"
         :average-ticket="accountAverageTicket"
         :locale="accountLocale"
+        :loading-more-stage-ids="loadingMoreStageIds"
         @move="moveConversation"
+        @load-more="loadMoreForStage"
       />
 
       <FunnelList
