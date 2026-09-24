@@ -143,6 +143,7 @@ class SuperAdmin::Commercial::ReservationsController < SuperAdmin::ApplicationCo
       id: quote.id,
       prospect_name: quote.company_name.presence || quote.prospect_name,
       contact_name: quote.prospect_name,
+      prospect_phone: quote.prospect_phone,
       seller_name: quote.seller&.name,
       clickup_status: quote.clickup_status,
       clickup_url: "https://app.clickup.com/t/#{quote.clickup_task_id}",

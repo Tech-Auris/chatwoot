@@ -120,6 +120,28 @@ const formatAmount = amount =>
 const formatDate = value =>
   value ? new Date(value).toLocaleDateString('pt-BR') : '—';
 
+// Formata BR: +55 11 91234-5678 (celular) / +55 11 1234-5678 (fixo).
+// Se não bater no padrão brasileiro, devolve o que veio pra não
+// esconder um número estrangeiro nem mascarar um telefone com formato
+// exótico que o vendedor pode precisar ler.
+const formatPhone = value => {
+  if (!value) return '';
+  const digits = value.replace(/\D/g, '');
+  const br = digits.match(/^55(\d{2})(\d{4,5})(\d{4})$/);
+  if (br) return `+55 ${br[1]} ${br[2]}-${br[3]}`;
+  return value;
+};
+
+const contactLine = reservation => {
+  const showName =
+    reservation.contact_name &&
+    reservation.contact_name !== reservation.prospect_name;
+  const phone = formatPhone(reservation.prospect_phone);
+  if (showName && phone) return `${reservation.contact_name} · ${phone}`;
+  if (showName) return reservation.contact_name;
+  return phone;
+};
+
 const statusLabel = status => STATUS_LABELS[status] || status;
 
 // "Perdido" is a ClickUp-side terminal state — the proposal itself doesn't
@@ -482,11 +504,16 @@ const submitRenew = async () => {
           >
             <td class="py-3">
               <div class="text-slate-900">{{ reservation.prospect_name }}</div>
+              <!-- "quem falou · com que telefone" numa varredura só. O
+                   nome do contato só entra quando difere de prospect_name
+                   pra não repetir a mesma coisa duas vezes; o telefone só
+                   entra quando existe. Ambos são calculados em
+                   `contactLine` pra não brigar com o formatador de HTML. -->
               <div
-                v-if="reservation.contact_name !== reservation.prospect_name"
-                class="text-xs text-slate-400 mt-1"
+                v-if="contactLine(reservation)"
+                class="text-xs text-slate-400 mt-1 whitespace-nowrap"
               >
-                {{ reservation.contact_name }}
+                {{ contactLine(reservation) }}
               </div>
             </td>
 
