@@ -41,6 +41,7 @@
 #  token_card_waived_at     :datetime
 #  total_amount             :integer          default(0), not null
 #  verification_phone_last4 :string
+#  waivers_amount           :integer          default(0), not null
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
 #  account_id               :bigint

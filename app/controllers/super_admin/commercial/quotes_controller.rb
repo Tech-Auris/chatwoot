@@ -196,6 +196,7 @@ class SuperAdmin::Commercial::QuotesController < SuperAdmin::ApplicationControll
     quote.total_amount = result.total
     quote.discount_summary = result.summary
     quote.meeting_discount_amount = result.meeting_discount_amount
+    quote.waivers_amount = result.waivers_amount
   end
 
   def selected_coupon

@@ -180,20 +180,44 @@ class Sales::ClickupCrmSyncService
     quote.items.where(name: name).sum(:quantity)
   end
 
-  # Recurring lines summed and divided by the plan's months — the value the
-  # customer pays every month, whether the plan is billed monthly or paid
-  # up-front for six or twelve months.
+  # Recurring lines summed, the meeting-discount attributed to them
+  # (10% off the recurring subtotal when it was applied), then divided by
+  # the plan's months — the value the customer pays every month, whether
+  # the plan is billed monthly or paid up-front for six or twelve months.
+  #
+  # The CRM attribution rule the sales team asked for: the meeting
+  # courtesy hits the subscription line only (that's where the ticket
+  # is), and waivers / scoped-coupons hit the implementation line only
+  # (that's what they typically waive on the setup fee). Splits the
+  # deal the way the team reads it, even though the calculator's
+  # underlying waterfall spreads the meeting on the eligible base.
   def subscription_monthly_value_cents
     months = Sales::CheckoutService::CYCLE_MONTHS[quote.billing_cycle&.to_sym].to_i
     return 0 if months.zero?
 
     recurring_total = quote.items.where.not(recurring_interval: nil).sum('unit_amount * quantity')
-    recurring_total / months
+    return 0 if recurring_total.zero?
+
+    effective = quote.meeting_discount? ? apply_meeting_discount(recurring_total) : recurring_total
+    # Float division: `effective` and `months` can leave a fractional
+    # cent that `currency` then rounds to two decimals for reais. An
+    # integer division would drop the cent and make the CRM lag the
+    # invoice on odd-priced plans.
+    effective.to_f / months
   end
 
-  # Non-recurring lines summed — setup fees and one-off implementations.
+  # Non-recurring lines summed, minus the item-targeted waivers /
+  # scoped-coupons the calculator recorded on this quote. Matches what
+  # the customer paid for implementation once the API waiver and the
+  # setup coupon came off — the meeting courtesy is attributed to the
+  # subscription line, not here.
   def implementation_value_cents
-    quote.items.where(recurring_interval: nil).sum('unit_amount * quantity')
+    subtotal = quote.items.where(recurring_interval: nil).sum('unit_amount * quantity')
+    subtotal - quote.waivers_amount.to_i
+  end
+
+  def apply_meeting_discount(amount)
+    amount - ((amount * Sales::QuoteCalculatorService::MEETING_DISCOUNT_PERCENT) / 100.0).round
   end
 
   def currency(cents)
