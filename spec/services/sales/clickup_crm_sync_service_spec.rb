@@ -190,6 +190,47 @@ RSpec.describe Sales::ClickupCrmSyncService do
         .with('86akkgh7b', described_class::FIELDS[:implementation_value], 3_500.00)
     end
 
+    # The CRM attribution rule the sales team asked for: the meeting
+    # courtesy hits the subscription line (that's where the ticket is),
+    # and waivers / scoped-coupon hit the implementation line (that's
+    # what they typically waive on the setup fee). Verifies the split on
+    # a real-shaped cart against what the team already computes by hand.
+    context 'when the seller applied the 10% meeting courtesy' do
+      let(:quote) do
+        create(:sales_quote, clickup_task_id: '86akkgh7b', status: :paid, payment_method: :card,
+                             billing_cycle: :annual, prospect_name: 'Clínica Auris', meeting_discount: true)
+      end
+
+      it 'applies the 10% off on the subscription line (per month, dividing by the plan months)' do
+        # 12 × R$ 1.000 = R$ 12.000 total recurring; meeting off = R$ 10.800; ÷ 12 = R$ 900,00.
+        create(:sales_quote_item, sales_quote: quote, name: 'Plataforma Auris',
+                                  unit_amount: 100_000, quantity: 12, recurring_interval: 'month')
+
+        sync
+
+        expect(client).to have_received(:set_custom_field)
+          .with('86akkgh7b', described_class::FIELDS[:subscription_value], 900.00)
+      end
+    end
+
+    context 'when the calculator recorded implementation-targeted waivers on the quote' do
+      let(:quote) do
+        create(:sales_quote, clickup_task_id: '86akkgh7b', status: :paid, payment_method: :card,
+                             billing_cycle: :annual, prospect_name: 'Clínica Auris', waivers_amount: 319_000)
+      end
+
+      it 'subtracts them from the raw implementation subtotal' do
+        # R$ 4.898 raw setup − R$ 3.190 waivers/scoped-coupon = R$ 1.708 net.
+        create(:sales_quote_item, sales_quote: quote, name: 'Implantação',
+                                  unit_amount: 489_800, recurring_interval: nil)
+
+        sync
+
+        expect(client).to have_received(:set_custom_field)
+          .with('86akkgh7b', described_class::FIELDS[:implementation_value], 1_708.00)
+      end
+    end
+
     it 'records the sync on the proposal history for auditability' do
       sync
 

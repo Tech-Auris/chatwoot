@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_09_24_180000) do
+ActiveRecord::Schema[7.1].define(version: 2026_09_24_210500) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -1745,6 +1745,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_24_180000) do
     t.text "inter_pix_payload"
     t.integer "meeting_discount_amount", default: 0, null: false
     t.datetime "boleto_enabled_at"
+    t.integer "waivers_amount", default: 0, null: false
     t.index ["account_id"], name: "index_sales_quotes_on_account_id"
     t.index ["clickup_task_id"], name: "index_sales_quotes_on_clickup_task_id"
     t.index ["inter_txid"], name: "index_sales_quotes_on_inter_txid", unique: true, where: "(inter_txid IS NOT NULL)"

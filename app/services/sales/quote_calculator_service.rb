@@ -27,7 +27,7 @@ class Sales::QuoteCalculatorService
     'Desenvolvimento de Integração API'
   ].map(&:downcase).freeze
 
-  Result = Struct.new(:subtotal, :discount, :total, :summary, :meeting_discount_amount, keyword_init: true)
+  Result = Struct.new(:subtotal, :discount, :total, :summary, :meeting_discount_amount, :waivers_amount, keyword_init: true)
 
   attr_reader :items, :meeting_discount, :coupon, :pix_discount_percent, :api_integration_waived
 
@@ -44,13 +44,15 @@ class Sales::QuoteCalculatorService
     parts = discount_parts(subtotal)
     discount = [parts.sum { |part| part[:amount] }, subtotal].min
     meeting_amount = parts.find { |part| part[:key] == :meeting }&.dig(:amount).to_i
+    waivers_amount = parts.select { |part| part[:key] == :waiver }.sum { |part| part[:amount] }
 
     Result.new(
       subtotal: subtotal,
       discount: discount,
       total: subtotal - discount,
       summary: parts.pluck(:label).join(' + ').presence,
-      meeting_discount_amount: meeting_amount
+      meeting_discount_amount: meeting_amount,
+      waivers_amount: waivers_amount
     )
   end
 
@@ -89,7 +91,7 @@ class Sales::QuoteCalculatorService
                   .sum { |item| line_total(item) }
     return nil if amount.zero?
 
-    { amount: amount, label: 'isenção integração via API' }
+    { key: :waiver, amount: amount, label: 'isenção integração via API' }
   end
 
   # Stripe coupons scoped to a specific product are the way the operator
@@ -119,10 +121,10 @@ class Sales::QuoteCalculatorService
   def scoped_coupon_part(scoped_subtotal)
     if coupon[:percent_off].to_f.positive?
       amount = percent_of(scoped_subtotal, coupon[:percent_off])
-      { amount: [amount, scoped_subtotal].min,
+      { key: :waiver, amount: [amount, scoped_subtotal].min,
         label: "cupom #{coupon_name} (#{format_percent(coupon[:percent_off])}%)" }
     elsif coupon[:amount_off].to_i.positive?
-      { amount: [coupon[:amount_off].to_i, scoped_subtotal].min,
+      { key: :waiver, amount: [coupon[:amount_off].to_i, scoped_subtotal].min,
         label: "cupom #{coupon_name}" }
     end
   end
