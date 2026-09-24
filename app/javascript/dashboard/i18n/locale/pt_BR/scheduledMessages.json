@@ -1,0 +1,17 @@
+{
+  "SCHEDULED": {
+    "TITLE": "Mensagens agendadas",
+    "SUBTITLE": "Mensagens agendadas de todas as conversas",
+    "LOADING": "Carregando…",
+    "EMPTY": "Nenhuma mensagem agendada nesta lista.",
+    "NO_CONTACT_NAME": "Contato sem nome",
+    "NO_CONTENT": "(mensagem sem conteúdo)",
+    "ITEMS_LABEL": "item(ns)",
+    "STATUS": {
+      "PENDING": "Pendente",
+      "SENT": "Enviada",
+      "FAILED": "Falhou",
+      "HELD": "Suspensa"
+    }
+  }
+}

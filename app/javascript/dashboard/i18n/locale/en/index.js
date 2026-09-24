@@ -36,6 +36,7 @@ import mediaHub from './mediaHub.json';
 import metaTemplates from './metaTemplates.json';
 import operationsNotifications from './operationsNotifications.json';
 import releaseNotes from './releaseNotes.json';
+import scheduledMessages from './scheduledMessages.json';
 import report from './report.json';
 import resetPassword from './resetPassword.json';
 import search from './search.json';
@@ -92,6 +93,7 @@ export default {
   ...metaTemplates,
   ...operationsNotifications,
   ...releaseNotes,
+  ...scheduledMessages,
   ...report,
   ...resetPassword,
   ...search,

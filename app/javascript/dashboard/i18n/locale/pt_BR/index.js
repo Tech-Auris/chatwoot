@@ -39,6 +39,7 @@ import mfa from './mfa.json';
 import onboarding from './onboarding.json';
 import operationsNotifications from './operationsNotifications.json';
 import releaseNotes from './releaseNotes.json';
+import scheduledMessages from './scheduledMessages.json';
 import report from './report.json';
 import resetPassword from './resetPassword.json';
 import search from './search.json';
@@ -95,6 +96,7 @@ export default {
   ...onboarding,
   ...operationsNotifications,
   ...releaseNotes,
+  ...scheduledMessages,
   ...report,
   ...resetPassword,
   ...search,
