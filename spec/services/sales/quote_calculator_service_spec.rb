@@ -18,6 +18,21 @@ RSpec.describe Sales::QuoteCalculatorService do
     expect(result.total).to eq(98_550)
   end
 
+  # `meeting_discount_amount` isolates the courtesy portion of the total
+  # `discount` so callers can undo the 10% cleanly when the reservation
+  # expires without recomputing the whole result.
+  it 'exposes the meeting-discount portion separately from the total discount' do
+    result = calculate(cart, meeting_discount: true)
+
+    expect(result.meeting_discount_amount).to eq(10_950)
+  end
+
+  it 'zeroes meeting_discount_amount when the seller did not opt in' do
+    result = calculate(cart, meeting_discount: false)
+
+    expect(result.meeting_discount_amount).to eq(0)
+  end
+
   # The seller and the customer both read this line; it is also what goes to the
   # Stripe invoice so the charge explains itself there.
   it 'says what each discount was' do

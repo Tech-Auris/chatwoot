@@ -27,7 +27,7 @@ class Sales::QuoteCalculatorService
     'Desenvolvimento de Integração API'
   ].map(&:downcase).freeze
 
-  Result = Struct.new(:subtotal, :discount, :total, :summary, keyword_init: true)
+  Result = Struct.new(:subtotal, :discount, :total, :summary, :meeting_discount_amount, keyword_init: true)
 
   attr_reader :items, :meeting_discount, :coupon, :pix_discount_percent, :api_integration_waived
 
@@ -43,12 +43,14 @@ class Sales::QuoteCalculatorService
     subtotal = items.sum { |item| line_total(item) }
     parts = discount_parts(subtotal)
     discount = [parts.sum { |part| part[:amount] }, subtotal].min
+    meeting_amount = parts.find { |part| part[:key] == :meeting }&.dig(:amount).to_i
 
     Result.new(
       subtotal: subtotal,
       discount: discount,
       total: subtotal - discount,
-      summary: parts.pluck(:label).join(' + ').presence
+      summary: parts.pluck(:label).join(' + ').presence,
+      meeting_discount_amount: meeting_amount
     )
   end
 
@@ -129,7 +131,7 @@ class Sales::QuoteCalculatorService
     return nil unless meeting_discount
     return nil if base.zero?
 
-    { amount: percent_of(base, MEETING_DISCOUNT_PERCENT), label: "#{MEETING_DISCOUNT_PERCENT}% reunião" }
+    { key: :meeting, amount: percent_of(base, MEETING_DISCOUNT_PERCENT), label: "#{MEETING_DISCOUNT_PERCENT}% reunião" }
   end
 
   # Untargeted coupon: applies to whatever is still on the table after

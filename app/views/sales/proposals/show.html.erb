@@ -47,10 +47,10 @@
       <span>Subtotal</span>
       <span><%= proposal_amount(@proposal.subtotal_amount) %></span>
     </div>
-    <% if @proposal.discount_amount.positive? %>
+    <% if @proposal.effective_discount_amount.positive? %>
       <div class="flex justify-between text-green-700 mt-1">
-        <span>Desconto<%= " (#{@proposal.discount_summary})" if @proposal.discount_summary %></span>
-        <span class="whitespace-nowrap">− <%= proposal_amount(@proposal.discount_amount) %></span>
+        <span>Desconto<%= " (#{@proposal.effective_discount_summary})" if @proposal.effective_discount_summary %></span>
+        <span class="whitespace-nowrap">− <%= proposal_amount(@proposal.effective_discount_amount) %></span>
       </div>
     <% end %>
     <%# On a semiannual/annual plan, the Total value is replaced by two
@@ -74,7 +74,7 @@
           <% end %>
         </span>
       <% else %>
-        <span><%= proposal_amount(@proposal.total_amount) %></span>
+        <span><%= proposal_amount(@proposal.effective_total_amount) %></span>
       <% end %>
     </div>
 
@@ -83,14 +83,14 @@
 
   <% if @proposal.reservation_active? %>
     <div class="mt-6 rounded bg-green-50 px-4 py-3" data-testid="countdown">
-      <% if @proposal.discount_amount.positive? %>
+      <% if @proposal.effective_discount_amount.positive? %>
         <p class="text-sm text-green-800">
           Você garantiu
-          <strong><%= proposal_amount(@proposal.discount_amount) %></strong>
+          <strong><%= proposal_amount(@proposal.effective_discount_amount) %></strong>
           de desconto.
         </p>
       <% end %>
-      <p class="text-sm text-green-800<%= ' mt-1' if @proposal.discount_amount.positive? %>">
+      <p class="text-sm text-green-800<%= ' mt-1' if @proposal.effective_discount_amount.positive? %>">
         Essa condição ficará disponível por
         <strong><%= proposal_time_left(@proposal.reserved_until) %></strong>.
       </p>

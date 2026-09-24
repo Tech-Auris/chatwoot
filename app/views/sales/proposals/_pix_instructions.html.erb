@@ -18,7 +18,7 @@
   <% if pix_code.present? %>
     <div class="mt-4 flex justify-between text-sm">
       <span class="text-slate-600">Valor a pagar</span>
-      <span class="font-medium text-slate-900"><%= proposal_amount(@proposal.total_amount) %></span>
+      <span class="font-medium text-slate-900"><%= proposal_amount(@proposal.effective_total_amount) %></span>
     </div>
 
     <p class="mt-3 text-sm font-medium text-slate-900">

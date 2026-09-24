@@ -34,7 +34,7 @@
 
   <div class="mt-3 pt-3 border-t border-slate-100 flex justify-between text-base font-medium text-slate-900">
     <span>Total</span>
-    <span><%= proposal_amount(@proposal.total_amount) %></span>
+    <span><%= proposal_amount(@proposal.effective_total_amount) %></span>
   </div>
 
   <%= render 'monthly_note' %>
