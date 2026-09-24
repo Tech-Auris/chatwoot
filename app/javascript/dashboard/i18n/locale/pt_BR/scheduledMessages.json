@@ -28,6 +28,7 @@
       "SEARCHING": "Pesquisando…",
       "INBOX_LABEL": "Via",
       "INBOX_PLACEHOLDER": "Selecione uma caixa de entrada",
+      "INBOX_UNREACHABLE": "Este contato não está em nenhuma caixa de entrada onde você tem acesso.",
       "MESSAGE_LABEL": "Mensagem",
       "MESSAGE_PLACEHOLDER": "Escreva a mensagem que será enviada no horário programado…",
       "SCHEDULE_LABEL": "Programar envio",

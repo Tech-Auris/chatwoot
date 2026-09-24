@@ -28,6 +28,7 @@
       "SEARCHING": "Searching…",
       "INBOX_LABEL": "Via",
       "INBOX_PLACEHOLDER": "Pick an inbox",
+      "INBOX_UNREACHABLE": "This contact is not on any inbox you have access to.",
       "MESSAGE_LABEL": "Message",
       "MESSAGE_PLACEHOLDER": "Write the message that will be sent at the scheduled time…",
       "SCHEDULE_LABEL": "Schedule for",

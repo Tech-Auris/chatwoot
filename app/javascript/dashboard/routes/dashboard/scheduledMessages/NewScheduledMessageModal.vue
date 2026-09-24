@@ -35,6 +35,20 @@ const scheduledAt = ref('');
 const holdOnReply = ref(true);
 const isSaving = ref(false);
 
+// Caixas do usuário logado — o Vuex já carrega só o que ele pode
+// ver (administrator / manager: todas; agent: só as inboxes onde é
+// membro). Usado pra filtrar o dropdown Via, evitando que o agente
+// escolha uma caixa que o backend depois recusa com 403.
+const myInboxes = useMapGetter('inboxes/getInboxes');
+const accessibleInboxIds = computed(
+  () => new Set((myInboxes.value || []).map(i => i.id))
+);
+const accessibleContactInboxes = computed(() =>
+  (contactInboxes.value || []).filter(ci =>
+    accessibleInboxIds.value.has(ci.inbox?.id)
+  )
+);
+
 // A fresh contact search fires whenever the operator types >= 2 chars.
 // The endpoint is the same one the pencil flow calls; results carry
 // `contact_inboxes` inline so we can populate Via without a follow-up.
@@ -67,10 +81,9 @@ const pickContact = contact => {
   contactQuery.value = contact.name || contact.phone_number || '';
   contactResults.value = [];
   contactInboxes.value = contact.contact_inboxes || [];
+  const accessible = accessibleContactInboxes.value;
   selectedInboxId.value =
-    contactInboxes.value.length === 1
-      ? contactInboxes.value[0].inbox?.id
-      : null;
+    accessible.length === 1 ? accessible[0].inbox?.id : null;
 };
 
 const clearContact = () => {
@@ -273,6 +286,7 @@ watch(
               {{ t('SCHEDULED.NEW.INBOX_LABEL') }}
             </label>
             <select
+              v-if="accessibleContactInboxes.length"
               v-model="selectedInboxId"
               class="mt-1 w-full border border-n-slate-3 rounded-md px-3 py-2 text-sm text-n-slate-12 focus:border-n-brand focus:outline-none"
             >
@@ -280,13 +294,16 @@ watch(
                 {{ t('SCHEDULED.NEW.INBOX_PLACEHOLDER') }}
               </option>
               <option
-                v-for="ci in contactInboxes"
+                v-for="ci in accessibleContactInboxes"
                 :key="ci.inbox.id"
                 :value="ci.inbox.id"
               >
                 {{ ci.inbox.name }}
               </option>
             </select>
+            <p v-else class="mt-1 text-xs text-n-amber-11">
+              {{ t('SCHEDULED.NEW.INBOX_UNREACHABLE') }}
+            </p>
           </div>
 
           <!-- Message -->
