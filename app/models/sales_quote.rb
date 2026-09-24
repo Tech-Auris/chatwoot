@@ -17,6 +17,7 @@
 #  asaas_payment_link_url   :string
 #  billing_cycle            :integer
 #  billing_name             :string
+#  boleto_enabled_at        :datetime
 #  clickup_status           :string
 #  clickup_status_synced_at :datetime
 #  company_document         :string
@@ -140,6 +141,15 @@ class SalesQuote < ApplicationRecord
   # date the proposal stays reachable, at full price, until someone renews it.
   def reservation_active?
     reserved_until.present? && reserved_until.future?
+  end
+
+  # Boleto ships off by default and only reaches the public page after the
+  # seller enables it from the Reservations grid — same shape as
+  # `token_card_waived_at`. Adding both guards keeps monthly plans (which
+  # CheckoutService already refuses) safe from a legacy row that flipped
+  # this on before the constraint existed.
+  def boleto_available?
+    boleto_enabled_at.present? && Sales::CheckoutService.offers?('boleto', billing_cycle)
   end
 
   # The meeting discount is a courtesy from the sales conversation and only
