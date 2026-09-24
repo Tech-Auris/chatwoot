@@ -423,6 +423,16 @@ const menuItems = computed(() => {
           icon: 'i-lucide-clock-alert',
           to: accountScopedRoute('conversation_unattended'),
         },
+        // Painel account-wide de mensagens agendadas — vive junto às
+        // outras visões de "conversas com algo pendente" (Não atendidas,
+        // Participando) em vez de num menu separado, para o operador
+        // achar na primeira leitura do sidebar.
+        {
+          name: 'Scheduled',
+          label: t('SIDEBAR.SCHEDULED_MESSAGES'),
+          icon: 'i-lucide-clock',
+          to: accountScopedRoute('scheduled_messages_index'),
+        },
         {
           name: 'Folders',
           label: t('SIDEBAR.CUSTOM_VIEWS_FOLDER'),
@@ -705,21 +715,6 @@ const menuItems = computed(() => {
           label: t('SIDEBAR.ANALYTICS'),
           to: accountScopedRoute('marketing_analytics_index'),
           tag: 'BETA',
-        },
-      ],
-    },
-    // Mensagens — hoje só um filho, Agendadas, mas segue a estrutura
-    // parent/children porque o painel de agendadas será a primeira de
-    // várias visões account-wide (envios recentes, falhas, etc.).
-    {
-      name: 'Messages',
-      label: t('SIDEBAR.MESSAGES'),
-      icon: 'i-lucide-mail',
-      children: [
-        {
-          name: 'Scheduled',
-          label: t('SIDEBAR.SCHEDULED_MESSAGES'),
-          to: accountScopedRoute('scheduled_messages_index'),
         },
       ],
     },
