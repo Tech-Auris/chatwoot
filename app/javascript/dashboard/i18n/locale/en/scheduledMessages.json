@@ -18,6 +18,26 @@
       "CONFIRM": "Cancel this scheduled message? It will not be sent.",
       "DONE": "Scheduled message cancelled.",
       "FAILED": "Could not cancel the message. Please try again."
+    },
+    "NEW": {
+      "BUTTON": "Schedule message",
+      "TITLE": "Schedule message",
+      "CONTACT_LABEL": "To",
+      "CONTACT_PLACEHOLDER": "Type at least 2 characters to search by name, email or phone number",
+      "CLEAR_CONTACT": "Clear contact",
+      "SEARCHING": "Searching…",
+      "INBOX_LABEL": "Via",
+      "INBOX_PLACEHOLDER": "Pick an inbox",
+      "MESSAGE_LABEL": "Message",
+      "MESSAGE_PLACEHOLDER": "Write the message that will be sent at the scheduled time…",
+      "SCHEDULE_LABEL": "Schedule for",
+      "HOLD_ON_REPLY": "Hold if the customer replies first",
+      "HOLD_ON_REPLY_HINT": "If the customer sends a message before this one, it will be held for review instead of being sent automatically.",
+      "CANCEL": "Cancel",
+      "SUBMIT": "Schedule",
+      "SAVING": "Scheduling…",
+      "DONE": "Message scheduled.",
+      "FAILED": "Could not schedule the message. Check the fields and try again."
     }
   }
 }

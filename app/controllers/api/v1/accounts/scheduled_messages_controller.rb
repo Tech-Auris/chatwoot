@@ -29,6 +29,32 @@ class Api::V1::Accounts::ScheduledMessagesController < Api::V1::Accounts::BaseCo
     }
   end
 
+  # Creates a scheduled message straight from the account-wide panel —
+  # no conversation id required. Given a `contact_id + inbox_id` we
+  # find-or-create the ContactInbox and reuse an open conversation for
+  # that pair, else create one via `ConversationBuilder`. The result
+  # feeds into the per-conversation ScheduledMessage create path so the
+  # rest of the stack behaves the same as if the message had been
+  # scheduled from the conversation drawer.
+  def create
+    contact = Current.account.contacts.find_by(id: params[:contact_id])
+    return render(json: { error: 'contact_not_found' }, status: :not_found) if contact.blank?
+
+    inbox = accessible_inbox_by_id(params[:inbox_id])
+    return render(json: { error: 'inbox_not_accessible' }, status: :forbidden) if inbox.blank?
+
+    conversation = resolve_conversation(contact: contact, inbox: inbox)
+    scheduled_message = build_scheduled_message(conversation, inbox)
+    return render_scheduled_message_errors(scheduled_message) unless scheduled_message.persisted?
+
+    Rails.configuration.dispatcher.dispatch(
+      Events::Types::SCHEDULED_MESSAGE_CREATED,
+      Time.zone.now,
+      scheduled_message: scheduled_message
+    )
+    render json: { id: scheduled_message.id, conversation_id: conversation.display_id }
+  end
+
   # Cancels a pending scheduled message from the panel. Uses the same
   # inbox-scope check as `index` — if the record does not live in one of
   # the user's `assigned_inboxes`, we answer 404 rather than expose that
@@ -109,5 +135,52 @@ class Api::V1::Accounts::ScheduledMessagesController < Api::V1::Accounts::BaseCo
 
   def accessible_inbox_ids
     @accessible_inbox_ids ||= Current.user.assigned_inboxes.pluck(:id)
+  end
+
+  def accessible_inbox_by_id(inbox_id)
+    return nil if inbox_id.blank?
+
+    Current.user.assigned_inboxes.find_by(id: inbox_id)
+  end
+
+  # Reuse an existing open conversation for the (contact, inbox) pair
+  # so a fresh scheduled message does not spawn a duplicate thread when
+  # a live one is already there. Only `open` — a snoozed / resolved
+  # conversation was closed by the operator and would be a surprise
+  # place for a message to land later.
+  def resolve_conversation(contact:, inbox:)
+    contact_inbox = ContactInboxBuilder.new(contact: contact, inbox: inbox).perform
+    existing = Current.account.conversations
+                      .where(contact_inbox_id: contact_inbox.id, status: :open)
+                      .order(created_at: :desc)
+                      .first
+    return existing if existing.present?
+
+    ConversationBuilder.new(
+      params: ActionController::Parameters.new(
+        inbox_id: inbox.id,
+        contact_id: contact.id,
+        source_id: contact_inbox.source_id,
+        assignee_id: Current.user.id,
+        status: 'open'
+      ),
+      contact_inbox: contact_inbox
+    ).perform
+  end
+
+  def build_scheduled_message(conversation, inbox)
+    conversation.scheduled_messages.create(
+      account: Current.account,
+      inbox: inbox,
+      author: Current.user,
+      content: params[:content],
+      scheduled_at: params[:scheduled_at],
+      hold_on_reply: ActiveModel::Type::Boolean.new.cast(params[:hold_on_reply]) || false,
+      status: :pending
+    )
+  end
+
+  def render_scheduled_message_errors(scheduled_message)
+    render json: { errors: scheduled_message.errors.full_messages }, status: :unprocessable_entity
   end
 end
