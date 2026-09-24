@@ -475,6 +475,7 @@
     "ACCORDION": {
       "CONTACT_DETAILS": "Contact Details",
       "SCHEDULED_MESSAGES": "Scheduled Messages",
+      "OPEN_SCHEDULED_HUB": "See all account-wide scheduled messages",
       "CONVERSATION_ACTIONS": "Conversation Actions",
       "CONVERSATION_LABELS": "Conversation Labels",
       "CONVERSATION_INFO": "Conversation Information",

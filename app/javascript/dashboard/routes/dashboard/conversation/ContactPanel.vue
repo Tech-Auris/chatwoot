@@ -57,7 +57,13 @@ const isShopifyFeatureEnabled = computed(
   () => shopifyIntegration.value.enabled
 );
 
-const { isCloudFeatureEnabled } = useAccount();
+const { isCloudFeatureEnabled, accountScopedRoute } = useAccount();
+
+// Rota para o painel account-wide de mensagens agendadas — usada pelo
+// ícone no header da seção "Mensagens agendadas".
+const scheduledMessagesRoute = computed(() =>
+  accountScopedRoute('scheduled_messages_index')
+);
 
 const isLinearFeatureEnabled = computed(() =>
   isCloudFeatureEnabled(FEATURE_FLAGS.LINEAR)
@@ -182,6 +188,25 @@ onMounted(() => {
                   toggleSidebarUIState('is_scheduled_messages_open', value)
               "
             >
+              <template #button>
+                <!-- Atalho para o painel account-wide (Conversas →
+                     Agendadas). Discreto ao lado do botão de recolher,
+                     sempre visível mesmo com a seção fechada; abre o
+                     painel em nova aba pra não tirar o operador da
+                     conversa atual. -->
+                <router-link
+                  :to="scheduledMessagesRoute"
+                  target="_blank"
+                  rel="noopener"
+                  class="flex items-center justify-center w-5 h-5 mr-1 text-n-slate-11 hover:text-n-slate-12"
+                  :title="
+                    $t('CONVERSATION_SIDEBAR.ACCORDION.OPEN_SCHEDULED_HUB')
+                  "
+                  @click.stop
+                >
+                  <span class="i-lucide-external-link size-3.5" />
+                </router-link>
+              </template>
               <ScheduledMessages
                 :conversation-id="conversationId"
                 :inbox-id="inboxId"
