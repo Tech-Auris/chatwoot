@@ -12,6 +12,12 @@
       "SENT": "Sent",
       "FAILED": "Failed",
       "HELD": "Held"
+    },
+    "CANCEL": {
+      "LABEL": "Cancel schedule",
+      "CONFIRM": "Cancel this scheduled message? It will not be sent.",
+      "DONE": "Scheduled message cancelled.",
+      "FAILED": "Could not cancel the message. Please try again."
     }
   }
 }

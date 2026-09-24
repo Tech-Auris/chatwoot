@@ -8,6 +8,8 @@
 # `assigned_inboxes` gives managers / administrators every inbox on the
 # account and agents only the ones they belong to via `inbox_members`.
 class Api::V1::Accounts::ScheduledMessagesController < Api::V1::Accounts::BaseController
+  include Events::Types
+
   PER_PAGE = 25
   # Statuses the panel can filter on. `draft` is bench work that never fires
   # and is left out; `held` covers agent-suspended plus the auto-hold that
@@ -25,6 +27,29 @@ class Api::V1::Accounts::ScheduledMessagesController < Api::V1::Accounts::BaseCo
         status: status_filter
       }
     }
+  end
+
+  # Cancels a pending scheduled message from the panel. Uses the same
+  # inbox-scope check as `index` — if the record does not live in one of
+  # the user's `assigned_inboxes`, we answer 404 rather than expose that
+  # the id exists. Only pending rows can be cancelled; sent/failed are
+  # already terminal and held ones are the operator's chosen "pause",
+  # so blocking cancel on them keeps this endpoint's intent narrow.
+  def destroy
+    scheduled_message = ScheduledMessage.where(account_id: Current.account.id)
+                                        .joins(conversation: :inbox)
+                                        .where(conversations: { inbox_id: accessible_inbox_ids })
+                                        .find_by(id: params[:id])
+    return render(json: { error: 'not_found' }, status: :not_found) if scheduled_message.blank?
+    return render(json: { error: 'not_pending' }, status: :unprocessable_entity) unless scheduled_message.pending?
+
+    scheduled_message.destroy!
+    Rails.configuration.dispatcher.dispatch(
+      Events::Types::SCHEDULED_MESSAGE_DELETED,
+      Time.zone.now,
+      scheduled_message: scheduled_message
+    )
+    render json: { deleted: 1 }
   end
 
   private

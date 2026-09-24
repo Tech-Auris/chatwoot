@@ -12,6 +12,12 @@
       "SENT": "Enviada",
       "FAILED": "Falhou",
       "HELD": "Suspensa"
+    },
+    "CANCEL": {
+      "LABEL": "Cancelar agendamento",
+      "CONFIRM": "Cancelar esta mensagem agendada? Ela não será enviada.",
+      "DONE": "Mensagem agendada cancelada.",
+      "FAILED": "Não foi possível cancelar a mensagem. Tente novamente."
     }
   }
 }
