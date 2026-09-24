@@ -10,6 +10,7 @@ import {
 } from 'vue';
 import { useRouter } from 'vue-router';
 import { useMapGetter } from 'dashboard/composables/store';
+import { useAlert } from 'dashboard/composables';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
@@ -158,6 +159,38 @@ const goToConversation = item => {
   );
 };
 
+// Cancel a pending scheduled message from the panel. Only shows up on
+// pending rows — sent/failed are terminal and held is the operator's
+// own pause. Optimistically removes the row from the current list and
+// bumps the total count down; reloads the tab on error so the shown
+// state matches what the API actually holds.
+const cancellingIds = ref(new Set());
+const isCancelling = id => cancellingIds.value.has(id);
+const cancelPending = async item => {
+  if (!item || item.status !== 'pending' || isCancelling(item.id)) return;
+  // eslint-disable-next-line no-alert
+  if (!window.confirm(t('SCHEDULED.CANCEL.CONFIRM'))) return;
+  cancellingIds.value = new Set([...cancellingIds.value, item.id]);
+  try {
+    await axios.delete(
+      `/api/v1/accounts/${accountId.value}/scheduled_messages/${item.id}`
+    );
+    items.value = items.value.filter(row => row.id !== item.id);
+    meta.value = {
+      ...meta.value,
+      total_count: Math.max(0, (meta.value.total_count || 0) - 1),
+    };
+    useAlert(t('SCHEDULED.CANCEL.DONE'));
+  } catch (e) {
+    useAlert(e.message || t('SCHEDULED.CANCEL.FAILED'));
+    resetAndFetch();
+  } finally {
+    const next = new Set(cancellingIds.value);
+    next.delete(item.id);
+    cancellingIds.value = next;
+  }
+};
+
 const statusPillClass = status => {
   switch (status) {
     case 'pending':
@@ -282,6 +315,19 @@ const statusPillClass = status => {
                     {{ item.author?.name || '' }}
                   </div>
                 </div>
+                <!-- Cancelar — só nas pendentes. Sent / failed são terminais;
+                     held é uma pausa deliberada do operador e deve ser
+                     desfeita pelo drawer da conversa, que já sabe reagendar. -->
+                <button
+                  v-if="item.status === 'pending'"
+                  type="button"
+                  class="!p-0 w-8 h-8 flex-shrink-0 inline-flex items-center justify-center rounded-md text-n-slate-11 hover:text-n-ruby-11 hover:bg-n-ruby-3 disabled:opacity-40"
+                  :disabled="isCancelling(item.id)"
+                  :title="t('SCHEDULED.CANCEL.LABEL')"
+                  @click.stop="cancelPending(item)"
+                >
+                  <span class="i-lucide-trash-2 size-4" />
+                </button>
               </li>
             </ul>
           </div>

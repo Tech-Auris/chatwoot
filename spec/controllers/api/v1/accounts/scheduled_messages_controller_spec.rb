@@ -95,6 +95,36 @@ RSpec.describe 'Scheduled Messages API', type: :request do
     end
   end
 
+  describe 'DELETE /api/v1/accounts/:account_id/scheduled_messages/:id' do
+    it 'cancels a pending scheduled message the current user can see' do
+      expect do
+        delete "/api/v1/accounts/#{account.id}/scheduled_messages/#{pending_in_a.id}",
+               headers: admin.create_new_auth_token,
+               as: :json
+      end.to change { ScheduledMessage.where(id: pending_in_a.id).count }.from(1).to(0)
+      expect(response).to have_http_status(:success)
+      expect(response.parsed_body['deleted']).to eq(1)
+    end
+
+    it 'answers 404 for an agent trying to cancel a scheduled message from an inbox they do not belong to' do
+      expect do
+        delete "/api/v1/accounts/#{account.id}/scheduled_messages/#{pending_in_b.id}",
+               headers: agent.create_new_auth_token,
+               as: :json
+      end.not_to change(ScheduledMessage, :count)
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it 'refuses to cancel a sent scheduled message — those are terminal' do
+      delete "/api/v1/accounts/#{account.id}/scheduled_messages/#{sent_in_a.id}",
+             headers: admin.create_new_auth_token,
+             as: :json
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(ScheduledMessage.exists?(sent_in_a.id)).to be true
+    end
+  end
+
   def scheduled(inbox, status:, content:, scheduled_at:)
     conversation = create(:conversation, account: account, inbox: inbox)
     # The model requires a future `scheduled_at` on create and refuses
