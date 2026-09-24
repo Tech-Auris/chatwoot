@@ -102,6 +102,52 @@ RSpec.describe SalesQuote do
     end
   end
 
+  # The 10% "reunião" courtesy only holds while the reservation does. Past
+  # the deadline the same proposal reads at full price minus every other
+  # discount that still stands (coupon, API waiver). A renewal that pushes
+  # `reserved_until` back into the future restores it automatically because
+  # the model derives the effective values here rather than freezing them.
+  describe '#effective_total_amount and #effective_discount_amount' do
+    let(:active_quote) do
+      create(:sales_quote, meeting_discount: true, reserved_until: 3.days.from_now,
+                           subtotal_amount: 100_000, discount_amount: 15_000, total_amount: 85_000,
+                           meeting_discount_amount: 10_000, discount_summary: '10% reunião + cupom Parceiro (5%)')
+    end
+    let(:expired_quote) do
+      create(:sales_quote, meeting_discount: true, reserved_until: 1.day.ago,
+                           subtotal_amount: 100_000, discount_amount: 15_000, total_amount: 85_000,
+                           meeting_discount_amount: 10_000, discount_summary: '10% reunião + cupom Parceiro (5%)')
+    end
+
+    it 'keeps the frozen totals while the reservation is still active' do
+      expect(active_quote.effective_total_amount).to eq(85_000)
+      expect(active_quote.effective_discount_amount).to eq(15_000)
+      expect(active_quote.effective_discount_summary).to eq('10% reunião + cupom Parceiro (5%)')
+    end
+
+    it 'peels the meeting discount off once the reservation has expired' do
+      expect(expired_quote.effective_total_amount).to eq(95_000)
+      expect(expired_quote.effective_discount_amount).to eq(5000)
+      expect(expired_quote.effective_discount_summary).to eq('cupom Parceiro (5%)')
+    end
+
+    it 'collapses the summary to nil when the courtesy was the only part' do
+      quote = create(:sales_quote, meeting_discount: true, reserved_until: 1.day.ago,
+                                   subtotal_amount: 100_000, discount_amount: 10_000, total_amount: 90_000,
+                                   meeting_discount_amount: 10_000, discount_summary: '10% reunião')
+      expect(quote.effective_discount_summary).to be_nil
+    end
+
+    it 'leaves everything alone when the seller never applied the meeting discount' do
+      quote = create(:sales_quote, meeting_discount: false, reserved_until: 1.day.ago,
+                                   subtotal_amount: 100_000, discount_amount: 5000, total_amount: 95_000,
+                                   meeting_discount_amount: 0, discount_summary: 'cupom Parceiro (5%)')
+      expect(quote.effective_total_amount).to eq(95_000)
+      expect(quote.effective_discount_amount).to eq(5000)
+      expect(quote.effective_discount_summary).to eq('cupom Parceiro (5%)')
+    end
+  end
+
   describe '#effective_charge_amount' do
     # A card sale is billed by Stripe/AsaaS at the list total — no PIX
     # percent applies.

@@ -27,6 +27,7 @@
 #  inter_pix_payload        :text
 #  inter_txid               :string
 #  meeting_discount         :boolean          default(FALSE), not null
+#  meeting_discount_amount  :integer          default(0), not null
 #  payment_method           :integer
 #  prospect_document        :string
 #  prospect_email           :string
@@ -141,6 +142,49 @@ class SalesQuote < ApplicationRecord
     reserved_until.present? && reserved_until.future?
   end
 
+  # The meeting discount is a courtesy from the sales conversation and only
+  # holds while the reservation does. Past the deadline the customer sees
+  # the same proposal without the 10% off; a renewal that puts the reserva-
+  # tion back in the future restores it automatically, because both totals
+  # and summary are derived here rather than frozen with the courtesy in.
+  def meeting_discount_active?
+    meeting_discount && reservation_active?
+  end
+
+  def effective_total_amount
+    return total_amount unless meeting_discount_must_be_removed?
+
+    total_amount + meeting_discount_amount
+  end
+
+  def effective_discount_amount
+    return discount_amount unless meeting_discount_must_be_removed?
+
+    discount_amount - meeting_discount_amount
+  end
+
+  # Strips the "10% reunião" fragment from the frozen summary when the
+  # discount is not currently active — leaves the rest of the parts (a
+  # scoped coupon, the API waiver) alone, so "cupom X + 10% reunião"
+  # becomes "cupom X" and a summary that was only the meeting collapses
+  # to nil.
+  def effective_discount_summary
+    return discount_summary unless meeting_discount_must_be_removed?
+    return nil if discount_summary.blank?
+
+    remaining = discount_summary
+                .split(' + ')
+                .reject { |part| part.include?("#{Sales::QuoteCalculatorService::MEETING_DISCOUNT_PERCENT}% reunião") }
+    remaining.any? ? remaining.join(' + ') : nil
+  end
+
+  # True when the meeting discount was applied at creation, currently no
+  # longer holds (reservation expired or missing), and there is a positive
+  # portion of the frozen `discount_amount` to peel back off.
+  def meeting_discount_must_be_removed?
+    meeting_discount && !reservation_active? && meeting_discount_amount.positive?
+  end
+
   # What the customer actually pays on this proposal — `total_amount` is the
   # cart total (the "list price" of the proposal after the meeting discount
   # and any product coupons). When the customer picks PIX on a semiannual or
@@ -149,12 +193,13 @@ class SalesQuote < ApplicationRecord
   # vista" hint the proposal already showed and charging something else.
   # Card sales get the list price back (no PIX percent applies).
   def effective_charge_amount
-    return total_amount unless payment_method_pix?
+    base = effective_total_amount
+    return base unless payment_method_pix?
 
     percent = Sales::CheckoutService.pix_discount_for(billing_cycle)
-    return total_amount if percent.to_i.zero?
+    return base if percent.to_i.zero?
 
-    total_amount - ((total_amount * percent) / 100.0).round
+    base - ((base * percent) / 100.0).round
   end
 
   # The PIX percent baked into `effective_charge_amount`, exposed so the

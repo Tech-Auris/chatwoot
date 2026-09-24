@@ -380,6 +380,7 @@ RSpec.describe 'Super Admin Commercial Quotes', type: :request do
       allow(clickup_client).to receive(:update_task)
       allow(clickup_client).to receive(:add_tag)
       allow(clickup_client).to receive(:add_comment)
+      allow(clickup_client).to receive(:set_custom_field)
     end
 
     it 'holds the proposal and answers with the link and the QR the seller shares' do
