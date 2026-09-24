@@ -21,6 +21,22 @@ class SuperAdmin::Commercial::ReservationsController < SuperAdmin::ApplicationCo
     render json: { reservation: serialize(quote) }
   end
 
+  # Boleto is off by default on every new proposal — the customer only
+  # sees it as a payment option after the seller flips it on here. Same
+  # shape as `waive_token_card`: stamped when enabled, kept as an event
+  # for the audit trail.
+  def enable_boleto
+    quote = SalesQuote.find(params[:id])
+    unless Sales::CheckoutService.offers?('boleto', quote.billing_cycle)
+      return render(json: { error: 'boleto_unavailable_for_plan' }, status: :unprocessable_entity)
+    end
+
+    quote.update!(boleto_enabled_at: Time.current) if quote.boleto_enabled_at.blank?
+    quote.events.create!(event: 'boleto_enabled', metadata: { super_admin_id: current_super_admin.id })
+
+    render json: { reservation: serialize(quote) }
+  end
+
   # A manual sale confirmation — the finance team clicks this when the money
   # landed on AsaaS (card / boleto) or Inter (PIX) and the webhook has not
   # closed the sale on its own. Routes to the right service based on the
@@ -139,6 +155,9 @@ class SuperAdmin::Commercial::ReservationsController < SuperAdmin::ApplicationCo
       total_amount: quote.effective_total_amount,
       token_card_saved: quote.token_payment_method_id.present?,
       token_card_waived: quote.token_card_waived_at.present?,
+      boleto_available: quote.boleto_available?,
+      boleto_enabled: quote.boleto_enabled_at.present?,
+      boleto_eligible_for_plan: Sales::CheckoutService.offers?('boleto', quote.billing_cycle),
       payment_method: quote.payment_method,
       # A single flag the grid reads to show the "Registrar pagamento" button
       # for any sale still waiting on a manual confirmation — AsaaS card /

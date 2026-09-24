@@ -256,6 +256,10 @@ RSpec.describe Sales::CheckoutService do
     let(:asaas) { instance_double(Integrations::Asaas::Client) }
 
     before do
+      # Boleto is off by default now — the seller has to flip it on from
+      # the Reservations grid before the customer can pick it. The tests
+      # in this block simulate a proposal where that already happened.
+      quote.update!(boleto_enabled_at: 2.minutes.ago)
       sign_terms
       allow(Integrations::Asaas::Client).to receive(:new).and_return(asaas)
       allow(asaas).to receive(:find_customer).and_return(nil)
@@ -302,6 +306,17 @@ RSpec.describe Sales::CheckoutService do
       quote.update!(billing_cycle: :monthly)
 
       expect { checkout(method: 'boleto') }.to raise_error(described_class::UnsupportedPaymentMethod, /mensal/)
+    end
+
+    # A customer who hits `payment_method=boleto` from a stale form or a
+    # copy-pasted URL, before the seller has flipped the boleto flag on,
+    # must be blocked here — the public page also hides the option, this
+    # guard covers the case where the form was submitted from a state
+    # that no longer reflects what the seller has released.
+    it 'refuses boleto when the seller has not enabled it on the proposal' do
+      quote.update!(boleto_enabled_at: nil)
+
+      expect { checkout(method: 'boleto') }.to raise_error(described_class::UnsupportedPaymentMethod, /liberado/)
     end
   end
 

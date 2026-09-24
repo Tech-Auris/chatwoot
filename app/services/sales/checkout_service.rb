@@ -33,7 +33,7 @@ class Sales::CheckoutService
   def perform
     raise TermsNotAccepted, 'É preciso aceitar os termos de uso' unless terms_signed?
 
-    raise UnsupportedPaymentMethod, 'O plano mensal é pago no cartão' unless self.class.offers?(payment_method, quote.billing_cycle)
+    ensure_payment_method_available!
 
     discard_open_asaas_installment
     quote.update!(payment_method: payment_method)
@@ -91,6 +91,18 @@ class Sales::CheckoutService
   private
 
   attr_reader :quote, :payment_method, :urls, :request
+
+  # Two guards, kept in one place so `perform` reads as the flow it is:
+  #   * `offers?` is the static rule of the catalog (card / long-plan pix /
+  #     long-plan boleto).
+  #   * The boleto opt-in is per-proposal: off by default and flipped on by
+  #     the seller from the Reservations grid. This catches a customer that
+  #     hit `payment_method=boleto` from a stale form / URL before the
+  #     seller had opened it up.
+  def ensure_payment_method_available!
+    raise UnsupportedPaymentMethod, 'O plano mensal é pago no cartão' unless self.class.offers?(payment_method, quote.billing_cycle)
+    raise UnsupportedPaymentMethod, 'Boleto ainda não foi liberado para esta proposta' if payment_method == 'boleto' && !quote.boleto_available?
+  end
 
   def client
     @client ||= Integrations::Stripe::Client.new

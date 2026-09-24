@@ -219,6 +219,40 @@ const cancelPixRegister = () => {
   pixModal.value = { open: false, reservation: null };
 };
 
+// Boleto ships off por default em toda proposta nova — o vendedor
+// libera aqui, mesmo padrão de "Dispensar cartão". Após liberado, o
+// cliente passa a ver a opção de boleto na página pública.
+const enableBoleto = async reservation => {
+  if (
+    !window.confirm('Liberar boleto como forma de pagamento para este cliente?')
+  )
+    return;
+
+  busyId.value = reservation.id;
+  error.value = null;
+  try {
+    const res = await fetch(
+      `${props.componentData.reservations_url}/${reservation.id}/enable_boleto`,
+      {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          Accept: 'application/json',
+          'X-CSRF-Token':
+            document.querySelector('meta[name="csrf-token"]')?.content ?? '',
+        },
+      }
+    );
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+    await fetchData();
+  } catch (e) {
+    error.value = e.message;
+  } finally {
+    busyId.value = null;
+  }
+};
+
 const waiveTokenCard = async reservation => {
   if (
     !window.confirm(
@@ -498,6 +532,37 @@ const submitRenew = async () => {
                   @click="openRegisterPayment(reservation)"
                 >
                   Registrar pagamento · {{ reservation.register_payment_label }}
+                </button>
+              </div>
+              <!-- Boleto liberação pré-venda — só aparece quando o plano
+                   suporta boleto (semestral/anual), a reserva ainda vale
+                   e o vendedor ainda não liberou. Após liberar, o cliente
+                   passa a ver a opção na página pública. Some sozinho
+                   quando a venda entra em "awaiting confirmation" (aí o
+                   botão de Registrar pagamento acima já toma o espaço). -->
+              <div
+                v-if="
+                  reservation.boleto_eligible_for_plan &&
+                  reservation.reservation_active &&
+                  !reservation.awaiting_manual_payment_confirmation
+                "
+                class="mt-1"
+              >
+                <span
+                  v-if="reservation.boleto_enabled"
+                  class="text-xs text-slate-500"
+                >
+                  Boleto liberado
+                </span>
+                <button
+                  v-else
+                  type="button"
+                  class="reset-base px-2 py-1 rounded border border-woot-200 text-woot-600 text-xs leading-tight whitespace-nowrap bg-white hover:bg-woot-50 disabled:opacity-40"
+                  :disabled="busyId === reservation.id"
+                  title="Libera boleto como forma de pagamento para este cliente na página pública."
+                  @click="enableBoleto(reservation)"
+                >
+                  Liberar boleto
                 </button>
               </div>
             </td>

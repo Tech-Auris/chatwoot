@@ -340,4 +340,42 @@ RSpec.describe 'Super Admin Commercial Reservations', type: :request do
         .to have_enqueued_job(Sales::ClickupCrmSyncJob).with(quote.id, 'closed')
     end
   end
+
+  describe 'POST /super_admin/commercial/reservations/:id/enable_boleto' do
+    context 'when the plan is eligible for boleto' do
+      let(:quote) { create(:sales_quote, status: :reserved, billing_cycle: :semiannual, reserved_until: 3.days.from_now) }
+
+      it 'stamps the enablement and records the audit event' do
+        expect do
+          post "/super_admin/commercial/reservations/#{quote.id}/enable_boleto"
+        end.to change { quote.reload.boleto_enabled_at }.from(nil).to(be_present)
+
+        expect(response).to have_http_status(:success)
+        expect(quote.events.pluck(:event)).to include('boleto_enabled')
+      end
+
+      it 'is idempotent — a second click does not overwrite the timestamp' do
+        post "/super_admin/commercial/reservations/#{quote.id}/enable_boleto"
+        stamped = quote.reload.boleto_enabled_at
+
+        travel 1.minute do
+          post "/super_admin/commercial/reservations/#{quote.id}/enable_boleto"
+        end
+
+        expect(quote.reload.boleto_enabled_at).to eq(stamped)
+      end
+    end
+
+    context 'when the plan is not eligible for boleto' do
+      let(:quote) { create(:sales_quote, status: :reserved, billing_cycle: :monthly, reserved_until: 3.days.from_now) }
+
+      it 'refuses and does not stamp the enablement' do
+        expect do
+          post "/super_admin/commercial/reservations/#{quote.id}/enable_boleto"
+        end.not_to(change { quote.reload.boleto_enabled_at })
+
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+    end
+  end
 end
