@@ -420,7 +420,9 @@ const menuItems = computed(() => {
           name: 'Unattended',
           activeOn: ['conversation_through_unattended'],
           label: t('SIDEBAR.UNATTENDED_CONVERSATIONS'),
-          icon: 'i-lucide-clock-alert',
+          // Balão com atenção — o relógio (clock-alert) dava colisão
+          // visual com 'Agendadas' logo abaixo, que também é um relógio.
+          icon: 'i-lucide-message-square-warning',
           to: accountScopedRoute('conversation_unattended'),
         },
         // Painel account-wide de mensagens agendadas — vive junto às

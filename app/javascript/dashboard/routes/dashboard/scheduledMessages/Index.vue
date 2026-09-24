@@ -317,11 +317,13 @@ const statusPillClass = status => {
                 </div>
                 <!-- Cancelar — só nas pendentes. Sent / failed são terminais;
                      held é uma pausa deliberada do operador e deve ser
-                     desfeita pelo drawer da conversa, que já sabe reagendar. -->
+                     desfeita pelo drawer da conversa, que já sabe reagendar.
+                     Vermelho segue o padrão do AurisChat para ação destrutiva
+                     (mesma paleta ruby do Media Hub). -->
                 <button
                   v-if="item.status === 'pending'"
                   type="button"
-                  class="!p-0 w-8 h-8 flex-shrink-0 inline-flex items-center justify-center rounded-md text-n-slate-11 hover:text-n-ruby-11 hover:bg-n-ruby-3 disabled:opacity-40"
+                  class="!p-0 w-8 h-8 flex-shrink-0 inline-flex items-center justify-center rounded-md text-n-ruby-11 bg-n-ruby-3 hover:bg-n-ruby-4 disabled:opacity-40"
                   :disabled="isCancelling(item.id)"
                   :title="t('SCHEDULED.CANCEL.LABEL')"
                   @click.stop="cancelPending(item)"
