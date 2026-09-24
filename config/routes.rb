@@ -84,6 +84,7 @@ Rails.application.routes.draw do
           # here so the panel can cancel a pending row without having to
           # know its conversation id.
           get 'scheduled_messages', to: 'scheduled_messages#index', defaults: { format: :json }
+          post 'scheduled_messages', to: 'scheduled_messages#create', defaults: { format: :json }
           delete 'scheduled_messages/:id', to: 'scheduled_messages#destroy', defaults: { format: :json }
           namespace :captain do
             resource :preferences, only: [:show, :update]

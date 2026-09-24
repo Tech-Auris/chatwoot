@@ -12,6 +12,7 @@ import { useRouter } from 'vue-router';
 import { useMapGetter } from 'dashboard/composables/store';
 import { useAlert } from 'dashboard/composables';
 import { useI18n } from 'vue-i18n';
+import NewScheduledMessageModal from './NewScheduledMessageModal.vue';
 
 const { t } = useI18n();
 const router = useRouter();
@@ -164,6 +165,15 @@ const goToConversation = item => {
 // own pause. Optimistically removes the row from the current list and
 // bumps the total count down; reloads the tab on error so the shown
 // state matches what the API actually holds.
+const showComposer = ref(false);
+const openComposer = () => {
+  showComposer.value = true;
+};
+const onScheduled = () => {
+  activeStatus.value = 'pending';
+  resetAndFetch();
+};
+
 const cancellingIds = ref(new Set());
 const isCancelling = id => cancellingIds.value.has(id);
 const cancelPending = async item => {
@@ -212,12 +222,24 @@ const statusPillClass = status => {
     <div class="mx-auto max-w-5xl h-full flex flex-col bg-n-solid-1 shadow-sm">
       <!-- Header -->
       <div class="border-b border-n-slate-4 px-6 pt-5 pb-3">
-        <h1 class="text-2xl font-semibold text-n-slate-12 leading-tight">
-          {{ t('SCHEDULED.TITLE') }}
-        </h1>
-        <p class="text-sm text-n-slate-11 mt-1 mb-4">
-          {{ t('SCHEDULED.SUBTITLE') }}
-        </p>
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <h1 class="text-2xl font-semibold text-n-slate-12 leading-tight">
+              {{ t('SCHEDULED.TITLE') }}
+            </h1>
+            <p class="text-sm text-n-slate-11 mt-1 mb-4">
+              {{ t('SCHEDULED.SUBTITLE') }}
+            </p>
+          </div>
+          <button
+            type="button"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-woot-500 text-white text-sm font-medium hover:bg-woot-600"
+            @click="openComposer"
+          >
+            <span class="i-lucide-plus size-4" />
+            {{ t('SCHEDULED.NEW.BUTTON') }}
+          </button>
+        </div>
         <nav class="flex gap-6 mb-[-1px]">
           <button
             v-for="tab in TABS"
@@ -343,5 +365,9 @@ const statusPillClass = status => {
         </template>
       </div>
     </div>
+    <NewScheduledMessageModal
+      v-model:show="showComposer"
+      @scheduled="onScheduled"
+    />
   </div>
 </template>

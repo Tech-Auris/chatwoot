@@ -95,6 +95,81 @@ RSpec.describe 'Scheduled Messages API', type: :request do
     end
   end
 
+  describe 'POST /api/v1/accounts/:account_id/scheduled_messages' do
+    let(:target_contact) { create(:contact, account: account, phone_number: '+5511900099999') }
+
+    it 'creates the scheduled message on an existing open conversation for the (contact, inbox) pair' do
+      contact_inbox = create(:contact_inbox, contact: target_contact, inbox: inbox_a, source_id: target_contact.phone_number)
+      conversation = create(:conversation, account: account, inbox: inbox_a, contact: target_contact, contact_inbox: contact_inbox, status: :open)
+
+      expect do
+        post "/api/v1/accounts/#{account.id}/scheduled_messages",
+             params: {
+               contact_id: target_contact.id,
+               inbox_id: inbox_a.id,
+               content: 'Retomando amanhã',
+               scheduled_at: 6.hours.from_now.iso8601,
+               hold_on_reply: true
+             },
+             headers: admin.create_new_auth_token,
+             as: :json
+      end.to change(ScheduledMessage, :count).by(1).and(not_change(Conversation, :count))
+
+      expect(response).to have_http_status(:success)
+      expect(response.parsed_body['conversation_id']).to eq(conversation.display_id)
+      sm = ScheduledMessage.last
+      expect(sm).to have_attributes(content: 'Retomando amanhã', conversation_id: conversation.id, hold_on_reply: true, status: 'pending')
+    end
+
+    it 'creates a fresh conversation when the contact has no open thread on that inbox yet' do
+      expect do
+        post "/api/v1/accounts/#{account.id}/scheduled_messages",
+             params: {
+               contact_id: target_contact.id,
+               inbox_id: inbox_a.id,
+               content: 'Follow-up amanhã',
+               scheduled_at: 3.hours.from_now.iso8601
+             },
+             headers: admin.create_new_auth_token,
+             as: :json
+      end.to change(ScheduledMessage, :count).by(1).and(change(Conversation, :count).by(1))
+
+      expect(response).to have_http_status(:success)
+    end
+
+    it 'refuses when the current user is not a member of the requested inbox' do
+      expect do
+        post "/api/v1/accounts/#{account.id}/scheduled_messages",
+             params: {
+               contact_id: target_contact.id,
+               inbox_id: inbox_b.id,
+               content: 'Fora do escopo',
+               scheduled_at: 1.day.from_now.iso8601
+             },
+             headers: agent.create_new_auth_token,
+             as: :json
+      end.not_to change(ScheduledMessage, :count)
+
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it 'refuses when the contact does not belong to the account' do
+      other_contact = create(:contact, account: create(:account))
+
+      post "/api/v1/accounts/#{account.id}/scheduled_messages",
+           params: {
+             contact_id: other_contact.id,
+             inbox_id: inbox_a.id,
+             content: 'x',
+             scheduled_at: 1.day.from_now.iso8601
+           },
+           headers: admin.create_new_auth_token,
+           as: :json
+
+      expect(response).to have_http_status(:not_found)
+    end
+  end
+
   describe 'DELETE /api/v1/accounts/:account_id/scheduled_messages/:id' do
     it 'cancels a pending scheduled message the current user can see' do
       expect do

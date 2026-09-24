@@ -18,6 +18,26 @@
       "CONFIRM": "Cancelar esta mensagem agendada? Ela não será enviada.",
       "DONE": "Mensagem agendada cancelada.",
       "FAILED": "Não foi possível cancelar a mensagem. Tente novamente."
+    },
+    "NEW": {
+      "BUTTON": "Agendar mensagem",
+      "TITLE": "Agendar mensagem",
+      "CONTACT_LABEL": "Para",
+      "CONTACT_PLACEHOLDER": "Digite pelo menos 2 caracteres para pesquisar por nome, e-mail ou número",
+      "CLEAR_CONTACT": "Limpar contato",
+      "SEARCHING": "Pesquisando…",
+      "INBOX_LABEL": "Via",
+      "INBOX_PLACEHOLDER": "Selecione uma caixa de entrada",
+      "MESSAGE_LABEL": "Mensagem",
+      "MESSAGE_PLACEHOLDER": "Escreva a mensagem que será enviada no horário programado…",
+      "SCHEDULE_LABEL": "Programar envio",
+      "HOLD_ON_REPLY": "Reter se o cliente responder primeiro",
+      "HOLD_ON_REPLY_HINT": "Se o cliente enviar uma mensagem antes desta ser enviada, ela ficará retida para revisão em vez de ser enviada automaticamente.",
+      "CANCEL": "Cancelar",
+      "SUBMIT": "Agendar",
+      "SAVING": "Agendando…",
+      "DONE": "Mensagem agendada com sucesso.",
+      "FAILED": "Não foi possível agendar a mensagem. Verifique os campos e tente novamente."
     }
   }
 }
