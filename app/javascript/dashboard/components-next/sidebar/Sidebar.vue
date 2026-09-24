@@ -708,6 +708,21 @@ const menuItems = computed(() => {
         },
       ],
     },
+    // Mensagens — hoje só um filho, Agendadas, mas segue a estrutura
+    // parent/children porque o painel de agendadas será a primeira de
+    // várias visões account-wide (envios recentes, falhas, etc.).
+    {
+      name: 'Messages',
+      label: t('SIDEBAR.MESSAGES'),
+      icon: 'i-lucide-mail',
+      children: [
+        {
+          name: 'Scheduled',
+          label: t('SIDEBAR.SCHEDULED_MESSAGES'),
+          to: accountScopedRoute('scheduled_messages_index'),
+        },
+      ],
+    },
     // Mídia — hub central com todas as imagens, documentos e links que a
     // conta trocou nas conversas. Fica logo abaixo do Marketing porque é
     // um recurso operacional, não de configuração.

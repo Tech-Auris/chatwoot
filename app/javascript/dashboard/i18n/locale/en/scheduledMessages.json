@@ -1,0 +1,17 @@
+{
+  "SCHEDULED": {
+    "TITLE": "Scheduled messages",
+    "SUBTITLE": "Scheduled messages across every conversation",
+    "LOADING": "Loading…",
+    "EMPTY": "No scheduled messages in this list.",
+    "NO_CONTACT_NAME": "Unnamed contact",
+    "NO_CONTENT": "(empty message)",
+    "ITEMS_LABEL": "item(s)",
+    "STATUS": {
+      "PENDING": "Pending",
+      "SENT": "Sent",
+      "FAILED": "Failed",
+      "HELD": "Held"
+    }
+  }
+}

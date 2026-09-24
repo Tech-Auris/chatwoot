@@ -389,6 +389,8 @@
     "PIXEL": "Pixel & Data",
     "ANALYTICS": "Analytics",
     "MEDIA": "Media",
+    "MESSAGES": "Messages",
+    "SCHEDULED_MESSAGES": "Scheduled",
     "PROFILE_SETTINGS": "Profile Settings",
     "ACCOUNT_SETTINGS": "Account Settings",
     "APPLICATIONS": "Applications",

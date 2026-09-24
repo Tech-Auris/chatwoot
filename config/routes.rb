@@ -78,6 +78,10 @@ Rails.application.routes.draw do
           end
           get 'media_hub', to: 'media_hub#index', defaults: { format: :json }
           delete 'media_hub', to: 'media_hub#destroy', defaults: { format: :json }
+          # Account-wide read of scheduled messages — powers the
+          # "Mensagens → Agendadas" left-nav entry. Per-conversation
+          # create/update/destroy stay in the existing nested controller.
+          get 'scheduled_messages', to: 'scheduled_messages#index', defaults: { format: :json }
           namespace :captain do
             resource :preferences, only: [:show, :update]
             resources :assistants do
