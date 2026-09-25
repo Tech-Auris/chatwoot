@@ -688,5 +688,43 @@ RSpec.describe 'Public sales proposal', type: :request do
 
       expect(response.body).to include('time já está preparando a implantação')
     end
+
+    # The step marker follows what the customer still has to do: showing
+    # "5. Onboarding" as the current step while a "Cadastrar cartão dos
+    # tokens" button waits below reads as a broken screen (the seller has
+    # to convince a suspicious customer that both are right at once).
+    describe 'the step marker while the token card is still pending' do
+      # `text-woot-600 font-medium` is the class the `_steps` partial paints
+      # on the current step only; the pattern lets us assert which label
+      # follows that class without pinning the whitespace between them.
+      def current_step_pattern(label)
+        /text-woot-600 font-medium">\s*\d+\.\s*#{Regexp.escape(label)}/
+      end
+
+      it 'stays on "4. Tokens" for a converted sale whose token card was neither saved nor waived' do
+        quote.update!(status: :converted, token_payment_method_id: nil, token_card_waived_at: nil)
+
+        get "/proposals/#{quote.public_token}/acompanhamento"
+
+        expect(response.body).to match(current_step_pattern('Tokens'))
+        expect(response.body).not_to match(current_step_pattern('Onboarding'))
+      end
+
+      it 'advances to "5. Onboarding" once the token card is on file' do
+        quote.update!(status: :converted, token_payment_method_id: 'seti_1')
+
+        get "/proposals/#{quote.public_token}/acompanhamento"
+
+        expect(response.body).to match(current_step_pattern('Onboarding'))
+      end
+
+      it 'advances to "5. Onboarding" once the seller explicitly waived the token card' do
+        quote.update!(status: :converted, token_card_waived_at: Time.current)
+
+        get "/proposals/#{quote.public_token}/acompanhamento"
+
+        expect(response.body).to match(current_step_pattern('Onboarding'))
+      end
+    end
   end
 end
