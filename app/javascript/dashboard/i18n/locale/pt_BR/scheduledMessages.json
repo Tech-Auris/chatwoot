@@ -11,7 +11,7 @@
       "PENDING": "Pendente",
       "SENT": "Enviada",
       "FAILED": "Falhou",
-      "HELD": "Suspensa"
+      "HELD": "Retida"
     },
     "CANCEL": {
       "LABEL": "Cancelar agendamento",
@@ -31,6 +31,8 @@
       "INBOX_UNREACHABLE": "Este contato não está em nenhuma caixa de entrada onde você tem acesso.",
       "MESSAGE_LABEL": "Mensagem",
       "MESSAGE_PLACEHOLDER": "Escreva a mensagem que será enviada no horário programado…",
+      "VARIABLE_HINT_PREFIX": "Digite",
+      "VARIABLE_HINT_SUFFIX": "para inserir variáveis",
       "SCHEDULE_LABEL": "Programar envio",
       "HOLD_ON_REPLY": "Reter se o cliente responder primeiro",
       "HOLD_ON_REPLY_HINT": "Se o cliente enviar uma mensagem antes desta ser enviada, ela ficará retida para revisão em vez de ser enviada automaticamente.",

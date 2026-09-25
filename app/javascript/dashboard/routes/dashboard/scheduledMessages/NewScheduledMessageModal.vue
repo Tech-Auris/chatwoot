@@ -1,9 +1,10 @@
 <script setup>
 /* global axios */
-import { computed, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
-import { useMapGetter } from 'dashboard/composables/store';
+import { useMapGetter, useStore } from 'dashboard/composables/store';
+import VariableList from 'dashboard/components/widgets/conversation/VariableList.vue';
 
 // A lean v1 of the composer that lets the operator schedule a message
 // from the Agendadas panel without having to open a conversation first.
@@ -24,6 +25,7 @@ const emit = defineEmits(['update:show', 'scheduled']);
 const { t } = useI18n();
 const accountId = useMapGetter('getCurrentAccountId');
 
+const store = useStore();
 const contactQuery = ref('');
 const contactResults = ref([]);
 const contactSearchLoading = ref(false);
@@ -34,6 +36,101 @@ const message = ref('');
 const scheduledAt = ref('');
 const holdOnReply = ref(true);
 const isSaving = ref(false);
+
+// Textarea auto-grow — o composer de template do WhatsApp na Meta cresce
+// junto com o texto, e o operador pediu o mesmo aqui pra caber mensagens
+// mais longas sem obrigar o scroll interno.
+const messageTextareaRef = ref(null);
+const MIN_TEXTAREA_HEIGHT = 128;
+const MAX_TEXTAREA_HEIGHT = 400;
+const VARIABLE_TRIGGER = '{{';
+const resizeTextarea = () => {
+  const el = messageTextareaRef.value;
+  if (!el) return;
+  el.style.height = 'auto';
+  const next = Math.min(
+    Math.max(el.scrollHeight, MIN_TEXTAREA_HEIGHT),
+    MAX_TEXTAREA_HEIGHT
+  );
+  el.style.height = `${next}px`;
+};
+
+// Variable picker — reaproveita o `VariableList` que o composer de
+// conversas usa. Sensor simples: quando o usuário digita `{{` e continua
+// dentro dele, mostra o dropdown; ao escolher, substitui o fragmento
+// `{{search` por `{{ variable.key }}` e devolve o cursor pra depois.
+const showVariablePicker = ref(false);
+const variableSearchKey = ref('');
+const variableStartPos = ref(0);
+
+const evaluateVariablePicker = () => {
+  const el = messageTextareaRef.value;
+  if (!el) {
+    showVariablePicker.value = false;
+    return;
+  }
+  const caret = el.selectionStart ?? message.value.length;
+  const before = message.value.slice(0, caret);
+  const openIdx = before.lastIndexOf('{{');
+  if (openIdx === -1) {
+    showVariablePicker.value = false;
+    return;
+  }
+  const fragment = before.slice(openIdx + 2);
+  // Um `}` ou uma quebra de linha fecha o contexto — se aparecerem
+  // depois do `{{` mais recente, não estamos mais dentro dele.
+  if (/[}\n]/.test(fragment)) {
+    showVariablePicker.value = false;
+    return;
+  }
+  variableStartPos.value = openIdx;
+  variableSearchKey.value = fragment;
+  showVariablePicker.value = true;
+};
+
+const onMessageInput = () => {
+  resizeTextarea();
+  evaluateVariablePicker();
+};
+
+// Ao sair do textarea, fecha o picker — mas com atraso curto para o
+// clique numa opção do MentionBox conseguir disparar antes do teardown.
+let blurCloseHandle = null;
+const onMessageBlur = () => {
+  if (blurCloseHandle) clearTimeout(blurCloseHandle);
+  blurCloseHandle = setTimeout(() => {
+    showVariablePicker.value = false;
+  }, 150);
+};
+const onMessageFocus = () => {
+  if (blurCloseHandle) {
+    clearTimeout(blurCloseHandle);
+    blurCloseHandle = null;
+  }
+};
+
+const insertVariable = variableKey => {
+  const el = messageTextareaRef.value;
+  if (!el) return;
+  const caret = el.selectionStart ?? message.value.length;
+  const before = message.value.slice(0, variableStartPos.value);
+  const after = message.value.slice(caret);
+  const replacement = `{{ ${variableKey} }}`;
+  message.value = `${before}${replacement}${after}`;
+  showVariablePicker.value = false;
+  nextTick(() => {
+    resizeTextarea();
+    const nextCaret = before.length + replacement.length;
+    el.focus();
+    el.setSelectionRange(nextCaret, nextCaret);
+  });
+};
+
+// Custom attributes populam variáveis extras (ex.: `contact.custom_attribute.
+// birthday`), então garantimos que o store carregou antes de abrir a lista.
+onMounted(() => {
+  store.dispatch('attributes/get');
+});
 
 // Caixas do usuário logado — o Vuex já carrega só o que ele pode
 // ver (administrator / manager: todas; agent: só as inboxes onde é
@@ -150,6 +247,8 @@ const reset = () => {
   message.value = '';
   scheduledAt.value = '';
   holdOnReply.value = true;
+  showVariablePicker.value = false;
+  nextTick(() => resizeTextarea());
 };
 
 const submit = async () => {
@@ -197,7 +296,7 @@ watch(
       @click.self="close"
     >
       <div
-        class="w-full max-w-lg bg-n-solid-1 rounded-xl shadow-xl flex flex-col max-h-[92vh] overflow-hidden"
+        class="w-full max-w-2xl bg-n-solid-1 rounded-xl shadow-xl flex flex-col max-h-[92vh] overflow-hidden"
       >
         <header class="flex items-start justify-between px-6 pt-5 pb-3">
           <h2 class="text-lg font-semibold text-n-slate-12">
@@ -306,17 +405,42 @@ watch(
             </p>
           </div>
 
-          <!-- Message -->
-          <div>
-            <label class="text-sm font-medium text-n-slate-12">
-              {{ t('SCHEDULED.NEW.MESSAGE_LABEL') }}
-            </label>
+          <!-- Message: textarea auto-grow + picker de variáveis (`{{`).
+               A dica sobre `{{` fica sempre visível pra o operador
+               descobrir a funcionalidade sem precisar receber onboarding
+               separado. -->
+          <div class="relative">
+            <div class="flex items-baseline justify-between gap-2">
+              <label class="text-sm font-medium text-n-slate-12">
+                {{ t('SCHEDULED.NEW.MESSAGE_LABEL') }}
+              </label>
+              <span class="text-xs text-n-slate-11">
+                {{ t('SCHEDULED.NEW.VARIABLE_HINT_PREFIX') }}
+                <code class="text-n-slate-12">{{ VARIABLE_TRIGGER }}</code>
+                {{ t('SCHEDULED.NEW.VARIABLE_HINT_SUFFIX') }}
+              </span>
+            </div>
             <textarea
+              ref="messageTextareaRef"
               v-model="message"
-              rows="5"
               :placeholder="t('SCHEDULED.NEW.MESSAGE_PLACEHOLDER')"
-              class="mt-1 w-full border border-n-slate-3 rounded-md px-3 py-2 text-sm text-n-slate-12 focus:border-n-brand focus:outline-none"
+              class="mt-1 w-full border border-n-slate-3 rounded-md px-3 py-2 text-sm text-n-slate-12 focus:border-n-brand focus:outline-none resize-none"
+              :style="{ minHeight: `${MIN_TEXTAREA_HEIGHT}px` }"
+              @input="onMessageInput"
+              @keyup="evaluateVariablePicker"
+              @click="evaluateVariablePicker"
+              @focus="onMessageFocus"
+              @blur="onMessageBlur"
             />
+            <div
+              v-if="showVariablePicker"
+              class="absolute left-0 right-0 top-full mt-1 z-20"
+            >
+              <VariableList
+                :search-key="variableSearchKey"
+                @select-variable="insertVariable"
+              />
+            </div>
           </div>
 
           <!-- Schedule -->
