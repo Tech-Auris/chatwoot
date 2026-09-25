@@ -6,12 +6,17 @@ RSpec.describe 'Commercial Stripe webhook', type: :request do
                          stripe_customer_id: 'cus_1', status: :signed)
   end
 
+  # Build the payload as a real `Stripe::Event` (not a plain Hash) so the
+  # spec exercises the runtime type the gem hands back. A Hash-shaped fake
+  # supports `.dig` and hides bugs like the metadata lookup calling `.dig`
+  # on a `Stripe::StripeObject` (which does NOT implement it) and blowing up
+  # with 500 at the endpoint.
   def event(type: 'checkout.session.completed', mode: 'payment', quote_id: quote.id, session_id: 'cs_1')
-    {
-      'type' => type,
-      'data' => { 'object' => { 'id' => session_id, 'mode' => mode, 'setup_intent' => 'seti_1',
-                                'metadata' => { 'sales_quote_id' => quote_id.to_s } } }
-    }
+    Stripe::Event.construct_from(
+      type: type,
+      data: { object: { id: session_id, object: 'checkout.session', mode: mode,
+                        setup_intent: 'seti_1', metadata: { sales_quote_id: quote_id.to_s } } }
+    )
   end
 
   def post_event(payload)

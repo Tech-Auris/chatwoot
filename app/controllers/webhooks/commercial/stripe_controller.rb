@@ -31,7 +31,12 @@ class Webhooks::Commercial::StripeController < ActionController::API
 
   def handle(event)
     session = event['data']['object']
-    quote = SalesQuote.find_by(id: session.dig('metadata', 'sales_quote_id'))
+    # `session` is a `Stripe::Checkout::Session` (a `Stripe::StripeObject`) —
+    # it supports `[]` and method access but does NOT implement `dig`, so a
+    # `session.dig('metadata', 'sales_quote_id')` here raised `NoMethodError`
+    # and returned 500 to Stripe. Bracket-access it directly.
+    metadata = session['metadata']
+    quote = SalesQuote.find_by(id: metadata && metadata['sales_quote_id'])
     return if quote.blank?
 
     session['mode'] == 'setup' ? record_token_card(quote, session) : record_payment(quote, session)
