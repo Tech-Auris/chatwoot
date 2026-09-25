@@ -1,10 +1,13 @@
 <%
-  # The bar shows the step that is still open, so it stops at the payment
-  # while the payment is pending — a card saved for the token charges is
-  # convenience, not a paid contract.
+  # The bar shows the step that is still open. Onboarding only becomes
+  # current after the tokens step is done — either the card was saved on
+  # Stripe or the seller waived it — so the marker and the CTA underneath
+  # agree on what the customer still has to do; showing "5. Onboarding"
+  # with a "Cadastrar cartão dos tokens" button below it used to read as
+  # a broken screen.
   current_step =
-    if @proposal.converted? then :onboarding
-    elsif @proposal.paid? then :tokens
+    if @proposal.converted? && @proposal.token_card_settled? then :onboarding
+    elsif @proposal.paid? || @proposal.converted? then :tokens
     else :payment
     end
 %>
