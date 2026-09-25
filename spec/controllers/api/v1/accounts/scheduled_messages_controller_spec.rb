@@ -168,6 +168,42 @@ RSpec.describe 'Scheduled Messages API', type: :request do
 
       expect(response).to have_http_status(:not_found)
     end
+
+    # A WhatsApp Cloud sale scheduled outside the 24h window has to go
+    # out as an approved template. The panel form sends `template_params`
+    # (name, category, language, processed_params); the controller has
+    # to persist that blob so the send job can pass it down to
+    # MessageBuilder, which routes to the template path.
+    it 'persists template_params when the client sent them' do
+      template_payload = {
+        name: 'lembrete_agendamento',
+        category: 'MARKETING',
+        language: 'pt_BR',
+        processed_params: { body: { '1' => 'Fabio', '2' => '15h' } }
+      }
+
+      post "/api/v1/accounts/#{account.id}/scheduled_messages",
+           params: {
+             contact_id: target_contact.id,
+             inbox_id: inbox_a.id,
+             content: 'Olá Fabio, seu agendamento é às 15h',
+             template_params: template_payload,
+             scheduled_at: 4.hours.from_now.iso8601
+           },
+           headers: admin.create_new_auth_token,
+           as: :json
+
+      expect(response).to have_http_status(:success)
+      sm = ScheduledMessage.last
+      expect(sm.template_params).to include(
+        'name' => 'lembrete_agendamento',
+        'category' => 'MARKETING',
+        'language' => 'pt_BR'
+      )
+      expect(sm.template_params['processed_params']).to include(
+        'body' => a_hash_including('1' => 'Fabio', '2' => '15h')
+      )
+    end
   end
 
   describe 'DELETE /api/v1/accounts/:account_id/scheduled_messages/:id' do
