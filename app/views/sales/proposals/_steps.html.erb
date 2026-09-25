@@ -10,12 +10,24 @@
   order = steps.map(&:last)
   current_index = order.index(current) || 0
 %>
-<ol class="flex items-center gap-2 mb-6" aria-label="Etapas da contratação">
-  <% steps.each_with_index do |(label, key), index| %>
-    <li class="flex-1">
+<%# Mobile-first: em telas estreitas os seis rótulos não cabiam numa
+    linha e quebravam pra duas, desalinhando a barra. Agora os passos
+    que não são o atual viram uma pílula estreita com só o número
+    (`min-w-[26px]`), enquanto o passo atual absorve o espaço restante
+    (`flex-1`) e mostra `N. Nome` inteiro sem truncar. A partir do
+    breakpoint `sm:`, tudo volta pra seis colunas iguais com todos os
+    rótulos — o layout do desktop segue idêntico. %>
+<ol class="flex items-start gap-2 mb-6" aria-label="Etapas da contratação">
+  <% steps.each_with_index do |(label, _key), index| %>
+    <% is_current = index == current_index %>
+    <li class="<%= is_current ? 'flex-1 min-w-0' : 'flex-none min-w-[26px] sm:flex-1 sm:min-w-0' %>">
       <div class="h-1 rounded <%= index <= current_index ? 'bg-woot-500' : 'bg-slate-200' %>"></div>
-      <span class="mt-1 block text-[11px] <%= index == current_index ? 'text-woot-600 font-medium' : 'text-slate-400' %>">
+      <span class="mt-1 block text-[11px] whitespace-nowrap overflow-hidden text-ellipsis <%= is_current ? 'text-left text-woot-600 font-medium' : 'text-center sm:text-left text-slate-400' %>">
+        <% if is_current %>
         <%= index + 1 %>. <%= label %>
+        <% else %>
+        <%= index + 1 %><span class="hidden sm:inline">. <%= label %></span>
+        <% end %>
       </span>
     </li>
   <% end %>
