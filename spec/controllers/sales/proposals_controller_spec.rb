@@ -726,5 +726,46 @@ RSpec.describe 'Public sales proposal', type: :request do
         expect(response.body).to match(current_step_pattern('Onboarding'))
       end
     end
+
+    # In narrow viewports the six rótulos didn't fit and the labels
+    # broke to a second line. The partial now hides the label of any
+    # non-current step behind a `hidden sm:inline` span so mobile only
+    # shows the number; from `sm:` upwards every label is visible again.
+    describe 'the mobile-only collapse of non-current step names' do
+      it 'wraps a non-current step name in a sm-only span' do
+        quote.update!(status: :signed, payment_method: :pix)
+
+        get "/proposals/#{quote.public_token}/acompanhamento"
+
+        # "Reservar" is a past step here — its name lives inside the
+        # sm-only span so mobile only shows the number.
+        expect(response.body).to include('<span class="hidden sm:inline">. Reservar</span>')
+        expect(response.body).to include('<span class="hidden sm:inline">. Onboarding</span>')
+      end
+
+      it 'leaves the current step name outside the sm-only span so it always shows' do
+        quote.update!(status: :signed, payment_method: :pix)
+
+        get "/proposals/#{quote.public_token}/acompanhamento"
+
+        # Signed pix → current step is Pagamento. The rótulo has to
+        # render always, so it is NOT inside a `hidden sm:inline` span,
+        # and the current-step highlight class stays paired with the
+        # full "3. Pagamento" text.
+        expect(response.body).not_to include('<span class="hidden sm:inline">. Pagamento</span>')
+        expect(response.body).to match(/text-woot-600 font-medium">\s*\d+\.\s*Pagamento/)
+      end
+
+      # The `flex-none min-w-[26px]` on non-currents is what makes them
+      # collapse to a narrow number pill on mobile; the `sm:flex-1`
+      # brings them back to equal-width columns on desktop.
+      it 'gives non-current steps a narrow fixed width on mobile' do
+        quote.update!(status: :signed, payment_method: :pix)
+
+        get "/proposals/#{quote.public_token}/acompanhamento"
+
+        expect(response.body).to include('flex-none min-w-[26px] sm:flex-1 sm:min-w-0')
+      end
+    end
   end
 end
