@@ -7,11 +7,11 @@ import { useI18n } from 'vue-i18n';
 import { useStore, useMapGetter } from 'dashboard/composables/store';
 import { useAlert } from 'dashboard/composables';
 
-const TRIGGER_TYPES = [
-  'funnel_stage_reached',
-  'label_added',
-  'automation_action',
-];
+// `automation_action` foi removido do dropdown enquanto a operação não
+// usa esse gatilho. A i18n do label e o resolver do `triggerLabel` ficam
+// intactos pra render correto de eventos antigos que porventura tenham
+// sido salvos com esse tipo antes.
+const TRIGGER_TYPES = ['funnel_stage_reached', 'label_added'];
 
 const { t } = useI18n();
 const store = useStore();
