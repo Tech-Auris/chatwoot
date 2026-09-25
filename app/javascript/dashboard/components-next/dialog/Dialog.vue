@@ -97,18 +97,33 @@ const open = () => {
   dialogRef.value?.showModal();
 };
 
+// When the parent asks us to close programmatically, we need to bypass
+// the "blocking dialog" reopener below — otherwise a `dismissable=false`
+// dialog would never close on its own once the parent said so, and the
+// user would see an empty modal after the queue drains (Operations
+// Notifications hit exactly this: acknowledging the last notification
+// left the empty dialog on screen because the reopener fired on the
+// programmatic close event too).
+let isClosingProgrammatically = false;
+
 const close = () => {
+  isClosingProgrammatically = true;
   emit('close');
   dialogRef.value?.close();
   isOpen.value = false;
 };
 
-// Only close if the close event originated from this dialog,
-// not from a child dialog (e.g. ProseMirror prompt) bubbling up.
+// The native `close` event fires for programmatic `.close()` AND for user
+// gestures (ESC on a dismissable dialog, or a form submit inside it). We
+// only defend against the user gesture — a blocking dialog is defined
+// by "the user cannot dismiss it", not "nobody can".
 const handleDialogClose = e => {
+  if (isClosingProgrammatically) {
+    isClosingProgrammatically = false;
+    return;
+  }
   if (!props.dismissable) {
-    // The native `close` event fires before the dialog is torn down; a
-    // blocking dialog re-opens itself so ESC does not dismiss it.
+    // ESC on a blocking dialog: re-open it so the gesture is a no-op.
     dialogRef.value?.showModal();
     return;
   }
