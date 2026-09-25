@@ -93,6 +93,23 @@ RSpec.describe Sales::ProposalsHelper do
 
       expect(helper.proposal_installment_hint(quote)).to be_nil
     end
+
+    # Reporte de campo (Fernanda Alarcon): reserva vencida, cupom de
+    # 100% na Implantação sobrevive, mas a cortesia da reunião não —
+    # e a parcela mostrada precisa partir do `effective_total_amount`
+    # (que já peela o meeting). Com o valor frozen a linha embaixo do
+    # Total (que usa `effective_total_amount`) e a linha de parcela
+    # divergiam.
+    it 'splits by the post-reservation effective total when the reservation lapsed' do
+      # subtotal 16.950 - waiver 3.000 = 13.950 elegível; 10% meeting = 1.395.
+      # Frozen: total 12.555, discount 4.395, meeting_amount 1.395.
+      # Reserva vencida → effective_total = 12.555 + 1.395 = 13.950.
+      quote = build(:sales_quote, billing_cycle: :annual, reserved_until: 1.day.ago,
+                                  total_amount: 1_255_500, discount_amount: 439_500,
+                                  meeting_discount: true, meeting_discount_amount: 139_500)
+
+      expect(helper.proposal_installment_hint(quote)).to eq('12x de R$ 1.162,50 no cartão de crédito')
+    end
   end
 
   describe '#proposal_pix_cash_hint' do
@@ -112,6 +129,19 @@ RSpec.describe Sales::ProposalsHelper do
       quote = build(:sales_quote, billing_cycle: :monthly, total_amount: 89_700)
 
       expect(helper.proposal_pix_cash_hint(quote)).to be_nil
+    end
+
+    # Same rationale as `proposal_installment_hint`: parte do
+    # `effective_total_amount` (com o meeting peelado após reserva
+    # vencida), senão o "à vista" mostraria um valor mais baixo que
+    # o Total logo acima consegue explicar.
+    it 'discounts the post-reservation effective total when the reservation lapsed' do
+      # effective_total 13.950 → PIX à-vista (10%) = 12.555.
+      quote = build(:sales_quote, billing_cycle: :annual, reserved_until: 1.day.ago,
+                                  total_amount: 1_255_500, discount_amount: 439_500,
+                                  meeting_discount: true, meeting_discount_amount: 139_500)
+
+      expect(helper.proposal_pix_cash_hint(quote)).to eq(amount: 1_255_500, percent: 10)
     end
   end
 end
