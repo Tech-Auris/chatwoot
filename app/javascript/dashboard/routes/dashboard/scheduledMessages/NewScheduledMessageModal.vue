@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
 import { useMapGetter, useStore } from 'dashboard/composables/store';
 import VariableList from 'dashboard/components/widgets/conversation/VariableList.vue';
+import WhatsappTemplatesModal from 'dashboard/components/widgets/conversation/WhatsappTemplates/Modal.vue';
 import { INBOX_TYPES } from 'dashboard/helper/inbox';
 
 // A lean v1 of the composer that lets the operator schedule a message
@@ -37,6 +38,13 @@ const message = ref('');
 const scheduledAt = ref('');
 const holdOnReply = ref(true);
 const isSaving = ref(false);
+// Template WhatsApp (Cloud oficial da Meta) — quando escolhido, o
+// operador está agendando um envio de template. `content` recebe o
+// texto renderizado (com variáveis preenchidas) só para preview; o
+// payload verdadeiro é `templateParams`, que o job de disparo lê e
+// passa pro MessageBuilder pra rotear via WhatsApp Cloud API.
+const templateParams = ref(null);
+const showTemplatePickerModal = ref(false);
 
 // Textarea auto-grow — o composer de template do WhatsApp na Meta cresce
 // junto com o texto, e o operador pediu o mesmo aqui pra caber mensagens
@@ -176,6 +184,37 @@ const isWhatsappCloudInbox = computed(() => {
   return provider !== 'baileys' && provider !== 'zapi';
 });
 
+const hasTemplate = computed(
+  () => templateParams.value && Object.keys(templateParams.value).length > 0
+);
+
+const templateName = computed(
+  () => templateParams.value?.name || templateParams.value?.id || null
+);
+
+const openTemplatePicker = () => {
+  showTemplatePickerModal.value = true;
+};
+
+const closeTemplatePicker = () => {
+  showTemplatePickerModal.value = false;
+};
+
+const onTemplatePicked = payload => {
+  // O `WhatsappTemplates/Modal.vue` emite `{ message, templateParams }`
+  // após o operador escolher o template e preencher as variáveis.
+  templateParams.value = payload.templateParams || null;
+  message.value = payload.message || '';
+  closeTemplatePicker();
+  nextTick(() => resizeTextarea());
+};
+
+const clearTemplate = () => {
+  templateParams.value = null;
+  message.value = '';
+  nextTick(() => resizeTextarea());
+};
+
 // A fresh contact search fires whenever the operator types >= 2 chars.
 // The endpoint is the same one the pencil flow calls; results carry
 // `contact_inboxes` inline so we can populate Via without a follow-up.
@@ -267,14 +306,16 @@ const applyShortcut = shortcut => {
     `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 };
 
-const canSubmit = computed(
-  () =>
-    selectedContact.value &&
-    selectedInboxId.value &&
-    message.value.trim().length > 0 &&
-    !!scheduledAt.value &&
-    !isSaving.value
-);
+const canSubmit = computed(() => {
+  if (!selectedContact.value) return false;
+  if (!selectedInboxId.value) return false;
+  if (!scheduledAt.value) return false;
+  if (isSaving.value) return false;
+  // Template picked → basta ter `templateParams` (content vem renderizado
+  // do próprio parser). Sem template → o texto livre precisa existir.
+  if (hasTemplate.value) return true;
+  return message.value.trim().length > 0;
+});
 
 const close = () => emit('update:show', false);
 
@@ -284,6 +325,8 @@ const reset = () => {
   scheduledAt.value = '';
   holdOnReply.value = true;
   showVariablePicker.value = false;
+  templateParams.value = null;
+  showTemplatePickerModal.value = false;
   nextTick(() => resizeTextarea());
 };
 
@@ -294,13 +337,18 @@ const submit = async () => {
     // Convert the local `YYYY-MM-DDTHH:mm` back to an ISO the server can
     // read as UTC without inheriting the app's `Time.zone`.
     const iso = new Date(scheduledAt.value).toISOString();
-    await axios.post(`/api/v1/accounts/${accountId.value}/scheduled_messages`, {
+    const payload = {
       contact_id: selectedContact.value.id,
       inbox_id: selectedInboxId.value,
       content: message.value,
       scheduled_at: iso,
       hold_on_reply: holdOnReply.value,
-    });
+    };
+    if (hasTemplate.value) payload.template_params = templateParams.value;
+    await axios.post(
+      `/api/v1/accounts/${accountId.value}/scheduled_messages`,
+      payload
+    );
     useAlert(t('SCHEDULED.NEW.DONE'));
     emit('scheduled');
     reset();
@@ -333,6 +381,13 @@ watch(inboxOptionsForVia, options => {
   ) {
     selectedInboxId.value = null;
   }
+});
+
+// Trocar a inbox depois de já ter escolhido um template invalidaria a
+// escolha (o template pertence à caixa anterior), então limpa. O
+// operador reabre o picker com o template set da nova inbox.
+watch(selectedInboxId, () => {
+  if (hasTemplate.value) clearTemplate();
 });
 </script>
 
@@ -459,24 +514,61 @@ watch(inboxOptionsForVia, options => {
               {{ t('SCHEDULED.NEW.INBOX_UNREACHABLE') }}
             </p>
             <!-- WhatsApp Cloud (oficial da Meta): fora da janela de 24h
-                 só aceita envio como template. O picker de template pra
-                 dentro desse modal ainda está em preparação; até lá, o
-                 aviso trava a espera do operador. -->
-            <p v-if="isWhatsappCloudInbox" class="mt-2 text-xs text-n-amber-11">
-              {{ t('SCHEDULED.NEW.WHATSAPP_CLOUD_TEMPLATE_NOTICE') }}
-            </p>
+                 só aceita envio como template. Aviso + botão pra abrir
+                 o TemplatesPicker; depois de escolhido, o badge mostra
+                 o template selecionado com opção de trocar. -->
+            <div
+              v-if="isWhatsappCloudInbox && !hasTemplate"
+              class="mt-2 flex flex-col gap-1"
+            >
+              <p class="text-xs text-n-amber-11">
+                {{ t('SCHEDULED.NEW.WHATSAPP_CLOUD_TEMPLATE_NOTICE') }}
+              </p>
+              <button
+                type="button"
+                class="self-start inline-flex items-center gap-1 rounded border border-n-brand-solid/60 text-n-brand px-3 py-1.5 text-xs font-medium hover:bg-n-alpha-1"
+                @click="openTemplatePicker"
+              >
+                <span class="i-lucide-zap size-4" />
+                {{ t('SCHEDULED.NEW.PICK_TEMPLATE') }}
+              </button>
+            </div>
+            <div
+              v-else-if="hasTemplate"
+              class="mt-2 flex items-center justify-between rounded border border-n-brand-solid/40 bg-n-alpha-1 px-3 py-2 text-xs"
+            >
+              <span class="text-n-slate-12">
+                {{
+                  t('SCHEDULED.NEW.TEMPLATE_SELECTED', { name: templateName })
+                }}
+              </span>
+              <button
+                type="button"
+                class="text-n-slate-11 hover:text-n-slate-12"
+                :title="t('SCHEDULED.NEW.CLEAR_TEMPLATE')"
+                @click="clearTemplate"
+              >
+                <span class="i-lucide-x size-4" />
+              </button>
+            </div>
           </div>
 
           <!-- Message: textarea auto-grow + picker de variáveis (`{{`).
                A dica sobre `{{` fica sempre visível pra o operador
                descobrir a funcionalidade sem precisar receber onboarding
-               separado. -->
+               separado. Quando um template do WhatsApp Cloud já foi
+               escolhido, o campo vira preview readonly (o texto vem
+               renderizado do parser com as variáveis preenchidas). -->
           <div class="relative">
             <div class="flex items-baseline justify-between gap-2">
               <label class="text-sm font-medium text-n-slate-12">
-                {{ t('SCHEDULED.NEW.MESSAGE_LABEL') }}
+                {{
+                  hasTemplate
+                    ? t('SCHEDULED.NEW.TEMPLATE_PREVIEW_LABEL')
+                    : t('SCHEDULED.NEW.MESSAGE_LABEL')
+                }}
               </label>
-              <span class="text-xs text-n-slate-11">
+              <span v-if="!hasTemplate" class="text-xs text-n-slate-11">
                 {{ t('SCHEDULED.NEW.VARIABLE_HINT_PREFIX') }}
                 <code class="text-n-slate-12">{{ VARIABLE_TRIGGER }}</code>
                 {{ t('SCHEDULED.NEW.VARIABLE_HINT_SUFFIX') }}
@@ -486,7 +578,9 @@ watch(inboxOptionsForVia, options => {
               ref="messageTextareaRef"
               v-model="message"
               :placeholder="t('SCHEDULED.NEW.MESSAGE_PLACEHOLDER')"
+              :readonly="hasTemplate"
               class="mt-1 w-full border border-n-slate-3 rounded-md px-3 py-2 text-sm text-n-slate-12 focus:border-n-brand focus:outline-none resize-none"
+              :class="hasTemplate ? 'bg-n-alpha-2 cursor-not-allowed' : ''"
               :style="{ minHeight: `${MIN_TEXTAREA_HEIGHT}px` }"
               @input="onMessageInput"
               @keyup="evaluateVariablePicker"
@@ -495,7 +589,7 @@ watch(inboxOptionsForVia, options => {
               @blur="onMessageBlur"
             />
             <div
-              v-if="showVariablePicker"
+              v-if="showVariablePicker && !hasTemplate"
               class="absolute left-0 right-0 top-full mt-1 z-20"
             >
               <VariableList
@@ -581,5 +675,17 @@ watch(inboxOptionsForVia, options => {
         </footer>
       </div>
     </div>
+
+    <!-- Modal do template do WhatsApp: recebe o inbox id, renderiza o
+         `TemplatesPicker` + `WhatsAppTemplateParser`, emite o payload
+         final quando o operador confirma. Fica dentro do `teleport` pra
+         herdar o z-index acima da backdrop principal. -->
+    <WhatsappTemplatesModal
+      v-model:show="showTemplatePickerModal"
+      :inbox-id="selectedInboxId"
+      :send-button-label="t('SCHEDULED.NEW.PICK_TEMPLATE_CONFIRM')"
+      @on-send="onTemplatePicked"
+      @cancel="closeTemplatePicker"
+    />
   </teleport>
 </template>

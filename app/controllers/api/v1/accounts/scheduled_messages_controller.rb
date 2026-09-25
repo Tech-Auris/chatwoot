@@ -168,16 +168,28 @@ class Api::V1::Accounts::ScheduledMessagesController < Api::V1::Accounts::BaseCo
     ).perform
   end
 
+  # A WhatsApp Cloud sale scheduled outside the 24h window can only
+  # dispatch as an approved template; the model's `content_optional?`
+  # already accepts a blank `content` when `template_params` is present,
+  # and the send job passes `template_params` down to MessageBuilder,
+  # which routes to the template path. All this needs on the panel side
+  # is to accept the nested hash from the form.
   def build_scheduled_message(conversation, inbox)
     conversation.scheduled_messages.create(
       account: Current.account,
       inbox: inbox,
       author: Current.user,
       content: params[:content],
+      template_params: scheduled_message_template_params,
       scheduled_at: params[:scheduled_at],
       hold_on_reply: ActiveModel::Type::Boolean.new.cast(params[:hold_on_reply]) || false,
       status: :pending
     )
+  end
+
+  def scheduled_message_template_params
+    permitted = params.permit(template_params: {}).to_h[:template_params]
+    permitted.presence
   end
 
   def render_scheduled_message_errors(scheduled_message)
