@@ -82,10 +82,16 @@ class Sales::ClickupCrmSyncService
     write_field(:custom_dev_count, custom_dev_count)
     write_field(:unit_setup_count, unit_setup_count)
     write_field(:setup_addons, setup_addons_body)
-    write_field(:total_paid, currency(quote.total_amount))
-    write_field(:subscription_value, currency(subscription_monthly_value_cents))
+    # `effective_charge_amount` bakes in the PIX percent when the plan
+    # carries one (semiannual 5%, annual 10%); for card / boleto it
+    # collapses to `effective_total_amount`. Anchoring the three money
+    # fields off it makes the report read what actually hit the account,
+    # not the "de-tabela" the PIX side never charged.
+    charged = quote.effective_charge_amount
+    write_field(:total_paid, currency(charged))
+    write_field(:subscription_value, currency(subscription_monthly_value_cents(charged)))
     write_field(:implementation_value, currency(implementation_value_cents))
-    write_field(:subscription_discount, currency(quote.discount_amount))
+    write_field(:subscription_discount, currency(quote.subtotal_amount - charged))
 
     quote.events.create!(event: 'clickup_crm_paid_fields_synced', metadata: { task_id: task_id })
   end
@@ -180,44 +186,37 @@ class Sales::ClickupCrmSyncService
     quote.items.where(name: name).sum(:quantity)
   end
 
-  # Recurring lines summed, the meeting-discount attributed to them
-  # (10% off the recurring subtotal when it was applied), then divided by
-  # the plan's months — the value the customer pays every month, whether
-  # the plan is billed monthly or paid up-front for six or twelve months.
+  # Subscription split as `(what was actually paid − implementation) /
+  # months`. Reconciles cleanly with the total in every combination —
+  # PIX à-vista discount, meeting courtesy, scoped-coupon waivers on
+  # avulsos — because implementation is fixed at "avulsos net of
+  # waivers" and everything else absorbs into the subscription line.
   #
-  # The CRM attribution rule the sales team asked for: the meeting
-  # courtesy hits the subscription line only (that's where the ticket
-  # is), and waivers / scoped-coupons hit the implementation line only
-  # (that's what they typically waive on the setup fee). Splits the
-  # deal the way the team reads it, even though the calculator's
-  # underlying waterfall spreads the meeting on the eligible base.
-  def subscription_monthly_value_cents
+  # Previously the code attributed a flat 10% off the recurring subtotal
+  # to the subscription slot and let the rest fall where it might; that
+  # left the subscription slot and the implementation slot summing to
+  # ~R$ 100 above the "Total Pago" on a Manfredini-shaped deal (waiver +
+  # meeting + PIX all in the same sale). The new split fecha 100%.
+  #
+  # Float division: `charged - implementation` and `months` can leave a
+  # fractional cent that `currency` then rounds to two decimals for
+  # reais. Integer division would drop the cent and make the CRM lag
+  # the invoice on odd-priced plans.
+  def subscription_monthly_value_cents(charged)
     months = Sales::CheckoutService::CYCLE_MONTHS[quote.billing_cycle&.to_sym].to_i
     return 0 if months.zero?
+    return 0 if charged.zero?
 
-    recurring_total = quote.items.where.not(recurring_interval: nil).sum('unit_amount * quantity')
-    return 0 if recurring_total.zero?
-
-    effective = quote.meeting_discount? ? apply_meeting_discount(recurring_total) : recurring_total
-    # Float division: `effective` and `months` can leave a fractional
-    # cent that `currency` then rounds to two decimals for reais. An
-    # integer division would drop the cent and make the CRM lag the
-    # invoice on odd-priced plans.
-    effective.to_f / months
+    (charged - implementation_value_cents).to_f / months
   end
 
   # Non-recurring lines summed, minus the item-targeted waivers /
   # scoped-coupons the calculator recorded on this quote. Matches what
   # the customer paid for implementation once the API waiver and the
-  # setup coupon came off — the meeting courtesy is attributed to the
-  # subscription line, not here.
+  # setup coupon came off.
   def implementation_value_cents
     subtotal = quote.items.where(recurring_interval: nil).sum('unit_amount * quantity')
     subtotal - quote.waivers_amount.to_i
-  end
-
-  def apply_meeting_discount(amount)
-    amount - ((amount * Sales::QuoteCalculatorService::MEETING_DISCOUNT_PERCENT) / 100.0).round
   end
 
   def currency(cents)

@@ -4,8 +4,9 @@ RSpec.describe Sales::ClickupCrmSyncService do
   let(:client) { instance_double(Integrations::Clickup::Client) }
   let(:quote) do
     create(:sales_quote, prospect_name: 'Fábio Rocha', prospect_email: 'fabio@clinica.com',
-                         billing_cycle: :annual, payment_method: :card, total_amount: 1_286_760,
-                         discount_amount: 143_000, clickup_task_id: '86akkgh7b')
+                         billing_cycle: :annual, payment_method: :card,
+                         subtotal_amount: 1_429_760, discount_amount: 143_000, total_amount: 1_286_760,
+                         clickup_task_id: '86akkgh7b')
   end
 
   before do
@@ -158,17 +159,21 @@ RSpec.describe Sales::ClickupCrmSyncService do
     it 'writes the total paid and the subscription discount in reais' do
       sync
 
+      # Card annual: `effective_charge_amount` collapses to `effective_total_amount`
+      # = `total_amount`. Discount = `subtotal - charged`.
       expect(client).to have_received(:set_custom_field)
         .with('86akkgh7b', described_class::FIELDS[:total_paid], 12_867.60)
       expect(client).to have_received(:set_custom_field)
         .with('86akkgh7b', described_class::FIELDS[:subscription_discount], 1_430.00)
     end
 
-    # Subscription value = recurring line total / cycle months. On an annual
-    # plan paid up-front this reveals the monthly value the customer signed
-    # for, which is what the CRM tracks as MRR.
+    # Subscription monthly = (what was actually paid − implementation) / months.
+    # On an annual plan whose only line is recurring (no avulsos), that's the
+    # whole charged value divided by 12 — the MRR the CRM tracks.
     it 'writes the monthly recurring value even when the plan was paid up-front' do
-      # annual plan: one recurring item priced R$ 897/mês × 12 months = R$ 10.764 total recurring.
+      # annual plan, single recurring line of R$ 897/mês × 12 = R$ 10.764 total,
+      # no discount, no implementation. Monthly = R$ 10.764 / 12 = R$ 897.
+      quote.update!(subtotal_amount: 1_076_400, discount_amount: 0, total_amount: 1_076_400)
       create(:sales_quote_item, sales_quote: quote, name: 'Plataforma Auris',
                                 unit_amount: 89_700, quantity: 12, recurring_interval: 'month')
 
@@ -190,19 +195,22 @@ RSpec.describe Sales::ClickupCrmSyncService do
         .with('86akkgh7b', described_class::FIELDS[:implementation_value], 3_500.00)
     end
 
-    # The CRM attribution rule the sales team asked for: the meeting
-    # courtesy hits the subscription line (that's where the ticket is),
-    # and waivers / scoped-coupon hit the implementation line (that's
-    # what they typically waive on the setup fee). Verifies the split on
-    # a real-shaped cart against what the team already computes by hand.
+    # Meeting hits the whole cart (subtotal after waivers) on the calculator
+    # side; the CRM report simply reads whatever ended up in `total_amount`
+    # and divides "charged − implementation" by the months. On a pure
+    # recurring cart with no avulsos, that's just the meeting-discounted
+    # total ÷ 12.
     context 'when the seller applied the 10% meeting courtesy' do
       let(:quote) do
         create(:sales_quote, clickup_task_id: '86akkgh7b', status: :paid, payment_method: :card,
-                             billing_cycle: :annual, prospect_name: 'Clínica Auris', meeting_discount: true)
+                             billing_cycle: :annual, prospect_name: 'Clínica Auris',
+                             reserved_until: 30.days.from_now,
+                             meeting_discount: true, meeting_discount_amount: 120_000,
+                             subtotal_amount: 1_200_000, discount_amount: 120_000, total_amount: 1_080_000)
       end
 
-      it 'applies the 10% off on the subscription line (per month, dividing by the plan months)' do
-        # 12 × R$ 1.000 = R$ 12.000 total recurring; meeting off = R$ 10.800; ÷ 12 = R$ 900,00.
+      it 'lands the meeting on the subscription line (charged ÷ months on a pure-recurring cart)' do
+        # 12 × R$ 1.000 = R$ 12.000 subtotal recurring; meeting off = R$ 10.800; ÷ 12 = R$ 900,00.
         create(:sales_quote_item, sales_quote: quote, name: 'Plataforma Auris',
                                   unit_amount: 100_000, quantity: 12, recurring_interval: 'month')
 
@@ -210,6 +218,65 @@ RSpec.describe Sales::ClickupCrmSyncService do
 
         expect(client).to have_received(:set_custom_field)
           .with('86akkgh7b', described_class::FIELDS[:subscription_value], 900.00)
+      end
+    end
+
+    # Manfredini-shaped deal: PIX à-vista + waiver on implantação + meeting
+    # + one avulso that doesn't get waived. The three money fields have to
+    # reflect what actually hit the account, and the sum of subscription
+    # (× months) + implementation must reconcile to the total.
+    context 'when a PIX annual sale carried the waiver + meeting stack' do
+      let(:quote) do
+        # 10.764 (Plataforma anual recurring) + 3.000 (Implantação avulso, 100% waived)
+        # + 999 (Config API avulso) = 14.763 subtotal.
+        # Discounts: 3.000 waiver + 1.176,30 meeting = 4.176,30.
+        # Total-de-tabela: 10.586,70. PIX 10% off: charged = 9.528,03.
+        create(:sales_quote, clickup_task_id: '86akkgh7b', status: :paid, payment_method: :pix,
+                             billing_cycle: :annual, prospect_name: 'Ronaldo Manfredini',
+                             reserved_until: 30.days.from_now,
+                             meeting_discount: true, meeting_discount_amount: 117_630,
+                             waivers_amount: 300_000,
+                             subtotal_amount: 1_476_300, discount_amount: 417_630, total_amount: 1_058_670)
+      end
+
+      before do
+        create(:sales_quote_item, sales_quote: quote, name: 'Plataforma Auris',
+                                  unit_amount: 89_700, quantity: 12, recurring_interval: 'month')
+        create(:sales_quote_item, sales_quote: quote, name: 'Implantação',
+                                  unit_amount: 300_000, recurring_interval: nil)
+        create(:sales_quote_item, sales_quote: quote, name: 'Configuração de Integração API',
+                                  unit_amount: 99_900, recurring_interval: nil)
+      end
+
+      it 'writes the PIX-discounted total on Total Pago' do
+        sync
+
+        expect(client).to have_received(:set_custom_field)
+          .with('86akkgh7b', described_class::FIELDS[:total_paid], 9_528.03)
+      end
+
+      it 'writes (charged − implementation) ÷ months on Valor da Assinatura' do
+        sync
+
+        # (9.528,03 − 999,00) ÷ 12 = 710,7525 ≈ 710,75 (rounded by `currency`).
+        expect(client).to have_received(:set_custom_field)
+          .with('86akkgh7b', described_class::FIELDS[:subscription_value], 710.75)
+      end
+
+      it 'writes avulsos-net-of-waivers on Valor da Implantação' do
+        sync
+
+        # 3.999 avulsos − 3.000 waiver = 999.
+        expect(client).to have_received(:set_custom_field)
+          .with('86akkgh7b', described_class::FIELDS[:implementation_value], 999.00)
+      end
+
+      it 'writes (subtotal − charged) on Valor do Desconto — includes the PIX cut' do
+        sync
+
+        # 14.763 − 9.528,03 = 5.234,97 (= meeting + waiver + PIX à-vista).
+        expect(client).to have_received(:set_custom_field)
+          .with('86akkgh7b', described_class::FIELDS[:subscription_discount], 5_234.97)
       end
     end
 

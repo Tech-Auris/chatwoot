@@ -49,6 +49,31 @@ RSpec.describe 'Sales proposal PIX instructions', type: :request do
 
       expect(response.body).to include('data:image/svg+xml;base64,')
     end
+
+    # Semestral and annual plans carry a PIX à-vista discount (5% / 10%);
+    # the page has to show the already-discounted value AND inject that
+    # same value into the PIX code, or the customer confirms an amount
+    # that's larger than what was promised on the checkout step.
+    context 'when the plan carries a PIX à-vista discount' do
+      let(:proposal) do
+        # Annual plan, R$ 12.867,60 de tabela → 10% off = R$ 11.580,84.
+        create(:sales_quote, status: :signed, payment_method: :pix,
+                             billing_cycle: :annual, total_amount: 1_286_760,
+                             prospect_name: 'Fabio Rocha', prospect_email: 'fabio@exemplo.com',
+                             prospect_phone: '+5511979859425', prospect_document: '05649318700',
+                             company_name: 'Clínica Nefrário')
+      end
+
+      # "Total contratado" na parte inferior segue mostrando o valor de
+      # contrato (`total_amount`); o teste foca no bloco PIX que carrega o
+      # "Valor a pagar" e o QR/copia-e-cola.
+      it 'shows the already-discounted amount and injects it into the PIX code' do
+        get "/proposals/#{proposal.public_token}/obrigado"
+
+        expect(response.body).to include('R$ 11.580,84')
+        expect(response.body).to include('540811580.84')
+      end
+    end
   end
 
   context 'when it is not configured yet' do
