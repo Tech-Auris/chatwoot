@@ -1,0 +1,12 @@
+<%#
+# HTML Text Index Partial
+#
+# The index needs a one-line preview instead of the full HTML — a rich
+# title with an image would blow the row's height and the plain-text
+# preview reads more like an inbox subject line.
+#
+# Locals:
+#   * `field`: instance of HtmlTextField.
+%>
+
+<%= field.preview_text %>
