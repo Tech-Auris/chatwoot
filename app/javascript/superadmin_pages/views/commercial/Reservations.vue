@@ -566,9 +566,13 @@ const submitRenew = async () => {
                    e o vendedor ainda não liberou. Após liberar, o cliente
                    passa a ver a opção na página pública. Some sozinho
                    quando a venda entra em "awaiting confirmation" (aí o
-                   botão de Registrar pagamento acima já toma o espaço). -->
+                   botão de Registrar pagamento acima já toma o espaço)
+                   ou depois que a venda vira Ganho — depois de fechar,
+                   nada aqui interessa mais e a coluna tem que ficar
+                   quieta. -->
               <div
                 v-if="
+                  !reservation.won &&
                   reservation.boleto_eligible_for_plan &&
                   reservation.reservation_active &&
                   !reservation.awaiting_manual_payment_confirmation
