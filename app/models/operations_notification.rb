@@ -57,8 +57,18 @@ class OperationsNotification < ApplicationRecord
   belongs_to :subject, polymorphic: true, optional: true
   has_many :operations_notification_acks, dependent: :destroy
 
-  validates :title, presence: true
-  validates :body, presence: true
+  # Higher-than-default (20K) length ceilings because the Super Admin form
+  # now composes rich HTML with embedded images (base64 data-URIs when the
+  # operator pastes a screenshot). Two megabytes is 0.2% of Postgres' TEXT
+  # ceiling — comfortable for a notification with a few screenshots and
+  # still small enough to fit an ActionCable broadcast payload. Once a
+  # proper upload path exists for images (S3 / ActiveStorage), this can
+  # come back down. Title stays under 10K — it is one HTML line.
+  TITLE_MAX_LENGTH = 10_000
+  BODY_MAX_LENGTH = 2_000_000
+
+  validates :title, presence: true, length: { maximum: TITLE_MAX_LENGTH }
+  validates :body, presence: true, length: { maximum: BODY_MAX_LENGTH }
   validate :account_ids_required_when_scoped_to_accounts
   validate :audience_user_ids_required_when_specific_users
   validate :specific_users_require_account_scope
