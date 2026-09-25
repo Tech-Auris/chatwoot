@@ -1,23 +1,28 @@
 class SuperAdmin::AppConfigsController < SuperAdmin::ApplicationController
   before_action :set_config
   before_action :allowed_configs
+  before_action :load_installation_configs, only: [:show, :create]
   def show
-    # ref: https://github.com/rubocop/rubocop/issues/7767
-    # rubocop:disable Style/HashTransformValues
+    # Read the model so `SerializedValueCoder` is applied — a `.pluck` on
+    # `serialized_value` returns the raw column (YAML string for rows
+    # written by upstream, native hash for newer ones) and the string
+    # branch answers `nil` to `['value']`, which then renders the secret
+    # field empty in the form. Empty form field + the guard in `create`
+    # used to be enough to wipe the row on Submit.
     @app_config = InstallationConfig.where(name: @allowed_configs)
-                                    .pluck(:name, :serialized_value)
-                                    .map { |name, serialized_value| [name, serialized_value['value']] }
-                                    .to_h
-    # rubocop:enable Style/HashTransformValues
-    @installation_configs = ConfigLoader.new.general_configs.each_with_object({}) do |config_hash, result|
-      result[config_hash['name']] = config_hash.except('name')
-    end
+                                    .to_h { |config| [config.name, config.value] }
   end
 
   def create
     errors = []
     params['app_config'].each do |key, value|
       next unless @allowed_configs.include?(key)
+      # A password field renders as dots and browsers do not always echo
+      # the current value back on paste / autofill. Submitting an empty
+      # secret would have wiped a live credential (Stripe/AsaaS/Inter),
+      # so treat "blank secret input" as "leave it alone". Clearing a
+      # secret on purpose is a console operation, not a form gesture.
+      next if secret_config?(key) && value.to_s.empty?
 
       i = InstallationConfig.where(name: key).first_or_create!(value: value, locked: false)
       i.value = value
@@ -35,6 +40,18 @@ class SuperAdmin::AppConfigsController < SuperAdmin::ApplicationController
 
   def set_config
     @config = params[:config] || 'general'
+  end
+
+  # Loaded once for both the `show` (form render) and `create` (submit
+  # guard) so the two agree on what "type: secret" means.
+  def load_installation_configs
+    @installation_configs = ConfigLoader.new.general_configs.each_with_object({}) do |config_hash, result|
+      result[config_hash['name']] = config_hash.except('name')
+    end
+  end
+
+  def secret_config?(key)
+    @installation_configs[key]&.dig('type') == 'secret'
   end
 
   # Auris-only settings screens, kept apart from the upstream mapping so

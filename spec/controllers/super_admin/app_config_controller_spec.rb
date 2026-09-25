@@ -43,6 +43,41 @@ RSpec.describe 'Super Admin Application Config API', type: :request do
       expect(GlobalConfig.get('ASAAS_API_KEY')['ASAAS_API_KEY']).to eq('$aact_nova')
     end
 
+    # A secret field renders as dots and browsers do not always echo the
+    # current value back on paste / autofill. Submitting an empty secret
+    # used to wipe the row — losing production credentials the moment an
+    # admin opened the AsaaS tab and clicked Submit to save another
+    # config on the same page.
+    it 'keeps a stored secret when the input is submitted blank' do
+      create(:installation_config, name: 'ASAAS_API_KEY', value: '$aact_prod_live')
+
+      post '/super_admin/app_config?config=asaas', params: { app_config: { ASAAS_API_KEY: '' } }
+
+      expect(GlobalConfig.get('ASAAS_API_KEY')['ASAAS_API_KEY']).to eq('$aact_prod_live')
+    end
+
+    # But rotating a secret is a normal admin gesture — a non-empty value
+    # still overwrites the stored one, so the guard only fires when the
+    # input actually arrives blank.
+    it 'rotates a stored secret when a new value is submitted' do
+      create(:installation_config, name: 'ASAAS_API_KEY', value: '$aact_prod_live')
+
+      post '/super_admin/app_config?config=asaas', params: { app_config: { ASAAS_API_KEY: '$aact_prod_rotated' } }
+
+      expect(GlobalConfig.get('ASAAS_API_KEY')['ASAAS_API_KEY']).to eq('$aact_prod_rotated')
+    end
+
+    # A non-secret config (integer/text) still accepts a blank to mean
+    # "clear it" — the guard is scoped to `type: secret` alone, where the
+    # risk/reward calculus is different.
+    it 'clears a non-secret config when the input is submitted blank' do
+      create(:installation_config, name: 'ASAAS_MAX_INSTALLMENTS', value: '12')
+
+      post '/super_admin/app_config?config=asaas', params: { app_config: { ASAAS_MAX_INSTALLMENTS: '' } }
+
+      expect(GlobalConfig.get('ASAAS_MAX_INSTALLMENTS')['ASAAS_MAX_INSTALLMENTS']).to be_blank
+    end
+
     # Every section is an allowlist: a key that is not part of it must not be
     # writable through it.
     it 'refuses to write another section key through it' do
