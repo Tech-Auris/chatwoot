@@ -126,4 +126,40 @@ RSpec.describe 'Marketing Integrations API', type: :request do
       expect(response).to have_http_status(:success)
     end
   end
+
+  describe 'GET /api/v1/accounts/{id}/marketing_integrations/{id}/pixel_events' do
+    let!(:integration) { create(:marketing_integration, account: account, status: :test_mode) }
+
+    before do
+      stub_request(:get, %r{graph\.facebook\.com/v20\.0/123456789/stats})
+        .to_return(status: 200, body: { data: [{ 'data' => { 'AgendarConsulta' => 4 } }] }.to_json,
+                   headers: { 'Content-Type' => 'application/json' })
+    end
+
+    it 'returns the standard catalog plus the pixel-received custom events' do
+      get "/api/v1/accounts/#{account.id}/marketing_integrations/#{integration.id}/pixel_events",
+          headers: admin.create_new_auth_token, as: :json
+
+      expect(response).to have_http_status(:success)
+      body = response.parsed_body
+      expect(body['standard']).to include('Lead', 'Purchase')
+      expect(body['custom']).to contain_exactly('AgendarConsulta')
+    end
+
+    it 'refuses agents' do
+      get "/api/v1/accounts/#{account.id}/marketing_integrations/#{integration.id}/pixel_events",
+          headers: agent.create_new_auth_token, as: :json
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it 'refuses a Google Ads integration — the endpoint is Meta-only' do
+      google = create(:marketing_integration, :google_ads, account: account)
+
+      get "/api/v1/accounts/#{account.id}/marketing_integrations/#{google.id}/pixel_events",
+          headers: admin.create_new_auth_token, as: :json
+
+      expect(response).to have_http_status(:not_found)
+    end
+  end
 end

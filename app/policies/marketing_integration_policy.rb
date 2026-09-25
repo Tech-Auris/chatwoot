@@ -22,6 +22,10 @@ class MarketingIntegrationPolicy < ApplicationPolicy
     admin_or_manager?
   end
 
+  def pixel_events?
+    admin_or_manager?
+  end
+
   private
 
   def admin_or_manager?
