@@ -184,6 +184,24 @@ const isWhatsappCloudInbox = computed(() => {
   return provider !== 'baileys' && provider !== 'zapi';
 });
 
+// Labels compactos pro chip do "Para" e "Via", casando com o formato
+// do lápis: `nome (email)`, `nome (telefone)` ou só `nome` quando não
+// há nem uma coisa nem outra.
+const selectedContactLabel = computed(() => {
+  const c = selectedContact.value;
+  if (!c) return '';
+  const detail = c.email || c.phone_number;
+  if (!detail) return c.name || '';
+  return c.name ? `${c.name} (${detail})` : detail;
+});
+
+const selectedInboxLabel = computed(() => {
+  const inbox = selectedInbox.value;
+  if (!inbox) return '';
+  const phone = inbox.phone_number;
+  return phone ? `${inbox.name} (${phone})` : inbox.name;
+});
+
 const hasTemplate = computed(
   () => templateParams.value && Object.keys(templateParams.value).length > 0
 );
@@ -420,146 +438,165 @@ watch(selectedInboxId, () => {
         </header>
 
         <div class="flex-1 overflow-y-auto px-6 pb-5 flex flex-col gap-4">
-          <!-- Para: contact search -->
-          <div>
-            <label
-              class="text-sm font-medium text-n-slate-12 flex gap-2 items-center"
-            >
-              <span class="i-lucide-user size-4 text-n-slate-11" />
-              {{ t('SCHEDULED.NEW.CONTACT_LABEL') }}
-            </label>
-            <div v-if="selectedContact" class="mt-1 flex items-center gap-2">
+          <!-- Para: label inline + chip compacto quando o contato está
+               escolhido, ou input de busca full-width com dropdown
+               inferior quando ainda não. Mesmo shape que o lápis usa
+               em `ContactSelector.vue` — reduz duas linhas verticais
+               (rótulo em bloco + campo abaixo) pra uma só. -->
+          <div class="relative">
+            <div class="flex items-baseline gap-3 min-h-7">
+              <label
+                class="text-sm font-medium text-n-slate-11 whitespace-nowrap"
+              >
+                {{ t('SCHEDULED.NEW.CONTACT_LABEL') }}
+              </label>
               <div
-                class="flex-1 border border-n-slate-3 rounded-md px-3 py-2 text-sm text-n-slate-12"
+                v-if="selectedContact"
+                class="flex items-center gap-1 rounded-md bg-n-alpha-2 pl-3 pr-1 h-7 min-w-0"
               >
-                <div>
-                  {{ selectedContact.name || t('SCHEDULED.NO_CONTACT_NAME') }}
-                </div>
-                <div class="text-xs text-n-slate-11">
-                  {{ selectedContact.phone_number }}
-                </div>
+                <span class="text-sm truncate text-n-slate-12">
+                  {{ selectedContactLabel }}
+                </span>
+                <button
+                  type="button"
+                  class="!p-0 w-5 h-5 inline-flex items-center justify-center rounded text-n-slate-11 hover:text-n-slate-12 hover:bg-n-alpha-3"
+                  :title="t('SCHEDULED.NEW.CLEAR_CONTACT')"
+                  @click="clearContact"
+                >
+                  <span class="i-lucide-x size-3.5" />
+                </button>
               </div>
-              <button
-                type="button"
-                class="!p-0 w-8 h-8 inline-flex items-center justify-center rounded-md text-n-slate-11 hover:bg-n-alpha-2"
-                :title="t('SCHEDULED.NEW.CLEAR_CONTACT')"
-                @click="clearContact"
-              >
-                <span class="i-lucide-x size-4" />
-              </button>
-            </div>
-            <div v-else class="mt-1 relative">
               <input
+                v-else
                 v-model="contactQuery"
                 type="text"
                 autofocus
                 :placeholder="t('SCHEDULED.NEW.CONTACT_PLACEHOLDER')"
-                class="w-full border border-n-slate-3 rounded-md px-3 py-2 text-sm text-n-slate-12 focus:border-n-brand focus:outline-none"
+                class="flex-1 min-w-0 border border-n-slate-3 rounded-md px-3 h-7 text-sm text-n-slate-12 focus:border-n-brand focus:outline-none"
               />
-              <ul
-                v-if="contactResults.length"
-                class="absolute z-10 mt-1 w-full max-h-56 overflow-y-auto rounded-md border border-n-slate-3 bg-n-solid-1 shadow-lg"
-              >
-                <li
-                  v-for="contact in contactResults"
-                  :key="contact.id"
-                  class="px-3 py-2 text-sm cursor-pointer hover:bg-n-slate-2"
-                  @click="pickContact(contact)"
-                >
-                  <div class="text-n-slate-12">
-                    {{ contact.name || t('SCHEDULED.NO_CONTACT_NAME') }}
-                  </div>
-                  <div class="text-xs text-n-slate-11">
-                    {{ contact.phone_number || contact.email }}
-                  </div>
-                </li>
-              </ul>
-              <p
-                v-else-if="contactSearchLoading"
-                class="mt-1 text-xs text-n-slate-11"
-              >
-                {{ t('SCHEDULED.NEW.SEARCHING') }}
-              </p>
             </div>
+            <ul
+              v-if="!selectedContact && contactResults.length"
+              class="absolute z-10 mt-1 w-full max-h-56 overflow-y-auto rounded-md border border-n-slate-3 bg-n-solid-1 shadow-lg"
+            >
+              <li
+                v-for="contact in contactResults"
+                :key="contact.id"
+                class="px-3 py-2 text-sm cursor-pointer hover:bg-n-slate-2"
+                @click="pickContact(contact)"
+              >
+                <div class="text-n-slate-12">
+                  {{ contact.name || t('SCHEDULED.NO_CONTACT_NAME') }}
+                </div>
+                <div class="text-xs text-n-slate-11">
+                  {{ contact.phone_number || contact.email }}
+                </div>
+              </li>
+            </ul>
+            <p
+              v-else-if="!selectedContact && contactSearchLoading"
+              class="mt-1 text-xs text-n-slate-11"
+            >
+              {{ t('SCHEDULED.NEW.SEARCHING') }}
+            </p>
           </div>
 
-          <!-- Via: inbox picker — sempre visível, igual ao lápis. Sem
-               contato escolhido, lista todas as inboxes acessíveis pro
-               operador. Assim que o contato entra, o filtro fecha só nas
-               inboxes onde ele existe. Se nenhuma delas casar, avisa. -->
+          <!-- Via: mesmo shape do Para. Chip compacto com nome + número
+               quando a inbox está escolhida; select nativo (compacto,
+               com chevron custom via PR anterior) quando ainda não.
+               O aviso Cloud e o botão de template ficam abaixo, na
+               própria linha, pra não engordar a row do Via. -->
           <div>
-            <label
-              class="text-sm font-medium text-n-slate-12 flex gap-2 items-center"
-            >
-              <span class="i-lucide-mailbox size-4 text-n-slate-11" />
-              {{ t('SCHEDULED.NEW.INBOX_LABEL') }}
-            </label>
-            <!-- Wrap + `appearance-none` porque o CSS global em
-                 `_base.scss` seta uma `background-position` inválida
-                 (`right -1rem center` como 3-value shorthand) que os
-                 navegadores modernos descartam e recolocam o triângulo
-                 no top-left do controle — o operador via a seta antes
-                 do nome da inbox. Aqui saímos do bg-image do global e
-                 desenhamos o chevron com `absolute` na direita. -->
-            <div v-if="inboxOptionsForVia.length" class="relative mt-1">
-              <select
-                v-model="selectedInboxId"
-                class="appearance-none !bg-none w-full border border-n-slate-3 rounded-md pl-3 pr-8 py-2 text-sm text-n-slate-12 focus:border-n-brand focus:outline-none"
+            <div class="flex items-baseline gap-3 min-h-7">
+              <label
+                class="text-sm font-medium text-n-slate-11 whitespace-nowrap"
               >
-                <option :value="null" disabled>
-                  {{ t('SCHEDULED.NEW.INBOX_PLACEHOLDER') }}
-                </option>
-                <option
-                  v-for="inbox in inboxOptionsForVia"
-                  :key="inbox.id"
-                  :value="inbox.id"
+                {{ t('SCHEDULED.NEW.INBOX_LABEL') }}
+              </label>
+              <div
+                v-if="selectedInbox"
+                class="flex items-center gap-1 rounded-md bg-n-alpha-2 pl-3 pr-1 h-7 min-w-0"
+              >
+                <span class="text-sm truncate text-n-slate-12">
+                  {{ selectedInboxLabel }}
+                </span>
+                <button
+                  type="button"
+                  class="!p-0 w-5 h-5 inline-flex items-center justify-center rounded text-n-slate-11 hover:text-n-slate-12 hover:bg-n-alpha-3"
+                  @click="selectedInboxId = null"
                 >
-                  {{ inbox.name }}
-                </option>
-              </select>
-              <span
-                class="i-lucide-chevron-down size-4 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-n-slate-11"
-              />
+                  <span class="i-lucide-x size-3.5" />
+                </button>
+              </div>
+              <!-- appearance-none + chevron custom absoluto — o CSS
+                   global do `<select>` (em `_base.scss`) usa uma
+                   `background-position` inválida que os navegadores
+                   descartam, e o triângulo cai no top-left. -->
+              <div
+                v-else-if="inboxOptionsForVia.length"
+                class="relative flex-1 min-w-0"
+              >
+                <select
+                  v-model="selectedInboxId"
+                  class="appearance-none !bg-none w-full border border-n-slate-3 rounded-md pl-3 pr-8 h-7 text-sm text-n-slate-12 focus:border-n-brand focus:outline-none"
+                >
+                  <option :value="null" disabled>
+                    {{ t('SCHEDULED.NEW.INBOX_PLACEHOLDER') }}
+                  </option>
+                  <option
+                    v-for="inbox in inboxOptionsForVia"
+                    :key="inbox.id"
+                    :value="inbox.id"
+                  >
+                    {{ inbox.name }}
+                  </option>
+                </select>
+                <span
+                  class="i-lucide-chevron-down size-4 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-n-slate-11"
+                />
+              </div>
+              <p v-else-if="selectedContact" class="text-xs text-n-amber-11">
+                {{ t('SCHEDULED.NEW.INBOX_UNREACHABLE') }}
+              </p>
             </div>
-            <p v-else-if="selectedContact" class="mt-1 text-xs text-n-amber-11">
-              {{ t('SCHEDULED.NEW.INBOX_UNREACHABLE') }}
-            </p>
             <!-- WhatsApp Cloud (oficial da Meta): fora da janela de 24h
-                 só aceita envio como template. Aviso + botão pra abrir
-                 o TemplatesPicker; depois de escolhido, o badge mostra
-                 o template selecionado com opção de trocar. -->
+                 só aceita envio como template. Botão compacto abaixo
+                 do Via ("Selecione o modelo") abre o TemplatesPicker;
+                 depois de escolhido, vira badge com opção de trocar. -->
             <div
               v-if="isWhatsappCloudInbox && !hasTemplate"
-              class="mt-2 flex flex-col gap-1"
+              class="mt-2 flex items-center gap-2"
             >
-              <p class="text-xs text-n-amber-11">
-                {{ t('SCHEDULED.NEW.WHATSAPP_CLOUD_TEMPLATE_NOTICE') }}
-              </p>
               <button
                 type="button"
-                class="self-start inline-flex items-center gap-1 rounded border border-n-brand-solid/60 text-n-brand px-3 py-1.5 text-xs font-medium hover:bg-n-alpha-1"
+                class="inline-flex items-center gap-1.5 rounded-md border border-n-slate-3 text-n-slate-12 px-3 h-7 text-xs font-medium hover:bg-n-alpha-2"
                 @click="openTemplatePicker"
               >
-                <span class="i-lucide-zap size-4" />
+                <span
+                  class="i-lucide-message-square size-3.5 text-n-slate-11"
+                />
                 {{ t('SCHEDULED.NEW.PICK_TEMPLATE') }}
               </button>
+              <span class="text-xs text-n-amber-11">
+                {{ t('SCHEDULED.NEW.WHATSAPP_CLOUD_TEMPLATE_NOTICE') }}
+              </span>
             </div>
             <div
               v-else-if="hasTemplate"
-              class="mt-2 flex items-center justify-between rounded border border-n-brand-solid/40 bg-n-alpha-1 px-3 py-2 text-xs"
+              class="mt-2 flex items-center gap-1 rounded-md bg-n-alpha-2 pl-3 pr-1 h-7 w-fit max-w-full"
             >
-              <span class="text-n-slate-12">
+              <span class="text-xs truncate text-n-slate-12">
                 {{
                   t('SCHEDULED.NEW.TEMPLATE_SELECTED', { name: templateName })
                 }}
               </span>
               <button
                 type="button"
-                class="text-n-slate-11 hover:text-n-slate-12"
+                class="!p-0 w-5 h-5 inline-flex items-center justify-center rounded text-n-slate-11 hover:text-n-slate-12 hover:bg-n-alpha-3"
                 :title="t('SCHEDULED.NEW.CLEAR_TEMPLATE')"
                 @click="clearTemplate"
               >
-                <span class="i-lucide-x size-4" />
+                <span class="i-lucide-x size-3.5" />
               </button>
             </div>
           </div>
