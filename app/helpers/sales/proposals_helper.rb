@@ -104,26 +104,39 @@ module Sales::ProposalsHelper
   # plans return nil because the recurrence itself is the split.
   BILLING_CYCLE_INSTALLMENTS = { 'semiannual' => 6, 'annual' => 12 }.freeze
 
+  # `effective_total_amount` — not the frozen `total_amount` — is what
+  # matches the "Total" line the customer just saw acima: it peela a
+  # cortesia da reunião quando a reserva vence, e a linha de parcelas
+  # tem que refletir esse mesmo total. Mostrando `total_amount / N`
+  # depois da reserva vencer, o cliente lia uma parcela menor do que
+  # o Total consegue explicar — foi o reporte da Fernanda Alarcon
+  # (R$ 12x 1.046,25 quando o correto era R$ 12x 1.162,50).
   def proposal_installment_hint(proposal)
     return nil if proposal.billing_cycle.blank?
 
     parts = BILLING_CYCLE_INSTALLMENTS[proposal.billing_cycle]
     return nil if parts.blank?
 
-    "#{parts}x de #{proposal_amount((proposal.total_amount || 0) / parts)} no cartão de crédito"
+    "#{parts}x de #{proposal_amount((proposal.effective_total_amount || 0) / parts)} no cartão de crédito"
   end
 
   # The "or à vista" hint for plans that carry a PIX discount (semiannual
   # 5%, annual 10%). Returns a hash `{ amount:, percent: }` with the
   # already-discounted total in cents and the discount percent, or nil for
   # plans that offer no à-vista discount (monthly today).
+  #
+  # Same reason as `proposal_installment_hint`: parte do
+  # `effective_total_amount` (post reserva-vencida). Do contrário o
+  # "à-vista" descontava sobre o valor com meeting embutido e o Total
+  # ao lado (que já usa `effective_total_amount`) não fechava com o
+  # à-vista logo abaixo.
   def proposal_pix_cash_hint(proposal)
     return nil if proposal.billing_cycle.blank?
 
     percent = Sales::CheckoutService.pix_discount_for(proposal.billing_cycle)
     return nil if percent.to_i.zero?
 
-    total = proposal.total_amount || 0
+    total = proposal.effective_total_amount || 0
     discounted = total - ((total * percent) / 100.0).round
     { amount: discounted, percent: percent }
   end
