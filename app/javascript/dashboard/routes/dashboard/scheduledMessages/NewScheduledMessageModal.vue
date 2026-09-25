@@ -494,22 +494,33 @@ watch(selectedInboxId, () => {
               <span class="i-lucide-mailbox size-4 text-n-slate-11" />
               {{ t('SCHEDULED.NEW.INBOX_LABEL') }}
             </label>
-            <select
-              v-if="inboxOptionsForVia.length"
-              v-model="selectedInboxId"
-              class="mt-1 w-full border border-n-slate-3 rounded-md px-3 py-2 text-sm text-n-slate-12 focus:border-n-brand focus:outline-none"
-            >
-              <option :value="null" disabled>
-                {{ t('SCHEDULED.NEW.INBOX_PLACEHOLDER') }}
-              </option>
-              <option
-                v-for="inbox in inboxOptionsForVia"
-                :key="inbox.id"
-                :value="inbox.id"
+            <!-- Wrap + `appearance-none` porque o CSS global em
+                 `_base.scss` seta uma `background-position` inválida
+                 (`right -1rem center` como 3-value shorthand) que os
+                 navegadores modernos descartam e recolocam o triângulo
+                 no top-left do controle — o operador via a seta antes
+                 do nome da inbox. Aqui saímos do bg-image do global e
+                 desenhamos o chevron com `absolute` na direita. -->
+            <div v-if="inboxOptionsForVia.length" class="relative mt-1">
+              <select
+                v-model="selectedInboxId"
+                class="appearance-none !bg-none w-full border border-n-slate-3 rounded-md pl-3 pr-8 py-2 text-sm text-n-slate-12 focus:border-n-brand focus:outline-none"
               >
-                {{ inbox.name }}
-              </option>
-            </select>
+                <option :value="null" disabled>
+                  {{ t('SCHEDULED.NEW.INBOX_PLACEHOLDER') }}
+                </option>
+                <option
+                  v-for="inbox in inboxOptionsForVia"
+                  :key="inbox.id"
+                  :value="inbox.id"
+                >
+                  {{ inbox.name }}
+                </option>
+              </select>
+              <span
+                class="i-lucide-chevron-down size-4 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-n-slate-11"
+              />
+            </div>
             <p v-else-if="selectedContact" class="mt-1 text-xs text-n-amber-11">
               {{ t('SCHEDULED.NEW.INBOX_UNREACHABLE') }}
             </p>
