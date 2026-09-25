@@ -6,6 +6,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useStore, useMapGetter } from 'dashboard/composables/store';
 import { useAlert } from 'dashboard/composables';
+import MarketingIntegrationsAPI from 'dashboard/api/marketingIntegrations';
 
 // `automation_action` foi removido do dropdown enquanto a operação não
 // usa esse gatilho. A i18n do label e o resolver do `triggerLabel` ficam
@@ -24,6 +25,22 @@ const uiFlags = useMapGetter('conversionEvents/getUIFlags');
 // gatilho left the operator typing the label name by hand.
 const funnelStages = useMapGetter('funnelStages/getFunnelStages');
 const labels = useMapGetter('labels/getLabels');
+const marketingIntegrations = useMapGetter(
+  'marketingIntegrations/getMarketingIntegrations'
+);
+
+// A conversion event dispatches to exactly one provider per row on the
+// form — Meta CAPI or Google Ads — so the operator picks the destination
+// first and the form reveals the relevant event-name field. On edit the
+// destination is derived from whichever field is populated; a rare row
+// that carries both defaults to Meta (Meta is the default destination
+// for new records too).
+const DESTINATIONS = ['meta', 'google'];
+
+const metaIntegration = computed(() =>
+  (marketingIntegrations.value || []).find(i => i.provider === 'meta_capi')
+);
+const metaEventSuggestions = ref([]);
 
 const editing = ref(null);
 const draft = reactive({
@@ -31,6 +48,7 @@ const draft = reactive({
   name: '',
   trigger_type: 'funnel_stage_reached',
   trigger_config: {},
+  destination: 'meta',
   meta_event_name: '',
   google_event_name: '',
   enabled: true,
@@ -42,6 +60,7 @@ const resetDraft = () => {
     name: '',
     trigger_type: 'funnel_stage_reached',
     trigger_config: {},
+    destination: 'meta',
     meta_event_name: '',
     google_event_name: '',
     enabled: true,
@@ -53,10 +72,19 @@ const startCreate = () => {
   editing.value = 'new';
 };
 
+// Both `meta_event_name` populated → default to Meta.
+// Only `google_event_name` → Google.
+// Neither / just `meta_event_name` → Meta.
+const destinationFromRow = event => {
+  if (event.google_event_name && !event.meta_event_name) return 'google';
+  return 'meta';
+};
+
 const startEdit = event => {
   Object.assign(draft, {
     ...event,
     trigger_config: { ...(event.trigger_config || {}) },
+    destination: destinationFromRow(event),
   });
   editing.value = event.id;
 };
@@ -77,9 +105,13 @@ const triggerConfigForBackend = () => {
   return {};
 };
 
+const currentEventName = computed(() =>
+  draft.destination === 'meta' ? draft.meta_event_name : draft.google_event_name
+);
+
 const canSave = computed(() => {
   if (!draft.name.trim()) return false;
-  if (!draft.meta_event_name && !draft.google_event_name) return false;
+  if (!(currentEventName.value || '').trim()) return false;
   if (
     draft.trigger_type === 'funnel_stage_reached' &&
     !draft.trigger_config.funnel_stage_id
@@ -94,12 +126,17 @@ const canSave = computed(() => {
 });
 
 const save = async () => {
+  // Persist only the field paired with the chosen destination; the other
+  // is cleared so switching destinations doesn't leave an orphan value
+  // that the dispatcher would still act on.
   const payload = {
     name: draft.name.trim(),
     trigger_type: draft.trigger_type,
     trigger_config: triggerConfigForBackend(),
-    meta_event_name: draft.meta_event_name || null,
-    google_event_name: draft.google_event_name || null,
+    meta_event_name:
+      draft.destination === 'meta' ? draft.meta_event_name || null : null,
+    google_event_name:
+      draft.destination === 'google' ? draft.google_event_name || null : null,
     enabled: draft.enabled,
   };
   try {
@@ -147,18 +184,56 @@ const triggerLabel = event => {
   return t('MARKETING_ANALYTICS.EVENTS.TRIGGER_TYPES.AUTOMATION_ACTION');
 };
 
-onMounted(() => {
+const loadMetaEventSuggestions = async () => {
+  if (!metaIntegration.value?.id) {
+    metaEventSuggestions.value = [];
+    return;
+  }
+  try {
+    const { data } = await MarketingIntegrationsAPI.fetchPixelEvents(
+      metaIntegration.value.id
+    );
+    metaEventSuggestions.value = [
+      ...(data.standard || []),
+      ...(data.custom || []),
+    ];
+  } catch {
+    // A broken Meta call (missing credentials, expired token, network
+    // hiccup) must not lock the operator out — the datalist becomes
+    // empty and the field stays a free-text input.
+    metaEventSuggestions.value = [];
+  }
+};
+
+onMounted(async () => {
   store.dispatch('conversionEvents/get');
   // Both stores are idempotent (their own `get` short-circuits when
   // already fetched), so dispatching every mount is cheap.
   store.dispatch('funnelStages/get');
   store.dispatch('labels/get');
+  // `IntegrationsSection` on the same screen fires this too — the store
+  // shares the single fetch. Re-fires here so opening the page directly
+  // on the Conversion Events section (or on a variant that hides the
+  // integrations section) still populates the Meta combobox.
+  await store.dispatch('marketingIntegrations/get');
+  loadMetaEventSuggestions();
 });
 
 watch(
   () => draft.trigger_type,
   () => {
     draft.trigger_config = {};
+  }
+);
+
+// Refresh the suggestions if the Meta integration gets connected /
+// re-credentialed while the operator is on the screen (e.g., a manager
+// pastes the Meta token in the section above and comes down to fill an
+// event — the combobox has to catch up).
+watch(
+  () => metaIntegration.value?.id,
+  id => {
+    if (id) loadMetaEventSuggestions();
   }
 );
 </script>
@@ -273,23 +348,59 @@ watch(
         </label>
 
         <label class="flex flex-col gap-1">
-          <span class="text-n-slate-11">{{
-            t('MARKETING_ANALYTICS.EVENTS.META_EVENT')
-          }}</span>
+          <span class="text-n-slate-11">
+            {{ t('MARKETING_ANALYTICS.EVENTS.DESTINATION') }}
+            <span class="text-n-ruby-10">*</span>
+          </span>
+          <select
+            v-model="draft.destination"
+            class="rounded border border-n-strong bg-n-solid-2 px-2 py-1.5 text-n-slate-12"
+          >
+            <option v-for="dst in DESTINATIONS" :key="dst" :value="dst">
+              {{
+                t(
+                  `MARKETING_ANALYTICS.EVENTS.DESTINATIONS.${dst.toUpperCase()}`
+                )
+              }}
+            </option>
+          </select>
+        </label>
+
+        <!-- Combobox (input + datalist) para o Meta: aceita valores
+             livres (o operador pode digitar um Custom Event novo) mas
+             sugere Standard Events + eventos que o pixel já recebeu
+             nos últimos 30 dias (via `pixel_events` endpoint). -->
+        <label v-if="draft.destination === 'meta'" class="flex flex-col gap-1">
+          <span class="text-n-slate-11">
+            {{ t('MARKETING_ANALYTICS.EVENTS.META_EVENT') }}
+            <span class="text-n-ruby-10">*</span>
+          </span>
           <input
             v-model="draft.meta_event_name"
+            list="meta-event-suggestions"
             type="text"
             :placeholder="
               t('MARKETING_ANALYTICS.EVENTS.META_EVENT_PLACEHOLDER')
             "
             class="rounded border border-n-strong bg-n-solid-2 px-2 py-1.5 text-n-slate-12"
           />
+          <datalist id="meta-event-suggestions">
+            <option
+              v-for="name in metaEventSuggestions"
+              :key="name"
+              :value="name"
+            />
+          </datalist>
         </label>
 
-        <label class="flex flex-col gap-1">
-          <span class="text-n-slate-11">{{
-            t('MARKETING_ANALYTICS.EVENTS.GOOGLE_EVENT')
-          }}</span>
+        <label
+          v-else-if="draft.destination === 'google'"
+          class="flex flex-col gap-1"
+        >
+          <span class="text-n-slate-11">
+            {{ t('MARKETING_ANALYTICS.EVENTS.GOOGLE_EVENT') }}
+            <span class="text-n-ruby-10">*</span>
+          </span>
           <input
             v-model="draft.google_event_name"
             type="text"

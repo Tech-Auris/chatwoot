@@ -91,6 +91,11 @@
       "LABEL": "Etiqueta",
       "META_LABEL": "Meta",
       "GOOGLE_LABEL": "· Google",
+      "DESTINATION": "Enviar para",
+      "DESTINATIONS": {
+        "META": "Meta Ads (CAPI)",
+        "GOOGLE": "Google Ads"
+      },
       "META_EVENT": "Nome do evento no Meta",
       "META_EVENT_PLACEHOLDER": "Lead / Schedule / Purchase …",
       "GOOGLE_EVENT": "Nome do evento no Google",
