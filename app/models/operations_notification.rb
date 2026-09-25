@@ -63,6 +63,13 @@ class OperationsNotification < ApplicationRecord
   validate :audience_user_ids_required_when_specific_users
   validate :specific_users_require_account_scope
 
+  # The Super Admin form now writes rich-text HTML into title and body via
+  # a Quill editor — sanitize on the way in so a slip on the operator side
+  # cannot inject a script tag or an event handler onto the modal every
+  # user sees. Tags below are what the editor's toolbar can produce plus
+  # image/video/iframe for embedded media (also editor-produced).
+  before_validation :sanitize_html_fields
+
   # Push to ActionCable only when the operator marked the notification as
   # `immediate`. `on_login` ones rely on the frontend's onMounted
   # fetchPending — pushing them would force them onto users already
@@ -193,7 +200,34 @@ class OperationsNotification < ApplicationRecord
     end.distinct
   end
 
+  # Snapshot HTML sanitizer configuration — tags the editor toolbar can
+  # produce plus the media embeds the operator can insert by URL. Anything
+  # outside this list is stripped, including inline event handlers and
+  # javascript: URLs (SafeListSanitizer strips those by default).
+  HTML_ALLOWED_TAGS = %w[
+    p div span br hr
+    b i u s strong em ins del strike sub sup
+    h1 h2 h3 h4 h5 h6
+    ul ol li
+    blockquote pre code
+    a img figure figcaption
+    video source iframe
+  ].freeze
+
+  HTML_ALLOWED_ATTRIBUTES = %w[
+    href src alt title target rel
+    width height style class
+    controls autoplay muted loop poster type
+    allow allowfullscreen frameborder scrolling sandbox
+  ].freeze
+
   private
+
+  def sanitize_html_fields
+    sanitizer = Rails::Html::SafeListSanitizer.new
+    self.title = sanitizer.sanitize(title.to_s, tags: HTML_ALLOWED_TAGS, attributes: HTML_ALLOWED_ATTRIBUTES) if title_changed?
+    self.body  = sanitizer.sanitize(body.to_s,  tags: HTML_ALLOWED_TAGS, attributes: HTML_ALLOWED_ATTRIBUTES) if body_changed?
+  end
 
   def broadcast_if_immediate
     return unless trigger_immediate?

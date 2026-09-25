@@ -49,6 +49,55 @@ RSpec.describe OperationsNotification do
     end
   end
 
+  # Title and body arrive as HTML from the Super Admin form (Quill editor).
+  # The model sanitizes on write so a slip on the operator side cannot
+  # inject a script tag or an inline event handler onto the modal every
+  # user sees.
+  describe 'HTML sanitization' do
+    let(:notification) do
+      described_class.new(scope_type: :all_accounts, audience_type: :all_users, created_by: super_admin_user)
+    end
+
+    it 'strips <script> tags from the body' do
+      notification.title = 'Aviso'
+      notification.body = 'olá<script>alert("x")</script>mundo'
+      notification.valid?
+
+      # The sanitizer removes the tag; the text between the tags survives
+      # as inert plain text (no script tag = no execution).
+      expect(notification.body).not_to include('<script>')
+      expect(notification.body).to include('olá')
+      expect(notification.body).to include('mundo')
+    end
+
+    it 'strips inline event handlers from allowed tags' do
+      notification.title = '<a href="https://auris.io" onclick="alert(1)">clique</a>'
+      notification.body = 'ok'
+      notification.valid?
+
+      expect(notification.title).to include('href="https://auris.io"')
+      expect(notification.title).not_to include('onclick')
+    end
+
+    it 'keeps safe media embeds the toolbar produces' do
+      notification.title = 'Aviso'
+      notification.body = '<p>Veja <img src="https://cdn.auris.io/img.png" alt="ok" /> e ' \
+                          '<iframe src="https://www.youtube.com/embed/x" allowfullscreen></iframe></p>'
+      notification.valid?
+
+      expect(notification.body).to include('<img src="https://cdn.auris.io/img.png"')
+      expect(notification.body).to include('<iframe src="https://www.youtube.com/embed/x"')
+    end
+
+    it 'strips a javascript: pseudo-URL from a link' do
+      notification.title = '<a href="javascript:alert(1)">malicioso</a>'
+      notification.body = 'ok'
+      notification.valid?
+
+      expect(notification.title).not_to include('javascript:')
+    end
+  end
+
   describe '.visible_for' do
     let!(:all_users_global) do
       create_notification(scope_type: :all_accounts, audience_type: :all_users)

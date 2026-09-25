@@ -93,11 +93,11 @@ onBeforeUnmount(() => {
   <Dialog
     ref="dialogRef"
     type="edit"
-    width="lg"
+    width="xl"
     position="center"
     :show-cancel-button="false"
     :show-confirm-button="false"
-    :dismissable="!isTermsSignature"
+    :dismissable="false"
   >
     <TermsSignatureBody
       v-if="currentNotification && isTermsSignature"
@@ -116,12 +116,22 @@ onBeforeUnmount(() => {
       >
         {{ t('OPERATIONS_NOTIFICATIONS.INFO_BADGE') }}
       </div>
-      <h3 class="text-base font-semibold text-n-slate-12">
-        {{ currentNotification.title }}
-      </h3>
-      <p class="text-sm whitespace-pre-wrap text-n-slate-12">
-        {{ currentNotification.body }}
-      </p>
+      <!-- Title and body arrive as HTML from the super-admin editor
+           (already sanitized on the server). Arbitrary-variant Tailwind
+           utilities constrain everything inside so a long URL breaks
+           instead of scrolling the modal sideways, embedded media fit
+           the width, and lists / headings render with sensible margins.
+           `[overflow-wrap:anywhere]` is what does the long-URL work;
+           `break-words` alone lets the browser prefer whole-word breaks
+           and long slugs still overflow. -->
+      <h3
+        class="text-base font-semibold text-n-slate-12 break-words [overflow-wrap:anywhere] [&_a]:underline [&_a]:text-n-blue-11"
+        v-html="currentNotification.title"
+      />
+      <div
+        class="text-sm text-n-slate-12 max-w-full break-words [overflow-wrap:anywhere] [&_a]:underline [&_a]:text-n-blue-11 [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-md [&_video]:max-w-full [&_video]:h-auto [&_video]:rounded-md [&_iframe]:max-w-full [&_iframe]:aspect-video [&_iframe]:w-full [&_iframe]:rounded-md [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_h1]:text-lg [&_h1]:font-semibold [&_h2]:text-base [&_h2]:font-semibold [&_h3]:text-sm [&_h3]:font-semibold [&_blockquote]:border-l-4 [&_blockquote]:border-n-slate-4 [&_blockquote]:pl-3 [&_blockquote]:italic [&_pre]:bg-n-slate-2 [&_pre]:rounded-md [&_pre]:p-3 [&_pre]:overflow-x-auto [&_code]:font-mono [&_p]:mb-2 [&_p:last-child]:mb-0"
+        v-html="currentNotification.body"
+      />
       <p v-if="pending.length > 1" class="text-xs text-n-slate-10">
         {{
           t('OPERATIONS_NOTIFICATIONS.MORE_PENDING', {
