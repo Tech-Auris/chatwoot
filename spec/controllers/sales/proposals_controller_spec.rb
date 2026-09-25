@@ -510,6 +510,29 @@ RSpec.describe 'Public sales proposal', type: :request do
       expect(quote.reload.terms_acceptances.status_signed).to be_empty
     end
 
+    # The lead needs to see the cuts that survive the reservation window —
+    # a scoped waiver like "Isenção da Implantação (100%)" is not part of
+    # the meeting courtesy and still holds. Rendering only the Total would
+    # look like the discount vanished.
+    it 'keeps the non-meeting discount breakdown on the page after the reservation lapses' do
+      quote.update!(
+        reserved_until: 1.day.ago,
+        subtotal_amount: 1_540_020,
+        discount_amount: 270_000,
+        total_amount: 1_270_020,
+        meeting_discount: false,
+        meeting_discount_amount: 0,
+        discount_summary: 'cupom Isenção da Implantação (100%)'
+      )
+
+      get "/proposals/#{quote.public_token}/pagamento"
+
+      expect(response.body).to include('A reserva venceu')
+      expect(response.body).to include('Desconto (cupom Isenção da Implantação (100%))')
+      expect(response.body).to include('R$ 2.700,00')
+      expect(response.body).to include('R$ 12.700,20')
+    end
+
     # Signing against a page nobody could read would leave an empty contract on
     # file, so the flow stops instead.
     it 'stops when the terms page cannot be read' do
