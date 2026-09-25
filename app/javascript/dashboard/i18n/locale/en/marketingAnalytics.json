@@ -90,7 +90,7 @@
       "FUNNEL_STAGE": "Funnel stage",
       "LABEL": "Label",
       "META_LABEL": "Meta",
-      "GOOGLE_LABEL": "· Google",
+      "GOOGLE_LABEL": "Google",
       "DESTINATION": "Send to",
       "DESTINATIONS": {
         "META": "Meta Ads (CAPI)",

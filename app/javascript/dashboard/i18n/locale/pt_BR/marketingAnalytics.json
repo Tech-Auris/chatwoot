@@ -90,7 +90,7 @@
       "FUNNEL_STAGE": "Etapa do funil",
       "LABEL": "Etiqueta",
       "META_LABEL": "Meta",
-      "GOOGLE_LABEL": "· Google",
+      "GOOGLE_LABEL": "Google",
       "DESTINATION": "Enviar para",
       "DESTINATIONS": {
         "META": "Meta Ads (CAPI)",
