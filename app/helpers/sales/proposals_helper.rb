@@ -31,13 +31,18 @@ module Sales::ProposalsHelper
   # Falls back to the company's static PIX code (configured in Settings),
   # with the proposal's amount injected so the customer confirms an amount
   # instead of typing one they read minutes ago.
+  #
+  # `effective_charge_amount` — not `total_amount` — bakes in the PIX à-vista
+  # discount (5% semestral, 10% anual). Injecting the list amount into the QR
+  # made the customer pay the full price without the discount they clicked
+  # PIX for on the previous step.
   def pix_payload(proposal)
     return proposal.inter_pix_payload if proposal.inter_pix_payload.present?
 
     configured = GlobalConfig.get('SALES_PIX_PAYLOAD')['SALES_PIX_PAYLOAD'].presence
     return nil if configured.blank?
 
-    Sales::PixCodeService.new(payload: configured, amount_cents: proposal.total_amount).perform
+    Sales::PixCodeService.new(payload: configured, amount_cents: proposal.effective_charge_amount).perform
   end
 
   # Drawn from the code itself rather than stored as an image, so the QR and the
