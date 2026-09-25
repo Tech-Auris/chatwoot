@@ -462,12 +462,18 @@ watch(
           <span class="text-xs text-n-slate-11 truncate">{{
             triggerLabel(event)
           }}</span>
+          <!-- Um evento novo carrega só um destino (Meta ou Google), então
+               o `META_LABEL` / `GOOGLE_LABEL` aparece sem prefixo. Linhas
+               legadas com os dois campos preenchidos ainda podem existir;
+               nesse caso, colocamos um "·" antes do Google só como
+               separador visual. -->
           <span class="text-xs text-n-slate-11">
             <template v-if="event.meta_event_name">
               {{ t('MARKETING_ANALYTICS.EVENTS.META_LABEL') }}:
               <code class="text-n-slate-12">{{ event.meta_event_name }}</code>
             </template>
             <template v-if="event.google_event_name">
+              <span v-if="event.meta_event_name"> · </span>
               {{ t('MARKETING_ANALYTICS.EVENTS.GOOGLE_LABEL') }}:
               <code class="text-n-slate-12">{{ event.google_event_name }}</code>
             </template>
