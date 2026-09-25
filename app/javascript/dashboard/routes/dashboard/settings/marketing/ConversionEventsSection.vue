@@ -17,7 +17,13 @@ const { t } = useI18n();
 const store = useStore();
 const events = useMapGetter('conversionEvents/getConversionEvents');
 const uiFlags = useMapGetter('conversionEvents/getUIFlags');
-const funnelStages = useMapGetter('funnel/getStages');
+// Namespaces were `funnel/getStages` and never resolved — the module is
+// registered as `funnelStages` with a `getFunnelStages` getter, so the
+// dropdown stayed empty and the CTA "Etapa do funil" was unusable.
+// Labels never had a fetch here at all and the "Etiqueta aplicada"
+// gatilho left the operator typing the label name by hand.
+const funnelStages = useMapGetter('funnelStages/getFunnelStages');
+const labels = useMapGetter('labels/getLabels');
 
 const editing = ref(null);
 const draft = reactive({
@@ -143,9 +149,10 @@ const triggerLabel = event => {
 
 onMounted(() => {
   store.dispatch('conversionEvents/get');
-  if (typeof store.getters['funnel/getStages'] === 'undefined') {
-    store.dispatch('funnel/get');
-  }
+  // Both stores are idempotent (their own `get` short-circuits when
+  // already fetched), so dispatching every mount is cheap.
+  store.dispatch('funnelStages/get');
+  store.dispatch('labels/get');
 });
 
 watch(
@@ -245,11 +252,24 @@ watch(
             {{ t('MARKETING_ANALYTICS.EVENTS.LABEL') }}
             <span class="text-n-ruby-10">*</span>
           </span>
-          <input
+          <!-- Picker over the account's existing labels — pareado com o
+               que a automação usa como gatilho de "label added". Digitar
+               à mão dava falso match silencioso (o backend compara pelo
+               `title`; um typo passava despercebido até o operador
+               reparar que o Meta CAPI nunca disparava). -->
+          <select
             v-model="draft.trigger_config.label"
-            type="text"
             class="rounded border border-n-strong bg-n-solid-2 px-2 py-1.5 text-n-slate-12"
-          />
+          >
+            <option :value="undefined" disabled>—</option>
+            <option
+              v-for="label in labels || []"
+              :key="label.id"
+              :value="label.title"
+            >
+              {{ label.title }}
+            </option>
+          </select>
         </label>
 
         <label class="flex flex-col gap-1">
