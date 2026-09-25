@@ -56,6 +56,19 @@ watch(currentNotification, next => {
   else dialogRef.value?.close();
 });
 
+// The Quill editor wraps the title into `<p>...</p>` — a nested `<p>`
+// inside an `<h3>` is invalid HTML and the browser resets the heading's
+// font-size / font-weight, so the title used to look like body copy.
+// Strip a single leading/trailing `<p>` (Quill only ever produces one
+// on a plain title) so the heading styles win.
+const titleHtml = computed(() => {
+  const raw = currentNotification.value?.title || '';
+  return raw
+    .replace(/^\s*<p[^>]*>/i, '')
+    .replace(/<\/p>\s*$/i, '')
+    .trim();
+});
+
 const acknowledgeCurrent = async () => {
   const id = currentNotification.value?.id;
   if (!id) return;
@@ -125,8 +138,8 @@ onBeforeUnmount(() => {
            `break-words` alone lets the browser prefer whole-word breaks
            and long slugs still overflow. -->
       <h3
-        class="text-base font-semibold text-n-slate-12 break-words [overflow-wrap:anywhere] [&_a]:underline [&_a]:text-n-blue-11"
-        v-html="currentNotification.title"
+        class="text-lg font-semibold text-n-slate-12 break-words [overflow-wrap:anywhere] [&_a]:underline [&_a]:text-n-blue-11"
+        v-html="titleHtml"
       />
       <div
         class="text-sm text-n-slate-12 max-w-full break-words [overflow-wrap:anywhere] [&_a]:underline [&_a]:text-n-blue-11 [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-md [&_video]:max-w-full [&_video]:h-auto [&_video]:rounded-md [&_iframe]:max-w-full [&_iframe]:aspect-video [&_iframe]:w-full [&_iframe]:rounded-md [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_h1]:text-lg [&_h1]:font-semibold [&_h2]:text-base [&_h2]:font-semibold [&_h3]:text-sm [&_h3]:font-semibold [&_blockquote]:border-l-4 [&_blockquote]:border-n-slate-4 [&_blockquote]:pl-3 [&_blockquote]:italic [&_pre]:bg-n-slate-2 [&_pre]:rounded-md [&_pre]:p-3 [&_pre]:overflow-x-auto [&_code]:font-mono [&_p]:mb-2 [&_p:last-child]:mb-0"
