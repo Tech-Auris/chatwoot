@@ -290,10 +290,14 @@ watch(
 
 <template>
   <teleport to="body">
+    <!-- Clicar fora do modal (na backdrop) NÃO fecha — o operador acaba
+         de gastar minutos escolhendo contato, escrevendo a mensagem e
+         montando o cronograma; um clique acidental fora perdia o trabalho
+         inteiro. Fecha só pelos botões Cancelar (footer) ou X (header),
+         ou depois que o Agendar salva com sucesso. -->
     <div
       v-if="show"
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6"
-      @click.self="close"
     >
       <div
         class="w-full max-w-2xl bg-n-solid-1 rounded-xl shadow-xl flex flex-col max-h-[92vh] overflow-hidden"
