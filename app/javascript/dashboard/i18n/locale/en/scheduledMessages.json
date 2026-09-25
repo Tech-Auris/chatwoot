@@ -31,6 +31,8 @@
       "INBOX_UNREACHABLE": "This contact is not on any inbox you have access to.",
       "MESSAGE_LABEL": "Message",
       "MESSAGE_PLACEHOLDER": "Write the message that will be sent at the scheduled time…",
+      "VARIABLE_HINT_PREFIX": "Type",
+      "VARIABLE_HINT_SUFFIX": "to insert variables",
       "SCHEDULE_LABEL": "Schedule for",
       "HOLD_ON_REPLY": "Hold if the customer replies first",
       "HOLD_ON_REPLY_HINT": "If the customer sends a message before this one, it will be held for review instead of being sent automatically.",
