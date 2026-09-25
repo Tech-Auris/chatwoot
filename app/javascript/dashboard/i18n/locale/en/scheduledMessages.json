@@ -29,6 +29,7 @@
       "INBOX_LABEL": "Via",
       "INBOX_PLACEHOLDER": "Pick an inbox",
       "INBOX_UNREACHABLE": "This contact is not on any inbox you have access to.",
+      "WHATSAPP_CLOUD_TEMPLATE_NOTICE": "This inbox uses official WhatsApp Cloud (Meta). Outside the 24h window only approved templates are accepted — a free-text scheduled send may fail. Template picker here coming soon.",
       "MESSAGE_LABEL": "Message",
       "MESSAGE_PLACEHOLDER": "Write the message that will be sent at the scheduled time…",
       "VARIABLE_HINT_PREFIX": "Type",

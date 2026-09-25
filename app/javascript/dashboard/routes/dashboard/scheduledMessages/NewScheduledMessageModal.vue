@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
 import { useMapGetter, useStore } from 'dashboard/composables/store';
 import VariableList from 'dashboard/components/widgets/conversation/VariableList.vue';
+import { INBOX_TYPES } from 'dashboard/helper/inbox';
 
 // A lean v1 of the composer that lets the operator schedule a message
 // from the Agendadas panel without having to open a conversation first.
@@ -146,6 +147,35 @@ const accessibleContactInboxes = computed(() =>
   )
 );
 
+// Lista de inboxes que aparece no dropdown Via. Antes do contato ser
+// escolhido, mostra todas as inboxes do usuário — o operador pode
+// escolher primeiro por qual caixa quer enviar. Depois do contato, o
+// filtro fecha nas inboxes onde ele realmente existe (pra não agendar
+// pra uma inbox que o backend depois rejeita).
+const inboxOptionsForVia = computed(() => {
+  if (selectedContact.value) {
+    return accessibleContactInboxes.value.map(ci => ci.inbox);
+  }
+  return myInboxes.value || [];
+});
+
+const selectedInbox = computed(() =>
+  (myInboxes.value || []).find(i => i.id === selectedInboxId.value)
+);
+
+// WhatsApp Cloud API é qualquer inbox WhatsApp cujo provider não é
+// baileys nem zapi (as duas alternativas não-oficiais). Fora da janela
+// de 24h, essas inboxes só aceitam envio como template — enviar texto
+// livre agendado dá erro. Enquanto o template picker não chega, exibe
+// um aviso pro operador não se surpreender no dia do envio.
+const isWhatsappCloudInbox = computed(() => {
+  const inbox = selectedInbox.value;
+  if (!inbox) return false;
+  if (inbox.channel_type !== INBOX_TYPES.WHATSAPP) return false;
+  const provider = inbox.provider || '';
+  return provider !== 'baileys' && provider !== 'zapi';
+});
+
 // A fresh contact search fires whenever the operator types >= 2 chars.
 // The endpoint is the same one the pencil flow calls; results carry
 // `contact_inboxes` inline so we can populate Via without a follow-up.
@@ -179,6 +209,12 @@ const pickContact = contact => {
   contactResults.value = [];
   contactInboxes.value = contact.contact_inboxes || [];
   const accessible = accessibleContactInboxes.value;
+  // Preserva a inbox que o operador já escolheu (fluxo "Via primeiro,
+  // contato depois") desde que o contato exista nessa mesma inbox.
+  const stillValid =
+    selectedInboxId.value &&
+    accessible.some(ci => ci.inbox?.id === selectedInboxId.value);
+  if (stillValid) return;
   selectedInboxId.value =
     accessible.length === 1 ? accessible[0].inbox?.id : null;
 };
@@ -286,6 +322,18 @@ watch(
     if (!value) reset();
   }
 );
+
+// Se o operador tinha uma inbox selecionada e trocou o contato (ou
+// limpou), a inbox anterior pode não fazer mais parte das opções.
+// Limpar pra não enviar um valor "fantasma" no submit.
+watch(inboxOptionsForVia, options => {
+  if (
+    selectedInboxId.value &&
+    !options.some(i => i.id === selectedInboxId.value)
+  ) {
+    selectedInboxId.value = null;
+  }
+});
 </script>
 
 <template>
@@ -380,8 +428,11 @@ watch(
             </div>
           </div>
 
-          <!-- Via: inbox picker (visible after contact chosen) -->
-          <div v-if="selectedContact">
+          <!-- Via: inbox picker — sempre visível, igual ao lápis. Sem
+               contato escolhido, lista todas as inboxes acessíveis pro
+               operador. Assim que o contato entra, o filtro fecha só nas
+               inboxes onde ele existe. Se nenhuma delas casar, avisa. -->
+          <div>
             <label
               class="text-sm font-medium text-n-slate-12 flex gap-2 items-center"
             >
@@ -389,7 +440,7 @@ watch(
               {{ t('SCHEDULED.NEW.INBOX_LABEL') }}
             </label>
             <select
-              v-if="accessibleContactInboxes.length"
+              v-if="inboxOptionsForVia.length"
               v-model="selectedInboxId"
               class="mt-1 w-full border border-n-slate-3 rounded-md px-3 py-2 text-sm text-n-slate-12 focus:border-n-brand focus:outline-none"
             >
@@ -397,15 +448,22 @@ watch(
                 {{ t('SCHEDULED.NEW.INBOX_PLACEHOLDER') }}
               </option>
               <option
-                v-for="ci in accessibleContactInboxes"
-                :key="ci.inbox.id"
-                :value="ci.inbox.id"
+                v-for="inbox in inboxOptionsForVia"
+                :key="inbox.id"
+                :value="inbox.id"
               >
-                {{ ci.inbox.name }}
+                {{ inbox.name }}
               </option>
             </select>
-            <p v-else class="mt-1 text-xs text-n-amber-11">
+            <p v-else-if="selectedContact" class="mt-1 text-xs text-n-amber-11">
               {{ t('SCHEDULED.NEW.INBOX_UNREACHABLE') }}
+            </p>
+            <!-- WhatsApp Cloud (oficial da Meta): fora da janela de 24h
+                 só aceita envio como template. O picker de template pra
+                 dentro desse modal ainda está em preparação; até lá, o
+                 aviso trava a espera do operador. -->
+            <p v-if="isWhatsappCloudInbox" class="mt-2 text-xs text-n-amber-11">
+              {{ t('SCHEDULED.NEW.WHATSAPP_CLOUD_TEMPLATE_NOTICE') }}
             </p>
           </div>
 
