@@ -1,0 +1,33 @@
+<%#
+# HTML Text Show Partial
+#
+# The stored value is HTML the operator composed in the Super Admin form
+# and the model has already sanitized on write (see
+# `OperationsNotification#sanitize_html_fields`). We re-sanitize on read
+# too as a defence-in-depth — the sanitizer allowlist here matches the
+# model's, so nothing new can slip through by loosening the model side.
+#
+# Locals:
+#   * `field`: instance of HtmlTextField.
+%>
+
+<div class="html-preview">
+  <%= sanitize field.html,
+               tags: OperationsNotification::HTML_ALLOWED_TAGS,
+               attributes: OperationsNotification::HTML_ALLOWED_ATTRIBUTES %>
+</div>
+
+<style>
+  /* Keep the rendered HTML inside the Administrate `dd` — long URLs
+     break instead of scrolling sideways, images and video embeds fit
+     the column, and lists / blockquotes have sensible indentation. */
+  .html-preview { max-width: 100%; overflow-wrap: anywhere; word-break: break-word; }
+  .html-preview img,
+  .html-preview video,
+  .html-preview iframe { max-width: 100%; height: auto; border-radius: 6px; }
+  .html-preview ul { list-style: disc; padding-left: 1.25rem; }
+  .html-preview ol { list-style: decimal; padding-left: 1.25rem; }
+  .html-preview blockquote { border-left: 4px solid #cbd5e1; padding-left: 12px; color: #475569; font-style: italic; }
+  .html-preview pre { background: #f1f5f9; padding: 12px; border-radius: 6px; overflow-x: auto; }
+  .html-preview a { color: #2563eb; text-decoration: underline; }
+</style>

@@ -17,8 +17,11 @@ class OperationsNotificationDashboard < Administrate::BaseDashboard
 
   ATTRIBUTE_TYPES = {
     id: Field::Number,
-    title: Field::String.with_options(searchable: true),
-    body: Field::Text,
+    # HTML editor on the form (see `_form.html.erb`) — `HtmlTextField`
+    # renders the sanitized HTML on the show page and a plain-text
+    # preview on the index.
+    title: HtmlTextField.with_options(searchable: true),
+    body: HtmlTextField,
     severity: Field::Select.with_options(collection: SEVERITY_OPTIONS),
     scope_type: Field::Select.with_options(collection: SCOPE_OPTIONS),
     accounts_summary: Field::String.with_options(searchable: false),
@@ -93,8 +96,14 @@ class OperationsNotificationDashboard < Administrate::BaseDashboard
     deleted: ->(resources) { resources.where.not(deleted_at: nil) }
   }.freeze
 
+  # Header on the show/edit pages needs the title as PLAIN TEXT — the raw
+  # HTML would print literally next to the id. `strip_tags` collapses the
+  # rich title back to what the user typed.
   def display_resource(operations_notification)
-    "##{operations_notification.id} — #{operations_notification.title}"
+    plain_title = ActionController::Base.helpers.strip_tags(operations_notification.title.to_s)
+                                        .gsub(/\s+/, ' ')
+                                        .strip
+    "##{operations_notification.id} — #{plain_title}"
   end
 
   # Administrate's index header builds the "New …" button with the
