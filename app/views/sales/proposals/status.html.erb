@@ -10,13 +10,31 @@
     elsif @proposal.paid? || @proposal.converted? then :tokens
     else :payment
     end
+  needs_token_card = !@proposal.token_card_settled? && (@proposal.paid? || @proposal.converted?)
 %>
 <%= render 'steps', current: current_step %>
 
 <div class="bg-white rounded-lg shadow p-6">
-  <h1 class="text-lg font-medium text-slate-900">Acompanhamento</h1>
+  <%# Still owes the card for the token charges (not waived by the seller
+      either): that is the only thing left for the customer to do, so it is
+      what the page talks about. %>
+  <h1 class="text-lg font-medium text-slate-900">
+    <%= needs_token_card ? 'Forma de pagamento dos tokens' : 'Acompanhamento' %>
+  </h1>
 
-  <% if @proposal.converted? %>
+  <% if needs_token_card %>
+    <p class="text-sm text-slate-600 mt-2">
+      O consumo de tokens é apurado mensalmente e cobrado de forma pós-paga,
+      conforme o uso.
+    </p>
+    <p class="text-sm text-slate-600 mt-2">
+      Nenhuma cobrança será realizada neste momento. É necessário apenas
+      cadastrar a forma de pagamento.
+    </p>
+
+    <%= link_to 'Cadastrar', sales_proposal_tokens_path(@proposal.public_token),
+          class: 'mt-5 block w-full text-center px-3 py-2 rounded bg-woot-500 text-white text-sm' %>
+  <% elsif @proposal.converted? %>
     <p class="text-sm text-slate-600 mt-2">
       Seu acesso foi criado e o time já está preparando a implantação. Vamos
       falar com você pelo WhatsApp <strong><%= @proposal.prospect_phone %></strong>.
@@ -56,11 +74,6 @@
     <p class="text-sm text-slate-600 mt-2">
       Aguardando a confirmação do pagamento.
     </p>
-  <% end %>
-
-  <% if !@proposal.token_card_settled? && (@proposal.paid? || @proposal.converted?) %>
-    <%= link_to 'Cadastrar cartão dos tokens', sales_proposal_tokens_path(@proposal.public_token),
-          class: 'mt-5 block w-full text-center px-3 py-2 rounded bg-woot-500 text-white text-sm' %>
   <% end %>
 
   <%= render 'change_payment' %>

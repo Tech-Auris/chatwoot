@@ -595,7 +595,7 @@ RSpec.describe 'Public sales proposal', type: :request do
 
       get "/proposals/#{quote.public_token}/acompanhamento"
 
-      expect(response.body).not_to include('Cadastrar cartão dos tokens')
+      expect(response.body).not_to include('Forma de pagamento dos tokens')
       expect(response.body).to include('sem cartão cadastrado')
     end
 
@@ -658,19 +658,21 @@ RSpec.describe 'Public sales proposal', type: :request do
     end
 
     it 'says the access is being created once the payment landed' do
-      quote.update!(status: :paid)
+      quote.update!(status: :paid, token_payment_method_id: 'seti_1')
 
       get "/proposals/#{quote.public_token}/acompanhamento"
 
       expect(response.body).to include('Estamos criando o seu acesso')
     end
 
-    it 'points to the token card while it is missing' do
-      quote.update!(status: :paid)
+    it 'asks for the token payment method while it is missing' do
+      quote.update!(status: :converted, token_payment_method_id: nil)
 
       get "/proposals/#{quote.public_token}/acompanhamento"
 
-      expect(response.body).to include('Cadastrar cartão dos tokens')
+      expect(response.body).to include('Forma de pagamento dos tokens')
+      expect(response.body).to include('Nenhuma cobrança será realizada neste momento')
+      expect(response.body).not_to include('Acompanhamento')
     end
 
     it 'stops asking for the card once it is saved' do
@@ -678,11 +680,11 @@ RSpec.describe 'Public sales proposal', type: :request do
 
       get "/proposals/#{quote.public_token}/acompanhamento"
 
-      expect(response.body).not_to include('Cadastrar cartão dos tokens')
+      expect(response.body).not_to include('Forma de pagamento dos tokens')
     end
 
     it 'tells the converted customer the onboarding is under way' do
-      quote.update!(status: :converted)
+      quote.update!(status: :converted, token_payment_method_id: 'seti_1')
 
       get "/proposals/#{quote.public_token}/acompanhamento"
 
