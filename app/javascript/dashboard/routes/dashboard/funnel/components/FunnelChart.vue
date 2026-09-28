@@ -1,5 +1,6 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
+import DrillIcon from './DrillIcon.vue';
 
 const props = defineProps({
   stages: {
@@ -160,6 +161,34 @@ const labelsForStages = computed(() => {
 });
 
 const formatCount = value => Number(value || 0).toLocaleString();
+
+// The drill-down icon sits right after a clickable count (before it on the
+// last, right-anchored stage), so the rendered width of each count is
+// measured once the labels are on screen.
+const DRILL_ICON_SIZE = 22;
+const DRILL_ICON_GAP = 8;
+const countEls = {};
+const countWidths = ref({});
+
+const measureCounts = () => {
+  countWidths.value = Object.fromEntries(
+    Object.entries(countEls)
+      .filter(([, el]) => el)
+      .map(([key, el]) => [key, el.getComputedTextLength()])
+  );
+};
+
+watch(labelsForStages, () => nextTick(measureCounts), { immediate: true });
+
+const drillIconX = label => {
+  const width = countWidths.value[label.key] || 0;
+  if (label.anchor === 'end') {
+    return label.x - width - DRILL_ICON_GAP - DRILL_ICON_SIZE;
+  }
+  const start =
+    label.anchor === 'middle' ? label.x + width / 2 : label.x + width;
+  return start + DRILL_ICON_GAP;
+};
 // Tiny shares keep one significant digit (0.03%) instead of rounding to a
 // misleading 0.0%.
 const formatPct = value => {
@@ -268,19 +297,27 @@ const hoveredTooltip = computed(() => {
         >
           {{ label.name }}
         </text>
-        <text
-          :x="label.x"
-          :y="72"
-          :text-anchor="label.anchor"
-          class="fill-n-slate-12 text-3xl font-semibold"
-          :class="{
-            'cursor-pointer underline decoration-dotted hover:fill-n-brand':
-              label.clickable,
-          }"
+        <g
+          :class="{ 'group cursor-pointer': label.clickable }"
           @click="label.clickable && emit('drill', label.stage)"
         >
-          {{ formatCount(label.count) }}
-        </text>
+          <text
+            :ref="el => (countEls[label.key] = el)"
+            :x="label.x"
+            :y="72"
+            :text-anchor="label.anchor"
+            class="fill-n-slate-12 text-3xl font-semibold group-hover:fill-n-brand"
+          >
+            {{ formatCount(label.count) }}
+          </text>
+          <DrillIcon
+            v-if="label.clickable"
+            :x="drillIconX(label)"
+            :y="72 - DRILL_ICON_SIZE"
+            :size="DRILL_ICON_SIZE"
+            class="text-n-slate-10 group-hover:text-n-brand"
+          />
+        </g>
         <text
           :x="label.x"
           :y="100"
