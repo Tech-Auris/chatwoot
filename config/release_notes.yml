@@ -1,4 +1,18 @@
 ---
+- tag: v4.15.1-auris.1.63
+  published_at: '2026-09-28T23:30:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.63
+  notes:
+    en: |-
+      ### ✨ What's new
+
+      - **AI replies in a single message on official WhatsApp.** On official WhatsApp accounts, the assistant now answers in one message instead of several, and your manager can change this for each inbox.
+      - **See the patients behind the funnel numbers.** In the funnel conversion report, click the number of scheduled, confirmed or attended patients (or the losses) to see who they are, with a link to each conversation.
+    pt_BR: |-
+      ### ✨ Novidades
+
+      - **Resposta da IA em uma só mensagem no WhatsApp oficial.** Nas caixas de WhatsApp oficial, a assistente passa a responder em uma mensagem só, em vez de várias, e seu gestor pode mudar isso em cada caixa.
+      - **Veja os pacientes por trás dos números do funil.** No relatório de conversão do funil, clique no número de agendados, confirmados ou comparecimentos (ou nas perdas) para ver quem são, com link para cada conversa.
 - tag: v4.15.1-auris.1.62
   published_at: '2026-09-25T21:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.62
@@ -321,11 +335,3 @@
       ### ⚡ Melhorias
 
       - **Exportar contatos baixa o arquivo na hora.** Antes a exportação era enviada por e-mail e muitas vezes a mensagem não chegava, deixando você esperando por um arquivo que não vinha. Agora o CSV é salvo no seu computador assim que você confirma a exportação.
-- tag: v4.15.1-auris.1.49
-  published_at: '2026-08-20T21:00:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.49
-  notes:
-    en: |-
-      Bug fixes and internal improvements.
-    pt_BR: |-
-      Correções de bugs e melhorias internas.
