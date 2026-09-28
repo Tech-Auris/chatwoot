@@ -94,6 +94,34 @@ class SummaryReportsAPI extends ApiClient {
       },
     });
   }
+
+  // Conversations behind one number of the conversion report: a chart stage
+  // (`stageKey`) or the losses (`kind: 'loss'`, optionally one reason).
+  getFunnelConversionDrilldown({
+    since,
+    until: untilTs,
+    inboxId,
+    label,
+    origem,
+    stageKey,
+    kind,
+    lossReasonId,
+    page,
+  } = {}) {
+    return axios.get(`${this.url}/funnel_conversion_drilldown`, {
+      params: {
+        since,
+        until: untilTs,
+        inbox_id: inboxId,
+        label,
+        origem,
+        stage_key: stageKey,
+        kind,
+        loss_reason_id: lossReasonId,
+        page,
+      },
+    });
+  }
 }
 
 export default new SummaryReportsAPI();

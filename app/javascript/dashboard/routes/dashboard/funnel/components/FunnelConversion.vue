@@ -14,6 +14,7 @@ import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import FunnelChart from './FunnelChart.vue';
 import LossReasonsDonut from './LossReasonsDonut.vue';
 import CampaignBreakdownTable from './CampaignBreakdownTable.vue';
+import FunnelDrilldownDialog from './FunnelDrilldownDialog.vue';
 import {
   ORIGEM_OPTIONS,
   ORIGEM_NONE_TOKEN,
@@ -53,21 +54,47 @@ const labelOptions = computed(() =>
 
 const origemOptions = ORIGEM_OPTIONS;
 
+// Tiny rates keep one significant digit (0.03%) instead of a misleading 0.0%.
 const formatRate = value => {
   if (value === null || value === undefined) return '--';
-  return `${Number(value).toFixed(1)}%`;
+  const rate = Number(value);
+  if (rate > 0 && rate < 0.1) return `${Number(rate.toPrecision(1))}%`;
+  return `${rate.toFixed(1)}%`;
 };
 
+const filters = computed(() => ({
+  since: from.value,
+  until: to.value,
+  inboxId: inboxId.value || undefined,
+  label: labelName.value || undefined,
+  origem: origem.value || undefined,
+}));
+
+const drilldownRef = ref(null);
+
+const onStageDrill = stage =>
+  drilldownRef.value?.open({
+    stageKey: stage.key,
+    name: stage.name,
+    count: stage.count,
+  });
+
+const onLossDrill = reason =>
+  drilldownRef.value?.open({
+    kind: 'loss',
+    lossReasonId: reason?.id,
+    name: reason?.name,
+    count: reason
+      ? reason.count
+      : lossReasons.value.reduce((sum, r) => sum + (r.count || 0), 0),
+  });
+
 const fetchReports = async () => {
-  const params = {
-    since: from.value,
-    until: to.value,
-    inboxId: inboxId.value || undefined,
-    label: labelName.value || undefined,
-    origem: origem.value || undefined,
-  };
   try {
-    await store.dispatch('summaryReports/fetchFunnelConversionReports', params);
+    await store.dispatch(
+      'summaryReports/fetchFunnelConversionReports',
+      filters.value
+    );
   } catch {
     useAlert(t('REPORT.SUMMARY_FETCHING_FAILED'));
   }
@@ -242,7 +269,7 @@ onMounted(fetchReports);
           {{ $t('FUNNEL_CONVERSION_REPORTS.EMPTY_STATE') }}
         </div>
 
-        <FunnelChart v-else :stages="stages" />
+        <FunnelChart v-else :stages="stages" @drill="onStageDrill" />
       </div>
 
       <div
@@ -257,7 +284,7 @@ onMounted(fetchReports);
         >
           {{ $t('FUNNEL_CONVERSION_REPORTS.LOSS_REASONS.EMPTY_STATE') }}
         </div>
-        <LossReasonsDonut v-else :reasons="lossReasons" />
+        <LossReasonsDonut v-else :reasons="lossReasons" @drill="onLossDrill" />
       </div>
 
       <Transition
@@ -286,5 +313,7 @@ onMounted(fetchReports);
       </div>
       <CampaignBreakdownTable :rows="campaignBreakdown" />
     </div>
+
+    <FunnelDrilldownDialog ref="drilldownRef" :filters="filters" />
   </div>
 </template>

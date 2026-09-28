@@ -8,6 +8,9 @@ const props = defineProps({
   },
 });
 
+// Emitted with the stage when its count is clicked (drillable stages only).
+const emit = defineEmits(['drill']);
+
 // SVG coordinate space. The viewBox is wider than tall to match the funnel
 // reference; the actual rendered size is fluid via CSS. Stage labels sit
 // above the funnel area, so we reserve `labelBand` vertical space at the top.
@@ -149,6 +152,8 @@ const labelsForStages = computed(() => {
       anchor,
       name: pt.stage.name,
       count: pt.count,
+      stage: pt.stage,
+      clickable: pt.stage.drillable && pt.count > 0,
       pct,
     };
   });
@@ -268,6 +273,11 @@ const hoveredTooltip = computed(() => {
           :y="72"
           :text-anchor="label.anchor"
           class="fill-n-slate-12 text-3xl font-semibold"
+          :class="{
+            'cursor-pointer underline decoration-dotted hover:fill-n-brand':
+              label.clickable,
+          }"
+          @click="label.clickable && emit('drill', label.stage)"
         >
           {{ formatCount(label.count) }}
         </text>

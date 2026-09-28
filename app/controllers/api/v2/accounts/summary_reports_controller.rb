@@ -1,6 +1,7 @@
 class Api::V2::Accounts::SummaryReportsController < Api::V1::Accounts::BaseController
   before_action :check_authorization
-  before_action :prepare_builder_params, only: [:agent, :team, :inbox, :label, :origem, :channel, :funnel, :funnel_conversion]
+  before_action :prepare_builder_params,
+                only: [:agent, :team, :inbox, :label, :origem, :channel, :funnel, :funnel_conversion, :funnel_conversion_drilldown]
 
   def agent
     render_report_with(V2::Reports::AgentSummaryBuilder, type: :agent)
@@ -34,6 +35,13 @@ class Api::V2::Accounts::SummaryReportsController < Api::V1::Accounts::BaseContr
 
   def funnel_conversion
     render_report_with(V2::Reports::FunnelConversionBuilder)
+  end
+
+  def funnel_conversion_drilldown
+    builder_params = @builder_params.merge(params.permit(:stage_key, :kind, :loss_reason_id, :page).to_h.symbolize_keys)
+    render json: V2::Reports::FunnelConversionDrilldownBuilder.new(account: Current.account, params: builder_params).build
+  rescue V2::Reports::FunnelConversionDrilldownBuilder::UnknownStage
+    render json: { error: 'Unknown funnel stage' }, status: :unprocessable_entity
   end
 
   def campaign_analytics

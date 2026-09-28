@@ -19,6 +19,9 @@ class V2::Reports::FunnelConversionBuilder
   # separate constants so a rename of a stage forces an explicit tick here.
   QUALIFYING_STAGE_NAME = 'Em Qualificação'.freeze
 
+  # Chart stages whose number opens the list of conversations behind it.
+  DRILLABLE_STAGE_KEYS = [SCHEDULING_CHART_GROUP, CONFIRMATION_STAGE_NAME, ATTENDANCE_STAGE_NAME].freeze
+
   # Special origem value that means "conversations whose contact has no origem
   # set" (Sem Origem in the UI). Kept lexically distinct from the operator-
   # facing labels to avoid a collision if someone ever names a real origin
@@ -223,6 +226,8 @@ class V2::Reports::FunnelConversionBuilder
   def stage_row(group, counts)
     {
       id: group[:stage_id],
+      key: group[:key],
+      drillable: DRILLABLE_STAGE_KEYS.include?(group[:key]),
       name: group[:display_name],
       color: group[:color],
       position: group[:position],

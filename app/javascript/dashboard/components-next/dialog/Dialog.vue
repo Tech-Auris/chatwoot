@@ -77,6 +77,7 @@ const isOpen = ref(false);
 
 const maxWidthClass = computed(() => {
   const classesMap = {
+    '5xl': 'max-w-5xl',
     '3xl': 'max-w-3xl',
     '2xl': 'max-w-2xl',
     xl: 'max-w-xl',
