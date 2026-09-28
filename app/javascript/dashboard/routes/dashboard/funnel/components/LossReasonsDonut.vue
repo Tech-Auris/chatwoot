@@ -1,5 +1,7 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
+import Icon from 'dashboard/components-next/icon/Icon.vue';
+import DrillIcon from './DrillIcon.vue';
 
 const props = defineProps({
   reasons: {
@@ -120,6 +122,19 @@ const legendRows = computed(() =>
 );
 
 const formatCount = value => Number(value || 0).toLocaleString();
+
+// Drill-down icon right after the centered total, placed off its measured width.
+const DRILL_ICON_SIZE = 14;
+const totalEl = ref(null);
+const totalWidth = ref(0);
+watch(
+  total,
+  () =>
+    nextTick(() => {
+      totalWidth.value = totalEl.value?.getComputedTextLength() || 0;
+    }),
+  { immediate: true }
+);
 const formatPct = value => `${Number(value || 0).toFixed(1)}%`;
 </script>
 
@@ -139,15 +154,23 @@ const formatPct = value => `${Number(value || 0).toFixed(1)}%`;
         :d="slice.d"
         :fill="slice.color"
       />
-      <text
-        :x="CENTER"
-        :y="CENTER - 4"
-        text-anchor="middle"
-        class="fill-n-slate-12 text-2xl font-semibold cursor-pointer underline decoration-dotted hover:fill-n-brand"
-        @click="emit('drill', null)"
-      >
-        {{ formatCount(total) }}
-      </text>
+      <g class="group cursor-pointer" @click="emit('drill', null)">
+        <text
+          ref="totalEl"
+          :x="CENTER"
+          :y="CENTER - 4"
+          text-anchor="middle"
+          class="fill-n-slate-12 text-2xl font-semibold group-hover:fill-n-brand"
+        >
+          {{ formatCount(total) }}
+        </text>
+        <DrillIcon
+          :x="CENTER + totalWidth / 2 + 5"
+          :y="CENTER - 4 - DRILL_ICON_SIZE - 2"
+          :size="DRILL_ICON_SIZE"
+          class="text-n-slate-10 group-hover:text-n-brand"
+        />
+      </g>
       <text
         :x="CENTER"
         :y="CENTER + 16"
@@ -185,10 +208,14 @@ const formatPct = value => `${Number(value || 0).toFixed(1)}%`;
           <span class="text-n-slate-12 truncate">{{ row.name }}</span>
           <button
             type="button"
-            class="text-n-slate-12 text-right underline decoration-dotted hover:text-n-brand"
+            class="group inline-flex items-center justify-end gap-1 text-n-slate-12 hover:text-n-brand"
             @click="emit('drill', row.reason)"
           >
             {{ formatCount(row.count) }}
+            <Icon
+              icon="i-lucide-external-link"
+              class="size-3 text-n-slate-10 group-hover:text-n-brand"
+            />
           </button>
           <span class="text-n-slate-11 text-right">{{
             formatPct(row.percentage)
