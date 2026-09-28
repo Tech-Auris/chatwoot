@@ -34,6 +34,10 @@ const hasFetched = ref(false);
 
 const accountId = computed(() => route.params.accountId);
 
+const showLeadsCreated = computed(
+  () => totals.value.leads_created !== undefined
+);
+
 const conversationUrl = row =>
   `/app/accounts/${accountId.value}/conversations/${row.conversation_id}`;
 
@@ -179,7 +183,22 @@ const closeOnlineModal = () => {
     {{ $t('IA_HUMAN_DISTRIBUTION_REPORT.ERROR_LOAD', { error }) }}
   </div>
 
-  <div v-if="hasFetched" class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+  <div
+    v-if="hasFetched"
+    class="grid grid-cols-2 gap-3 mb-6"
+    :class="showLeadsCreated ? 'md:grid-cols-6' : 'md:grid-cols-5'"
+  >
+    <div
+      v-if="showLeadsCreated"
+      class="bg-n-solid-2 outline outline-1 outline-n-container rounded-xl shadow px-4 py-3"
+    >
+      <div class="text-xs text-n-slate-11">
+        {{ $t('IA_HUMAN_DISTRIBUTION_REPORT.KPI.LEADS_CREATED') }}
+      </div>
+      <div class="text-2xl font-medium text-n-slate-12 mt-1">
+        {{ totals.leads_created }}
+      </div>
+    </div>
     <div
       class="bg-n-solid-2 outline outline-1 outline-n-container rounded-xl shadow px-4 py-3"
     >
