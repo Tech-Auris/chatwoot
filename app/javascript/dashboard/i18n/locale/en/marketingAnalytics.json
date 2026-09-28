@@ -69,11 +69,15 @@
       "PIXEL_ID": "Pixel ID",
       "ACCESS_TOKEN": "Access Token",
       "TEST_EVENT_CODE": "Test Event Code",
+      "AD_ACCOUNT_ID": "Ad account ID",
       "CUSTOMER_ID": "Customer ID",
       "CONVERSION_ACTION_ID": "Conversion Action ID",
       "DEVELOPER_TOKEN": "Developer Token",
       "OAUTH_REFRESH_TOKEN": "OAuth Refresh Token",
       "LOGIN_CUSTOMER_ID": "Login Customer ID (MCC)"
+    },
+    "FIELD_HINTS": {
+      "AD_ACCOUNT_ID": "Needed for Spend, CPL, CPA and ROAS on the reports. In Meta Ads Manager, it's the number next to the ad account name (act_…). The access token also needs the ads_read permission on that account."
     },
     "EVENTS": {
       "TITLE": "Conversion events",

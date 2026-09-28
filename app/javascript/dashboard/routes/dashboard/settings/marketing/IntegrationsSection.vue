@@ -13,6 +13,8 @@ const META_CAPI_FIELDS = [
   { key: 'pixel_id', secret: false, required: true },
   { key: 'access_token', secret: true, required: true },
   { key: 'test_event_code', secret: false, required: false },
+  // Only the spend sync (Gasto / CPL / CPA / ROAS) needs it.
+  { key: 'ad_account_id', secret: false, required: false, hint: true },
 ];
 const GOOGLE_ADS_FIELDS = [
   { key: 'customer_id', secret: false, required: true },
@@ -225,6 +227,11 @@ const providers = computed(() => [
             class="rounded border border-n-strong bg-n-solid-2 px-2 py-1.5 text-n-slate-12"
             @input="bindCredential(provider.key, field.key).onInput($event)"
           />
+          <span v-if="field.hint" class="text-xs text-n-slate-10">
+            {{
+              t(`MARKETING_ANALYTICS.FIELD_HINTS.${field.key.toUpperCase()}`)
+            }}
+          </span>
         </label>
 
         <div class="col-span-full flex justify-end">
