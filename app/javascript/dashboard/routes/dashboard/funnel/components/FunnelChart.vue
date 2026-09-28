@@ -195,6 +195,26 @@ const drillIconX = label => {
   return start + DRILL_ICON_GAP;
 };
 
+// SVG only takes clicks on painted pixels (glyph and icon strokes), so a
+// transparent box spanning number + icon, with some padding, is what makes
+// the whole thing easy to hit.
+const DRILL_HIT_PADDING = 10;
+const drillHitBox = label => {
+  const width = countWidths.value[label.key] || 0;
+  const iconRight = drillIconX(label) + DRILL_ICON_SIZE;
+  const countLeft = {
+    start: label.x,
+    middle: label.x - width / 2,
+    end: countX(label) - width,
+  }[label.anchor];
+  return {
+    x: countLeft - DRILL_HIT_PADDING,
+    y: 72 - 22 - DRILL_HIT_PADDING,
+    width: iconRight - countLeft + DRILL_HIT_PADDING * 2,
+    height: 22 + DRILL_HIT_PADDING * 2,
+  };
+};
+
 // Tiny shares keep one significant digit (0.03%) instead of rounding to a
 // misleading 0.0%.
 const formatPct = value => {
@@ -316,6 +336,11 @@ const hoveredTooltip = computed(() => {
           >
             {{ formatCount(label.count) }}
           </text>
+          <rect
+            v-if="label.clickable"
+            v-bind="drillHitBox(label)"
+            fill="transparent"
+          />
           <DrillIcon
             v-if="label.clickable"
             :x="drillIconX(label)"
