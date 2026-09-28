@@ -181,6 +181,39 @@ RSpec.describe 'Webhooks::WhatsappController', type: :request do
       end
     end
 
+    context 'when the number belongs to a Z-API channel' do
+      let!(:zapi_channel) { create(:channel_whatsapp, provider: 'zapi', sync_templates: false, validate_provider_config: false) }
+      let(:zapi_path) { "/webhooks/whatsapp/#{zapi_channel.phone_number}" }
+
+      it 'enqueues the event when the token matches' do
+        post zapi_path, params: { type: 'ReceivedCallback', token: zapi_channel.provider_config['webhook_verify_token'] }
+
+        expect(response).to have_http_status(:ok)
+        expect(configured_job).to have_received(:perform_later)
+      end
+
+      it 'rejects the event when the token is missing' do
+        post zapi_path, params: { type: 'ReceivedCallback' }
+
+        expect(response).to have_http_status(:unauthorized)
+        expect(configured_job).not_to have_received(:perform_later)
+      end
+
+      it 'rejects the event when the token is wrong' do
+        post zapi_path, params: { type: 'ReceivedCallback', token: 'wrong' }
+
+        expect(response).to have_http_status(:unauthorized)
+        expect(configured_job).not_to have_received(:perform_later)
+      end
+
+      it 'rejects the event when the channel has no token yet' do
+        zapi_channel.update_columns(provider_config: zapi_channel.provider_config.except('webhook_verify_token')) # rubocop:disable Rails/SkipsModelValidations
+        post zapi_path, params: { type: 'ReceivedCallback', token: '' }
+
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+
     context 'when the payload is a non-message Z-API event (status/delivery/connection)' do
       it 'routes to :low' do
         post '/webhooks/whatsapp/123221321', params: { type: 'MessageStatusCallback' }

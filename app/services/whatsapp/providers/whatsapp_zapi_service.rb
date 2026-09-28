@@ -39,7 +39,7 @@ class Whatsapp::Providers::WhatsappZapiService < Whatsapp::Providers::BaseServic
       "#{api_instance_path_with_token}/update-every-webhooks",
       headers: api_headers,
       body: {
-        value: whatsapp_channel.inbox.callback_webhook_url,
+        value: webhook_url,
         notifySentByMe: true
       }.to_json
     )
@@ -137,6 +137,12 @@ class Whatsapp::Providers::WhatsappZapiService < Whatsapp::Providers::BaseServic
   end
 
   private
+
+  # Z-API can't sign its webhooks, so the per-channel secret travels in the
+  # URL we register; Webhooks::WhatsappController rejects calls without it.
+  def webhook_url
+    "#{whatsapp_channel.inbox.callback_webhook_url}?token=#{whatsapp_channel.provider_config['webhook_verify_token']}"
+  end
 
   def api_instance_path
     "#{API_BASE_PATH}/instances/#{whatsapp_channel.provider_config['instance_id']}"

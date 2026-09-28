@@ -2,6 +2,7 @@ class Webhooks::WhatsappController < ActionController::API
   include MetaTokenVerifyConcern
 
   before_action :verify_meta_signature!, only: :process_payload
+  before_action :verify_zapi_token!, only: :process_payload
 
   # Folga para o `SendReplyJob` (que persiste o `source_id` da mensagem
   # enviada) completar antes de o `messages.update` ser reprocessado. No
@@ -122,6 +123,17 @@ class Webhooks::WhatsappController < ActionController::API
     )
     Webhooks::WhatsappEventsJob.set(wait: MESSAGE_NOT_FOUND_RETRY_DELAY).perform_later(params.to_unsafe_hash)
     head :ok
+  end
+
+  # Z-API webhooks carry no signature; the channel's webhook_verify_token is
+  # appended to the URL registered on Z-API. Fail closed when it is missing.
+  def verify_zapi_token!
+    return unless whatsapp_channel&.provider == 'zapi'
+
+    expected = whatsapp_channel.provider_config['webhook_verify_token'].to_s
+    return if expected.present? && ActiveSupport::SecurityUtils.secure_compare(params[:token].to_s, expected)
+
+    head :unauthorized
   end
 
   def valid_token?(token)
