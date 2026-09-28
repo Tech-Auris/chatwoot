@@ -164,6 +164,15 @@ const formatPct = value => `${Number(value || 0).toFixed(1)}%`;
         >
           {{ formatCount(total) }}
         </text>
+        <!-- Clicks only land on painted pixels in SVG; this transparent box
+             makes the whole number + icon area clickable. -->
+        <rect
+          :x="CENTER - totalWidth / 2 - 8"
+          :y="CENTER - 4 - 26"
+          :width="totalWidth + 5 + DRILL_ICON_SIZE + 16"
+          :height="34"
+          fill="transparent"
+        />
         <DrillIcon
           :x="CENTER + totalWidth / 2 + 5"
           :y="CENTER - 4 - DRILL_ICON_SIZE - 2"
