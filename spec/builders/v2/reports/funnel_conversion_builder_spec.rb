@@ -281,6 +281,26 @@ RSpec.describe V2::Reports::FunnelConversionBuilder do
       end
     end
 
+    context 'when a conversation that went through the funnel was deleted' do
+      before do
+        kept = conversation_with_id
+        stage_change(conv_id: kept.id, new_stage: stages[:lead].name)
+        stage_change(conv_id: kept.id, new_stage: stages[:won].name)
+        deleted = conversation_with_id
+        stage_change(conv_id: deleted.id, new_stage: stages[:lead].name)
+        stage_change(conv_id: deleted.id, new_stage: stages[:won].name)
+        deleted.delete
+      end
+
+      it 'leaves it out of the KPIs, like the chart does' do
+        stub_const('V2::Reports::FunnelConversionBuilder::ATTENDANCE_STAGE_NAME', stages[:won].name)
+        result = builder.build
+
+        expect(result[:kpis]).to include(total_leads: 1, attendance_count: 1, attendance_rate: 100.0)
+        expect(result[:stages].find { |row| row[:name] == stages[:won].name }[:count]).to eq(1)
+      end
+    end
+
     context 'with inbox_id filter' do
       let(:other_inbox) { create(:inbox, account: account) }
 

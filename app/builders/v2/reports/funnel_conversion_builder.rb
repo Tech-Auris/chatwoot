@@ -157,11 +157,18 @@ class V2::Reports::FunnelConversionBuilder
   # callers can chain `.where(...)` / `.group(...)` like they did before.
   # Filters default to OFF when the param is blank.
   def funnel_stage_changes_scope
-    scope = account.funnel_stage_changes
+    scope = live_funnel_stage_changes
     scope = scope.where(inbox_id: params[:inbox_id]) if params[:inbox_id].present?
     scope = scope.where(conversation_id: account.conversations.tagged_with(params[:label], on: :labels).select(:id)) if params[:label].present?
     scope = scope.where(conversation_id: conversations_for_origem_scope) if params[:origem].present?
     scope
+  end
+
+  # Stage changes outlive their conversation (nothing deletes them with it).
+  # The chart only counts conversations that still exist, so every other
+  # number here has to as well — otherwise the KPI cards drift above the bars.
+  def live_funnel_stage_changes
+    account.funnel_stage_changes.where(conversation_id: account.conversations.select(:id))
   end
 
   # Per-conversation attribute filter — the operator picks from a fixed
