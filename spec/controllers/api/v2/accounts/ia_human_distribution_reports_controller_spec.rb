@@ -168,12 +168,25 @@ RSpec.describe 'IA Human Distribution Reports API', type: :request do
           expect(rows.first['lead_created_label']).to eq(lead_created_at.in_time_zone('America/Sao_Paulo').strftime('%d/%m/%Y %H:%M:%S'))
         end
 
+        it 'counts every lead created in the range, handed over or not' do
+          create(:conversation, account: account, inbox: inbox, created_at: lead_created_at + 10.minutes)
+
+          get "/api/v2/accounts/#{account.id}/ia_human_distribution_reports",
+              params: lead_range.merge(date_basis: 'lead_created'),
+              headers: admin.create_new_auth_token
+
+          totals = response.parsed_body['totals']
+          expect(totals['leads_created']).to eq(2)
+          expect(totals['total']).to eq(1)
+        end
+
         it 'keeps filtering by the transfer date by default' do
           get "/api/v2/accounts/#{account.id}/ia_human_distribution_reports",
               params: lead_range,
               headers: admin.create_new_auth_token
 
           expect(response.parsed_body['rows']).to be_empty
+          expect(response.parsed_body['totals']).not_to have_key('leads_created')
         end
       end
 

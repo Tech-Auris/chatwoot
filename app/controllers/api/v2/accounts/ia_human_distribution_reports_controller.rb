@@ -11,7 +11,9 @@ class Api::V2::Accounts::IaHumanDistributionReportsController < Api::V1::Account
     inbox_id = params[:inbox_id].presence&.to_i
 
     rows = build_rows(range, inbox_id, params[:date_basis])
-    render json: { rows: rows, totals: tally(rows) }
+    totals = tally(rows)
+    totals[:leads_created] = leads_created_count(range, inbox_id) if params[:date_basis] == 'lead_created'
+    render json: { rows: rows, totals: totals }
   end
 
   private
@@ -73,6 +75,14 @@ class Api::V2::Accounts::IaHumanDistributionReportsController < Api::V1::Account
       status_tag: status_tag,
       status_text: status_text_for(status_tag)
     }
+  end
+
+  # Every lead (conversation) that came in during the range, handed over or not,
+  # so the handovers can be read against how many leads there were.
+  def leads_created_count(range, inbox_id)
+    scope = Current.account.conversations.where(created_at: range)
+    scope = scope.where(inbox_id: inbox_id) if inbox_id
+    scope.count
   end
 
   def lead_created_label(conversation)

@@ -749,7 +749,8 @@
     },
     "ERROR_LOAD": "Failed to load data: {error}",
     "KPI": {
-      "TOTAL": "Total",
+      "LEADS_CREATED": "Leads created",
+      "TOTAL": "Total transfers",
       "VIA_TEAM": "✅ via team",
       "VIA_TEAM_OFFLINE": "🟧 via team (agent offline)",
       "FAILED": "⚠️ not assigned",
