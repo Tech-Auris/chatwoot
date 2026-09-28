@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 
 import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
+import Button from 'dashboard/components-next/button/Button.vue';
 import PaginationFooter from 'dashboard/components-next/pagination/PaginationFooter.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import SummaryReportsAPI from 'dashboard/api/summaryReports';
@@ -93,9 +94,7 @@ defineExpose({ open });
     ref="dialogRef"
     :title="title"
     :description="$t('FUNNEL_CONVERSION_REPORTS.DRILLDOWN.DESCRIPTION')"
-    width="5xl"
-    :show-confirm-button="false"
-    :cancel-button-label="$t('FUNNEL_CONVERSION_REPORTS.DRILLDOWN.CLOSE')"
+    width="7xl"
   >
     <div class="flex flex-col gap-3">
       <div
@@ -245,5 +244,17 @@ defineExpose({ open });
         @update:current-page="fetchPage"
       />
     </div>
+
+    <template #footer>
+      <div class="flex justify-center">
+        <Button
+          type="button"
+          color="blue"
+          class="min-w-32"
+          :label="$t('FUNNEL_CONVERSION_REPORTS.DRILLDOWN.CLOSE')"
+          @click="dialogRef.close()"
+        />
+      </div>
+    </template>
   </Dialog>
 </template>
