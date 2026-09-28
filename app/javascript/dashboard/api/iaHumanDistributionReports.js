@@ -9,12 +9,13 @@ class IaHumanDistributionReportsAPI extends ApiClient {
     });
   }
 
-  fetch({ from, to, inboxId }) {
+  fetch({ from, to, inboxId, dateBasis }) {
     return axios.get(this.url, {
       params: {
         from,
         to,
         inbox_id: inboxId || undefined,
+        date_basis: dateBasis,
       },
     });
   }

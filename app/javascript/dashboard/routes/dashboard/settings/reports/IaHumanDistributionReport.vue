@@ -18,6 +18,7 @@ const today = new Date();
 const customDateRange = ref([today, today]);
 const selectedDateRange = ref(DATE_RANGE_TYPES.CUSTOM_RANGE);
 const inboxId = ref('');
+const dateBasis = ref('transfer');
 
 const rows = ref([]);
 const totals = ref({
@@ -47,6 +48,7 @@ const fetchData = async () => {
       from: fromUnix.value,
       to: toUnix.value,
       inboxId: inboxId.value,
+      dateBasis: dateBasis.value,
     });
     rows.value = data.rows || [];
     totals.value = data.totals || totals.value;
@@ -150,6 +152,19 @@ const closeOnlineModal = () => {
       </option>
     </select>
 
+    <select
+      v-model="dateBasis"
+      class="bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg pl-3 pr-9 py-2 text-sm text-n-slate-12 focus:outline-n-brand lg:w-64"
+      @change="fetchData"
+    >
+      <option value="transfer">
+        {{ $t('IA_HUMAN_DISTRIBUTION_REPORT.DATE_BASIS.TRANSFER') }}
+      </option>
+      <option value="lead_created">
+        {{ $t('IA_HUMAN_DISTRIBUTION_REPORT.DATE_BASIS.LEAD_CREATED') }}
+      </option>
+    </select>
+
     <WootDatePicker
       v-model:date-range="customDateRange"
       v-model:range-type="selectedDateRange"
@@ -239,6 +254,9 @@ const closeOnlineModal = () => {
           <th class="text-left px-5 py-3 font-medium text-sm whitespace-nowrap">
             {{ $t('IA_HUMAN_DISTRIBUTION_REPORT.COLUMNS.DATETIME') }}
           </th>
+          <th class="text-left px-5 py-3 font-medium text-sm whitespace-nowrap">
+            {{ $t('IA_HUMAN_DISTRIBUTION_REPORT.COLUMNS.LEAD_CREATED') }}
+          </th>
           <th class="text-left px-5 py-3 font-medium text-sm">
             {{ $t('IA_HUMAN_DISTRIBUTION_REPORT.COLUMNS.CONVERSATION') }}
           </th>
@@ -267,6 +285,11 @@ const closeOnlineModal = () => {
         >
           <td class="px-5 py-3 whitespace-nowrap">
             {{ row.date_label }} {{ row.time_label }}
+          </td>
+          <td class="px-5 py-3 whitespace-nowrap">
+            {{
+              row.lead_created_label || $t('IA_HUMAN_DISTRIBUTION_REPORT.DASH')
+            }}
           </td>
           <td class="px-5 py-3 whitespace-nowrap">
             <a
@@ -335,12 +358,12 @@ const closeOnlineModal = () => {
           </td>
         </tr>
         <tr v-if="!rows.length && !loading">
-          <td colspan="7" class="px-5 py-8 text-center text-n-slate-11">
+          <td colspan="8" class="px-5 py-8 text-center text-n-slate-11">
             {{ $t('IA_HUMAN_DISTRIBUTION_REPORT.EMPTY_STATE') }}
           </td>
         </tr>
         <tr v-if="loading">
-          <td colspan="7" class="px-5 py-8 text-center text-n-slate-11">
+          <td colspan="8" class="px-5 py-8 text-center text-n-slate-11">
             {{ $t('IA_HUMAN_DISTRIBUTION_REPORT.LOADING') }}
           </td>
         </tr>

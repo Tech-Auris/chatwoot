@@ -743,6 +743,10 @@
     "HEADER": "AI → Human",
     "DESCRIPTION": "Audit of assignments made by Auris AI (last 7 days).",
     "ALL_INBOXES": "All inboxes",
+    "DATE_BASIS": {
+      "TRANSFER": "By transfer date",
+      "LEAD_CREATED": "By lead creation date"
+    },
     "ERROR_LOAD": "Failed to load data: {error}",
     "KPI": {
       "TOTAL": "Total",
@@ -752,7 +756,8 @@
       "FAILED_NO_ONLINE": "🔴 nobody online"
     },
     "COLUMNS": {
-      "DATETIME": "Date / Time",
+      "DATETIME": "Transfer date / time",
+      "LEAD_CREATED": "Lead created",
       "CONVERSATION": "Conversation",
       "INBOX": "Inbox",
       "TEAM": "Team",
