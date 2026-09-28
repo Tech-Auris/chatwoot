@@ -48,6 +48,10 @@ properties:
     type: boolean
     description: Lock to single conversation
     example: true
+  split_messages:
+    type: boolean
+    description: Whether the AI splits its reply into one message per line break. Administrators and managers only.
+    example: false
   portal_id:
     type: integer
     description: Id of the help center portal to attach to the inbox

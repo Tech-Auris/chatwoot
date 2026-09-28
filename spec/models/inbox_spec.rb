@@ -458,7 +458,7 @@ RSpec.describe Inbox do
       inbox = create(:inbox, account: account, name: 'Support', timezone: 'America/Porto_Velho', working_hours_enabled: true)
       account.update!(reporting_timezone: 'America/Sao_Paulo')
 
-      expect(inbox.webhook_data).to eq(id: inbox.id, name: 'Support', timezone: 'America/Porto_Velho')
+      expect(inbox.webhook_data).to eq(id: inbox.id, name: 'Support', timezone: 'America/Porto_Velho', split_messages: true)
     end
 
     it 'falls back to the account reporting_timezone when Business Hours was never enabled' do
@@ -472,6 +472,42 @@ RSpec.describe Inbox do
       inbox = create(:inbox, account: account, name: 'Support', working_hours_enabled: false)
 
       expect(inbox.webhook_data[:timezone]).to eq('UTC')
+    end
+  end
+
+  # n8n reads inbox.split_messages from the webhook to decide whether the AI
+  # sends one WhatsApp message per line break. Meta bills every message sent
+  # through the official API from 2026-10-01, so that is the one channel that
+  # starts with splitting off.
+  describe '#split_messages_enabled?' do
+    let(:account) { create(:account) }
+
+    def whatsapp_inbox(provider)
+      channel = create(:channel_whatsapp, account: account, provider: provider, validate_provider_config: false, sync_templates: false)
+      channel.inbox
+    end
+
+    it 'splits by default on a non-WhatsApp inbox' do
+      expect(create(:inbox, account: account).split_messages_enabled?).to be(true)
+    end
+
+    it 'splits by default on Baileys and Z-API inboxes' do
+      expect(whatsapp_inbox('baileys').split_messages_enabled?).to be(true)
+      expect(whatsapp_inbox('zapi').split_messages_enabled?).to be(true)
+    end
+
+    it 'does not split by default on the official WhatsApp Cloud API' do
+      expect(whatsapp_inbox('whatsapp_cloud').split_messages_enabled?).to be(false)
+    end
+
+    it 'follows an explicit choice over the channel default' do
+      cloud = whatsapp_inbox('whatsapp_cloud')
+      cloud.update!(split_messages: true)
+      baileys = whatsapp_inbox('baileys')
+      baileys.update!(split_messages: false)
+
+      expect(cloud.split_messages_enabled?).to be(true)
+      expect(baileys.webhook_data[:split_messages]).to be(false)
     end
   end
 end

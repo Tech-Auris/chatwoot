@@ -20,6 +20,7 @@
 #  name                          :string           not null
 #  out_of_office_message         :string
 #  sender_name_type              :integer          default("friendly"), not null
+#  split_messages                :boolean
 #  timezone                      :string           default("UTC")
 #  working_hours_enabled         :boolean          default(FALSE)
 #  created_at                    :datetime         not null
@@ -192,8 +193,17 @@ class Inbox < ApplicationRecord
     {
       id: id,
       name: name,
-      timezone: effective_timezone
+      timezone: effective_timezone,
+      split_messages: split_messages_enabled?
     }
+  end
+
+  # Whether the AI (n8n) should send its reply as one WhatsApp message per
+  # line break. An explicit choice on the inbox wins; left unset, it splits
+  # everywhere except the official WhatsApp API (anything but Baileys/Z-API),
+  # where Meta bills every message sent from 2026-10-01.
+  def split_messages_enabled?
+    split_messages.nil? ? !(whatsapp? && %w[baileys zapi].exclude?(channel.provider)) : split_messages
   end
 
   # Timezone the downstream consumer should treat as authoritative.

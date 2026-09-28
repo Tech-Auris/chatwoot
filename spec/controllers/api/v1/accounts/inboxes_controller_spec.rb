@@ -539,6 +539,47 @@ RSpec.describe 'Inboxes API', type: :request do
         expect(response.parsed_body['name']).to eq 'new test inbox'
       end
 
+      # The AI splits its reply per line break unless the inbox turns it off;
+      # managers and administrators decide per inbox, agents cannot.
+      describe 'split_messages' do
+        it 'lets a manager turn it off and returns the effective value' do
+          manager = create(:user, account: account, role: :manager)
+
+          patch "/api/v1/accounts/#{account.id}/inboxes/#{inbox.id}",
+                headers: manager.create_new_auth_token,
+                params: { split_messages: false },
+                as: :json
+
+          expect(response).to have_http_status(:success)
+          expect(inbox.reload.split_messages).to be(false)
+          expect(response.parsed_body['split_messages']).to be(false)
+        end
+
+        it 'lets an administrator turn it on' do
+          inbox.update!(split_messages: false)
+
+          patch "/api/v1/accounts/#{account.id}/inboxes/#{inbox.id}",
+                headers: admin.create_new_auth_token,
+                params: { split_messages: true },
+                as: :json
+
+          expect(inbox.reload.split_messages).to be(true)
+        end
+
+        it 'does not let an agent change it' do
+          agent = create(:user, account: account, role: :agent)
+          create(:inbox_member, user: agent, inbox: inbox)
+
+          patch "/api/v1/accounts/#{account.id}/inboxes/#{inbox.id}",
+                headers: agent.create_new_auth_token,
+                params: { split_messages: false },
+                as: :json
+
+          expect(response).to have_http_status(:unauthorized)
+          expect(inbox.reload.split_messages).to be_nil
+        end
+      end
+
       it 'updates api inbox when administrator' do
         api_channel = create(:channel_api, account: account)
         api_inbox = create(:inbox, channel: api_channel, account: account)

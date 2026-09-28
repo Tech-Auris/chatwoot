@@ -114,6 +114,9 @@ properties:
   lock_to_single_conversation:
     type: boolean
     description: Whether to lock a contact to a single conversation
+  split_messages:
+    type: boolean
+    description: Whether the AI splits its reply into one message per line break. Defaults to true, except on the official WhatsApp Cloud API where it defaults to false.
   sender_name_type:
     type: string
     description: Type of sender name to display (e.g., friendly)
