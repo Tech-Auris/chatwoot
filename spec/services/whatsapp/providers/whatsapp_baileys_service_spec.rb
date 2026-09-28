@@ -812,6 +812,15 @@ describe Whatsapp::Providers::WhatsappBaileysService do
         expect(Rails.logger).to have_received(:error)
       end
     end
+
+    context 'when a custom provider url has no api key' do
+      it 'returns false without calling the provider' do
+        whatsapp_channel.update!(provider_config: { 'provider_url' => 'https://attacker.example' })
+
+        expect(service.validate_provider_config?).to be(false)
+        expect(a_request(:get, 'https://attacker.example/status/auth')).not_to have_been_made
+      end
+    end
   end
 
   describe '#fetch_reachout_timelock' do
@@ -1588,6 +1597,22 @@ describe Whatsapp::Providers::WhatsappBaileysService do
     it 'uses the API key from the environment variable' do
       stub_const('Whatsapp::Providers::WhatsappBaileysService::DEFAULT_API_KEY', 'key')
       whatsapp_channel.update!(provider_config: {})
+
+      expect(service.send(:api_key)).to eq('key')
+    end
+
+    it 'never sends the default API key to a custom provider url' do
+      stub_const('Whatsapp::Providers::WhatsappBaileysService::DEFAULT_API_KEY', 'key')
+      stub_const('Whatsapp::Providers::WhatsappBaileysService::DEFAULT_URL', 'http://test.com')
+      whatsapp_channel.update!(provider_config: { 'provider_url' => 'https://attacker.example' })
+
+      expect(service.send(:api_key)).to be_nil
+    end
+
+    it 'keeps the default API key when provider url is the default one' do
+      stub_const('Whatsapp::Providers::WhatsappBaileysService::DEFAULT_API_KEY', 'key')
+      stub_const('Whatsapp::Providers::WhatsappBaileysService::DEFAULT_URL', 'http://test.com')
+      whatsapp_channel.update!(provider_config: { 'provider_url' => 'http://test.com/' })
 
       expect(service.send(:api_key)).to eq('key')
     end
