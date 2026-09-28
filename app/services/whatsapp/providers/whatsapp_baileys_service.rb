@@ -347,6 +347,8 @@ class Whatsapp::Providers::WhatsappBaileysService < Whatsapp::Providers::BaseSer
   end
 
   def validate_provider_config?
+    return false if custom_provider_url? && whatsapp_channel.provider_config['api_key'].blank?
+
     response = HTTParty.get(
       "#{provider_url}/status/auth",
       headers: api_headers
@@ -593,8 +595,18 @@ class Whatsapp::Providers::WhatsappBaileysService < Whatsapp::Providers::BaseSer
     whatsapp_channel.provider_config['provider_url'].presence || DEFAULT_URL
   end
 
+  # The installation-wide key unlocks every tenant's session on the default
+  # Baileys server, so it only ever goes to that server. An inbox pointing at
+  # its own provider_url must bring its own api_key.
   def api_key
+    return whatsapp_channel.provider_config['api_key'] if custom_provider_url?
+
     whatsapp_channel.provider_config['api_key'].presence || DEFAULT_API_KEY
+  end
+
+  def custom_provider_url?
+    url = whatsapp_channel.provider_config['provider_url']
+    url.present? && url.chomp('/') != DEFAULT_URL.to_s.chomp('/')
   end
 
   def reaction_message_content
