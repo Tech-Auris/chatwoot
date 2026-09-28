@@ -500,6 +500,14 @@ RSpec.describe Inbox do
       expect(whatsapp_inbox('whatsapp_cloud').split_messages_enabled?).to be(false)
     end
 
+    it 'does not split by default on Twilio WhatsApp, but keeps splitting on Twilio SMS' do
+      twilio_whatsapp = create(:channel_twilio_sms, account: account, medium: :whatsapp).inbox
+      twilio_sms = create(:channel_twilio_sms, account: account, medium: :sms).inbox
+
+      expect(twilio_whatsapp.split_messages_enabled?).to be(false)
+      expect(twilio_sms.split_messages_enabled?).to be(true)
+    end
+
     it 'follows an explicit choice over the channel default' do
       cloud = whatsapp_inbox('whatsapp_cloud')
       cloud.update!(split_messages: true)
