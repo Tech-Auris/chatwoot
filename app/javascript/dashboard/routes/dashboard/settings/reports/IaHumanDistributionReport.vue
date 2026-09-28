@@ -121,6 +121,12 @@ const pct = n => {
   return `${Math.round((n / totals.value.total) * 100)}%`;
 };
 
+// Transfers over leads created in the period (lead creation filter only).
+const transferRate = computed(() => {
+  if (!totals.value.leads_created) return '0%';
+  return `${Math.round((totals.value.total / totals.value.leads_created) * 100)}%`;
+});
+
 const ONLINE_VISIBLE_LIMIT = 3;
 
 const visibleOnlineMembers = row =>
@@ -214,6 +220,9 @@ const closeOnlineModal = () => {
       </div>
       <div class="text-2xl font-medium text-n-slate-12 mt-1">
         {{ totals.total }}
+        <span v-if="showLeadsCreated" class="text-xs text-n-slate-11 ml-1">{{
+          transferRate
+        }}</span>
       </div>
     </div>
     <div
