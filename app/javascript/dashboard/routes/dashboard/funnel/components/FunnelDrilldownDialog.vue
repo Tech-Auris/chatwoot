@@ -26,6 +26,8 @@ const loading = ref(false);
 const failed = ref(false);
 
 const isLoss = computed(() => target.value?.kind === 'loss');
+// An ad's own leads all came from that ad: the origin column says nothing new.
+const isAd = computed(() => target.value?.kind === 'ad');
 
 const title = computed(() => {
   if (!target.value) return '';
@@ -173,7 +175,10 @@ defineExpose({ open });
               <th class="px-3 py-2 text-left font-medium whitespace-nowrap">
                 {{ $t('FUNNEL_CONVERSION_REPORTS.DRILLDOWN.COLUMNS.INBOX') }}
               </th>
-              <th class="px-3 py-2 text-left font-medium whitespace-nowrap">
+              <th
+                v-if="!isAd"
+                class="px-3 py-2 text-left font-medium whitespace-nowrap"
+              >
                 {{ $t('FUNNEL_CONVERSION_REPORTS.DRILLDOWN.COLUMNS.SOURCE') }}
               </th>
             </tr>
@@ -222,7 +227,7 @@ defineExpose({ open });
               <td class="px-3 py-2 whitespace-nowrap">
                 {{ dash(row.inbox_name) }}
               </td>
-              <td class="px-3 py-2">
+              <td v-if="!isAd" class="px-3 py-2">
                 <div>{{ dash(row.origem) }}</div>
                 <div v-if="row.ad_title" class="text-xs text-n-slate-11">
                   {{ row.ad_title }}
