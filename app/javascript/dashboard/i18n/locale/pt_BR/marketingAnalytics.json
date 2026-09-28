@@ -70,6 +70,7 @@
       "ACCESS_TOKEN": "Access Token",
       "TEST_EVENT_CODE": "Test Event Code",
       "AD_ACCOUNT_ID": "ID da conta de anúncios",
+      "ADS_READ_TOKEN": "Token de leitura de anúncios",
       "CUSTOMER_ID": "Customer ID",
       "CONVERSION_ACTION_ID": "Conversion Action ID",
       "DEVELOPER_TOKEN": "Developer Token",
@@ -77,7 +78,8 @@
       "LOGIN_CUSTOMER_ID": "Login Customer ID (MCC)"
     },
     "FIELD_HINTS": {
-      "AD_ACCOUNT_ID": "Necessário para Gasto, CPL, CPA e ROAS nos relatórios. No Gerenciador de Anúncios da Meta, é o número ao lado do nome da conta de anúncios (act_…). O Access Token também precisa da permissão ads_read nessa conta."
+      "AD_ACCOUNT_ID": "Necessário para Gasto, CPL, CPA e ROAS nos relatórios. No Gerenciador de Anúncios da Meta, é o número ao lado do nome da conta de anúncios (act_…). O Access Token também precisa da permissão ads_read nessa conta.",
+      "ADS_READ_TOKEN": "Opcional. Token com a permissão ads_read na conta de anúncios, usado só para ler o gasto. Deixe em branco para usar o Access Token acima, que continua dedicado ao envio de conversões."
     },
     "EVENTS": {
       "TITLE": "Eventos de conversão",

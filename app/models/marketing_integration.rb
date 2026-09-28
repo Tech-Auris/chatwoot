@@ -43,7 +43,11 @@ class MarketingIntegration < ApplicationRecord
   # when the operator wants CPL/ROAS in the Analytics report. CAPI itself
   # never touches it. Format: numeric ("1234567890"), the caller prefixes
   # with "act_" when it hits the Insights endpoint.
-  META_CAPI_KEYS = %w[pixel_id access_token test_event_code ad_account_id].freeze
+  # `ads_read_token` is optional too: a token with `ads_read` on the ad
+  # account, for the spend sync only. The CAPI token is usually generated in
+  # Events Manager with nothing but pixel access, so it can't read spend; this
+  # keeps it untouched. Falls back to `access_token` when blank.
+  META_CAPI_KEYS = %w[pixel_id access_token test_event_code ad_account_id ads_read_token].freeze
   # `conversion_action_id` is the numeric id of the Google Ads Conversion
   # Action (Configurações → Conversões → click into an action → the id shows in
   # the URL). The gtag-oriented `conversion_id` / `conversion_label` fields

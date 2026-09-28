@@ -10,8 +10,8 @@
 #     up to the ad account's timezone cutoff).
 #   * time_increment=1 — force daily breakdown even for multi-day ranges.
 #
-# Requires the same access_token the CAPI integration uses AS LONG AS the
-# operator granted the `ads_read` scope on the OAuth app. Without that scope
+# Uses the integration's `ads_read_token` when set, else the CAPI
+# `access_token` — either way it needs the `ads_read` scope on the ad account. Without that scope
 # Meta returns HTTP 400 with error code 200 — we mark the integration as
 # permanently unhealthy in the log; the operator has to re-authorize.
 class Marketing::MetaSpendFetcher
@@ -53,7 +53,7 @@ class Marketing::MetaSpendFetcher
         time_range: { since: since.iso8601, until: until_.iso8601 }.to_json,
         time_increment: 1,
         limit: 500,
-        access_token: integration.credentials['access_token']
+        access_token: integration.credentials['ads_read_token'].presence || integration.credentials['access_token']
       },
       timeout: 15
     )

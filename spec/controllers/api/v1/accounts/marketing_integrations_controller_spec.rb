@@ -32,12 +32,15 @@ RSpec.describe 'Marketing Integrations API', type: :request do
     # saw them when the operator pasted them in, and echoing back would let
     # anyone with an admin session read stored access tokens.
     it 'masks secret credentials in the response body' do
+      integration.update!(credentials: integration.credentials.merge('ads_read_token' => 'EAAG_ads'))
       get "/api/v1/accounts/#{account.id}/marketing_integrations", headers: admin.create_new_auth_token, as: :json
 
       payload = response.parsed_body['payload'].first
       expect(payload['credentials']['pixel_id']).to eq('123456789')
       expect(payload['credentials']['access_token']).to be_nil
       expect(payload['credentials_set']['access_token']).to be(true)
+      expect(payload['credentials']['ads_read_token']).to be_nil
+      expect(payload['credentials_set']['ads_read_token']).to be(true)
     end
   end
 

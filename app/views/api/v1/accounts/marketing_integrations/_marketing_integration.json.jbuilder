@@ -1,9 +1,9 @@
-# Sensitive fields (access_token, developer_token, oauth_refresh_token) are
+# Sensitive fields (access_token, ads_read_token, developer_token, oauth_refresh_token) are
 # always masked on the way out — the operator saw them when they typed them
 # in, and the server never needs to echo them back verbatim. `credentials_set`
 # says which keys have a value stored so the UI can show "••••" instead of
 # an empty input.
-secret_keys = %w[access_token developer_token oauth_refresh_token]
+secret_keys = %w[access_token ads_read_token developer_token oauth_refresh_token]
 
 json.id integration.id
 json.provider integration.provider
