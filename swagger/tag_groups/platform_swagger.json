@@ -1,8 +1,8 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Chatwoot",
-    "description": "This is the API documentation for Chatwoot server.",
+    "title": "AurisChat API",
+    "description": "Documentação da API do AurisChat. Com ela, sistemas externos (CRMs, ERPs, automações como n8n e Make) leem e escrevem dados da sua conta: conversas, mensagens, contatos, etiquetas e mais.\n\n# Autenticação: seu token de acesso\n\nToda chamada à API precisa de um **token de acesso**. Cada usuário do AurisChat tem o seu próprio token, e a API responde com as mesmas permissões que esse usuário tem no painel.\n\n## Onde encontrar o token\n\n1. Entre no AurisChat com o usuário que a integração vai usar.\n2. Clique na sua foto no canto inferior esquerdo e abra **Configurações do Perfil**.\n3. Role até a seção **Token de acesso** e clique em **Copiar**.\n\n## Onde encontrar o ID da conta\n\nQuase todos os endereços da API começam com `/api/v1/accounts/{account_id}/`. O `account_id` é o número que aparece na barra de endereço do navegador quando você está no painel: em `https://chat.auris.ia.br/app/accounts/12/dashboard`, o ID da conta é `12`.\n\n## Como enviar o token\n\nEnvie o token no cabeçalho (header) `api_access_token` de cada requisição. Exemplo, listando as caixas de entrada da conta 12:\n\n```bash\ncurl https://chat.auris.ia.br/api/v1/accounts/12/inboxes \\\n  -H \"api_access_token: SEU_TOKEN_AQUI\"\n```\n\nPara enviar dados (criar ou alterar algo), inclua também o cabeçalho `Content-Type: application/json`:\n\n```bash\ncurl -X POST https://chat.auris.ia.br/api/v1/accounts/12/conversations/345/messages \\\n  -H \"api_access_token: SEU_TOKEN_AQUI\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"content\": \"Olá! Sua consulta está confirmada.\", \"message_type\": \"outgoing\"}'\n```\n\n## O que o token pode fazer\n\nO token herda o papel do usuário dono dele:\n\n| Papel do usuário | O que a API permite |\n|---|---|\n| **Agente** | Conversas e mensagens das caixas de entrada das quais ele é membro, contatos e etiquetas. Não altera configurações da conta. |\n| **Gerente** | Tudo o que o agente faz, em todas as caixas de entrada, mais relatórios e configurações de caixas e times. |\n| **Administrador** | Acesso completo à conta, incluindo agentes, integrações e configurações. |\n\nDica: crie um usuário específico para cada integração, com o menor papel que resolve o que ela precisa. Assim, as ações da integração ficam identificadas no histórico e fica fácil revogar o acesso sem afetar ninguém.\n\n## Boas práticas de segurança\n\n- **Trate o token como uma senha.** Quem tem o token age em nome do usuário. Não publique em sites, planilhas compartilhadas ou mensagens.\n- **Use o token só no servidor.** Nunca coloque o token em código que roda no navegador ou em aplicativos instalados no celular do cliente.\n- **Trocou de fornecedor ou suspeita de vazamento? Gere um novo token.** Em **Configurações do Perfil → Token de acesso**, clique em **Reiniciar**. O token anterior para de funcionar na hora, então atualize as integrações que usavam ele.\n- **Usuário desativado, token desativado.** Se o usuário for removido da conta, o token dele deixa de ter acesso.\n\n## Respostas de erro mais comuns\n\n| Código | O que significa | O que fazer |\n|---|---|---|\n| `401 Unauthorized` | Token ausente, inválido, reiniciado, ou o usuário não tem permissão para essa ação. | Confira o cabeçalho `api_access_token` e o papel do usuário. |\n| `404 Not Found` | O registro não existe ou não pertence a essa conta. | Confira o `account_id` e o ID do registro. |\n| `422 Unprocessable Entity` | Os dados enviados não passaram na validação. | Leia a mensagem de erro no corpo da resposta. |\n| `429 Too Many Requests` | Muitas requisições em pouco tempo. | Aguarde alguns segundos e tente de novo; espalhe as chamadas ao longo do tempo em vez de enviar tudo de uma vez. |\n",
     "version": "1.1.0",
     "termsOfService": "https://www.chatwoot.com/terms-of-service/",
     "contact": {
@@ -15,7 +15,8 @@
   },
   "servers": [
     {
-      "url": "https://app.chatwoot.com/"
+      "url": "https://chat.auris.ia.br/",
+      "description": "Produção"
     }
   ],
   "paths": {
@@ -9154,7 +9155,7 @@
         "type": "apiKey",
         "in": "header",
         "name": "api_access_token",
-        "description": "This token can be obtained by visiting the profile page or via rails console. Provides access to  endpoints based on the user permissions levels. This token can be saved by an external system when user is created via API, to perform activities on behalf of the user."
+        "description": "Token de acesso pessoal do usuário, copiado em Configurações do Perfil → Token de acesso. Envie no cabeçalho `api_access_token`. A API responde com as mesmas permissões que o usuário tem no painel (agente, gerente ou administrador). Veja a seção \"Autenticação\" no início desta documentação."
       },
       "agentBotApiKey": {
         "type": "apiKey",
