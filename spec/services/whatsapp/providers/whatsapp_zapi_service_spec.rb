@@ -61,7 +61,7 @@ describe Whatsapp::Providers::WhatsappZapiService do
           .with(
             headers: stub_headers,
             body: {
-              value: whatsapp_channel.inbox.callback_webhook_url,
+              value: "#{whatsapp_channel.inbox.callback_webhook_url}?token=#{whatsapp_channel.provider_config['webhook_verify_token']}",
               notifySentByMe: true
             }.to_json
           )
