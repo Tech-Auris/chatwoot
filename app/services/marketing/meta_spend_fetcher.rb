@@ -46,7 +46,7 @@ class Marketing::MetaSpendFetcher
     until_ = Time.zone.today
 
     response = HTTParty.get(
-      "https://graph.facebook.com/#{META_API_VERSION}/act_#{integration.credentials['ad_account_id']}/insights",
+      "https://graph.facebook.com/#{META_API_VERSION}/act_#{ad_account_id(integration)}/insights",
       query: {
         level: 'ad',
         fields: 'ad_id,ad_name,campaign_id,campaign_name,spend,account_currency,date_start,date_stop',
@@ -61,6 +61,11 @@ class Marketing::MetaSpendFetcher
     return { error: "HTTP #{response.code}", body: safe_parse(response) } unless response.success?
 
     Array(safe_parse(response)['data'])
+  end
+
+  # Ads Manager shows the id as "act_123…"; operators paste it either way.
+  def ad_account_id(integration)
+    integration.credentials['ad_account_id'].to_s.strip.delete_prefix('act_')
   end
 
   def upsert_rows!(rows, _integration)

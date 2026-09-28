@@ -69,11 +69,15 @@
       "PIXEL_ID": "Pixel ID",
       "ACCESS_TOKEN": "Access Token",
       "TEST_EVENT_CODE": "Test Event Code",
+      "AD_ACCOUNT_ID": "ID da conta de anúncios",
       "CUSTOMER_ID": "Customer ID",
       "CONVERSION_ACTION_ID": "Conversion Action ID",
       "DEVELOPER_TOKEN": "Developer Token",
       "OAUTH_REFRESH_TOKEN": "OAuth Refresh Token",
       "LOGIN_CUSTOMER_ID": "Login Customer ID (MCC)"
+    },
+    "FIELD_HINTS": {
+      "AD_ACCOUNT_ID": "Necessário para Gasto, CPL, CPA e ROAS nos relatórios. No Gerenciador de Anúncios da Meta, é o número ao lado do nome da conta de anúncios (act_…). O Access Token também precisa da permissão ads_read nessa conta."
     },
     "EVENTS": {
       "TITLE": "Eventos de conversão",

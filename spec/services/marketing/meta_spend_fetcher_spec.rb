@@ -82,6 +82,13 @@ RSpec.describe Marketing::MetaSpendFetcher do
     # access_token (fase 2 shape). ad_account_id is optional and only needed
     # for spend sync — reporting the missing field is more useful than
     # silently no-oping.
+    it 'accepts the ad account id pasted with its act_ prefix' do
+      integration.update!(credentials: integration.credentials.merge('ad_account_id' => 'act_1234567890'))
+      stub_insights([sample_row])
+
+      expect(described_class.new(account: account).perform).to include(ok: true, rows_synced: 1)
+    end
+
     it 'reports failure without inserting when ad_account_id is missing' do
       integration.update!(credentials: integration.credentials.except('ad_account_id'))
 
