@@ -190,12 +190,32 @@ RSpec.describe 'IA Human Distribution Reports API', type: :request do
         end
       end
 
-      it 'clamps requested range to the last 7 days of retention' do
+      it 'returns the whole requested period, however long' do
+        old_conv = create(:conversation, account: account, inbox: inbox)
+        create(:ai_assignment_attempt,
+               conversation: old_conv, account: account, team: team,
+               agent_assigned: nil, triggered_by: ia_user, online_user_ids: [],
+               created_at: reference_time - 25.days)
+
         get "/api/v2/accounts/#{account.id}/ia_human_distribution_reports",
-            params: { from: 30.days.ago.to_i, to: Time.current.to_i },
+            params: { from: (reference_time - 30.days).to_i, to: range_to },
             headers: admin.create_new_auth_token
 
-        expect(response).to have_http_status(:success)
+        expect(response.parsed_body['totals']['total']).to eq(4)
+      end
+
+      it 'pages the rows while the cards count the whole period' do
+        stub_const('Api::V2::Accounts::IaHumanDistributionReportsController::PER_PAGE', 2)
+
+        get "/api/v2/accounts/#{account.id}/ia_human_distribution_reports",
+            params: { from: range_from, to: range_to, page: 2 },
+            headers: admin.create_new_auth_token
+
+        body = response.parsed_body
+        expect(body['rows'].pluck('conversation_id')).to eq([conv_no_online.display_id])
+        expect(body['meta']).to include('current_page' => 2, 'per_page' => 2, 'total_count' => 3)
+        expect(body['totals']).to include('total' => 3, 'assigned_via_team' => 1, 'assigned_via_team_offline' => 1,
+                                          'failed_no_online' => 1, 'failed_with_online' => 0)
       end
     end
   end

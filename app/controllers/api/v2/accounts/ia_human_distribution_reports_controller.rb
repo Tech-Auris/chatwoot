@@ -1,19 +1,27 @@
 class Api::V2::Accounts::IaHumanDistributionReportsController < Api::V1::Accounts::BaseController
   TZ = ActiveSupport::TimeZone['America/Sao_Paulo']
-  MAX_RANGE_DAYS = 7
+  PER_PAGE = 50
+  # Same rule as AiAssignmentAttempt#status_tag, in SQL, so the cards count the
+  # whole period and not just the page on screen.
+  STATUS_COUNTS_SQL = <<~SQL.squish.freeze
+    COUNT(*) AS total,
+    COUNT(*) FILTER (WHERE agent_assigned_id IS NOT NULL AND agent_assigned_id = ANY(online_user_ids)) AS assigned_via_team,
+    COUNT(*) FILTER (WHERE agent_assigned_id IS NOT NULL AND NOT (agent_assigned_id = ANY(online_user_ids))) AS assigned_via_team_offline,
+    COUNT(*) FILTER (WHERE agent_assigned_id IS NULL AND cardinality(online_user_ids) > 0) AS failed_with_online,
+    COUNT(*) FILTER (WHERE agent_assigned_id IS NULL AND cardinality(online_user_ids) = 0) AS failed_no_online
+  SQL
 
   before_action :check_authorization
 
   def index
-    from = parse_unix_timestamp(params[:from])
-    to = parse_unix_timestamp(params[:to])
-    range = clamp_range(from, to)
+    range = report_range
     inbox_id = params[:inbox_id].presence&.to_i
-
-    rows = build_rows(range, inbox_id, params[:date_basis])
-    totals = tally(rows)
+    scope = attempts_scope(range, inbox_id, params[:date_basis])
+    totals = status_counts(scope)
     totals[:leads_created] = leads_created_count(range, inbox_id) if params[:date_basis] == 'lead_created'
-    render json: { rows: rows, totals: totals }
+
+    render json: { rows: page_rows(scope), totals: totals,
+                   meta: { current_page: current_page, per_page: PER_PAGE, total_count: totals[:total] } }
   end
 
   private
@@ -22,14 +30,17 @@ class Api::V2::Accounts::IaHumanDistributionReportsController < Api::V1::Account
     authorize :report, :view?
   end
 
-  # Audit window matches the operational retention we expect for
-  # `ai_assignment_attempts` (deletes outside this window happen via a
-  # separate housekeeping job — not modelled here). Clamping keeps a
-  # "Last 30 days" picker from returning surprises.
-  def clamp_range(from, to)
-    finish = [to, Time.current].compact.min
-    start = [from, finish - MAX_RANGE_DAYS.days].compact.max
-    start..finish
+  # Whatever period the filter asks for: the attempts are kept for good.
+  def report_range
+    (parse_unix_timestamp(params[:from]) || Time.current.beginning_of_day)..(parse_unix_timestamp(params[:to]) || Time.current)
+  end
+
+  def current_page
+    [params[:page].to_i, 1].max
+  end
+
+  def page_rows(scope)
+    scope.includes(:conversation, :team, :agent_assigned).page(current_page).per(PER_PAGE).map { |attempt| build_row(attempt) }
   end
 
   def parse_unix_timestamp(raw)
@@ -41,19 +52,18 @@ class Api::V2::Accounts::IaHumanDistributionReportsController < Api::V1::Account
   # `date_basis` picks what the date range filters on: when the IA handed the
   # conversation over (default), or when the lead's conversation was created —
   # the latter lists every handover of the leads that came in that period.
-  def build_rows(range, inbox_id, date_basis)
-    scope = AiAssignmentAttempt
-            .for_account(Current.account.id)
-            .includes(:conversation, :team, :agent_assigned)
-            .order(:created_at)
+  def attempts_scope(range, inbox_id, date_basis)
+    scope = AiAssignmentAttempt.for_account(Current.account.id).order(:created_at, :id)
     scope = if date_basis == 'lead_created'
               scope.joins(:conversation).where(conversations: { created_at: range })
             else
               scope.where(created_at: range)
             end
-    scope = scope.for_inbox(inbox_id) if inbox_id
+    inbox_id ? scope.for_inbox(inbox_id) : scope
+  end
 
-    scope.map { |attempt| build_row(attempt) }
+  def status_counts(scope)
+    scope.unscope(:order).select(STATUS_COUNTS_SQL).take.attributes.except('id').symbolize_keys
   end
 
   def build_row(attempt)
@@ -104,16 +114,5 @@ class Api::V2::Accounts::IaHumanDistributionReportsController < Api::V1::Account
       'failed_no_online' => 'não conseguiu atribuir - ninguém ativo',
       'failed_with_online' => 'não conseguiu atribuir'
     }[tag]
-  end
-
-  def tally(rows)
-    by_tag = rows.group_by { |r| r[:status_tag] }.transform_values(&:size)
-    {
-      total: rows.size,
-      assigned_via_team: by_tag['assigned_via_team'] || 0,
-      assigned_via_team_offline: by_tag['assigned_via_team_offline'] || 0,
-      failed_with_online: by_tag['failed_with_online'] || 0,
-      failed_no_online: by_tag['failed_no_online'] || 0
-    }
   end
 end

@@ -8,6 +8,7 @@ import WootDatePicker from 'dashboard/components/ui/DatePicker/DatePicker.vue';
 import ReportHeader from './components/ReportHeader.vue';
 import IaHumanDistributionReportsAPI from 'dashboard/api/iaHumanDistributionReports';
 import Modal from 'dashboard/components/Modal.vue';
+import PaginationFooter from 'dashboard/components-next/pagination/PaginationFooter.vue';
 
 const store = useStore();
 const route = useRoute();
@@ -28,6 +29,8 @@ const totals = ref({
   failed_with_online: 0,
   failed_no_online: 0,
 });
+const currentPage = ref(1);
+const meta = ref({ current_page: 1, per_page: 50, total_count: 0 });
 const loading = ref(false);
 const error = ref(null);
 const hasFetched = ref(false);
@@ -44,7 +47,8 @@ const conversationUrl = row =>
 const fromUnix = computed(() => getUnixStartOfDay(customDateRange.value[0]));
 const toUnix = computed(() => getUnixEndOfDay(customDateRange.value[1]));
 
-const fetchData = async () => {
+const fetchData = async (page = 1) => {
+  currentPage.value = page;
   loading.value = true;
   error.value = null;
   try {
@@ -53,9 +57,11 @@ const fetchData = async () => {
       to: toUnix.value,
       inboxId: inboxId.value,
       dateBasis: dateBasis.value,
+      page,
     });
     rows.value = data.rows || [];
     totals.value = data.totals || totals.value;
+    meta.value = data.meta || meta.value;
     hasFetched.value = true;
   } catch (e) {
     error.value =
@@ -73,6 +79,7 @@ const onDateRangeChange = value => {
 };
 
 const onInboxChange = () => fetchData();
+const onDateBasisChange = () => fetchData();
 
 onMounted(() => {
   store.dispatch('inboxes/get');
@@ -159,7 +166,7 @@ const closeOnlineModal = () => {
     <select
       v-model="dateBasis"
       class="bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg pl-3 pr-9 py-2 text-sm text-n-slate-12 focus:outline-n-brand lg:w-64"
-      @change="fetchData"
+      @change="onDateBasisChange"
     >
       <option value="transfer">
         {{ $t('IA_HUMAN_DISTRIBUTION_REPORT.DATE_BASIS.TRANSFER') }}
@@ -388,8 +395,14 @@ const closeOnlineModal = () => {
         </tr>
       </tbody>
     </table>
-    <div class="px-5 py-3 text-xs text-n-slate-11 border-t border-n-slate-2">
-      {{ $t('IA_HUMAN_DISTRIBUTION_REPORT.ROW_COUNT', { count: rows.length }) }}
+    <div class="px-5 py-3 border-t border-n-slate-2">
+      <PaginationFooter
+        :current-page="currentPage"
+        :total-items="meta.total_count"
+        :items-per-page="meta.per_page"
+        class="!px-0"
+        @update:current-page="fetchData"
+      />
     </div>
   </div>
 
