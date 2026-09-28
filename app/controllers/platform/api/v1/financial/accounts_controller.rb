@@ -5,14 +5,9 @@
 # takes on Financeiro → Vínculos, where it is recorded next to the rest of the
 # billing relationship; an automation flipping it would leave nobody knowing who
 # decided what.
-class Platform::Api::V1::Financial::AccountsController < PlatformController
+class Platform::Api::V1::Financial::AccountsController < Platform::Api::V1::Financial::BaseController
   DEFAULT_PER_PAGE = 50
   MAX_PER_PAGE = 200
-
-  # Billing is instance-wide rather than scoped to a permissible account, so
-  # holding the platform token is the authorization.
-  skip_before_action :set_resource, raise: false
-  skip_before_action :validate_platform_app_permissible, raise: false
 
   def index
     accounts = filtered_accounts.page(page).per(per_page)

@@ -7,6 +7,10 @@ RSpec.describe 'Platform Financial Accounts API', type: :request do
   let!(:opted_out) { create(:account, name: 'Não cobra', stripe_customer_id: 'cus_2', token_billing_enabled: false) }
   let!(:unlinked) { create(:account, name: 'Sem cliente') }
 
+  around do |example|
+    with_modified_env(FINANCIAL_PLATFORM_APP_IDS: platform_app.id.to_s) { example.run }
+  end
+
   it 'rejects a request without a platform token' do
     get '/platform/api/v1/financial/accounts'
 
@@ -55,5 +59,12 @@ RSpec.describe 'Platform Financial Accounts API', type: :request do
 
     expect(response.parsed_body['accounts'].length).to eq(1)
     expect(response.parsed_body['meta']).to include('current_page' => 2, 'total_count' => 3)
+  end
+
+  it 'rejects a platform app that is not allowed to reach billing' do
+    other_headers = { api_access_token: create(:platform_app).access_token.token }
+    get '/platform/api/v1/financial/accounts', headers: other_headers
+
+    expect(response).to have_http_status(:forbidden)
   end
 end
