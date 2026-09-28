@@ -15,6 +15,7 @@ const META_CAPI_FIELDS = [
   { key: 'test_event_code', secret: false, required: false },
   // Only the spend sync (Gasto / CPL / CPA / ROAS) needs it.
   { key: 'ad_account_id', secret: false, required: false, hint: true },
+  { key: 'ads_read_token', secret: true, required: false, hint: true },
 ];
 const GOOGLE_ADS_FIELDS = [
   { key: 'customer_id', secret: false, required: true },

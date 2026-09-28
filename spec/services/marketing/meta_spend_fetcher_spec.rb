@@ -82,6 +82,16 @@ RSpec.describe Marketing::MetaSpendFetcher do
     # access_token (fase 2 shape). ad_account_id is optional and only needed
     # for spend sync — reporting the missing field is more useful than
     # silently no-oping.
+    it 'reads spend with the dedicated ads_read_token when there is one' do
+      integration.update!(credentials: integration.credentials.merge('ads_read_token' => 'EAAG_ads'))
+      stub = stub_request(:get, %r{act_1234567890/insights.*access_token=EAAG_ads})
+             .to_return(status: 200, body: { data: [sample_row] }.to_json, headers: { 'Content-Type' => 'application/json' })
+
+      described_class.new(account: account).perform
+
+      expect(stub).to have_been_requested
+    end
+
     it 'accepts the ad account id pasted with its act_ prefix' do
       integration.update!(credentials: integration.credentials.merge('ad_account_id' => 'act_1234567890'))
       stub_insights([sample_row])
