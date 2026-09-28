@@ -4,13 +4,7 @@
 # Exists so the monthly token billing can run without anybody opening the super
 # admin: the caller sends the usage per account and gets back one result per
 # customer, saying which invoices were issued and which were not.
-class Platform::Api::V1::Financial::InvoicesController < PlatformController
-  # Unlike the resource endpoints of this API, billing is instance-wide rather
-  # than scoped to a permissible account, so there is no per-resource check to
-  # run — holding the platform token is the authorization.
-  skip_before_action :set_resource, raise: false
-  skip_before_action :validate_platform_app_permissible, raise: false
-
+class Platform::Api::V1::Financial::InvoicesController < Platform::Api::V1::Financial::BaseController
   rescue_from Integrations::Stripe::Client::Unauthorized do |e|
     render json: { error: "Stripe credential rejected: #{e.message}" }, status: :unauthorized
   end

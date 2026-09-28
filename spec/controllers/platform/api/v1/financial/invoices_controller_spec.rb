@@ -12,6 +12,10 @@ RSpec.describe 'Platform Financial Invoices API', type: :request do
     Struct.new(:id, :unit_amount, :currency, :nickname).new(id, unit_amount, 'brl', id)
   end
 
+  around do |example|
+    with_modified_env(FINANCIAL_PLATFORM_APP_IDS: platform_app.id.to_s) { example.run }
+  end
+
   before do
     # GlobalConfig memoizes across examples while the rows themselves roll back,
     # so a price saved by one example would leak into the next one.
@@ -108,5 +112,12 @@ RSpec.describe 'Platform Financial Invoices API', type: :request do
       expect(response.parsed_body['results'].first).to include('status' => 'skipped')
       expect(response.parsed_body['issued_count']).to eq(0)
     end
+  end
+
+  it 'rejects a platform app that is not allowed to reach billing' do
+    other_headers = { api_access_token: create(:platform_app).access_token.token }
+    post '/platform/api/v1/financial/invoices/preview', params: { usage: usage, prices: prices }, headers: other_headers, as: :json
+
+    expect(response).to have_http_status(:forbidden)
   end
 end
