@@ -180,6 +180,20 @@ RSpec.describe 'IA Human Distribution Reports API', type: :request do
           expect(totals['total']).to eq(1)
         end
 
+        it 'lists the newest lead first' do
+          newer_lead = create(:conversation, account: account, inbox: inbox, created_at: lead_created_at + 30.minutes)
+          create(:ai_assignment_attempt,
+                 conversation: newer_lead, account: account, team: team,
+                 agent_assigned: nil, triggered_by: ia_user, online_user_ids: [],
+                 created_at: reference_time - 1.day)
+
+          get "/api/v2/accounts/#{account.id}/ia_human_distribution_reports",
+              params: lead_range.merge(date_basis: 'lead_created'),
+              headers: admin.create_new_auth_token
+
+          expect(response.parsed_body['rows'].first['conversation_id']).to eq(newer_lead.display_id)
+        end
+
         it 'keeps filtering by the transfer date by default' do
           get "/api/v2/accounts/#{account.id}/ia_human_distribution_reports",
               params: lead_range,
@@ -188,6 +202,15 @@ RSpec.describe 'IA Human Distribution Reports API', type: :request do
           expect(response.parsed_body['rows']).to be_empty
           expect(response.parsed_body['totals']).not_to have_key('leads_created')
         end
+      end
+
+      it 'lists the newest handover first' do
+        get "/api/v2/accounts/#{account.id}/ia_human_distribution_reports",
+            params: { from: range_from, to: range_to },
+            headers: admin.create_new_auth_token
+
+        expect(response.parsed_body['rows'].pluck('conversation_id'))
+          .to eq([conv_no_online, conv_offline, conv_success].map(&:display_id))
       end
 
       it 'returns the whole requested period, however long' do
@@ -212,7 +235,7 @@ RSpec.describe 'IA Human Distribution Reports API', type: :request do
             headers: admin.create_new_auth_token
 
         body = response.parsed_body
-        expect(body['rows'].pluck('conversation_id')).to eq([conv_no_online.display_id])
+        expect(body['rows'].pluck('conversation_id')).to eq([conv_success.display_id])
         expect(body['meta']).to include('current_page' => 2, 'per_page' => 2, 'total_count' => 3)
         expect(body['totals']).to include('total' => 3, 'assigned_via_team' => 1, 'assigned_via_team_offline' => 1,
                                           'failed_no_online' => 1, 'failed_with_online' => 0)

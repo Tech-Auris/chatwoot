@@ -53,11 +53,13 @@ class Api::V2::Accounts::IaHumanDistributionReportsController < Api::V1::Account
   # conversation over (default), or when the lead's conversation was created —
   # the latter lists every handover of the leads that came in that period.
   def attempts_scope(range, inbox_id, date_basis)
-    scope = AiAssignmentAttempt.for_account(Current.account.id).order(:created_at, :id)
+    scope = AiAssignmentAttempt.for_account(Current.account.id)
+    # Newest first, on the same date the period is filtered by.
     scope = if date_basis == 'lead_created'
               scope.joins(:conversation).where(conversations: { created_at: range })
+                   .order('conversations.created_at DESC', created_at: :desc, id: :desc)
             else
-              scope.where(created_at: range)
+              scope.where(created_at: range).order(created_at: :desc, id: :desc)
             end
     inbox_id ? scope.for_inbox(inbox_id) : scope
   end
