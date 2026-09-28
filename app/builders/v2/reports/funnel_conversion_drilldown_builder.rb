@@ -16,7 +16,7 @@ class V2::Reports::FunnelConversionDrilldownBuilder < V2::Reports::FunnelConvers
     entries = latest_entry_per_conversation
     total = entries.count
     page = entries.order(created_at: :desc, id: :desc).page(current_page).per(PER_PAGE).includes(:user, :loss_reason).to_a
-    conversations = Conversation.where(id: page.map(&:conversation_id)).includes(:contact, :inbox, :funnel_stage).index_by(&:id)
+    conversations = Conversation.where(id: page.map(&:conversation_id)).includes(:contact, :inbox).index_by(&:id)
 
     {
       rows: page.map { |entry| row_for(entry, conversations[entry.conversation_id]) },
@@ -68,7 +68,6 @@ class V2::Reports::FunnelConversionDrilldownBuilder < V2::Reports::FunnelConvers
       stage: entry.new_stage,
       previous_stage: entry.previous_stage,
       moved_by: entry.user&.name,
-      current_stage: conversation.funnel_stage&.name,
       inbox_name: conversation.inbox.name,
       origem: conversation.origem,
       ad_title: conversation.additional_attributes&.dig('campaign_referral', 'title'),

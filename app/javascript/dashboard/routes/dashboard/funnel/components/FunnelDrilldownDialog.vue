@@ -163,13 +163,6 @@ defineExpose({ open });
                 {{ $t('FUNNEL_CONVERSION_REPORTS.DRILLDOWN.COLUMNS.MOVED_BY') }}
               </th>
               <th class="px-3 py-2 text-left font-medium whitespace-nowrap">
-                {{
-                  $t(
-                    'FUNNEL_CONVERSION_REPORTS.DRILLDOWN.COLUMNS.CURRENT_STAGE'
-                  )
-                }}
-              </th>
-              <th class="px-3 py-2 text-left font-medium whitespace-nowrap">
                 {{ $t('FUNNEL_CONVERSION_REPORTS.DRILLDOWN.COLUMNS.INBOX') }}
               </th>
               <th class="px-3 py-2 text-left font-medium whitespace-nowrap">
@@ -217,9 +210,6 @@ defineExpose({ open });
                   row.moved_by ||
                   $t('FUNNEL_CONVERSION_REPORTS.DRILLDOWN.AUTOMATION')
                 }}
-              </td>
-              <td class="px-3 py-2 whitespace-nowrap">
-                {{ dash(row.current_stage) }}
               </td>
               <td class="px-3 py-2 whitespace-nowrap">
                 {{ dash(row.inbox_name) }}
