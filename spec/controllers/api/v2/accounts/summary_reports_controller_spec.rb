@@ -340,4 +340,32 @@ RSpec.describe 'Summary Reports API', type: :request do
       end
     end
   end
+
+  describe 'GET /api/v2/accounts/:account_id/summary_reports/funnel_conversion_drilldown' do
+    let(:url) { "/api/v2/accounts/#{account.id}/summary_reports/funnel_conversion_drilldown" }
+    let(:params) { { since: start_of_today.to_s, until: end_of_today.to_s, stage_key: 'Agendamento', inbox_id: '3' } }
+
+    it 'returns unauthorized for agents' do
+      get url, params: params, headers: agent.create_new_auth_token, as: :json
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it 'passes the report filters and the clicked number to the builder' do
+      builder = instance_double(V2::Reports::FunnelConversionDrilldownBuilder, build: { rows: [], meta: { total_count: 0 } })
+      allow(V2::Reports::FunnelConversionDrilldownBuilder).to receive(:new).and_return(builder)
+
+      get url, params: params, headers: admin.create_new_auth_token, as: :json
+
+      expect(response).to have_http_status(:success)
+      expect(V2::Reports::FunnelConversionDrilldownBuilder).to have_received(:new)
+        .with(account: account, params: hash_including(stage_key: 'Agendamento', inbox_id: '3', since: start_of_today.to_s))
+    end
+
+    it 'rejects a stage that is not drillable' do
+      get url, params: params.merge(stage_key: 'Novo Contato'), headers: admin.create_new_auth_token, as: :json
+
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+  end
 end

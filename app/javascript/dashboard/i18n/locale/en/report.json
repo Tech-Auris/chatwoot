@@ -737,6 +737,31 @@
         "CPA": "CPA",
         "ROAS": "ROAS"
       }
+    },
+    "DRILLDOWN": {
+      "TITLE_STAGE": "{stage}: {count} conversations",
+      "TITLE_LOSS": "Losses: {count} conversations",
+      "TITLE_LOSS_REASON": "Lost for \"{reason}\": {count} conversations",
+      "DESCRIPTION": "Same period and filters as the report. One row per conversation, with its latest entry in the period.",
+      "CLOSE": "Close",
+      "EMPTY_STATE": "No conversations found.",
+      "ERROR": "Could not load the conversations. Try again.",
+      "AUTOMATION": "Automation",
+      "DASH": "—",
+      "HASH_ID": "#{id}",
+      "COLUMNS": {
+        "CONVERSATION": "Conversation",
+        "CONTACT": "Contact",
+        "ENTERED_AT": "Entered on",
+        "LOST_AT": "Lost on",
+        "STAGE": "Stage",
+        "LOSS_REASON": "Loss reason",
+        "PREVIOUS_STAGE": "Came from",
+        "MOVED_BY": "Moved by",
+        "CURRENT_STAGE": "Current stage",
+        "INBOX": "Inbox",
+        "SOURCE": "Origin / ad"
+      }
     }
   },
   "IA_HUMAN_DISTRIBUTION_REPORT": {

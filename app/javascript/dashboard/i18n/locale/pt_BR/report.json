@@ -737,6 +737,31 @@
         "CPA": "CPA",
         "ROAS": "ROAS"
       }
+    },
+    "DRILLDOWN": {
+      "TITLE_STAGE": "{stage}: {count} conversas",
+      "TITLE_LOSS": "Perdas: {count} conversas",
+      "TITLE_LOSS_REASON": "Perdas por \"{reason}\": {count} conversas",
+      "DESCRIPTION": "Mesmo período e filtros do relatório. Uma linha por conversa, com a entrada mais recente no período.",
+      "CLOSE": "Fechar",
+      "EMPTY_STATE": "Nenhuma conversa encontrada.",
+      "ERROR": "Não foi possível carregar as conversas. Tente novamente.",
+      "AUTOMATION": "Automação",
+      "DASH": "—",
+      "HASH_ID": "#{id}",
+      "COLUMNS": {
+        "CONVERSATION": "Conversa",
+        "CONTACT": "Contato",
+        "ENTERED_AT": "Entrou em",
+        "LOST_AT": "Perdido em",
+        "STAGE": "Etapa",
+        "LOSS_REASON": "Motivo da perda",
+        "PREVIOUS_STAGE": "Veio de",
+        "MOVED_BY": "Movido por",
+        "CURRENT_STAGE": "Etapa atual",
+        "INBOX": "Caixa",
+        "SOURCE": "Origem / anúncio"
+      }
     }
   },
   "IA_HUMAN_DISTRIBUTION_REPORT": {

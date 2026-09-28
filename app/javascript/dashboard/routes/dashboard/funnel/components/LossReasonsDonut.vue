@@ -8,6 +8,9 @@ const props = defineProps({
   },
 });
 
+// `drill` carries the clicked reason, or null for the total in the middle.
+const emit = defineEmits(['drill']);
+
 // Fixed palette cycled by reason index. LossReason has no color column, so a
 // deterministic palette keeps colors stable across renders without growing the
 // schema. Order picked to read well at small sizes (no near-neighbors).
@@ -108,6 +111,7 @@ const legendRows = computed(() =>
     .filter(r => (r.count || 0) > 0)
     .map((reason, idx) => ({
       key: reason.id ?? reason.name,
+      reason,
       color: colorFor(idx),
       name: reason.name,
       count: reason.count,
@@ -139,7 +143,8 @@ const formatPct = value => `${Number(value || 0).toFixed(1)}%`;
         :x="CENTER"
         :y="CENTER - 4"
         text-anchor="middle"
-        class="fill-n-slate-12 text-2xl font-semibold"
+        class="fill-n-slate-12 text-2xl font-semibold cursor-pointer underline decoration-dotted hover:fill-n-brand"
+        @click="emit('drill', null)"
       >
         {{ formatCount(total) }}
       </text>
@@ -178,9 +183,13 @@ const formatPct = value => `${Number(value || 0).toFixed(1)}%`;
             :style="{ backgroundColor: row.color }"
           />
           <span class="text-n-slate-12 truncate">{{ row.name }}</span>
-          <span class="text-n-slate-12 text-right">{{
-            formatCount(row.count)
-          }}</span>
+          <button
+            type="button"
+            class="text-n-slate-12 text-right underline decoration-dotted hover:text-n-brand"
+            @click="emit('drill', row.reason)"
+          >
+            {{ formatCount(row.count) }}
+          </button>
           <span class="text-n-slate-11 text-right">{{
             formatPct(row.percentage)
           }}</span>
