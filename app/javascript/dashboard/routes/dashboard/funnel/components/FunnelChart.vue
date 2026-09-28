@@ -25,6 +25,12 @@ const MIDPOINT = FUNNEL_TOP + FUNNEL_HEIGHT / 2;
 const AI_COLOR = '#84cc16'; // tailwind lime-500
 const MANUAL_COLOR = '#3b82f6'; // tailwind blue-500
 
+// Smallest band a stage with at least one lead gets, as a share of the
+// funnel height. With 10k+ leads on top, a stage of a handful of
+// conversations would otherwise be a hairline; the exact count stays in the
+// label above it.
+const MIN_VISIBLE_RATIO = 0.08;
+
 // Max stage TOTAL anchors the funnel height — the AI/manual split sits
 // inside that total. Using the largest stage (vs. always the first) keeps
 // the chart honest when a downstream stage received more entries than the
@@ -41,7 +47,8 @@ const stagePoints = computed(() => {
   return props.stages.map((stage, i) => {
     const total = stage.count || 0;
     const ai = stage.countAi || 0;
-    const totalRatio = total / maxCount.value;
+    const totalRatio =
+      total > 0 ? Math.max(total / maxCount.value, MIN_VISIBLE_RATIO) : 0;
     const halfHeight = (totalRatio * FUNNEL_HEIGHT) / 2;
     // AI sits on top of the band, manual underneath — `splitY` separates them.
     // Sliding it from `topY` to `botY` by the AI proportion of the total.
@@ -148,7 +155,13 @@ const labelsForStages = computed(() => {
 });
 
 const formatCount = value => Number(value || 0).toLocaleString();
-const formatPct = value => `${Number(value).toFixed(1)}%`;
+// Tiny shares keep one significant digit (0.03%) instead of rounding to a
+// misleading 0.0%.
+const formatPct = value => {
+  const pct = Number(value);
+  if (pct > 0 && pct < 0.1) return `${Number(pct.toPrecision(1))}%`;
+  return `${pct.toFixed(1)}%`;
+};
 
 // Hover hit zones: one invisible rect per stage, spanning the half-distance
 // to its left and right neighbors so a mouse anywhere over the stage's
