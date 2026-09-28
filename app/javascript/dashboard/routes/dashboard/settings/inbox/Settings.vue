@@ -90,6 +90,7 @@ export default {
       businessName: '',
       locktoSingleConversation: false,
       allowMessagesAfterResolved: true,
+      splitMessages: true,
       continuityViaEmail: true,
       selectedInboxName: '',
       channelWebsiteUrl: '',
@@ -466,6 +467,7 @@ export default {
       this.allowMessagesAfterResolved =
         this.inbox.allow_messages_after_resolved;
       this.continuityViaEmail = this.inbox.continuity_via_email;
+      this.splitMessages = this.inbox.split_messages;
       this.channelWebsiteUrl = this.inbox.website_url;
       this.channelWelcomeTitle = this.inbox.welcome_title;
       this.channelWelcomeTagline = this.inbox.welcome_tagline || '';
@@ -578,6 +580,7 @@ export default {
           name: this.selectedInboxName?.trim(),
           enable_email_collect: this.emailCollectEnabled,
           allow_messages_after_resolved: this.allowMessagesAfterResolved,
+          split_messages: this.splitMessages,
           greeting_enabled: this.greetingEnabled,
           greeting_message: this.greetingMessage || '',
           portal_id: this.selectedPortalSlug
@@ -1210,6 +1213,18 @@ export default {
                   $t(
                     'INBOX_MGMT.SETTINGS_POPUP.ENABLE_EMAIL_COLLECT_BOX_SUB_TEXT'
                   )
+                "
+              />
+
+              <!-- Sent to n8n in every webhook as inbox.split_messages: the AI
+                   breaks its reply into one message per line break when on.
+                   Official WhatsApp Cloud defaults to off because Meta bills
+                   each message from 2026-10-01. -->
+              <SettingsToggleSection
+                v-model="splitMessages"
+                :header="$t('INBOX_MGMT.SETTINGS_POPUP.SPLIT_MESSAGES')"
+                :description="
+                  $t('INBOX_MGMT.SETTINGS_POPUP.SPLIT_MESSAGES_SUB_TEXT')
                 "
               />
 
