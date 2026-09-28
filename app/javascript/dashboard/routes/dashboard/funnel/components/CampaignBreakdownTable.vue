@@ -1,5 +1,6 @@
 <script setup>
 import { useI18n } from 'vue-i18n';
+import Icon from 'dashboard/components-next/icon/Icon.vue';
 
 // Per-ad table sitting below the funnel chart. Each row is one Meta ad
 // (grouped by the Cloud referral's `source_id`), with the same funnel buckets
@@ -12,6 +13,9 @@ defineProps({
     default: () => [],
   },
 });
+
+// Emitted with the ad row when its Leads count is clicked.
+const emit = defineEmits(['drill']);
 
 const { t } = useI18n();
 
@@ -156,7 +160,17 @@ const formatRoas = roas =>
               </span>
             </td>
             <td class="py-3 pr-3 whitespace-nowrap text-right font-medium">
-              {{ row.leads }}
+              <button
+                type="button"
+                class="group inline-flex items-center justify-end gap-1 text-n-slate-12 hover:text-n-brand"
+                @click="emit('drill', row)"
+              >
+                {{ row.leads }}
+                <Icon
+                  icon="i-lucide-external-link"
+                  class="size-3 text-n-slate-10 group-hover:text-n-brand"
+                />
+              </button>
             </td>
             <td class="py-3 pr-3 whitespace-nowrap text-right">
               <div class="font-medium leading-tight">

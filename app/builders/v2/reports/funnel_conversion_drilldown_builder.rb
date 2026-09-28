@@ -1,6 +1,7 @@
 # The conversations behind a number of the funnel conversion report: one of
-# the chart stages (Agendamento, Confirmado, Comparecimentos) or the lost
-# conversations of the loss-reasons donut.
+# the chart stages (Agendamento, Confirmado, Comparecimentos), the lost
+# conversations of the loss-reasons donut, or the leads of one ad on the
+# "Anúncios do período" grid (its latest stage in the period).
 #
 # Inherits the report's own scoping (period, inbox / label / origem filters,
 # conversations that still exist) so the list always has exactly as many rows
@@ -29,7 +30,7 @@ class V2::Reports::FunnelConversionDrilldownBuilder < V2::Reports::FunnelConvers
   def latest_entry_per_conversation
     scope = funnel_stage_changes_scope
     scope = scope.where(created_at: range) if range.present?
-    scope = loss? ? loss_scope(scope) : scope.where(new_stage: stage_names)
+    scope = narrow(scope)
     per = loss? ? 'funnel_stage_changes.conversation_id, funnel_stage_changes.loss_reason_id' : 'funnel_stage_changes.conversation_id'
     latest = scope.select("DISTINCT ON (#{per}) funnel_stage_changes.*").reorder(Arel.sql("#{per}, funnel_stage_changes.created_at DESC"))
     FunnelStageChange.from(latest, :funnel_stage_changes)
@@ -37,6 +38,22 @@ class V2::Reports::FunnelConversionDrilldownBuilder < V2::Reports::FunnelConvers
 
   def loss?
     params[:kind] == 'loss'
+  end
+
+  def narrow(scope)
+    case params[:kind]
+    when 'loss' then loss_scope(scope)
+    when 'ad' then ad_scope(scope)
+    else scope.where(new_stage: stage_names)
+    end
+  end
+
+  # Same leads the grid counts for the ad: every conversation tagged with it
+  # that moved anywhere in the funnel during the period.
+  def ad_scope(scope)
+    ad_conversations = account.conversations
+                              .where("conversations.additional_attributes -> 'campaign_referral' ->> 'source_id' = ?", params[:source_id].to_s)
+    scope.where(conversation_id: ad_conversations.select(:id))
   end
 
   def loss_scope(scope)
