@@ -145,6 +145,38 @@ RSpec.describe 'IA Human Distribution Reports API', type: :request do
         expect(body['rows'].first['inbox_id']).to eq(other_inbox.id)
       end
 
+      context 'when filtering by lead creation date' do
+        let(:lead_created_at) { reference_time - 2.days }
+        let(:lead_range) { { from: (lead_created_at - 1.hour).to_i, to: (lead_created_at + 1.hour).to_i } }
+
+        before do
+          old_lead = create(:conversation, account: account, inbox: inbox, created_at: lead_created_at)
+          create(:ai_assignment_attempt,
+                 conversation: old_lead, account: account, team: team,
+                 agent_assigned: agent_user, triggered_by: ia_user,
+                 online_user_ids: [agent_user.id],
+                 created_at: reference_time)
+        end
+
+        it 'lists the handovers of the leads created in the range, whenever they happened' do
+          get "/api/v2/accounts/#{account.id}/ia_human_distribution_reports",
+              params: lead_range.merge(date_basis: 'lead_created'),
+              headers: admin.create_new_auth_token
+
+          rows = response.parsed_body['rows']
+          expect(rows.length).to eq(1)
+          expect(rows.first['lead_created_label']).to eq(lead_created_at.in_time_zone('America/Sao_Paulo').strftime('%d/%m/%Y %H:%M:%S'))
+        end
+
+        it 'keeps filtering by the transfer date by default' do
+          get "/api/v2/accounts/#{account.id}/ia_human_distribution_reports",
+              params: lead_range,
+              headers: admin.create_new_auth_token
+
+          expect(response.parsed_body['rows']).to be_empty
+        end
+      end
+
       it 'clamps requested range to the last 7 days of retention' do
         get "/api/v2/accounts/#{account.id}/ia_human_distribution_reports",
             params: { from: 30.days.ago.to_i, to: Time.current.to_i },

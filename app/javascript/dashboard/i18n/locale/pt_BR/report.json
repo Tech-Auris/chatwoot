@@ -743,6 +743,10 @@
     "HEADER": "IA → Humano",
     "DESCRIPTION": "Auditoria das atribuições feitas pela IA Auris (últimos 7 dias).",
     "ALL_INBOXES": "Todas as caixas",
+    "DATE_BASIS": {
+      "TRANSFER": "Por data da transferência",
+      "LEAD_CREATED": "Por data de criação do lead"
+    },
     "ERROR_LOAD": "Falha ao carregar dados: {error}",
     "KPI": {
       "TOTAL": "Total",
@@ -752,7 +756,8 @@
       "FAILED_NO_ONLINE": "🔴 ninguém ativo"
     },
     "COLUMNS": {
-      "DATETIME": "Data / Hora",
+      "DATETIME": "Data / Hora da transferência",
+      "LEAD_CREATED": "Criação do lead",
       "CONVERSATION": "Conversa",
       "INBOX": "Inbox",
       "TEAM": "Time",
