@@ -162,11 +162,13 @@ const labelsForStages = computed(() => {
 
 const formatCount = value => Number(value || 0).toLocaleString();
 
-// The drill-down icon sits right after a clickable count (before it on the
-// last, right-anchored stage), so the rendered width of each count is
-// measured once the labels are on screen.
-const DRILL_ICON_SIZE = 22;
-const DRILL_ICON_GAP = 8;
+// The drill-down icon sits right after a clickable count, so the rendered
+// width of each count is measured once the labels are on screen. On the last,
+// right-anchored stage the count shifts left to leave the icon room.
+const DRILL_ICON_SIZE = 16;
+const DRILL_ICON_GAP = 6;
+// Vertically centered on the digits (baseline 72, ~22 units tall).
+const DRILL_ICON_Y = 72 - 11 - DRILL_ICON_SIZE / 2;
 const countEls = {};
 const countWidths = ref({});
 
@@ -180,15 +182,19 @@ const measureCounts = () => {
 
 watch(labelsForStages, () => nextTick(measureCounts), { immediate: true });
 
+const countX = label =>
+  label.clickable && label.anchor === 'end'
+    ? label.x - DRILL_ICON_SIZE - DRILL_ICON_GAP
+    : label.x;
+
 const drillIconX = label => {
+  if (label.anchor === 'end') return label.x - DRILL_ICON_SIZE;
   const width = countWidths.value[label.key] || 0;
-  if (label.anchor === 'end') {
-    return label.x - width - DRILL_ICON_GAP - DRILL_ICON_SIZE;
-  }
   const start =
     label.anchor === 'middle' ? label.x + width / 2 : label.x + width;
   return start + DRILL_ICON_GAP;
 };
+
 // Tiny shares keep one significant digit (0.03%) instead of rounding to a
 // misleading 0.0%.
 const formatPct = value => {
@@ -303,7 +309,7 @@ const hoveredTooltip = computed(() => {
         >
           <text
             :ref="el => (countEls[label.key] = el)"
-            :x="label.x"
+            :x="countX(label)"
             :y="72"
             :text-anchor="label.anchor"
             class="fill-n-slate-12 text-3xl font-semibold group-hover:fill-n-brand"
@@ -313,7 +319,7 @@ const hoveredTooltip = computed(() => {
           <DrillIcon
             v-if="label.clickable"
             :x="drillIconX(label)"
-            :y="72 - DRILL_ICON_SIZE"
+            :y="DRILL_ICON_Y"
             :size="DRILL_ICON_SIZE"
             class="text-n-slate-10 group-hover:text-n-brand"
           />
