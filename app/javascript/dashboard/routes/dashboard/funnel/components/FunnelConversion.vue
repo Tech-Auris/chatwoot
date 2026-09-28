@@ -89,6 +89,15 @@ const onLossDrill = reason =>
       : lossReasons.value.reduce((sum, r) => sum + (r.count || 0), 0),
   });
 
+const onAdDrill = ad =>
+  drilldownRef.value?.open({
+    kind: 'ad',
+    sourceId: ad.sourceId,
+    name:
+      ad.title || t('FUNNEL_CONVERSION_REPORTS.CAMPAIGN_BREAKDOWN.UNTITLED_AD'),
+    count: ad.leads,
+  });
+
 const fetchReports = async () => {
   try {
     await store.dispatch(
@@ -311,7 +320,7 @@ onMounted(fetchReports);
       <div class="text-sm font-medium text-n-slate-12 mb-4">
         {{ $t('FUNNEL_CONVERSION_REPORTS.CAMPAIGN_BREAKDOWN.HEADER') }}
       </div>
-      <CampaignBreakdownTable :rows="campaignBreakdown" />
+      <CampaignBreakdownTable :rows="campaignBreakdown" @drill="onAdDrill" />
     </div>
 
     <FunnelDrilldownDialog ref="drilldownRef" :filters="filters" />

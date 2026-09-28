@@ -30,6 +30,12 @@ const isLoss = computed(() => target.value?.kind === 'loss');
 const title = computed(() => {
   if (!target.value) return '';
   const count = meta.value.total_count;
+  if (target.value.kind === 'ad') {
+    return t('FUNNEL_CONVERSION_REPORTS.DRILLDOWN.TITLE_AD', {
+      ad: target.value.name,
+      count,
+    });
+  }
   if (!isLoss.value) {
     return t('FUNNEL_CONVERSION_REPORTS.DRILLDOWN.TITLE_STAGE', {
       stage: target.value.name,
@@ -54,6 +60,7 @@ const fetchPage = async page => {
       stageKey: target.value.stageKey,
       kind: target.value.kind,
       lossReasonId: target.value.lossReasonId,
+      sourceId: target.value.sourceId,
       page,
     });
     rows.value = data.rows;
@@ -65,8 +72,9 @@ const fetchPage = async page => {
   }
 };
 
-// `next` is { stageKey, name, count } for a chart stage, or
-// { kind: 'loss', lossReasonId?, name?, count } for the losses.
+// `next` is { stageKey, name, count } for a chart stage,
+// { kind: 'loss', lossReasonId?, name?, count } for the losses, or
+// { kind: 'ad', sourceId, name, count } for one ad's leads.
 const open = next => {
   target.value = next;
   rows.value = [];

@@ -96,7 +96,8 @@ class SummaryReportsAPI extends ApiClient {
   }
 
   // Conversations behind one number of the conversion report: a chart stage
-  // (`stageKey`) or the losses (`kind: 'loss'`, optionally one reason).
+  // (`stageKey`), the losses (`kind: 'loss'`, optionally one reason) or one
+  // ad's leads (`kind: 'ad'` + `sourceId`).
   getFunnelConversionDrilldown({
     since,
     until: untilTs,
@@ -106,6 +107,7 @@ class SummaryReportsAPI extends ApiClient {
     stageKey,
     kind,
     lossReasonId,
+    sourceId,
     page,
   } = {}) {
     return axios.get(`${this.url}/funnel_conversion_drilldown`, {
@@ -118,6 +120,7 @@ class SummaryReportsAPI extends ApiClient {
         stage_key: stageKey,
         kind,
         loss_reason_id: lossReasonId,
+        source_id: sourceId,
         page,
       },
     });

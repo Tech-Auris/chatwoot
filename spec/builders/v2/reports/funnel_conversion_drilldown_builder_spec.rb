@@ -72,6 +72,31 @@ RSpec.describe V2::Reports::FunnelConversionDrilldownBuilder do
     end
   end
 
+  describe 'the leads of an ad' do
+    def ad_conversation(source_id)
+      create(:conversation, account: account, inbox: inbox, contact: contact,
+                            additional_attributes: { 'campaign_referral' => { 'source_id' => source_id, 'title' => 'Promo' } })
+    end
+
+    let!(:qualified_lead) { ad_conversation('AD_1') }
+
+    before do
+      stage_change(qualified_lead, stages[:lead].name, created_at: 2.days.ago)
+      stage_change(qualified_lead, stages[:scheduled].name, created_at: 1.day.ago)
+      stage_change(ad_conversation('AD_1'), stages[:lead].name)
+      stage_change(ad_conversation('AD_2'), stages[:lead].name)
+      stage_change(conversation, stages[:lead].name)
+    end
+
+    it 'lists the same leads the ad grid counts, each on its latest stage' do
+      result = drilldown(kind: 'ad', source_id: 'AD_1')
+      grid = V2::Reports::FunnelConversionBuilder.new(account: account, params: params).build[:campaign_breakdown]
+
+      expect(result[:meta][:total_count]).to eq(grid.find { |row| row[:source_id] == 'AD_1' }[:leads])
+      expect(result[:rows].find { |row| row[:conversation_id] == qualified_lead.display_id }[:stage]).to eq(stages[:scheduled].name)
+    end
+  end
+
   describe 'the losses' do
     let(:price) { create(:loss_reason, name: "price_#{SecureRandom.hex(4)}") }
     let(:no_answer) { create(:loss_reason, name: "no_answer_#{SecureRandom.hex(4)}") }

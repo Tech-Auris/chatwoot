@@ -742,6 +742,7 @@
       "TITLE_STAGE": "{stage}: {count} conversas",
       "TITLE_LOSS": "Perdas: {count} conversas",
       "TITLE_LOSS_REASON": "Perdas por \"{reason}\": {count} conversas",
+      "TITLE_AD": "Anúncio \"{ad}\": {count} leads",
       "DESCRIPTION": "Mesmo período e filtros do relatório. Uma linha por conversa, com a entrada mais recente no período.",
       "CLOSE": "Fechar",
       "EMPTY_STATE": "Nenhuma conversa encontrada.",
