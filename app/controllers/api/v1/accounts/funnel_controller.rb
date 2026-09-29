@@ -35,9 +35,13 @@ class Api::V1::Accounts::FunnelController < Api::V1::Accounts::BaseController
   end
 
   def move
+    # Same reach as the conversation list: an agent only moves conversations
+    # of the inboxes they belong to (the move fires CAPI / Google conversions
+    # with the contact's data).
+    conversation = permitted_conversations.find_by!(display_id: params.require(:conversation_id))
     service = Funnel::MoveConversationService.new(
       account: Current.account,
-      conversation_display_id: params.require(:conversation_id),
+      conversation_display_id: conversation.display_id,
       # `stage` (name) is what the kanban sends; `funnel_stage_id` is the stable
       # handle the conversation header uses.
       target_stage_name: params[:stage],
@@ -54,7 +58,7 @@ class Api::V1::Accounts::FunnelController < Api::V1::Accounts::BaseController
   end
 
   def history
-    conversation = Current.account.conversations.find_by!(display_id: params.require(:conversation_id))
+    conversation = permitted_conversations.find_by!(display_id: params.require(:conversation_id))
     @history = Current.account.funnel_stage_changes
                       .where(conversation_id: conversation.id)
                       .order(created_at: :desc)
@@ -62,7 +66,7 @@ class Api::V1::Accounts::FunnelController < Api::V1::Accounts::BaseController
   end
 
   def conversation_status
-    conversation = Current.account.conversations.find_by!(display_id: params.require(:conversation_id))
+    conversation = permitted_conversations.find_by!(display_id: params.require(:conversation_id))
     @conversation = conversation
     @stage = conversation.funnel_stage
   end
@@ -104,9 +108,15 @@ class Api::V1::Accounts::FunnelController < Api::V1::Accounts::BaseController
     # contact's `avatar_url` (an ActiveStorage attachment lookup) each ran
     # once per card, which is what pushed the endpoint past the statement
     # timeout on busy accounts.
-    Current.account.conversations
-           .includes(:inbox, :funnel_stage, :account, contact: { avatar_attachment: :blob })
-           .where(funnel_stage_id: active_stage_ids)
+    permitted_conversations
+      .includes(:inbox, :funnel_stage, :account, contact: { avatar_attachment: :blob })
+      .where(funnel_stage_id: active_stage_ids)
+  end
+
+  # Administrators and managers see every conversation; agents only those of
+  # their inboxes — the same rule as the conversation list.
+  def permitted_conversations
+    Conversations::PermissionFilterService.new(Current.account.conversations, Current.user, Current.account).perform
   end
 
   def active_stage_ids

@@ -79,6 +79,47 @@ RSpec.describe 'Funnel API', type: :request do
     end
   end
 
+  describe 'inbox permissions' do
+    let(:agent) { create(:user, account: account, role: :agent) }
+    let(:other_inbox) { create(:inbox, account: account, enable_auto_assignment: false) }
+    let!(:own_conversation) { create(:conversation, account: account, inbox: inbox, funnel_stage: novo) }
+    let!(:other_conversation) { create(:conversation, account: account, inbox: other_inbox, funnel_stage: novo) }
+
+    before { create(:inbox_member, user: agent, inbox: inbox) }
+
+    it 'shows an agent only the conversations of their inboxes' do
+      get "/api/v1/accounts/#{account.id}/funnel", headers: agent.create_new_auth_token, as: :json
+
+      ids = response.parsed_body.dig('payload', 'stages').flat_map { |stage| stage['conversations'].pluck('id') }
+      expect(ids).to contain_exactly(own_conversation.display_id)
+    end
+
+    it 'does not let an agent move a conversation of an inbox they are not in' do
+      post "/api/v1/accounts/#{account.id}/funnel/move",
+           params: { conversation_id: other_conversation.display_id, funnel_stage_id: qualificacao.id },
+           headers: agent.create_new_auth_token, as: :json
+
+      expect(response).to have_http_status(:not_found)
+      expect(other_conversation.reload.funnel_stage_id).to eq(novo.id)
+    end
+
+    it 'lets an agent move a conversation of their own inbox' do
+      post "/api/v1/accounts/#{account.id}/funnel/move",
+           params: { conversation_id: own_conversation.display_id, funnel_stage_id: qualificacao.id },
+           headers: agent.create_new_auth_token, as: :json
+
+      expect(response).to have_http_status(:success)
+      expect(own_conversation.reload.funnel_stage_id).to eq(qualificacao.id)
+    end
+
+    it 'keeps every conversation visible to an administrator' do
+      get "/api/v1/accounts/#{account.id}/funnel", headers: admin.create_new_auth_token, as: :json
+
+      ids = response.parsed_body.dig('payload', 'stages').flat_map { |stage| stage['conversations'].pluck('id') }
+      expect(ids).to include(own_conversation.display_id, other_conversation.display_id)
+    end
+  end
+
   describe 'GET /api/v1/accounts/:account_id/funnel/stages/:stage_id/conversations' do
     it 'brings the next page of a single column' do
       30.times { create(:conversation, account: account, inbox: inbox, funnel_stage: novo) }
