@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue';
+import AiStatusChip from 'dashboard/components-next/Conversation/AiStatusChip.vue';
 import { useI18n } from 'vue-i18n';
 
 import NextButton from 'dashboard/components-next/button/Button.vue';
@@ -56,12 +57,7 @@ const handleSubmit = () => {
               class="m-0"
               :aria-label="t('BULK_ACTION.AI_STATUS.ENABLE')"
             />
-            <span
-              class="inline-flex items-center gap-1 h-4 px-1.5 py-0.5 rounded-[4px] text-xs font-medium leading-tight bg-n-teal-9 text-white"
-            >
-              <span class="inline-block w-2 h-2 rounded-sm bg-white" />
-              {{ t('CONVERSATION.AI_STATUS.LABEL') }}
-            </span>
+            <AiStatusChip enabled />
             <span class="text-sm">{{ t('BULK_ACTION.AI_STATUS.ENABLE') }}</span>
           </label>
         </li>
@@ -77,12 +73,7 @@ const handleSubmit = () => {
               class="m-0"
               :aria-label="t('BULK_ACTION.AI_STATUS.DISABLE')"
             />
-            <span
-              class="inline-flex items-center gap-1 h-4 px-1.5 py-0.5 rounded-[4px] text-xs font-medium leading-tight bg-n-ruby-9 text-white"
-            >
-              <span class="inline-block w-2 h-2 rounded-sm bg-white" />
-              {{ t('CONVERSATION.AI_STATUS.LABEL') }}
-            </span>
+            <AiStatusChip :enabled="false" />
             <span class="text-sm">{{
               t('BULK_ACTION.AI_STATUS.DISABLE')
             }}</span>

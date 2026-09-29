@@ -211,6 +211,7 @@ const copyConversationId = async () => {
     >
       <AiStatusBadge
         v-if="chat?.id"
+        size="md"
         :conversation-id="chat.id"
         :ai-enabled="chat.ai_enabled !== false"
       />
