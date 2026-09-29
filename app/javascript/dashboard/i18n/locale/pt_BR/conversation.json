@@ -726,7 +726,9 @@
   },
   "CAMPAIGN_REFERRAL_CARD": {
     "TITLE": "Anúncio de origem",
-    "VIEW_AD": "Ver anúncio"
+    "VIEW_AD": "Ver anúncio",
+    "VIA_FORM": "via formulário",
+    "CAMPAIGN": "Campanha: {name}"
   },
   "CONVERSATION_PARTICIPANTS": {
     "SIDEBAR_MENU_TITLE": "Participantes",

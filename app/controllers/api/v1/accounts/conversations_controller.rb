@@ -50,6 +50,7 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
 
   def update
     @conversation.update!(permitted_update_params)
+    record_campaign_referral if params[:campaign_referral].present?
   end
 
   def filter
@@ -192,6 +193,14 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
   end
 
   private
+
+  # Ad / campaign of a lead that reached an existing conversation from outside
+  # the channel (e.g. a website form relayed by n8n). First touch wins.
+  def record_campaign_referral
+    referral = params.require(:campaign_referral).permit(*::Conversations::CampaignReferralAttributionService::ALLOWED_KEYS)
+    ::Conversations::CampaignReferralAttributionService.new(conversation: @conversation, referral: referral.to_h).perform
+    @conversation.reload
+  end
 
   def permitted_update_params
     # TODO: Move the other conversation attributes to this method and remove specific endpoints for each attribute

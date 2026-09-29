@@ -144,6 +144,26 @@ RSpec.describe Marketing::MetaCapiDispatcher do
     end
   end
 
+  describe 'a lead from a website form' do
+    before do
+      conversation.update!(additional_attributes: {
+                             'campaign_referral' => { 'source_type' => 'website_form', 'fbclid' => 'IwZX', 'captured_at' => 1_790_596_623 }
+                           })
+    end
+
+    it 'sends a system_generated event with the fbc built from the fbclid' do
+      stub_meta_success
+      described_class.new(dispatch: dispatch).perform
+
+      event = JSON.parse(captured[:body])['data'].first
+      expect(event['action_source']).to eq('system_generated')
+      expect(event).not_to have_key('messaging_channel')
+      expect(event['user_data']['fbc']).to eq('fb.1.1790596623000.IwZX')
+      expect(event['user_data']).not_to have_key('ctwa_clid')
+      expect(event['user_data']['ph']).to be_present
+    end
+  end
+
   describe 'active integration (not test_mode)' do
     before { integration.update!(status: :active) }
 
