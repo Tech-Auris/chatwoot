@@ -1,4 +1,6 @@
 class Api::V1::Accounts::Contacts::GroupInvitesController < Api::V1::Accounts::Contacts::BaseController
+  include GroupInboxAccess
+
   def show
     authorize @contact, :show?
     code = channel.group_invite_code(@contact.identifier)

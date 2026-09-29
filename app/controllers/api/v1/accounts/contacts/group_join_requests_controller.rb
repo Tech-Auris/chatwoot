@@ -1,4 +1,6 @@
 class Api::V1::Accounts::Contacts::GroupJoinRequestsController < Api::V1::Accounts::Contacts::BaseController
+  include GroupInboxAccess
+
   def index
     authorize @contact, :show?
     requests = channel.group_join_requests(@contact.identifier)

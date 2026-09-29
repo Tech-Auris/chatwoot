@@ -1,4 +1,6 @@
 class Api::V1::Accounts::Contacts::GroupMetadataController < Api::V1::Accounts::Contacts::BaseController
+  include GroupInboxAccess
+
   def update
     authorize @contact, :update?
     update_subject if metadata_params[:subject].present?
