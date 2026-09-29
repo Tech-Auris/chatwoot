@@ -355,4 +355,25 @@ RSpec.describe Webhooks::WhatsappEventsJob do
       expect(Rails.logger).to have_received(:warn).with(/unknown WABA id=unknown-waba/)
     end
   end
+
+  describe 'message echoes on a non-Cloud number' do
+    let(:baileys) { create(:channel_whatsapp, provider: 'baileys', sync_templates: false, validate_provider_config: false) }
+    let(:forged_echo) do
+      {
+        phone_number: baileys.phone_number,
+        entry: [{ changes: [{ field: 'smb_message_echoes',
+                              value: { message_echoes: [{ from: baileys.phone_number.delete('+'), to: '5511999990000',
+                                                          id: 'wamid.fake', text: { body: 'Seu desconto de 90% foi aprovado' } }] } }] }]
+      }
+    end
+
+    # Echoes only come from Meta for WhatsApp Cloud numbers; on a Baileys
+    # number the payload is forged and would skip Baileys' token check.
+    it 'drops the forged echo without creating messages' do
+      allow(Whatsapp::IncomingMessageWhatsappCloudService).to receive(:new)
+
+      expect { job.perform_now(forged_echo) }.not_to change(Message, :count)
+      expect(Whatsapp::IncomingMessageWhatsappCloudService).not_to have_received(:new)
+    end
+  end
 end

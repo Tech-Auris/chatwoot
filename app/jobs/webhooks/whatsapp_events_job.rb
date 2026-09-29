@@ -58,6 +58,12 @@ class Webhooks::WhatsappEventsJob < MutexApplicationJob
 
   def process_events(channel, params)
     if message_echo_event?(params)
+      # Echoes come from Meta, for WhatsApp Cloud numbers only (signed there).
+      # On a Baileys / Z-API number the payload can only be forged — and it
+      # would skip that provider's token check, planting "sent by the business"
+      # messages the AI then reads as history.
+      return unless channel.provider == 'whatsapp_cloud'
+
       handle_message_echo(channel, params)
     else
       handle_message_events(channel, params)
