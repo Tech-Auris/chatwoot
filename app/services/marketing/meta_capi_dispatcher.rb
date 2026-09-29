@@ -13,6 +13,12 @@
 #   * user_data.em / ph — SHA256 of lowercased-trimmed email / normalized
 #     phone. Only ever in memory; never persisted in the raw form.
 #
+# Leads that came through a website form (campaign_referral with an `fbclid`
+# and no `ctwa_clid`, recorded by n8n) are not messaging conversions for Meta:
+# they go as `action_source: "system_generated"` (an event the business logs
+# after the fact, like a CRM stage change) with `user_data.fbc` built from the
+# fbclid, which is what ties the event back to the ad click.
+#
 # Idempotency: Meta dedupes by `event_id` within a 7-day window, so a Sidekiq
 # retry of the same dispatch (identical event_id) is safe on their side too.
 class Marketing::MetaCapiDispatcher
@@ -62,14 +68,36 @@ class Marketing::MetaCapiDispatcher
   end
 
   def event_hash
-    {
+    event = {
       event_name: dispatch.conversion_event.meta_event_name,
       event_time: dispatch.created_at.to_i,
       event_id: dispatch.event_id,
-      action_source: 'business_messaging',
-      messaging_channel: messaging_channel,
       user_data: user_data
     }
+    return event.merge(action_source: 'system_generated') if form_lead?
+
+    event.merge(action_source: 'business_messaging', messaging_channel: messaging_channel)
+  end
+
+  def referral
+    @referral ||= begin
+      attributes = dispatch.conversation.additional_attributes
+      (attributes.is_a?(Hash) && attributes['campaign_referral']) || {}
+    end
+  end
+
+  def form_lead?
+    referral['fbclid'].present? && referral['ctwa_clid'].blank?
+  end
+
+  # Meta's click id cookie format: fb.<subdomain index>.<creation ms>.<fbclid>.
+  # Creation time is when the click was captured — the form submission, or the
+  # conversation's creation when n8n did not send it.
+  def fbc
+    return if referral['fbclid'].blank?
+
+    captured_at = referral['captured_at'].to_i.positive? ? Time.zone.at(referral['captured_at'].to_i) : dispatch.conversation.created_at
+    "fb.1.#{(captured_at.to_f * 1000).to_i}.#{referral['fbclid']}"
   end
 
   # test_event_code makes events show up in Meta Events Manager's Test Events
@@ -85,13 +113,12 @@ class Marketing::MetaCapiDispatcher
 
   def user_data
     contact = dispatch.conversation.contact
-    referral = dispatch.conversation.additional_attributes.is_a?(Hash) ? dispatch.conversation.additional_attributes['campaign_referral'] : nil
-    referral ||= {}
 
     {
       em: hashed_emails(contact),
       ph: hashed_phones(contact),
-      ctwa_clid: referral['ctwa_clid']
+      ctwa_clid: referral['ctwa_clid'],
+      fbc: fbc
     }.compact
   end
 

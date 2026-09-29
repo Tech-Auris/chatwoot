@@ -393,6 +393,18 @@ RSpec.describe 'Conversations API', type: :request do
         expect(JSON.parse(response.body, symbolize_names: true)[:priority]).to eq('high')
       end
 
+      it 'records the campaign of a lead relayed from a website form' do
+        patch "/api/v1/accounts/#{account.id}/conversations/#{conversation.display_id}",
+              params: { campaign_referral: { source_type: 'website_form', source_id: '120241645998560300', fbclid: 'IwZX' } },
+              headers: administrator.create_new_auth_token,
+              as: :json
+
+        expect(response).to have_http_status(:success)
+        expect(conversation.reload.additional_attributes['campaign_referral'])
+          .to eq('source_type' => 'website_form', 'source_id' => '120241645998560300', 'fbclid' => 'IwZX')
+        expect(response.parsed_body['additional_attributes']['campaign_referral']).to include('source_id' => '120241645998560300')
+      end
+
       it 'updates the conversation if you are an agent with access to inbox' do
         create(:inbox_member, user: agent, inbox: conversation.inbox)
         patch "/api/v1/accounts/#{account.id}/conversations/#{conversation.display_id}",

@@ -27,6 +27,55 @@ requestBody:
             nullable: true
             description: 'Free-form summary of the conversation. Send null to clear it.'
             example: 'Patient greeted and asked about facial evaluation availability.'
+          origem:
+            type: string
+            enum: ['Evento', 'Facebook', 'Google', 'Indicação de cliente', 'Indicação de colega', 'Influenciador', 'Instagram', 'Orgânico']
+            description: 'Where the lead came from (the "Origem" dropdown). Overwrites the current value.'
+            example: 'Facebook'
+          campaign_referral:
+            type: object
+            description: >-
+              Ad / campaign that brought the lead, for leads that reach the conversation from outside the channel
+              (e.g. a website form relayed by an automation). First touch wins: ignored when the conversation already
+              has an origin ad. `source_id` (the ad id) feeds the funnel ad grid and ad spend; `fbclid` / `gclid` are
+              sent back to Meta CAPI / Google Ads on conversion events.
+            properties:
+              source_type:
+                type: string
+                example: 'website_form'
+              source_id:
+                type: string
+                description: 'Ad id'
+                example: '120241645998560300'
+              title:
+                type: string
+                description: 'Ad name'
+                example: 'Sistema para Grandes Clínicas'
+              campaign_name:
+                type: string
+                example: '[LEAD] [MÉDICOS] - Agenda'
+              source_url:
+                type: string
+              body:
+                type: string
+              utm_source:
+                type: string
+              utm_medium:
+                type: string
+              utm_campaign:
+                type: string
+              utm_term:
+                type: string
+              utm_content:
+                type: string
+              fbclid:
+                type: string
+              gclid:
+                type: string
+              captured_at:
+                type: integer
+                description: 'Unix time of the form submission'
+                example: 1790596623
 responses:
   '200':
     description: Success

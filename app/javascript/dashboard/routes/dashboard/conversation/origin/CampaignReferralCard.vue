@@ -18,7 +18,7 @@ const props = defineProps({
     validator: value =>
       value == null ||
       (typeof value === 'object' &&
-        ['title', 'body', 'source_url', 'thumbnail_url'].every(
+        ['title', 'body', 'source_url', 'thumbnail_url', 'campaign_name'].every(
           key => value[key] == null || typeof value[key] === 'string'
         )),
   },
@@ -39,6 +39,13 @@ const toHttpUrl = url => {
 };
 
 const adUrl = computed(() => toHttpUrl(props.referral?.source_url));
+
+// Leads relayed from a website form (n8n) carry `source_type: website_form`
+// and the campaign name from the UTMs, which a click-to-WhatsApp referral
+// does not have.
+const isFormLead = computed(
+  () => props.referral?.source_type === 'website_form'
+);
 const imageUrl = computed(() => toHttpUrl(props.referral?.thumbnail_url));
 
 const hasImageError = ref(false);
@@ -68,6 +75,12 @@ const capturedAt = computed(() => {
         <span class="font-medium">
           {{ t('CAMPAIGN_REFERRAL_CARD.TITLE') }}
         </span>
+        <span
+          v-if="isFormLead"
+          class="px-1.5 py-0.5 rounded bg-n-alpha-2 text-n-slate-11"
+        >
+          {{ t('CAMPAIGN_REFERRAL_CARD.VIA_FORM') }}
+        </span>
       </div>
       <component
         :is="adUrl ? 'a' : 'div'"
@@ -96,6 +109,16 @@ const capturedAt = computed(() => {
             class="mb-0 mt-1 text-xs text-n-slate-11 line-clamp-2"
           >
             {{ referral.body }}
+          </p>
+          <p
+            v-if="referral.campaign_name"
+            class="mb-0 mt-1 text-xs text-n-slate-11 line-clamp-2"
+          >
+            {{
+              t('CAMPAIGN_REFERRAL_CARD.CAMPAIGN', {
+                name: referral.campaign_name,
+              })
+            }}
           </p>
         </div>
         <div v-if="capturedAt" class="text-xs text-n-slate-12">
