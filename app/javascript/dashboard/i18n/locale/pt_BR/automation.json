@@ -168,7 +168,7 @@
       "ENABLE_AI": "Ativar IA",
       "DISABLE_AI": "Desativar IA",
       "ASSIGN_ORIGEM": "Atribuir Origem do lead",
-      "MOVE_TO_FUNNEL_STAGE": "Mover no funil",
+      "MOVE_TO_FUNNEL_STAGE": "Mover no funil para",
       "TRIGGER_CONVERSION_EVENT": "Disparar evento de conversão"
     },
     "MESSAGE_TYPES": {

@@ -168,7 +168,7 @@
       "ENABLE_AI": "Enable AI",
       "DISABLE_AI": "Disable AI",
       "ASSIGN_ORIGEM": "Assign lead origin",
-      "MOVE_TO_FUNNEL_STAGE": "Move in the funnel",
+      "MOVE_TO_FUNNEL_STAGE": "Move in the funnel to",
       "TRIGGER_CONVERSION_EVENT": "Trigger marketing conversion event"
     },
     "MESSAGE_TYPES": {
