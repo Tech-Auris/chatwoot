@@ -139,15 +139,35 @@ RSpec.describe 'Media Hub API', type: :request do
   end
 
   describe 'DELETE /api/v1/accounts/:account_id/media_hub' do
-    it 'refuses to delete an attachment the agent cannot see' do
-      # image_in_b lives in inbox_b, which the agent is not a member of.
+    # The delete is permanent (message and file destroyed), so agents can't
+    # use it — not even on the inboxes they can see.
+    it 'refuses agents' do
       expect do
         delete "/api/v1/accounts/#{account.id}/media_hub",
-               params: { type: 'image', ids: [image_in_b.id] },
+               params: { type: 'image', ids: [image_in_a.id] },
                headers: agent.create_new_auth_token,
                as: :json
       end.not_to change(Attachment, :count)
-      expect(response.parsed_body['deleted']).to eq(0)
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it 'lets a manager delete an attachment' do
+      expect do
+        delete "/api/v1/accounts/#{account.id}/media_hub",
+               params: { type: 'image', ids: [image_in_a.id] },
+               headers: manager.create_new_auth_token,
+               as: :json
+      end.to change(Attachment, :count).by(-1)
+      expect(response.parsed_body['deleted']).to eq(1)
+    end
+
+    it 'refuses more than one bulk page of items at once' do
+      delete "/api/v1/accounts/#{account.id}/media_hub",
+             params: { type: 'image', ids: (1..101).to_a },
+             headers: admin.create_new_auth_token,
+             as: :json
+
+      expect(response).to have_http_status(:unprocessable_entity)
     end
   end
 
