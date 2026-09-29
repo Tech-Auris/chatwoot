@@ -15,6 +15,12 @@ RSpec.describe Conversations::TranscriptPdfService do
       expect(service.perform).to eq('PDFBYTES')
     end
 
+    it 'renders with JavaScript disabled, since the HTML carries customer content' do
+      service.perform
+
+      expect(Grover).to have_received(:new).with(anything, hash_including(java_script_enabled: false))
+    end
+
     it 'releases the semaphore slot after a successful render' do
       before_available = described_class::SEMAPHORE.available_permits
       service.perform
