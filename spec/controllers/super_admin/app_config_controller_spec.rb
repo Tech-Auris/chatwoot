@@ -157,4 +157,44 @@ RSpec.describe 'Super Admin Application Config API', type: :request do
       end
     end
   end
+
+  # Settings → Commercial also holds where the proposal messages to leads go
+  # out from on WhatsApp: an account, one of its inboxes, and the reminder time.
+  describe 'the Commercial section' do
+    let(:account) { create(:account, name: 'Auris Comercial') }
+    let(:inbox) { create(:inbox, account: account, name: 'Vendedor principal') }
+
+    before { sign_in(super_admin, scope: :super_admin) }
+
+    it 'offers the accounts and their inboxes' do
+      inbox
+      get '/super_admin/app_config?config=commercial'
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include("#{account.id} · Auris Comercial", "#{inbox.id} · Vendedor principal", "data-account-id=\"#{account.id}\"")
+    end
+
+    it 'saves the account, the inbox and the reminder time' do
+      post '/super_admin/app_config?config=commercial', params: {
+        app_config: { COMMERCIAL_WHATSAPP_ACCOUNT_ID: account.id, COMMERCIAL_WHATSAPP_INBOX_ID: inbox.id,
+                      COMMERCIAL_RESERVATION_REMINDER_TIME: '12:30' }
+      }
+
+      GlobalConfig.clear_cache
+      expect(Sales::LeadWhatsappMessenger.inbox_id).to eq(inbox.id)
+      expect(Sales::LeadWhatsappMessenger.account_id).to eq(account.id)
+    end
+
+    it 'refuses an inbox that belongs to another account' do
+      other_inbox = create(:inbox, account: create(:account))
+
+      post '/super_admin/app_config?config=commercial', params: {
+        app_config: { COMMERCIAL_WHATSAPP_ACCOUNT_ID: account.id, COMMERCIAL_WHATSAPP_INBOX_ID: other_inbox.id,
+                      COMMERCIAL_RESERVATION_REMINDER_TIME: '12:30' }
+      }
+
+      expect(flash[:alert]).to include('não pertence à conta')
+      expect(InstallationConfig.find_by(name: 'COMMERCIAL_WHATSAPP_INBOX_ID')&.value).not_to eq(other_inbox.id.to_s)
+    end
+  end
 end

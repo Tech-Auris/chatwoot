@@ -2,6 +2,7 @@ class SuperAdmin::AppConfigsController < SuperAdmin::ApplicationController
   before_action :set_config
   before_action :allowed_configs
   before_action :load_installation_configs, only: [:show, :create]
+  before_action :validate_commercial_whatsapp, only: :create, if: -> { @config == 'commercial' }
   def show
     # Read the model so `SerializedValueCoder` is applied — a `.pluck` on
     # `serialized_value` returns the raw column (YAML string for rows
@@ -11,6 +12,7 @@ class SuperAdmin::AppConfigsController < SuperAdmin::ApplicationController
     # used to be enough to wipe the row on Submit.
     @app_config = InstallationConfig.where(name: @allowed_configs)
                                     .to_h { |config| [config.name, config.value] }
+    load_commercial_whatsapp_options if @config == 'commercial'
   end
 
   def create
@@ -54,6 +56,28 @@ class SuperAdmin::AppConfigsController < SuperAdmin::ApplicationController
     @installation_configs[key]&.dig('type') == 'secret'
   end
 
+  # Settings → Commercial picks the WhatsApp the proposal messages go out
+  # from: an account, then one of that account's inboxes (the form filters
+  # the inbox list by the account picked).
+  def load_commercial_whatsapp_options
+    @account_options = Account.order(:name).pluck(:id, :name)
+    @inbox_options = Inbox.order(:name).pluck(:id, :name, :account_id)
+  end
+
+  def validate_commercial_whatsapp
+    error = commercial_whatsapp_error(params.fetch('app_config', {}))
+    redirect_to super_admin_app_config_path(config: @config), alert: error if error
+  end
+
+  # Only checked when the form carries the WhatsApp fields.
+  def commercial_whatsapp_error(values)
+    return unless values.key?('COMMERCIAL_WHATSAPP_INBOX_ID')
+    return 'A caixa escolhida não pertence à conta escolhida' unless
+      Inbox.exists?(id: values['COMMERCIAL_WHATSAPP_INBOX_ID'], account_id: values['COMMERCIAL_WHATSAPP_ACCOUNT_ID'])
+
+    'Informe o horário do lembrete no formato HH:MM' unless values['COMMERCIAL_RESERVATION_REMINDER_TIME'].to_s.match?(/\A([01]\d|2[0-3]):[0-5]\d\z/)
+  end
+
   # Auris-only settings screens, kept apart from the upstream mapping so
   # syncing chatwoot/chatwoot doesn't conflict on every new entry.
   def auris_config_mapping
@@ -82,7 +106,11 @@ class SuperAdmin::AppConfigsController < SuperAdmin::ApplicationController
       'google_ads' => %w[GOOGLE_ADS_OAUTH_CLIENT_ID GOOGLE_ADS_OAUTH_CLIENT_SECRET],
       # The page a prospect opens. It is not the console and not the product:
       # it carries the sales logo and the PIX code the company is paid to.
-      'commercial' => %w[SALES_PROPOSAL_LOGO SALES_PIX_PAYLOAD SALES_TERMS_URL],
+      # Also where the proposal messages to leads go out from on WhatsApp (an
+      # account and one of its inboxes — the main seller's number) and when
+      # the reservation's last-day reminder is sent.
+      'commercial' => %w[SALES_PROPOSAL_LOGO SALES_PIX_PAYLOAD SALES_TERMS_URL
+                         COMMERCIAL_WHATSAPP_ACCOUNT_ID COMMERCIAL_WHATSAPP_INBOX_ID COMMERCIAL_RESERVATION_REMINDER_TIME],
       # Toggle that gates the messaging-window chip on WhatsApp Cloud
       # conversations. The backend always computes `Conversation#messaging_window`
       # so downstream consumers (n8n, webhooks) see the state; this flag only

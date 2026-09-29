@@ -36,7 +36,7 @@ RSpec.describe Sales::ReservationReminderJob do
     expect(due.events.where(event: 'whatsapp_last_day_reminder_sent').count).to eq(1)
   end
 
-  it 'honours the reminder time set in Commercial → Settings' do
+  it 'honours the reminder time set in Settings → Commercial' do
     quote_ending_today
     InstallationConfig.where(name: 'COMMERCIAL_RESERVATION_REMINDER_TIME').first_or_create!(value: '09:00', locked: false).update!(value: '09:00')
     GlobalConfig.clear_cache
