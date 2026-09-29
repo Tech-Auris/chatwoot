@@ -17,6 +17,15 @@ module PortalHelper
     uri.to_s
   end
 
+  # The portal's custom head / body HTML (tracking tags and the like) runs
+  # only on the portal's own custom domain. On the AurisChat domain it would
+  # share the dashboard's origin — and its session cookie — so a script an
+  # account admin put there could hijack whoever opens that help center logged
+  # in to the dashboard.
+  def render_portal_custom_html?(plain_layout)
+    !plain_layout && !DomainHelper.chatwoot_domain?(request.host)
+  end
+
   def generate_portal_bg(portal_color, theme)
     base_color = theme == 'dark' ? 'black' : 'white'
     "color-mix(in srgb, #{portal_color} 20%, #{base_color})"
