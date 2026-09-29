@@ -1,17 +1,42 @@
 <script setup>
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useStore } from 'vuex';
 import { useAlert } from 'dashboard/composables';
+import AiStatusChip from './AiStatusChip.vue';
 
+// The AI status chip of a conversation; clicking toggles it. The state is in
+// the colour and spelled out in the tooltip / aria-label.
 const props = defineProps({
   conversationId: { type: Number, required: true },
   aiEnabled: { type: Boolean, default: true },
+  // `sm` fits the dense rows (conversation list, funnel); `md` is the
+  // conversation header.
+  size: {
+    type: String,
+    default: 'sm',
+    validator: value => ['sm', 'md'].includes(value),
+  },
 });
 
 const { t } = useI18n();
 const store = useStore();
 const isToggling = ref(false);
+
+const stateLabel = computed(() =>
+  props.aiEnabled
+    ? t('CONVERSATION.AI_STATUS.ON_LABEL')
+    : t('CONVERSATION.AI_STATUS.OFF_LABEL')
+);
+
+const tooltip = computed(
+  () =>
+    `${stateLabel.value} · ${
+      props.aiEnabled
+        ? t('CONVERSATION.AI_STATUS.TOGGLE_OFF_TOOLTIP')
+        : t('CONVERSATION.AI_STATUS.TOGGLE_ON_TOOLTIP')
+    }`
+);
 
 const toggle = async () => {
   if (isToggling.value) return;
@@ -31,17 +56,13 @@ const toggle = async () => {
 <template>
   <button
     type="button"
-    class="inline-flex items-center gap-1 h-4 px-1.5 py-0.5 rounded-[4px] text-xs font-medium leading-tight flex-shrink-0 transition-opacity hover:opacity-90 disabled:opacity-60 cursor-pointer"
-    :class="aiEnabled ? 'bg-n-teal-9 text-white' : 'bg-n-ruby-9 text-white'"
+    class="inline-flex flex-shrink-0 rounded-full transition-opacity hover:opacity-80 disabled:opacity-60 cursor-pointer"
     :disabled="isToggling"
-    :title="
-      aiEnabled
-        ? t('CONVERSATION.AI_STATUS.TOGGLE_OFF_TOOLTIP')
-        : t('CONVERSATION.AI_STATUS.TOGGLE_ON_TOOLTIP')
-    "
+    :title="tooltip"
+    :aria-label="stateLabel"
+    :aria-pressed="aiEnabled"
     @click.stop.prevent="toggle"
   >
-    <span class="inline-block w-2 h-2 rounded-sm bg-white" />
-    {{ t('CONVERSATION.AI_STATUS.LABEL') }}
+    <AiStatusChip :enabled="aiEnabled" :size="size" />
   </button>
 </template>
