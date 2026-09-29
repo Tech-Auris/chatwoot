@@ -14,6 +14,12 @@ RSpec.describe Marketing::MetaSpendFetcher do
                  headers: { 'Content-Type' => 'application/json' })
   end
 
+  # Importing the legacy ad_account_id names the new grid row from Meta.
+  before do
+    stub_request(:get, %r{graph\.facebook\.com/v20\.0/act_\d+\?.*fields=name,currency})
+      .to_return(status: 200, body: { name: 'Conta', currency: 'BRL' }.to_json, headers: { 'Content-Type' => 'application/json' })
+  end
+
   describe '#perform' do
     let(:sample_row) do
       {

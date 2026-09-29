@@ -21,12 +21,21 @@ RSpec.describe 'Marketing Ad Accounts API', type: :request do
     expect(response).to have_http_status(:unauthorized)
   end
 
-  it 'lists the ad accounts, bringing in the one saved in the legacy field' do
+  it 'moves the ad account saved in the legacy field into the grid, named from Meta' do
     integration.update!(credentials: integration.credentials.merge('ad_account_id' => 'act_762067646356782'))
+    stub_lookup('762067646356782')
 
     get base_url, headers: admin.create_new_auth_token, as: :json
 
-    expect(response.parsed_body['payload'].pluck('external_id')).to eq(['762067646356782'])
+    expect(response.parsed_body['payload'].first).to include('external_id' => '762067646356782', 'name' => 'Clínica Leger')
+    expect(integration.reload.credentials).not_to have_key('ad_account_id')
+  end
+
+  it 'explains an id that is not a number, without calling Meta' do
+    post base_url, params: { external_id: 'asdasdasd' }, headers: admin.create_new_auth_token, as: :json
+
+    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response.parsed_body['error']).to include('act_1234567890')
   end
 
   it 'adds an ad account the token can read, with its name from Meta' do

@@ -112,6 +112,9 @@ en:
       file_too_large: 'File exceeds the maximum allowed size'
       unsupported_content_type: 'File type not supported (only images and videos are allowed)'
       unexpected: 'An unexpected error occurred'
+    marketing_ad_account:
+      invalid_id: 'Enter the ad account id as digits, e.g. act_1234567890.'
+      already_added: 'This ad account is already on the list.'
     automation:
       scheduled_message:
         delay_out_of_range: Delay must be between 1 minute and 999 days

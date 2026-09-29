@@ -88,13 +88,19 @@ class MarketingIntegration < ApplicationRecord
   end
 
   # Before the ad accounts grid existed, one ad account id lived in the
-  # credentials. Brings it into the grid the first time the integration is
-  # read, so accounts configured that way keep syncing.
+  # credentials. Moves it into the grid (as its first row, named from Meta
+  # when the token can read it) the first time the integration is read, and
+  # drops it from the credentials so removing the row later doesn't bring it
+  # back.
   def import_legacy_ad_account!
     legacy_id = credentials['ad_account_id'].to_s.strip.delete_prefix('act_')
-    return if legacy_id.blank? || ad_accounts.exists?
+    return if legacy_id.blank?
 
-    ad_accounts.create!(account: account, external_id: legacy_id)
+    unless ad_accounts.exists?(external_id: legacy_id)
+      lookup = Marketing::MetaAdAccountLookup.new(integration: self, external_id: legacy_id).perform
+      ad_accounts.create!(account: account, external_id: legacy_id, name: lookup.name, currency: lookup.currency)
+    end
+    update!(credentials: credentials.except('ad_account_id'))
   end
 
   private

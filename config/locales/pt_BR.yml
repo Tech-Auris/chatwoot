@@ -89,6 +89,9 @@ pt_BR:
       file_too_large: 'O arquivo excede o tamanho máximo permitido'
       unsupported_content_type: 'Tipo de arquivo não suportado (apenas imagens e vídeos são permitidos)'
       unexpected: 'Ocorreu um erro inesperado'
+    marketing_ad_account:
+      invalid_id: 'Informe o ID da conta de anúncios com números, por exemplo act_1234567890.'
+      already_added: 'Esta conta de anúncios já está na lista.'
     automation:
       scheduled_message:
         delay_out_of_range: O atraso deve ser entre 1 minuto e 999 dias
