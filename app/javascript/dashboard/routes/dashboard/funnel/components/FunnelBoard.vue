@@ -84,12 +84,17 @@ const requestMore = stage => emit('loadMore', stage);
         </header>
 
         <div class="flex-1 flex flex-col overflow-y-auto">
+          <!-- The drop zone fills the whole column (flex-1), not just the
+               height of its cards: a card released anywhere over the lane —
+               below the last card, or on an empty lane — lands there, instead
+               of only when hovered right over another card. -->
           <Draggable
             :model-value="cardsFor(stage)"
             :group="{ name: 'funnel', pull: true, put: true }"
             item-key="id"
-            class="flex flex-col gap-2 p-2"
+            class="flex flex-col flex-1 gap-2 p-2 min-h-24"
             ghost-class="opacity-50"
+            :empty-insert-threshold="80"
             @change="event => onDragEnd(event, stage)"
           >
             <template #item="{ element }">
