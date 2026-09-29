@@ -911,11 +911,6 @@ Rails.application.routes.draw do
             post :reserve
           end
         end
-
-        resource :settings, only: [:show, :update], controller: 'settings' do
-          get :accounts
-          get :inboxes
-        end
       end
 
       namespace :financial do

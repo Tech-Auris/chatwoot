@@ -1,5 +1,5 @@
 # On a reservation's last day, reminds the lead who hasn't closed yet, from
-# the reminder time set in Commercial → Settings (12:30 by default, São Paulo
+# the reminder time set in Settings → Commercial (12:30 by default, São Paulo
 # time). Runs every 10 minutes; each reservation is reminded once per
 # deadline — a renewed reservation gets reminded again on its new last day.
 class Sales::ReservationReminderJob < ApplicationJob

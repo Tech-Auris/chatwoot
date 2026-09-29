@@ -648,18 +648,21 @@
   locked: false
 - name: COMMERCIAL_WHATSAPP_ACCOUNT_ID
   display_title: 'Conta do WhatsApp comercial'
-  description: 'Account whose inbox sends the proposal messages to leads (reservation link and last-day reminder). Set in Commercial → Settings.'
+  description: 'Conta cuja caixa envia as mensagens das propostas aos leads (link da reserva e lembrete do último dia).'
   value: '1'
+  type: account_select
   locked: false
 - name: COMMERCIAL_WHATSAPP_INBOX_ID
   display_title: 'Caixa do WhatsApp comercial'
-  description: 'Inbox (of the account above) the proposal messages to leads go out from — the main seller number. Set in Commercial → Settings.'
+  description: 'Caixa da conta acima por onde as mensagens saem — o número do vendedor principal. O contato é criado nessa conta quando ainda não existe.'
   value: '385'
+  type: inbox_select
   locked: false
 - name: COMMERCIAL_RESERVATION_REMINDER_TIME
   display_title: 'Horário do lembrete de último dia'
-  description: 'Time (HH:MM, São Paulo) the lead is reminded on the last day of the reservation. Set in Commercial → Settings.'
+  description: 'Horário de Brasília. No último dia da reserva, quem ainda não contratou recebe o lembrete a partir desse horário.'
   value: '12:30'
+  type: time
   locked: false
 - name: CLICKUP_PIPELINE_LIST_ID
   display_title: 'ClickUp Pipeline List ID'

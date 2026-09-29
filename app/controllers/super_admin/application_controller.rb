@@ -29,7 +29,6 @@ class SuperAdmin::ApplicationController < Administrate::ApplicationController
   COMMERCIAL_ALLOWED_CONTROLLERS = %w[
     super_admin/commercial/quotes
     super_admin/commercial/reservations
-    super_admin/commercial/settings
     super_admin/terms_acceptances
     super_admin/profile/mfa
     super_admin/sessions/mfa_challenge

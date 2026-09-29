@@ -53,6 +53,25 @@
                 </svg>
               </button>
             </div>
+          <% elsif @installation_configs[key]&.dig('type') == 'account_select' %>
+            <%= form.select "app_config[#{key}]",
+              @account_options.map { |id, name| ["#{id} · #{name}", id] },
+              { selected: @app_config[key].to_i },
+              id: 'commercial_account_select',
+              class: "mt-2 border border-slate-100 p-1 rounded-md"
+            %>
+          <% elsif @installation_configs[key]&.dig('type') == 'inbox_select' %>
+            <%= form.select "app_config[#{key}]",
+              options_for_select(
+                @inbox_options.map { |id, name, account_id| ["#{id} · #{name}", id, { 'data-account-id' => account_id }] },
+                @app_config[key].to_i
+              ),
+              {},
+              id: 'commercial_inbox_select',
+              class: "mt-2 border border-slate-100 p-1 rounded-md"
+            %>
+          <% elsif @installation_configs[key]&.dig('type') == 'time' %>
+            <%= form.text_field "app_config[#{key}]", value: @app_config[key], type: 'time', class: "mt-2 border border-slate-100 p-1 rounded-md w-32" %>
           <% elsif @installation_configs[key]&.dig('type') == 'select' && @installation_configs[key]&.dig('options').present? %>
             <%= form.select "app_config[#{key}]",
               @installation_configs[key]['options'].map { |val, label| [label, val] },
@@ -87,6 +106,25 @@
 <% content_for :javascript do %>
   <script>
   document.addEventListener('DOMContentLoaded', () => {
+    // Settings → Commercial: the inbox list only offers the inboxes of the
+    // account picked above it.
+    const accountSelect = document.getElementById('commercial_account_select');
+    const inboxSelect = document.getElementById('commercial_inbox_select');
+    if (accountSelect && inboxSelect) {
+      const filterInboxes = () => {
+        const options = Array.from(inboxSelect.options);
+        options.forEach(option => {
+          option.hidden = option.dataset.accountId !== accountSelect.value;
+        });
+        if (inboxSelect.selectedOptions[0]?.hidden) {
+          const first = options.find(option => !option.hidden);
+          inboxSelect.value = first ? first.value : '';
+        }
+      };
+      accountSelect.addEventListener('change', filterInboxes);
+      filterInboxes();
+    }
+
     document.querySelectorAll('.toggle-password').forEach(button => {
       button.addEventListener('click', () => {
         const targetId = button.dataset.target;

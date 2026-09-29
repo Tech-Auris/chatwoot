@@ -1,5 +1,5 @@
 # Sends a message to a proposal's lead on WhatsApp, through the inbox set in
-# Commercial → Settings (the main seller's number). Works like the dashboard's
+# Settings → Commercial (the main seller's number). Works like the dashboard's
 # new-conversation pencil: finds the contact by phone — with and without the
 # Brazilian 9th digit, the usual source of duplicates — or creates it, reuses
 # the open conversation of that inbox or opens one, and sends.
@@ -36,7 +36,7 @@ class Sales::LeadWhatsappMessenger
 
   def inbox
     @inbox ||= Account.find_by(id: self.class.account_id)&.inboxes&.find_by(id: self.class.inbox_id) ||
-               raise(NotConfigured, 'Configure a conta e a caixa em Commercial → Settings')
+               raise(NotConfigured, 'Configure a conta e a caixa em Settings → Commercial')
   end
 
   def phone
