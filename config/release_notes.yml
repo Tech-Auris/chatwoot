@@ -15,6 +15,10 @@
 
       - **New AI status icon.** The "ia" tag on conversations is now a round sparkle icon: green when the AI is answering, grey when it's off. Click it to turn the AI on or off, as before.
       - **Funnel shows your conversations.** Agents now see in the funnel only the conversations of the inboxes they work in.
+
+      ### 🐛 Fixes
+
+      - **Moving cards on the funnel board.** Drag a card and release it anywhere over another lane — it moves right away, even onto an empty lane.
     pt_BR: |-
       ### ✨ Novidades
 
@@ -27,6 +31,10 @@
 
       - **Novo ícone de status da IA.** A etiqueta "ia" das conversas virou um ícone redondo de estrelas: verde quando a IA está respondendo, cinza quando está desligada. Clique nele para ligar ou desligar a IA, como antes.
       - **Funil mostra as suas conversas.** Agentes passam a ver no funil só as conversas das caixas em que atendem.
+
+      ### 🐛 Correções
+
+      - **Mover cards no quadro do funil.** Arraste o card e solte em qualquer ponto de outra raia — ele move na hora, inclusive para uma raia vazia.
 - tag: v4.15.1-auris.1.63
   published_at: '2026-09-28T23:30:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.63
