@@ -1,4 +1,32 @@
 ---
+- tag: v4.15.1-auris.1.64
+  published_at: '2026-09-29T22:00:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.64
+  notes:
+    en: |-
+      ### ✨ What's new
+
+      - **Automations move conversations in the funnel.** A rule can now move the conversation to a funnel stage — for example, to "Agendado" when the team sends the booking confirmation.
+      - **Several ad accounts per clinic.** Add each Meta ad account one by one; AurisChat checks access right away and shows, per account, when spend was last synced or what went wrong.
+      - **See the conversations behind the Analytics numbers.** Click Leads, Qualifying, Scheduling, Confirmed or Attendance on an ad to list its conversations.
+      - **Website form leads keep their ad.** Leads that arrive through the website form are credited to the ad that brought them, show up in the ad reports and are sent back to Meta as they move through the funnel.
+
+      ### ⚡ Improvements
+
+      - **New AI status icon.** The "ia" tag on conversations is now a round sparkle icon: green when the AI is answering, grey when it's off. Click it to turn the AI on or off, as before.
+      - **Funnel shows your conversations.** Agents now see in the funnel only the conversations of the inboxes they work in.
+    pt_BR: |-
+      ### ✨ Novidades
+
+      - **Automações movem conversas no funil.** Uma regra agora pode mover a conversa para uma etapa do funil — por exemplo, para "Agendado" quando a equipe envia a confirmação do agendamento.
+      - **Várias contas de anúncios por clínica.** Adicione cada conta de anúncios da Meta uma a uma; o AurisChat confere o acesso na hora e mostra, por conta, quando o gasto foi sincronizado ou o que deu errado.
+      - **Veja as conversas por trás dos números do Analytics.** Clique em Leads, Em qualificação, Agendamento, Confirmado ou Comparecimentos de um anúncio para listar as conversas.
+      - **Leads de formulário mantêm o anúncio de origem.** Quem chega pelo formulário do site é creditado ao anúncio que o trouxe, aparece nos relatórios de anúncios e é enviado de volta à Meta quando avança no funil.
+
+      ### ⚡ Melhorias
+
+      - **Novo ícone de status da IA.** A etiqueta "ia" das conversas virou um ícone redondo de estrelas: verde quando a IA está respondendo, cinza quando está desligada. Clique nele para ligar ou desligar a IA, como antes.
+      - **Funil mostra as suas conversas.** Agentes passam a ver no funil só as conversas das caixas em que atendem.
 - tag: v4.15.1-auris.1.63
   published_at: '2026-09-28T23:30:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.63
@@ -309,27 +337,3 @@
       ### 🐛 Correções
 
       - **Exportar contatos no perfil manager.** Se você usa o perfil de manager, o "Exportar contatos" estava dando erro. Agora o arquivo baixa normalmente, respeitando os filtros da tela.
-- tag: v4.15.1-auris.1.50
-  published_at: '2026-08-28T00:45:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.50
-  notes:
-    en: |-
-      ### ✨ What's new
-
-      - **The funnel stage now lives on the conversation.** The stage the conversation is in appears right in its header, with the colour of the stage, and can be changed there — including a play button that advances it to the next stage. No need to open the funnel board to move a conversation along.
-      - **Filter conversations by funnel stage.** The conversation filters gained a "Funnel stage" option, so you can list everyone sitting in a given stage.
-      - **Automations can look at the funnel stage.** A rule can now require the conversation to be in a given stage before it acts.
-
-      ### ⚡ Improvements
-
-      - **Exporting contacts downloads the file right away.** The export used to be sent by e-mail and the message often never arrived, leaving you waiting for a file that was never coming. Now the CSV is saved to your computer as soon as you confirm the export.
-    pt_BR: |-
-      ### ✨ Novidades
-
-      - **A etapa do funil agora fica na conversa.** A etapa em que a conversa está aparece no topo dela, com a cor da fase, e pode ser alterada ali mesmo — inclusive com um botão de avançar para a próxima etapa. Não precisa mais abrir o quadro do funil para mover a conversa.
-      - **Filtrar conversas por etapa do funil.** Os filtros de conversa ganharam a opção "Etapa do funil", para listar quem está em uma determinada fase.
-      - **Automações podem olhar a etapa do funil.** Uma regra passa a poder exigir que a conversa esteja em determinada etapa antes de agir.
-
-      ### ⚡ Melhorias
-
-      - **Exportar contatos baixa o arquivo na hora.** Antes a exportação era enviada por e-mail e muitas vezes a mensagem não chegava, deixando você esperando por um arquivo que não vinha. Agora o CSV é salvo no seu computador assim que você confirma a exportação.
