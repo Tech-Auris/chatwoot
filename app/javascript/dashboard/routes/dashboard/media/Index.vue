@@ -11,9 +11,13 @@ import {
 import { useRouter } from 'vue-router';
 import { useMapGetter } from 'dashboard/composables/store';
 import { useAlert } from 'dashboard/composables';
+import { useAdmin } from 'dashboard/composables/useAdmin';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
+// Deleting is permanent, so it is for administrators and managers only.
+const { isAdmin, isManager } = useAdmin();
+const canDelete = computed(() => isAdmin.value || isManager.value);
 const router = useRouter();
 const accountId = useMapGetter('getCurrentAccountId');
 
@@ -441,6 +445,7 @@ const menuItems = item => {
       key: 'delete',
       label: t('MEDIA_HUB.MENU.DELETE'),
       icon: 'i-lucide-trash-2',
+      show: canDelete.value,
       danger: true,
       divider: true,
       action: () => deleteOne(item),
@@ -992,6 +997,7 @@ const runMenuAction = mi => {
         @click.stop
       >
         <button
+          v-if="canDelete"
           type="button"
           class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-n-ruby-3 text-n-ruby-11 hover:bg-n-ruby-4 disabled:opacity-40"
           :disabled="!selectedIds.size"

@@ -20,6 +20,8 @@ class Api::V1::Accounts::MediaHubController < Api::V1::Accounts::BaseController
   PER_PAGE = 60
   URL_REGEX = %r{https?://[^\s<>"']+}
   MEDIA_KINDS = %w[image video audio].freeze
+  # A page of the hub holds 60 items; a bulk delete never needs more.
+  MAX_DELETE = 100
 
   def index
     render json: {
@@ -40,8 +42,10 @@ class Api::V1::Accounts::MediaHubController < Api::V1::Accounts::BaseController
   # host message ends up empty are cleaned up along the way so we don't
   # leave dangling ghost messages behind.
   def destroy
+    authorize :media_hub, :destroy?
     ids = Array(params[:ids]).map(&:to_i).uniq
     return render(json: { deleted: 0 }) if ids.empty?
+    return render(json: { error: "Too many items (max #{MAX_DELETE})" }, status: :unprocessable_entity) if ids.size > MAX_DELETE
 
     deleted = kind == 'link' ? delete_link_messages(ids) : delete_attachments(ids)
     render json: { deleted: deleted }
