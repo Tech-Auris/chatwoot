@@ -3,7 +3,7 @@
 # them, so the list has exactly as many rows as the number clicked.
 #
 #   conversations → conversations tagged with the ad and created in the period
-#   qualified / scheduled / attendance → conversations of the ad that entered
+#   qualified / scheduled / confirmed / attendance → conversations of the ad that entered
 #     that stage in the period (one row each, its latest entry)
 class V2::Reports::CampaignAnalyticsDrilldownBuilder < V2::Reports::FunnelConversionDrilldownBuilder
   def build
@@ -20,6 +20,7 @@ class V2::Reports::CampaignAnalyticsDrilldownBuilder < V2::Reports::FunnelConver
     case params[:metric]
     when 'qualified' then [QUALIFYING_STAGE_NAME]
     when 'scheduled' then scheduling_member_names(FunnelStage.active.to_a)
+    when 'confirmed' then [CONFIRMATION_STAGE_NAME]
     when 'attendance' then [ATTENDANCE_STAGE_NAME]
     else raise UnknownStage
     end

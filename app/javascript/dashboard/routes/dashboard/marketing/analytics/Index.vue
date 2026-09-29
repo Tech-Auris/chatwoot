@@ -39,24 +39,22 @@ const range = computed(() => {
   return { since: sinceSeconds, until: untilSeconds };
 });
 
+const SUM_FIELDS = [
+  'conversations_count',
+  'qualified_count',
+  'scheduled_count',
+  'confirmed_count',
+  'attendance_count',
+  'revenue_cents',
+  'spend_cents',
+];
+
 const totals = computed(() =>
-  rows.value.reduce(
-    (acc, row) => ({
-      conversations: acc.conversations + (row.conversations_count || 0),
-      qualified: acc.qualified + (row.qualified_count || 0),
-      scheduled: acc.scheduled + (row.scheduled_count || 0),
-      attendance: acc.attendance + (row.attendance_count || 0),
-      revenue_cents: acc.revenue_cents + (row.revenue_cents || 0),
-      spend_cents: acc.spend_cents + (row.spend_cents || 0),
-    }),
-    {
-      conversations: 0,
-      qualified: 0,
-      scheduled: 0,
-      attendance: 0,
-      revenue_cents: 0,
-      spend_cents: 0,
-    }
+  Object.fromEntries(
+    SUM_FIELDS.map(field => [
+      field,
+      rows.value.reduce((sum, row) => sum + (row[field] || 0), 0),
+    ])
   )
 );
 
@@ -88,15 +86,16 @@ const formatMoney = cents => {
 // Columns whose number opens the conversations behind it (Meta ads only —
 // Google rows carry spend, no conversations).
 const DRILL_COLUMNS = [
-  {
-    metric: 'conversations',
-    field: 'conversations_count',
-    label: 'CONVERSATIONS',
-  },
-  { metric: 'qualified', field: 'qualified_count', label: 'QUALIFIED' },
-  { metric: 'scheduled', field: 'scheduled_count', label: 'SCHEDULED' },
+  { metric: 'conversations', field: 'conversations_count', label: 'LEADS' },
+  { metric: 'qualified', field: 'qualified_count', label: 'QUALIFYING' },
+  { metric: 'scheduled', field: 'scheduled_count', label: 'SCHEDULING' },
+  { metric: 'confirmed', field: 'confirmed_count', label: 'CONFIRMATION' },
   { metric: 'attendance', field: 'attendance_count', label: 'ATTENDANCE' },
 ];
+
+// Share of the ad's leads that reached the stage, like the funnel's ad grid.
+const stageRate = (count, leads) =>
+  leads > 0 ? `${((count / leads) * 100).toFixed(1)}%` : null;
 
 const drilldownRef = ref(null);
 const drilldownFilters = computed(() => ({
@@ -169,17 +168,12 @@ watch(selectedPreset, fetchData);
             <th class="px-3 py-2 font-medium">
               {{ t('MARKETING_ANALYTICS_REPORT.COLUMNS.CAMPAIGN') }}
             </th>
-            <th class="px-3 py-2 font-medium text-right">
-              {{ t('MARKETING_ANALYTICS_REPORT.COLUMNS.CONVERSATIONS') }}
-            </th>
-            <th class="px-3 py-2 font-medium text-right">
-              {{ t('MARKETING_ANALYTICS_REPORT.COLUMNS.QUALIFIED') }}
-            </th>
-            <th class="px-3 py-2 font-medium text-right">
-              {{ t('MARKETING_ANALYTICS_REPORT.COLUMNS.SCHEDULED') }}
-            </th>
-            <th class="px-3 py-2 font-medium text-right">
-              {{ t('MARKETING_ANALYTICS_REPORT.COLUMNS.ATTENDANCE') }}
+            <th
+              v-for="column in DRILL_COLUMNS"
+              :key="column.metric"
+              class="px-3 py-2 font-medium text-right whitespace-nowrap"
+            >
+              {{ t(`MARKETING_ANALYTICS_REPORT.COLUMNS.${column.label}`) }}
             </th>
             <th class="px-3 py-2 font-medium text-right">
               {{ t('MARKETING_ANALYTICS_REPORT.COLUMNS.REVENUE') }}
@@ -234,6 +228,15 @@ watch(selectedPreset, fetchData);
                 />
               </button>
               <span v-else>{{ row[column.field] || 0 }}</span>
+              <div
+                v-if="
+                  column.metric !== 'conversations' &&
+                  stageRate(row[column.field] || 0, row.conversations_count)
+                "
+                class="text-xs text-n-slate-11"
+              >
+                {{ stageRate(row[column.field] || 0, row.conversations_count) }}
+              </div>
             </td>
             <td class="px-3 py-2 text-right">
               {{ formatMoney(row.revenue_cents) }}
@@ -255,10 +258,24 @@ watch(selectedPreset, fetchData);
             <td class="px-3 py-2 text-n-slate-11 uppercase text-xs">
               {{ t('MARKETING_ANALYTICS_REPORT.TOTAL') }}
             </td>
-            <td class="px-3 py-2 text-right">{{ totals.conversations }}</td>
-            <td class="px-3 py-2 text-right">{{ totals.qualified }}</td>
-            <td class="px-3 py-2 text-right">{{ totals.scheduled }}</td>
-            <td class="px-3 py-2 text-right">{{ totals.attendance }}</td>
+            <td
+              v-for="column in DRILL_COLUMNS"
+              :key="column.metric"
+              class="px-3 py-2 text-right"
+            >
+              {{ totals[column.field] }}
+              <div
+                v-if="
+                  column.metric !== 'conversations' &&
+                  stageRate(totals[column.field], totals.conversations_count)
+                "
+                class="text-xs font-normal text-n-slate-11"
+              >
+                {{
+                  stageRate(totals[column.field], totals.conversations_count)
+                }}
+              </div>
+            </td>
             <td class="px-3 py-2 text-right">
               {{ formatMoney(totals.revenue_cents) }}
             </td>
