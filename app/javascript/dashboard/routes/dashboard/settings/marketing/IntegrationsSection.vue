@@ -7,14 +7,13 @@ import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useStore, useMapGetter } from 'dashboard/composables/store';
 import { useAlert } from 'dashboard/composables';
+import AdAccountsGrid from './AdAccountsGrid.vue';
 
 const STATUSES = ['disabled', 'test_mode', 'active'];
 const META_CAPI_FIELDS = [
   { key: 'pixel_id', secret: false, required: true },
   { key: 'access_token', secret: true, required: true },
   { key: 'test_event_code', secret: false, required: false },
-  // Only the spend sync (Gasto / CPL / CPA / ROAS) needs it.
-  { key: 'ad_account_id', secret: false, required: false, hint: true },
   { key: 'ads_read_token', secret: true, required: false, hint: true },
 ];
 const GOOGLE_ADS_FIELDS = [
@@ -249,6 +248,14 @@ const providers = computed(() => [
           </button>
         </div>
       </form>
+
+      <!-- Spend for the reports comes from these ad accounts; only once the
+           integration exists, since each account is checked with its token. -->
+      <AdAccountsGrid
+        v-if="provider.key === 'meta_capi' && findByProvider('meta_capi')"
+        class="mt-4"
+        :integration-id="findByProvider('meta_capi').id"
+      />
     </section>
   </div>
 </template>

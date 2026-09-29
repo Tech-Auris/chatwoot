@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_09_28_120000) do
+ActiveRecord::Schema[7.1].define(version: 2026_09_29_120000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -1367,6 +1367,23 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_28_120000) do
     t.index ["account_id"], name: "index_macros_on_account_id"
   end
 
+  create_table "marketing_ad_accounts", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "marketing_integration_id", null: false
+    t.string "external_id", null: false
+    t.string "name"
+    t.string "currency"
+    t.boolean "enabled", default: true, null: false
+    t.datetime "last_synced_at"
+    t.string "last_sync_status"
+    t.text "last_sync_error"
+    t.integer "last_rows_synced"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_marketing_ad_accounts_on_account_id"
+    t.index ["marketing_integration_id", "external_id"], name: "index_marketing_ad_accounts_on_integration_and_external_id", unique: true
+  end
+
   create_table "marketing_integrations", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.integer "provider", null: false
@@ -2089,6 +2106,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_28_120000) do
   add_foreign_key "internal_chat_reactions", "users", on_delete: :cascade
   add_foreign_key "login_events", "accounts"
   add_foreign_key "login_events", "users"
+  add_foreign_key "marketing_ad_accounts", "accounts", on_delete: :cascade
+  add_foreign_key "marketing_ad_accounts", "marketing_integrations", on_delete: :cascade
   add_foreign_key "marketing_integrations", "accounts"
   add_foreign_key "operations_notification_acks", "accounts"
   add_foreign_key "operations_notification_acks", "operations_notifications", on_delete: :cascade

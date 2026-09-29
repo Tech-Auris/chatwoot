@@ -69,7 +69,6 @@
       "PIXEL_ID": "Pixel ID",
       "ACCESS_TOKEN": "Access Token",
       "TEST_EVENT_CODE": "Test Event Code",
-      "AD_ACCOUNT_ID": "Ad account ID",
       "ADS_READ_TOKEN": "Ads read token",
       "CUSTOMER_ID": "Customer ID",
       "CONVERSION_ACTION_ID": "Conversion Action ID",
@@ -78,7 +77,6 @@
       "LOGIN_CUSTOMER_ID": "Login Customer ID (MCC)"
     },
     "FIELD_HINTS": {
-      "AD_ACCOUNT_ID": "Needed for Spend, CPL, CPA and ROAS on the reports. In Meta Ads Manager, it's the number next to the ad account name (act_…). The access token also needs the ads_read permission on that account.",
       "ADS_READ_TOKEN": "Optional. A token with the ads_read permission on the ad account, used only to read spend. Leave blank to use the Access Token above, which stays dedicated to sending conversions."
     },
     "EVENTS": {
@@ -112,6 +110,34 @@
       "SAVE_ERROR": "Could not save event",
       "DELETE_CONFIRM": "Delete the event \"{name}\"? Existing dispatches stay in history.",
       "DELETE_SUCCESS": "Event deleted"
+    },
+    "AD_ACCOUNTS": {
+      "TITLE": "Ad accounts",
+      "DESCRIPTION": "Spend from these accounts fills Spend, CPL, CPA and ROAS on the reports. Synced every day; the token needs the ads_read permission on each account.",
+      "ADD": "Add account",
+      "CONFIRM_ADD": "Add",
+      "CHECKING": "Checking…",
+      "CANCEL": "Cancel",
+      "ID_PLACEHOLDER": "act_1234567890",
+      "ID_HINT": "In Meta Business Settings → Accounts → Ad accounts, or Ads Manager, next to the account name.",
+      "ADDED": "Ad account added",
+      "ADD_FAILED": "Could not add this ad account.",
+      "SYNC_NOW": "Sync now",
+      "SYNCING": "Syncing…",
+      "SYNC_STARTED": "Sync started — the status refreshes in a few seconds.",
+      "EMPTY": "No ad account yet. Add the accounts whose spend should show on the reports.",
+      "NO_NAME": "Unnamed account",
+      "ACT_ID": "act_{id}",
+      "SYNC_OK": "Synced {date} · {rows} rows",
+      "SYNC_ERROR": "Failed {date}",
+      "SYNC_PENDING": "Waiting for the first sync",
+      "REMOVE": "Remove",
+      "COLUMNS": {
+        "ACCOUNT": "Account",
+        "LAST_SYNC": "Last sync",
+        "ACTIVE": "Active"
+      },
+      "CURRENCY": "· {currency}"
     }
   }
 }

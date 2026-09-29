@@ -1,5 +1,7 @@
 # Pulls daily ad spend from Meta Marketing API and upserts into
-# `campaign_spends`. Runs per-account, called by the daily sync job.
+# `campaign_spends`, for every enabled ad account of the account's Meta
+# integration (the grid in Marketing → Pixel e Dados). Called by the daily
+# sync job and by the grid's "Sincronizar agora".
 #
 # Endpoint: /act_{ad_account_id}/insights
 #   * level=ad — one row per ad per day. Ad-level matches
@@ -9,28 +11,33 @@
 #     amount gets re-synced tomorrow with a fresh close (spend can grow
 #     up to the ad account's timezone cutoff).
 #   * time_increment=1 — force daily breakdown even for multi-day ranges.
+#   * paged through `paging.next`: a busy account over 90 days easily passes
+#     one page.
 #
 # Uses the integration's `ads_read_token` when set, else the CAPI
-# `access_token` — either way it needs the `ads_read` scope on the ad account. Without that scope
-# Meta returns HTTP 400 with error code 200 — we mark the integration as
-# permanently unhealthy in the log; the operator has to re-authorize.
+# `access_token` — either way it needs the `ads_read` scope on each ad
+# account. Each account records its own outcome (rows or the Meta error), so
+# one account losing access doesn't stop the others.
 class Marketing::MetaSpendFetcher
   META_API_VERSION = 'v20.0'.freeze
   DEFAULT_LOOKBACK_DAYS = 7
   MAX_LOOKBACK_DAYS = 90
+  MAX_PAGES = 50
+
+  class FetchError < StandardError; end
 
   pattr_initialize [:account!, { lookback_days: DEFAULT_LOOKBACK_DAYS }]
 
   def perform
     integration = fetch_integration
     return failure('no active meta_capi integration') if integration.blank?
-    return failure('meta integration missing ad_account_id') if integration.credentials['ad_account_id'].blank?
 
-    rows = fetch_insights(integration)
-    return failure(rows) if rows.is_a?(Hash) && rows[:error]
+    integration.import_legacy_ad_account!
+    ad_accounts = integration.ad_accounts.enabled.to_a
+    return failure('meta integration has no ad account (ad_account_id)') if ad_accounts.empty?
 
-    upsert_rows!(rows, integration)
-    { ok: true, rows_synced: rows.size }
+    results = ad_accounts.map { |ad_account| sync_ad_account(integration, ad_account) }
+    { ok: results.all? { |result| result[:ok] }, rows_synced: results.sum { |result| result[:rows_synced].to_i }, accounts: results }
   end
 
   private
@@ -41,47 +48,59 @@ class Marketing::MetaSpendFetcher
            .find_by(provider: :meta_capi)
   end
 
-  def fetch_insights(integration)
-    since = safe_lookback_days.days.ago.to_date
-    until_ = Time.zone.today
-
-    response = HTTParty.get(
-      "https://graph.facebook.com/#{META_API_VERSION}/act_#{ad_account_id(integration)}/insights",
-      query: {
-        level: 'ad',
-        fields: 'ad_id,ad_name,campaign_id,campaign_name,spend,account_currency,date_start,date_stop',
-        time_range: { since: since.iso8601, until: until_.iso8601 }.to_json,
-        time_increment: 1,
-        limit: 500,
-        access_token: integration.credentials['ads_read_token'].presence || integration.credentials['access_token']
-      },
-      timeout: 15
-    )
-
-    return { error: "HTTP #{response.code}", body: safe_parse(response) } unless response.success?
-
-    Array(safe_parse(response)['data'])
-  end
-
-  # Ads Manager shows the id as "act_123…"; operators paste it either way.
-  def ad_account_id(integration)
-    integration.credentials['ad_account_id'].to_s.strip.delete_prefix('act_')
-  end
-
-  def upsert_rows!(rows, _integration)
+  def sync_ad_account(integration, ad_account)
+    rows = fetch_insights(integration, ad_account)
     rows.each { |row| upsert_row!(row) }
+    ad_account.record_sync!(rows_synced: rows.size)
+    { ad_account_id: ad_account.external_id, ok: true, rows_synced: rows.size }
+  rescue FetchError => e
+    ad_account.record_sync_error!(e.message)
+    failure("act_#{ad_account.external_id} — #{e.message}").merge(ad_account_id: ad_account.external_id)
+  end
+
+  def fetch_insights(integration, ad_account)
+    url = "https://graph.facebook.com/#{META_API_VERSION}/act_#{ad_account.external_id}/insights"
+    query = insights_query(integration)
+    rows = []
+
+    MAX_PAGES.times do
+      body = get_page(url, query)
+      rows.concat(Array(body['data']))
+      url = body.dig('paging', 'next')
+      break if url.blank?
+
+      query = nil # the `next` url already carries every parameter
+    end
+    rows
+  end
+
+  def insights_query(integration)
+    {
+      level: 'ad',
+      fields: 'account_id,ad_id,ad_name,campaign_id,campaign_name,spend,account_currency,date_start,date_stop',
+      time_range: { since: safe_lookback_days.days.ago.to_date.iso8601, until: Time.zone.today.iso8601 }.to_json,
+      time_increment: 1,
+      limit: 500,
+      access_token: integration.ads_read_access_token
+    }
+  end
+
+  def get_page(url, query)
+    response = HTTParty.get(url, query: query, timeout: 15)
+    body = safe_parse(response)
+    raise FetchError, (body.dig('error', 'message') || "HTTP #{response.code}") unless response.success?
+
+    body
   end
 
   def upsert_row!(row)
-    amount_cents = (row['spend'].to_f * 100).round
     attrs = base_attrs_for(row).merge(
-      amount_cents: amount_cents,
+      amount_cents: (row['spend'].to_f * 100).round,
       currency: row['account_currency'] || 'BRL',
       last_synced_at: Time.current,
       external_metadata: row
     )
-    scope = base_attrs_for(row)
-    record = account.campaign_spends.find_or_initialize_by(**scope)
+    record = account.campaign_spends.find_or_initialize_by(**base_attrs_for(row))
     record.assign_attributes(attrs)
     record.save!
   end

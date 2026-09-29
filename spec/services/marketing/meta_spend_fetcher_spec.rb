@@ -99,6 +99,36 @@ RSpec.describe Marketing::MetaSpendFetcher do
       expect(described_class.new(account: account).perform).to include(ok: true, rows_synced: 1)
     end
 
+    it 'syncs every enabled ad account and records each outcome' do
+      integration.update!(credentials: integration.credentials.except('ad_account_id'))
+      ok_account = integration.ad_accounts.create!(account: account, external_id: '1234567890')
+      denied = integration.ad_accounts.create!(account: account, external_id: '999')
+      integration.ad_accounts.create!(account: account, external_id: '555', enabled: false)
+      stub_insights([sample_row])
+      stub_request(:get, %r{act_999/insights}).to_return(
+        status: 403, body: { error: { message: 'no ads_read' } }.to_json, headers: { 'Content-Type' => 'application/json' }
+      )
+
+      result = described_class.new(account: account).perform
+
+      expect(result).to include(ok: false, rows_synced: 1)
+      expect(ok_account.reload).to have_attributes(last_sync_status: 'ok', last_rows_synced: 1)
+      expect(denied.reload).to have_attributes(last_sync_status: 'error', last_sync_error: 'no ads_read')
+      expect(a_request(:get, %r{act_555/insights})).not_to have_been_made
+    end
+
+    it 'follows the next pages of the insights' do
+      next_url = 'https://graph.facebook.com/v20.0/act_1234567890/insights?after=CURSOR'
+      stub_request(:get, %r{act_1234567890/insights\?(?!after)}).to_return(
+        status: 200, body: { data: [sample_row], paging: { next: next_url } }.to_json, headers: { 'Content-Type' => 'application/json' }
+      )
+      stub_request(:get, next_url).to_return(
+        status: 200, body: { data: [sample_row.merge('ad_id' => 'AD_2')] }.to_json, headers: { 'Content-Type' => 'application/json' }
+      )
+
+      expect(described_class.new(account: account).perform).to include(ok: true, rows_synced: 2)
+    end
+
     it 'reports failure without inserting when ad_account_id is missing' do
       integration.update!(credentials: integration.credentials.except('ad_account_id'))
 
