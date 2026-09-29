@@ -190,6 +190,10 @@ export const AUTOMATIONS = {
         key: 'trigger_conversion_event',
         name: 'TRIGGER_CONVERSION_EVENT',
       },
+      {
+        key: 'move_to_funnel_stage',
+        name: 'MOVE_TO_FUNNEL_STAGE',
+      },
     ],
   },
   conversation_created: {
@@ -361,6 +365,10 @@ export const AUTOMATIONS = {
       {
         key: 'trigger_conversion_event',
         name: 'TRIGGER_CONVERSION_EVENT',
+      },
+      {
+        key: 'move_to_funnel_stage',
+        name: 'MOVE_TO_FUNNEL_STAGE',
       },
     ],
   },
@@ -546,6 +554,10 @@ export const AUTOMATIONS = {
         key: 'trigger_conversion_event',
         name: 'TRIGGER_CONVERSION_EVENT',
       },
+      {
+        key: 'move_to_funnel_stage',
+        name: 'MOVE_TO_FUNNEL_STAGE',
+      },
     ],
   },
   conversation_opened: {
@@ -720,6 +732,10 @@ export const AUTOMATIONS = {
         key: 'trigger_conversion_event',
         name: 'TRIGGER_CONVERSION_EVENT',
       },
+      {
+        key: 'move_to_funnel_stage',
+        name: 'MOVE_TO_FUNNEL_STAGE',
+      },
     ],
   },
   conversation_resolved: {
@@ -871,6 +887,10 @@ export const AUTOMATIONS = {
       {
         key: 'trigger_conversion_event',
         name: 'TRIGGER_CONVERSION_EVENT',
+      },
+      {
+        key: 'move_to_funnel_stage',
+        name: 'MOVE_TO_FUNNEL_STAGE',
       },
     ],
   },
@@ -1032,6 +1052,11 @@ export const AUTOMATION_ACTION_TYPES = [
     key: 'trigger_conversion_event',
     label: 'TRIGGER_CONVERSION_EVENT',
     inputType: 'multi_select',
+  },
+  {
+    key: 'move_to_funnel_stage',
+    label: 'MOVE_TO_FUNNEL_STAGE',
+    inputType: 'search_select',
   },
 ];
 

@@ -40,6 +40,26 @@ describe ActionService do
     end
   end
 
+  describe '#move_to_funnel_stage' do
+    let(:conversation) { create(:conversation, account: account) }
+    let(:action_service) { described_class.new(conversation) }
+    let(:scheduled) { create(:funnel_stage, name: "scheduled_#{SecureRandom.hex(4)}") }
+
+    it 'moves the conversation and records the move as made by automation' do
+      action_service.move_to_funnel_stage([scheduled.id])
+
+      expect(conversation.reload.funnel_stage_id).to eq(scheduled.id)
+      change = account.funnel_stage_changes.last
+      expect(change).to have_attributes(new_stage: scheduled.name, source: 'automation', user_id: nil)
+    end
+
+    it 'does nothing when the conversation is already on that stage' do
+      conversation.update!(funnel_stage_id: scheduled.id)
+
+      expect { action_service.move_to_funnel_stage([scheduled.id]) }.not_to change(FunnelStageChange, :count)
+    end
+  end
+
   describe '#assign_origem' do
     let(:contact) { create(:contact, account: account) }
     let(:conversation) { create(:conversation, account: account, contact: contact) }

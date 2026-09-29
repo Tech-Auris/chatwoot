@@ -104,6 +104,15 @@ export default function useAutomationValues() {
       .map(ev => ({ id: ev.id, name: ev.name }))
   );
 
+  // Stages a rule can move a conversation to. The ones that demand a loss
+  // reason (Perdido) are left out: a rule has no reason to give, so the move
+  // would always be refused.
+  const funnelStageOptions = computed(() =>
+    (funnelStages.value || [])
+      .filter(stage => !stage.requires_loss_reason)
+      .map(stage => ({ id: stage.id, name: stage.name }))
+  );
+
   /**
    * Adds a translated "None" option to the beginning of a list
    * @param {Array} list - The list to add "None" to
@@ -172,6 +181,7 @@ export default function useAutomationValues() {
       priorityOptions: priorityOptions.value,
       origemOptions: origemOptions.value,
       conversionEventOptions: conversionEventOptions.value,
+      funnelStageOptions: funnelStageOptions.value,
     });
   };
 

@@ -94,6 +94,24 @@ class ActionService
     @conversation.update!(origem: incoming == 'nil' ? nil : incoming)
   end
 
+  # Moves the conversation to a funnel stage through the same service the board
+  # uses, so the move lands in the stage history (as "Automação", no user) and
+  # fires the stage's marketing conversions like a manual move. Already on that
+  # stage → no-op, so a rule matching every new message doesn't pile up
+  # repeated moves and conversion events. Stages that need a loss reason can't
+  # be picked here (the rule has no reason to give) and fail in the service.
+  def move_to_funnel_stage(values = [])
+    stage_id = Array(values).first.to_i
+    return if stage_id.zero? || @conversation.funnel_stage_id == stage_id
+
+    ::Funnel::MoveConversationService.new(
+      account: @conversation.account,
+      conversation_display_id: @conversation.display_id,
+      target_stage_id: stage_id,
+      source: 'automation'
+    ).perform
+  end
+
   def assign_team(team_ids = [])
     # Keep nil/0 handling for existing automation and macro payloads.
     should_unassign = team_ids.blank? || %w[nil 0].include?(team_ids[0].to_s)

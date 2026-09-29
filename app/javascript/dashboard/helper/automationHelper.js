@@ -105,6 +105,7 @@ export const getActionOptions = ({
   priorityOptions,
   origemOptions,
   conversionEventOptions,
+  funnelStageOptions,
 }) => {
   const actionsMap = {
     assign_agent: addNoneToListFn ? addNoneToListFn(agents) : agents,
@@ -118,6 +119,7 @@ export const getActionOptions = ({
       ? addNoneToListFn(origemOptions)
       : origemOptions,
     trigger_conversion_event: conversionEventOptions,
+    move_to_funnel_stage: funnelStageOptions,
   };
   return actionsMap[type];
 };

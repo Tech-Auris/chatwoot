@@ -147,7 +147,7 @@
     "ACTIONS": {
       "ASSIGN_AGENT": "Atribuir ao Agente",
       "ASSIGN_TEAM": "Atribuir um Time",
-      "REMOVE_ASSIGNED_AGENT": "Remove Assigned Agent",
+      "REMOVE_ASSIGNED_AGENT": "Remover Agente Atribuído",
       "REMOVE_ASSIGNED_TEAM": "Remover Time Atribuído",
       "ADD_LABEL": "Adicionar uma Etiqueta",
       "REMOVE_LABEL": "Remover uma Etiqueta",
@@ -168,6 +168,7 @@
       "ENABLE_AI": "Ativar IA",
       "DISABLE_AI": "Desativar IA",
       "ASSIGN_ORIGEM": "Atribuir Origem do lead",
+      "MOVE_TO_FUNNEL_STAGE": "Mover no funil",
       "TRIGGER_CONVERSION_EVENT": "Disparar evento de conversão"
     },
     "MESSAGE_TYPES": {
