@@ -5,7 +5,6 @@ import Avatar from 'next/avatar/Avatar.vue';
 import MessagePreview from './MessagePreview.vue';
 import InboxName from '../InboxName.vue';
 import AiStatusBadge from 'dashboard/components-next/Conversation/AiStatusBadge.vue';
-import ConversationContextMenu from './contextMenu/Index.vue';
 import TimeAgo from 'dashboard/components/ui/TimeAgo.vue';
 import CardLabels from './conversationCardComponents/CardLabels.vue';
 import CardPriorityIcon from 'dashboard/components-next/Conversation/ConversationCard/CardPriorityIcon.vue';
@@ -49,14 +48,6 @@ const voiceCallData = computed(() => ({
   status: props.chat.additional_attributes?.call_status,
   direction: props.chat.additional_attributes?.call_direction,
 }));
-
-const showMetaSection = computed(() => {
-  return (
-    props.showInboxName ||
-    (props.showAssignee && props.assignee.name) ||
-    props.chat.priority
-  );
-});
 
 const hasSlaPolicyId = computed(() => props.chat?.sla_policy_id);
 
@@ -215,7 +206,7 @@ watch(
           {{ $t(`CHAT_LIST.NO_MESSAGES`) }}
         </span>
       </p>
-      <div class="absolute flex flex-col ltr:right-3 rtl:left-3 top-8">
+      <div class="absolute flex flex-col ltr:right-3 rtl:left-3 top-9">
         <span class="ml-auto font-normal leading-4 text-xxs">
           <TimeAgo
             :last-activity-timestamp="chat.timestamp"
