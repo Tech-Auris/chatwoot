@@ -21,7 +21,7 @@ defineProps({
       size === 'md' ? 'size-[26px]' : 'size-5',
       enabled
         ? 'bg-n-teal-3 border-n-teal-9 text-n-teal-9'
-        : 'bg-n-solid-1 border-n-slate-11 text-n-slate-10',
+        : 'bg-n-solid-1 border-n-slate-11 text-n-slate-9',
     ]"
   >
     <svg
