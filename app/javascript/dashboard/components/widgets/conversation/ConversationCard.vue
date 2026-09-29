@@ -206,7 +206,7 @@ watch(
           {{ $t(`CHAT_LIST.NO_MESSAGES`) }}
         </span>
       </p>
-      <div class="absolute flex flex-col ltr:right-3 rtl:left-3 top-9">
+      <div class="absolute flex flex-col ltr:right-3 rtl:left-3 top-10">
         <span class="ml-auto font-normal leading-4 text-xxs">
           <TimeAgo
             :last-activity-timestamp="chat.timestamp"
