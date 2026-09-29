@@ -164,6 +164,24 @@ RSpec.describe Captain::Tools::HttpTool, type: :model do
       end
     end
 
+    # A public-looking hostname that resolves to 0.0.0.0 reaches the server
+    # itself; the hand-rolled private-range list the fork once used did not
+    # cover it (nor IPv4-mapped IPv6, CGNAT, …) and checked DNS separately
+    # from the connection, which a rebinding domain also slips through.
+    context 'when the endpoint hostname resolves to the server itself' do
+      before do
+        custom_tool.update!(endpoint_url: 'https://internal.example.com/secret', response_template: nil)
+        allow(Resolv).to receive(:getaddress).with('internal.example.com').and_return('0.0.0.0')
+        allow(Resolv).to receive(:getaddresses).with('internal.example.com').and_return(['0.0.0.0'])
+        stub_request(:get, 'https://internal.example.com/secret').to_return(status: 200, body: 'internal secret')
+      end
+
+      it 'refuses to call it' do
+        expect(tool.perform(tool_context)).to eq('An error occurred while executing the request')
+        expect(WebMock).not_to have_requested(:get, 'https://internal.example.com/secret')
+      end
+    end
+
     context 'when handling errors' do
       it 'returns generic error message on network failure' do
         custom_tool.update!(endpoint_url: 'https://example.com/data')
