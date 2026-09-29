@@ -50,6 +50,6 @@ class Api::V1::Accounts::MarketingAdAccountsController < Api::V1::Accounts::Base
   end
 
   def render_record_invalid
-    render json: { error: @ad_account.errors.full_messages.to_sentence }, status: :unprocessable_entity
+    render json: { error: @ad_account.errors.messages.values.flatten.first }, status: :unprocessable_entity
   end
 end

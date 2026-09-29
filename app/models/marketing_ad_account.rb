@@ -10,8 +10,9 @@ class MarketingAdAccount < ApplicationRecord
 
   before_validation :normalize_external_id
 
-  validates :external_id, presence: true, format: { with: /\A\d+\z/ },
-                          uniqueness: { scope: :marketing_integration_id }
+  validates :external_id, format: { with: /\A\d+\z/, message: ->(*) { I18n.t('errors.marketing_ad_account.invalid_id') } },
+                          uniqueness: { scope: :marketing_integration_id,
+                                        message: ->(*) { I18n.t('errors.marketing_ad_account.already_added') } }
   validates :last_sync_status, inclusion: { in: SYNC_STATUSES }, allow_nil: true
 
   scope :enabled, -> { where(enabled: true) }
