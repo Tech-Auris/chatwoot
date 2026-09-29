@@ -42,7 +42,9 @@ class Conversations::TranscriptPdfService
     raise OverloadError, 'Too many transcript PDF renders in flight' unless acquired
 
     begin
-      Grover.new(sanitize_for_grover(render_html), display_url: display_url).to_pdf
+      # The transcript is static HTML built from customer-supplied content and
+      # Chromium runs without a sandbox: never let a script in it execute.
+      Grover.new(sanitize_for_grover(render_html), display_url: display_url, java_script_enabled: false).to_pdf
     ensure
       SEMAPHORE.release
     end
