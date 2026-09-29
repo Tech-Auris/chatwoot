@@ -1,4 +1,8 @@
 class Api::V1::Accounts::ContactsController < Api::V1::Accounts::BaseController # rubocop:disable Metrics/ClassLength
+  # Only `sync_group` acts on a group's inbox; it checks access itself, after
+  # making sure the contact is a group.
+  include GroupInboxAccess
+  skip_before_action :ensure_group_inbox_access
   include Sift
   sort_on :email, type: :string
   sort_on :name, internal_name: :order_on_name, type: :scope, scope_params: [:direction]
@@ -101,6 +105,7 @@ class Api::V1::Accounts::ContactsController < Api::V1::Accounts::BaseController 
     authorize @contact, :sync_group?
     raise ActionController::BadRequest, I18n.t('contacts.sync_group.not_a_group') if @contact.group_type_individual?
     raise ActionController::BadRequest, I18n.t('contacts.sync_group.no_identifier') if @contact.identifier.blank?
+    return render json: { error: 'You do not have access to the inbox of this group' }, status: :unauthorized unless group_inbox_accessible?
 
     Contacts::SyncGroupJob.perform_later(@contact)
     head :accepted

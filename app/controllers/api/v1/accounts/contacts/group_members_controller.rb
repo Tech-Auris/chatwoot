@@ -1,4 +1,6 @@
 class Api::V1::Accounts::Contacts::GroupMembersController < Api::V1::Accounts::Contacts::BaseController
+  include GroupInboxAccess
+
   DEFAULT_PER_PAGE = 10
 
   before_action :ensure_group_contact, only: %i[create update destroy]

@@ -1,4 +1,6 @@
 class Api::V1::Accounts::Contacts::GroupAdminController < Api::V1::Accounts::Contacts::BaseController
+  include GroupInboxAccess
+
   VALID_PROPERTIES = %w[announce restrict join_approval_mode member_add_mode].freeze
 
   def leave
