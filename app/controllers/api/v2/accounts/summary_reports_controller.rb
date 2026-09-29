@@ -38,9 +38,12 @@ class Api::V2::Accounts::SummaryReportsController < Api::V1::Accounts::BaseContr
     render_report_with(V2::Reports::FunnelConversionBuilder)
   end
 
+  # Also serves Marketing → Analytics, whose columns (`metric`) count one ad's
+  # conversations the way that report does.
   def funnel_conversion_drilldown
-    builder_params = @builder_params.merge(params.permit(:stage_key, :kind, :loss_reason_id, :source_id, :page).to_h.symbolize_keys)
-    render json: V2::Reports::FunnelConversionDrilldownBuilder.new(account: Current.account, params: builder_params).build
+    builder_params = @builder_params.merge(params.permit(:stage_key, :kind, :loss_reason_id, :source_id, :metric, :page).to_h.symbolize_keys)
+    builder_class = params[:metric].present? ? V2::Reports::CampaignAnalyticsDrilldownBuilder : V2::Reports::FunnelConversionDrilldownBuilder
+    render json: builder_class.new(account: Current.account, params: builder_params).build
   rescue V2::Reports::FunnelConversionDrilldownBuilder::UnknownStage
     render json: { error: 'Unknown funnel stage' }, status: :unprocessable_entity
   end

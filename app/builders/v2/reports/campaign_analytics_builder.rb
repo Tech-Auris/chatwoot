@@ -90,14 +90,17 @@ class V2::Reports::CampaignAnalyticsBuilder
     end
   end
 
+  # Distinct conversations per stage, like the funnel conversion report: a
+  # conversation that re-entered a stage counts once, so the number matches
+  # the drill-down list behind it.
   def stage_counts_by_ad # rubocop:disable Metrics/MethodLength
     @stage_counts_by_ad ||= begin
       rows = ActiveRecord::Base.connection.select_all(<<~SQL.squish)
         SELECT
           c.additional_attributes->'campaign_referral'->>'source_id' AS ad_id,
-          COUNT(*) FILTER (WHERE fsc.new_stage = '#{QUALIFYING_STAGE_NAME}') AS qualifying,
-          COUNT(*) FILTER (WHERE fsc.new_stage IN (#{scheduling_stage_names_sql})) AS scheduling,
-          COUNT(*) FILTER (WHERE fsc.new_stage = '#{ATTENDANCE_STAGE_NAME}') AS attendance
+          COUNT(DISTINCT fsc.conversation_id) FILTER (WHERE fsc.new_stage = '#{QUALIFYING_STAGE_NAME}') AS qualifying,
+          COUNT(DISTINCT fsc.conversation_id) FILTER (WHERE fsc.new_stage IN (#{scheduling_stage_names_sql})) AS scheduling,
+          COUNT(DISTINCT fsc.conversation_id) FILTER (WHERE fsc.new_stage = '#{ATTENDANCE_STAGE_NAME}') AS attendance
         FROM funnel_stage_changes fsc
         JOIN conversations c ON c.id = fsc.conversation_id
         WHERE fsc.account_id = #{account.id}

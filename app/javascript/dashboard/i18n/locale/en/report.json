@@ -743,6 +743,7 @@
       "TITLE_LOSS": "Losses: {count} conversations",
       "TITLE_LOSS_REASON": "Lost for \"{reason}\": {count} conversations",
       "TITLE_AD": "Ad \"{ad}\": {count} leads",
+      "TITLE_AD_METRIC": "\"{ad}\" · {metric}: {count} conversations",
       "DESCRIPTION": "Same period and filters as the report. One row per conversation, with its latest entry in the period.",
       "CLOSE": "Close",
       "EMPTY_STATE": "No conversations found.",
@@ -760,7 +761,9 @@
         "PREVIOUS_STAGE": "Came from",
         "MOVED_BY": "Moved by",
         "INBOX": "Inbox",
-        "SOURCE": "Origin / ad"
+        "SOURCE": "Origin / ad",
+        "CREATED_AT": "Created on",
+        "CURRENT_STAGE": "Current stage"
       }
     }
   },

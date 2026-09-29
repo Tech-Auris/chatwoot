@@ -11,6 +11,8 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import SummaryReportsAPI from 'dashboard/api/summaryReports';
+import Icon from 'dashboard/components-next/icon/Icon.vue';
+import FunnelDrilldownDialog from 'dashboard/routes/dashboard/funnel/components/FunnelDrilldownDialog.vue';
 
 const PRESETS = [
   { key: 'LAST_7_DAYS', days: 7 },
@@ -82,6 +84,38 @@ const formatMoney = cents => {
     currency: 'BRL',
   }).format(value);
 };
+
+// Columns whose number opens the conversations behind it (Meta ads only —
+// Google rows carry spend, no conversations).
+const DRILL_COLUMNS = [
+  {
+    metric: 'conversations',
+    field: 'conversations_count',
+    label: 'CONVERSATIONS',
+  },
+  { metric: 'qualified', field: 'qualified_count', label: 'QUALIFIED' },
+  { metric: 'scheduled', field: 'scheduled_count', label: 'SCHEDULED' },
+  { metric: 'attendance', field: 'attendance_count', label: 'ATTENDANCE' },
+];
+
+const drilldownRef = ref(null);
+const drilldownFilters = computed(() => ({
+  since: range.value.since,
+  until: range.value.until,
+}));
+
+const canDrill = (row, column) =>
+  row.source_type === 'meta_ad' && (row[column.field] || 0) > 0;
+
+const openDrilldown = (row, column) =>
+  drilldownRef.value?.open({
+    kind: 'ad',
+    sourceId: row.source_id,
+    metric: column.metric,
+    metricLabel: t(`MARKETING_ANALYTICS_REPORT.COLUMNS.${column.label}`),
+    name: row.name || row.source_id,
+    count: row[column.field],
+  });
 
 const formatRoas = roas => (roas == null ? '—' : `${roas.toFixed(2)}×`);
 
@@ -182,13 +216,24 @@ watch(selectedPreset, fetchData);
                 </span>
               </div>
             </td>
-            <td class="px-3 py-2 text-right">
-              {{ row.conversations_count || 0 }}
-            </td>
-            <td class="px-3 py-2 text-right">{{ row.qualified_count || 0 }}</td>
-            <td class="px-3 py-2 text-right">{{ row.scheduled_count || 0 }}</td>
-            <td class="px-3 py-2 text-right">
-              {{ row.attendance_count || 0 }}
+            <td
+              v-for="column in DRILL_COLUMNS"
+              :key="column.metric"
+              class="px-3 py-2 text-right"
+            >
+              <button
+                v-if="canDrill(row, column)"
+                type="button"
+                class="group inline-flex items-center justify-end gap-1 text-n-slate-12 hover:text-n-brand"
+                @click="openDrilldown(row, column)"
+              >
+                {{ row[column.field] }}
+                <Icon
+                  icon="i-lucide-external-link"
+                  class="size-3 text-n-slate-10 group-hover:text-n-brand"
+                />
+              </button>
+              <span v-else>{{ row[column.field] || 0 }}</span>
             </td>
             <td class="px-3 py-2 text-right">
               {{ formatMoney(row.revenue_cents) }}
@@ -225,5 +270,7 @@ watch(selectedPreset, fetchData);
         </tfoot>
       </table>
     </div>
+
+    <FunnelDrilldownDialog ref="drilldownRef" :filters="drilldownFilters" />
   </div>
 </template>
