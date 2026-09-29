@@ -177,8 +177,20 @@ class SuperAdmin::Commercial::ReservationsController < SuperAdmin::ApplicationCo
       access_code: quote.access_code,
       # Payment links generated during the sale — surfaced in the expanded
       # row so the sales team can resend the exact link the customer got.
-      payment_links: payment_links(quote)
+      payment_links: payment_links(quote),
+      whatsapp: last_whatsapp(quote)
     }
+  end
+
+  # Latest WhatsApp message sent to the lead (Sales::LeadWhatsappJob), so the
+  # seller sees it went out — or why it didn't.
+  def last_whatsapp(quote)
+    event = quote.events.where("event LIKE 'whatsapp\\_%'").order(:created_at).last
+    return if event.nil?
+
+    outcome = event.event[/(sent|failed)\z/]
+    { kind: event.event.delete_prefix('whatsapp_').delete_suffix("_#{outcome}"), outcome: outcome,
+      at: event.created_at, error: event.metadata['error'] }
   end
 
   # Handful of URLs we may have collected along the sale, per provider.

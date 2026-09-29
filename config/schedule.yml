@@ -22,6 +22,14 @@ super_admin_health_score_daily_snapshot_job:
 # API into `campaign_spends` for each account with an active integration.
 # 7-day window because both providers can revise today's numbers up to
 # their timezone cutoff.
+# every 10 minutes
+# reminds the leads whose reservation ends today, from the time set in
+# Commercial → Settings (12:30 by default, São Paulo); once per deadline.
+sales_reservation_reminder_job:
+  cron: '*/10 * * * *'
+  class: 'Sales::ReservationReminderJob'
+  queue: low
+
 marketing_spend_sync_job:
   cron: '0 4 * * *'
   class: 'Marketing::SpendSyncJob'

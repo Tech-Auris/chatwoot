@@ -25,6 +25,24 @@ const STATUS_LABELS = {
   cancelled: 'Cancelada',
 };
 
+const WHATSAPP_KINDS = {
+  reservation: 'reserva',
+  last_day_reminder: 'lembrete do último dia',
+};
+
+const whatsappStatus = whatsapp => {
+  const kind = WHATSAPP_KINDS[whatsapp.kind] || whatsapp.kind;
+  const at = new Date(whatsapp.at).toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+  return whatsapp.outcome === 'sent'
+    ? `WhatsApp: ${kind} enviada ${at}`
+    : `WhatsApp: ${kind} falhou ${at}`;
+};
+
 const reservations = ref([]);
 const statuses = ref([]);
 const meta = ref({ current_page: 1, total_pages: 1, total_count: 0 });
@@ -696,6 +714,20 @@ const submitRenew = async () => {
                 >
                   Renovar
                 </button>
+              </div>
+              <!-- Last WhatsApp message the lead got from the seller's number
+                   (reservation link or last-day reminder), or why it failed. -->
+              <div
+                v-if="reservation.whatsapp"
+                class="mt-1 text-xs leading-tight"
+                :class="
+                  reservation.whatsapp.outcome === 'sent'
+                    ? 'text-green-700'
+                    : 'text-red-600'
+                "
+                :title="reservation.whatsapp.error || ''"
+              >
+                {{ whatsappStatus(reservation.whatsapp) }}
               </div>
             </td>
           </tr>
