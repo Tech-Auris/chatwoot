@@ -108,6 +108,7 @@ class SummaryReportsAPI extends ApiClient {
     kind,
     lossReasonId,
     sourceId,
+    metric,
     page,
   } = {}) {
     return axios.get(`${this.url}/funnel_conversion_drilldown`, {
@@ -121,6 +122,7 @@ class SummaryReportsAPI extends ApiClient {
         kind,
         loss_reason_id: lossReasonId,
         source_id: sourceId,
+        metric,
         page,
       },
     });

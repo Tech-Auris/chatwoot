@@ -28,10 +28,22 @@ const failed = ref(false);
 const isLoss = computed(() => target.value?.kind === 'loss');
 // An ad's own leads all came from that ad: the origin column says nothing new.
 const isAd = computed(() => target.value?.kind === 'ad');
+// Marketing → Analytics "Conversas": plain conversations, no stage change
+// behind each row — so no "came from" / "moved by", and the stage is today's.
+const isConversationList = computed(
+  () => target.value?.metric === 'conversations'
+);
 
 const title = computed(() => {
   if (!target.value) return '';
   const count = meta.value.total_count;
+  if (target.value.metric) {
+    return t('FUNNEL_CONVERSION_REPORTS.DRILLDOWN.TITLE_AD_METRIC', {
+      ad: target.value.name,
+      metric: target.value.metricLabel,
+      count,
+    });
+  }
   if (target.value.kind === 'ad') {
     return t('FUNNEL_CONVERSION_REPORTS.DRILLDOWN.TITLE_AD', {
       ad: target.value.name,
@@ -63,6 +75,7 @@ const fetchPage = async page => {
       kind: target.value.kind,
       lossReasonId: target.value.lossReasonId,
       sourceId: target.value.sourceId,
+      metric: target.value.metric,
       page,
     });
     rows.value = data.rows;
@@ -76,7 +89,8 @@ const fetchPage = async page => {
 
 // `next` is { stageKey, name, count } for a chart stage,
 // { kind: 'loss', lossReasonId?, name?, count } for the losses, or
-// { kind: 'ad', sourceId, name, count } for one ad's leads.
+// { kind: 'ad', sourceId, name, count } for one ad's leads — plus
+// `metric` / `metricLabel` for one column of Marketing → Analytics.
 const open = next => {
   target.value = next;
   rows.value = [];
@@ -148,9 +162,13 @@ defineExpose({ open });
                 {{
                   isLoss
                     ? $t('FUNNEL_CONVERSION_REPORTS.DRILLDOWN.COLUMNS.LOST_AT')
-                    : $t(
-                        'FUNNEL_CONVERSION_REPORTS.DRILLDOWN.COLUMNS.ENTERED_AT'
-                      )
+                    : isConversationList
+                      ? $t(
+                          'FUNNEL_CONVERSION_REPORTS.DRILLDOWN.COLUMNS.CREATED_AT'
+                        )
+                      : $t(
+                          'FUNNEL_CONVERSION_REPORTS.DRILLDOWN.COLUMNS.ENTERED_AT'
+                        )
                 }}
               </th>
               <th class="px-3 py-2 text-left font-medium whitespace-nowrap">
@@ -159,17 +177,27 @@ defineExpose({ open });
                     ? $t(
                         'FUNNEL_CONVERSION_REPORTS.DRILLDOWN.COLUMNS.LOSS_REASON'
                       )
-                    : $t('FUNNEL_CONVERSION_REPORTS.DRILLDOWN.COLUMNS.STAGE')
+                    : isConversationList
+                      ? $t(
+                          'FUNNEL_CONVERSION_REPORTS.DRILLDOWN.COLUMNS.CURRENT_STAGE'
+                        )
+                      : $t('FUNNEL_CONVERSION_REPORTS.DRILLDOWN.COLUMNS.STAGE')
                 }}
               </th>
-              <th class="px-3 py-2 text-left font-medium whitespace-nowrap">
+              <th
+                v-if="!isConversationList"
+                class="px-3 py-2 text-left font-medium whitespace-nowrap"
+              >
                 {{
                   $t(
                     'FUNNEL_CONVERSION_REPORTS.DRILLDOWN.COLUMNS.PREVIOUS_STAGE'
                   )
                 }}
               </th>
-              <th class="px-3 py-2 text-left font-medium whitespace-nowrap">
+              <th
+                v-if="!isConversationList"
+                class="px-3 py-2 text-left font-medium whitespace-nowrap"
+              >
                 {{ $t('FUNNEL_CONVERSION_REPORTS.DRILLDOWN.COLUMNS.MOVED_BY') }}
               </th>
               <th class="px-3 py-2 text-left font-medium whitespace-nowrap">
@@ -215,10 +243,16 @@ defineExpose({ open });
               <td class="px-3 py-2 whitespace-nowrap">
                 {{ dash(isLoss ? row.loss_reason : row.stage) }}
               </td>
-              <td class="px-3 py-2 whitespace-nowrap">
+              <td
+                v-if="!isConversationList"
+                class="px-3 py-2 whitespace-nowrap"
+              >
                 {{ dash(row.previous_stage) }}
               </td>
-              <td class="px-3 py-2 whitespace-nowrap">
+              <td
+                v-if="!isConversationList"
+                class="px-3 py-2 whitespace-nowrap"
+              >
                 {{
                   row.moved_by ||
                   $t('FUNNEL_CONVERSION_REPORTS.DRILLDOWN.AUTOMATION')
