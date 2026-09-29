@@ -39,7 +39,49 @@ class Sales::ReservationMessageBuilder
     message = for_quote(quote)
     return nil if message.blank?
 
-    "Vendedor criou a reserva. Envie a seguinte mensagem para o cliente:\n\n#{message}"
+    'Vendedor criou a reserva. A mensagem abaixo é enviada automaticamente ao cliente pelo WhatsApp comercial ' \
+      "(confira o envio no grid de Reservas):\n\n#{message}"
+  end
+
+  # Sent on the reservation's last day to a lead who hasn't closed yet.
+  # Two wordings: the special condition with the meeting discount (and how
+  # much it saves), or a plain follow-up on the quote.
+  def self.last_day_reminder_for(quote)
+    link = public_url_for(quote)
+    return nil if link.blank?
+
+    name = quote.prospect_name.to_s.split.first.presence || 'Olá'
+    return discount_reminder(name, link, quote.meeting_discount_amount) if quote.meeting_discount && quote.meeting_discount_amount.to_i.positive?
+
+    <<~MSG
+      #{name}, tudo bem?
+      Passando para te lembrar que hoje é o último dia da reserva do seu orçamento da Auris, conforme combinamos.
+
+      Você havia ficado de me dar um retorno até hoje sobre a contratação.
+
+      Caso queira avançar, basta acessar o link abaixo e concluir:
+      Link: #{link}
+
+      Se precisar de alguma informação antes de finalizar, pode me chamar por aqui.
+    MSG
+  end
+
+  def self.discount_reminder(name, link, discount_cents)
+    <<~MSG
+      #{name}, tudo bem?
+
+      Passando para te lembrar que hoje é o último dia da reserva da sua condição especial da Auris com 10% de desconto.
+
+      Você vai economizar R$ #{format_money(discount_cents)} na contratação.
+      Para aproveitar o desconto, basta acessar o link abaixo e concluir a contratação:
+      Link: #{link}
+
+      A condição fica disponível somente até o final do dia de hoje.
+    MSG
+  end
+
+  def self.format_money(cents)
+    ActiveSupport::NumberHelper.number_to_currency(cents.to_i / 100.0, unit: '', separator: ',', delimiter: '.', precision: 2).strip
   end
 
   def self.format_deadline(time)

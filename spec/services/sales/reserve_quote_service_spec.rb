@@ -23,6 +23,10 @@ RSpec.describe Sales::ReserveQuoteService do
     expect(result.quote.reload).to have_attributes(status: 'reserved', reserved_until: deadline)
   end
 
+  it 'sends the lead the reservation message on WhatsApp' do
+    expect { reserve }.to have_enqueued_job(Sales::LeadWhatsappJob).with(quote.id, 'reservation')
+  end
+
   # ClickUp takes epoch milliseconds; sending seconds would date the task
   # to 1970. The reservation deadline is a day, not a moment, so it goes
   # normalised to midnight of that day *in São Paulo* — the sales team,
@@ -73,7 +77,7 @@ RSpec.describe Sales::ReserveQuoteService do
 
     expect(client).to have_received(:add_comment) do |task_id, text|
       expect(task_id).to eq('86ak7rd8j')
-      expect(text).to start_with('Vendedor criou a reserva. Envie a seguinte mensagem para o cliente:')
+      expect(text).to start_with('Vendedor criou a reserva. A mensagem abaixo é enviada automaticamente ao cliente')
       expect(text).to include(quote.access_code)
       expect(text).to include(quote.public_token)
     end

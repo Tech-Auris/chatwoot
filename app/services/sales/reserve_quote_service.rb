@@ -42,6 +42,9 @@ class Sales::ReserveQuoteService
 
     error = sync_clickup
     record_event(renewal, error)
+    # The lead gets the link and access code on WhatsApp right away (again
+    # on a renewal, with the new deadline), from the main seller's number.
+    Sales::LeadWhatsappJob.perform_later(quote.id, 'reservation')
 
     Result.new(quote: quote, clickup_synced: error.nil?, clickup_error: error)
   end

@@ -15,6 +15,7 @@ import FinancialCouponsIndex from '../superadmin_pages/views/financial/Coupons.v
 import FinancialPixRenewalsIndex from '../superadmin_pages/views/financial/PixRenewals.vue';
 import CommercialQuotesIndex from '../superadmin_pages/views/commercial/Quotes.vue';
 import CommercialReservationsIndex from '../superadmin_pages/views/commercial/Reservations.vue';
+import CommercialSettings from '../superadmin_pages/views/commercial/Settings.vue';
 import TermsAcceptancesIndex from '../superadmin_pages/views/commercial/TermsAcceptances.vue';
 import TermsAcceptanceRequestsIndex from '../superadmin_pages/views/commercial/TermsAcceptanceRequestsIndex.vue';
 import TermsAcceptanceRequestWizard from '../superadmin_pages/views/commercial/TermsAcceptanceRequestWizard.vue';
@@ -35,6 +36,7 @@ const ComponentMapping = {
   FinancialPixRenewalsIndex: FinancialPixRenewalsIndex,
   CommercialQuotesIndex: CommercialQuotesIndex,
   CommercialReservationsIndex: CommercialReservationsIndex,
+  CommercialSettings: CommercialSettings,
   TermsAcceptancesIndex: TermsAcceptancesIndex,
   TermsAcceptanceRequestsIndex: TermsAcceptanceRequestsIndex,
   TermsAcceptanceRequestWizard: TermsAcceptanceRequestWizard,

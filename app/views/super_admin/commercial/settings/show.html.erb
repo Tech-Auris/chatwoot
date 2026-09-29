@@ -1,0 +1,9 @@
+<% content_for(:title) do %>
+  Commercial settings
+<% end %>
+
+<%= render_vue_component('CommercialSettings', {
+  settings_url: super_admin_commercial_settings_url(format: :json),
+  accounts_url: accounts_super_admin_commercial_settings_url(format: :json),
+  inboxes_url: inboxes_super_admin_commercial_settings_url(format: :json)
+}) %>
