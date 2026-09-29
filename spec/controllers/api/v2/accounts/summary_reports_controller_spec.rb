@@ -341,6 +341,21 @@ RSpec.describe 'Summary Reports API', type: :request do
     end
   end
 
+  describe 'GET /api/v2/accounts/:account_id/summary_reports/campaign_analytics' do
+    it 'renders the per-ad rows for the requested period' do
+      create(:campaign_spend, account: account, provider: :meta, source_type: 'meta_ad', source_id: 'AD_1',
+                              period_start: Time.zone.today, period_end: Time.zone.today, amount_cents: 15_075)
+
+      get "/api/v2/accounts/#{account.id}/summary_reports/campaign_analytics",
+          params: { since: 7.days.ago.to_i.to_s, until: Time.current.to_i.to_s },
+          headers: admin.create_new_auth_token,
+          as: :json
+
+      expect(response).to have_http_status(:success)
+      expect(response.parsed_body.first).to include('source_id' => 'AD_1', 'spend_cents' => 15_075)
+    end
+  end
+
   describe 'GET /api/v2/accounts/:account_id/summary_reports/funnel_conversion_drilldown' do
     let(:url) { "/api/v2/accounts/#{account.id}/summary_reports/funnel_conversion_drilldown" }
     let(:params) { { since: start_of_today.to_s, until: end_of_today.to_s, stage_key: 'Agendamento', inbox_id: '3' } }

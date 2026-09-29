@@ -1,7 +1,8 @@
 class Api::V2::Accounts::SummaryReportsController < Api::V1::Accounts::BaseController
   before_action :check_authorization
   before_action :prepare_builder_params,
-                only: [:agent, :team, :inbox, :label, :origem, :channel, :funnel, :funnel_conversion, :funnel_conversion_drilldown]
+                only: [:agent, :team, :inbox, :label, :origem, :channel, :funnel, :funnel_conversion, :funnel_conversion_drilldown,
+                       :campaign_analytics]
 
   def agent
     render_report_with(V2::Reports::AgentSummaryBuilder, type: :agent)
