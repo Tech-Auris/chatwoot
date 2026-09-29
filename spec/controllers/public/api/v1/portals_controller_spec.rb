@@ -37,6 +37,30 @@ RSpec.describe Public::Api::V1::PortalsController, type: :request do
       Please send us an email at support@chatwoot.com with the custom domain name and account API key"
     end
 
+    context 'with custom head / body HTML' do
+      before { portal.update!(custom_head_html: '<script>window.tag = 1</script>', custom_body_html: '<noscript>tag</noscript>') }
+
+      it "renders it on the portal's own custom domain" do
+        with_modified_env(FRONTEND_URL: 'https://chat.aurischat.test') do
+          get "/hc/#{portal.slug}/en"
+        end
+
+        expect(response.body).to include('window.tag = 1', '<noscript>tag</noscript>')
+      end
+
+      # On the AurisChat domain it would share the dashboard's origin and
+      # session cookie.
+      it 'leaves it out on the AurisChat domain' do
+        with_modified_env(FRONTEND_URL: 'http://www.example.com') do
+          get "/hc/#{portal.slug}/en"
+        end
+
+        expect(response).to have_http_status(:success)
+        expect(response.body).not_to include('window.tag = 1')
+        expect(response.body).not_to include('<noscript>tag</noscript>')
+      end
+    end
+
     context 'when portal has a logo' do
       it 'includes the logo as favicon' do
         # Attach a test image to the portal

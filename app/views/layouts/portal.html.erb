@@ -57,7 +57,7 @@ By default, it renders:
         document.documentElement.classList.add('light')
       }
     </script>
-    <% if !@is_plain_layout_enabled && @portal.custom_head_html.present? %>
+    <% if render_portal_custom_html?(@is_plain_layout_enabled) && @portal.custom_head_html.present? %>
       <%= @portal.custom_head_html.html_safe %>
     <% end %>
   </head>
@@ -160,7 +160,7 @@ By default, it renders:
   <% if @portal.channel_web_widget.present? && !@is_plain_layout_enabled %>
   <%= @portal.channel_web_widget.web_widget_script.html_safe %>
   <% end %>
-  <% if !@is_plain_layout_enabled && @portal.custom_body_html.present? %>
+  <% if render_portal_custom_html?(@is_plain_layout_enabled) && @portal.custom_body_html.present? %>
     <%= @portal.custom_body_html.html_safe %>
   <% end %>
 </html>
