@@ -1,5 +1,6 @@
 class Api::V1::Accounts::Whatsapp::AuthorizationsController < Api::V1::Accounts::BaseController
   before_action :fetch_and_validate_inbox, if: -> { params[:inbox_id].present? }
+  before_action :authorize_signup
 
   # POST /api/v1/accounts/:account_id/whatsapp/authorization
   # Handles both initial authorization and reauthorization
@@ -21,6 +22,13 @@ class Api::V1::Accounts::Whatsapp::AuthorizationsController < Api::V1::Accounts:
       inbox_id: params[:inbox_id]
     )
     service.perform
+  end
+
+  # Creating an inbox, or reauthorizing / converting an existing one (e.g. a
+  # Baileys or Z-API inbox moved to the official API), follows the same rule
+  # as the inboxes screen: administrators and managers only.
+  def authorize_signup
+    @inbox ? authorize(@inbox, :update?) : authorize(Inbox, :create?)
   end
 
   def fetch_and_validate_inbox
