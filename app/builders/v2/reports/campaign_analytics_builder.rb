@@ -9,7 +9,8 @@
 #   * source_id        — ad_id (Meta) or campaign_id (Google)
 #   * name             — ad title (Meta) or campaign name (Google), pulled
 #                        from campaign_referral / campaign_spend metadata
-#   * conversations_count, qualified_count, scheduled_count, attendance_count
+#   * conversations_count, qualified_count, scheduled_count, confirmed_count,
+#     attendance_count
 #   * revenue_cents    — attendance_count × Account.average_ticket
 #   * spend_cents      — SUM of campaign_spends.amount_cents in the period
 #   * cpl_cents, cpa_cents, roas — derived (nil when denominator is 0)
@@ -18,6 +19,7 @@ class V2::Reports::CampaignAnalyticsBuilder
 
   QUALIFYING_STAGE_NAME = 'Em Qualificação'.freeze
   SCHEDULING_CHART_GROUP = 'Agendamento'.freeze
+  CONFIRMATION_STAGE_NAME = 'Confirmado'.freeze
   ATTENDANCE_STAGE_NAME = 'Comparecimento (ganho)'.freeze
 
   attr_reader :account, :params
@@ -44,7 +46,7 @@ class V2::Reports::CampaignAnalyticsBuilder
     end
   end
 
-  def build_meta_row(ad_id) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+  def build_meta_row(ad_id)
     conv = conversation_agg_by_ad[ad_id] || { count: 0, sample_name: nil }
     stages = stage_counts_by_ad[ad_id] || {}
     spent_cents = meta_spend_by_ad[ad_id] || 0
@@ -56,14 +58,21 @@ class V2::Reports::CampaignAnalyticsBuilder
       source_id: ad_id,
       name: conv[:sample_name],
       conversations_count: conv[:count],
-      qualified_count: stages[:qualifying] || 0,
-      scheduled_count: stages[:scheduling] || 0,
-      attendance_count: attendance,
+      **stage_count_fields(stages),
       revenue_cents: revenue_cents,
       spend_cents: spent_cents,
       cpl_cents: safe_div(spent_cents, stages[:qualifying]),
       cpa_cents: safe_div(spent_cents, attendance),
       roas: (spent_cents.positive? && revenue_cents.positive? ? (revenue_cents.to_f / spent_cents).round(2) : nil)
+    }
+  end
+
+  def stage_count_fields(stages)
+    {
+      qualified_count: stages[:qualifying] || 0,
+      scheduled_count: stages[:scheduling] || 0,
+      confirmed_count: stages[:confirmation] || 0,
+      attendance_count: stages[:attendance] || 0
     }
   end
 
@@ -100,6 +109,7 @@ class V2::Reports::CampaignAnalyticsBuilder
           c.additional_attributes->'campaign_referral'->>'source_id' AS ad_id,
           COUNT(DISTINCT fsc.conversation_id) FILTER (WHERE fsc.new_stage = '#{QUALIFYING_STAGE_NAME}') AS qualifying,
           COUNT(DISTINCT fsc.conversation_id) FILTER (WHERE fsc.new_stage IN (#{scheduling_stage_names_sql})) AS scheduling,
+          COUNT(DISTINCT fsc.conversation_id) FILTER (WHERE fsc.new_stage = '#{CONFIRMATION_STAGE_NAME}') AS confirmation,
           COUNT(DISTINCT fsc.conversation_id) FILTER (WHERE fsc.new_stage = '#{ATTENDANCE_STAGE_NAME}') AS attendance
         FROM funnel_stage_changes fsc
         JOIN conversations c ON c.id = fsc.conversation_id
@@ -112,6 +122,7 @@ class V2::Reports::CampaignAnalyticsBuilder
         acc[row['ad_id']] = {
           qualifying: row['qualifying'].to_i,
           scheduling: row['scheduling'].to_i,
+          confirmation: row['confirmation'].to_i,
           attendance: row['attendance'].to_i
         }
       end
@@ -153,6 +164,7 @@ class V2::Reports::CampaignAnalyticsBuilder
       conversations_count: 0,
       qualified_count: 0,
       scheduled_count: 0,
+      confirmed_count: 0,
       attendance_count: 0,
       revenue_cents: 0,
       spend_cents: spent_cents,

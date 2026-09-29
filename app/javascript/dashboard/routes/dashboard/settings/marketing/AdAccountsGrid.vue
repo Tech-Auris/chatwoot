@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
+import Button from 'dashboard/components-next/button/Button.vue';
 import MarketingIntegrationsAPI from 'dashboard/api/marketingIntegrations';
 
 // Meta ad accounts whose spend feeds Gasto / CPL / CPA / ROAS. Added one by
@@ -116,27 +117,28 @@ onMounted(fetchRows);
         </p>
       </div>
       <div class="flex items-center gap-2 shrink-0">
-        <button
+        <Button
           type="button"
+          size="sm"
+          variant="faded"
+          color="slate"
           :disabled="isSyncing || !rows.length"
-          class="rounded border border-n-strong px-3 py-1.5 text-sm text-n-slate-12 hover:bg-n-alpha-1 disabled:opacity-50"
-          @click="syncNow"
-        >
-          {{
+          :label="
             isSyncing
               ? t('MARKETING_ANALYTICS.AD_ACCOUNTS.SYNCING')
               : t('MARKETING_ANALYTICS.AD_ACCOUNTS.SYNC_NOW')
-          }}
-        </button>
-        <button
+          "
+          @click="syncNow"
+        />
+        <Button
           type="button"
+          size="sm"
+          color="blue"
+          icon="i-lucide-plus"
           :disabled="isAdding"
-          class="inline-flex items-center gap-1 rounded bg-n-brand hover:bg-n-brand/90 text-white px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+          :label="t('MARKETING_ANALYTICS.AD_ACCOUNTS.ADD')"
           @click="startAdding"
-        >
-          <Icon icon="i-lucide-plus" class="size-4" />
-          {{ t('MARKETING_ANALYTICS.AD_ACCOUNTS.ADD') }}
-        </button>
+        />
       </div>
     </div>
 
@@ -144,34 +146,35 @@ onMounted(fetchRows);
       v-if="isAdding"
       class="flex flex-col gap-2 rounded-lg bg-n-alpha-1 p-3"
     >
-      <div class="flex flex-col gap-2 sm:flex-row">
+      <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
         <input
           v-model="newExternalId"
           type="text"
           :placeholder="t('MARKETING_ANALYTICS.AD_ACCOUNTS.ID_PLACEHOLDER')"
-          class="flex-1 rounded border border-n-strong bg-n-solid-2 px-2 py-1.5 text-sm text-n-slate-12"
+          class="!mb-0 !h-8 flex-1 rounded border border-n-strong bg-n-solid-2 px-2 text-sm text-n-slate-12"
           @keydown.enter.prevent="addAccount"
         />
-        <div class="flex gap-2">
-          <button
+        <div class="flex gap-2 shrink-0">
+          <Button
             type="button"
+            size="sm"
+            color="blue"
             :disabled="isSubmitting || !newExternalId.trim()"
-            class="rounded bg-n-brand hover:bg-n-brand/90 text-white px-3 py-1.5 text-sm font-medium disabled:opacity-50"
-            @click="addAccount"
-          >
-            {{
+            :label="
               isSubmitting
                 ? t('MARKETING_ANALYTICS.AD_ACCOUNTS.CHECKING')
                 : t('MARKETING_ANALYTICS.AD_ACCOUNTS.CONFIRM_ADD')
-            }}
-          </button>
-          <button
+            "
+            @click="addAccount"
+          />
+          <Button
             type="button"
-            class="rounded border border-n-strong px-3 py-1.5 text-sm text-n-slate-12 hover:bg-n-alpha-1"
+            size="sm"
+            variant="faded"
+            color="slate"
+            :label="t('MARKETING_ANALYTICS.AD_ACCOUNTS.CANCEL')"
             @click="cancelAdding"
-          >
-            {{ t('MARKETING_ANALYTICS.AD_ACCOUNTS.CANCEL') }}
-          </button>
+          />
         </div>
       </div>
       <p class="text-xs text-n-slate-10">

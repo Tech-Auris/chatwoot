@@ -18,9 +18,10 @@
     },
     "COLUMNS": {
       "CAMPAIGN": "Campaign",
-      "CONVERSATIONS": "Conversations",
-      "QUALIFIED": "Qualified",
-      "SCHEDULED": "Scheduled",
+      "LEADS": "Leads",
+      "QUALIFYING": "Qualifying",
+      "SCHEDULING": "Scheduling",
+      "CONFIRMATION": "Confirmed",
       "ATTENDANCE": "Attendance",
       "REVENUE": "Revenue",
       "SPEND": "Spend",
