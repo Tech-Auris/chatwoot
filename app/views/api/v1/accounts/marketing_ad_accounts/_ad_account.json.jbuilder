@@ -1,0 +1,9 @@
+json.id ad_account.id
+json.external_id ad_account.external_id
+json.name ad_account.name
+json.currency ad_account.currency
+json.enabled ad_account.enabled
+json.last_synced_at ad_account.last_synced_at&.to_i
+json.last_sync_status ad_account.last_sync_status
+json.last_sync_error ad_account.last_sync_error
+json.last_rows_synced ad_account.last_rows_synced

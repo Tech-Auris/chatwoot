@@ -401,6 +401,11 @@ Rails.application.routes.draw do
             member do
               get :pixel_events
             end
+            resources :ad_accounts, only: [:index, :create, :update, :destroy], controller: 'marketing_ad_accounts' do
+              collection do
+                post :sync
+              end
+            end
           end
           resources :conversion_events, only: [:index, :show, :create, :update, :destroy]
 

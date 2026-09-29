@@ -64,6 +64,7 @@ class MarketingIntegration < ApplicationRecord
   enum status: STATUSES
 
   belongs_to :account
+  has_many :ad_accounts, class_name: 'MarketingAdAccount', dependent: :destroy
 
   validates :account_id, uniqueness: { scope: :provider }
   validate :required_credentials_present, if: -> { active? || test_mode? }
@@ -78,6 +79,22 @@ class MarketingIntegration < ApplicationRecord
 
   def credentials=(hash)
     self.credentials_ciphertext = hash.is_a?(Hash) ? hash.to_json : nil
+  end
+
+  # Token the spend sync reads with: the dedicated read token when set, else
+  # the CAPI token (which rarely has ads_read).
+  def ads_read_access_token
+    credentials['ads_read_token'].presence || credentials['access_token']
+  end
+
+  # Before the ad accounts grid existed, one ad account id lived in the
+  # credentials. Brings it into the grid the first time the integration is
+  # read, so accounts configured that way keep syncing.
+  def import_legacy_ad_account!
+    legacy_id = credentials['ad_account_id'].to_s.strip.delete_prefix('act_')
+    return if legacy_id.blank? || ad_accounts.exists?
+
+    ad_accounts.create!(account: account, external_id: legacy_id)
   end
 
   private
