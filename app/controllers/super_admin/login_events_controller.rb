@@ -11,7 +11,32 @@ class SuperAdmin::LoginEventsController < SuperAdmin::ApplicationController
     render json: { events: paginated.map { |event| serialize(event) }, meta: pagination_meta }
   end
 
+  # "Atividade": who used the dashboard in the period, not only who typed a
+  # password — a session stays valid for months, so most days a user works
+  # without a new login. One row per user and account, from the sessions
+  # whose last activity falls in the period (today when none is given).
+  def activity
+    rows = activity_rows
+    page = Kaminari.paginate_array(rows).page(params[:page] || 1).per(PER_PAGE)
+    render json: { rows: page, meta: { current_page: page.current_page, total_pages: page.total_pages, total_count: rows.size } }
+  end
+
   private
+
+  ACTIVITY_TIME_ZONE = 'America/Sao_Paulo'.freeze
+
+  def activity_rows
+    SuperAdmin::UserActivityService.new(
+      from: parse_time(params[:from]) || Time.current.in_time_zone(ACTIVITY_TIME_ZONE).beginning_of_day,
+      to: parse_time(params[:to]) || Time.current,
+      account_id: params[:account_id].presence,
+      role: params[:role].presence
+    ).rows
+  end
+
+  def parse_time(value)
+    Time.zone.parse(value) if value.present?
+  end
 
   def paginated
     @paginated ||= filtered_scope.page(params[:page] || 1).per(PER_PAGE)
