@@ -79,9 +79,9 @@ const METRIC_HINTS = {
   inbox_uptime:
     '% das inboxes WhatsApp atualmente conectadas, considerando o pior caso entre todas. Inbox desconectada significa mensagens perdidas. Quando todas estão fora por > 48h, o score total fica capeado em 40 (vermelho).',
   daily_agent_activity:
-    '% dos dias úteis (Seg-Sex) dos últimos 14 dias com pelo menos um agente enviando mensagem. Mede a adoção real do produto. Time que não usa diariamente está se desengajando — pode ser o início de migração para outra ferramenta.',
+    '% dos dias úteis (Seg-Sex) dos últimos 14 dias com pelo menos um agente enviando mensagem. Mede a adoção real do produto. Time que não usa diariamente está se desengajando — pode ser o início de migração para outra ferramenta. O detalhe mostra também quantos agentes usaram o painel nos últimos 7 dias e a última atividade (uso real do painel, não o último login).',
   manager_engagement:
-    'Se o usuário com perfil manager logou nos últimos 7 dias. O manager é o decisor — quando ele para de acompanhar o produto, o churn é questão de tempo. A métrica fica indisponível se a conta não tem manager.',
+    'Se algum usuário com perfil manager usou o painel nos últimos 7 dias (última atividade real, não o último login — a sessão fica aberta por semanas). O manager é o decisor — quando ele para de acompanhar o produto, o churn é questão de tempo. A métrica fica indisponível se a conta não tem manager.',
 };
 
 // Chip colors avoid the score band palette (red / amber / teal) AND keep
@@ -98,6 +98,21 @@ const MISSING_REASON_LABELS = {
   insufficient_volume: 'Volume de conversas insuficiente para avaliação',
   no_whatsapp_inboxes: 'Conta sem inbox WhatsApp',
   no_manager_role: 'Conta sem usuário com perfil manager',
+};
+
+// Readable names for the metric detail fields. Unknown keys (e.g. older
+// snapshots) fall back to the raw key.
+const RAW_LABELS = {
+  active_days: 'Dias com mensagem',
+  business_days: 'Dias úteis',
+  active_dates: 'Datas com mensagem',
+  agent_count: 'Agentes',
+  active_agents_7d: 'Agentes ativos (7d)',
+  last_agent_activity_at: 'Última atividade de agente',
+  manager_count: 'Managers',
+  active_managers_7d: 'Managers ativos (7d)',
+  last_activity_at: 'Última atividade do manager',
+  recent_login: 'Ativo nos últimos 7 dias',
 };
 
 const KILL_CLAUSE_LABELS = {
@@ -244,6 +259,12 @@ const bandForScore = score => {
 
 const formatRawValue = (key, value) => {
   if (value === null || value === undefined) return '—';
+  if (key.endsWith('_at') && typeof value === 'string') {
+    return new Date(value).toLocaleString('pt-BR', {
+      dateStyle: 'short',
+      timeStyle: 'short',
+    });
+  }
   if (typeof value === 'number') {
     if (key.endsWith('_pct')) return `${(value * 100).toFixed(1)}%`;
     return String(value);
@@ -647,7 +668,9 @@ const arrow = column => {
                             v-for="(value, rawKey) in metric.raw"
                             :key="rawKey"
                           >
-                            <span class="text-n-slate-10">{{ rawKey }}:</span>
+                            <span class="text-n-slate-10">
+                              {{ `${RAW_LABELS[rawKey] || rawKey}:` }}
+                            </span>
                             <span class="font-mono">{{
                               formatRawValue(rawKey, value)
                             }}</span>
