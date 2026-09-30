@@ -73,7 +73,9 @@ class Sales::ReservationMessageBuilder
       Passando para te lembrar que hoje é o último dia da reserva da sua condição especial da Auris com 10% de desconto.
 
       Você vai economizar R$ #{format_money(discount_cents)} na contratação.
+
       Para aproveitar o desconto, basta acessar o link abaixo e concluir a contratação:
+
       Link: #{link}
 
       A condição fica disponível somente até o final do dia de hoje.
