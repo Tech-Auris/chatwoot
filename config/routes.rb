@@ -1017,6 +1017,7 @@ Rails.application.routes.draw do
       end
       resources :login_events, only: [:index] do
         get :data, on: :collection
+        get :activity, on: :collection
       end
       resources :platform_banners
       resource :instance_status, only: [:show]

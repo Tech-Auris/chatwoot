@@ -20,7 +20,13 @@ const ROLE_OPTIONS = [
 
 const accountsProp = computed(() => props.componentData.accounts || []);
 
+// "Logins": every time somebody typed a password. "Atividade": who used the
+// dashboard in the period — sessions stay valid for months, so most days a
+// user works without a new login.
+const tab = ref('logins');
+
 const events = ref([]);
+const activityRows = ref([]);
 const meta = ref({ current_page: 1, total_pages: 1, total_count: 0 });
 const loading = ref(false);
 const error = ref(null);
@@ -40,13 +46,18 @@ const fetchData = async () => {
     if (roleFilter.value) params.set('role', roleFilter.value);
     if (fromFilter.value) params.set('from', fromFilter.value);
     if (toFilter.value) params.set('to', toFilter.value);
-    const res = await fetch(`${props.componentData.data_url}?${params}`, {
+    const url =
+      tab.value === 'activity'
+        ? props.componentData.activity_url
+        : props.componentData.data_url;
+    const res = await fetch(`${url}?${params}`, {
       headers: { Accept: 'application/json' },
       credentials: 'same-origin',
     });
     const body = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
-    events.value = body.events || [];
+    if (tab.value === 'activity') activityRows.value = body.rows || [];
+    else events.value = body.events || [];
     meta.value = body.meta || meta.value;
   } catch (e) {
     error.value = e.message;
@@ -59,7 +70,7 @@ onMounted(fetchData);
 
 // Filters reset page to 1 before refetching so the operator never lands
 // on an empty page-3 after narrowing.
-watch([accountFilter, roleFilter, fromFilter, toFilter], () => {
+watch([tab, accountFilter, roleFilter, fromFilter, toFilter], () => {
   page.value = 1;
   fetchData();
 });
@@ -85,13 +96,40 @@ const clearFilters = () => {
 
 <template>
   <div class="p-6">
-    <div class="mb-6">
+    <div class="mb-4">
       <h1 class="text-xl font-medium text-slate-900">Login events</h1>
-      <p class="text-sm text-slate-500 mt-1">
+      <p v-if="tab === 'logins'" class="text-sm text-slate-500 mt-1">
         Todo login bem-sucedido no dashboard, com IP, dispositivo e o perfil no
         momento da entrada. Uma linha por conta em que o usuário tinha acesso —
         filtre pela conta para ver quem entrou nela.
       </p>
+      <p v-else class="text-sm text-slate-500 mt-1">
+        Quem usou o dashboard no período (hoje, se nenhum for escolhido), pela
+        última atividade das sessões — a sessão vale por meses, então a pessoa
+        trabalha sem precisar fazer login de novo. Só a última atividade de cada
+        sessão é guardada: para hoje é exato; num dia passado, não aparece quem
+        voltou a usar a mesma sessão depois.
+      </p>
+    </div>
+
+    <div class="flex gap-2 mb-4">
+      <button
+        v-for="option in [
+          { id: 'logins', label: 'Logins' },
+          { id: 'activity', label: 'Atividade' },
+        ]"
+        :key="option.id"
+        type="button"
+        class="px-3 py-1.5 rounded text-sm border"
+        :class="
+          tab === option.id
+            ? 'bg-woot-500 border-woot-500 text-white'
+            : 'bg-white border-slate-200 text-slate-700'
+        "
+        @click="tab = option.id"
+      >
+        {{ option.label }}
+      </button>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
@@ -162,6 +200,71 @@ const clearFilters = () => {
     </div>
 
     <p v-if="loading" class="text-sm text-slate-500">Carregando…</p>
+
+    <table v-else-if="tab === 'activity'" class="w-full text-sm">
+      <thead>
+        <tr class="text-left text-slate-500 border-b border-slate-100">
+          <th class="py-2">Última atividade</th>
+          <th class="py-2">Usuário</th>
+          <th class="py-2">Conta</th>
+          <th class="py-2">Perfil</th>
+          <th class="py-2">Origem</th>
+          <th class="py-2">Dispositivo</th>
+          <th class="py-2">Sessões</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          v-for="row in activityRows"
+          :key="row.id"
+          class="border-b border-slate-50 align-top"
+        >
+          <td class="py-3 text-slate-700 whitespace-nowrap">
+            {{ formatDateTime(row.last_activity_at) }}
+            <div class="text-xs text-slate-400 mt-1">
+              sessão aberta em {{ formatDateTime(row.session_started_at) }}
+            </div>
+          </td>
+          <td class="py-3">
+            <div class="text-slate-900">{{ row.user_name || '—' }}</div>
+            <div class="text-xs text-slate-400 mt-1">{{ row.user_email }}</div>
+          </td>
+          <td class="py-3 text-slate-700">
+            {{ row.account_name }}
+            <div class="text-xs text-slate-400">#{{ row.account_id }}</div>
+          </td>
+          <td class="py-3">
+            <span
+              class="px-2 py-0.5 rounded text-xs"
+              :class="roleClass(row.role)"
+            >
+              {{ roleLabel(row.role) }}
+            </span>
+          </td>
+          <td class="py-3 text-slate-700">
+            <div>{{ row.ip_address || '—' }}</div>
+            <div
+              v-if="row.city || row.country"
+              class="text-xs text-slate-400 mt-1"
+            >
+              {{ [row.city, row.country].filter(Boolean).join(', ') }}
+            </div>
+          </td>
+          <td class="py-3 text-slate-700">
+            <div>{{ row.browser_name || '—' }} {{ row.browser_version }}</div>
+            <div class="text-xs text-slate-400 mt-1">
+              {{ row.platform_name }}
+            </div>
+          </td>
+          <td class="py-3 text-slate-700">{{ row.sessions_count }}</td>
+        </tr>
+        <tr v-if="!activityRows.length">
+          <td colspan="7" class="py-6 text-center text-slate-400">
+            Ninguém usou o dashboard no período com os filtros atuais.
+          </td>
+        </tr>
+      </tbody>
+    </table>
 
     <table v-else class="w-full text-sm">
       <thead>
