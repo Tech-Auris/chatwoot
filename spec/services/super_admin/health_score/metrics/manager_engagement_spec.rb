@@ -20,7 +20,18 @@ RSpec.describe SuperAdmin::HealthScore::Metrics::ManagerEngagement do
     result = described_class.new(account, on: on).compute
 
     expect(result[:sub_score]).to eq(100)
-    expect(result.dig(:raw, :recent_login)).to be true
+    expect(result.dig(:raw, :active_managers_7d)).to eq(1)
+  end
+
+  it 'scores on dashboard activity, not on the last password login' do
+    manager = create(:user, account: account, role: :agent)
+    AccountUser.find_by(user: manager, account: account).update!(role: :manager)
+    manager.update!(current_sign_in_at: 60.days.ago, last_sign_in_at: 60.days.ago)
+    UserSession.create!(user: manager, client_id: 'c3', last_activity_at: 1.hour.ago)
+
+    result = described_class.new(account, on: on).compute
+
+    expect(result[:sub_score]).to eq(100)
   end
 
   it 'returns 0 when the manager has no recent activity' do
@@ -31,7 +42,7 @@ RSpec.describe SuperAdmin::HealthScore::Metrics::ManagerEngagement do
     result = described_class.new(account, on: on).compute
 
     expect(result[:sub_score]).to eq(0)
-    expect(result.dig(:raw, :recent_login)).to be false
+    expect(result.dig(:raw, :active_managers_7d)).to eq(0)
   end
 
   it 'returns 0 when the manager has no session tracked at all' do

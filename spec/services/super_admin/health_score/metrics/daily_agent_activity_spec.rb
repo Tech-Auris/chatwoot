@@ -42,4 +42,17 @@ RSpec.describe SuperAdmin::HealthScore::Metrics::DailyAgentActivity do
     expect(result[:sub_score]).to eq(0)
     expect(result.dig(:raw, :active_days)).to eq(0)
   end
+
+  it 'reports the agents dashboard activity from their sessions' do
+    other_agent = create(:user, account: account)
+    admin = create(:user, account: account, role: :administrator)
+    UserSession.create!(user: agent, client_id: 'a1', last_activity_at: on.in_time_zone.change(hour: 9))
+    UserSession.create!(user: other_agent, client_id: 'a2', last_activity_at: (on - 20).in_time_zone)
+    UserSession.create!(user: admin, client_id: 'a3', last_activity_at: on.in_time_zone.change(hour: 11))
+
+    raw = described_class.new(account, on: on).compute[:raw]
+
+    expect(raw).to include(agent_count: 2, active_agents_7d: 1,
+                           last_agent_activity_at: on.in_time_zone.change(hour: 9).iso8601)
+  end
 end

@@ -16,13 +16,14 @@ class SuperAdmin::HealthScore::Metrics::ManagerEngagement < SuperAdmin::HealthSc
     return missing(:no_manager_role) if managers.empty?
 
     threshold = (on - RECENT_WINDOW_DAYS).beginning_of_day
-    last_activity = last_activity_for(managers.pluck(:id))
+    sessions = UserSession.where(user_id: managers.pluck(:id))
+    last_activity = sessions.maximum(:last_activity_at)
     sub_score = last_activity && last_activity >= threshold ? 100 : 0
 
     present(
       sub_score,
       manager_count: managers.size,
-      recent_login: sub_score == 100,
+      active_managers_7d: sessions.where(last_activity_at: threshold..).distinct.count(:user_id),
       last_activity_at: last_activity&.iso8601
     )
   end
@@ -31,11 +32,5 @@ class SuperAdmin::HealthScore::Metrics::ManagerEngagement < SuperAdmin::HealthSc
 
   def manager_users
     User.joins(:account_users).where(account_users: { account_id: account.id, role: AccountUser.roles[:manager] })
-  end
-
-  def last_activity_for(user_ids)
-    return nil if user_ids.empty?
-
-    UserSession.where(user_id: user_ids).maximum(:last_activity_at)
   end
 end
