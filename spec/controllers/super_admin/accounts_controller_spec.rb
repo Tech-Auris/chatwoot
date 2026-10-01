@@ -23,6 +23,14 @@ RSpec.describe 'Super Admin accounts API', type: :request do
         expect(response.body).to include(account.name)
       end
 
+      it 'shows the secretary section on the edit page' do
+        sign_in(super_admin, scope: :super_admin)
+
+        get "/super_admin/accounts/#{account.id}/edit"
+
+        expect(response.body).to include('AccountSecretary')
+      end
+
       it 'shows the secretary version and filters by it' do
         version = create(:secretary_version, name: 'v3.2')
         on_version = create(:account, name: 'Clinica Na Versao')

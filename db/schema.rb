@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_09_30_120000) do
+ActiveRecord::Schema[7.1].define(version: 2026_09_30_130000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -1816,7 +1816,6 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_30_120000) do
 
   create_table "secretary_versions", force: :cascade do |t|
     t.string "name", null: false
-    t.string "nickname"
     t.datetime "released_at"
     t.string "webhook_url", null: false
     t.string "workflow_id"

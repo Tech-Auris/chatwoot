@@ -52,7 +52,7 @@ class Secretary::WebhookMigration
 
   def find_or_create_version(attrs)
     SecretaryVersion.find_or_create_by!(name: attrs[:name]) do |version|
-      version.assign_attributes(attrs.except(:name).merge(nickname: "versão #{attrs[:name]}", status: :active))
+      version.assign_attributes(attrs.except(:name).merge(status: :active))
     end
   end
 

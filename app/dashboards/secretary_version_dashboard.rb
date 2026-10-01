@@ -4,7 +4,6 @@ class SecretaryVersionDashboard < Administrate::BaseDashboard
   ATTRIBUTE_TYPES = {
     id: Field::Number,
     name: Field::String,
-    nickname: Field::String,
     released_at: Field::DateTime,
     webhook_url: Field::String,
     workflow_id: Field::String,
@@ -17,7 +16,6 @@ class SecretaryVersionDashboard < Administrate::BaseDashboard
   COLLECTION_ATTRIBUTES = %i[
     id
     name
-    nickname
     status
     released_at
     webhook_url
@@ -26,7 +24,6 @@ class SecretaryVersionDashboard < Administrate::BaseDashboard
   SHOW_PAGE_ATTRIBUTES = %i[
     id
     name
-    nickname
     status
     released_at
     webhook_url
@@ -37,7 +34,6 @@ class SecretaryVersionDashboard < Administrate::BaseDashboard
 
   FORM_ATTRIBUTES = %i[
     name
-    nickname
     status
     released_at
     webhook_url

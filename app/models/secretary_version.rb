@@ -10,7 +10,6 @@
 #
 #  id          :bigint           not null, primary key
 #  name        :string           not null
-#  nickname    :string
 #  released_at :datetime
 #  status      :integer          default("testing"), not null
 #  webhook_url :string           not null
