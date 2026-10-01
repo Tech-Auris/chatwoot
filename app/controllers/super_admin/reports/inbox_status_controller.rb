@@ -9,7 +9,10 @@ class SuperAdmin::Reports::InboxStatusController < SuperAdmin::ApplicationContro
   def data
     inboxes = whatsapp_inboxes
     stats = compute_outgoing_failure_stats(inboxes)
-    payload = inboxes.map { |inbox| serialize(inbox, stats[inbox.id]) }
+    versions = secretary_versions_by_account(inboxes)
+    payload = inboxes.map do |inbox|
+      serialize(inbox, stats[inbox.id]).merge(secretary_version: (versions[inbox.account_id] if inbox.secretary_enabled))
+    end
     render json: { inboxes: payload, counts: count_states(payload) }
   end
 
@@ -69,6 +72,15 @@ class SuperAdmin::Reports::InboxStatusController < SuperAdmin::ApplicationContro
       outgoing_24h_total: stats[:total],
       outgoing_24h_failed: stats[:failed]
     }
+  end
+
+  # Account version name per account id. The Simulador's testing version is
+  # never shown here: the report only lists WhatsApp inboxes.
+  def secretary_versions_by_account(inboxes)
+    AccountSecretary.where(account_id: inboxes.map(&:account_id).uniq)
+                    .joins(:secretary_version)
+                    .pluck(:account_id, 'secretary_versions.name')
+                    .to_h
   end
 
   def connection_state_for(channel, socket_provider)

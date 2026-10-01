@@ -146,6 +146,10 @@ class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
   after_update_commit :clear_unread_conversation_counts_cache, if: :saved_change_to_feature_conversation_unread_counts?
   after_commit :ensure_simulator_inbox!, on: %i[create update], if: :env_test?
 
+  def secretary_version_name
+    account_secretary&.secretary_version&.name
+  end
+
   def agents
     users.where(account_users: { role: :agent })
   end

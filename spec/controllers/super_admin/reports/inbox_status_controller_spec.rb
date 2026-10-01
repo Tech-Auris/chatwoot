@@ -49,6 +49,19 @@ RSpec.describe 'Super Admin inbox status report', type: :request do
       expect(response).to have_http_status(:redirect)
     end
 
+    it 'shows the account secretary version only on the inboxes the secretary answers on' do
+      version = create(:secretary_version, name: 'v3.2')
+      create(:account_secretary, account: account, secretary_version: version)
+      connected_baileys.inbox.update!(secretary_enabled: true)
+      sign_in(super_admin, scope: :super_admin)
+
+      get '/super_admin/reports/inbox_status/data'
+
+      versions = response.parsed_body['inboxes'].to_h { |row| [row['phone_number'], row['secretary_version']] }
+      expect(versions[connected_baileys.phone_number]).to eq('v3.2')
+      expect(versions[cloud_inbox.phone_number]).to be_nil
+    end
+
     it 'returns every WhatsApp inbox across providers' do
       sign_in(super_admin, scope: :super_admin)
       get '/super_admin/reports/inbox_status/data'

@@ -24,6 +24,7 @@ pt_BR:
         average_ticket: 'Ticket médio'
         funnel_enabled: 'Menu Funil ativo'
         ai_status_uses_attribute: 'Status da IA por atributo (desligado = etiqueta agente-off legada)'
+        secretary_version_name: 'Versão da secretária'
     # Administrate uses `model.model_name.human(count: …)` to render both
     # the super-admin sidebar label (plural / `other`) and the "New …"
     # button label (singular / `one`). Choose forms that read naturally
