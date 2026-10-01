@@ -1,0 +1,13 @@
+<div class="field-unit__label">
+  <%= f.label :account_secretary, 'Secretária' %>
+</div>
+<div class="field-unit__field">
+  <% if f.object.persisted? %>
+    <%= render_vue_component('AccountSecretary', {
+      url: super_admin_account_secretary_url(f.object, format: :json),
+      regenerate_url: regenerate_secret_super_admin_account_secretary_url(f.object, format: :json)
+    }) %>
+  <% else %>
+    <p class="text-sm text-slate-500">Disponível depois de criar a conta.</p>
+  <% end %>
+</div>
