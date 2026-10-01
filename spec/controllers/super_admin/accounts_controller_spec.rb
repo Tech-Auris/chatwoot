@@ -23,6 +23,21 @@ RSpec.describe 'Super Admin accounts API', type: :request do
         expect(response.body).to include(account.name)
       end
 
+      it 'shows the secretary version and filters by it' do
+        version = create(:secretary_version, name: 'v3.2')
+        on_version = create(:account, name: 'Clinica Na Versao')
+        create(:account_secretary, account: on_version, secretary_version: version)
+        sign_in(super_admin, scope: :super_admin)
+
+        get '/super_admin/accounts', params: { search: "secretaria:#{version.id}" }
+        expect(response.body).to include('Clinica Na Versao', 'v3.2')
+        expect(response.body).not_to include(account.name)
+
+        get '/super_admin/accounts', params: { search: 'secretaria:nenhuma' }
+        expect(response.body).to include(account.name)
+        expect(response.body).not_to include('Clinica Na Versao')
+      end
+
       # Real prod incident: typing any text in the Super Admin accounts
       # search box returned 500 ("column accounts.reporting_timezone does
       # not exist"). `reporting_timezone` is a `store_accessor` on the

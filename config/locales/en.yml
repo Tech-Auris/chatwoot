@@ -37,6 +37,7 @@ en:
         average_ticket: 'Average ticket'
         funnel_enabled: 'Funnel menu enabled'
         ai_status_uses_attribute: 'AI status from attribute (off = legacy agente-off label)'
+        secretary_version_name: 'Secretary version'
     # Administrate uses `model.model_name.human(count: …)` to render both
     # the super-admin sidebar label (plural / `other`) and the "New …"
     # button label (singular / `one`). Choose forms that read naturally in

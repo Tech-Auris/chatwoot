@@ -54,6 +54,9 @@ class AccountDashboard < Administrate::BaseDashboard
     auris_menus: AurisAccountMenusField,
     funnel_enabled: Field::Boolean,
     ai_status_uses_attribute: Field::Boolean,
+    # Read through `account_secretary`, not a column: `searchable: false`
+    # keeps it out of the search SQL (same reason as reporting_timezone).
+    secretary_version_name: Field::String.with_options(searchable: false),
     inbox_view_menu_enabled: Field::Boolean,
     help_center_menu_enabled: Field::Boolean,
     campaigns_live_chat_menu_enabled: Field::Boolean,
@@ -79,6 +82,7 @@ class AccountDashboard < Administrate::BaseDashboard
     average_ticket
     funnel_enabled
     ai_status_uses_attribute
+    secretary_version_name
   ].freeze
 
   # SHOW_PAGE_ATTRIBUTES
@@ -143,7 +147,16 @@ class AccountDashboard < Administrate::BaseDashboard
     active: ->(resources) { resources.where(status: :active) },
     suspended: ->(resources) { resources.where(status: :suspended) },
     recent: ->(resources) { resources.where('created_at > ?', 30.days.ago) },
-    marked_for_deletion: ->(resources) { resources.where("custom_attributes->>'marked_for_deletion_at' IS NOT NULL") }
+    marked_for_deletion: ->(resources) { resources.where("custom_attributes->>'marked_for_deletion_at' IS NOT NULL") },
+    # `secretaria:<version id>` or `secretaria:nenhuma`; set by the
+    # "Versão da secretária" picker above the grid.
+    secretaria: lambda { |resources, version_id|
+      with_version = AccountSecretary.where.not(secretary_version_id: nil)
+      next resources.where.not(id: with_version.select(:account_id)) if version_id == 'nenhuma'
+
+      with_version = with_version.where(secretary_version_id: version_id) if version_id.present?
+      resources.where(id: with_version.select(:account_id))
+    }
   }.freeze
 
   # Overwrite this method to customize how accounts are displayed

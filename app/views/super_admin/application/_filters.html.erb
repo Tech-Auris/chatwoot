@@ -60,4 +60,6 @@ for a collection of resources.
       }
     }
   </script>
-<% end %> 
+<% end %>
+
+<%= render 'super_admin/accounts/secretary_filter' if page.resource_name.classify == 'Account' %>

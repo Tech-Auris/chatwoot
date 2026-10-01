@@ -22,6 +22,7 @@ const filters = ref({
   account_name: '',
   inbox_name: '',
   account_id: '',
+  secretary_version: 'all',
 });
 
 const selectedInbox = ref(null);
@@ -128,6 +129,13 @@ const filteredInboxes = computed(() => {
       String(row.account_id) !== String(filters.value.account_id).trim()
     )
       return false;
+    if (filters.value.secretary_version === 'none' && row.secretary_version)
+      return false;
+    if (
+      !['all', 'none'].includes(filters.value.secretary_version) &&
+      row.secretary_version !== filters.value.secretary_version
+    )
+      return false;
     return true;
   });
 });
@@ -139,6 +147,13 @@ const accountNameOptions = computed(() => {
 
 const inboxNameOptions = computed(() => {
   const set = new Set(inboxes.value.map(i => i.inbox_name).filter(Boolean));
+  return Array.from(set).sort();
+});
+
+const secretaryVersionOptions = computed(() => {
+  const set = new Set(
+    inboxes.value.map(i => i.secretary_version).filter(Boolean)
+  );
   return Array.from(set).sort();
 });
 
@@ -226,6 +241,7 @@ const resetFilters = () => {
     account_name: '',
     inbox_name: '',
     account_id: '',
+    secretary_version: 'all',
   };
 };
 </script>
@@ -356,6 +372,23 @@ const resetFilters = () => {
             </select>
           </label>
           <label class="flex flex-col text-xs text-n-slate-11">
+            Versão da secretária
+            <select
+              v-model="filters.secretary_version"
+              class="mt-1 bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg px-2 py-1.5 text-sm text-n-slate-12 focus:outline-n-brand"
+            >
+              <option value="all">Todas</option>
+              <option value="none">Sem secretária</option>
+              <option
+                v-for="version in secretaryVersionOptions"
+                :key="version"
+                :value="version"
+              >
+                {{ version }}
+              </option>
+            </select>
+          </label>
+          <label class="flex flex-col text-xs text-n-slate-11">
             Telefone
             <input
               v-model="filters.phone"
@@ -419,6 +452,9 @@ const resetFilters = () => {
               </th>
               <th class="text-left px-5 py-3 font-medium text-sm">Inbox</th>
               <th class="text-left px-5 py-3 font-medium text-sm">Provider</th>
+              <th class="text-left px-5 py-3 font-medium text-sm">
+                Versão da secretária
+              </th>
               <th class="text-left px-5 py-3 font-medium text-sm">Telefone</th>
               <th class="text-left px-5 py-3 font-medium text-sm">Status</th>
               <th class="text-left px-5 py-3 font-medium text-sm">Reconexão</th>
@@ -446,6 +482,9 @@ const resetFilters = () => {
               <td class="px-5 py-4">{{ row.inbox_name }}</td>
               <td class="px-5 py-4 text-n-slate-11">
                 {{ providerLabel(row.provider) }}
+              </td>
+              <td class="px-5 py-4 text-n-slate-11">
+                {{ row.secretary_version || '—' }}
               </td>
               <td class="px-5 py-4 font-mono text-xs">
                 {{ row.phone_number }}
@@ -538,7 +577,7 @@ const resetFilters = () => {
               </td>
             </tr>
             <tr v-if="!filteredInboxes.length">
-              <td colspan="10" class="px-5 py-8 text-center text-n-slate-11">
+              <td colspan="11" class="px-5 py-8 text-center text-n-slate-11">
                 Nenhuma inbox encontrada com os filtros atuais.
               </td>
             </tr>
