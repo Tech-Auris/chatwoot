@@ -40,6 +40,36 @@ describe WebhookListener do
     end
   end
 
+  describe 'secretary delivery' do
+    let(:event_name) { :'message.created' }
+    let(:version) { create(:secretary_version) }
+    let!(:secretary) { create(:account_secretary, account: account, secretary_version: version) }
+
+    it 'posts the message to the version webhook, signed with the account secret, when the inbox is enabled' do
+      inbox.update!(secretary_enabled: true)
+      expect(WebhookJob).to receive(:perform_later).with(
+        version.webhook_url, message.webhook_data.merge(event: 'message_created'), :account_webhook,
+        secret: secretary.secret, delivery_id: instance_of(String)
+      ).once
+
+      listener.message_created(message_created_event)
+    end
+
+    it 'does not post when the secretary is not enabled on the inbox' do
+      expect(WebhookJob).not_to receive(:perform_later)
+
+      listener.message_created(message_created_event)
+    end
+
+    it 'does not post when the account has no version' do
+      inbox.update!(secretary_enabled: true)
+      secretary.update!(secretary_version: nil)
+      expect(WebhookJob).not_to receive(:perform_later)
+
+      listener.message_created(message_created_event)
+    end
+  end
+
   describe '#message_created' do
     let(:event_name) { :'message.created' }
 

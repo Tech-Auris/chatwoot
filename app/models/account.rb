@@ -122,6 +122,7 @@ class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
   has_many :web_widgets, dependent: :destroy_async, class_name: '::Channel::WebWidget'
   has_many :simulator_channels, dependent: :destroy_async, class_name: '::Channel::Simulator'
   has_many :webhooks, dependent: :destroy_async
+  has_one :account_secretary, dependent: :destroy
   has_many :whatsapp_channels, dependent: :destroy_async, class_name: '::Channel::Whatsapp'
   has_many :working_hours, dependent: :destroy_async
 

@@ -40,6 +40,11 @@
         "TITLE": "General settings",
         "NOTE": ""
       },
+      "SECRETARY": {
+        "TITLE": "AI secretary",
+        "NOTE": "Version of the AI secretary serving this account. Contact support to change it.",
+        "NONE": "No secretary"
+      },
       "ACCOUNT_ID": {
         "TITLE": "Account ID",
         "NOTE": "This ID is required if you are building an API based integration"

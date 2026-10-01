@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_09_29_120000) do
+ActiveRecord::Schema[7.1].define(version: 2026_09_30_120000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -58,6 +58,18 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_29_120000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["account_id"], name: "index_account_saml_settings_on_account_id"
+  end
+
+  create_table "account_secretaries", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "secretary_version_id"
+    t.bigint "simulator_version_id"
+    t.string "secret"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_account_secretaries_on_account_id", unique: true
+    t.index ["secretary_version_id"], name: "index_account_secretaries_on_secretary_version_id"
+    t.index ["simulator_version_id"], name: "index_account_secretaries_on_simulator_version_id"
   end
 
   create_table "account_users", force: :cascade do |t|
@@ -1105,6 +1117,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_29_120000) do
     t.string "business_name"
     t.jsonb "csat_config", default: {}, null: false
     t.boolean "split_messages"
+    t.boolean "secretary_enabled", default: false, null: false
     t.index ["account_id"], name: "index_inboxes_on_account_id"
     t.index ["channel_id", "channel_type"], name: "index_inboxes_on_channel_id_and_channel_type"
     t.index ["portal_id"], name: "index_inboxes_on_portal_id"
@@ -1801,6 +1814,19 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_29_120000) do
     t.index ["status", "scheduled_at"], name: "index_scheduled_messages_on_status_and_scheduled_at"
   end
 
+  create_table "secretary_versions", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "nickname"
+    t.datetime "released_at"
+    t.string "webhook_url", null: false
+    t.string "workflow_id"
+    t.integer "status", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_secretary_versions_on_name", unique: true
+    t.index ["webhook_url"], name: "index_secretary_versions_on_webhook_url", unique: true
+  end
+
   create_table "sla_events", force: :cascade do |t|
     t.bigint "applied_sla_id", null: false
     t.bigint "conversation_id", null: false
@@ -2068,6 +2094,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_29_120000) do
   end
 
   add_foreign_key "account_health_scores", "accounts", on_delete: :cascade
+  add_foreign_key "account_secretaries", "accounts", on_delete: :cascade
+  add_foreign_key "account_secretaries", "secretary_versions"
+  add_foreign_key "account_secretaries", "secretary_versions", column: "simulator_version_id"
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "ai_assignment_attempts", "conversations", on_delete: :cascade

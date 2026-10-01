@@ -40,6 +40,11 @@
         "TITLE": "Configurações gerais",
         "NOTE": ""
       },
+      "SECRETARY": {
+        "TITLE": "Secretária de IA",
+        "NOTE": "Versão da secretária de IA que atende esta conta. Fale com o suporte para alterar.",
+        "NONE": "Sem secretária"
+      },
       "ACCOUNT_ID": {
         "TITLE": "ID da Conta",
         "NOTE": "Este ID é necessário se você está construindo uma integração baseada em API"

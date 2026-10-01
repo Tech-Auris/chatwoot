@@ -98,3 +98,11 @@ as well as a link to its edit page.
   <%= render partial: "reset_cache", locals: { page: page } %>
 
   <%= render partial: "provision_simulator_inbox", locals: { page: page } %>
+
+<section class="main-content__body">
+  <hr/>
+  <%= render_vue_component('AccountSecretary', {
+    url: super_admin_account_secretary_url(page.resource, format: :json),
+    regenerate_url: regenerate_secret_super_admin_account_secretary_url(page.resource, format: :json)
+  }) %>
+</section>

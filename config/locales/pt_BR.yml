@@ -68,6 +68,7 @@ pt_BR:
       presence: não pode ficar em branco
     webhook:
       invalid: Eventos inválidos
+      secretary_url: Reservada para a secretária de IA. Fale com o suporte para configurar.
     signup:
       disposable_email: Não permitimos e-mails descartáveis
       blocked_domain: Este domínio não é permitido. Se você acredita que isso é um erro, por favor contate o suporte.

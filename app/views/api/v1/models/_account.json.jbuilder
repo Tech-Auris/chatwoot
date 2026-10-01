@@ -37,6 +37,7 @@ json.settings_macros_menu_enabled @account.settings_macros_menu_enabled
 json.support_email @account.support_email
 json.status @account.status
 json.environment @account.environment
+json.secretary_version_name @account.account_secretary&.secretary_version&.name
 json.clickup_integration_enabled Integrations::Clickup::Setup.ready?
 json.simulator_inbox_id @account.simulator_inbox_id
 json.cache_keys @account.cache_keys
