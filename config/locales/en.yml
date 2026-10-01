@@ -57,6 +57,8 @@ en:
         accounts_summary: 'Accounts'
         audience_users_summary: 'Specific users'
         created_by_display: 'Created by'
+      account:
+        secretary_version_name: 'Secretary Version'
   internal_chat:
     default_category_name: 'Channels'
     default_channel_name: 'General'

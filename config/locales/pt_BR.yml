@@ -41,6 +41,8 @@ pt_BR:
         accounts_summary: 'Contas'
         audience_users_summary: 'Usuários específicos'
         created_by_display: 'Criado por'
+      account:
+        secretary_version_name: 'Secretary Version'
   internal_chat:
     default_category_name: 'Canais'
     default_channel_name: 'Geral'
