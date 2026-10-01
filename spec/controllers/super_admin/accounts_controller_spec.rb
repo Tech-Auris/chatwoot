@@ -47,7 +47,8 @@ RSpec.describe 'Super Admin accounts API', type: :request do
         sign_in(super_admin, scope: :super_admin)
 
         get '/super_admin/accounts', params: { search: "secretaria:#{version.id}" }
-        expect(response.body).to include('Clinica Na Versao', 'v3.2')
+        expect(response.body).to include('Clinica Na Versao', 'v3.2', 'Secretary Version')
+        expect(response.body).not_to include('Secretary Version Name')
         expect(response.body).not_to include(account.name)
 
         get '/super_admin/accounts', params: { search: 'secretaria:nenhuma' }
