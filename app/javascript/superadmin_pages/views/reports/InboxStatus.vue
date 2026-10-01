@@ -446,14 +446,12 @@ const resetFilters = () => {
         <table class="w-full text-sm">
           <thead class="bg-n-slate-1 text-n-slate-12">
             <tr>
+              <th class="text-left px-5 py-3 font-medium text-sm">ID</th>
               <th class="text-left px-5 py-3 font-medium text-sm">Account</th>
-              <th class="text-left px-5 py-3 font-medium text-sm">
-                Account ID
-              </th>
               <th class="text-left px-5 py-3 font-medium text-sm">Inbox</th>
               <th class="text-left px-5 py-3 font-medium text-sm">Provider</th>
               <th class="text-left px-5 py-3 font-medium text-sm">
-                Versão da secretária
+                Secretária
               </th>
               <th class="text-left px-5 py-3 font-medium text-sm">Telefone</th>
               <th class="text-left px-5 py-3 font-medium text-sm">Status</th>
@@ -461,8 +459,11 @@ const resetFilters = () => {
               <th class="text-left px-5 py-3 font-medium text-sm">
                 Estado desde
               </th>
-              <th class="text-left px-5 py-3 font-medium text-sm">
-                Não confirmadas 24h
+              <th
+                class="text-left px-5 py-3 font-medium text-sm whitespace-nowrap"
+                title="Mensagens enviadas nas últimas 24h sem confirmação do provider"
+              >
+                Ñ Conf.24hs
               </th>
               <th
                 class="text-left px-5 py-3 font-medium text-sm w-px whitespace-nowrap"
@@ -477,8 +478,8 @@ const resetFilters = () => {
               :key="row.inbox_id"
               class="text-n-slate-12 hover:bg-n-alpha-1"
             >
-              <td class="px-5 py-4">{{ row.account_name }}</td>
               <td class="px-5 py-4 text-n-slate-11">{{ row.account_id }}</td>
+              <td class="px-5 py-4">{{ row.account_name }}</td>
               <td class="px-5 py-4">{{ row.inbox_name }}</td>
               <td class="px-5 py-4 text-n-slate-11">
                 {{ providerLabel(row.provider) }}
