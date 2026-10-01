@@ -91,6 +91,7 @@ en:
       presence: must not be blank
     webhook:
       invalid: Invalid events
+      secretary_url: Reserved for the AI secretary. Contact support to set it up.
     signup:
       disposable_email: We do not allow disposable emails
       blocked_domain: This domain is not allowed. If you believe this is a mistake, please contact support.

@@ -19,6 +19,7 @@
 #  lock_to_single_conversation   :boolean          default(TRUE), not null
 #  name                          :string           not null
 #  out_of_office_message         :string
+#  secretary_enabled             :boolean          default(FALSE), not null
 #  sender_name_type              :integer          default("friendly"), not null
 #  split_messages                :boolean
 #  timezone                      :string           default("UTC")

@@ -30,6 +30,7 @@ class WebhookListener < BaseListener # rubocop:disable Metrics/ClassLength
 
     payload = message.webhook_data.merge(event: __method__.to_s)
     deliver_webhook_payloads(payload, inbox)
+    deliver_secretary_payload(payload, inbox)
 
     message_incoming(event)
     message_outgoing(event)
@@ -239,6 +240,18 @@ class WebhookListener < BaseListener # rubocop:disable Metrics/ClassLength
 
     WebhookJob.perform_later(inbox.channel.webhook_url, payload, :api_inbox_webhook,
                              secret: inbox.channel.secret, delivery_id: SecureRandom.uuid)
+  end
+
+  # The AI secretary is configured in Super Admin, not as an account webhook,
+  # so the customer never sees (or deletes) it.
+  def deliver_secretary_payload(payload, inbox)
+    secretary = inbox.account.account_secretary
+    version = secretary&.version_for(inbox)
+    return if version.nil?
+
+    WebhookJob.perform_later(version.webhook_url, payload, :account_webhook,
+                             secret: secretary.secret,
+                             delivery_id: SecureRandom.uuid)
   end
 
   def deliver_webhook_payloads(payload, inbox)

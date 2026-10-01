@@ -12,6 +12,7 @@ import NextInput from 'next/input/Input.vue';
 import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
 import NextButton from 'dashboard/components-next/button/Button.vue';
 import AccountId from './components/AccountId.vue';
+import SecretaryVersion from './components/SecretaryVersion.vue';
 import BuildInfo from './components/BuildInfo.vue';
 import AccountDelete from './components/AccountDelete.vue';
 import AudioTranscription from './components/AudioTranscription.vue';
@@ -22,6 +23,7 @@ export default {
     BaseSettingsHeader,
     NextButton,
     AccountId,
+    SecretaryVersion,
     BuildInfo,
     AccountDelete,
     AudioTranscription,
@@ -239,6 +241,7 @@ export default {
     </div>
     <AudioTranscription v-if="showAudioTranscriptionConfig" />
     <AccountId />
+    <SecretaryVersion />
     <div v-if="!uiFlags.isFetchingItem && isOnChatwootCloud">
       <AccountDelete />
     </div>

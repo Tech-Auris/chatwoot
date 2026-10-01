@@ -20,6 +20,7 @@ import TermsAcceptanceRequestsIndex from '../superadmin_pages/views/commercial/T
 import TermsAcceptanceRequestWizard from '../superadmin_pages/views/commercial/TermsAcceptanceRequestWizard.vue';
 import TermsAcceptanceRequestReport from '../superadmin_pages/views/commercial/TermsAcceptanceRequestReport.vue';
 import LoginEventsIndex from '../superadmin_pages/views/operations/LoginEvents.vue';
+import AccountSecretary from '../superadmin_pages/views/accounts/AccountSecretary.vue';
 
 const ComponentMapping = {
   PlaygroundIndex: PlaygroundIndex,
@@ -40,6 +41,7 @@ const ComponentMapping = {
   TermsAcceptanceRequestWizard: TermsAcceptanceRequestWizard,
   TermsAcceptanceRequestReport: TermsAcceptanceRequestReport,
   LoginEventsIndex: LoginEventsIndex,
+  AccountSecretary: AccountSecretary,
 };
 
 const renderComponent = (componentName, props) => {

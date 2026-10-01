@@ -27,6 +27,7 @@ class Webhook < ApplicationRecord
   validates :account_id, presence: true
   validates :url, uniqueness: { scope: [:account_id] }, format: URI::DEFAULT_PARSER.make_regexp(%w[http https])
   validate :validate_webhook_subscriptions
+  validate :url_not_a_secretary_version
   enum webhook_type: { account_type: 0, inbox_type: 1 }
 
   ALLOWED_WEBHOOK_EVENTS = %w[conversation_status_changed conversation_updated conversation_created contact_created contact_updated
@@ -36,6 +37,12 @@ class Webhook < ApplicationRecord
                               internal_chat_message_deleted internal_chat_channel_updated funnel_updated].freeze
 
   private
+
+  # The secretary already receives every message through its Super Admin
+  # setup; a webhook to the same URL would make it answer twice.
+  def url_not_a_secretary_version
+    errors.add(:url, I18n.t('errors.webhook.secretary_url')) if SecretaryVersion.exists?(webhook_url: url.to_s.strip)
+  end
 
   def validate_webhook_subscriptions
     invalid_subscriptions = !subscriptions.instance_of?(Array) ||

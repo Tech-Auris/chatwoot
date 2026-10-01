@@ -999,6 +999,9 @@ Rails.application.routes.draw do
         post :seed, on: :member
         post :reset_cache, on: :member
         post :provision_simulator_inbox, on: :member
+        resource :secretary, only: [:show, :update], controller: 'account_secretaries' do
+          post :regenerate_secret
+        end
       end
       resources :users, only: [:index, :new, :create, :show, :edit, :update, :destroy] do
         delete :avatar, on: :member, action: :destroy_avatar
@@ -1012,6 +1015,7 @@ Rails.application.routes.draw do
       resources :platform_apps, only: [:index, :new, :create, :show, :edit, :update, :destroy]
       resources :funnel_stages, only: [:index, :new, :create, :show, :edit, :update, :destroy]
       resources :loss_reasons, only: [:index, :new, :create, :show, :edit, :update, :destroy]
+      resources :secretary_versions, only: [:index, :new, :create, :show, :edit, :update]
       resources :operations_notifications, only: [:index, :new, :create, :show, :destroy] do
         get :acks, on: :member
       end
