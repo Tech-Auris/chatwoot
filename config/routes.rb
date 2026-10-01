@@ -999,7 +999,7 @@ Rails.application.routes.draw do
         post :seed, on: :member
         post :reset_cache, on: :member
         post :provision_simulator_inbox, on: :member
-        resource :secretary, only: [:show, :update], controller: 'account_secretaries' do
+        resource :secretary, only: [:show], controller: 'account_secretaries' do
           post :regenerate_secret
         end
       end

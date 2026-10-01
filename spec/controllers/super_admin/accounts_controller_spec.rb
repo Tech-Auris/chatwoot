@@ -23,12 +23,21 @@ RSpec.describe 'Super Admin accounts API', type: :request do
         expect(response.body).to include(account.name)
       end
 
+      it 'renders the new account page, where the secretary waits for the account to exist' do
+        sign_in(super_admin, scope: :super_admin)
+
+        get '/super_admin/accounts/new'
+
+        expect(response).to have_http_status(:success)
+        expect(response.body).to include('Disponível depois de criar a conta')
+      end
+
       it 'shows the secretary section on the edit page' do
         sign_in(super_admin, scope: :super_admin)
 
         get "/super_admin/accounts/#{account.id}/edit"
 
-        expect(response.body).to include('AccountSecretary')
+        expect(response.body).to include('AccountSecretary', 'secretary')
       end
 
       it 'shows the secretary version and filters by it' do
@@ -135,6 +144,54 @@ RSpec.describe 'Super Admin accounts API', type: :request do
       end.to change(Channel::Simulator, :count).by(1)
 
       expect(prod_account.reload.simulator_inbox_id).not_to eq(999_999_999)
+    end
+  end
+
+  describe 'PUT /super_admin/accounts/{account_id} (Secretária section)' do
+    let!(:reception) { create(:inbox, account: account) }
+    let!(:sales) { create(:inbox, account: account) }
+    let(:version) { create(:secretary_version) }
+    let(:testing) { create(:secretary_version, status: :testing) }
+
+    before { sign_in(super_admin, scope: :super_admin) }
+
+    it 'saves the secretary with the account, in the same submit' do
+      put "/super_admin/accounts/#{account.id}", params: {
+        account: { name: 'Clinica Nova' },
+        secretary: { secretary_version_id: version.id, simulator_version_id: testing.id, inbox_ids: ['', reception.id] }
+      }
+
+      expect(response).to have_http_status(:redirect)
+      expect(account.reload.name).to eq('Clinica Nova')
+      expect(account.account_secretary).to have_attributes(secretary_version: version, simulator_version: testing)
+      expect(account.account_secretary.secret).to be_present
+      expect(reception.reload.secretary_enabled).to be(true)
+      expect(sales.reload.secretary_enabled).to be(false)
+    end
+
+    it 'turns every inbox off when the list is cleared' do
+      reception.update!(secretary_enabled: true)
+
+      put "/super_admin/accounts/#{account.id}",
+          params: { account: { name: account.name }, secretary: { secretary_version_id: version.id, inbox_ids: [''] } }
+
+      expect(reception.reload.secretary_enabled).to be(false)
+    end
+
+    it 'leaves the secretary untouched when the section was not posted' do
+      reception.update!(secretary_enabled: true)
+
+      put "/super_admin/accounts/#{account.id}", params: { account: { name: account.name } }
+
+      expect(reception.reload.secretary_enabled).to be(true)
+    end
+
+    it 'refuses a testing version for the account' do
+      put "/super_admin/accounts/#{account.id}",
+          params: { account: { name: account.name }, secretary: { secretary_version_id: testing.id, inbox_ids: [''] } }
+
+      expect(flash[:alert]).to be_present
+      expect(account.reload.account_secretary&.secretary_version).to be_nil
     end
   end
 

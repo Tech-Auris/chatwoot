@@ -52,6 +52,7 @@ class AccountDashboard < Administrate::BaseDashboard
     reporting_timezone: Field::Select.with_options(collection: reporting_timezone_collection, include_blank: false, searchable: false),
     auris_settings: AurisAccountSettingsField,
     auris_menus: AurisAccountMenusField,
+    account_secretary: SecretaryField,
     funnel_enabled: Field::Boolean,
     ai_status_uses_attribute: Field::Boolean,
     # Read through `account_secretary`, not a column: `searchable: false`
@@ -131,6 +132,7 @@ class AccountDashboard < Administrate::BaseDashboard
     reporting_timezone
     auris_settings
     auris_menus
+    account_secretary
   ] + enterprise_form_attributes).freeze
 
   # COLLECTION_FILTERS

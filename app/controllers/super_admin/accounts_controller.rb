@@ -2,10 +2,14 @@ class SuperAdmin::AccountsController < SuperAdmin::ApplicationController
   # Overwrite any of the RESTful controller actions to implement custom behavior
   # For example, you may want to send an email after a foo is updated.
   #
-  # def update
-  #   super
-  #   send_foo_updated_email(requested_resource)
-  # end
+  # The "Secretária" field posts outside the account params; it is saved
+  # with the same button once the account itself saved.
+  def update
+    super
+    save_secretary if response.redirect? && params[:secretary].present?
+  rescue ActiveRecord::RecordInvalid => e
+    flash[:alert] = e.record.errors.full_messages.to_sentence
+  end
 
   # Override this method to specify custom lookup behavior.
   # This will be used to set the resource for the `show`, `edit`, and `update`
@@ -95,6 +99,13 @@ class SuperAdmin::AccountsController < SuperAdmin::ApplicationController
   # onto the two sidebar-visibility columns. Kept separate from the settings
   # writer so menu access stays an isolated concern: it doesn't ride along on
   # webhooks and a future Super Admin reshuffle can move it independently.
+  def save_secretary
+    attrs = params.require(:secretary).permit(:secretary_version_id, :simulator_version_id, inbox_ids: [])
+    Secretary::AccountSetup.new(requested_resource).update!(
+      secretary_version_id: attrs[:secretary_version_id], simulator_version_id: attrs[:simulator_version_id], inbox_ids: attrs[:inbox_ids]
+    )
+  end
+
   def merge_auris_menus(permitted_params)
     return if params[:auris_menus].blank?
 

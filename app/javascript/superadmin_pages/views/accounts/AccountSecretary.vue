@@ -20,7 +20,6 @@ const selectedInboxIds = ref([]);
 const secret = ref(null);
 const showSecret = ref(false);
 const loading = ref(true);
-const saving = ref(false);
 const message = ref(null);
 const error = ref(null);
 
@@ -37,16 +36,11 @@ const applyPayload = body => {
   secret.value = body.secret;
 };
 
-const request = async (url, method, data) => {
+const request = async (url, method) => {
   const res = await fetch(url, {
     method,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      'X-CSRF-Token': csrfToken(),
-    },
+    headers: { Accept: 'application/json', 'X-CSRF-Token': csrfToken() },
     credentials: 'same-origin',
-    body: data ? JSON.stringify(data) : undefined,
   });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
@@ -116,24 +110,6 @@ const load = async () => {
   }
 };
 
-const save = async () => {
-  saving.value = true;
-  error.value = null;
-  try {
-    const body = await request(props.componentData.url, 'PATCH', {
-      secretary_version_id: versionId.value || null,
-      simulator_version_id: simulatorVersionId.value || null,
-      inbox_ids: selectedInboxIds.value,
-    });
-    applyPayload(body);
-    flash('Secretária atualizada');
-  } catch (e) {
-    error.value = e.message;
-  } finally {
-    saving.value = false;
-  }
-};
-
 const regenerateSecret = async () => {
   // eslint-disable-next-line no-alert
   if (!window.confirm('Gerar um novo segredo? O anterior deixa de valer.'))
@@ -162,9 +138,9 @@ onMounted(load);
 </script>
 
 <template>
-  <div class="flex flex-col gap-6 py-4">
-    <h2 class="text-lg font-medium text-n-slate-12">Secretária</h2>
-
+  <!-- Lives inside the account form: the named fields below are posted with
+       "Update Account" and saved by AccountsController#update. -->
+  <div class="flex flex-col gap-4">
     <p v-if="loading" class="text-sm text-n-slate-11">Carregando…</p>
 
     <template v-else>
@@ -175,6 +151,7 @@ onMounted(load);
         <select
           id="secretary-version"
           v-model="versionId"
+          name="secretary[secretary_version_id]"
           class="w-80 border border-slate-200 rounded px-2 py-1.5 text-sm"
         >
           <option value="">Sem secretária</option>
@@ -189,6 +166,15 @@ onMounted(load);
 
         <span class="text-sm text-n-slate-11 pt-2">Caixas de entrada</span>
         <div class="flex flex-col gap-2">
+          <!-- The empty entry lets "Limpar" post an empty list. -->
+          <input type="hidden" name="secretary[inbox_ids][]" value="" />
+          <input
+            v-for="id in selectedInboxIds"
+            :key="`inbox-${id}`"
+            type="hidden"
+            name="secretary[inbox_ids][]"
+            :value="id"
+          />
           <div
             class="flex flex-wrap gap-2 min-h-11 p-2 border border-slate-200 rounded-lg"
           >
@@ -262,6 +248,7 @@ onMounted(load);
           <select
             id="simulator-version"
             v-model="simulatorVersionId"
+            name="secretary[simulator_version_id]"
             class="w-80 border border-slate-200 rounded px-2 py-1.5 text-sm"
             :disabled="!simulatorInbox"
           >
@@ -328,15 +315,10 @@ onMounted(load);
         </div>
       </div>
 
-      <div class="flex items-center gap-4">
-        <button
-          type="button"
-          class="px-4 py-2 rounded bg-woot-500 text-white text-sm disabled:opacity-40"
-          :disabled="saving"
-          @click="save"
-        >
-          {{ saving ? 'Salvando…' : 'Atualizar' }}
-        </button>
+      <p class="text-xs text-n-slate-11">
+        Salvo junto com a conta, no botão "Update Account".
+      </p>
+      <div v-if="message || error" class="flex items-center gap-4">
         <span v-if="message" class="text-sm text-n-teal-11">
           {{ message }}
         </span>
