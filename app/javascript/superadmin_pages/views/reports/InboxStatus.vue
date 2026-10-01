@@ -563,7 +563,7 @@ const resetFilters = () => {
                     class="px-2.5 py-1 rounded-lg bg-n-brand text-white text-xs font-medium hover:bg-n-brand/90"
                     @click="openConnectModal(row)"
                   >
-                    Conectar dispositivo
+                    Conectar
                   </button>
                   <button
                     v-else
