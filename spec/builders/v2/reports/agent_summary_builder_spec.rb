@@ -64,6 +64,8 @@ RSpec.describe V2::Reports::AgentSummaryBuilder do
       context 'when business hours is disabled' do
         let(:business_hours) { false }
 
+        # Time metrics are the 95th percentile (reply 30s and 40s → 39.5s),
+        # with the median alongside for the hint.
         it 'returns the correct team stats' do
           report = builder.build
 
@@ -75,7 +77,10 @@ RSpec.describe V2::Reports::AgentSummaryBuilder do
                 resolved_conversations_count: 0,
                 avg_resolution_time: nil,
                 avg_first_response_time: 20.0,
-                avg_reply_time: 35.0
+                avg_reply_time: 39.5,
+                avg_resolution_time_median: nil,
+                avg_first_response_time_median: 20.0,
+                avg_reply_time_median: 35.0
               },
               {
                 id: user2.id,
@@ -83,7 +88,10 @@ RSpec.describe V2::Reports::AgentSummaryBuilder do
                 resolved_conversations_count: 1,
                 avg_resolution_time: 50.0,
                 avg_first_response_time: nil,
-                avg_reply_time: nil
+                avg_reply_time: nil,
+                avg_resolution_time_median: 50.0,
+                avg_first_response_time_median: nil,
+                avg_reply_time_median: nil
               }
             ]
           )
@@ -104,7 +112,10 @@ RSpec.describe V2::Reports::AgentSummaryBuilder do
                 resolved_conversations_count: 0,
                 avg_resolution_time: nil,
                 avg_first_response_time: 10.0,
-                avg_reply_time: 20.0
+                avg_reply_time: 24.5,
+                avg_resolution_time_median: nil,
+                avg_first_response_time_median: 10.0,
+                avg_reply_time_median: 20.0
               },
               {
                 id: user2.id,
@@ -112,7 +123,10 @@ RSpec.describe V2::Reports::AgentSummaryBuilder do
                 resolved_conversations_count: 1,
                 avg_resolution_time: 40.0,
                 avg_first_response_time: nil,
-                avg_reply_time: nil
+                avg_reply_time: nil,
+                avg_resolution_time_median: 40.0,
+                avg_first_response_time_median: nil,
+                avg_reply_time_median: nil
               }
             ]
           )

@@ -6,6 +6,8 @@
     "DOWNLOAD_CONVERSATION_REPORTS": "Baixar relatórios de conversas",
     "DATA_FETCHING_FAILED": "Falha ao buscar dados, tente novamente mais tarde.",
     "SUMMARY_FETCHING_FAILED": "Não foi possível obter o resumo. Tente novamente mais tarde.",
+    "P95_SUFFIX": "(P95)",
+    "P95_HINT": "Percentil 95: 95% das conversas tiveram este tempo ou menos. Diferente da média, não é distorcido por poucos casos muito demorados. Mediana: {median}.",
     "TIME_UNITS": {
       "SEC": "seg",
       "MIN": "min",
@@ -27,15 +29,15 @@
       },
       "FIRST_RESPONSE_TIME": {
         "NAME": "Tempo de Primeira Resposta",
-        "DESC": "(Média)",
+        "DESC": "(P95)",
         "INFO_TEXT": "Número total de conversas utilizadas para computação:",
-        "TOOLTIP_TEXT": "O Tempo de Primeira Resposta é de {metricValue} (com base em {conversationCount} conversas)"
+        "TOOLTIP_TEXT": "O Tempo de Primeira Resposta (P95) é de {metricValue} (com base em {conversationCount} conversas)"
       },
       "RESOLUTION_TIME": {
         "NAME": "Tempo de Resolução",
-        "DESC": "(Média)",
+        "DESC": "(P95)",
         "INFO_TEXT": "Número total de conversas utilizadas para computação:",
-        "TOOLTIP_TEXT": "O Tempo de Resolução é de {metricValue} (com base em {conversationCount} conversas)"
+        "TOOLTIP_TEXT": "O Tempo de Resolução (P95) é de {metricValue} (com base em {conversationCount} conversas)"
       },
       "RESOLUTION_COUNT": {
         "NAME": "Contagem de Resolução",
@@ -51,7 +53,7 @@
       },
       "REPLY_TIME": {
         "NAME": "Tempo de espera do cliente",
-        "TOOLTIP_TEXT": "O Tempo de Espera é {metricValue} (com base em {conversationCount} respostas)",
+        "TOOLTIP_TEXT": "O Tempo de Espera (P95) é {metricValue} (com base em {conversationCount} respostas)",
         "DESC": ""
       }
     },
@@ -159,15 +161,15 @@
       },
       "FIRST_RESPONSE_TIME": {
         "NAME": "Tempo da Primeira Resposta",
-        "DESC": "(Média)",
+        "DESC": "(P95)",
         "INFO_TEXT": "Número total de conversas utilizadas para computação:",
-        "TOOLTIP_TEXT": "O Tempo de Primeira Resposta é de {metricValue} (com base em {conversationCount} conversas)"
+        "TOOLTIP_TEXT": "O Tempo de Primeira Resposta (P95) é de {metricValue} (com base em {conversationCount} conversas)"
       },
       "RESOLUTION_TIME": {
         "NAME": "Tempo de Resolução",
-        "DESC": "(Média)",
+        "DESC": "(P95)",
         "INFO_TEXT": "Número total de conversas utilizadas para computação:",
-        "TOOLTIP_TEXT": "O Tempo de Resolução é de {metricValue} (com base em {conversationCount} conversas)"
+        "TOOLTIP_TEXT": "O Tempo de Resolução (P95) é de {metricValue} (com base em {conversationCount} conversas)"
       },
       "RESOLUTION_COUNT": {
         "NAME": "Contagem de Resolução",
@@ -212,9 +214,9 @@
     "COLUMNS": {
       "NAME": "Origem do lead",
       "CONVERSATIONS": "Nº de Conversas",
-      "AVG_FIRST_RESPONSE_TIME": "Tempo Médio de Primeira Resposta",
-      "AVG_RESOLUTION_TIME": "Tempo Médio de Resolução",
-      "AVG_REPLY_TIME": "Tempo Médio de Espera do Cliente",
+      "AVG_FIRST_RESPONSE_TIME": "Tempo de Primeira Resposta (P95)",
+      "AVG_RESOLUTION_TIME": "Tempo de Resolução (P95)",
+      "AVG_REPLY_TIME": "Tempo de Espera do Cliente (P95)",
       "RESOLUTION_COUNT": "Contagem de Resolução"
     }
   },
@@ -245,15 +247,15 @@
       },
       "FIRST_RESPONSE_TIME": {
         "NAME": "Tempo de Primeira Resposta",
-        "DESC": "(Média)",
+        "DESC": "(P95)",
         "INFO_TEXT": "Número total de conversas utilizadas para computação:",
-        "TOOLTIP_TEXT": "O Tempo de Primeira Resposta é de {metricValue} (com base em {conversationCount} conversas)"
+        "TOOLTIP_TEXT": "O Tempo de Primeira Resposta (P95) é de {metricValue} (com base em {conversationCount} conversas)"
       },
       "RESOLUTION_TIME": {
         "NAME": "Tempo de Resolução",
-        "DESC": "(Média)",
+        "DESC": "(P95)",
         "INFO_TEXT": "Número total de conversas utilizadas para computação:",
-        "TOOLTIP_TEXT": "O Tempo de Resolução é de {metricValue} (com base em {conversationCount} conversas)"
+        "TOOLTIP_TEXT": "O Tempo de Resolução (P95) é de {metricValue} (com base em {conversationCount} conversas)"
       },
       "RESOLUTION_COUNT": {
         "NAME": "Contagem de Resolução",
@@ -320,15 +322,15 @@
       },
       "FIRST_RESPONSE_TIME": {
         "NAME": "Tempo da Primeira Resposta",
-        "DESC": "(Média)",
+        "DESC": "(P95)",
         "INFO_TEXT": "Número total de conversas utilizadas para computação:",
-        "TOOLTIP_TEXT": "O Tempo de Primeira Resposta é de {metricValue} (com base em {conversationCount} conversas)"
+        "TOOLTIP_TEXT": "O Tempo de Primeira Resposta (P95) é de {metricValue} (com base em {conversationCount} conversas)"
       },
       "RESOLUTION_TIME": {
         "NAME": "Tempo de resolução",
-        "DESC": "(Média)",
+        "DESC": "(P95)",
         "INFO_TEXT": "Número total de conversas utilizadas para computação:",
-        "TOOLTIP_TEXT": "O Tempo de Resolução é de {metricValue} (com base em {conversationCount} conversas)"
+        "TOOLTIP_TEXT": "O Tempo de Resolução (P95) é de {metricValue} (com base em {conversationCount} conversas)"
       },
       "RESOLUTION_COUNT": {
         "NAME": "Contagem de Resolução",
@@ -396,15 +398,15 @@
       },
       "FIRST_RESPONSE_TIME": {
         "NAME": "Tempo da Primeira Resposta",
-        "DESC": "(Média)",
+        "DESC": "(P95)",
         "INFO_TEXT": "Número total de conversas utilizadas para computação:",
-        "TOOLTIP_TEXT": "O Tempo de Primeira Resposta é de {metricValue} (com base em {conversationCount} conversas)"
+        "TOOLTIP_TEXT": "O Tempo de Primeira Resposta (P95) é de {metricValue} (com base em {conversationCount} conversas)"
       },
       "RESOLUTION_TIME": {
         "NAME": "Tempo de Resolução",
-        "DESC": "(Média)",
+        "DESC": "(P95)",
         "INFO_TEXT": "Número total de conversas utilizadas para computação:",
-        "TOOLTIP_TEXT": "O Tempo de Resolução é de {metricValue} (com base em {conversationCount} conversas)"
+        "TOOLTIP_TEXT": "O Tempo de Resolução (P95) é de {metricValue} (com base em {conversationCount} conversas)"
       },
       "RESOLUTION_COUNT": {
         "NAME": "Contagem de Resolução",
@@ -660,9 +662,9 @@
     "AGENT": "Agente",
     "TEAM": "Time",
     "LABEL": "Nome do campo",
-    "AVG_RESOLUTION_TIME": "Tempo Médio de Resolução",
-    "AVG_FIRST_RESPONSE_TIME": "Tempo Médio de Primeira Resposta",
-    "AVG_REPLY_TIME": "Tempo Médio de Espera do Cliente",
+    "AVG_RESOLUTION_TIME": "Tempo de Resolução (P95)",
+    "AVG_FIRST_RESPONSE_TIME": "Tempo de Primeira Resposta (P95)",
+    "AVG_REPLY_TIME": "Tempo de Espera do Cliente (P95)",
     "RESOLUTION_COUNT": "Contagem de Resolução",
     "CONVERSATIONS": "Nº de Conversas"
   },

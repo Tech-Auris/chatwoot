@@ -71,6 +71,14 @@ const defaulSpanRender = cellProps =>
     cellProps.getValue()
   );
 
+// Time columns show the 95th percentile; hovering shows the median.
+const timeSpanRender = cellProps =>
+  h(
+    'span',
+    { title: cellProps.row.original[`${cellProps.column.id}Hint`] },
+    cellProps.getValue()
+  );
+
 const columns = computed(() => [
   columnHelper.accessor('name', {
     header: t(`SUMMARY_REPORTS.${props.type.toUpperCase()}`),
@@ -85,17 +93,17 @@ const columns = computed(() => [
   columnHelper.accessor('avgFirstResponseTime', {
     header: t('SUMMARY_REPORTS.AVG_FIRST_RESPONSE_TIME'),
     width: 200,
-    cell: defaulSpanRender,
+    cell: timeSpanRender,
   }),
   columnHelper.accessor('avgResolutionTime', {
     header: t('SUMMARY_REPORTS.AVG_RESOLUTION_TIME'),
     width: 200,
-    cell: defaulSpanRender,
+    cell: timeSpanRender,
   }),
   columnHelper.accessor('avgReplyTime', {
     header: t('SUMMARY_REPORTS.AVG_REPLY_TIME'),
     width: 200,
-    cell: defaulSpanRender,
+    cell: timeSpanRender,
   }),
   columnHelper.accessor('resolutionsCount', {
     header: t('SUMMARY_REPORTS.RESOLUTION_COUNT'),
@@ -105,6 +113,9 @@ const columns = computed(() => [
 ]);
 
 const renderAvgTime = value => (value ? formatTimeLocalized(value, t) : '--');
+
+const timeHint = median =>
+  t('REPORT.P95_HINT', { median: renderAvgTime(median) });
 
 const renderCount = value => (value ? value.toLocaleString() : '--');
 
@@ -116,6 +127,9 @@ const tableData = computed(() =>
       avgFirstResponseTime,
       avgResolutionTime,
       avgReplyTime,
+      avgFirstResponseTimeMedian,
+      avgResolutionTimeMedian,
+      avgReplyTimeMedian,
       resolvedConversationsCount,
     } = rowMetrics;
     return {
@@ -127,6 +141,9 @@ const tableData = computed(() =>
       avgFirstResponseTime: renderAvgTime(avgFirstResponseTime),
       avgReplyTime: renderAvgTime(avgReplyTime),
       avgResolutionTime: renderAvgTime(avgResolutionTime),
+      avgFirstResponseTimeHint: timeHint(avgFirstResponseTimeMedian),
+      avgReplyTimeHint: timeHint(avgReplyTimeMedian),
+      avgResolutionTimeHint: timeHint(avgResolutionTimeMedian),
       resolutionsCount: renderCount(resolvedConversationsCount),
     };
   })

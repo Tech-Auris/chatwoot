@@ -39,6 +39,16 @@ const reportRows = useMapGetter('summaryReports/getOrigemSummaryReports');
 
 const renderAvgTime = value => (value ? formatTimeLocalized(value, t) : '--');
 const renderCount = value => (value ? value.toLocaleString() : '--');
+const timeHint = median =>
+  t('REPORT.P95_HINT', { median: renderAvgTime(median) });
+
+// Time columns show the 95th percentile; hovering shows the median.
+const timeSpanRender = cellProps =>
+  h(
+    'span',
+    { title: cellProps.row.original[`${cellProps.column.id}Hint`] },
+    cellProps.getValue()
+  );
 
 const defaultSpanRender = cellProps =>
   h(
@@ -61,17 +71,17 @@ const columns = computed(() => [
   columnHelper.accessor('avgFirstResponseTime', {
     header: t('ORIGEM_REPORTS.COLUMNS.AVG_FIRST_RESPONSE_TIME'),
     width: 200,
-    cell: defaultSpanRender,
+    cell: timeSpanRender,
   }),
   columnHelper.accessor('avgResolutionTime', {
     header: t('ORIGEM_REPORTS.COLUMNS.AVG_RESOLUTION_TIME'),
     width: 200,
-    cell: defaultSpanRender,
+    cell: timeSpanRender,
   }),
   columnHelper.accessor('avgReplyTime', {
     header: t('ORIGEM_REPORTS.COLUMNS.AVG_REPLY_TIME'),
     width: 200,
-    cell: defaultSpanRender,
+    cell: timeSpanRender,
   }),
   columnHelper.accessor('resolutionsCount', {
     header: t('ORIGEM_REPORTS.COLUMNS.RESOLUTION_COUNT'),
@@ -88,6 +98,9 @@ const tableData = computed(() =>
     avgFirstResponseTime: renderAvgTime(row.avgFirstResponseTime),
     avgResolutionTime: renderAvgTime(row.avgResolutionTime),
     avgReplyTime: renderAvgTime(row.avgReplyTime),
+    avgFirstResponseTimeHint: timeHint(row.avgFirstResponseTimeMedian),
+    avgResolutionTimeHint: timeHint(row.avgResolutionTimeMedian),
+    avgReplyTimeHint: timeHint(row.avgReplyTimeMedian),
     resolutionsCount: renderCount(row.resolvedConversationsCount),
   }))
 );

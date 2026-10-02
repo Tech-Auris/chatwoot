@@ -45,6 +45,18 @@ RSpec.describe V2::Reports::OrigemSummaryBuilder do
       )
     end
 
+    it 'reports time metrics as the 95th percentile with the median alongside' do
+      [10, 20].each do |seconds|
+        conversation = conversation_with_origem('Facebook')
+        create(:reporting_event, account: account, conversation: conversation, name: 'first_response', value: seconds)
+      end
+
+      row = builder.build.find { |r| r[:name] == 'Facebook' }
+
+      expect(row[:avg_first_response_time]).to be_within(0.001).of(19.5)
+      expect(row[:avg_first_response_time_median]).to eq(15.0)
+    end
+
     it 'ignores conversations outside the period' do
       conversation_with_origem('Google', created_at: 60.days.ago)
 

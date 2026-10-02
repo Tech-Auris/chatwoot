@@ -40,11 +40,18 @@ class V2::Reports::LabelSummaryBuilder < V2::Reports::BaseSummaryBuilder
       id: label.id,
       name: label.title,
       conversations_count: report_data[:conversation_counts][label.title] || 0,
-      avg_resolution_time: report_data[:resolution_metrics][label.title] || 0,
-      avg_first_response_time: report_data[:first_response_metrics][label.title] || 0,
-      avg_reply_time: report_data[:reply_metrics][label.title] || 0,
       resolved_conversations_count: report_data[:resolved_counts][label.title] || 0
-    }
+    }.merge(time_metrics(report_data, label.title))
+  end
+
+  # 95th percentile of each time metric plus its median (shown in the hint).
+  def time_metrics(report_data, key)
+    { avg_resolution_time: :resolution_metrics, avg_first_response_time: :first_response_metrics,
+      avg_reply_time: :reply_metrics }.each_with_object({}) do |(field, bucket), result|
+      values = report_data[bucket][key] || {}
+      result[field] = values[:p95] || 0
+      result[:"#{field}_median"] = values[:median] || 0
+    end
   end
 
   def use_business_hours?
@@ -103,10 +110,13 @@ class V2::Reports::LabelSummaryBuilder < V2::Reports::BaseSummaryBuilder
       )
       .group('tags.name')
       .order('tags.name')
-      .select(
-        'tags.name',
-        use_business_hours ? 'AVG(reporting_events.value_in_business_hours) as avg_value' : 'AVG(reporting_events.value) as avg_value'
-      )
-      .each_with_object({}) { |record, hash| hash[record.name] = record.avg_value.to_f }
+      .select('tags.name', *percentile_selects(use_business_hours))
+      .each_with_object({}) { |record, hash| hash[record.name] = { p95: record.p95_value.to_f, median: record.median_value.to_f } }
+  end
+
+  def percentile_selects(use_business_hours)
+    column = use_business_hours ? 'reporting_events.value_in_business_hours' : 'reporting_events.value'
+    ["#{Reports::TimePercentiles.sql(Reports::TimePercentiles::P95, column)} as p95_value",
+     "#{Reports::TimePercentiles.sql(Reports::TimePercentiles::MEDIAN, column)} as median_value"]
   end
 end

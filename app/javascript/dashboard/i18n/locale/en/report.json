@@ -6,6 +6,8 @@
     "DOWNLOAD_CONVERSATION_REPORTS": "Download conversation reports",
     "DATA_FETCHING_FAILED": "Failed to fetch data, please try again later.",
     "SUMMARY_FETCHING_FAILED": "Failed to fetch summary, please try again later.",
+    "P95_SUFFIX": "(P95)",
+    "P95_HINT": "95th percentile: 95% of conversations took this long or less. Unlike the average, it is not skewed by a few very slow cases. Median: {median}.",
     "TIME_UNITS": {
       "SEC": "Sec",
       "MIN": "Min",
@@ -27,15 +29,15 @@
       },
       "FIRST_RESPONSE_TIME": {
         "NAME": "First Response Time",
-        "DESC": "( Avg )",
+        "DESC": "( P95 )",
         "INFO_TEXT": "Total number of conversations used for computation:",
-        "TOOLTIP_TEXT": "First Response Time is {metricValue} (based on {conversationCount} conversations)"
+        "TOOLTIP_TEXT": "First Response Time (P95) is {metricValue} (based on {conversationCount} conversations)"
       },
       "RESOLUTION_TIME": {
         "NAME": "Resolution Time",
-        "DESC": "( Avg )",
+        "DESC": "( P95 )",
         "INFO_TEXT": "Total number of conversations used for computation:",
-        "TOOLTIP_TEXT": "Resolution Time is {metricValue} (based on {conversationCount} conversations)"
+        "TOOLTIP_TEXT": "Resolution Time (P95) is {metricValue} (based on {conversationCount} conversations)"
       },
       "RESOLUTION_COUNT": {
         "NAME": "Resolution Count",
@@ -51,7 +53,7 @@
       },
       "REPLY_TIME": {
         "NAME": "Customer waiting time",
-        "TOOLTIP_TEXT": "Waiting time is {metricValue} (based on {conversationCount} replies)",
+        "TOOLTIP_TEXT": "Waiting time (P95) is {metricValue} (based on {conversationCount} replies)",
         "DESC": ""
       }
     },
@@ -159,15 +161,15 @@
       },
       "FIRST_RESPONSE_TIME": {
         "NAME": "First Response Time",
-        "DESC": "( Avg )",
+        "DESC": "( P95 )",
         "INFO_TEXT": "Total number of conversations used for computation:",
-        "TOOLTIP_TEXT": "First Response Time is {metricValue} (based on {conversationCount} conversations)"
+        "TOOLTIP_TEXT": "First Response Time (P95) is {metricValue} (based on {conversationCount} conversations)"
       },
       "RESOLUTION_TIME": {
         "NAME": "Resolution Time",
-        "DESC": "( Avg )",
+        "DESC": "( P95 )",
         "INFO_TEXT": "Total number of conversations used for computation:",
-        "TOOLTIP_TEXT": "Resolution Time is {metricValue} (based on {conversationCount} conversations)"
+        "TOOLTIP_TEXT": "Resolution Time (P95) is {metricValue} (based on {conversationCount} conversations)"
       },
       "RESOLUTION_COUNT": {
         "NAME": "Resolution Count",
@@ -212,9 +214,9 @@
     "COLUMNS": {
       "NAME": "Lead origin",
       "CONVERSATIONS": "Conversations",
-      "AVG_FIRST_RESPONSE_TIME": "Avg. first response time",
-      "AVG_RESOLUTION_TIME": "Avg. resolution time",
-      "AVG_REPLY_TIME": "Avg. customer wait time",
+      "AVG_FIRST_RESPONSE_TIME": "First response time (P95)",
+      "AVG_RESOLUTION_TIME": "Resolution time (P95)",
+      "AVG_REPLY_TIME": "Customer wait time (P95)",
       "RESOLUTION_COUNT": "Resolution count"
     }
   },
@@ -245,15 +247,15 @@
       },
       "FIRST_RESPONSE_TIME": {
         "NAME": "First Response Time",
-        "DESC": "( Avg )",
+        "DESC": "( P95 )",
         "INFO_TEXT": "Total number of conversations used for computation:",
-        "TOOLTIP_TEXT": "First Response Time is {metricValue} (based on {conversationCount} conversations)"
+        "TOOLTIP_TEXT": "First Response Time (P95) is {metricValue} (based on {conversationCount} conversations)"
       },
       "RESOLUTION_TIME": {
         "NAME": "Resolution Time",
-        "DESC": "( Avg )",
+        "DESC": "( P95 )",
         "INFO_TEXT": "Total number of conversations used for computation:",
-        "TOOLTIP_TEXT": "Resolution Time is {metricValue} (based on {conversationCount} conversations)"
+        "TOOLTIP_TEXT": "Resolution Time (P95) is {metricValue} (based on {conversationCount} conversations)"
       },
       "RESOLUTION_COUNT": {
         "NAME": "Resolution Count",
@@ -320,15 +322,15 @@
       },
       "FIRST_RESPONSE_TIME": {
         "NAME": "First Response Time",
-        "DESC": "( Avg )",
+        "DESC": "( P95 )",
         "INFO_TEXT": "Total number of conversations used for computation:",
-        "TOOLTIP_TEXT": "First Response Time is {metricValue} (based on {conversationCount} conversations)"
+        "TOOLTIP_TEXT": "First Response Time (P95) is {metricValue} (based on {conversationCount} conversations)"
       },
       "RESOLUTION_TIME": {
         "NAME": "Resolution Time",
-        "DESC": "( Avg )",
+        "DESC": "( P95 )",
         "INFO_TEXT": "Total number of conversations used for computation:",
-        "TOOLTIP_TEXT": "Resolution Time is {metricValue} (based on {conversationCount} conversations)"
+        "TOOLTIP_TEXT": "Resolution Time (P95) is {metricValue} (based on {conversationCount} conversations)"
       },
       "RESOLUTION_COUNT": {
         "NAME": "Resolution Count",
@@ -396,15 +398,15 @@
       },
       "FIRST_RESPONSE_TIME": {
         "NAME": "First Response Time",
-        "DESC": "( Avg )",
+        "DESC": "( P95 )",
         "INFO_TEXT": "Total number of conversations used for computation:",
-        "TOOLTIP_TEXT": "First Response Time is {metricValue} (based on {conversationCount} conversations)"
+        "TOOLTIP_TEXT": "First Response Time (P95) is {metricValue} (based on {conversationCount} conversations)"
       },
       "RESOLUTION_TIME": {
         "NAME": "Resolution Time",
-        "DESC": "( Avg )",
+        "DESC": "( P95 )",
         "INFO_TEXT": "Total number of conversations used for computation:",
-        "TOOLTIP_TEXT": "Resolution Time is {metricValue} (based on {conversationCount} conversations)"
+        "TOOLTIP_TEXT": "Resolution Time (P95) is {metricValue} (based on {conversationCount} conversations)"
       },
       "RESOLUTION_COUNT": {
         "NAME": "Resolution Count",
@@ -660,9 +662,9 @@
     "AGENT": "Agent",
     "TEAM": "Team",
     "LABEL": "Label",
-    "AVG_RESOLUTION_TIME": "Avg. Resolution Time",
-    "AVG_FIRST_RESPONSE_TIME": "Avg. First Response Time",
-    "AVG_REPLY_TIME": "Avg. Customer Waiting Time",
+    "AVG_RESOLUTION_TIME": "Resolution Time (P95)",
+    "AVG_FIRST_RESPONSE_TIME": "First Response Time (P95)",
+    "AVG_REPLY_TIME": "Customer Waiting Time (P95)",
     "RESOLUTION_COUNT": "Resolution Count",
     "CONVERSATIONS": "No. of conversations"
   },

@@ -21,8 +21,13 @@ const props = defineProps({
 
 const { t } = useI18n();
 
-const { calculateTrend, displayMetric, isAverageMetricType, fetchingStatus } =
-  useReportMetrics(props.accountSummaryKey, props.summaryFetchingKey);
+const {
+  calculateTrend,
+  displayMetric,
+  isAverageMetricType,
+  timeMetricHint,
+  fetchingStatus,
+} = useReportMetrics(props.accountSummaryKey, props.summaryFetchingKey);
 
 const trendColor = (value, key) => {
   if (isAverageMetricType(key)) {
@@ -40,6 +45,9 @@ const trendColor = (value, key) => {
   <div class="text-n-slate-11">
     <span class="text-sm">
       {{ metric.NAME }}
+      <template v-if="isAverageMetricType(metric.KEY)">
+        {{ t('REPORT.P95_SUFFIX') }}
+      </template>
     </span>
     <div class="flex items-end text-n-slate-12">
       <div v-if="fetchingStatus === STATUS.FETCHING">
@@ -53,6 +61,9 @@ const trendColor = (value, key) => {
       </div>
       <div
         v-else-if="fetchingStatus === STATUS.FINISHED"
+        v-tooltip.top="
+          isAverageMetricType(metric.KEY) ? timeMetricHint(metric.KEY) : null
+        "
         class="text-xl font-medium"
       >
         {{ displayMetric(metric.KEY) }}

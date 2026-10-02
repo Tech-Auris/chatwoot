@@ -1,10 +1,18 @@
+# Time metrics are reported as their 95th percentile plus median (see Reports::TimePercentiles).
 class Reports::RawDataSource < Reports::DataSource
+  P95 = Reports::TimePercentiles::P95
+  MEDIAN = Reports::TimePercentiles::MEDIAN
+
   def timeseries
     average_metric? ? average_timeseries : count_timeseries
   end
 
   def aggregate
-    average_metric? ? average_scope.average(average_value_key) : count_scope.count
+    average_metric? ? percentile(P95) : count_scope.count
+  end
+
+  def median
+    percentile(MEDIAN) if average_metric?
   end
 
   def summary
@@ -25,7 +33,7 @@ class Reports::RawDataSource < Reports::DataSource
   end
 
   def average_timeseries
-    grouped_average_time = grouped_average_scope.average(average_value_key)
+    grouped_average_time = grouped_percentile(grouped_average_scope, P95)
     grouped_event_count = grouped_average_scope.count
 
     grouped_average_time.each_with_object([]) do |(event_date, average_time), results|
@@ -35,6 +43,22 @@ class Reports::RawDataSource < Reports::DataSource
         count: grouped_event_count[event_date]
       }
     end
+  end
+
+  def percentile(fraction)
+    average_scope.pick(Arel.sql(percentile_sql(fraction)))
+  end
+
+  # groupdate has no percentile calculation: pluck it per period bucket and let
+  # groupdate fill the empty buckets exactly as it does for `.average`.
+  def grouped_percentile(relation, fraction)
+    buckets = relation.group_values.map { |group| Arel.sql(group.to_s) }
+    rows = relation.pluck(*buckets, Arel.sql(percentile_sql(fraction))).to_h
+    Groupdate.process_result(relation, rows, default_value: 0)
+  end
+
+  def percentile_sql(fraction, event_name: nil)
+    Reports::TimePercentiles.sql(fraction, average_value_key, event_name: event_name)
   end
 
   def grouped_average_scope
@@ -119,14 +143,15 @@ class Reports::RawDataSource < Reports::DataSource
   end
 
   def summary_select_fields
-    ["#{summary_group_by_key} as #{summary_index_key}"] + summary_metrics.map { |definition| summary_select_field(definition) }
+    ["#{summary_group_by_key} as #{summary_index_key}"] + summary_metrics.flat_map { |definition| summary_select_field(definition) }
   end
 
   def summary_select_field(definition)
     if definition.count?
       "COUNT(CASE WHEN name = '#{definition.raw_event_name}' THEN 1 END) as #{definition.summary_key}"
     else
-      "AVG(CASE WHEN name = '#{definition.raw_event_name}' THEN #{average_value_key} END) as #{definition.summary_key}"
+      ["#{percentile_sql(P95, event_name: definition.raw_event_name)} as #{definition.summary_key}",
+       "#{percentile_sql(MEDIAN, event_name: definition.raw_event_name)} as #{definition.summary_key}_median"]
     end
   end
 
@@ -134,6 +159,7 @@ class Reports::RawDataSource < Reports::DataSource
     summary_metrics.each_with_object({ conversations_count: conversations_count.to_i }) do |definition, attributes|
       value = record&.public_send(definition.summary_key)
       attributes[definition.summary_key] = definition.count? ? value.to_i : value
+      attributes[:"#{definition.summary_key}_median"] = record&.public_send(:"#{definition.summary_key}_median") unless definition.count?
     end
   end
 

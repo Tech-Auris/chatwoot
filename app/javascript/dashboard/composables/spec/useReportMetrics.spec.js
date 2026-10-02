@@ -7,7 +7,9 @@ vi.mock('dashboard/composables/store');
 vi.mock('vue-i18n', () => ({
   // The composable only reads `t`; return the key unchanged so the spec
   // stays focused on the metric-routing logic, not translation output.
-  useI18n: () => ({ t: key => key }),
+  useI18n: () => ({
+    t: (key, params) => (params ? `${key} ${JSON.stringify(params)}` : key),
+  }),
 }));
 vi.mock('dashboard/helper/timeFormatter', () => ({
   formatTimeLocalized: vi.fn(time => `formatted_${time}`),
@@ -40,6 +42,17 @@ describe('useReportMetrics', () => {
     expect(isAverageMetricType('avg_resolution_time')).toBe(true);
     expect(isAverageMetricType('reply_time')).toBe(true);
     expect(isAverageMetricType('conversations_count')).toBe(false);
+  });
+
+  it('builds the P95 hint with the median of a time metric', () => {
+    useMapGetter.mockReturnValue(
+      ref({ ...summary, avg_first_response_time_median: 42 })
+    );
+    const { timeMetricHint } = useReportMetrics();
+
+    expect(timeMetricHint('avg_first_response_time')).toBe(
+      'REPORT.P95_HINT {"median":"formatted_42"}'
+    );
   });
 
   it('displays metrics correctly for account', () => {

@@ -61,11 +61,18 @@ class V2::Reports::OrigemSummaryBuilder
       id: id,
       name: origem_key.presence || 'Sem origem',
       conversations_count: fetch.call(:conversation_counts),
-      avg_resolution_time: fetch.call(:resolution_metrics),
-      avg_first_response_time: fetch.call(:first_response_metrics),
-      avg_reply_time: fetch.call(:reply_metrics),
       resolved_conversations_count: fetch.call(:resolved_counts)
-    }
+    }.merge(time_metrics(report_data, lookup_key))
+  end
+
+  # 95th percentile of each time metric plus its median (shown in the hint).
+  def time_metrics(report_data, key)
+    { avg_resolution_time: :resolution_metrics, avg_first_response_time: :first_response_metrics,
+      avg_reply_time: :reply_metrics }.each_with_object({}) do |(field, bucket), result|
+      p95, median = report_data[bucket][key]
+      result[field] = p95 || 0
+      result[:"#{field}_median"] = median || 0
+    end
   end
 
   def use_business_hours?
@@ -108,7 +115,9 @@ class V2::Reports::OrigemSummaryBuilder
       .joins(:conversation)
       .where(conversations: conversation_filter, name: event_name)
       .group(Arel.sql(ORIGEM_EXPR))
-      .pluck(Arel.sql("#{ORIGEM_EXPR} AS bucket"), Arel.sql("AVG(#{value_column}) AS avg_value"))
-      .then { |rows| rows.to_h.transform_values(&:to_f) }
+      .pluck(Arel.sql(ORIGEM_EXPR),
+             Arel.sql(Reports::TimePercentiles.sql(Reports::TimePercentiles::P95, value_column)),
+             Arel.sql(Reports::TimePercentiles.sql(Reports::TimePercentiles::MEDIAN, value_column)))
+      .to_h { |bucket, p95, median| [bucket, [p95.to_f, median.to_f]] }
   end
 end

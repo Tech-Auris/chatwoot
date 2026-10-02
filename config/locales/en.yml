@@ -235,45 +235,47 @@ en:
     agent_csv:
       agent_name: Agent name
       conversations_count: Assigned conversations
-      avg_first_response_time: Avg first response time
-      avg_resolution_time: Avg resolution time
+      avg_first_response_time: First response time (P95)
+      avg_resolution_time: Resolution time (P95)
       resolution_count: Resolution Count
-      avg_customer_waiting_time: Avg customer waiting time
+      avg_customer_waiting_time: Customer waiting time (P95)
     inbox_csv:
       inbox_name: Inbox name
       inbox_type: Inbox type
       conversations_count: No. of conversations
-      avg_first_response_time: Avg first response time
-      avg_resolution_time: Avg resolution time
+      avg_first_response_time: First response time (P95)
+      avg_resolution_time: Resolution time (P95)
+      avg_customer_waiting_time: Customer waiting time (P95)
+      resolution_count: Resolution Count
     label_csv:
       label_title: Label
       conversations_count: No. of conversations
-      avg_first_response_time: Avg first response time
-      avg_resolution_time: Avg resolution time
-      avg_reply_time: Avg reply time
+      avg_first_response_time: First response time (P95)
+      avg_resolution_time: Resolution time (P95)
+      avg_reply_time: Reply time (P95)
       resolution_count: Resolution Count
     origem_csv:
       origem: Lead origin
       conversations_count: No. of conversations
-      avg_first_response_time: Avg first response time
-      avg_resolution_time: Avg resolution time
-      avg_reply_time: Avg reply time
+      avg_first_response_time: First response time (P95)
+      avg_resolution_time: Resolution time (P95)
+      avg_reply_time: Reply time (P95)
       resolution_count: Resolution Count
     team_csv:
       team_name: Team name
       conversations_count: Conversations count
-      avg_first_response_time: Avg first response time
-      avg_resolution_time: Avg resolution time
+      avg_first_response_time: First response time (P95)
+      avg_resolution_time: Resolution time (P95)
       resolution_count: Resolution Count
-      avg_customer_waiting_time: Avg customer waiting time
+      avg_customer_waiting_time: Customer waiting time (P95)
     conversation_csv:
       conversations_count: Conversations
       incoming_messages_count: Messages received
       outgoing_messages_count: Messages sent
-      avg_first_response_time: Avg first response time
-      avg_resolution_time: Avg resolution time
+      avg_first_response_time: First response time (P95)
+      avg_resolution_time: Resolution time (P95)
       resolution_count: Resolution count
-      avg_customer_waiting_time: Avg customer waiting time
+      avg_customer_waiting_time: Customer waiting time (P95)
     conversation_traffic_csv:
       timezone: Timezone
     sla_csv:
