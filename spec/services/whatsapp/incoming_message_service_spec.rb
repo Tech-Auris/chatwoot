@@ -273,6 +273,22 @@ describe Whatsapp::IncomingMessageService do
         expect(message.content).to eq('This message is unavailable.')
         expect(message.content_attributes['is_unsupported']).to be(true)
       end
+
+      it "keeps Meta's reason on the unsupported message" do
+        params = {
+          'contacts' => [{ 'profile' => { 'name' => 'Sojan Jose' }, 'wa_id' => '2423423243' }],
+          'messages' => [{
+            'errors' => [{ 'code' => 131_051, 'title' => 'Message type unknown',
+                           'error_data' => { 'details' => 'Message type is currently not supported' } }],
+            :from => '2423423243', :id => 'wamid.unsupported-reason', :timestamp => '1667047370', :type => 'unsupported'
+          }]
+        }.with_indifferent_access
+
+        described_class.new(inbox: whatsapp_channel.inbox, params: params).perform
+
+        message = whatsapp_channel.inbox.messages.last
+        expect(message.content_attributes['external_error']).to eq('131051 - Message type unknown - Message type is currently not supported')
+      end
     end
 
     context 'when valid status params' do
