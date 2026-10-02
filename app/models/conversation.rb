@@ -68,6 +68,7 @@ class Conversation < ApplicationRecord
   include Labelable
   include LlmFormattable
   include AssignmentHandler
+  include AiAssigneeSync
   include AutoAssignmentHandler
   include ActivityMessageHandler
   include UrlHelper

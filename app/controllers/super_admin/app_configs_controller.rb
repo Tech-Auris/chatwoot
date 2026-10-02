@@ -116,7 +116,10 @@ class SuperAdmin::AppConfigsController < SuperAdmin::ApplicationController
       # so downstream consumers (n8n, webhooks) see the state; this flag only
       # decides whether the dashboard renders the chip. Turn on globally on
       # 01/10/2026 when Meta's per-message service pricing kicks in.
-      'whatsapp_pricing' => %w[WHATSAPP_MESSAGING_WINDOW_INDICATOR_ENABLED]
+      'whatsapp_pricing' => %w[WHATSAPP_MESSAGING_WINDOW_INDICATOR_ENABLED],
+      # The AI secretary's user ("IA | Auris"): assigning a conversation to it
+      # turns the AI status on, unassigning it turns it off.
+      'secretary' => %w[SECRETARY_AI_USER_ID]
     }
   end
 

@@ -186,3 +186,9 @@ whatsapp_pricing:
   enabled: true
   icon: 'icon-time-line'
   config_key: 'whatsapp_pricing'
+secretary:
+  name: 'Secretary'
+  description: 'The AI secretary user ("IA | Auris"). Assigning a conversation to it turns the AI status on; unassigning it turns the AI status off.'
+  enabled: true
+  icon: 'icon-robot-line'
+  config_key: 'secretary'
