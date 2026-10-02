@@ -17,7 +17,7 @@ class MessageContentPresenter < SimpleDelegator
   # `content_attributes.is_unsupported` flag on the same payload is what
   # a webhook consumer should branch on.
   def webhook_content
-    return '' if content_attributes.is_a?(Hash) && content_attributes['is_unsupported']
+    return Message::UNSUPPORTED_WEBHOOK_CONTENT if content_attributes.is_a?(Hash) && content_attributes['is_unsupported']
 
     Messages::WebhookContentNormalizer.normalize(content_with_survey_link)
   end
