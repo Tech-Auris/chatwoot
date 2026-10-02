@@ -210,45 +210,47 @@ pt_BR:
     agent_csv:
       agent_name: Nome do Agente
       conversations_count: Conversas atribuídas
-      avg_first_response_time: Tempo médio de primeira resposta
-      avg_resolution_time: Tempo médio de resolução
+      avg_first_response_time: Tempo de primeira resposta (P95)
+      avg_resolution_time: Tempo de resolução (P95)
       resolution_count: Contagem de Resolução
-      avg_customer_waiting_time: Tempo médio de espera do cliente
+      avg_customer_waiting_time: Tempo de espera do cliente (P95)
     inbox_csv:
       inbox_name: Nome da Caixa de Entrada
       inbox_type: Tipo da Caixa de Entrada
       conversations_count: Nº de Conversas
-      avg_first_response_time: Tempo médio de primeira resposta
-      avg_resolution_time: Tempo médio de resolução
+      avg_first_response_time: Tempo de primeira resposta (P95)
+      avg_resolution_time: Tempo de resolução (P95)
+      avg_customer_waiting_time: Tempo de espera do cliente (P95)
+      resolution_count: Contagem de Resolução
     label_csv:
       label_title: Etiqueta
       conversations_count: Nº de Conversas
-      avg_first_response_time: Tempo médio de primeira resposta
-      avg_resolution_time: Tempo médio de resolução
-      avg_reply_time: Tempo médio de resposta
+      avg_first_response_time: Tempo de primeira resposta (P95)
+      avg_resolution_time: Tempo de resolução (P95)
+      avg_reply_time: Tempo de resposta (P95)
       resolution_count: Contagem de Resolução
     origem_csv:
       origem: Origem do lead
       conversations_count: Nº de Conversas
-      avg_first_response_time: Tempo médio de primeira resposta
-      avg_resolution_time: Tempo médio de resolução
-      avg_reply_time: Tempo médio de resposta
+      avg_first_response_time: Tempo de primeira resposta (P95)
+      avg_resolution_time: Tempo de resolução (P95)
+      avg_reply_time: Tempo de resposta (P95)
       resolution_count: Contagem de Resolução
     team_csv:
       team_name: Nome do Time
       conversations_count: Contagem de conversas
-      avg_first_response_time: Tempo médio de primeira resposta
-      avg_resolution_time: Tempo médio de resolução
+      avg_first_response_time: Tempo de primeira resposta (P95)
+      avg_resolution_time: Tempo de resolução (P95)
       resolution_count: Contagem de Resolução
-      avg_customer_waiting_time: Tempo médio de espera do cliente
+      avg_customer_waiting_time: Tempo de espera do cliente (P95)
     conversation_csv:
       conversations_count: Conversas
       incoming_messages_count: Mensagens Recebidas
       outgoing_messages_count: Mensagens enviadas
-      avg_first_response_time: Tempo médio de primeira resposta
-      avg_resolution_time: Tempo médio de resolução
+      avg_first_response_time: Tempo de primeira resposta (P95)
+      avg_resolution_time: Tempo de resolução (P95)
       resolution_count: Quantidade de resoluções
-      avg_customer_waiting_time: Tempo médio de espera do cliente
+      avg_customer_waiting_time: Tempo de espera do cliente (P95)
     conversation_traffic_csv:
       timezone: Fuso horário
     sla_csv:

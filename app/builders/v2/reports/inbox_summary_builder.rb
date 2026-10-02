@@ -25,7 +25,7 @@ class V2::Reports::InboxSummaryBuilder < V2::Reports::BaseSummaryBuilder
       avg_resolution_time: avg_resolution_time[inbox.id],
       avg_first_response_time: avg_first_response_time[inbox.id],
       avg_reply_time: avg_reply_time[inbox.id]
-    }
+    }.merge(medians_for(inbox.id))
   end
 
   def group_by_key

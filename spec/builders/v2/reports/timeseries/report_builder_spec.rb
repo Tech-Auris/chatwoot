@@ -53,7 +53,7 @@ describe V2::Reports::Timeseries::ReportBuilder do
             { count: 0, timestamp: 1_603_411_200, value: 0 },
             { count: 0, timestamp: 1_603_497_600, value: 0 },
             { count: 0, timestamp: 1_603_584_000, value: 0 },
-            { count: 2, timestamp: 1_603_670_400, value: 90.0 }
+            { count: 2, timestamp: 1_603_670_400, value: 99.0 }
           ]
         )
       end
@@ -73,7 +73,7 @@ describe V2::Reports::Timeseries::ReportBuilder do
               { count: 0, timestamp: 1_603_411_200, value: 0 },
               { count: 0, timestamp: 1_603_497_600, value: 0 },
               { count: 0, timestamp: 1_603_584_000, value: 0 },
-              { count: 2, timestamp: 1_603_670_400, value: 15.0 }
+              { count: 2, timestamp: 1_603_670_400, value: 19.5 }
             ]
           )
         end
@@ -87,7 +87,7 @@ describe V2::Reports::Timeseries::ReportBuilder do
           expect(timeseries_values).to eq(
             [
               { count: 1, timestamp: (current_time - 1.week).beginning_of_week(:sunday).to_i, value: 93.0 },
-              { count: 2, timestamp: current_time.beginning_of_week(:sunday).to_i, value: 90.0 }
+              { count: 2, timestamp: current_time.beginning_of_week(:sunday).to_i, value: 99.0 }
             ]
           )
         end
@@ -102,7 +102,7 @@ describe V2::Reports::Timeseries::ReportBuilder do
           expect(timeseries_values).to eq(
             [
               { count: 1, timestamp: (current_time - 1.week).in_time_zone('Chennai').beginning_of_week(:sunday).to_i, value: 93.0 },
-              { count: 2, timestamp: current_time.in_time_zone('Chennai').beginning_of_week(:sunday).to_i, value: 90.0 }
+              { count: 2, timestamp: current_time.in_time_zone('Chennai').beginning_of_week(:sunday).to_i, value: 99.0 }
             ]
           )
         end
@@ -165,8 +165,12 @@ describe V2::Reports::Timeseries::ReportBuilder do
 
     describe '#aggregate_value' do
       context 'when there is no filter applied' do
-        it 'returns the correct average value' do
-          expect(subject.aggregate_value).to eq 91.0
+        it 'returns the 95th percentile, not the average' do
+          expect(subject.aggregate_value).to be_within(0.001).of(99.3)
+        end
+
+        it 'returns the median for the hint' do
+          expect(subject.median_value).to eq 93.0
         end
       end
 

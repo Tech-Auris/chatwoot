@@ -20,7 +20,7 @@ class V2::Reports::TeamSummaryBuilder < V2::Reports::BaseSummaryBuilder
       avg_resolution_time: avg_resolution_time[team.id],
       avg_first_response_time: avg_first_response_time[team.id],
       avg_reply_time: avg_reply_time[team.id]
-    }
+    }.merge(medians_for(team.id))
   end
 
   def group_by_key

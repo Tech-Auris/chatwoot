@@ -16,6 +16,14 @@ class V2::Reports::BaseSummaryBuilder
     @avg_resolution_time = results.transform_values { |data| data[:avg_resolution_time] }
     @avg_first_response_time = results.transform_values { |data| data[:avg_first_response_time] }
     @avg_reply_time = results.transform_values { |data| data[:avg_reply_time] }
+    @medians = results.transform_values do |data|
+      data.slice(:avg_resolution_time_median, :avg_first_response_time_median, :avg_reply_time_median)
+    end
+  end
+
+  # Median of each time metric, shown in the hint next to its 95th percentile.
+  def medians_for(id)
+    @medians[id] || {}
   end
 
   def group_by_key

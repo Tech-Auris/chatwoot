@@ -55,10 +55,23 @@ export function useReportMetrics(
     return Number(accountSummary.value[key] || '').toLocaleString();
   };
 
+  /**
+   * Hint for a time metric: it is shown as the 95th percentile, and the hint
+   * explains that and gives the median.
+   *
+   * @param {string} key - The key of the time metric.
+   * @returns {string} The hint text.
+   */
+  const timeMetricHint = key =>
+    t('REPORT.P95_HINT', {
+      median: formatTimeLocalized(accountSummary.value[`${key}_median`], t),
+    });
+
   return {
     calculateTrend,
     isAverageMetricType,
     displayMetric,
+    timeMetricHint,
     fetchingStatus,
   };
 }

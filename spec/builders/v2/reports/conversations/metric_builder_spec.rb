@@ -5,7 +5,7 @@ RSpec.describe V2::Reports::Conversations::MetricBuilder, type: :model do
 
   let(:account) { create(:account) }
   let(:params) { { since: '2023-01-01', until: '2024-01-01' } }
-  let(:builder_instance) { instance_double(V2::Reports::Timeseries::ReportBuilder, aggregate_value: 42) }
+  let(:builder_instance) { instance_double(V2::Reports::Timeseries::ReportBuilder, aggregate_value: 42, median_value: 7) }
 
   before do
     allow(V2::Reports::Timeseries::ReportBuilder).to receive(:new).and_return(builder_instance)
@@ -20,9 +20,12 @@ RSpec.describe V2::Reports::Conversations::MetricBuilder, type: :model do
           incoming_messages_count: 42,
           outgoing_messages_count: 42,
           avg_first_response_time: 42,
+          avg_first_response_time_median: 7,
           avg_resolution_time: 42,
+          avg_resolution_time_median: 7,
           resolutions_count: 42,
-          reply_time: 42
+          reply_time: 42,
+          reply_time_median: 7
         }
       )
     end

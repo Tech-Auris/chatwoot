@@ -6,4 +6,8 @@ class V2::Reports::Timeseries::ReportBuilder < V2::Reports::Timeseries::BaseTime
   def aggregate_value
     data_source.aggregate
   end
+
+  def median_value
+    data_source.median
+  end
 end
