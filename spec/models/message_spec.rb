@@ -489,23 +489,23 @@ RSpec.describe Message do
     # WhatsApp `type: unsupported` messages carry a localized placeholder so
     # the dashboard renders something, but leaking that placeholder into
     # webhooks makes downstream AI agents treat it as a real customer
-    # message. Blank the content field on the way out; keep the flag on
-    # `content_attributes` so consumers can branch on it.
+    # message. It goes out as a plain greeting so the AI still answers; the
+    # flag stays on `content_attributes` so consumers can branch on it.
     context 'when the message is an unsupported placeholder' do
       let(:message) do
         create(:message, content: 'Esta mensagem não é suportada.',
                          content_attributes: { is_unsupported: true })
       end
 
-      it 'sends a blank content on webhook_data' do
-        expect(message.webhook_data[:content]).to eq('')
+      it 'sends a greeting as content on webhook_data' do
+        expect(message.webhook_data[:content]).to eq('Olá')
         expect(message.webhook_data[:content_attributes]['is_unsupported']).to be(true)
       end
 
-      it 'sends a blank content on webhook_push_event_data' do
+      it 'sends a greeting as content on webhook_push_event_data' do
         payload = message.webhook_push_event_data
-        expect(payload[:content]).to eq('')
-        expect(payload[:processed_message_content]).to eq('')
+        expect(payload[:content]).to eq('Olá')
+        expect(payload[:processed_message_content]).to eq('Olá')
       end
     end
   end

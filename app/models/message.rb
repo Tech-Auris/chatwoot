@@ -209,10 +209,14 @@ class Message < ApplicationRecord
   # WhatsApp `type: unsupported` messages carry a localized placeholder
   # ("Esta mensagem não é suportada...") so the dashboard has something to
   # render, but that string leaks into external webhooks (n8n, AI agents)
-  # as if it were the customer's message. Strip it on the way out — the
+  # as if it were the customer's message. It goes out as a plain greeting
+  # instead, so the AI still answers when such a message opens the
+  # conversation (e.g. some click-to-WhatsApp ads) — the
   # `content_attributes.is_unsupported` flag stays for consumers to branch on.
+  UNSUPPORTED_WEBHOOK_CONTENT = 'Olá'.freeze
+
   def webhook_safe_content(source)
-    return '' if content_attributes.is_a?(Hash) && content_attributes['is_unsupported']
+    return UNSUPPORTED_WEBHOOK_CONTENT if content_attributes.is_a?(Hash) && content_attributes['is_unsupported']
 
     Messages::WebhookContentNormalizer.normalize(source)
   end
