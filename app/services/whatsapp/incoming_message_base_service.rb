@@ -186,13 +186,22 @@ class Whatsapp::IncomingMessageBaseService # rubocop:disable Metrics/ClassLength
   # WhatsApp delivers messages it cannot render (e.g. coexistence companion-device syncs that
   # fail with error 131060) as type: unsupported with no content. We still persist a placeholder
   # so the contact/conversation isn't created "headless" and agents know to check the WhatsApp app.
+  #
+  # Meta's reason (code, title and details) is kept on the message: without it there
+  # is no way to tell which ad format or message kind keeps coming in unsupported.
   def create_unsupported_message(message)
-    log_error(message) if error_webhook_event?(message)
+    Rails.logger.warn "Whatsapp unsupported message: #{message.to_json}"
     process_in_reply_to(message)
     create_message(message, source_id: message[:id])
     @message.content = I18n.t('conversations.messages.whatsapp.unsupported_message')
     @message.content_attributes = @message.content_attributes.merge(is_unsupported: true)
+    @message.external_error = unsupported_reason(message) if error_webhook_event?(message)
     @message.save!
+  end
+
+  def unsupported_reason(message)
+    error = message[:errors].first
+    [error[:code], error[:title], error.dig(:error_data, :details)].compact_blank.join(' - ')
   end
 
   # Cloud delivers a reaction removal as a webhook with empty emoji. Our schema
