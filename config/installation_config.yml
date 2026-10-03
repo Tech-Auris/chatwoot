@@ -616,8 +616,8 @@
   locked: false
   type: secret
 - name: AUTENTIQUE_WEBHOOK_SECRET
-  display_title: 'Autentique — segredo do webhook'
-  description: 'Segredo do webhook cadastrado no painel de desenvolvedor do Autentique. Usado para conferir que cada aviso de assinatura veio mesmo do Autentique.'
+  display_title: 'Autentique — código do webhook'
+  description: 'Uma sequência aleatória longa, criada por você (ex.: gerada num gerenciador de senhas). Ela vai no fim da URL do webhook, mostrada abaixo: só quem tem a URL completa consegue avisar o AurisChat.'
   value: ''
   locked: false
   type: secret

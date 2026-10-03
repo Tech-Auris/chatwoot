@@ -10,13 +10,20 @@
     Auris assina cada contrato automaticamente, antes de enviar ao cliente.
   </p>
 
+  <% webhook_code = InstallationConfig.find_by(name: 'AUTENTIQUE_WEBHOOK_SECRET')&.value.presence %>
   <div class="mb-4 p-3 rounded border border-slate-100 bg-slate-25">
-    <p class="text-sm text-slate-600">
-      <strong>Webhook:</strong> cadastre no painel de desenvolvedor do Autentique a URL
-      <code class="px-1 bg-slate-100 rounded"><%= "#{ENV.fetch('FRONTEND_URL', request.base_url)}/webhooks/commercial/autentique" %></code>
-      com os eventos <code>signature.accepted</code>, <code>signature.rejected</code> e <code>document.finished</code>,
-      e salve aqui o segredo que ele gerar.
-    </p>
+    <% if webhook_code %>
+      <p class="text-sm text-slate-600">
+        <strong>Webhook:</strong> no painel de desenvolvedor do Autentique, cadastre um endpoint com a URL
+        <code class="px-1 bg-slate-100 rounded break-all"><%= "#{ENV.fetch('FRONTEND_URL', request.base_url)}/webhooks/commercial/autentique/#{webhook_code}" %></code>,
+        formato JSON, e marque os eventos <code>signature.accepted</code> e <code>signature.rejected</code> (tipo Assinatura)
+        e <code>document.finished</code> (tipo Documento). A autenticação do Autentique (Pro) não é necessária.
+      </p>
+    <% else %>
+      <p class="text-sm text-slate-600">
+        <strong>Webhook:</strong> salve um <strong>código do webhook</strong> acima para ver a URL a cadastrar no Autentique.
+      </p>
+    <% end %>
   </div>
 
   <% if token.blank? %>
