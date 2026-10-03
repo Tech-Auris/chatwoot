@@ -50,6 +50,13 @@ RSpec.describe Sales::GenerateContractService do
     expect { perform }.to have_enqueued_job(Sales::ContractClickupCommentJob).with(kind_of(Integer), 'generated')
   end
 
+  it 'asks Autentique for the signing link when the e-mail signer has none' do
+    document['signatures'][1] = { 'public_id' => 'sig-maria', 'email' => 'maria@clinica.com.br', 'link' => nil }
+    allow(client).to receive(:signature_link).with('sig-maria').and_return('https://assina.ae/novo')
+
+    expect(perform.signing_url).to eq('https://assina.ae/novo')
+  end
+
   it 'does not sign for Auris when the automatic signature is off' do
     Sales::ContractSettings.update!(enabled: true, auto_sign: false)
 

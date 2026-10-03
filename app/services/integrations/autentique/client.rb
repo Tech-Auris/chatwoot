@@ -72,6 +72,13 @@ class Integrations::Autentique::Client
     query('mutation($id: UUID!) { signDocument(id: $id) }', id: id).fetch('signDocument')
   end
 
+  # A signer invited by e-mail gets no link on the document; this creates the
+  # one the customer opens from the hiring area ("Conferir contrato").
+  def signature_link(public_id)
+    query('mutation($public_id: UUID!) { createLinkToSignature(public_id: $public_id) { short_link } }',
+          public_id: public_id).dig('createLinkToSignature', 'short_link')
+  end
+
   def update_deadline(id, deadline_at)
     query('mutation($id: UUID!, $document: UpdateDocumentInput!) { updateDocument(id: $id, document: $document) { id deadline_at } }',
           id: id, document: { deadline_at: deadline_at.utc.iso8601(3) }).fetch('updateDocument')
@@ -94,14 +101,19 @@ class Integrations::Autentique::Client
   end
 
   # HTTParty names the multipart part after the file's path, so the bytes are
-  # copied under the real filename first (same as the ClickUp attachment).
+  # copied under the real filename first. The body is built up front instead
+  # of letting HTTParty stream it: its streamed multipart only delivered the
+  # first part (`operations`), and Autentique refused it with "Missing
+  # parameter map".
   def upload(operations, io:, filename:)
     Dir.mktmpdir('autentique-upload') do |dir|
       path = File.join(dir, File.basename(filename.to_s))
       File.open(path, 'wb') { |f| IO.copy_stream(io, f) }
       File.open(path, 'rb') do |file|
-        response = HTTParty.post(ENDPOINT, headers: headers, multipart: true, timeout: DEFAULT_TIMEOUT,
-                                           body: { operations: operations.to_json, map: { file: ['variables.file'] }.to_json, file: file })
+        body = HTTParty::Request::Body.new({ operations: operations.to_json, map: { file: ['variables.file'] }.to_json, file: file },
+                                           force_multipart: true)
+        response = HTTParty.post(ENDPOINT, body: body.call, timeout: DEFAULT_TIMEOUT,
+                                           headers: headers.merge('Content-Type' => "multipart/form-data; boundary=#{body.boundary}"))
         return parse(response)
       end
     end
