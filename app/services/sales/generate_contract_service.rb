@@ -91,9 +91,13 @@ class Sales::GenerateContractService
     @auris_email ||= client.me['email']
   end
 
+  # Autentique only puts a link on signers without e-mail; for ours it has to
+  # be asked for.
   def signing_url(document, contract)
     signature = Array(document['signatures']).find { |sig| sig['email'].to_s.casecmp?(contract.signer_email.to_s) }
-    signature&.dig('link', 'short_link')
+    return if signature.nil?
+
+    signature.dig('link', 'short_link').presence || client.signature_link(signature['public_id'])
   end
 
   def document_name

@@ -30,6 +30,20 @@ RSpec.describe Integrations::Autentique::Client do
     expect(request).to have_been_requested
   end
 
+  # HTTParty's streamed multipart only delivered the first part; the whole
+  # body is sent at once so `map` and the file reach Autentique.
+  it 'sends the operations, the map and the file as separate parts' do
+    request = stub_request(:post, endpoint)
+              .with(headers: { 'Content-Type' => %r{multipart/form-data; boundary=} }) do |req|
+                ['name="operations"', 'name="map"', 'name="file"; filename="contrato.pdf"'].all? { |part| req.body.include?(part) }
+              end
+              .to_return(status: 200, body: { data: { createDocument: { id: 'doc-1' } } }.to_json, headers: { 'Content-Type' => 'application/json' })
+
+    client.create_document(name: 'Contrato', io: StringIO.new('%PDF-1.4'), filename: 'contrato.pdf', signers: [])
+
+    expect(request).to have_been_requested
+  end
+
   it 'raises Unauthorized when Autentique does not recognize the token' do
     stub_graphql(errors: [{ message: 'Unauthenticated.' }])
 
