@@ -52,7 +52,7 @@ class Sales::ContractForm
 
   # Stored on the contract: the confirmed data plus the address in one line.
   def data
-    values = attributes.except('payment_method')
+    values = attributes.except('payment_method').merge('cpf' => format_document(cpf, 11), 'cnpj' => format_document(cnpj, 14))
     values = values.except('razao_social', 'cnpj') unless pj?
     values.merge('endereco' => full_address)
   end
@@ -72,6 +72,15 @@ class Sales::ContractForm
   def address_valid
     errors.add(:cep, 'inválido') if cep.present? && cep.gsub(/\D/, '').length != 8
     errors.add(:uf, 'inválida') if uf.present? && uf.strip.length != 2
+  end
+
+  # Documents go into the contract formatted, however they were typed.
+  def format_document(value, size)
+    digits = value.to_s.gsub(/\D/, '')
+    return value if digits.length != size
+
+    pattern = size == 11 ? /(\d{3})(\d{3})(\d{3})(\d{2})/ : /(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/
+    size == 11 ? digits.sub(pattern, '\1.\2.\3-\4') : digits.sub(pattern, '\1.\2.\3/\4-\5')
   end
 
   def format_cep

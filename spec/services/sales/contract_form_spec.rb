@@ -14,6 +14,12 @@ RSpec.describe Sales::ContractForm do
     expect(form.data['endereco']).to eq('Rua A, 1, Centro, Brasília/DF, CEP 70000-000')
   end
 
+  it 'formats the documents however they were typed' do
+    data = described_class.new(attributes.merge(cnpj: '11222333000181', cpf: '52998224725')).data
+
+    expect(data).to include('cnpj' => '11.222.333/0001-81', 'cpf' => '529.982.247-25')
+  end
+
   it 'refuses an invalid CNPJ and CPF, in Portuguese' do
     form = described_class.new(attributes.merge(cnpj: '11.111.111/1111-11', cpf: '111.111.111-11'))
 
