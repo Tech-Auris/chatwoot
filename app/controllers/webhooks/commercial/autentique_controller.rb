@@ -2,13 +2,15 @@
 # refused, or the document was finished. The payload only says which document
 # moved — its state is read back from the API, which is the source of truth.
 #
-# Signature: `x-autentique-signature` is the HMAC-SHA256 of the raw body with
-# the webhook secret (Super Admin → Settings → Autentique). Without a secret
-# configured, every request is refused.
+# Authentication: the webhook secret (Super Admin → Settings → Autentique)
+# goes in the URL path, like the Banco Inter webhook — signed webhooks
+# (`x-autentique-signature`) are a paid Autentique feature. Without a secret
+# configured, every request is refused. Even a forged call only makes us ask
+# the API again: nothing in the payload is taken as the contract's state.
 class Webhooks::Commercial::AutentiqueController < ActionController::API
   def process_payload
     body = request.body.read
-    return head :unauthorized unless authorized?(body)
+    return head :unauthorized unless authorized?
 
     contract = SalesContract.find_by(autentique_document_id: document_id(body))
     Sales::ContractStatusService.new(contract).refresh! if contract
@@ -17,12 +19,11 @@ class Webhooks::Commercial::AutentiqueController < ActionController::API
 
   private
 
-  def authorized?(body)
+  def authorized?
     secret = GlobalConfig.get('AUTENTIQUE_WEBHOOK_SECRET')['AUTENTIQUE_WEBHOOK_SECRET'].to_s
     return false if secret.blank?
 
-    expected = OpenSSL::HMAC.hexdigest('SHA256', secret, body)
-    ActiveSupport::SecurityUtils.secure_compare(expected, request.headers['x-autentique-signature'].to_s)
+    ActiveSupport::SecurityUtils.secure_compare(secret, params[:token].to_s)
   end
 
   # Document events carry the document itself; signature events carry the
