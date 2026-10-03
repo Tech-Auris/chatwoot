@@ -1,0 +1,13 @@
+<% content_for(:title) do %>
+  Contrato
+<% end %>
+
+<%= render_vue_component('CommercialContract', {
+  data_url: data_super_admin_commercial_contract_url(format: :json),
+  settings_url: settings_super_admin_commercial_contract_url(format: :json),
+  templates_url: templates_super_admin_commercial_contract_url(format: :json),
+  template_version_url: super_admin_commercial_contract_url + '/templates',
+  preview_url: preview_super_admin_commercial_contract_url(format: :pdf),
+  signer_url: signer_super_admin_commercial_contract_url(format: :json),
+  autentique_settings_url: super_admin_app_config_path(config: 'autentique')
+}) %>

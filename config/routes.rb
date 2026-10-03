@@ -893,6 +893,15 @@ Rails.application.routes.draw do
       # Financeiro: Stripe-backed screens for products, account links,
       # subscriptions and invoices.
       namespace :commercial do
+        resource :contract, only: [:show], controller: 'contracts' do
+          get :data
+          patch :settings
+          post :templates
+          get 'templates/:version', action: :template_version, as: :template_version
+          post :preview
+          get :signer
+        end
+
         resources :reservations, only: [:index], controller: 'reservations' do
           collection do
             get :data

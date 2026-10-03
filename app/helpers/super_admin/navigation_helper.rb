@@ -54,7 +54,8 @@ module SuperAdmin::NavigationHelper
   def commercial_pages
     [
       { label: 'Plan builder', url: super_admin_commercial_quotes_url },
-      { label: 'Reservations', url: super_admin_commercial_reservations_url }
+      { label: 'Reservations', url: super_admin_commercial_reservations_url },
+      { label: 'Contrato', url: super_admin_commercial_contract_url }
     ]
   end
 

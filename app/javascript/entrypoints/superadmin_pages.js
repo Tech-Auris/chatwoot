@@ -21,6 +21,7 @@ import TermsAcceptanceRequestWizard from '../superadmin_pages/views/commercial/T
 import TermsAcceptanceRequestReport from '../superadmin_pages/views/commercial/TermsAcceptanceRequestReport.vue';
 import LoginEventsIndex from '../superadmin_pages/views/operations/LoginEvents.vue';
 import AccountSecretary from '../superadmin_pages/views/accounts/AccountSecretary.vue';
+import CommercialContract from '../superadmin_pages/views/commercial/Contract.vue';
 
 const ComponentMapping = {
   PlaygroundIndex: PlaygroundIndex,
@@ -42,6 +43,7 @@ const ComponentMapping = {
   TermsAcceptanceRequestReport: TermsAcceptanceRequestReport,
   LoginEventsIndex: LoginEventsIndex,
   AccountSecretary: AccountSecretary,
+  CommercialContract: CommercialContract,
 };
 
 const renderComponent = (componentName, props) => {
