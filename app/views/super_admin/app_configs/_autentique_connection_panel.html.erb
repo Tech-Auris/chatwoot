@@ -1,0 +1,29 @@
+<% token = InstallationConfig.find_by(name: 'AUTENTIQUE_API_TOKEN')&.value.presence %>
+
+<section class="main-content__body">
+  <hr class="my-8" />
+
+  <h2 class="text-lg font-medium mb-2">Conexão com o Autentique</h2>
+  <p class="text-sm text-slate-500 mb-4">
+    Os contratos dos planos semestral e anual são criados e assinados no Autentique. O token
+    precisa ser da conta do <strong>representante legal da Auris</strong>: é em nome dele que a
+    Auris assina cada contrato automaticamente, antes de enviar ao cliente.
+  </p>
+
+  <% if token.blank? %>
+    <div class="mb-4 p-3 rounded border border-slate-100 bg-slate-25">
+      <p class="text-sm text-slate-600">Salve o <strong>token da API</strong> acima para habilitar os contratos.</p>
+    </div>
+  <% else %>
+    <div class="mb-4 p-3 rounded border border-slate-100 bg-slate-25">
+      <p class="text-sm text-slate-600">
+        Token configurado. Use o botão abaixo para confirmar que ele funciona e ver em nome de quem a Auris vai assinar.
+      </p>
+    </div>
+    <%= form_with url: test_connection_super_admin_integrations_autentique_path, method: :post, html: { class: 'form' } do |form| %>
+      <div class="form-actions">
+        <%= form.submit 'Testar conexão' %>
+      </div>
+    <% end %>
+  <% end %>
+</section>

@@ -192,3 +192,9 @@ secretary:
   enabled: true
   icon: 'icon-robot-line'
   config_key: 'secretary'
+autentique:
+  name: 'Autentique'
+  description: 'E-signature of the semiannual and annual contracts in the hiring area. The token belongs to the Autentique user who signs for Auris.'
+  enabled: true
+  icon: 'icon-draft-line'
+  config_key: 'autentique'

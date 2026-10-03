@@ -883,6 +883,11 @@ Rails.application.routes.draw do
         resource :stripe, only: [], controller: 'stripe' do
           post :test_connection
         end
+
+        # Token check behind Super Admin → Settings → Autentique.
+        resource :autentique, only: [], controller: 'autentique' do
+          post :test_connection
+        end
       end
 
       # Financeiro: Stripe-backed screens for products, account links,

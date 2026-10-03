@@ -597,6 +597,24 @@
   value: ''
   locked: false
   type: secret
+- name: AUTENTIQUE_API_TOKEN
+  display_title: 'Autentique — token da API'
+  description: 'Gerado em Autentique → Configurações → API, na conta do representante legal da Auris: é em nome dele que a Auris assina os contratos automaticamente.'
+  value: ''
+  locked: false
+  type: secret
+- name: AUTENTIQUE_WEBHOOK_SECRET
+  display_title: 'Autentique — segredo do webhook'
+  description: 'Segredo do webhook cadastrado no painel de desenvolvedor do Autentique. Usado para conferir que cada aviso de assinatura veio mesmo do Autentique.'
+  value: ''
+  locked: false
+  type: secret
+- name: AUTENTIQUE_SANDBOX
+  display_title: 'Autentique — modo de teste'
+  description: 'Ligado: os contratos são criados como documentos de teste do Autentique (não consomem créditos e não têm validade jurídica). Desligue para produção.'
+  value: true
+  locked: false
+  type: boolean
 - name: INTER_CLIENT_ID
   display_title: 'Inter — Client ID'
   description: 'OAuth Client ID from the Banco Inter integration used for the dynamic PIX cobs opened at every PIX sale. Get it in Internet Banking PJ → Aplicações → API → Sua integração. Leave blank to disable Inter automation (the sales flow falls back to the static PIX code).'
