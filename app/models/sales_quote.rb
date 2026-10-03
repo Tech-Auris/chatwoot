@@ -79,6 +79,7 @@ class SalesQuote < ApplicationRecord
   has_many :items, class_name: 'SalesQuoteItem', dependent: :destroy
   has_many :events, class_name: 'SalesQuoteEvent', dependent: :destroy
   has_many :terms_acceptances, dependent: :nullify
+  has_many :contracts, class_name: 'SalesContract', dependent: :destroy
 
   # `details_confirmed` sits between `reserved` and `signed` in the
   # customer's journey: the prospect has filled name / clinic / contact /
@@ -136,6 +137,24 @@ class SalesQuote < ApplicationRecord
   # it is filled, the public page keeps asking rather than moving on.
   def details_complete?
     [prospect_name, company_name, prospect_email, prospect_phone, prospect_document].all?(&:present?)
+  end
+
+  # Semiannual and annual plans sign a contract between the terms and the
+  # payment, while the contract step is on (Super Admin → Commercial → Contrato).
+  # A proposal that already has a contract stays on that path either way.
+  def contract_required?
+    return false unless billing_cycle_semiannual? || billing_cycle_annual?
+
+    contracts.exists? || Sales::ContractSettings.enabled?
+  end
+
+  # The contract that counts: the newest one that was not cancelled.
+  def current_contract
+    contracts.live.order(:created_at).last
+  end
+
+  def terms_signed?
+    terms_acceptances.status_signed.exists?
   end
 
   # The reservation discount only holds while the reservation does. Past the

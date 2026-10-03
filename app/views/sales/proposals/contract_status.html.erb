@@ -1,0 +1,85 @@
+<%= render 'steps', current: :contract %>
+
+<div class="bg-white rounded-lg shadow p-6 flex flex-col gap-5">
+  <% if @contract.status_signed? %>
+    <div class="flex items-center gap-3">
+      <span class="flex items-center justify-center w-10 h-10 rounded-full bg-green-100 text-green-700" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"></path></svg>
+      </span>
+      <div>
+        <h1 class="text-lg font-medium text-slate-900">Contrato assinado</h1>
+        <p class="text-sm text-green-700">Em <%= proposal_datetime(@contract.signed_at) %></p>
+      </div>
+    </div>
+    <p class="text-sm text-slate-600">Tudo certo com o seu contrato. Você já pode realizar o pagamento.</p>
+  <% elsif @contract.status_awaiting_signature? %>
+    <div class="flex flex-col gap-2">
+      <h1 class="text-lg font-medium text-slate-900">Contrato enviado para assinatura</h1>
+      <p class="text-sm text-slate-600">
+        Antes de prosseguir para o pagamento, realize a conferência e assinatura do contrato enviado para o e-mail informado ou acesse pelo link abaixo.
+      </p>
+      <p class="text-sm text-slate-600">Após concluir a assinatura, volte para esta página para <strong class="text-slate-900">prosseguir para o pagamento</strong>.</p>
+    </div>
+  <% else %>
+    <div class="flex flex-col gap-2">
+      <h1 class="text-lg font-medium text-slate-900">
+        <%= @contract.status_rejected? ? 'Contrato recusado' : 'Prazo de assinatura encerrado' %>
+      </h1>
+      <p class="text-sm text-slate-600">
+        <%= @contract.status_rejected? ? 'A assinatura do contrato foi recusada.' : 'O contrato não foi assinado dentro da validade da reserva.' %>
+        Revise os dados e gere um novo contrato, ou fale com o seu consultor.
+      </p>
+    </div>
+  <% end %>
+
+  <dl class="grid grid-cols-[9rem_1fr] gap-x-3 gap-y-2 rounded border border-slate-200 px-4 py-3 text-sm">
+    <dt class="text-slate-500">Contratante</dt>
+    <dd class="text-slate-800"><%= @contract.contractor_label %></dd>
+    <% if @contract.auris_signed_at %>
+      <dt class="text-slate-500">Auris</dt>
+      <dd class="text-green-700">Assinado em <%= proposal_datetime(@contract.auris_signed_at) %></dd>
+    <% end %>
+    <dt class="text-slate-500">Enviado para</dt>
+    <dd class="text-slate-800"><%= @contract.signer_email %></dd>
+    <dt class="text-slate-500">Forma de pagamento</dt>
+    <dd class="text-slate-800"><%= proposal_contract_payment_label(@proposal, @contract) %></dd>
+    <% if @contract.status_awaiting_signature? && @contract.deadline_at %>
+      <dt class="text-slate-500">Assinar até</dt>
+      <dd class="text-slate-800"><%= proposal_datetime(@contract.deadline_at) %> (validade da reserva)</dd>
+    <% end %>
+  </dl>
+
+  <% if @contract.signing_url.present? && !@contract.status_expired? %>
+    <%= link_to @contract.signing_url, target: '_blank', rel: 'noopener noreferrer',
+          class: 'self-start inline-flex items-center gap-2 px-4 py-2 rounded border border-woot-500 text-woot-600 text-sm font-medium' do %>
+      <%= @contract.status_signed? ? 'Conferir contrato assinado' : 'Conferir contrato' %>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3h7v7"></path><path d="M10 14 21 3"></path><path d="M21 14v7H3V3h7"></path></svg>
+    <% end %>
+  <% end %>
+
+  <% if @contract.status_awaiting_signature? %>
+    <div class="flex items-center gap-2 rounded border border-yellow-300 bg-yellow-50 px-3 py-2 text-sm text-yellow-800" role="status">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+      Aguardando assinatura do contrato…
+    </div>
+  <% end %>
+
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <% if @contract.status_awaiting_signature? %>
+      <%= button_to 'Já assinou? Verificar assinatura', sales_proposal_verify_contract_path(@proposal.public_token),
+            class: 'px-4 py-2 rounded border border-slate-300 text-sm text-slate-700' %>
+      <span class="px-4 py-2 rounded bg-slate-200 text-slate-500 text-sm font-medium" aria-disabled="true">Avançar para pagamento</span>
+    <% elsif @contract.status_signed? %>
+      <span></span>
+      <%= link_to 'Avançar para pagamento', sales_proposal_checkout_path(@proposal.public_token),
+            class: 'px-4 py-2 rounded bg-woot-500 text-white text-sm font-medium' %>
+    <% end %>
+  </div>
+
+  <% unless @contract.status_signed? %>
+    <div class="border-t border-slate-200 pt-3 flex flex-col gap-1">
+      <%= link_to 'Editar dados e gerar novo contrato', sales_proposal_edit_contract_path(@proposal.public_token), class: 'text-sm text-woot-600 underline' %>
+      <span class="text-xs text-slate-500">O contrato atual é cancelado e um novo será gerado.</span>
+    </div>
+  <% end %>
+</div>

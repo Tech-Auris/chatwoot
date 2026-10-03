@@ -8,6 +8,8 @@ class Sales::ProposalsController < ActionController::Base
   ATTEMPT_LIMIT = 10
   ATTEMPT_WINDOW = 10.minutes
 
+  include Sales::ProposalContractGate
+
   layout 'sales_proposal'
 
   before_action :set_proposal
@@ -23,7 +25,10 @@ class Sales::ProposalsController < ActionController::Base
 
     # The prospect only sees the confirmation once we know who they are: name,
     # phone, e-mail and document are what the contract and the invoice need.
-    render :details unless @proposal.details_complete?
+    return render :details unless @proposal.details_complete?
+
+    # Semiannual and annual plans go on to the terms page, which recaps the plan.
+    redirect_to sales_proposal_terms_path(@proposal.public_token) if @proposal.contract_required?
   end
 
   def save_details
@@ -54,6 +59,9 @@ class Sales::ProposalsController < ActionController::Base
     @items = @proposal.items
     return redirect_to sales_proposal_status_path(@proposal.public_token) if settled?
     return redirect_to sales_proposal_path(@proposal.public_token) unless @proposal.details_complete?
+    return redirect_to contract_step_path if contract_pending?
+
+    @contract = signed_contract
 
     load_checkout_data
   rescue Sales::TermsFetcherService::Unavailable => e
@@ -64,18 +72,15 @@ class Sales::ProposalsController < ActionController::Base
   # because this is the only place that knows the address and the browser the
   # acceptance came from.
   def pay
-    # A page left open in another tab must not start a second payment for a
-    # proposal that is already settled.
-    return redirect_to sales_proposal_status_path(@proposal.public_token) if settled?
-    return render_checkout_error('É preciso aceitar os termos de uso') unless params[:accept_terms] == '1'
+    return redirect_to pay_blocked_path if pay_blocked_path
+    return render_checkout_error('É preciso aceitar os termos de uso') unless signed_contract || params[:accept_terms] == '1'
 
     # The signature points at the very text the page rendered, not at whatever
     # the site serves now — otherwise the customer could sign a wording that
-    # changed between reading and clicking.
-    sign_terms!(params[:terms_version_id])
-    result = Sales::CheckoutService.new(
-      quote: @proposal, payment_method: params[:payment_method], urls: checkout_urls
-    ).perform
+    # changed between reading and clicking. With the contract step the terms
+    # were already accepted on their own page.
+    sign_terms!(params[:terms_version_id]) unless signed_contract
+    result = Sales::CheckoutService.new(quote: @proposal, payment_method: chosen_payment_method, urls: checkout_urls).perform
 
     return redirect_to result.checkout_url, allow_other_host: true if result.checkout_url.present?
 
@@ -211,6 +216,7 @@ class Sales::ProposalsController < ActionController::Base
 
   def render_checkout_error(message)
     @items = @proposal.items
+    @contract = signed_contract
     load_checkout_data
     render :checkout, status: :unprocessable_entity, locals: { error: message }
   rescue Sales::TermsFetcherService::Unavailable => e

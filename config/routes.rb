@@ -41,6 +41,12 @@ Rails.application.routes.draw do
       get ':token', to: 'proposals#show', as: :proposal
       post ':token/unlock', to: 'proposals#unlock', as: :unlock_proposal
       post ':token/details', to: 'proposals#save_details', as: :proposal_details
+      get ':token/termos', to: 'proposal_contracts#terms', as: :proposal_terms
+      post ':token/termos', to: 'proposal_contracts#accept_terms', as: :proposal_accept_terms
+      get ':token/contrato', to: 'proposal_contracts#contract', as: :proposal_contract
+      post ':token/contrato', to: 'proposal_contracts#generate_contract', as: :proposal_generate_contract
+      post ':token/contrato/verificar', to: 'proposal_contracts#verify_contract', as: :proposal_verify_contract
+      get ':token/contrato/editar', to: 'proposal_contracts#edit_contract', as: :proposal_edit_contract
       get ':token/pagamento', to: 'proposals#checkout', as: :proposal_checkout
       post ':token/pagamento', to: 'proposals#pay', as: :proposal_pay
       get ':token/obrigado', to: 'proposals#payment_return', as: :proposal_payment_return
@@ -815,6 +821,7 @@ Rails.application.routes.draw do
   post 'webhooks/commercial/stripe', to: 'webhooks/commercial/stripe#process_payload'
   post 'webhooks/commercial/asaas', to: 'webhooks/commercial/asaas#process_payload'
   post 'webhooks/commercial/inter/:token', to: 'webhooks/commercial/inter#process_payload'
+  post 'webhooks/commercial/autentique', to: 'webhooks/commercial/autentique#process_payload'
 
   namespace :twitter do
     resource :callback, only: [:show]

@@ -140,4 +140,27 @@ module Sales::ProposalsHelper
     discounted = total - ((total * percent) / 100.0).round
     { amount: discounted, percent: percent }
   end
+
+  # The payment choices on the Contrato step, with what each one costs — the
+  # same rules as the payment page (PIX and boleto on long plans only, boleto
+  # once the seller enabled it).
+  def proposal_contract_payment_options(proposal)
+    count = Sales::CheckoutService.installments_for(proposal.billing_cycle)
+    parcels = "#{count} parcelas de #{proposal_amount((proposal.effective_total_amount || 0) / count)}"
+    options = [{ value: 'card', title: "Cartão de crédito em #{count}x", detail: parcels }]
+    if Sales::CheckoutService.offers?('pix', proposal.billing_cycle)
+      cash = proposal_pix_cash_hint(proposal)
+      detail = cash ? "#{cash[:percent]}% de desconto · #{proposal_amount(cash[:amount])}" : proposal_amount(proposal.effective_total_amount)
+      options << { value: 'pix', title: 'PIX à vista', detail: detail }
+    end
+    options << { value: 'boleto', title: "Boleto em #{count}x", detail: parcels } if proposal.boleto_available?
+    options
+  end
+
+  def proposal_contract_payment_label(proposal, contract)
+    option = proposal_contract_payment_options(proposal).find { |opt| opt[:value] == contract.payment_method }
+    return contract.payment_method if option.nil?
+
+    [option[:title], option[:detail]].compact.join(' · ')
+  end
 end

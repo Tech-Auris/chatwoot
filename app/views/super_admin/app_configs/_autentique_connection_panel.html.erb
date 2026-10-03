@@ -10,6 +10,15 @@
     Auris assina cada contrato automaticamente, antes de enviar ao cliente.
   </p>
 
+  <div class="mb-4 p-3 rounded border border-slate-100 bg-slate-25">
+    <p class="text-sm text-slate-600">
+      <strong>Webhook:</strong> cadastre no painel de desenvolvedor do Autentique a URL
+      <code class="px-1 bg-slate-100 rounded"><%= "#{ENV.fetch('FRONTEND_URL', request.base_url)}/webhooks/commercial/autentique" %></code>
+      com os eventos <code>signature.accepted</code>, <code>signature.rejected</code> e <code>document.finished</code>,
+      e salve aqui o segredo que ele gerar.
+    </p>
+  </div>
+
   <% if token.blank? %>
     <div class="mb-4 p-3 rounded border border-slate-100 bg-slate-25">
       <p class="text-sm text-slate-600">Salve o <strong>token da API</strong> acima para habilitar os contratos.</p>

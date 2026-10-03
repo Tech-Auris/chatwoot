@@ -1,21 +1,24 @@
 <%
+  # Semiannual and annual plans sign a contract between the terms and the
+  # payment (Super Admin → Commercial → Contrato); monthly ones do not.
   steps = [
     ['Reservar', :reserve],
-    ['Assinar', :sign],
+    ['Termos', :sign],
+    (['Contrato', :contract] if @proposal.contract_required?),
     ['Pagamento', :payment],
     ['Tokens', :tokens],
     ['Onboarding', :onboarding],
     ['Implantado', :live]
-  ]
+  ].compact
   order = steps.map(&:last)
   current_index = order.index(current) || 0
 %>
-<%# Mobile-first: em telas estreitas os seis rótulos não cabiam numa
+<%# Mobile-first: em telas estreitas os rótulos não cabiam numa
     linha e quebravam pra duas, desalinhando a barra. Agora os passos
     que não são o atual viram uma pílula estreita com só o número
     (`min-w-[26px]`), enquanto o passo atual absorve o espaço restante
     (`flex-1`) e mostra `N. Nome` inteiro sem truncar. A partir do
-    breakpoint `sm:`, tudo volta pra seis colunas iguais com todos os
+    breakpoint `sm:`, tudo volta pra uma coluna por etapa iguais com todos os
     rótulos — o layout do desktop segue idêntico. %>
 <ol class="flex items-start gap-2 mb-6" aria-label="Etapas da contratação">
   <% steps.each_with_index do |(label, _key), index| %>

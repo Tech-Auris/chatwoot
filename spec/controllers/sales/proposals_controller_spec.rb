@@ -313,10 +313,13 @@ RSpec.describe 'Public sales proposal', type: :request do
     end
   end
 
+  # Terms and payment on one page: the monthly plan, and the long plans while
+  # the contract step (Super Admin → Commercial → Contrato) is off.
   describe 'the payment step' do
     let(:stripe_client) { instance_double(Integrations::Stripe::Client) }
 
     before do
+      Sales::ContractSettings.update!(enabled: false, auto_sign: true)
       quote.update!(billing_cycle: :annual)
       stub_request(:get, Sales::TermsFetcherService::DEFAULT_URL)
         .to_return(status: 200, body: '<html><body><h1>Termos</h1><p>Conteúdo dos termos.</p></body></html>')
