@@ -119,7 +119,10 @@ class SuperAdmin::AppConfigsController < SuperAdmin::ApplicationController
       'whatsapp_pricing' => %w[WHATSAPP_MESSAGING_WINDOW_INDICATOR_ENABLED],
       # The AI secretary's user ("IA | Auris"): assigning a conversation to it
       # turns the AI status on, unassigning it turns it off.
-      'secretary' => %w[SECRETARY_AI_USER_ID]
+      'secretary' => %w[SECRETARY_AI_USER_ID],
+      # E-signature of the semiannual/annual contracts in the hiring area. The
+      # token's Autentique user is who signs for Auris, automatically.
+      'autentique' => %w[AUTENTIQUE_API_TOKEN AUTENTIQUE_WEBHOOK_SECRET AUTENTIQUE_SANDBOX]
     }
   end
 
