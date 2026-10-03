@@ -1,4 +1,26 @@
 ---
+- tag: v4.15.1-auris.1.65
+  published_at: '2026-10-03T17:10:56Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.65
+  notes:
+    en: |-
+      ### ✨ What's new
+
+      - **AI status follows the assignment.** When you assign a conversation to the AI, its AI status turns on by itself. Assigning it to someone else or unassigning it turns it off.
+
+      ### ⚡ Improvements
+
+      - **The AI answers patients from ads right away.** When a patient's first message arrives as "unsupported message" (the yellow bubble), the AI now answers right away instead of waiting for the patient to write again.
+      - **More faithful report times.** First response, resolution and waiting times now show the time within which 95% of conversations were handled. Hover over the number to see the typical time.
+    pt_BR: |-
+      ### ✨ Novidades
+
+      - **Status da IA acompanha a atribuição.** Quando você atribui a conversa à IA, o status da IA liga sozinho. Ao atribuir a outra pessoa ou tirar a atribuição, ele desliga.
+
+      ### ⚡ Melhorias
+
+      - **A IA responde na hora pacientes vindos de anúncios.** Quando a primeira mensagem do paciente chega como "mensagem não suportada" (o balão amarelo), a IA agora responde na hora, sem esperar o paciente escrever de novo.
+      - **Tempos dos relatórios mais fiéis.** Os tempos de primeira resposta, resolução e espera agora mostram o tempo em que 95% das conversas foram atendidas. Passe o mouse sobre o número para ver o tempo típico.
 - tag: v4.15.1-auris.1.64
   published_at: '2026-09-29T22:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.64
@@ -333,15 +355,3 @@
       Bug fixes and internal improvements.
     pt_BR: |-
       Correções de bugs e melhorias internas.
-- tag: v4.15.1-auris.1.51
-  published_at: '2026-08-28T21:00:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.51
-  notes:
-    en: |-
-      ### 🐛 Fixes
-
-      - **Exporting contacts as a manager.** If you use the manager profile, "Export contacts" was failing with an error. It now downloads the file normally, following the filters on screen.
-    pt_BR: |-
-      ### 🐛 Correções
-
-      - **Exportar contatos no perfil manager.** Se você usa o perfil de manager, o "Exportar contatos" estava dando erro. Agora o arquivo baixa normalmente, respeitando os filtros da tela.
