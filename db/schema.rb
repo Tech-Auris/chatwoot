@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_03_120000) do
+ActiveRecord::Schema[7.1].define(version: 2026_10_03_150000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -1716,6 +1716,29 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_03_120000) do
     t.index ["version"], name: "index_sales_contract_templates_on_version", unique: true
   end
 
+  create_table "sales_contracts", force: :cascade do |t|
+    t.bigint "sales_quote_id", null: false
+    t.bigint "sales_contract_template_id", null: false
+    t.integer "status", default: 0, null: false
+    t.string "person_type", null: false
+    t.jsonb "data", default: {}, null: false
+    t.string "payment_method", null: false
+    t.integer "installments"
+    t.string "autentique_document_id"
+    t.string "signing_url"
+    t.boolean "sandbox", default: false, null: false
+    t.text "error_message"
+    t.datetime "auris_signed_at"
+    t.datetime "signed_at"
+    t.datetime "cancelled_at"
+    t.datetime "deadline_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["autentique_document_id"], name: "index_sales_contracts_on_autentique_document_id", unique: true
+    t.index ["sales_contract_template_id"], name: "index_sales_contracts_on_sales_contract_template_id"
+    t.index ["sales_quote_id"], name: "index_sales_contracts_on_sales_quote_id"
+  end
+
   create_table "sales_quote_events", force: :cascade do |t|
     t.bigint "sales_quote_id", null: false
     t.bigint "user_id"
@@ -2155,6 +2178,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_03_120000) do
   add_foreign_key "recurring_scheduled_messages", "conversations"
   add_foreign_key "recurring_scheduled_messages", "inboxes"
   add_foreign_key "sales_asaas_installment_payments", "sales_quotes"
+  add_foreign_key "sales_contracts", "sales_contract_templates"
+  add_foreign_key "sales_contracts", "sales_quotes", on_delete: :cascade
   add_foreign_key "sales_quote_events", "sales_quotes"
   add_foreign_key "sales_quote_events", "users"
   add_foreign_key "sales_quote_items", "sales_quotes"

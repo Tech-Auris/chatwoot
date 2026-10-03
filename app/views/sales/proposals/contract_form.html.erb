@@ -1,0 +1,221 @@
+<%= render 'steps', current: :contract %>
+
+<% input_class = 'mt-1 w-full border border-slate-200 rounded px-3 py-2 text-sm' %>
+<div class="bg-white rounded-lg shadow p-6">
+  <h1 class="text-lg font-medium text-slate-900">Confirme os dados para o contrato</h1>
+  <p class="mt-1 text-sm text-slate-500">Preencha as informações e escolha a forma de pagamento para avançar.</p>
+
+  <% if local_assigns[:error].present? %>
+    <p class="mt-4 text-sm text-red-600"><%= error %></p>
+  <% end %>
+  <% if @form.errors.any? %>
+    <ul class="mt-4 text-sm text-red-600 list-disc pl-5">
+      <% @form.errors.full_messages.each do |message| %><li><%= message %></li><% end %>
+    </ul>
+  <% end %>
+
+  <%= form_with url: sales_proposal_generate_contract_path(@proposal.public_token), method: :post, scope: :contract,
+                class: 'mt-5 flex flex-col gap-5', id: 'contract-form' do |f| %>
+    <fieldset class="flex flex-col gap-2">
+      <legend class="text-sm font-medium text-slate-800 mb-2">Contratação em nome de</legend>
+      <div class="grid grid-cols-2 border border-slate-300 rounded overflow-hidden text-sm">
+        <% [%w[pj Pessoa\ Jurídica], %w[pf Pessoa\ Física]].each do |value, label| %>
+          <label class="flex items-center justify-center gap-2 py-2.5 cursor-pointer has-[:checked]:bg-woot-500 has-[:checked]:text-white has-[:checked]:font-medium">
+            <%= f.radio_button :person_type, value, checked: @form.person_type == value, class: 'sr-only', data: { person_type: value } %>
+            <%= label %>
+          </label>
+        <% end %>
+      </div>
+    </fieldset>
+
+    <section data-pj-only class="flex flex-col gap-3 <%= 'hidden' unless @form.pj? %>">
+      <h2 class="text-sm font-medium text-slate-800">Dados da empresa</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <label class="text-sm text-slate-600">
+          CNPJ
+          <%= f.text_field :cnpj, value: @form.cnpj, inputmode: 'numeric', maxlength: 18, data: { mask: 'cnpj', lookup: 'cnpj' }, class: input_class %>
+          <span data-lookup-status="cnpj" class="block mt-1 text-xs text-slate-500"></span>
+        </label>
+        <label class="text-sm text-slate-600">
+          Razão Social
+          <%= f.text_field :razao_social, value: @form.razao_social, class: input_class %>
+        </label>
+      </div>
+    </section>
+
+    <section class="flex flex-col gap-3">
+      <div>
+        <h2 class="text-sm font-medium text-slate-800" data-pj-only>Representante legal</h2>
+        <h2 class="text-sm font-medium text-slate-800" data-pf-only>Dados do contratante</h2>
+        <p class="text-xs text-slate-500 mt-0.5" data-pj-only>
+          Pessoa autorizada a representar a empresa e assinar o contrato em seu nome, conforme contrato social, estatuto ou procuração.
+        </p>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <label class="text-sm text-slate-600">
+          Nome completo
+          <%= f.text_field :nome, value: @form.nome, class: input_class %>
+        </label>
+        <label class="text-sm text-slate-600">
+          CPF
+          <%= f.text_field :cpf, value: @form.cpf, inputmode: 'numeric', maxlength: 14, data: { mask: 'cpf' }, class: input_class %>
+        </label>
+        <label class="text-sm text-slate-600">
+          E-mail
+          <%= f.email_field :email, value: @form.email, class: input_class %>
+          <span class="block mt-1 text-xs text-slate-500">O contrato será enviado para este e-mail.</span>
+        </label>
+        <label class="text-sm text-slate-600">
+          WhatsApp
+          <%= f.telephone_field :whatsapp, value: @form.whatsapp, class: input_class %>
+        </label>
+      </div>
+    </section>
+
+    <section class="flex flex-col gap-3">
+      <div>
+        <h2 class="text-sm font-medium text-slate-800">Endereço</h2>
+        <p class="text-xs text-slate-500 mt-0.5">Digite o CEP para preencher o restante.</p>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-[10rem_1fr_7rem] gap-3">
+        <label class="text-sm text-slate-600">
+          CEP
+          <%= f.text_field :cep, value: @form.cep, inputmode: 'numeric', maxlength: 9, data: { mask: 'cep', lookup: 'cep' }, class: input_class %>
+          <span data-lookup-status="cep" class="block mt-1 text-xs text-slate-500"></span>
+        </label>
+        <label class="text-sm text-slate-600">
+          Logradouro
+          <%= f.text_field :logradouro, value: @form.logradouro, class: input_class %>
+        </label>
+        <label class="text-sm text-slate-600">
+          Número
+          <%= f.text_field :numero, value: @form.numero, class: input_class %>
+        </label>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_5rem] gap-3">
+        <label class="text-sm text-slate-600">
+          Complemento
+          <%= f.text_field :complemento, value: @form.complemento, class: input_class %>
+        </label>
+        <label class="text-sm text-slate-600">
+          Bairro
+          <%= f.text_field :bairro, value: @form.bairro, class: input_class %>
+        </label>
+        <label class="text-sm text-slate-600">
+          Cidade
+          <%= f.text_field :cidade, value: @form.cidade, class: input_class %>
+        </label>
+        <label class="text-sm text-slate-600">
+          UF
+          <%= f.text_field :uf, value: @form.uf, maxlength: 2, class: input_class %>
+        </label>
+      </div>
+    </section>
+
+    <fieldset class="flex flex-col gap-2">
+      <legend class="text-sm font-medium text-slate-800 mb-1">Forma de pagamento</legend>
+      <p class="text-xs text-slate-500">
+        Escolha como deseja realizar o pagamento · Total <%= proposal_amount(@proposal.effective_total_amount) %>
+      </p>
+      <% proposal_contract_payment_options(@proposal).each_with_index do |option, index| %>
+        <label class="flex items-center gap-3 rounded border border-slate-300 px-3 py-2.5 text-sm cursor-pointer has-[:checked]:border-2 has-[:checked]:border-woot-500 has-[:checked]:bg-woot-25">
+          <%= f.radio_button :payment_method, option[:value], checked: @form.payment_method.present? ? @form.payment_method == option[:value] : index.zero? %>
+          <span class="flex flex-col">
+            <strong class="font-medium text-slate-800"><%= option[:title] %></strong>
+            <% if option[:detail] %><span class="text-xs text-slate-500"><%= option[:detail] %></span><% end %>
+          </span>
+        </label>
+      <% end %>
+    </fieldset>
+
+    <p class="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+      Ao continuar, o contrato será gerado com as informações e condições comerciais da sua reserva e enviado para assinatura.
+    </p>
+
+    <div class="flex items-center justify-end gap-3">
+      <%= f.submit 'Gerar contrato', data: { disable_with: 'Gerando contrato…' },
+            class: 'px-4 py-2 rounded bg-woot-500 text-white text-sm cursor-pointer' %>
+    </div>
+  <% end %>
+</div>
+
+<script>
+  (function () {
+    var form = document.getElementById('contract-form');
+    if (!form) return;
+
+    function digits(value) { return (value || '').replace(/\D/g, ''); }
+    function field(name) { return form.querySelector('[name="contract[' + name + ']"]'); }
+    function fill(name, value) {
+      var input = field(name);
+      if (input && value) input.value = value;
+    }
+
+    // PJ / PF: the company block and the matching headings follow the choice.
+    function syncPersonType() {
+      var checked = form.querySelector('[data-person-type]:checked');
+      var pj = !checked || checked.value === 'pj';
+      form.querySelectorAll('[data-pj-only]').forEach(function (el) { el.classList.toggle('hidden', !pj); });
+      form.querySelectorAll('[data-pf-only]').forEach(function (el) { el.classList.toggle('hidden', pj); });
+    }
+    form.querySelectorAll('[data-person-type]').forEach(function (input) { input.addEventListener('change', syncPersonType); });
+    syncPersonType();
+
+    var MASKS = {
+      cpf: function (d) { return d.slice(0, 11).replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2'); },
+      cnpj: function (d) { return d.slice(0, 14).replace(/(\d{2})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1/$2').replace(/(\d{4})(\d{1,2})$/, '$1-$2'); },
+      cep: function (d) { return d.slice(0, 8).replace(/(\d{5})(\d)/, '$1-$2'); }
+    };
+    form.querySelectorAll('[data-mask]').forEach(function (input) {
+      input.addEventListener('input', function () { input.value = MASKS[input.dataset.mask](digits(input.value)); });
+    });
+
+    function status(kind, text) {
+      var el = form.querySelector('[data-lookup-status="' + kind + '"]');
+      if (el) el.textContent = text;
+    }
+
+    // Public lookups (BrasilAPI): they only fill the fields, every one stays
+    // editable, and a failed lookup just leaves them for the customer.
+    function lookupCnpj(value) {
+      var d = digits(value);
+      if (d.length !== 14) return;
+      status('cnpj', 'Consultando a Receita Federal…');
+      fetch('https://brasilapi.com.br/api/cnpj/v1/' + d)
+        .then(function (res) { if (!res.ok) throw new Error(); return res.json(); })
+        .then(function (data) {
+          fill('razao_social', data.razao_social);
+          fill('cep', MASKS.cep(digits(String(data.cep || ''))));
+          fill('logradouro', [data.descricao_tipo_de_logradouro, data.logradouro].filter(Boolean).join(' '));
+          fill('numero', data.numero);
+          fill('complemento', data.complemento);
+          fill('bairro', data.bairro);
+          fill('cidade', data.municipio);
+          fill('uf', data.uf);
+          status('cnpj', 'Dados informados pela Receita Federal');
+        })
+        .catch(function () { status('cnpj', 'Não encontramos o CNPJ. Preencha os dados manualmente.'); });
+    }
+
+    function lookupCep(value) {
+      var d = digits(value);
+      if (d.length !== 8) return;
+      status('cep', 'Buscando endereço…');
+      fetch('https://brasilapi.com.br/api/cep/v2/' + d)
+        .then(function (res) { if (!res.ok) throw new Error(); return res.json(); })
+        .then(function (data) {
+          fill('logradouro', data.street);
+          fill('bairro', data.neighborhood);
+          fill('cidade', data.city);
+          fill('uf', data.state);
+          status('cep', '');
+        })
+        .catch(function () { status('cep', 'CEP não encontrado. Preencha o endereço manualmente.'); });
+    }
+
+    var cnpj = field('cnpj');
+    if (cnpj) cnpj.addEventListener('change', function () { lookupCnpj(cnpj.value); });
+    var cep = field('cep');
+    if (cep) cep.addEventListener('change', function () { lookupCep(cep.value); });
+  })();
+</script>

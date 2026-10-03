@@ -57,133 +57,97 @@
   <%= render 'monthly_note' %>
 
   <%= form_with url: sales_proposal_pay_path(@proposal.public_token), method: :post, class: 'mt-6 flex flex-col gap-4' do |f| %>
-    <fieldset>
-      <legend class="text-sm font-medium text-slate-800">Forma de pagamento</legend>
-
-      <% if @pix_available %>
-        <label class="flex items-center gap-2 mt-2 text-sm text-slate-700">
-          <%= f.radio_button :payment_method, 'pix', checked: true %>
-          <span>
-            PIX
-            <% if @pix_discount.positive? %>
-              <strong class="text-green-700">— <%= @pix_discount %>% de desconto</strong>
-            <% end %>
-          </span>
-        </label>
-      <% end %>
-
-      <label class="flex items-center gap-2 mt-3 text-sm text-slate-700">
-        <%= f.radio_button :payment_method, 'card', checked: !@pix_available %>
-        <span>
-          Cartão de crédito
-          <% if @installments > 1 %>
-            <span class="text-slate-500">— em <%= @installments %>x</span>
-          <% end %>
-        </span>
-      </label>
-
-      <% if @boleto_available %>
-        <label class="flex items-center gap-2 mt-3 text-sm text-slate-700">
-          <%= f.radio_button :payment_method, 'boleto' %>
-          <span>
-            Boleto
-            <% if @installments > 1 %>
-              <span class="text-slate-500">— <%= @installments %> parcelas mensais</span>
-            <% end %>
-          </span>
-        </label>
-      <% end %>
-    </fieldset>
-
-    <div>
-      <span class="text-sm font-medium text-slate-800">Termos de uso</span>
-
-      <% if @terms_error.present? %>
-        <p class="mt-2 text-sm text-red-600"><%= @terms_error %></p>
-      <% else %>
-        <%= hidden_field_tag :terms_version_id, @terms_version.id %>
-        <div
-          id="terms-box"
-          class="mt-2 h-56 overflow-y-auto border border-slate-200 rounded p-3 text-xs leading-relaxed text-slate-600 prose-sm"
-        ><%= sanitize @terms_version.content,
-              tags: Sales::TermsFetcherService::ALLOWED_TAGS,
-              attributes: Sales::TermsFetcherService::ALLOWED_ATTRIBUTES %></div>
-        <p id="terms-hint" class="mt-1 text-xs text-slate-500" aria-live="polite">
-          Role até o fim para liberar o aceite.
+    <% if @contract %>
+      <%# Semiannual/annual with the contract step: the terms were accepted on
+          their own page and the payment method is the one in the signed
+          contract. Changing it means a new contract. %>
+      <div class="flex flex-col gap-1">
+        <span class="text-sm font-medium text-slate-800">Forma de pagamento definida no contrato</span>
+        <div class="rounded border-2 border-woot-500 bg-woot-25 px-3 py-2 text-sm text-slate-800">
+          <%= proposal_contract_payment_label(@proposal, @contract) %>
+        </div>
+        <p class="text-xs text-slate-500">
+          Ela faz parte do contrato assinado. Para trocar, fale com o seu consultor.
         </p>
+      </div>
+      <%= hidden_field_tag :payment_method, @contract.payment_method %>
+      <% if @contract.signing_url.present? %>
+        <%= link_to 'Conferir contrato assinado', @contract.signing_url, target: '_blank', rel: 'noopener noreferrer',
+              class: 'text-sm text-woot-600 underline' %>
+      <% end %>
+      <%= f.submit 'Pagar', class: 'w-full px-3 py-2 rounded bg-woot-500 text-white text-sm cursor-pointer' %>
+    <% else %>
+      <fieldset>
+        <legend class="text-sm font-medium text-slate-800">Forma de pagamento</legend>
 
-        <label class="flex items-start gap-2 mt-3 text-sm text-slate-700">
-          <%= check_box_tag :accept_terms, '1', false, class: 'mt-1', disabled: true, id: 'accept-terms' %>
+        <% if @pix_available %>
+          <label class="flex items-center gap-2 mt-2 text-sm text-slate-700">
+            <%= f.radio_button :payment_method, 'pix', checked: true %>
+            <span>
+              PIX
+              <% if @pix_discount.positive? %>
+                <strong class="text-green-700">— <%= @pix_discount %>% de desconto</strong>
+              <% end %>
+            </span>
+          </label>
+        <% end %>
+
+        <label class="flex items-center gap-2 mt-3 text-sm text-slate-700">
+          <%= f.radio_button :payment_method, 'card', checked: !@pix_available %>
           <span>
-            Li e aceito os termos de uso acima
-            <a href="<%= @terms_version.source_url %>" target="_blank" rel="noopener noreferrer" class="underline text-slate-500">
-              (abrir em outra aba)
-            </a>.
+            Cartão de crédito
+            <% if @installments > 1 %>
+              <span class="text-slate-500">— em <%= @installments %>x</span>
+            <% end %>
           </span>
         </label>
-      <% end %>
-    </div>
 
-    <%= f.submit 'Assinar', id: 'submit-signature', disabled: @terms_error.present?,
-          class: 'w-full px-3 py-2 rounded bg-woot-500 text-white text-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed' %>
+        <% if @boleto_available %>
+          <label class="flex items-center gap-2 mt-3 text-sm text-slate-700">
+            <%= f.radio_button :payment_method, 'boleto' %>
+            <span>
+              Boleto
+              <% if @installments > 1 %>
+                <span class="text-slate-500">— <%= @installments %> parcelas mensais</span>
+              <% end %>
+            </span>
+          </label>
+        <% end %>
+      </fieldset>
+
+      <div>
+        <span class="text-sm font-medium text-slate-800">Termos de uso</span>
+
+        <% if @terms_error.present? %>
+          <p class="mt-2 text-sm text-red-600"><%= @terms_error %></p>
+        <% else %>
+          <%= hidden_field_tag :terms_version_id, @terms_version.id %>
+          <div
+            id="terms-box"
+            class="mt-2 h-56 overflow-y-auto border border-slate-200 rounded p-3 text-xs leading-relaxed text-slate-600 prose-sm"
+          ><%= sanitize @terms_version.content,
+                tags: Sales::TermsFetcherService::ALLOWED_TAGS,
+                attributes: Sales::TermsFetcherService::ALLOWED_ATTRIBUTES %></div>
+          <p id="terms-hint" class="mt-1 text-xs text-slate-500" aria-live="polite">
+            Role até o fim para liberar o aceite.
+          </p>
+
+          <label class="flex items-start gap-2 mt-3 text-sm text-slate-700">
+            <%= check_box_tag :accept_terms, '1', false, class: 'mt-1', disabled: true, id: 'accept-terms' %>
+            <span>
+              Li e aceito os termos de uso acima
+              <a href="<%= @terms_version.source_url %>" target="_blank" rel="noopener noreferrer" class="underline text-slate-500">
+                (abrir em outra aba)
+              </a>.
+            </span>
+          </label>
+        <% end %>
+      </div>
+
+      <%= f.submit 'Assinar', id: 'submit-signature', disabled: @terms_error.present?,
+            class: 'w-full px-3 py-2 rounded bg-woot-500 text-white text-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed' %>
+    <% end %>
   <% end %>
 </div>
 
-<script>
-  // The checkbox only accepts the terms once the customer reaches the end of
-  // them. This is about making "I never saw it" harder to claim, not a security
-  // control — the server still requires the checkbox and the version id.
-  (function () {
-    var box = document.getElementById('terms-box');
-    var checkbox = document.getElementById('accept-terms');
-    var hint = document.getElementById('terms-hint');
-    if (!box || !checkbox) return;
-
-    var QUIET = ['text-slate-500'];
-    var LOUD = ['text-red-600', 'font-medium'];
-    var blocked = true;
-
-    // Enabled from here on so that clicking it is an event we can answer. A
-    // disabled control swallows the click, and the customer who tries gets
-    // nothing back — which is how the notice went unread.
-    checkbox.disabled = false;
-
-    function warn() {
-      if (!hint) return;
-      hint.textContent = 'Role os termos até o fim para liberar o aceite.';
-      hint.classList.remove.apply(hint.classList, QUIET);
-      hint.classList.add.apply(hint.classList, LOUD);
-    }
-
-    function release() {
-      blocked = false;
-      if (hint) {
-        hint.textContent = 'Você chegou ao fim dos termos.';
-        hint.classList.remove.apply(hint.classList, LOUD);
-        hint.classList.add.apply(hint.classList, QUIET);
-      }
-      box.removeEventListener('scroll', onScroll);
-    }
-
-    function onScroll() {
-      if (box.scrollTop + box.clientHeight >= box.scrollHeight - 8) release();
-    }
-
-    // Covers the mouse and the keyboard alike: both activate through a click
-    // event, and neither may tick the box before the reading is done.
-    checkbox.addEventListener('click', function (event) {
-      if (!blocked) return;
-      event.preventDefault();
-      warn();
-      box.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-    });
-
-    // A short document that does not scroll would otherwise lock the customer
-    // out of a checkbox they can never tick.
-    if (box.scrollHeight <= box.clientHeight + 8) {
-      release();
-    } else {
-      box.addEventListener('scroll', onScroll);
-    }
-  })();
-</script>
+<%= render 'terms_scroll_script' %>
