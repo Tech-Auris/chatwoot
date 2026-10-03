@@ -55,10 +55,15 @@ class Sales::GenerateContractService
     contract.update!(autentique_document_id: document['id'], signing_url: signing_url(document, contract))
     sign_for_auris!(contract) if Sales::ContractSettings.auto_sign?
     contract.update!(status: :awaiting_signature, error_message: nil)
-    quote.events.create!(event: 'contract_generated', metadata: { contract_id: contract.id, template_version: contract.template_version })
+    record_sent(contract)
   rescue Integrations::Autentique::Client::Error => e
     contract.update!(status: :failed, error_message: e.message)
     raise Error, e.message
+  end
+
+  def record_sent(contract)
+    quote.events.create!(event: 'contract_generated', metadata: { contract_id: contract.id, template_version: contract.template_version })
+    Sales::ContractClickupCommentJob.perform_later(contract.id, 'generated')
   end
 
   def sign_for_auris!(contract)

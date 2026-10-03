@@ -39,6 +39,7 @@ class Sales::ReserveQuoteService
     quote.update!(reserved_until: reserved_until, status: :reserved)
     mark_local_write
     mirror_deadline_to_pending_terms
+    renew_contract_deadline
 
     error = sync_clickup
     record_event(renewal, error)
@@ -111,6 +112,15 @@ class Sales::ReserveQuoteService
   # single timestamp.
   def mirror_deadline_to_pending_terms
     quote.terms_acceptances.status_pending.kind_signature.update_all(deadline_at: reserved_until) # rubocop:disable Rails/SkipsModelValidations
+  end
+
+  # A contract still waiting for the customer (or that ran out of time with
+  # the old reservation) gets the new deadline on Autentique too.
+  def renew_contract_deadline
+    contract = quote.current_contract
+    return unless contract&.status_awaiting_signature? || contract&.status_expired?
+
+    Sales::ContractDeadlineJob.perform_later(contract.id)
   end
 
   # Posts a comment with the copy-paste WhatsApp message on the task,

@@ -40,5 +40,6 @@ class Sales::ContractStatusService
   def mark_signed!(signature)
     contract.update!(status: :signed, signed_at: Time.zone.parse(signature.dig('signed', 'created_at').to_s) || Time.current)
     contract.sales_quote.events.create!(event: 'contract_signed', metadata: { contract_id: contract.id })
+    Sales::ContractClickupCommentJob.perform_later(contract.id, 'signed')
   end
 end
