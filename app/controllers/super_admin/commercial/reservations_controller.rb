@@ -138,6 +138,13 @@ class SuperAdmin::Commercial::ReservationsController < SuperAdmin::ApplicationCo
     )
   end
 
+  def serialize_contract(contract)
+    return nil if contract.nil?
+
+    contract.slice(:status, :signing_url, :signed_at, :auris_signed_at, :deadline_at, :error_message)
+            .merge(auris_signature_failed: contract.error_message.to_s.start_with?('Erro na assinatura da Auris'))
+  end
+
   def serialize(quote) # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
     {
       id: quote.id,
@@ -160,6 +167,8 @@ class SuperAdmin::Commercial::ReservationsController < SuperAdmin::ApplicationCo
       boleto_enabled: quote.boleto_enabled_at.present?,
       boleto_eligible_for_plan: Sales::CheckoutService.offers?('boleto', quote.billing_cycle),
       payment_method: quote.payment_method,
+      contract_required: quote.contract_required?,
+      contract: serialize_contract(quote.current_contract),
       # A single flag the grid reads to show the "Registrar pagamento" button
       # for any sale still waiting on a manual confirmation — AsaaS card /
       # boleto and PIX, but not the monthly Stripe subscription (that one

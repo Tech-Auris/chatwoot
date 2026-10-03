@@ -35,6 +35,17 @@ RSpec.describe 'Super Admin Commercial Reservations', type: :request do
       expect(response.parsed_body['meta']['applied_status']).to eq('')
     end
 
+    it 'shows where the contract of a long plan stands, and marks a monthly one as not needing it' do
+      negotiating.update!(billing_cycle: :annual)
+      create(:sales_contract, sales_quote: negotiating, status: :awaiting_signature, signing_url: 'https://assina.ae/x')
+
+      get '/super_admin/commercial/reservations/data'
+
+      row = response.parsed_body['reservations'].find { |r| r['id'] == negotiating.id }
+      expect(row).to include('contract_required' => true)
+      expect(row['contract']).to include('status' => 'awaiting_signature', 'signing_url' => 'https://assina.ae/x')
+    end
+
     it 'brings back the closed deals when both toggles are on' do
       get '/super_admin/commercial/reservations/data',
           params: { include_finalized: '1', include_expired: '1' }

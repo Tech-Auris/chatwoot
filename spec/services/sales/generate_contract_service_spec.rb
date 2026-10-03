@@ -46,6 +46,10 @@ RSpec.describe Sales::GenerateContractService do
     expect(contract.template_version).to eq(SalesContractTemplate.current.version)
   end
 
+  it 'comments on the ClickUp task that the contract went out' do
+    expect { perform }.to have_enqueued_job(Sales::ContractClickupCommentJob).with(kind_of(Integer), 'generated')
+  end
+
   it 'does not sign for Auris when the automatic signature is off' do
     Sales::ContractSettings.update!(enabled: true, auto_sign: false)
 

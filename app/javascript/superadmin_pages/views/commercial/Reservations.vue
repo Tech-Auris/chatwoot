@@ -70,6 +70,35 @@ const busyId = ref(null);
 // lines exactly like the proposal reads them.
 const expandedIds = ref(new Set());
 const isExpanded = reservation => expandedIds.value.has(reservation.id);
+// Contract of a semiannual/annual sale (Super Admin → Commercial → Contrato).
+const CONTRACT_LABELS = {
+  awaiting_signature: 'Aguardando assinatura do cliente',
+  signed: 'Assinado',
+  rejected: 'Recusado',
+  cancelled: 'Cancelado',
+  expired: 'Expirado',
+  failed: 'Erro na geração',
+};
+
+const contractLabel = contract => {
+  if (contract.status === 'signed' && contract.signed_at) {
+    return `Assinado ${new Date(contract.signed_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}`;
+  }
+  if (contract.status === 'failed' && contract.auris_signature_failed) {
+    return 'Erro na assinatura da Auris';
+  }
+  return CONTRACT_LABELS[contract.status] || contract.status;
+};
+
+const contractClass = contract =>
+  ({
+    awaiting_signature: 'bg-yellow-100 text-yellow-800',
+    signed: 'bg-green-100 text-green-800',
+    rejected: 'bg-red-100 text-red-800',
+    expired: 'bg-red-100 text-red-800',
+    failed: 'bg-red-100 text-red-800',
+  })[contract.status] || 'bg-slate-100 text-slate-600';
+
 const toggleExpanded = (reservation, event) => {
   // Clicks that started on a button or a link stay with those controls;
   // only clicks on the row body itself toggle the sub-row.
@@ -508,6 +537,7 @@ const submitRenew = async () => {
           <th class="py-2">Vendedor</th>
           <th class="py-2 whitespace-nowrap">Status Ck</th>
           <th class="py-2">Situação</th>
+          <th class="py-2">Contrato</th>
           <th class="py-2 text-right whitespace-nowrap">Valor</th>
           <th class="py-2 text-right">Reserva até</th>
           <th class="py-2">Tokens</th>
@@ -614,6 +644,34 @@ const submitRenew = async () => {
                   Liberar boleto
                 </button>
               </div>
+            </td>
+
+            <td class="py-3">
+              <template v-if="reservation.contract">
+                <span
+                  class="px-2 py-0.5 rounded text-xs whitespace-nowrap"
+                  :class="contractClass(reservation.contract)"
+                  :title="reservation.contract.error_message || ''"
+                >
+                  {{ contractLabel(reservation.contract) }}
+                </span>
+                <a
+                  v-if="reservation.contract.signing_url"
+                  :href="reservation.contract.signing_url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="block mt-1 text-xs text-woot-500 underline"
+                >
+                  Abrir
+                </a>
+              </template>
+              <span
+                v-else-if="reservation.contract_required"
+                class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-600 whitespace-nowrap"
+              >
+                Não gerado
+              </span>
+              <span v-else class="text-xs text-slate-400">—</span>
             </td>
 
             <td class="py-3 text-right text-slate-700 whitespace-nowrap">
@@ -736,7 +794,7 @@ const submitRenew = async () => {
             v-if="isExpanded(reservation)"
             class="bg-slate-50 border-b border-slate-100"
           >
-            <td colspan="8" class="px-4 py-3">
+            <td colspan="9" class="px-4 py-3">
               <div
                 class="text-[10px] uppercase tracking-wide text-slate-500 mb-2"
               >
@@ -866,7 +924,7 @@ const submitRenew = async () => {
         </template>
 
         <tr v-if="!reservations.length">
-          <td colspan="8" class="py-6 text-center text-slate-400">
+          <td colspan="9" class="py-6 text-center text-slate-400">
             {{
               statusFilter
                 ? 'Nenhuma proposta com este status.'
