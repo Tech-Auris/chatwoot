@@ -597,6 +597,18 @@
   value: ''
   locked: false
   type: secret
+- name: COMMERCIAL_CONTRACT_ENABLED
+  display_title: 'Fluxo de contrato'
+  description: 'Planos semestral e anual passam pela etapa Contrato antes do pagamento. Editado em Super Admin → Commercial → Contrato.'
+  value: true
+  locked: false
+  type: boolean
+- name: COMMERCIAL_CONTRACT_AUTO_SIGN
+  display_title: 'Assinatura automática da Auris'
+  description: 'O representante legal da Auris (dono do token do Autentique) assina o contrato assim que ele é gerado. Editado em Super Admin → Commercial → Contrato.'
+  value: true
+  locked: false
+  type: boolean
 - name: AUTENTIQUE_API_TOKEN
   display_title: 'Autentique — token da API'
   description: 'Gerado em Autentique → Configurações → API, na conta do representante legal da Auris: é em nome dele que a Auris assina os contratos automaticamente.'
