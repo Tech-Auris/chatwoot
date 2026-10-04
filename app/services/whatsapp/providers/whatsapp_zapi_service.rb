@@ -7,9 +7,15 @@ class Whatsapp::Providers::WhatsappZapiService < Whatsapp::Providers::BaseServic
 
   def sync_templates; end
 
+  # `zapi_args` lets an API caller pass extra Z-API options (delays,
+  # mentions…). It can never change who receives the message or what it
+  # carries: those keys would otherwise override the conversation's contact,
+  # turning the clinic's number into a relay to any phone.
+  PROTECTED_ZAPI_ARGS = %w[phone message image audio video document caption fileName extension reaction].freeze
+
   def send_message(phone, message)
     phone = phone.delete('+')
-    params = message.content_attributes[:zapi_args].presence || {}
+    params = (message.content_attributes[:zapi_args].presence || {}).to_h.stringify_keys.except(*PROTECTED_ZAPI_ARGS)
 
     params[:messageId] = message.in_reply_to_external_id if message.in_reply_to_external_id.present?
 
