@@ -78,6 +78,12 @@ class Rack::Attack
     req.ip if req.path_without_extensions == '/super_admin/sign_in' && req.post?
   end
 
+  # The 6-digit code step after the password; the controller also locks a
+  # single admin after a few wrong codes.
+  throttle('super_admin_mfa/ip', limit: 10, period: 5.minutes) do |req|
+    req.ip if req.path_without_extensions == '/super_admin/sessions/mfa_challenge' && req.post?
+  end
+
   throttle('super_admin_login/email', limit: 5, period: 15.minutes) do |req|
     if req.path_without_extensions == '/super_admin/sign_in' && req.post?
       # NOTE: This line used to throw ArgumentError /rails/action_mailbox/sendgrid/inbound_emails : invalid byte sequence in UTF-8
