@@ -3,6 +3,9 @@ class SuperAdmin::AppConfigsController < SuperAdmin::ApplicationController
   before_action :allowed_configs
   before_action :load_installation_configs, only: [:show, :create]
   before_action :validate_commercial_whatsapp, only: :create, if: -> { @config == 'commercial' }
+  before_action :validate_api_limits, only: :create, if: -> { @config == 'api_limits' }
+  # Other processes pick the new values up within ApiRateLimits::REFRESH_INTERVAL.
+  after_action -> { ApiRateLimits.reset! }, only: :create, if: -> { @config == 'api_limits' }
   def show
     # Read the model so `SerializedValueCoder` is applied — a `.pluck` on
     # `serialized_value` returns the raw column (YAML string for rows
@@ -69,6 +72,13 @@ class SuperAdmin::AppConfigsController < SuperAdmin::ApplicationController
     redirect_to super_admin_app_config_path(config: @config), alert: error if error
   end
 
+  def validate_api_limits
+    invalid = ApiRateLimits.invalid_entries(params.dig('app_config', 'API_INTERNAL_IPS'))
+    return if invalid.empty?
+
+    redirect_to super_admin_app_config_path(config: @config), alert: "IP ou faixa inválida: #{invalid.join(', ')}"
+  end
+
   # Only checked when the form carries the WhatsApp fields.
   def commercial_whatsapp_error(values)
     return unless values.key?('COMMERCIAL_WHATSAPP_INBOX_ID')
@@ -122,7 +132,9 @@ class SuperAdmin::AppConfigsController < SuperAdmin::ApplicationController
       'secretary' => %w[SECRETARY_AI_USER_ID],
       # E-signature of the semiannual/annual contracts in the hiring area. The
       # token's Autentique user is who signs for Auris, automatically.
-      'autentique' => %w[AUTENTIQUE_API_TOKEN AUTENTIQUE_WEBHOOK_SECRET AUTENTIQUE_SANDBOX]
+      'autentique' => %w[AUTENTIQUE_API_TOKEN AUTENTIQUE_WEBHOOK_SECRET AUTENTIQUE_SANDBOX],
+      # Rack::Attack reads these on every request (see ApiRateLimits).
+      'api_limits' => %w[API_INTERNAL_IPS API_RATE_LIMIT_PER_IP API_RATE_LIMIT_PER_TOKEN API_RATE_LIMIT_MESSAGES_PER_INBOX]
     }
   end
 

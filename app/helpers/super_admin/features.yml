@@ -192,6 +192,12 @@ secretary:
   enabled: true
   icon: 'icon-robot-line'
   config_key: 'secretary'
+api_limits:
+  name: 'Limites da API'
+  description: 'Internal IPs that skip every limit, and the per-minute limits per IP, per API token and per inbox for messages sent through the API.'
+  enabled: true
+  icon: 'icon-lock-line'
+  config_key: 'api_limits'
 autentique:
   name: 'Autentique'
   description: 'E-signature of the semiannual and annual contracts in the hiring area. The token belongs to the Autentique user who signs for Auris.'

@@ -25,10 +25,14 @@ class Rack::Attack
       @remote_ip ||= (env['action_dispatch.remote_ip'] || ip).to_s
     end
 
+    # Localhost, RACK_ATTACK_ALLOWED_IPS and the list in Super Admin →
+    # Settings → Limites da API (IPs or CIDR ranges).
     def allowed_ip?
-      default_allowed_ips = ['127.0.0.1', '::1']
-      env_allowed_ips = ENV.fetch('RACK_ATTACK_ALLOWED_IPS', '').split(',').map(&:strip)
-      (default_allowed_ips + env_allowed_ips).include?(remote_ip)
+      ApiRateLimits.internal_ip?(remote_ip)
+    end
+
+    def api_access_token
+      get_header('HTTP_API_ACCESS_TOKEN').presence || get_header('api_access_token').presence
     end
 
     # Rails would allow requests to paths with extensions, so lets compare against the path with extension stripped
@@ -38,12 +42,11 @@ class Rack::Attack
     end
   end
 
-  ### Safelist IPs from Environment Variable ###
+  ### Safelist internal IPs ###
   #
-  # This block ensures requests from any IP present in RACK_ATTACK_ALLOWED_IPS
-  # will bypass Rack::Attack’s throttling rules.
+  # Requests from an internal IP bypass every throttle below.
   #
-  # Example: RACK_ATTACK_ALLOWED_IPS="127.0.0.1,::1,192.168.0.10"
+  # Example: RACK_ATTACK_ALLOWED_IPS="127.0.0.1,::1,192.168.0.10,100.62.125.0/24"
 
   Rack::Attack.safelist('trusted IPs', &:allowed_ip?)
 
@@ -63,11 +66,25 @@ class Rack::Attack
   # counted by rack-attack and this throttle may be activated too
   # quickly. If so, enable the condition to exclude them from tracking.
 
-  # Throttle all requests by IP (60rpm)
+  # The three limits below are set in Super Admin → Settings → Limites da API.
   #
   # Key: "rack::attack:#{Time.now.to_i/:period}:req/ip:#{req.ip}"
 
-  throttle('req/ip', limit: ENV.fetch('RACK_ATTACK_LIMIT', '3000').to_i, period: 1.minute, &:ip)
+  throttle('req/ip', limit: ->(_req) { ApiRateLimits.per_ip }, period: 1.minute, &:ip)
+
+  # The same API token can't dodge the IP limit by spreading over many IPs.
+  throttle('req/api_token', limit: ->(_req) { ApiRateLimits.per_token }, period: 1.minute, &:api_access_token)
+
+  # Messages sent through the API on one inbox. Keeps a script from bursting
+  # a WhatsApp number into a ban; the dashboard (no API token) isn't counted.
+  throttle('api/messages/inbox', limit: ->(_req) { ApiRateLimits.messages_per_inbox }, period: 1.minute) do |req|
+    next unless req.post? && req.api_access_token
+
+    match = %r{\A/api/v1/accounts/(?<account_id>\d+)/conversations/(?<display_id>\d+)/messages\z}.match(req.path_without_extensions)
+    next unless match
+
+    Conversation.where(account_id: match[:account_id], display_id: match[:display_id]).pick(:inbox_id)
+  end
 
   ###-----------------------------------------------###
   ###-----Authentication Related Throttling---------###
