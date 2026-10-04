@@ -688,6 +688,27 @@
   value: '385'
   type: inbox_select
   locked: false
+- name: API_INTERNAL_IPS
+  display_title: 'IPs internos'
+  description: 'Um por linha: IPv4, IPv6 ou faixa (ex.: 100.62.125.0/24). Esses endereços não sofrem nenhum limite, inclusive de login. Somam-se aos da variável RACK_ATTACK_ALLOWED_IPS.'
+  value: ''
+  type: code
+  locked: false
+- name: API_RATE_LIMIT_PER_IP
+  display_title: 'Limite por IP (requisições/min)'
+  description: 'Requisições por minuto vindas de um mesmo endereço, somando painel e API.'
+  value: '600'
+  locked: false
+- name: API_RATE_LIMIT_PER_TOKEN
+  display_title: 'Limite por token (requisições/min)'
+  description: 'Requisições por minuto de um mesmo api_access_token, mesmo trocando de IP.'
+  value: '600'
+  locked: false
+- name: API_RATE_LIMIT_MESSAGES_PER_INBOX
+  display_title: 'Envio de mensagens por caixa (mensagens/min)'
+  description: 'Mensagens enviadas via API (com api_access_token) numa mesma caixa por minuto. Protege o número de WhatsApp contra bloqueio por disparo em massa. O painel não entra nessa conta.'
+  value: '60'
+  locked: false
 - name: SECRETARY_AI_USER_ID
   display_title: 'Usuário da IA (ID)'
   description: 'ID do usuário "IA | Auris". Atribuir uma conversa a ele liga o status da IA; tirar a atribuição desliga.'

@@ -197,4 +197,35 @@ RSpec.describe 'Super Admin Application Config API', type: :request do
       expect(InstallationConfig.find_by(name: 'COMMERCIAL_WHATSAPP_INBOX_ID')&.value).not_to eq(other_inbox.id.to_s)
     end
   end
+
+  describe 'the Limites da API section' do
+    before { sign_in(super_admin, scope: :super_admin) }
+
+    after { ApiRateLimits.reset! }
+
+    it 'shows the internal IPs and the three limits' do
+      get '/super_admin/app_config?config=api_limits'
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include('IPs internos', 'Limite por IP', 'Limite por token', 'Envio de mensagens por caixa')
+    end
+
+    it 'saves the internal IPs and the limits, applied without a restart' do
+      post '/super_admin/app_config?config=api_limits', params: {
+        app_config: { API_INTERNAL_IPS: "100.62.125.0/24\n2804:14c::/32", API_RATE_LIMIT_PER_IP: '900',
+                      API_RATE_LIMIT_PER_TOKEN: '600', API_RATE_LIMIT_MESSAGES_PER_INBOX: '30' }
+      }
+
+      expect(response).to redirect_to(super_admin_settings_path)
+      expect(ApiRateLimits.internal_ip?('100.62.125.8')).to be(true)
+      expect(ApiRateLimits.messages_per_inbox).to eq(30)
+    end
+
+    it 'refuses a line that is not an IP or a range' do
+      post '/super_admin/app_config?config=api_limits', params: { app_config: { API_INTERNAL_IPS: "10.0.0.1\nservidor-n8n" } }
+
+      expect(flash[:alert]).to include('servidor-n8n')
+      expect(InstallationConfig.find_by(name: 'API_INTERNAL_IPS')&.value.to_s).not_to include('servidor-n8n')
+    end
+  end
 end
