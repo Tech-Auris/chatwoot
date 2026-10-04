@@ -5,7 +5,7 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController #
   before_action :validate_limit, only: [:create]
   # we are already handling the authorization in fetch inbox
   # rubocop:disable Rails/LexicallyScopedActionFilter -- health is defined in WhatsappHealthManagement concern
-  before_action :check_authorization, except: [:show, :health, :setup_channel_provider, :import_whatsapp_session]
+  before_action :check_authorization, except: [:show, :health, :setup_channel_provider]
   before_action :validate_whatsapp_cloud_channel, only: [:health]
   # rubocop:enable Rails/LexicallyScopedActionFilter
   include Api::V1::Accounts::Concerns::WhatsappHealthManagement
@@ -108,9 +108,9 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController #
   end
 
   # Hot-loads a WhatsApp Web session extracted by the browser extension into a
-  # disconnected Baileys inbox. Authorized like setup_channel_provider (any agent
-  # assigned to the inbox, via fetch_inbox -> show?), since connecting a number
-  # to an assigned inbox is the same privilege as scanning a QR for it.
+  # disconnected Baileys inbox. Only admins and managers: the session swaps the
+  # number behind the inbox, so an agent could otherwise route the clinic's
+  # conversations through a phone of their choosing.
   def import_whatsapp_session
     channel = @inbox.channel
 

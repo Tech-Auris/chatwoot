@@ -1425,6 +1425,36 @@ RSpec.describe 'Inboxes API', type: :request do
       end
     end
 
+    context 'when the user is an agent assigned to the inbox' do
+      it 'returns unauthorized and does not import the session' do
+        create(:inbox_member, user: agent, inbox: inbox)
+        allow(Whatsapp::Providers::WhatsappBaileysService).to receive(:new)
+
+        post "/api/v1/accounts/#{account.id}/inboxes/#{inbox.id}/import_whatsapp_session",
+             params: { session: session_payload },
+             headers: agent.create_new_auth_token,
+             as: :json
+
+        expect(response).to have_http_status(:unauthorized)
+        expect(Whatsapp::Providers::WhatsappBaileysService).not_to have_received(:new)
+      end
+    end
+
+    context 'when the user is a manager' do
+      it 'imports the session' do
+        manager = create(:user, account: account, role: :manager)
+        service_double = instance_double(Whatsapp::Providers::WhatsappBaileysService, import_session: true)
+        allow(Whatsapp::Providers::WhatsappBaileysService).to receive(:new).with(whatsapp_channel: channel).and_return(service_double)
+
+        post "/api/v1/accounts/#{account.id}/inboxes/#{inbox.id}/import_whatsapp_session",
+             params: { session: session_payload },
+             headers: manager.create_new_auth_token,
+             as: :json
+
+        expect(response).to have_http_status(:ok)
+      end
+    end
+
     context 'when authenticated' do
       it 'returns unprocessable entity for a non-baileys channel' do
         other = create(:inbox, account: account)
@@ -1496,24 +1526,8 @@ RSpec.describe 'Inboxes API', type: :request do
         expect(response).to have_http_status(:service_unavailable)
       end
 
-      it 'allows agents assigned to the inbox' do
-        create(:inbox_member, user: agent, inbox: inbox)
-        service_double = instance_double(Whatsapp::Providers::WhatsappBaileysService, import_session: true)
-        allow(Whatsapp::Providers::WhatsappBaileysService).to receive(:new)
-          .with(whatsapp_channel: channel)
-          .and_return(service_double)
-
-        post "/api/v1/accounts/#{account.id}/inboxes/#{inbox.id}/import_whatsapp_session",
-             params: { session: session_payload },
-             headers: agent.create_new_auth_token,
-             as: :json
-
-        expect(response).to have_http_status(:ok)
-      end
-
       it 'returns unauthorized for agents not assigned to the inbox' do
-        post "/api/v1/accounts/#{account.id}/inboxes/#{inbox.id}/import_whatsapp_session",
-             params: { session: session_payload },
+        post "/api/v1/accounts/#{account.id}/inboxes/#{inbox.id}/setup_channel_provider",
              headers: agent.create_new_auth_token,
              as: :json
 
