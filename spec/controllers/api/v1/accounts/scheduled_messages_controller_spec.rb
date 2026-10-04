@@ -18,6 +18,21 @@ RSpec.describe 'Scheduled Messages API', type: :request do
     create(:inbox_member, user: agent, inbox: inbox_a)
   end
 
+  describe "cancelling a colleague's schedule from the panel" do
+    it "refuses an agent cancelling a colleague's scheduled message from the panel" do
+      delete "/api/v1/accounts/#{account.id}/scheduled_messages/#{pending_in_a.id}", headers: agent.create_new_auth_token, as: :json
+
+      expect(response).to have_http_status(:forbidden)
+      expect(ScheduledMessage.exists?(pending_in_a.id)).to be(true)
+    end
+
+    it 'lets a manager cancel it' do
+      delete "/api/v1/accounts/#{account.id}/scheduled_messages/#{pending_in_a.id}", headers: manager.create_new_auth_token, as: :json
+
+      expect(response).to have_http_status(:success)
+    end
+  end
+
   describe 'GET /api/v1/accounts/:account_id/scheduled_messages' do
     it 'refuses an unauthenticated request' do
       get "/api/v1/accounts/#{account.id}/scheduled_messages"

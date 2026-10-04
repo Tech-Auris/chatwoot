@@ -67,6 +67,7 @@ class Api::V1::Accounts::ScheduledMessagesController < Api::V1::Accounts::BaseCo
                                         .where(conversations: { inbox_id: accessible_inbox_ids })
                                         .find_by(id: params[:id])
     return render(json: { error: 'not_found' }, status: :not_found) if scheduled_message.blank?
+    return render(json: { error: 'not_author' }, status: :forbidden) unless policy(scheduled_message).destroy?
     return render(json: { error: 'not_pending' }, status: :unprocessable_entity) unless scheduled_message.pending?
 
     scheduled_message.destroy!
