@@ -1,9 +1,12 @@
+# Direct messages are private to the two people in them — account
+# administrators included. Public and private channels keep the admin override.
 class InternalChat::ChannelPolicy < ApplicationPolicy
   def index?
     agent_or_admin?
   end
 
   def show?
+    return channel_member? if record.channel_type_dm?
     return true if administrator?
     return agent_or_admin? if record.channel_type_public_channel?
 
@@ -16,7 +19,10 @@ class InternalChat::ChannelPolicy < ApplicationPolicy
     administrator?
   end
 
+  # A DM has no settings or members to change.
   def update?
+    return false if record.channel_type_dm?
+
     administrator? || channel_admin?
   end
 
