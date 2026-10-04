@@ -111,4 +111,34 @@ RSpec.describe InternalChat::MessagePolicy, type: :policy do
       end
     end
   end
+
+  # A DM is private to the two people in it: the account administrator can
+  # neither read, write, edit, pin nor react in it.
+  describe 'direct messages' do
+    let(:channel) { create(:internal_chat_channel, :dm, account: account) }
+    let(:message) { create(:internal_chat_message, account: account, channel: channel, sender: agent) }
+
+    before do
+      create(:internal_chat_channel_member, channel: channel, user: agent)
+      create(:internal_chat_channel_member, channel: channel, user: other_agent)
+    end
+
+    permissions :index?, :create?, :update?, :destroy?, :pin?, :thread? do
+      it 'denies an administrator who is not in the DM' do
+        expect(subject).not_to permit(administrator_context, message)
+      end
+    end
+
+    permissions :index?, :create? do
+      it 'allows the people in the DM' do
+        expect(subject).to permit(other_agent_context, message)
+      end
+    end
+
+    it 'denies reactions to an administrator who is not in the DM' do
+      reaction = InternalChat::Reaction.new(message: message, user: administrator, emoji: '👍')
+
+      expect(InternalChat::ReactionPolicy.new(administrator_context, reaction).create?).to be(false)
+    end
+  end
 end

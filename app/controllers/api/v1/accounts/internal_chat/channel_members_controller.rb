@@ -65,11 +65,17 @@ class Api::V1::Accounts::InternalChat::ChannelMembersController < Api::V1::Accou
   end
 
   def authorize_member_update!
-    raise Pundit::NotAuthorizedError unless @member.user_id == Current.user.id || Current.account_user&.administrator?
+    raise Pundit::NotAuthorizedError unless @member.user_id == Current.user.id || administrator_override?
   end
 
   def authorize_member_destroy!
-    raise Pundit::NotAuthorizedError unless @member.user_id == Current.user.id || Current.account_user&.administrator?
+    raise Pundit::NotAuthorizedError unless @member.user_id == Current.user.id || administrator_override?
+  end
+
+  # Account administrators manage members of channels, never of someone
+  # else's direct messages.
+  def administrator_override?
+    Current.account_user&.administrator? && !current_channel.channel_type_dm?
   end
 
   def dispatch_member_update(removed_user: nil)

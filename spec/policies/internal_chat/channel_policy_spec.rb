@@ -80,6 +80,23 @@ RSpec.describe InternalChat::ChannelPolicy, type: :policy do
           expect(subject).not_to permit(other_agent_context, channel)
         end
       end
+
+      # A DM is private to the two people in it: the account administrator
+      # does not read it either.
+      context 'when user is an administrator who is not in the DM' do
+        it 'denies access' do
+          expect(subject).not_to permit(administrator_context, channel)
+        end
+      end
+    end
+  end
+
+  permissions :update? do
+    it 'never lets anyone change a DM or add people to it' do
+      dm = create(:internal_chat_channel, :dm, account: account)
+      create(:internal_chat_channel_member, channel: dm, user: administrator, role: :admin)
+
+      expect(subject).not_to permit(administrator_context, dm)
     end
   end
 
