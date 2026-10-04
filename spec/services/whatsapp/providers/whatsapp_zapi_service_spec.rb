@@ -380,6 +380,21 @@ describe Whatsapp::Providers::WhatsappZapiService do
       end
     end
 
+    # An API caller passing zapi_args must not redirect the message to
+    # another phone or swap what it says (audit item M4).
+    context 'when zapi_args try to change the recipient or the content' do
+      it 'keeps the conversation phone and the message, passing on the other options' do
+        message.update!(content: 'Olá', content_attributes: { zapi_args: { 'phone' => '5511999999999', 'message' => 'golpe', 'delayMessage' => 3 } })
+        request = stub_request(:post, request_path)
+                  .with(headers: stub_headers, body: { phone: test_send_phone_number, message: 'Olá', delayMessage: 3 }.to_json)
+                  .to_return(status: 200, body: result_body.to_json, headers: { 'Content-Type' => 'application/json' })
+
+        service.send_message("+#{test_send_phone_number}", message)
+
+        expect(request).to have_been_requested
+      end
+    end
+
     context 'when message is a text' do
       it 'sends the text message' do
         stub_request(:post, request_path)
