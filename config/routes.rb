@@ -1079,9 +1079,9 @@ Rails.application.routes.draw do
       end
     end
     # Mounted outside the Administrate controllers, so the console's own
-    # section guard never runs here — a finance-only admin would otherwise
-    # reach the queues by typing the URL.
-    authenticated :super_admin, ->(super_admin) { !super_admin.financial_only? } do
+    # section guard never runs here — a finance-only or commercial-only admin
+    # would otherwise reach the queues (and every job's arguments) by typing the URL.
+    authenticated :super_admin, ->(super_admin) { !super_admin.restricted? } do
       mount Sidekiq::Web => '/monitoring/sidekiq'
     end
   end
