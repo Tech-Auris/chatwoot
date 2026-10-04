@@ -106,6 +106,29 @@ RSpec.describe 'Scheduled Messages API', type: :request do
     end
   end
 
+  describe "someone else's scheduled message" do
+    let(:colleague) { create(:user, account: account, role: :agent) }
+    let(:manager) { create(:user, account: account, role: :manager) }
+
+    before { create(:inbox_member, inbox: inbox, user: colleague) }
+
+    it 'refuses an agent changing or cancelling what a colleague scheduled' do
+      patch scheduled_message_url(scheduled_message), params: { content: 'trocado' }, headers: colleague.create_new_auth_token, as: :json
+      expect(response).to have_http_status(:unauthorized)
+
+      delete scheduled_message_url(scheduled_message), headers: colleague.create_new_auth_token, as: :json
+      expect(response).to have_http_status(:unauthorized)
+      expect(ScheduledMessage.exists?(scheduled_message.id)).to be(true)
+    end
+
+    it 'lets a manager cancel it' do
+      delete scheduled_message_url(scheduled_message), headers: manager.create_new_auth_token, as: :json
+
+      expect(response).to have_http_status(:success)
+      expect(ScheduledMessage.exists?(scheduled_message.id)).to be(false)
+    end
+  end
+
   describe 'DELETE #destroy' do
     it 'deletes pending scheduled messages' do
       delete scheduled_message_url(scheduled_message), headers: agent.create_new_auth_token, as: :json

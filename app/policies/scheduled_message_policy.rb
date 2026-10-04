@@ -7,18 +7,29 @@ class ScheduledMessagePolicy < ApplicationPolicy
     accessible?
   end
 
+  # An agent changes or cancels only what they scheduled; administrators,
+  # managers and bots can touch anyone's.
   def update?
-    accessible?
+    accessible? && (supervisor? || author?)
   end
 
   def destroy?
-    accessible?
+    accessible? && (supervisor? || author?)
   end
 
   private
 
+  def supervisor?
+    administrator? || account_user&.manager? || agent_bot?
+  end
+
+  def author?
+    record.respond_to?(:author) && record.author == user
+  end
+
+  # Managers see every inbox of the account, like administrators.
   def accessible?
-    administrator? || agent_bot? || agent_can_view_conversation?
+    supervisor? || agent_can_view_conversation?
   end
 
   def agent_can_view_conversation?

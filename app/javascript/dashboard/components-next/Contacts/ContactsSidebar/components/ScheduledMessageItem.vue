@@ -10,6 +10,8 @@ import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import { buildRecurrenceDescription } from 'dashboard/helper/recurrenceHelpers';
+import { useAdmin } from 'dashboard/composables/useAdmin';
+import { useMapGetter } from 'dashboard/composables/store';
 
 const props = defineProps({
   scheduledMessage: {
@@ -88,6 +90,19 @@ const statusConfig = {
 
 const author = computed(() => props.scheduledMessage?.author || null);
 const authorType = computed(() => props.scheduledMessage?.author_type);
+
+// Agents change or cancel only what they scheduled; administrators and
+// managers can manage anyone's (the server enforces the same rule).
+const { isAdmin, isManager } = useAdmin();
+const currentUserId = useMapGetter('getCurrentUserID');
+const canManage = computed(
+  () =>
+    isAdmin.value ||
+    isManager.value ||
+    (authorType.value === 'User' && author.value?.id === currentUserId.value)
+);
+const showEdit = computed(() => props.allowEdit && canManage.value);
+const showDelete = computed(() => props.allowDelete && canManage.value);
 const isUserAuthor = computed(
   () => authorType.value === 'User' && Boolean(author.value?.id)
 );
@@ -336,11 +351,11 @@ watch(previewContent, () => {
           {{ statusBadge.label }}
         </span>
         <div
-          v-if="allowEdit || allowDelete"
+          v-if="showEdit || showDelete"
           class="flex items-center gap-1 opacity-0 group-hover/scheduled:opacity-100"
         >
           <Button
-            v-if="allowEdit"
+            v-if="showEdit"
             variant="faded"
             color="slate"
             size="xs"
@@ -348,7 +363,7 @@ watch(previewContent, () => {
             @click.stop="onEdit"
           />
           <Button
-            v-if="allowDelete"
+            v-if="showDelete"
             variant="faded"
             color="ruby"
             size="xs"
