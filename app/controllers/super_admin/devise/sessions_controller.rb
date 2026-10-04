@@ -12,6 +12,7 @@ class SuperAdmin::Devise::SessionsController < Devise::SessionsController
 
     if Chatwoot.mfa_enabled? && @super_admin.mfa_enabled?
       session[:super_admin_pending_mfa_id] = @super_admin.id
+      session[:super_admin_pending_mfa_at] = Time.current.to_i
       redirect_to super_admin_sessions_mfa_challenge_path and return
     end
 
