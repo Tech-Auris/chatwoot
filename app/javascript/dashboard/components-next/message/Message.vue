@@ -46,6 +46,7 @@ import ContextMenu from 'dashboard/modules/conversations/components/MessageConte
 import EmojiReactionPicker from './EmojiReactionPicker.vue';
 import ReactionDisplay from './ReactionDisplay.vue';
 import { useBranding } from 'shared/composables/useBranding';
+import { useAdmin } from 'dashboard/composables/useAdmin';
 
 /**
  * @typedef {Object} Attachment
@@ -407,6 +408,20 @@ const payloadForContextMenu = computed(() => {
   };
 });
 
+const { isAdmin, isManager } = useAdmin();
+
+// Agents edit only what they sent; administrators and managers can fix
+// anyone's message (the server enforces the same rule).
+const canEditMessage = computed(() => {
+  if (isAdmin.value || isManager.value) return true;
+  const senderId = props.senderId ?? props.sender?.id;
+  const senderType = props.sender?.type ?? props.senderType ?? '';
+  return (
+    senderId === props.currentUserId &&
+    senderType.toLowerCase() === SENDER_TYPES.USER.toLowerCase()
+  );
+});
+
 const contextMenuEnabledOptions = computed(() => {
   const hasText = !!props.content;
   const hasAttachments = !!(props.attachments && props.attachments.length > 0);
@@ -431,6 +446,7 @@ const contextMenuEnabledOptions = computed(() => {
       !isFailedOrProcessing,
     edit:
       isOutgoing &&
+      canEditMessage.value &&
       hasText &&
       !isFailedOrProcessing &&
       !isMessageDeleted.value &&

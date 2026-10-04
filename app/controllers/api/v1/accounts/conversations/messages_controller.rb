@@ -65,6 +65,7 @@ class Api::V1::Accounts::Conversations::MessagesController < Api::V1::Accounts::
     return render json: { error: 'Content is required' }, status: :unprocessable_entity if new_content.blank?
     return render json: { error: 'Content exceeds maximum length' }, status: :unprocessable_entity if new_content.length > 150_000
     return render json: { error: 'Only outgoing messages can be edited' }, status: :forbidden unless message.outgoing?
+    return render json: { error: 'You can only edit your own messages' }, status: :forbidden unless editable_by_current_user?
 
     original_content = message.content
     # Only save previous_content on first edit to preserve the original message
@@ -77,6 +78,14 @@ class Api::V1::Accounts::Conversations::MessagesController < Api::V1::Accounts::
   end
 
   private
+
+  # An agent edits only what they sent; administrators and managers can fix
+  # anyone's message (the AI's included).
+  def editable_by_current_user?
+    return true if Current.account_user&.administrator? || Current.account_user&.manager?
+
+    message.sender.present? && message.sender == Current.user
+  end
 
   def message
     @message ||= @conversation.messages.find(permitted_params[:id])
