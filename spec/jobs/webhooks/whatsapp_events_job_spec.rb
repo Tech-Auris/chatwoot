@@ -303,6 +303,7 @@ RSpec.describe Webhooks::WhatsappEventsJob do
     let(:waba_id) { channel.provider_config['business_account_id'] }
     let(:template_payload) do
       {
+        phone_number: channel.phone_number,
         object: 'whatsapp_business_account',
         entry: [{
           id: waba_id,
@@ -342,17 +343,25 @@ RSpec.describe Webhooks::WhatsappEventsJob do
       expect(Rails.logger).not_to have_received(:warn).with(/Inactive WhatsApp channel/)
     end
 
-    it 'logs a warning and skips when the WABA id does not match any channel' do
-      # Rebuild the payload with a bogus WABA id — array deep_merge replaces
-      # rather than merges, so we can't just swap the id in place.
-      unknown_payload = template_payload.deep_dup
-      unknown_payload[:entry][0][:id] = 'unknown-waba'
-      allow(Rails.logger).to receive(:warn)
-      expect(Whatsapp::TemplateStatusUpdateService).not_to receive(:new)
+    it 'ignores a WABA other than the one of the number in the URL' do
+      other_waba_payload = template_payload.deep_dup
+      other_waba_payload[:entry][0][:id] = 'another-clinic-waba'
+      allow(Whatsapp::TemplateStatusUpdateService).to receive(:new)
 
-      job.perform_now(unknown_payload)
+      job.perform_now(other_waba_payload)
 
-      expect(Rails.logger).to have_received(:warn).with(/unknown WABA id=unknown-waba/)
+      expect(Whatsapp::TemplateStatusUpdateService).not_to have_received(:new)
+    end
+
+    # Baileys / Z-API URLs skip the Meta signature check, so a template
+    # update arriving there can only be forged.
+    it 'ignores the update when it arrives on the URL of a Baileys number' do
+      baileys = create(:channel_whatsapp, provider: 'baileys', sync_templates: false, validate_provider_config: false)
+      allow(Whatsapp::TemplateStatusUpdateService).to receive(:new)
+
+      job.perform_now(template_payload.merge(phone_number: baileys.phone_number))
+
+      expect(Whatsapp::TemplateStatusUpdateService).not_to have_received(:new)
     end
   end
 

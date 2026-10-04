@@ -172,22 +172,27 @@ class Webhooks::WhatsappEventsJob < MutexApplicationJob
     params.dig(:entry, 0, :changes, 0, :field).to_s == 'message_template_status_update'
   end
 
+  # Meta delivers these to the callback URL of an official (Cloud) number on
+  # the same WABA, where the Meta signature is checked. Arriving on a Baileys /
+  # Z-API number's URL, or naming another WABA, the payload can only be forged:
+  # it would flip any clinic's templates to approved or rejected.
   def handle_template_status_update(params)
     waba_id = params.dig(:entry, 0, :id).to_s
     event_value = params.dig(:entry, 0, :changes, 0, :value) || {}
-    channels = channels_by_waba_id(waba_id)
+    return unless template_status_from_official_number?(params[:phone_number], waba_id)
 
-    if channels.empty?
-      Rails.logger.warn("[whatsapp] template_status_update for unknown WABA id=#{waba_id}")
-      return
-    end
+    channels_by_waba_id(waba_id).each { |channel| Whatsapp::TemplateStatusUpdateService.new(channel, event_value).perform }
+  end
 
-    channels.each { |channel| Whatsapp::TemplateStatusUpdateService.new(channel, event_value).perform }
+  def template_status_from_official_number?(phone_number, waba_id)
+    url_channel = Channel::Whatsapp.find_by(phone_number: phone_number)
+    return true if url_channel&.provider == 'whatsapp_cloud' && url_channel.provider_config['business_account_id'] == waba_id
+
+    Rails.logger.warn("[whatsapp] template_status_update rejected: WABA id=#{waba_id} on the URL of #{phone_number}")
+    false
   end
 
   def channels_by_waba_id(waba_id)
-    return Channel::Whatsapp.none if waba_id.blank?
-
     Channel::Whatsapp.where(provider: 'whatsapp_cloud')
                      .where("provider_config ->> 'business_account_id' = ?", waba_id)
   end
