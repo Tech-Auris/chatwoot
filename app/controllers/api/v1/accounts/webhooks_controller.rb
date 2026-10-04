@@ -23,11 +23,20 @@ class Api::V1::Accounts::WebhooksController < Api::V1::Accounts::BaseController
   private
 
   def webhook_create_params
-    params.require(:webhook).permit(:inbox_id, :name, :url, subscriptions: [])
+    webhook_params
   end
 
   def webhook_update_params
-    params.require(:webhook).permit(:name, subscriptions: [])
+    webhook_params
+  end
+
+  # `inbox_id` (a single inbox) is still accepted for API clients written
+  # before webhooks could listen to several inboxes.
+  def webhook_params
+    permitted = params.require(:webhook).permit(:inbox_id, :name, :url, subscriptions: [], inbox_ids: [])
+    legacy_inbox_id = permitted.delete(:inbox_id)
+    permitted[:inbox_ids] = Array(legacy_inbox_id.presence) if params[:webhook].key?(:inbox_id) && !permitted.key?(:inbox_ids)
+    permitted
   end
 
   def fetch_webhook

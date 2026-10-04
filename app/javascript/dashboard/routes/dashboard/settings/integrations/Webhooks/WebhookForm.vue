@@ -6,7 +6,7 @@ import { getI18nKey } from 'dashboard/routes/dashboard/settings/helper/settingsH
 import { copyTextToClipboard } from 'shared/helpers/clipboard';
 import { useAlert } from 'dashboard/composables';
 import NextButton from 'dashboard/components-next/button/Button.vue';
-import MultiselectDropdown from 'shared/components/ui/MultiselectDropdown.vue';
+import WebhookInboxPicker from './WebhookInboxPicker.vue';
 import { useMapGetter } from 'dashboard/composables/store';
 
 const { EXAMPLE_WEBHOOK_URL } = wootConstants;
@@ -48,7 +48,7 @@ const localhostUrl = value => {
 export default {
   components: {
     NextButton,
-    MultiselectDropdown,
+    WebhookInboxPicker,
   },
   props: {
     value: {
@@ -62,10 +62,6 @@ export default {
     submitLabel: {
       type: String,
       required: true,
-    },
-    isEditing: {
-      type: Boolean,
-      default: false,
     },
   },
   emits: ['submit', 'cancel'],
@@ -88,7 +84,7 @@ export default {
   data() {
     return {
       url: this.value.url || '',
-      assignedInbox: this.value.inbox || null,
+      inboxIds: this.value.inbox_ids || [],
       name: this.value.name || '',
       subscriptions: this.value.subscriptions || [],
       secretVisible: false,
@@ -98,20 +94,6 @@ export default {
   computed: {
     hasSecret() {
       return !!this.value.secret;
-    },
-    inboxesList() {
-      if (this.assignedInbox?.id) {
-        return [
-          {
-            id: 0,
-            name: this.$t(
-              'INTEGRATION_SETTINGS.WEBHOOK.FORM.INBOX.PLACEHOLDER'
-            ),
-          },
-          ...this.inboxes,
-        ];
-      }
-      return this.inboxes;
     },
     webhookURLInputPlaceholder() {
       return this.$t(
@@ -129,7 +111,7 @@ export default {
     onSubmit() {
       this.$emit('submit', {
         url: this.url,
-        inbox_id: this.assignedInbox?.id || null,
+        inbox_ids: this.inboxIds,
         name: this.name,
         subscriptions: this.subscriptions,
       });
@@ -137,9 +119,6 @@ export default {
     async copySecret() {
       await copyTextToClipboard(this.value.secret);
       useAlert(this.$t('INTEGRATION_SETTINGS.WEBHOOK.SECRET.COPY_SUCCESS'));
-    },
-    onClickAssignInbox(inbox) {
-      this.assignedInbox = inbox;
     },
     getI18nKey,
   },
@@ -155,7 +134,6 @@ export default {
           v-model="url"
           type="text"
           name="url"
-          :disabled="isEditing"
           :placeholder="webhookURLInputPlaceholder"
           @input="v$.url.$touch"
         />
@@ -163,29 +141,10 @@ export default {
           {{ $t('INTEGRATION_SETTINGS.WEBHOOK.FORM.END_POINT.ERROR') }}
         </span>
       </label>
-      <label>
+      <label class="mb-2">
         {{ $t('INTEGRATION_SETTINGS.WEBHOOK.FORM.INBOX.LABEL') }}
-        <div class="multiselect-wrap--small">
-          <MultiselectDropdown
-            :options="inboxesList"
-            :selected-item="assignedInbox"
-            :multiselector-title="
-              $t('INTEGRATION_SETTINGS.WEBHOOK.FORM.INBOX.TITLE')
-            "
-            :multiselector-placeholder="
-              $t('INTEGRATION_SETTINGS.WEBHOOK.FORM.INBOX.PLACEHOLDER')
-            "
-            :no-search-result="
-              $t('INTEGRATION_SETTINGS.WEBHOOK.FORM.INBOX.NO_RESULTS')
-            "
-            :input-placeholder="
-              $t('INTEGRATION_SETTINGS.WEBHOOK.FORM.INBOX.INPUT_PLACEHOLDER')
-            "
-            :disabled="isEditing"
-            @select="onClickAssignInbox"
-          />
-        </div>
       </label>
+      <WebhookInboxPicker v-model="inboxIds" :inboxes="inboxes" />
       <label>
         {{ $t('INTEGRATION_SETTINGS.WEBHOOK.FORM.NAME.LABEL') }}
         <input

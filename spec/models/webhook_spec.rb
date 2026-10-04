@@ -17,6 +17,42 @@ RSpec.describe Webhook do
     it { is_expected.to belong_to(:account) }
   end
 
+  describe 'inboxes' do
+    let(:account) { create(:account) }
+    let(:reception) { create(:inbox, account: account) }
+    let(:sales) { create(:inbox, account: account) }
+
+    it 'delivers for every inbox when none is picked' do
+      webhook = create(:webhook, account: account)
+
+      expect(webhook.delivers_for_inbox?(reception.id)).to be(true)
+    end
+
+    it 'delivers only for the picked inboxes' do
+      webhook = create(:webhook, account: account, inbox_ids: [reception.id])
+
+      expect(webhook.delivers_for_inbox?(reception.id)).to be(true)
+      expect(webhook.delivers_for_inbox?(sales.id)).to be(false)
+    end
+
+    it 'drops a deleted inbox from the list and keeps the others' do
+      webhook = create(:webhook, account: account, inbox_ids: [reception.id, sales.id])
+
+      reception.destroy!
+
+      expect(webhook.reload.inbox_ids).to eq([sales.id])
+    end
+
+    # An empty list would mean "every inbox", widening what the webhook receives.
+    it 'is deleted with its only inbox instead of falling back to every inbox' do
+      webhook = create(:webhook, account: account, inbox_ids: [reception.id])
+
+      reception.destroy!
+
+      expect(described_class.exists?(webhook.id)).to be(false)
+    end
+  end
+
   describe 'secret token' do
     let!(:account) { create(:account) }
 

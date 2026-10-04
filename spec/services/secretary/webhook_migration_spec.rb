@@ -27,7 +27,7 @@ RSpec.describe Secretary::WebhookMigration do
   end
 
   it 'enables only the inbox the webhook was restricted to' do
-    webhook.update!(inbox: sales)
+    webhook.update!(inbox_ids: [sales.id])
 
     described_class.new(apply: true).perform
 
@@ -54,12 +54,12 @@ RSpec.describe Secretary::WebhookMigration do
   end
 
   it 'is undone by the restore, with the same URL and secret' do
-    webhook.update!(inbox: sales)
+    webhook.update!(inbox_ids: [sales.id])
     described_class.new(apply: true).perform
 
     restored = Secretary::WebhookRestore.new.perform.first
 
-    expect(restored).to have_attributes(url: v32_url, secret: webhook.secret, inbox_id: sales.id, subscriptions: ['message_created'])
+    expect(restored).to have_attributes(url: v32_url, secret: webhook.secret, inbox_ids: [sales.id], subscriptions: ['message_created'])
     expect(account.reload.account_secretary.secretary_version).to be_nil
     expect(sales.reload.secretary_enabled).to be(false)
   end

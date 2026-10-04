@@ -40,7 +40,14 @@ const subscribedEvents = computed(() => {
   <BaseTableRow :item="webhook">
     <template #default>
       <BaseTableCell>
-        <InboxName v-if="webhook.inbox" class="!mx-0" :inbox="webhook.inbox" />
+        <div v-if="webhook.inboxes?.length" class="flex flex-wrap gap-x-3">
+          <InboxName
+            v-for="inbox in webhook.inboxes"
+            :key="inbox.id"
+            class="!mx-0"
+            :inbox="inbox"
+          />
+        </div>
         <div class="flex gap-2 font-medium break-words text-n-slate-12">
           <template v-if="webhook.name">
             {{ webhook.name }}
