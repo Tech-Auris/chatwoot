@@ -21,6 +21,7 @@ RSpec.describe Whatsapp::HealthService do
       verified_name: 'Leger POA',
       name_status: 'APPROVED',
       quality_rating: 'GREEN',
+      status: 'BANNED',
       messaging_limit_tier: 'TIER_UNKNOWN',
       account_mode: 'LIVE',
       code_verification_status: 'VERIFIED',
@@ -57,6 +58,16 @@ RSpec.describe Whatsapp::HealthService do
       expect(result[:display_phone_number]).to eq('+55 51 9273-3008')
       expect(result[:account_review_status]).to eq('FLAGGED')
       expect(result[:business_verification_status]).to eq('verified')
+    end
+
+    it 'returns the number status, which is where Meta says it is banned' do
+      stub_request(:get, %r{graph.facebook.com/.+/#{waba_id}})
+        .with(query: hash_including(fields: 'account_review_status,business_verification_status'))
+        .to_return(status: 200, body: {}.to_json, headers: { 'Content-Type' => 'application/json' })
+
+      result = service.fetch_health_status
+
+      expect(result).to include(quality_rating: 'GREEN', phone_status: 'BANNED')
     end
 
     it 'still returns the phone health data when the WABA call fails' do

@@ -18,13 +18,16 @@ const props = defineProps({
 
 const emit = defineEmits(['registerWebhook']);
 
-const { t } = useI18n();
+const { t, te } = useI18n();
 
-const QUALITY_COLORS = {
-  GREEN: 'text-n-teal-11',
-  YELLOW: 'text-n-amber-11',
-  RED: 'text-n-ruby-11',
-  UNKNOWN: 'text-n-slate-12',
+// Same scale as Meta's WhatsApp Manager: a dot plus Alta / Média / Baixa.
+// A banned number gets a solid badge so it never reads as a plain "Baixa".
+const QUALITY_STYLES = {
+  GREEN: { badge: 'bg-n-alpha-2 text-n-slate-12', dot: 'bg-n-teal-9' },
+  YELLOW: { badge: 'bg-n-alpha-2 text-n-slate-12', dot: 'bg-n-amber-9' },
+  RED: { badge: 'bg-n-alpha-2 text-n-slate-12', dot: 'bg-n-ruby-9' },
+  BANNED: { badge: 'bg-n-ruby-9 text-white', dot: 'bg-white' },
+  UNKNOWN: { badge: 'bg-n-alpha-2 text-n-slate-11', dot: 'bg-n-slate-8' },
 };
 
 const STATUS_COLORS = {
@@ -50,6 +53,7 @@ const ACCOUNT_STATUS_COLORS = {
   PENDING: 'text-n-amber-11',
   FLAGGED: 'text-n-ruby-9',
   DECLINED: 'text-n-ruby-9',
+  REJECTED: 'text-n-ruby-9',
   RESTRICTED: 'text-n-ruby-9',
   DISABLED: 'text-n-ruby-9',
 };
@@ -73,6 +77,7 @@ const healthItems = computed(() => {
     verified_name: verifiedName,
     name_status: nameStatus,
     quality_rating: qualityRating,
+    phone_status: phoneStatus,
     messaging_limit_tier: messagingLimitTier,
     account_mode: accountMode,
     account_review_status: accountReviewStatus,
@@ -109,7 +114,7 @@ const healthItems = computed(() => {
     {
       key: 'qualityRating',
       label: t('INBOX_MGMT.ACCOUNT_HEALTH.FIELDS.QUALITY_RATING.LABEL'),
-      value: qualityRating || 'UNKNOWN',
+      value: phoneStatus === 'BANNED' ? 'BANNED' : qualityRating || 'UNKNOWN',
       tooltip: t('INBOX_MGMT.ACCOUNT_HEALTH.FIELDS.QUALITY_RATING.TOOLTIP'),
       show: true,
       type: 'quality',
@@ -176,17 +181,24 @@ const handleGoToSettings = () => {
   }
 };
 
-const getQualityRatingTextColor = rating =>
-  QUALITY_COLORS[rating] || QUALITY_COLORS.UNKNOWN;
+// Meta adds values over time; one we don't translate yet shows as Meta sent
+// it instead of the raw i18n key.
+const translateValue = (group, value) => {
+  const key = `INBOX_MGMT.ACCOUNT_HEALTH.VALUES.${group}.${value}`;
+  return te(key) ? t(key) : value;
+};
 
-const formatTierDisplay = tier =>
-  t(`INBOX_MGMT.ACCOUNT_HEALTH.VALUES.TIERS.${tier}`) || tier;
+const getQualityStyle = rating =>
+  QUALITY_STYLES[rating] || QUALITY_STYLES.UNKNOWN;
 
-const formatStatusDisplay = status =>
-  t(`INBOX_MGMT.ACCOUNT_HEALTH.VALUES.STATUSES.${status}`) || status;
+const formatQualityDisplay = rating =>
+  translateValue('QUALITY_RATINGS', rating);
 
-const formatModeDisplay = mode =>
-  t(`INBOX_MGMT.ACCOUNT_HEALTH.VALUES.MODES.${mode}`) || mode;
+const formatTierDisplay = tier => translateValue('TIERS', tier);
+
+const formatStatusDisplay = status => translateValue('STATUSES', status);
+
+const formatModeDisplay = mode => translateValue('MODES', mode);
 
 const getModeStatusTextColor = mode => MODE_COLORS[mode] || 'text-n-slate-12';
 
@@ -199,12 +211,10 @@ const getVerificationTextColor = status =>
   VERIFICATION_COLORS[status] || 'text-n-slate-12';
 
 const formatAccountStatusDisplay = status =>
-  t(`INBOX_MGMT.ACCOUNT_HEALTH.VALUES.ACCOUNT_REVIEW_STATUSES.${status}`) ||
-  status;
+  translateValue('ACCOUNT_REVIEW_STATUSES', status);
 
 const formatVerificationDisplay = status =>
-  t(`INBOX_MGMT.ACCOUNT_HEALTH.VALUES.VERIFICATION_STATUSES.${status}`) ||
-  status;
+  translateValue('VERIFICATION_STATUSES', status);
 
 const showWebhookSection = computed(
   () => props.healthData?.webhook_configuration !== undefined
@@ -275,10 +285,14 @@ const handleRegisterWebhook = () => {
           <div class="flex items-center">
             <span
               v-if="item.type === 'quality'"
-              class="inline-flex items-center px-2 py-0.5 min-h-6 text-label-small rounded-md bg-n-alpha-2"
-              :class="getQualityRatingTextColor(item.value)"
+              class="inline-flex items-center gap-1.5 px-2 py-0.5 min-h-6 text-label-small rounded-md"
+              :class="getQualityStyle(item.value).badge"
             >
-              {{ item.value }}
+              <span
+                class="size-2 rounded-full"
+                :class="getQualityStyle(item.value).dot"
+              />
+              {{ formatQualityDisplay(item.value) }}
             </span>
             <span
               v-else-if="item.type === 'status'"
