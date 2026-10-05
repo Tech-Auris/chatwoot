@@ -61,6 +61,18 @@ RSpec.describe 'Public sales proposal – contract step', type: :request do
     expect(response.body).to include('CPF inválido', 'CEP é obrigatório')
   end
 
+  it 'tells the customer the contract is being generated while the first click is still running' do
+    accept_terms
+    lock_key = format(Sales::GenerateContractService::GENERATION_LOCK, quote_id: quote.id)
+    Redis::Alfred.set(lock_key, 1, ex: 60)
+
+    get "/proposals/#{token}/contrato"
+
+    expect(response.body).to include('Seu contrato está sendo gerado')
+  ensure
+    Redis::Alfred.delete(lock_key)
+  end
+
   it 'generates the contract and shows it waiting for the signature' do
     accept_terms
     allow(Sales::GenerateContractService).to receive(:new) do |quote:, form:|

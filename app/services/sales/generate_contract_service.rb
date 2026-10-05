@@ -6,23 +6,58 @@
 class Sales::GenerateContractService
   class Error < StandardError; end
 
+  # Generating takes several seconds (PDF + Autentique create + Auris's
+  # signature). A second submit in that window — a double click, Enter pressed
+  # again, a reload — waits for the first instead of sending another contract.
+  GENERATION_LOCK = 'SALES_CONTRACT_GENERATION::%<quote_id>d'.freeze
+  GENERATION_LOCK_TTL = 2.minutes
+
+  def self.in_progress?(quote)
+    Redis::Alfred.exists?(format(GENERATION_LOCK, quote_id: quote.id))
+  end
+
   def initialize(quote:, form:, client: Integrations::Autentique::Client.new)
     @quote = quote
     @form = form
     @client = client
   end
 
+  # Returns nil when another generation for this quote is still running.
   def perform
     ensure_payment_method!
-    cancel_current!
-    contract = create_contract
-    send_to_autentique(contract)
-    contract
+    return unless acquire_lock
+
+    begin
+      return quote.current_contract if same_contract_out?
+
+      cancel_current!
+      contract = create_contract
+      send_to_autentique(contract)
+      contract
+    ensure
+      Redis::Alfred.delete(lock_key)
+    end
   end
 
   private
 
   attr_reader :quote, :form, :client
+
+  def lock_key
+    format(GENERATION_LOCK, quote_id: quote.id)
+  end
+
+  def acquire_lock
+    Redis::Alfred.set(lock_key, 1, nx: true, ex: GENERATION_LOCK_TTL.to_i)
+  end
+
+  # Submitting the same data again changes nothing in the contract: the one
+  # already waiting for the customer's signature stays.
+  def same_contract_out?
+    current = quote.current_contract
+    current&.status_awaiting_signature? && current.person_type == form.person_type &&
+      current.payment_method == form.payment_method && current.data == form.data
+  end
 
   def ensure_payment_method!
     method = form.payment_method.to_s
