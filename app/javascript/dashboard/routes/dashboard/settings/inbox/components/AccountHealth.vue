@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n';
 
 import ButtonV4 from 'next/button/Button.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
+import { qualityKey, qualityStyle } from 'dashboard/helper/whatsappHealth';
 
 const props = defineProps({
   healthData: {
@@ -19,16 +20,6 @@ const props = defineProps({
 const emit = defineEmits(['registerWebhook']);
 
 const { t, te } = useI18n();
-
-// Same scale as Meta's WhatsApp Manager: a dot plus Alta / Média / Baixa.
-// A banned number gets a solid badge so it never reads as a plain "Baixa".
-const QUALITY_STYLES = {
-  GREEN: { badge: 'bg-n-alpha-2 text-n-slate-12', dot: 'bg-n-teal-9' },
-  YELLOW: { badge: 'bg-n-alpha-2 text-n-slate-12', dot: 'bg-n-amber-9' },
-  RED: { badge: 'bg-n-alpha-2 text-n-slate-12', dot: 'bg-n-ruby-9' },
-  BANNED: { badge: 'bg-n-ruby-9 text-white', dot: 'bg-white' },
-  UNKNOWN: { badge: 'bg-n-alpha-2 text-n-slate-11', dot: 'bg-n-slate-8' },
-};
 
 const STATUS_COLORS = {
   APPROVED: 'text-n-teal-11',
@@ -76,8 +67,6 @@ const healthItems = computed(() => {
     display_phone_number: displayPhoneNumber,
     verified_name: verifiedName,
     name_status: nameStatus,
-    quality_rating: qualityRating,
-    phone_status: phoneStatus,
     messaging_limit_tier: messagingLimitTier,
     account_mode: accountMode,
     account_review_status: accountReviewStatus,
@@ -114,7 +103,7 @@ const healthItems = computed(() => {
     {
       key: 'qualityRating',
       label: t('INBOX_MGMT.ACCOUNT_HEALTH.FIELDS.QUALITY_RATING.LABEL'),
-      value: phoneStatus === 'BANNED' ? 'BANNED' : qualityRating || 'UNKNOWN',
+      value: qualityKey(props.healthData),
       tooltip: t('INBOX_MGMT.ACCOUNT_HEALTH.FIELDS.QUALITY_RATING.TOOLTIP'),
       show: true,
       type: 'quality',
@@ -188,8 +177,7 @@ const translateValue = (group, value) => {
   return te(key) ? t(key) : value;
 };
 
-const getQualityStyle = rating =>
-  QUALITY_STYLES[rating] || QUALITY_STYLES.UNKNOWN;
+const getQualityStyle = qualityStyle;
 
 const formatQualityDisplay = rating =>
   translateValue('QUALITY_RATINGS', rating);

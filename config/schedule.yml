@@ -109,3 +109,11 @@ remove_orphan_conversations_job:
   cron: '0 7 * * *'
   class: 'Internal::RemoveOrphanConversationsJob'
   queue: housekeeping
+
+# every 30 minutes
+# refreshes the quality rating / account status of official WhatsApp numbers
+# shown as badges in the inbox list and the new-conversation "Via:" picker.
+whatsapp_health_summary_refresh_job:
+  cron: '*/30 * * * *'
+  class: 'Channels::Whatsapp::HealthSummaryRefreshJob'
+  queue: scheduled_jobs
