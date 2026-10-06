@@ -74,6 +74,7 @@ class Whatsapp::HealthService
     %w[
       id
       quality_rating
+      status
       messaging_limit_tier
       code_verification_status
       account_mode
@@ -106,6 +107,9 @@ class Whatsapp::HealthService
       verified_name: response['verified_name'],
       name_status: response['name_status'],
       quality_rating: response['quality_rating'],
+      # CONNECTED, FLAGGED, RESTRICTED, BANNED… — a banned number still has a
+      # quality rating, so the page reads the ban from here.
+      phone_status: response['status'],
       messaging_limit_tier: response['messaging_limit_tier'],
       account_mode: response['account_mode'],
       code_verification_status: response['code_verification_status'],

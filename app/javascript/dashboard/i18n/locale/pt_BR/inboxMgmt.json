@@ -789,8 +789,10 @@
           "PENDING_REVIEW": "Revisão pendente",
           "AVAILABLE_WITHOUT_REVIEW": "Disponível sem revisão",
           "REJECTED": "Rejeitado",
-          "DECLINED": "Sandbox",
-          "NON_EXISTS": "Não existe"
+          "DECLINED": "Recusado",
+          "NON_EXISTS": "Não existe",
+          "EXPIRED": "Expirado",
+          "NONE": "Não enviado"
         },
         "ACCOUNT_REVIEW_STATUSES": {
           "APPROVED": "Aprovada",
@@ -798,7 +800,8 @@
           "FLAGGED": "Conta desabilitada",
           "DECLINED": "Conta desabilitada",
           "RESTRICTED": "Conta restrita",
-          "DISABLED": "Conta desabilitada"
+          "DISABLED": "Conta desabilitada",
+          "REJECTED": "Reprovada"
         },
         "VERIFICATION_STATUSES": {
           "verified": "Verificada",
@@ -811,6 +814,13 @@
         "MODES": {
           "SANDBOX": "Sandbox",
           "LIVE": "Em tempo real"
+        },
+        "QUALITY_RATINGS": {
+          "GREEN": "Alta",
+          "YELLOW": "Média",
+          "RED": "Baixa",
+          "BANNED": "Banido",
+          "UNKNOWN": "Sem classificação ainda"
         }
       },
       "WEBHOOK": {
