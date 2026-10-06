@@ -110,114 +110,44 @@ RSpec.describe 'Scheduled Messages API', type: :request do
     end
   end
 
-  describe 'POST /api/v1/accounts/:account_id/scheduled_messages' do
+  # The panel uses the conversation drawer's form, which saves through the
+  # per-conversation endpoints; this only resolves the conversation.
+  describe 'POST /api/v1/accounts/:account_id/scheduled_messages/conversation' do
     let(:target_contact) { create(:contact, account: account, phone_number: '+5511900099999') }
 
-    it 'creates the scheduled message on an existing open conversation for the (contact, inbox) pair' do
+    def resolve(user, contact_id: target_contact.id, inbox_id: inbox_a.id)
+      post "/api/v1/accounts/#{account.id}/scheduled_messages/conversation",
+           params: { contact_id: contact_id, inbox_id: inbox_id },
+           headers: user.create_new_auth_token,
+           as: :json
+    end
+
+    it 'answers the open conversation the contact already has on that inbox' do
       contact_inbox = create(:contact_inbox, contact: target_contact, inbox: inbox_a, source_id: target_contact.phone_number)
       conversation = create(:conversation, account: account, inbox: inbox_a, contact: target_contact, contact_inbox: contact_inbox, status: :open)
 
-      expect do
-        post "/api/v1/accounts/#{account.id}/scheduled_messages",
-             params: {
-               contact_id: target_contact.id,
-               inbox_id: inbox_a.id,
-               content: 'Retomando amanhã',
-               scheduled_at: 6.hours.from_now.iso8601,
-               hold_on_reply: true
-             },
-             headers: admin.create_new_auth_token,
-             as: :json
-      end.to change(ScheduledMessage, :count).by(1).and(not_change(Conversation, :count))
+      expect { resolve(admin) }.not_to change(Conversation, :count)
 
       expect(response).to have_http_status(:success)
       expect(response.parsed_body['conversation_id']).to eq(conversation.display_id)
-      sm = ScheduledMessage.last
-      expect(sm).to have_attributes(content: 'Retomando amanhã', conversation_id: conversation.id, hold_on_reply: true, status: 'pending')
     end
 
-    it 'creates a fresh conversation when the contact has no open thread on that inbox yet' do
-      expect do
-        post "/api/v1/accounts/#{account.id}/scheduled_messages",
-             params: {
-               contact_id: target_contact.id,
-               inbox_id: inbox_a.id,
-               content: 'Follow-up amanhã',
-               scheduled_at: 3.hours.from_now.iso8601
-             },
-             headers: admin.create_new_auth_token,
-             as: :json
-      end.to change(ScheduledMessage, :count).by(1).and(change(Conversation, :count).by(1))
+    it 'opens a conversation when the contact has none open on that inbox' do
+      expect { resolve(admin) }.to change(Conversation, :count).by(1)
 
-      expect(response).to have_http_status(:success)
+      expect(response.parsed_body['conversation_id']).to eq(Conversation.last.display_id)
     end
 
-    it 'refuses when the current user is not a member of the requested inbox' do
-      expect do
-        post "/api/v1/accounts/#{account.id}/scheduled_messages",
-             params: {
-               contact_id: target_contact.id,
-               inbox_id: inbox_b.id,
-               content: 'Fora do escopo',
-               scheduled_at: 1.day.from_now.iso8601
-             },
-             headers: agent.create_new_auth_token,
-             as: :json
-      end.not_to change(ScheduledMessage, :count)
+    it 'refuses an inbox the current user is not a member of' do
+      expect { resolve(agent, inbox_id: inbox_b.id) }.not_to change(Conversation, :count)
 
       expect(response).to have_http_status(:forbidden)
     end
 
-    it 'refuses when the contact does not belong to the account' do
-      other_contact = create(:contact, account: create(:account))
-
-      post "/api/v1/accounts/#{account.id}/scheduled_messages",
-           params: {
-             contact_id: other_contact.id,
-             inbox_id: inbox_a.id,
-             content: 'x',
-             scheduled_at: 1.day.from_now.iso8601
-           },
-           headers: admin.create_new_auth_token,
-           as: :json
+    it 'refuses a contact from another account' do
+      resolve(admin, contact_id: create(:contact, account: create(:account)).id)
 
       expect(response).to have_http_status(:not_found)
-    end
-
-    # A WhatsApp Cloud sale scheduled outside the 24h window has to go
-    # out as an approved template. The panel form sends `template_params`
-    # (name, category, language, processed_params); the controller has
-    # to persist that blob so the send job can pass it down to
-    # MessageBuilder, which routes to the template path.
-    it 'persists template_params when the client sent them' do
-      template_payload = {
-        name: 'lembrete_agendamento',
-        category: 'MARKETING',
-        language: 'pt_BR',
-        processed_params: { body: { '1' => 'Fabio', '2' => '15h' } }
-      }
-
-      post "/api/v1/accounts/#{account.id}/scheduled_messages",
-           params: {
-             contact_id: target_contact.id,
-             inbox_id: inbox_a.id,
-             content: 'Olá Fabio, seu agendamento é às 15h',
-             template_params: template_payload,
-             scheduled_at: 4.hours.from_now.iso8601
-           },
-           headers: admin.create_new_auth_token,
-           as: :json
-
-      expect(response).to have_http_status(:success)
-      sm = ScheduledMessage.last
-      expect(sm.template_params).to include(
-        'name' => 'lembrete_agendamento',
-        'category' => 'MARKETING',
-        'language' => 'pt_BR'
-      )
-      expect(sm.template_params['processed_params']).to include(
-        'body' => a_hash_including('1' => 'Fabio', '2' => '15h')
-      )
     end
   end
 

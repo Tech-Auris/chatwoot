@@ -21,7 +21,6 @@
     },
     "NEW": {
       "BUTTON": "Schedule message",
-      "TITLE": "Schedule message",
       "CONTACT_LABEL": "To",
       "CONTACT_PLACEHOLDER": "Type at least 2 characters to search by name, email or phone number",
       "CLEAR_CONTACT": "Clear contact",
@@ -30,22 +29,7 @@
       "INBOX_PLACEHOLDER": "Pick an inbox",
       "INBOX_WARNING": "The message will only go out if the number is working at the scheduled time.",
       "INBOX_UNREACHABLE": "This contact is not on any inbox you have access to.",
-      "PICK_TEMPLATE_CONFIRM": "Use this template",
-      "TEMPLATE_SELECTED": "Template: {name}",
-      "CLEAR_TEMPLATE": "Change template",
-      "TEMPLATE_PREVIEW_LABEL": "Template preview",
-      "MESSAGE_LABEL": "Message",
-      "MESSAGE_PLACEHOLDER": "Write the message that will be sent at the scheduled time…",
-      "VARIABLE_HINT_PREFIX": "Type",
-      "VARIABLE_HINT_SUFFIX": "to insert variables",
-      "SCHEDULE_LABEL": "Schedule for",
-      "HOLD_ON_REPLY": "Hold if the customer replies first",
-      "HOLD_ON_REPLY_HINT": "If the customer sends a message before this one, it will be held for review instead of being sent automatically.",
-      "CANCEL": "Cancel",
-      "SUBMIT": "Schedule",
-      "SAVING": "Scheduling…",
-      "DONE": "Message scheduled.",
-      "FAILED": "Could not schedule the message. Check the fields and try again."
+      "DONE": "Message scheduled."
     }
   }
 }

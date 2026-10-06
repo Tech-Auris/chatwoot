@@ -1,5 +1,6 @@
 <script setup>
-import { computed, ref, watch } from 'vue';
+/* global axios */
+import { computed, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import FileUpload from 'vue-upload-component';
 
@@ -19,6 +20,8 @@ import DropdownItem from 'next/dropdown-menu/base/DropdownItem.vue';
 import WhatsappTemplates from 'dashboard/components/widgets/conversation/WhatsappTemplates/Modal.vue';
 import Switch from 'dashboard/components-next/switch/Switch.vue';
 import ScheduleDateShortcuts from './ScheduleDateShortcuts.vue';
+import ScheduledMessageRecipient from './ScheduledMessageRecipient.vue';
+import { INBOX_TYPES } from 'dashboard/helper/inbox';
 import RecurrenceDropdown from './RecurrenceDropdown.vue';
 import RecurrenceCustomModal from './RecurrenceCustomModal.vue';
 
@@ -27,9 +30,12 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  // Without a conversation (Mensagens agendadas), the form asks for the
+  // contact and the inbox ("Para" / "Via") and finds the conversation itself
+  // when saving.
   conversationId: {
     type: [Number, String],
-    required: true,
+    default: null,
   },
   inboxId: {
     type: [Number, String],
@@ -56,6 +62,14 @@ const store = useStore();
 
 const inboxGetter = useMapGetter('inboxes/getInbox');
 const uiFlags = useMapGetter('scheduledMessages/getUIFlags');
+const accountId = useMapGetter('getCurrentAccountId');
+
+const picksRecipient = computed(() => !props.conversationId);
+const pickedContact = ref(null);
+const pickedInboxId = ref(null);
+const recipientError = ref(false);
+const isResolvingConversation = ref(false);
+const inboxId = computed(() => props.inboxId || pickedInboxId.value);
 
 const isEditing = computed(() => !!props.scheduledMessage?.id);
 const isEditingRecurring = computed(
@@ -65,12 +79,26 @@ const isEditingRecurring = computed(
 );
 const isCreating = computed(() => uiFlags.value.isCreating);
 const isUpdating = computed(() => uiFlags.value.isUpdating);
-const isSubmitting = computed(() => isCreating.value || isUpdating.value);
-const currentInbox = computed(() => inboxGetter.value(props.inboxId));
+const isSubmitting = computed(
+  () => isCreating.value || isUpdating.value || isResolvingConversation.value
+);
+const currentInbox = computed(() => inboxGetter.value(inboxId.value));
 
 const whatsAppTemplates = computed(() => {
-  return store.getters['inboxes/getWhatsAppTemplates'](props.inboxId) || [];
+  return store.getters['inboxes/getWhatsAppTemplates'](inboxId.value) || [];
 });
+
+// Official API numbers only send approved templates, like the pencil: the
+// message field waits for one. A message already saved as free text keeps
+// its editor when edited.
+const isWhatsappCloudInbox = computed(() => {
+  const inbox = currentInbox.value;
+  if (inbox?.channel_type !== INBOX_TYPES.WHATSAPP) return false;
+  return !['baileys', 'zapi'].includes(inbox.provider);
+});
+const templateOnly = computed(
+  () => isWhatsappCloudInbox.value && !isEditing.value
+);
 
 const showWhatsappTemplates = computed(() => {
   return whatsAppTemplates.value.length > 0;
@@ -112,6 +140,9 @@ const resetForm = () => {
   dateTimeError.value = '';
   recurrenceRule.value = null;
   holdOnReply.value = false;
+  pickedContact.value = null;
+  pickedInboxId.value = null;
+  recipientError.value = false;
   // Reset original values
   originalContent.value = '';
   originalScheduledAt.value = null;
@@ -149,8 +180,23 @@ const setFormFromMessage = scheduledMessage => {
   originalHoldOnReply.value = holdOnReply.value;
 };
 
+// Read at upload time, so it follows the inbox picked in "Via".
+const uploadInbox = reactive({});
+watch(
+  currentInbox,
+  inbox =>
+    Object.assign(uploadInbox, {
+      channel_type: inbox?.channel_type,
+      medium: inbox?.medium,
+    }),
+  { immediate: true }
+);
+
 const { onFileUpload } = useFileUpload({
-  inbox: currentInbox.value || {},
+  inbox: uploadInbox,
+  // Direct uploads go through the open conversation; without one, the file
+  // travels with the form.
+  directUpload: !!props.conversationId,
   attachFile: ({ blob, file }) => {
     if (!file) return;
     const reader = new FileReader();
@@ -186,7 +232,8 @@ const showAttachmentUpload = computed(
   () =>
     !hasNewAttachment.value &&
     !hasExistingAttachment.value &&
-    !hasTemplate.value
+    !hasTemplate.value &&
+    !templateOnly.value
 );
 
 const displayAttachments = computed(() => {
@@ -335,6 +382,17 @@ const validatePayload = status => {
   contentError.value = false;
   contentLengthError.value = false;
   dateTimeError.value = '';
+  recipientError.value = false;
+
+  if (picksRecipient.value && (!pickedContact.value || !pickedInboxId.value)) {
+    recipientError.value = true;
+    return false;
+  }
+
+  if (templateOnly.value && !hasTemplate.value) {
+    contentError.value = true;
+    return false;
+  }
 
   const hasPayloadContent =
     hasContent.value ||
@@ -405,6 +463,11 @@ const hideWhatsAppTemplatesModal = () => {
   showWhatsAppTemplatesModal.value = false;
 };
 
+// A template belongs to its inbox: picking another one drops it.
+watch(pickedInboxId, () => {
+  if (hasTemplate.value) clearTemplate();
+});
+
 const onTemplateSelect = messagePayload => {
   templateParams.value = messagePayload.templateParams;
   messageContent.value = messagePayload.message;
@@ -412,10 +475,28 @@ const onTemplateSelect = messagePayload => {
   contentError.value = false;
 };
 
+// The conversation the message goes to: the open one, or the one for the
+// contact and inbox picked in "Para" / "Via" (found or opened on the server).
+const resolveConversationId = async () => {
+  if (props.conversationId) return props.conversationId;
+
+  isResolvingConversation.value = true;
+  try {
+    const { data } = await axios.post(
+      `/api/v1/accounts/${accountId.value}/scheduled_messages/conversation`,
+      { contact_id: pickedContact.value.id, inbox_id: pickedInboxId.value }
+    );
+    return data.conversation_id;
+  } finally {
+    isResolvingConversation.value = false;
+  }
+};
+
 const submit = async status => {
   if (!validatePayload(status)) return;
 
   try {
+    const conversationId = await resolveConversationId();
     const hasRecurrence = !!recurrenceRule.value;
     const existingRecurringId =
       props.scheduledMessage?.recurring_scheduled_message_id;
@@ -434,20 +515,20 @@ const submit = async status => {
       if (isEditing.value && existingRecurringId) {
         // Update existing recurring series
         await store.dispatch('recurringScheduledMessages/update', {
-          conversationId: props.conversationId,
+          conversationId,
           recurringScheduledMessageId: existingRecurringId,
           payload: recurringPayload,
         });
       } else {
         // Create new recurring series (new message or standalone gaining recurrence)
         await store.dispatch('recurringScheduledMessages/create', {
-          conversationId: props.conversationId,
+          conversationId,
           payload: recurringPayload,
         });
         // If converting a standalone message, delete the old one
         if (isEditing.value) {
           await store.dispatch('scheduledMessages/delete', {
-            conversationId: props.conversationId,
+            conversationId,
             scheduledMessageId: props.scheduledMessage.id,
           });
         }
@@ -456,7 +537,7 @@ const submit = async status => {
       // Editing without recurrence - if it had a recurring parent and user removed it, cancel the series
       if (existingRecurringId && !hasRecurrence) {
         await store.dispatch('recurringScheduledMessages/delete', {
-          conversationId: props.conversationId,
+          conversationId,
           recurringScheduledMessageId: existingRecurringId,
         });
         // If this was a direct recurring message edit, just close — no standalone to update
@@ -466,13 +547,13 @@ const submit = async status => {
         }
       }
       await store.dispatch('scheduledMessages/update', {
-        conversationId: props.conversationId,
+        conversationId,
         scheduledMessageId: props.scheduledMessage.id,
         payload: buildPayload(status),
       });
     } else {
       await store.dispatch('scheduledMessages/create', {
-        conversationId: props.conversationId,
+        conversationId,
         payload: buildPayload(status),
       });
     }
@@ -480,6 +561,7 @@ const submit = async status => {
     if (status === 'pending') {
       emit('scheduledMessageCreated');
     }
+    if (picksRecipient.value) useAlert(t('SCHEDULED.NEW.DONE'));
     closeModal();
   } catch (error) {
     useAlert(t('SCHEDULED_MESSAGES.ERRORS.SAVE_FAILED'));
@@ -557,11 +639,29 @@ watch(
         }}
       </h3>
 
+      <ScheduledMessageRecipient
+        v-if="picksRecipient"
+        v-model:contact="pickedContact"
+        v-model:inbox-id="pickedInboxId"
+        :has-error="recipientError"
+      />
+
       <div class="flex flex-col gap-2">
         <span class="text-sm font-medium text-n-slate-12">
           {{ t('SCHEDULED_MESSAGES.MODAL.MESSAGE_LABEL') }}
         </span>
+        <div v-if="templateOnly && !hasTemplate" class="flex items-center">
+          <NextButton
+            icon="i-ri-whatsapp-line"
+            :label="t('COMPOSE_NEW_CONVERSATION.FORM.WHATSAPP_OPTIONS.LABEL')"
+            color="slate"
+            size="sm"
+            class="!text-xs font-medium"
+            @click="openWhatsAppTemplatesModal"
+          />
+        </div>
         <WootMessageEditor
+          v-else
           v-model="messageContent"
           class="message-editor min-h-[10rem] max-h-[20rem] !px-3 resize-y overflow-auto"
           :class="[
@@ -575,6 +675,7 @@ watch(
           :medium="currentInbox?.medium"
           :disabled="!!hasTemplate"
           :enable-copilot="false"
+          enable-variables
           override-line-breaks
           @update:model-value="
             () => {
@@ -584,7 +685,14 @@ watch(
           "
         />
         <span v-if="contentError" class="text-xs text-n-ruby-9">
-          {{ t('SCHEDULED_MESSAGES.ERRORS.CONTENT_REQUIRED') }}
+          {{
+            templateOnly
+              ? t('SCHEDULED_MESSAGES.ERRORS.TEMPLATE_REQUIRED')
+              : t('SCHEDULED_MESSAGES.ERRORS.CONTENT_REQUIRED')
+          }}
+        </span>
+        <span v-if="recipientError" class="text-xs text-n-ruby-9">
+          {{ t('SCHEDULED_MESSAGES.ERRORS.RECIPIENT_REQUIRED') }}
         </span>
         <span v-if="contentLengthError" class="text-xs text-n-ruby-9">
           {{

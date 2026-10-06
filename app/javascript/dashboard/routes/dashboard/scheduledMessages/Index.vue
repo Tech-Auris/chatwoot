@@ -12,7 +12,7 @@ import { useRouter } from 'vue-router';
 import { useMapGetter } from 'dashboard/composables/store';
 import { useAlert } from 'dashboard/composables';
 import { useI18n } from 'vue-i18n';
-import NewScheduledMessageModal from './NewScheduledMessageModal.vue';
+import ScheduledMessageModal from 'dashboard/routes/dashboard/conversation/scheduledMessages/ScheduledMessageModal.vue';
 
 const { t } = useI18n();
 const router = useRouter();
@@ -365,9 +365,11 @@ const statusPillClass = status => {
         </template>
       </div>
     </div>
-    <NewScheduledMessageModal
+    <!-- Same form as the conversation drawer; without a conversation it
+         asks for the contact and the inbox ("Para" / "Via"). -->
+    <ScheduledMessageModal
       v-model:show="showComposer"
-      @scheduled="onScheduled"
+      @scheduled-message-created="onScheduled"
     />
   </div>
 </template>

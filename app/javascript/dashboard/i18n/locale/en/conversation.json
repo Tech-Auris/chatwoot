@@ -597,6 +597,8 @@
     },
     "ERRORS": {
       "CONTENT_REQUIRED": "Add a message, template, or attachment before saving.",
+      "TEMPLATE_REQUIRED": "Pick a template: official WhatsApp numbers only send approved templates.",
+      "RECIPIENT_REQUIRED": "Pick the contact and the inbox to send from.",
       "CONTENT_TOO_LONG": "Message is too long. Maximum {maxLength} characters allowed.",
       "DATETIME_REQUIRED": "Select a date and time to schedule the message.",
       "SCHEDULE_IN_PAST": "Scheduled time must be in the future.",
