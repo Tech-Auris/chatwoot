@@ -3,7 +3,11 @@
     "CONNECTION_STATUS": {
       "OPEN": "Conectado",
       "CONNECTING": "Conectando",
-      "CLOSE": "Desconectado"
+      "CLOSE": "Desconectado",
+      "LABELS": {
+        "STATUS": "Status:",
+        "QUALITY": "Qualidade:"
+      }
     },
     "HEADER": "Caixas de Entrada",
     "DESCRIPTION": "Um canal é o modo de comunicação que seu cliente escolhe para interagir com você. Uma caixa de entrada é onde você gerencia interações para um canal específico. Pode incluir comunicações de várias fontes, como e-mail, chat ao vivo e mídia social.",
