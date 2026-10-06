@@ -21,6 +21,13 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  // Which badge to show: both, or only the status / only the quality (the
+  // inbox grid has a column for each).
+  only: {
+    type: String,
+    default: null,
+    validator: value => [null, 'status', 'quality'].includes(value),
+  },
 });
 
 const { t, te } = useI18n();
@@ -41,7 +48,7 @@ const isWhatsapp = computed(
 );
 const connection = computed(() => props.inbox?.provider_connection || {});
 
-const badges = computed(() => {
+const allBadges = computed(() => {
   if (!isWhatsapp.value) return [];
 
   if (['baileys', 'zapi'].includes(props.inbox.provider)) {
@@ -84,6 +91,13 @@ const badges = computed(() => {
   });
   return list;
 });
+
+const PARTS = { status: 'STATUS', quality: 'QUALITY' };
+const badges = computed(() =>
+  props.only
+    ? allBadges.value.filter(item => item.prefix === PARTS[props.only])
+    : allBadges.value
+);
 </script>
 
 <template>

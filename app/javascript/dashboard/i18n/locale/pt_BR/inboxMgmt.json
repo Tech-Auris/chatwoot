@@ -24,8 +24,10 @@
       "COLUMNS": {
         "NAME": "Nome e conexão",
         "ADDRESS": "Número, {'@'} ou site",
-        "STATUS": "Qualidade ou status",
-        "ID": "ID"
+        "STATUS": "Status",
+        "QUALITY": "Qualidade",
+        "ID": "ID",
+        "ACTIONS": "Ações"
       }
     },
     "CREATE_FLOW": {
