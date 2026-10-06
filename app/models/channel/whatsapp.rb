@@ -147,6 +147,7 @@ class Channel::Whatsapp < ApplicationRecord # rubocop:disable Metrics/ClassLengt
     return if normalized == self.provider_connection
 
     previous_connection = self.provider_connection&.dig('connection')
+    previous_health = self.provider_connection&.dig('health')
     assign_attributes(provider_connection: normalized)
     # NOTE: Skip `validate_provider_config?` check.
     # `Inbox.no_touching` suppresses the `has_one :inbox, touch: true` callback
@@ -155,7 +156,8 @@ class Channel::Whatsapp < ApplicationRecord # rubocop:disable Metrics/ClassLengt
     # pushed to clients via a targeted `inbox.provider_connection_updated` event.
     Inbox.no_touching { save!(validate: false) }
     broadcast_provider_connection_updated
-    invalidate_inbox_cache_key if normalized['connection'] != previous_connection
+    # The inbox list is cached in the browser; a new quality/status must reach it too.
+    invalidate_inbox_cache_key if normalized['connection'] != previous_connection || normalized['health'] != previous_health
   end
 
   # Proactive (REST poll) / push update of just the reach-out lock. Unlike the connection.update
@@ -183,9 +185,18 @@ class Channel::Whatsapp < ApplicationRecord # rubocop:disable Metrics/ClassLengt
     end
   end
 
-  # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity
+  # Official API numbers: quality and account status read from Meta by
+  # Whatsapp::HealthService, kept here so lists (the "Via:" picker, the inbox
+  # grid) can show them without calling Meta for every inbox.
+  def update_health_summary!(health)
+    summary = health.to_h.stringify_keys.slice('quality_rating', 'phone_status', 'account_review_status')
+    with_lock { update_provider_connection!(provider_connection.merge('health' => summary)) }
+  end
+
+  # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
   def provider_connection_data
     data = { connection: provider_connection['connection'] }
+    data[:health] = provider_connection['health'] if provider_connection['health'].present?
     data[:reachout_time_lock] = provider_connection['reachout_time_lock'] if provider_connection['reachout_time_lock'].present?
     data[:new_chat_cap] = provider_connection['new_chat_cap'] if provider_connection['new_chat_cap'].present?
     # Auris: managers also need the QR/error to manage Baileys pairings, not just administrators.
@@ -196,7 +207,7 @@ class Channel::Whatsapp < ApplicationRecord # rubocop:disable Metrics/ClassLengt
     end
     data
   end
-  # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity
+  # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
   # Number of days of WhatsApp history to import after the next QR pairing.
   # Lives in `provider_config` so it rides existing permits and serializers.

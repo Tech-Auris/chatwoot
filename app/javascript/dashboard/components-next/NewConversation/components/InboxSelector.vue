@@ -3,10 +3,12 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { vOnClickOutside } from '@vueuse/components';
 import { generateLabelForContactableInboxesList } from 'dashboard/components-next/NewConversation/helpers/composeConversationHelper.js';
+import { useMapGetter } from 'dashboard/composables/store';
 
 import Button from 'dashboard/components-next/button/Button.vue';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
+import InboxStatusBadge from 'dashboard/components-next/Inbox/InboxStatusBadge.vue';
 
 const props = defineProps({
   targetInbox: {
@@ -43,6 +45,9 @@ const emit = defineEmits([
 
 const { t } = useI18n();
 
+// The contactable inboxes carry no connection data; the inbox store does.
+const getInbox = useMapGetter('inboxes/getInbox');
+
 const targetInboxLabel = computed(() => {
   return generateLabelForContactableInboxesList(props.targetInbox);
 });
@@ -62,6 +67,7 @@ const targetInboxLabel = computed(() => {
       <span class="text-sm truncate text-n-slate-12">
         {{ targetInboxLabel }}
       </span>
+      <InboxStatusBadge :inbox="getInbox(targetInbox.id)" />
       <Button
         variant="ghost"
         icon="i-lucide-x"
@@ -90,9 +96,16 @@ const targetInboxLabel = computed(() => {
       <DropdownMenu
         v-if="contactableInboxesList?.length > 0 && showInboxesDropdown"
         :menu-items="contactableInboxesList"
-        class="ltr:left-0 rtl:right-0 z-[100] top-8 max-h-56 w-fit max-w-sm dark:!outline-n-slate-5"
+        class="ltr:left-0 rtl:right-0 z-[100] top-8 max-h-56 w-fit max-w-lg dark:!outline-n-slate-5"
         @action="emit('handleInboxAction', $event)"
-      />
+      >
+        <template #trailing-icon="{ item }">
+          <InboxStatusBadge
+            class="ltr:ml-auto rtl:mr-auto ltr:pl-2 rtl:pr-2"
+            :inbox="getInbox(item.value)"
+          />
+        </template>
+      </DropdownMenu>
     </div>
   </div>
 </template>

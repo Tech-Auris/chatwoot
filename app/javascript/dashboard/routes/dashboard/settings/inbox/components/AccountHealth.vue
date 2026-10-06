@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n';
 
 import ButtonV4 from 'next/button/Button.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
+import { qualityKey, qualityStyle } from 'dashboard/helper/whatsappHealth';
 
 const props = defineProps({
   healthData: {

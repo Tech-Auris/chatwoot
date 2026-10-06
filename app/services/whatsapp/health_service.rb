@@ -18,7 +18,9 @@ class Whatsapp::HealthService
     # Failures on this extra call must not break the page — the phone data
     # is still useful even when Meta refuses to answer the business call
     # (e.g. missing business_management scope on the token).
-    phone_data.merge(fetch_business_account_health_data)
+    health = phone_data.merge(fetch_business_account_health_data)
+    @channel.update_health_summary!(health)
+    health
   end
 
   private

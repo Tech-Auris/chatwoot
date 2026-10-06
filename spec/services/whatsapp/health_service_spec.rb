@@ -70,6 +70,19 @@ RSpec.describe Whatsapp::HealthService do
       expect(result).to include(quality_rating: 'GREEN', phone_status: 'BANNED')
     end
 
+    # The "Via:" picker and the inbox grid read this instead of calling Meta.
+    it 'keeps the quality and account status on the channel for the inbox badges' do
+      stub_request(:get, %r{graph.facebook.com/.+/#{waba_id}})
+        .with(query: hash_including(fields: 'account_review_status,business_verification_status'))
+        .to_return(status: 200, body: { account_review_status: 'APPROVED' }.to_json, headers: { 'Content-Type' => 'application/json' })
+
+      service.fetch_health_status
+
+      expect(channel.reload.provider_connection['health'])
+        .to eq('quality_rating' => 'GREEN', 'phone_status' => 'BANNED', 'account_review_status' => 'APPROVED')
+      expect(channel.provider_connection_data[:health]).to include('quality_rating' => 'GREEN')
+    end
+
     it 'still returns the phone health data when the WABA call fails' do
       stub_request(:get, %r{graph.facebook.com/.+/#{waba_id}})
         .with(query: hash_including(fields: 'account_review_status,business_verification_status'))

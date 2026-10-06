@@ -14,6 +14,7 @@ import {
 import ChannelName from './components/ChannelName.vue';
 import ChannelIcon from 'next/icon/ChannelIcon.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
+import InboxStatusBadge from 'dashboard/components-next/Inbox/InboxStatusBadge.vue';
 
 const getters = useStoreGetters();
 const store = useStore();
@@ -37,8 +38,21 @@ const inboxesList = computed(() => {
 const filteredInboxesList = computed(() => {
   const query = searchQuery.value.trim();
   if (!query) return inboxesList.value;
-  return picoSearch(inboxesList.value, query, ['name', 'channel_type']);
+  return picoSearch(inboxesList.value, query, [
+    'name',
+    'channel_type',
+    'phone_number',
+  ]);
 });
+
+// What the customer sees on the other side: the number, the @ or the site.
+const inboxAddress = inbox => {
+  if (inbox.phone_number) return inbox.phone_number;
+  if (inbox.channel_type === 'Channel::Instagram') return `@${inbox.name}`;
+  if (inbox.channel_type === 'Channel::Telegram' && inbox.bot_name)
+    return `@${inbox.bot_name}`;
+  return inbox.website_url || inbox.email || '—';
+};
 
 const uiFlags = computed(() => getters['inboxes/getUIFlags'].value);
 
@@ -119,14 +133,23 @@ const openDelete = inbox => {
       </span>
       <div v-else class="divide-y divide-n-weak border-t border-n-weak">
         <div
+          class="hidden md:grid grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)_minmax(0,1.4fr)_4.5rem_5rem] gap-4 py-2 text-xs font-medium uppercase tracking-wide text-n-slate-11"
+        >
+          <span>{{ $t('INBOX_MGMT.LIST.COLUMNS.NAME') }}</span>
+          <span>{{ $t('INBOX_MGMT.LIST.COLUMNS.ADDRESS') }}</span>
+          <span>{{ $t('INBOX_MGMT.LIST.COLUMNS.STATUS') }}</span>
+          <span>{{ $t('INBOX_MGMT.LIST.COLUMNS.ID') }}</span>
+          <span />
+        </div>
+        <div
           v-for="inbox in filteredInboxesList"
           :key="inbox.id"
-          class="flex justify-between flex-row items-start gap-4 py-4"
+          class="grid grid-cols-[minmax(0,1fr)_auto] md:grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)_minmax(0,1.4fr)_4.5rem_5rem] items-center gap-x-4 gap-y-2 py-4"
         >
-          <div class="flex items-center gap-4">
+          <div class="flex items-center gap-4 min-w-0">
             <div
               v-if="inbox.avatar_url"
-              class="bg-n-alpha-3 rounded-xl size-10 ring ring-n-solid-1 border border-n-strong shadow-sm grid place-items-center"
+              class="bg-n-alpha-3 rounded-xl size-10 shrink-0 ring ring-n-solid-1 border border-n-strong shadow-sm grid place-items-center"
             >
               <Avatar
                 :src="inbox.avatar_url"
@@ -137,12 +160,14 @@ const openDelete = inbox => {
             </div>
             <div
               v-else
-              class="size-10 justify-center bg-n-alpha-3 rounded-xl ring ring-n-solid-1 border border-n-strong shadow-sm grid place-items-center"
+              class="size-10 shrink-0 justify-center bg-n-alpha-3 rounded-xl ring ring-n-solid-1 border border-n-strong shadow-sm grid place-items-center"
             >
               <ChannelIcon class="size-6 text-n-slate-10" :inbox="inbox" />
             </div>
-            <div class="flex flex-col items-start gap-1">
-              <span class="block text-heading-3 text-n-slate-12 capitalize">
+            <div class="flex flex-col items-start gap-1 min-w-0">
+              <span
+                class="block text-heading-3 text-n-slate-12 capitalize truncate max-w-full"
+              >
                 {{ inbox.name }}
               </span>
               <ChannelName
@@ -154,7 +179,23 @@ const openDelete = inbox => {
               />
             </div>
           </div>
-          <div class="flex gap-3 justify-end">
+          <span
+            class="col-span-2 md:col-span-1 order-3 md:order-none text-body-main text-n-slate-12 truncate"
+          >
+            {{ inboxAddress(inbox) }}
+          </span>
+          <div class="col-span-2 md:col-span-1 order-4 md:order-none min-w-0">
+            <InboxStatusBadge :inbox="inbox" />
+          </div>
+          <span
+            class="col-span-2 md:col-span-1 order-5 md:order-none text-body-main text-n-slate-11 tabular-nums"
+          >
+            <span class="md:hidden">
+              {{ $t('INBOX_MGMT.LIST.COLUMNS.ID') }}:
+            </span>
+            {{ inbox.id }}
+          </span>
+          <div class="flex gap-3 justify-end order-2 md:order-none">
             <router-link
               :to="{
                 name: 'settings_inbox_show',

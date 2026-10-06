@@ -1,5 +1,10 @@
 {
   "INBOX_MGMT": {
+    "CONNECTION_STATUS": {
+      "OPEN": "Conectado",
+      "CONNECTING": "Conectando",
+      "CLOSE": "Desconectado"
+    },
     "HEADER": "Caixas de Entrada",
     "DESCRIPTION": "Um canal é o modo de comunicação que seu cliente escolhe para interagir com você. Uma caixa de entrada é onde você gerencia interações para um canal específico. Pode incluir comunicações de várias fontes, como e-mail, chat ao vivo e mídia social.",
     "LEARN_MORE": "Saiba mais sobre as caixas de entrada",
@@ -11,7 +16,13 @@
     "WHATSAPP_REGISTRATION_INCOMPLETE": "Seu registro no WhatsApp Business não foi concluído. Verifique o status do seu nome de exibição no Meta Business Manager antes de reconectar.",
     "COMPLETE_REGISTRATION": "Concluir registro",
     "LIST": {
-      "404": "Não há caixas de entrada anexadas a esta conta."
+      "404": "Não há caixas de entrada anexadas a esta conta.",
+      "COLUMNS": {
+        "NAME": "Nome e conexão",
+        "ADDRESS": "Número, @ ou site",
+        "STATUS": "Qualidade ou status",
+        "ID": "ID"
+      }
     },
     "CREATE_FLOW": {
       "CHANNEL": {
