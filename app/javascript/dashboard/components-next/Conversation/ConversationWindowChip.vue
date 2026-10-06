@@ -98,6 +98,18 @@ const HELP_STYLES = {
 
 const helpStyle = computed(() => HELP_STYLES[state.value?.tone] || {});
 
+// The app's tooltip instead of the browser's `title`, whose delay (up to a
+// second) the page cannot change.
+const TOOLTIP_DELAY = { show: 100, hide: 0 };
+const chipTooltip = computed(() => ({
+  content: tooltip.value,
+  delay: TOOLTIP_DELAY,
+}));
+const hintTooltip = computed(() => ({
+  content: hint.value,
+  delay: TOOLTIP_DELAY,
+}));
+
 // Dot colors follow the tone but stay fully saturated. The warn state
 // also pulses to grab the atendente's eye — inline animation so it lands
 // regardless of whether Tailwind's `animate-pulse` shipped in this
@@ -125,22 +137,28 @@ const dotStyle = computed(() => {
 <template>
   <div
     v-if="state"
-    :title="tooltip"
     :style="chipStyle"
     class="inline-flex items-center gap-1.5 pl-2 pr-2 py-1 rounded-full text-xs font-semibold leading-none border transition-colors"
     data-testid="conversation-window-chip"
   >
-    <span class="w-1.5 h-1.5 rounded-full flex-none" :style="dotStyle" />
-    <span>{{ label }}</span>
+    <!-- The chip's own tooltip sits on its text, so hovering "?" shows only
+         the "?" one. -->
     <span
-      v-if="clock"
-      class="pl-0.5 font-mono font-medium text-[11px] opacity-85 tabular-nums"
+      v-tooltip.bottom="chipTooltip"
+      class="inline-flex items-center gap-1.5"
     >
-      {{ clock }}
+      <span class="w-1.5 h-1.5 rounded-full flex-none" :style="dotStyle" />
+      <span>{{ label }}</span>
+      <span
+        v-if="clock"
+        class="pl-0.5 font-mono font-medium text-[11px] opacity-85 tabular-nums"
+      >
+        {{ clock }}
+      </span>
     </span>
     <span
       v-if="hint"
-      :title="hint"
+      v-tooltip.bottom="hintTooltip"
       :style="helpStyle"
       class="inline-flex items-center justify-center w-4 h-4 rounded-full text-[10px] font-bold cursor-help"
       data-testid="conversation-window-chip-help"
@@ -164,7 +182,7 @@ const dotStyle = computed(() => {
 }
 @media (prefers-reduced-motion: reduce) {
   [data-testid='conversation-window-chip']
-    > span[style*='auris-window-chip-pulse'] {
+    span[style*='auris-window-chip-pulse'] {
     animation: none !important;
   }
 }
