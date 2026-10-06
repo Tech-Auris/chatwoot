@@ -965,7 +965,7 @@ export default {
       <ConversationWindowChip
         v-if="shouldShowWindowChip"
         :window="currentChat.messaging_window"
-        class="absolute top-3 right-3 z-10 shadow-sm"
+        class="absolute top-3 right-6 z-10 shadow-sm"
       />
       <MessageList
         ref="conversationPanelRef"
