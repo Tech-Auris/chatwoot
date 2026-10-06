@@ -31,6 +31,11 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  // Pages whose search matches longer things (numbers, sites) ask for more room.
+  wideSearch: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const slots = useSlots();
@@ -84,14 +89,14 @@ const helpURL = getHelpUrlForFeature(props.featureName);
     </div>
   </div>
   <div
-    v-if="searchPlaceholder || slots.actions || slots.tabs"
+    v-if="searchPlaceholder || slots.actions || slots.tabs || slots.filters"
     class="gap-3 flex justify-between sm:mt-4 min-w-0"
   >
     <div
-      v-if="slots.tabs || searchPlaceholder"
+      v-if="slots.tabs || slots.filters || searchPlaceholder"
       class="flex items-center gap-3"
       :class="{
-        'hidden sm:flex': !slots.tabs,
+        'hidden sm:flex': !slots.tabs && !slots.filters,
       }"
     >
       <slot name="tabs" />
@@ -99,7 +104,8 @@ const helpURL = getHelpUrlForFeature(props.featureName);
         v-if="searchPlaceholder"
         v-model="searchQuery"
         :placeholder="searchPlaceholder"
-        class="group w-56 min-w-0 hidden sm:flex [&>input]:ltr:!pl-8 [&>input]:rtl:!pr-8 [&>input]:!rounded-[0.625rem]"
+        class="group min-w-0 hidden sm:flex [&>input]:ltr:!pl-8 [&>input]:rtl:!pr-8 [&>input]:!rounded-[0.625rem]"
+        :class="wideSearch ? 'w-80' : 'w-56'"
         size="sm"
         type="search"
       >
@@ -110,6 +116,8 @@ const helpURL = getHelpUrlForFeature(props.featureName);
           />
         </template>
       </Input>
+      <!-- Filters that narrow the search, shown after it. -->
+      <slot name="filters" />
     </div>
     <div
       class="flex items-center gap-3 min-w-0"

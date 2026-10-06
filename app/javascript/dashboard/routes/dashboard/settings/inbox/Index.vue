@@ -133,13 +133,14 @@ const openDelete = inbox => {
     <template #header>
       <BaseSettingsHeader
         v-model:search-query="searchQuery"
+        wide-search
         :title="$t('INBOX_MGMT.HEADER')"
         :description="$t('INBOX_MGMT.DESCRIPTION')"
         :link-text="$t('INBOX_MGMT.LEARN_MORE')"
         :search-placeholder="$t('INBOX_MGMT.SEARCH_PLACEHOLDER')"
         feature-name="inboxes"
       >
-        <template v-if="inboxesList?.length" #tabs>
+        <template v-if="inboxesList?.length" #filters>
           <Select
             v-model="providerFilter"
             :options="connectionOptions"
