@@ -23,7 +23,7 @@
       "404": "There are no inboxes attached to this account.",
       "COLUMNS": {
         "NAME": "Name and connection",
-        "ADDRESS": "Number, @ or site",
+        "ADDRESS": "Number, {'@'} or site",
         "STATUS": "Quality or status",
         "ID": "ID"
       }
