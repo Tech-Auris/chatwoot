@@ -23,9 +23,16 @@
       "404": "Não há caixas de entrada anexadas a esta conta.",
       "COLUMNS": {
         "NAME": "Nome e conexão",
-        "ADDRESS": "Número, {'@'} ou site",
-        "STATUS": "Qualidade ou status",
-        "ID": "ID"
+        "ADDRESS": "Identificação",
+        "STATUS": "Status",
+        "QUALITY": "Qualidade",
+        "ID": "ID",
+        "ACTIONS": "Ações"
+      },
+      "CONNECTION_FILTER": {
+        "ALL": "Todas as conexões",
+        "WHATSAPP_CLOUD": "WhatsApp - API oficial",
+        "WHATSAPP_TWILIO": "WhatsApp - Twilio"
       }
     },
     "CREATE_FLOW": {
