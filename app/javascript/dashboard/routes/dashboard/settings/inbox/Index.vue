@@ -2,7 +2,6 @@
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
-import { picoSearch } from '@scmmishra/pico-search';
 import Avatar from 'next/avatar/Avatar.vue';
 import SettingsLayout from '../SettingsLayout.vue';
 import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
@@ -12,8 +11,14 @@ import {
   useStore,
 } from 'dashboard/composables/store';
 import ChannelName from './components/ChannelName.vue';
+import {
+  connectionKey,
+  inboxAddress,
+  matchesQuery,
+} from './helpers/inboxListFilter';
 import ChannelIcon from 'next/icon/ChannelIcon.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
+import Select from 'dashboard/components-next/select/Select.vue';
 import InboxStatusBadge from 'dashboard/components-next/Inbox/InboxStatusBadge.vue';
 import {
   BaseTable,
@@ -23,7 +28,7 @@ import {
 
 const getters = useStoreGetters();
 const store = useStore();
-const { t } = useI18n();
+const { t, te } = useI18n();
 const currentRole = computed(() => getters.getCurrentRole.value);
 const isAdmin = computed(() => currentRole.value === 'administrator');
 const canConfigureInboxes = computed(() =>
@@ -33,6 +38,7 @@ const canConfigureInboxes = computed(() =>
 const showDeletePopup = ref(false);
 const selectedInbox = ref({});
 const searchQuery = ref('');
+const providerFilter = ref('');
 
 const inboxes = useMapGetter('inboxes/getInboxes');
 
@@ -40,14 +46,30 @@ const inboxesList = computed(() => {
   return inboxes.value?.slice().sort((a, b) => a.name.localeCompare(b.name));
 });
 
+const connectionLabel = key => {
+  const listKey = `INBOX_MGMT.LIST.CONNECTION_FILTER.${key}`;
+  return te(listKey) ? t(listKey) : t(`INBOX_MGMT.CHANNELS.${key}`);
+};
+
+// Only the kinds this account actually has.
+const connectionOptions = computed(() => {
+  const keys = [...new Set((inboxesList.value || []).map(connectionKey))];
+  return [
+    { value: '', label: t('INBOX_MGMT.LIST.CONNECTION_FILTER.ALL') },
+    ...keys
+      .map(key => ({ value: key, label: connectionLabel(key) }))
+      .sort((a, b) => a.label.localeCompare(b.label)),
+  ];
+});
+
 const filteredInboxesList = computed(() => {
   const query = searchQuery.value.trim();
-  if (!query) return inboxesList.value;
-  return picoSearch(inboxesList.value, query, [
-    'name',
-    'channel_type',
-    'phone_number',
-  ]);
+  return (inboxesList.value || []).filter(
+    inbox =>
+      (!providerFilter.value ||
+        connectionKey(inbox) === providerFilter.value) &&
+      (!query || matchesQuery(inbox, query))
+  );
 });
 
 const tableHeaders = computed(() => [
@@ -58,15 +80,6 @@ const tableHeaders = computed(() => [
   t('INBOX_MGMT.LIST.COLUMNS.ID'),
   t('INBOX_MGMT.LIST.COLUMNS.ACTIONS'),
 ]);
-
-// What the customer sees on the other side: the number, the @ or the site.
-const inboxAddress = inbox => {
-  if (inbox.phone_number) return inbox.phone_number;
-  if (inbox.channel_type === 'Channel::Instagram') return `@${inbox.name}`;
-  if (inbox.channel_type === 'Channel::Telegram' && inbox.bot_name)
-    return `@${inbox.bot_name}`;
-  return inbox.website_url || inbox.email || '—';
-};
 
 const uiFlags = computed(() => getters['inboxes/getUIFlags'].value);
 
@@ -126,9 +139,16 @@ const openDelete = inbox => {
         :search-placeholder="$t('INBOX_MGMT.SEARCH_PLACEHOLDER')"
         feature-name="inboxes"
       >
+        <template v-if="inboxesList?.length" #tabs>
+          <Select
+            v-model="providerFilter"
+            :options="connectionOptions"
+            class="[&>select]:!py-1.5"
+          />
+        </template>
         <template v-if="inboxesList?.length" #count>
           <span class="text-body-main text-n-slate-11">
-            {{ $t('INBOX_MGMT.COUNT', { n: inboxesList.length }) }}
+            {{ $t('INBOX_MGMT.COUNT', { n: filteredInboxesList.length }) }}
           </span>
         </template>
         <template #actions>

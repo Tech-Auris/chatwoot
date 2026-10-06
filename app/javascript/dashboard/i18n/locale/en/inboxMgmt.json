@@ -23,11 +23,16 @@
       "404": "There are no inboxes attached to this account.",
       "COLUMNS": {
         "NAME": "Name and connection",
-        "ADDRESS": "Number, {'@'} or site",
+        "ADDRESS": "Identification",
         "STATUS": "Status",
         "QUALITY": "Quality",
         "ID": "ID",
         "ACTIONS": "Actions"
+      },
+      "CONNECTION_FILTER": {
+        "ALL": "All connections",
+        "WHATSAPP_CLOUD": "WhatsApp - Official API",
+        "WHATSAPP_TWILIO": "WhatsApp - Twilio"
       }
     },
     "CREATE_FLOW": {
