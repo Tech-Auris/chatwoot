@@ -26,6 +26,26 @@ RSpec.describe Sales::ConvertQuoteService do
     expect(account.users.pluck(:email)).to include('contato@clinicacinco.com.br')
   end
 
+  it 'sets the account up in Portuguese, on Brasília time, without the sign-up questionnaire' do
+    account = described_class.new(quote: quote).perform.account.reload
+
+    expect(account.locale).to eq('pt_BR')
+    expect(account.reporting_timezone).to eq('America/Sao_Paulo')
+    expect(account.custom_attributes).not_to have_key('onboarding_step')
+  end
+
+  it 'makes the customer a manager and the Auris user the administrator' do
+    tech = create(:user)
+    InstallationConfig.where(name: 'COMMERCIAL_ACCOUNT_ADMIN_USER_ID').first_or_create!(value: tech.id.to_s, locked: false)
+                      .update!(value: tech.id.to_s)
+    GlobalConfig.clear_cache
+
+    account = described_class.new(quote: quote).perform.account
+
+    roles = account.account_users.includes(:user).to_h { |account_user| [account_user.user.email, account_user.role] }
+    expect(roles).to eq('contato@clinicacinco.com.br' => 'manager', tech.email => 'administrator')
+  end
+
   # Stripe retries webhooks, so this runs more than once for the same sale.
   it 'does not create a second account when it runs again' do
     first = described_class.new(quote: quote).perform

@@ -120,7 +120,8 @@ class SuperAdmin::AppConfigsController < SuperAdmin::ApplicationController
       # account and one of its inboxes — the main seller's number) and when
       # the reservation's last-day reminder is sent.
       'commercial' => %w[SALES_PROPOSAL_LOGO SALES_PIX_PAYLOAD SALES_TERMS_URL
-                         COMMERCIAL_WHATSAPP_ACCOUNT_ID COMMERCIAL_WHATSAPP_INBOX_ID COMMERCIAL_RESERVATION_REMINDER_TIME],
+                         COMMERCIAL_WHATSAPP_ACCOUNT_ID COMMERCIAL_WHATSAPP_INBOX_ID COMMERCIAL_RESERVATION_REMINDER_TIME
+                         COMMERCIAL_ACCOUNT_ADMIN_USER_ID],
       # Toggle that gates the messaging-window chip on WhatsApp Cloud
       # conversations. The backend always computes `Conversation#messaging_window`
       # so downstream consumers (n8n, webhooks) see the state; this flag only

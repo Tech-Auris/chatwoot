@@ -714,6 +714,11 @@
   description: 'ID do usuário "IA | Auris". Atribuir uma conversa a ele liga o status da IA; tirar a atribuição desliga.'
   value: '61'
   locked: false
+- name: COMMERCIAL_ACCOUNT_ADMIN_USER_ID
+  display_title: 'Administrador Auris das contas novas (ID do usuário)'
+  description: 'Usuário da equipe Auris incluído como administrador em toda conta criada pela área de contratação. O cliente entra como gerente.'
+  value: '1'
+  locked: false
 - name: COMMERCIAL_RESERVATION_REMINDER_TIME
   display_title: 'Horário do lembrete de último dia'
   description: 'Horário de Brasília. No último dia da reserva, quem ainda não contratou recebe o lembrete a partir desse horário.'
