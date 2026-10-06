@@ -59,25 +59,26 @@ const hint = computed(() => {
 // outline-only pill (bg swallowed by an upstream rule or missed by the
 // Tailwind JIT scan against this file); switching to inline rgba tokens
 // bypasses that whole class of problems and keeps the chip readable on
-// any panel ground.
+// any panel ground. The fills are solid (the same tints over white): the
+// chip floats over the messages, and a see-through one mixed with them.
 const TONE_STYLES = {
   free: {
-    backgroundColor: 'rgba(16, 185, 129, 0.22)',
+    backgroundColor: '#CAF0E3',
     borderColor: 'rgba(16, 185, 129, 0.45)',
     color: '#065F46',
   },
   std: {
-    backgroundColor: 'rgba(37, 99, 235, 0.20)',
+    backgroundColor: '#D3E0FB',
     borderColor: 'rgba(37, 99, 235, 0.45)',
     color: '#1E3A8A',
   },
   warn: {
-    backgroundColor: 'rgba(217, 119, 6, 0.28)',
+    backgroundColor: '#F4D9B9',
     borderColor: 'rgba(217, 119, 6, 0.55)',
     color: '#78350F',
   },
   closed: {
-    backgroundColor: 'rgba(220, 38, 38, 0.20)',
+    backgroundColor: '#F8D4D4',
     borderColor: 'rgba(220, 38, 38, 0.45)',
     color: '#7F1D1D',
   },
