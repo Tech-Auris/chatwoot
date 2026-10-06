@@ -9,6 +9,7 @@ import WhatsappTemplatesModal from 'dashboard/components/widgets/conversation/Wh
 import { INBOX_TYPES } from 'dashboard/helper/inbox';
 import { vOnClickOutside } from '@vueuse/components';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu.vue';
+import Button from 'dashboard/components-next/button/Button.vue';
 import InboxStatusBadge from 'dashboard/components-next/Inbox/InboxStatusBadge.vue';
 import { sendBlockReason } from 'dashboard/helper/whatsappHealth';
 
@@ -357,8 +358,10 @@ const canSubmit = computed(() => {
   if (!scheduledAt.value) return false;
   if (isSaving.value) return false;
   // Template picked → basta ter `templateParams` (content vem renderizado
-  // do próprio parser). Sem template → o texto livre precisa existir.
+  // do próprio parser). Official API numbers only send templates, like the
+  // pencil; Baileys / Z-API need the free text.
   if (hasTemplate.value) return true;
+  if (isWhatsappCloudInbox.value) return false;
   return message.value.trim().length > 0;
 });
 
@@ -602,19 +605,17 @@ watch(selectedInboxId, () => {
               v-if="isWhatsappCloudInbox && !hasTemplate"
               class="mt-2 flex items-center gap-2"
             >
-              <button
+              <Button
                 type="button"
-                class="inline-flex items-center gap-1.5 rounded-md border border-n-slate-3 text-n-slate-12 px-3 h-7 text-xs font-medium hover:bg-n-alpha-2"
+                icon="i-ri-whatsapp-line"
+                :label="
+                  t('COMPOSE_NEW_CONVERSATION.FORM.WHATSAPP_OPTIONS.LABEL')
+                "
+                color="slate"
+                size="sm"
+                class="!text-xs font-medium"
                 @click="openTemplatePicker"
-              >
-                <span
-                  class="i-lucide-message-square size-3.5 text-n-slate-11"
-                />
-                {{ t('SCHEDULED.NEW.PICK_TEMPLATE') }}
-              </button>
-              <span class="text-xs text-n-amber-11">
-                {{ t('SCHEDULED.NEW.WHATSAPP_CLOUD_TEMPLATE_NOTICE') }}
-              </span>
+              />
             </div>
             <div
               v-else-if="hasTemplate"
@@ -642,7 +643,7 @@ watch(selectedInboxId, () => {
                separado. Quando um template do WhatsApp Cloud já foi
                escolhido, o campo vira preview readonly (o texto vem
                renderizado do parser com as variáveis preenchidas). -->
-          <div class="relative">
+          <div v-if="!isWhatsappCloudInbox || hasTemplate" class="relative">
             <div class="flex items-baseline justify-between gap-2">
               <label class="text-sm font-medium text-n-slate-12">
                 {{
