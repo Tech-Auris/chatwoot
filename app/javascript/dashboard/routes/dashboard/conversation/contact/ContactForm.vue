@@ -12,6 +12,7 @@ import parsePhoneNumber from 'libphonenumber-js';
 import NextButton from 'dashboard/components-next/button/Button.vue';
 import Avatar from 'next/avatar/Avatar.vue';
 import ComboBox from 'dashboard/components-next/combobox/ComboBox.vue';
+import languagesAPI from 'dashboard/api/languages';
 
 export default {
   components: {
@@ -53,6 +54,8 @@ export default {
         name: '',
       },
       city: '',
+      languageId: null,
+      languages: [],
       socialProfileUserNames: {
         facebook: '',
         twitter: '',
@@ -119,6 +122,7 @@ export default {
         this.companyName !== this.initialData.companyName ||
         this.description !== this.initialData.description ||
         this.city !== this.initialData.city ||
+        this.languageId !== this.initialData.languageId ||
         (this.country?.id || '') !== (this.initialData.countryId || '') ||
         this.avatarFile !== null ||
         socialProfilesChanged
@@ -144,8 +148,17 @@ export default {
   mounted() {
     this.setContactObject();
     this.setDialCode();
+    this.loadLanguages();
   },
   methods: {
+    async loadLanguages() {
+      try {
+        const { data } = await languagesAPI.get();
+        this.languages = data?.data || [];
+      } catch {
+        // The dropdown just stays empty.
+      }
+    },
     onCancel() {
       this.$emit('cancel');
     },
@@ -192,6 +205,7 @@ export default {
           this.$t('CONTACT_FORM.FORM.COUNTRY.SELECT_COUNTRY'),
       };
       this.city = additionalAttributes.city || '';
+      this.languageId = this.contact.language_id || null;
       this.description = additionalAttributes.description || '';
       this.avatarUrl = this.contact.thumbnail || '';
       const {
@@ -215,6 +229,7 @@ export default {
         companyName: this.companyName,
         description: this.description,
         city: this.city,
+        languageId: this.languageId,
         countryId: this.country.id,
         socialProfileUserNames: { ...this.socialProfileUserNames },
       };
@@ -231,6 +246,7 @@ export default {
         name: this.name,
         email: this.email,
         phone_number: this.setPhoneNumber,
+        language_id: this.languageId,
         additional_attributes: {
           ...this.contact.additional_attributes,
           description: this.description,
@@ -429,6 +445,17 @@ export default {
       :label="$t('CONTACT_FORM.FORM.CITY.LABEL')"
       :placeholder="$t('CONTACT_FORM.FORM.CITY.PLACEHOLDER')"
     />
+    <div class="w-full mb-4">
+      <label>
+        {{ $t('CONTACT_FORM.FORM.LANGUAGE.LABEL') }}
+      </label>
+      <ComboBox
+        v-model="languageId"
+        :options="languages.map(({ id, name }) => ({ value: id, label: name }))"
+        class="[&>div>button]:!bg-n-alpha-black2"
+        :placeholder="$t('CONTACT_FORM.FORM.LANGUAGE.PLACEHOLDER')"
+      />
+    </div>
 
     <div class="w-full">
       <label>{{ $t('CONTACTS_PAGE.LIST.TABLE_HEADER.SOCIAL_PROFILES') }}</label>

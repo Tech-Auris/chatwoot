@@ -136,6 +136,10 @@
         "PLACEHOLDER": "Digite o nome da cidade",
         "LABEL": "Nome da cidade"
       },
+      "LANGUAGE": {
+        "PLACEHOLDER": "Selecione o idioma",
+        "LABEL": "Idioma"
+      },
       "SOCIAL_PROFILES": {
         "FACEBOOK": {
           "PLACEHOLDER": "Digite o nome de usuário do Facebook",
