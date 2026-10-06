@@ -46,6 +46,35 @@ RSpec.describe Sales::GenerateContractService do
     expect(contract.template_version).to eq(SalesContractTemplate.current.version)
   end
 
+  # Real case: the customer clicked "Gerar contrato" several times while the
+  # first one was still being generated, and 7 contracts went out.
+  it 'sends nothing while another generation for the same quote is running' do
+    Redis::Alfred.set(format(described_class::GENERATION_LOCK, quote_id: quote.id), 1, ex: 60)
+
+    expect(perform).to be_nil
+    expect(client).not_to have_received(:create_document)
+    expect(quote.contracts).to be_empty
+  ensure
+    Redis::Alfred.delete(format(described_class::GENERATION_LOCK, quote_id: quote.id))
+  end
+
+  it 'keeps the contract already out when the same data is submitted again' do
+    first = perform
+
+    expect(perform).to eq(first)
+    expect(client).to have_received(:create_document).once
+    expect(quote.contracts.count).to eq(1)
+  end
+
+  it 'lets the next generation run once the previous one finished' do
+    perform
+    allow(client).to receive(:create_document).and_return(document.merge('id' => 'doc-2'))
+    form.payment_method = 'pix'
+
+    expect(perform.autentique_document_id).to eq('doc-2')
+    expect(quote.contracts.where(status: :cancelled).count).to eq(1)
+  end
+
   it 'comments on the ClickUp task that the contract went out' do
     expect { perform }.to have_enqueued_job(Sales::ContractClickupCommentJob).with(kind_of(Integer), 'generated')
   end

@@ -30,6 +30,8 @@ class Sales::ProposalContractsController < Sales::ProposalsController
   def contract
     return redirect_to sales_proposal_terms_path(@proposal.public_token) unless @proposal.terms_signed?
 
+    return render_contract_form(nil, generating: true) if Sales::GenerateContractService.in_progress?(@proposal)
+
     @contract = @proposal.current_contract
     Sales::ContractStatusService.new(@contract).refresh! if @contract&.status_awaiting_signature?
     return render_contract_form(contract_failure_message) if @contract.nil? || @contract.status_failed?
@@ -81,9 +83,9 @@ class Sales::ProposalContractsController < Sales::ProposalsController
     render :terms, status: :unprocessable_entity, locals: { error: message }
   end
 
-  def render_contract_form(message, status: :ok)
+  def render_contract_form(message, status: :ok, generating: false)
     @form ||= Sales::ContractForm.prefill(@proposal)
-    render :contract_form, status: status, locals: { error: message }
+    render :contract_form, status: status, locals: { error: message, generating: generating }
   end
 
   # A contract that could not be generated or that Auris could not sign

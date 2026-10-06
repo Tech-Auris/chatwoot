@@ -148,9 +148,10 @@ class SalesQuote < ApplicationRecord
     contracts.exists? || Sales::ContractSettings.enabled?
   end
 
-  # The contract that counts: the newest one that was not cancelled.
+  # The contract that counts: a signed one if there is any (a signature is
+  # never undone by a newer attempt), otherwise the newest not cancelled.
   def current_contract
-    contracts.live.order(:created_at).last
+    contracts.status_signed.order(:signed_at).last || contracts.live.order(:created_at).last
   end
 
   def terms_signed?

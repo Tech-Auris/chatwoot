@@ -176,6 +176,27 @@ RSpec.describe SalesQuote do
     end
   end
 
+  describe '#current_contract' do
+    let(:quote) { create(:sales_quote) }
+
+    it 'is the newest contract not cancelled' do
+      create(:sales_contract, sales_quote: quote)
+      newest = create(:sales_contract, sales_quote: quote, status: :failed, autentique_document_id: nil)
+      create(:sales_contract, sales_quote: quote, status: :cancelled)
+
+      expect(quote.current_contract).to eq(newest)
+    end
+
+    # Repeated clicks once left several contracts out; signing any of them
+    # must open the payment, whatever newer attempt failed afterwards.
+    it 'is the signed contract even when a newer attempt exists' do
+      signed = create(:sales_contract, sales_quote: quote, status: :signed, signed_at: 1.minute.ago)
+      create(:sales_contract, sales_quote: quote, status: :failed, autentique_document_id: nil)
+
+      expect(quote.current_contract).to eq(signed)
+    end
+  end
+
   describe 'items' do
     it 'keeps the amount that was offered, not the one Stripe has today' do
       item = create(:sales_quote_item, sales_quote: quote, unit_amount: 89_700, quantity: 2)

@@ -5,6 +5,11 @@
   <h1 class="text-lg font-medium text-slate-900">Confirme os dados para o contrato</h1>
   <p class="mt-1 text-sm text-slate-500">Preencha as informações e escolha a forma de pagamento para avançar.</p>
 
+  <% if local_assigns[:generating] %>
+    <p class="mt-4 rounded border border-yellow-200 bg-yellow-50 px-3 py-2 text-sm text-yellow-800" data-contract-generating>
+      Seu contrato está sendo gerado. Esta página se atualiza sozinha em alguns segundos.
+    </p>
+  <% end %>
   <% if local_assigns[:error].present? %>
     <p class="mt-4 text-sm text-red-600"><%= error %></p>
   <% end %>
@@ -133,16 +138,36 @@
     </p>
 
     <div class="flex items-center justify-end gap-3">
-      <%= f.submit 'Gerar contrato', data: { disable_with: 'Gerando contrato…' },
-            class: 'px-4 py-2 rounded bg-woot-500 text-white text-sm cursor-pointer' %>
+      <%= f.submit 'Gerar contrato', disabled: local_assigns[:generating],
+            class: 'px-4 py-2 rounded bg-woot-500 text-white text-sm cursor-pointer disabled:opacity-60 disabled:cursor-wait' %>
     </div>
   <% end %>
 </div>
 
 <script>
   (function () {
+    if (document.querySelector('[data-contract-generating]')) {
+      setTimeout(function () { window.location.reload(); }, 4000);
+    }
+
     var form = document.getElementById('contract-form');
     if (!form) return;
+
+    // Generating takes a few seconds; a second click must not send another contract.
+    form.addEventListener('submit', function () {
+      var button = form.querySelector('[type="submit"]');
+      setTimeout(function () {
+        button.disabled = true;
+        button.value = 'Gerando contrato…';
+      }, 0);
+    });
+    // Coming back with the browser's Back button restores the page as it was.
+    window.addEventListener('pageshow', function (event) {
+      if (!event.persisted) return;
+      var button = form.querySelector('[type="submit"]');
+      button.disabled = false;
+      button.value = 'Gerar contrato';
+    });
 
     function digits(value) { return (value || '').replace(/\D/g, ''); }
     function field(name) { return form.querySelector('[name="contract[' + name + ']"]'); }
