@@ -67,7 +67,7 @@ const targetInboxLabel = computed(() => {
       <span class="text-sm truncate text-n-slate-12">
         {{ targetInboxLabel }}
       </span>
-      <InboxStatusBadge :inbox="getInbox(targetInbox.id)" />
+      <InboxStatusBadge :inbox="getInbox(targetInbox.id)" labeled />
       <Button
         variant="ghost"
         icon="i-lucide-x"
@@ -103,6 +103,7 @@ const targetInboxLabel = computed(() => {
           <InboxStatusBadge
             class="ltr:ml-auto rtl:mr-auto ltr:pl-2 rtl:pr-2"
             :inbox="getInbox(item.value)"
+            labeled
           />
         </template>
       </DropdownMenu>

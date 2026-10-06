@@ -15,6 +15,12 @@ const props = defineProps({
     type: Object,
     default: null,
   },
+  // "Status: Aprovada - Qualidade: Média" where the badge stands on its own
+  // (the "Via:" picker); the inbox grid already names the column.
+  labeled: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const { t, te } = useI18n();
@@ -45,6 +51,7 @@ const badges = computed(() => {
     return [
       {
         key: 'connection',
+        prefix: 'STATUS',
         label: t(`INBOX_MGMT.CONNECTION_STATUS.${state.toUpperCase()}`),
         badge: 'bg-n-alpha-2 text-n-slate-12',
         dot: CONNECTION_DOTS[state],
@@ -60,6 +67,7 @@ const badges = computed(() => {
   if (health.account_review_status) {
     list.push({
       key: 'account',
+      prefix: 'STATUS',
       label: translateValue(
         'ACCOUNT_REVIEW_STATUSES',
         health.account_review_status
@@ -70,6 +78,7 @@ const badges = computed(() => {
   }
   list.push({
     key: 'quality',
+    prefix: 'QUALITY',
     label: translateValue('QUALITY_RATINGS', quality),
     ...qualityStyle(quality),
   });
@@ -79,14 +88,18 @@ const badges = computed(() => {
 
 <template>
   <span v-if="badges.length" class="inline-flex items-center gap-1 shrink-0">
-    <span
-      v-for="item in badges"
-      :key="item.key"
-      class="inline-flex items-center gap-1.5 px-1.5 h-5 text-xs rounded-md whitespace-nowrap"
-      :class="item.badge"
-    >
-      <span class="size-1.5 rounded-full" :class="item.dot" />
-      {{ item.label }}
-    </span>
+    <template v-for="(item, index) in badges" :key="item.key">
+      <span v-if="labeled && index > 0" class="text-xs text-n-slate-11">-</span>
+      <span
+        class="inline-flex items-center gap-1.5 px-1.5 h-5 text-xs rounded-md whitespace-nowrap"
+        :class="item.badge"
+      >
+        <span class="size-1.5 rounded-full" :class="item.dot" />
+        <template v-if="labeled">
+          {{ $t(`INBOX_MGMT.CONNECTION_STATUS.LABELS.${item.prefix}`) }}
+        </template>
+        {{ item.label }}
+      </span>
+    </template>
   </span>
 </template>
