@@ -1,4 +1,26 @@
 ---
+- tag: v4.15.1-auris.1.66
+  published_at: '2026-10-06T12:00:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.66
+  notes:
+    en: |-
+      ### ✨ What's new
+
+      - **See if a number is working before you send.** When starting a conversation from the pencil, each number in "Via:" shows whether it is connected or, for official numbers, its quality (High, Medium, Low or Banned).
+      - **Numbers with a problem are unavailable.** When starting a conversation, a disconnected or blocked number shows as unavailable with the reason, instead of letting the message get lost.
+
+      ### ⚡ Improvements
+
+      - **Messages and scheduled messages.** Each person edits their own messages and changes the scheduled messages they created. Admins and managers can still change all of them.
+    pt_BR: |-
+      ### ✨ Novidades
+
+      - **Veja se o número está funcionando antes de enviar.** Ao começar uma conversa pelo lápis, cada número do campo "Via:" mostra se está conectado ou, nos números oficiais, a qualidade (Alta, Média, Baixa ou Banido).
+      - **Números com problema ficam indisponíveis.** Ao começar uma conversa, um número desconectado ou bloqueado aparece apagado e mostra o motivo, em vez de deixar a mensagem se perder.
+
+      ### ⚡ Melhorias
+
+      - **Mensagens e agendamentos.** Cada pessoa edita as próprias mensagens e altera os agendamentos que criou. Administradores e gerentes continuam podendo mexer em todos.
 - tag: v4.15.1-auris.1.65
   published_at: '2026-10-03T17:10:56Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.65
@@ -342,14 +364,6 @@
 - tag: v4.15.1-auris.1.51.2
   published_at: '2026-08-30T20:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.51.2
-  notes:
-    en: |-
-      Bug fixes and internal improvements.
-    pt_BR: |-
-      Correções de bugs e melhorias internas.
-- tag: v4.15.1-auris.1.51.1
-  published_at: '2026-08-30T15:30:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.51.1
   notes:
     en: |-
       Bug fixes and internal improvements.
