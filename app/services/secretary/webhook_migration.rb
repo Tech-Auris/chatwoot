@@ -38,7 +38,7 @@ class Secretary::WebhookMigration
   end
 
   def inbox_ids_for(webhook)
-    return [webhook.inbox_id] if webhook.inbox_id.present?
+    return webhook.inbox_ids if webhook.inbox_ids.present?
 
     webhook.account.inboxes.where.not(channel_type: 'Channel::Simulator').pluck(:id)
   end

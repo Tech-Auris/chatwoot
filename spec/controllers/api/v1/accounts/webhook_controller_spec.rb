@@ -50,6 +50,37 @@ RSpec.describe 'Webhooks API', type: :request do
         expect(response.parsed_body['payload']['webhook']['url']).to eql 'https://hello.com'
       end
 
+      it 'creates a webhook listening to several inboxes' do
+        other_inbox = create(:inbox, account: account)
+
+        post "/api/v1/accounts/#{account.id}/webhooks",
+             params: { url: 'https://hello.com', inbox_ids: [inbox.id, other_inbox.id], subscriptions: ['message_created'] },
+             headers: administrator.create_new_auth_token,
+             as: :json
+        expect(response).to have_http_status(:success)
+        payload = response.parsed_body['payload']['webhook']
+        expect(payload['inbox_ids']).to contain_exactly(inbox.id, other_inbox.id)
+        expect(payload['inboxes'].pluck('id')).to contain_exactly(inbox.id, other_inbox.id)
+      end
+
+      it 'still accepts a single inbox_id from older API clients' do
+        post "/api/v1/accounts/#{account.id}/webhooks",
+             params: { url: 'https://hello.com', inbox_id: inbox.id, subscriptions: ['message_created'] },
+             headers: administrator.create_new_auth_token,
+             as: :json
+        expect(response.parsed_body['payload']['webhook']['inbox']['id']).to eql inbox.id
+      end
+
+      it 'refuses an inbox from another account' do
+        foreign_inbox = create(:inbox)
+
+        post "/api/v1/accounts/#{account.id}/webhooks",
+             params: { url: 'https://hello.com', inbox_ids: [foreign_inbox.id], subscriptions: ['message_created'] },
+             headers: administrator.create_new_auth_token,
+             as: :json
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+
       it 'creates webhook with name' do
         post "/api/v1/accounts/#{account.id}/webhooks",
              params: { account_id: account.id, inbox_id: inbox.id, url: 'https://hello.com', name: 'My Webhook' },
@@ -121,16 +152,33 @@ RSpec.describe 'Webhooks API', type: :request do
         expect(response.parsed_body['payload']['webhook']['name']).to eql 'Another Webhook'
       end
 
-      it 'ignores trying to update inbox_id and url' do
+      it 'updates the url and the inboxes' do
         new_inbox = create(:inbox, account: account)
 
         put "/api/v1/accounts/#{account.id}/webhooks/#{webhook.id}",
-            params: { url: 'https://other.url.com', inbox_id: new_inbox.id },
+            params: { url: 'https://other.url.com', inbox_ids: [inbox.id, new_inbox.id] },
             headers: administrator.create_new_auth_token,
             as: :json
         expect(response).to have_http_status(:success)
-        expect(response.parsed_body['payload']['webhook']['url']).to eql url
-        expect(response.parsed_body['payload']['webhook']['inbox']['id']).to eql inbox.id
+        expect(response.parsed_body['payload']['webhook']['url']).to eql 'https://other.url.com'
+        expect(response.parsed_body['payload']['webhook']['inbox_ids']).to contain_exactly(inbox.id, new_inbox.id)
+      end
+
+      it 'listens to every inbox again when the inboxes are cleared' do
+        put "/api/v1/accounts/#{account.id}/webhooks/#{webhook.id}",
+            params: { inbox_ids: [] },
+            headers: administrator.create_new_auth_token,
+            as: :json
+        expect(response).to have_http_status(:success)
+        expect(webhook.reload.inbox_ids).to eq([])
+      end
+
+      it 'keeps the inboxes when the update does not mention them' do
+        put "/api/v1/accounts/#{account.id}/webhooks/#{webhook.id}",
+            params: { name: 'Renamed' },
+            headers: administrator.create_new_auth_token,
+            as: :json
+        expect(webhook.reload.inbox_ids).to eq([inbox.id])
       end
     end
   end

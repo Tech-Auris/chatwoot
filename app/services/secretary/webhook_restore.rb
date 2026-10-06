@@ -17,7 +17,7 @@ class Secretary::WebhookRestore
   def restore(secretary)
     account = secretary.account
     version = secretary.secretary_version
-    webhook = account.webhooks.new(url: version.webhook_url, inbox_id: single_inbox_id(account), name: "Secretária #{version.name}",
+    webhook = account.webhooks.new(url: version.webhook_url, inbox_ids: enabled_inbox_ids(account), name: "Secretária #{version.name}",
                                    subscriptions: ['message_created'], secret: secretary.secret)
     # The URL belongs to a secretary version, which the webhook validation refuses.
     webhook.save!(validate: false)
@@ -26,9 +26,10 @@ class Secretary::WebhookRestore
     webhook
   end
 
-  def single_inbox_id(account)
+  # Every regular inbox enabled means "all inboxes", which an empty list says.
+  def enabled_inbox_ids(account)
     regular = account.inboxes.where.not(channel_type: 'Channel::Simulator')
     enabled = regular.where(secretary_enabled: true).pluck(:id)
-    enabled.first if enabled.size == 1 && regular.count > 1
+    enabled.size == regular.count ? [] : enabled
   end
 end

@@ -74,11 +74,13 @@
           "PLACEHOLDER": "Enter the name of the webhook"
         },
         "INBOX": {
-          "LABEL": "Inbox",
-          "TITLE": "Select the inbox",
+          "LABEL": "Inboxes",
           "PLACEHOLDER": "All Inboxes",
-          "NO_RESULTS": "No inboxes found",
-          "INPUT_PLACEHOLDER": "Search inbox"
+          "ADD": "Add inbox…",
+          "REMOVE": "Remove {name}",
+          "SELECT_ALL": "Select all",
+          "CLEAR": "Clear",
+          "HELP": "With no inbox picked, the webhook receives events from every inbox, including the ones created later."
         },
         "END_POINT": {
           "LABEL": "Webhook URL",
@@ -856,7 +858,6 @@
         "SUCCESS_MESSAGE": "The document has been successfully deleted",
         "ERROR_MESSAGE": "There was an error deleting the document, please try again."
       },
-
       "OPTIONS": {
         "VIEW_RELATED_RESPONSES": "View Related Responses",
         "SYNC_NOW": "Refresh now",
