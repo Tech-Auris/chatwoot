@@ -1,7 +1,10 @@
 FactoryBot.define do
   factory :webhook do
     account_id { 1 }
-    inbox_id { 1 }
+    transient do
+      inbox { nil }
+    end
+    inbox_ids { inbox ? [inbox.id] : [] }
     url { 'https://api.chatwoot.com' }
     name { 'My Webhook' }
     subscriptions do

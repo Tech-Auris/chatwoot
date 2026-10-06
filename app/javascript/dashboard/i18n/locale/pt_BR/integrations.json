@@ -74,11 +74,13 @@
           "PLACEHOLDER": "Insira o nome do webhook"
         },
         "INBOX": {
-          "LABEL": "Caixa de Entrada",
-          "TITLE": "Selecione a caixa de entrada",
+          "LABEL": "Caixas de Entrada",
           "PLACEHOLDER": "Todas as caixas de entrada",
-          "NO_RESULTS": "Nenhuma caixa de entrada encontrada",
-          "INPUT_PLACEHOLDER": "Buscar caixa de entrada"
+          "ADD": "Adicionar caixa…",
+          "REMOVE": "Remover {name}",
+          "SELECT_ALL": "Selecionar todas",
+          "CLEAR": "Limpar",
+          "HELP": "Sem nenhuma caixa escolhida, o webhook recebe eventos de todas as caixas, inclusive das criadas depois."
         },
         "END_POINT": {
           "LABEL": "URL do Webhook",

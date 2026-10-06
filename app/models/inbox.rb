@@ -77,12 +77,12 @@ class Inbox < ApplicationRecord
   has_one :assignment_policy, through: :inbox_assignment_policy
   has_one :agent_bot_inbox, dependent: :destroy_async
   has_one :agent_bot, through: :agent_bot_inbox
-  has_many :webhooks, dependent: :destroy_async
   has_many :hooks, dependent: :destroy_async, class_name: 'Integrations::Hook'
 
   enum sender_name_type: { friendly: 0, professional: 1 }
 
   after_destroy :delete_round_robin_agents
+  after_destroy -> { Webhook.detach_inbox(self) }
   # Keep `accounts.simulator_inbox_id` truthful when the Simulador inbox is
   # deleted. Without this, the account payload keeps advertising a
   # simulator_inbox_id that points nowhere — the Novo Inbox screen hides
