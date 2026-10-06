@@ -467,7 +467,7 @@ watch(selectedInboxId, () => {
           </button>
         </header>
 
-        <div class="flex-1 overflow-y-auto px-6 pb-5 flex flex-col gap-4">
+        <div class="flex-1 overflow-y-auto px-6 pt-2 pb-5 flex flex-col gap-4">
           <!-- Para: label inline + chip compacto quando o contato está
                escolhido, ou input de busca full-width com dropdown
                inferior quando ainda não. Mesmo shape que o lápis usa
