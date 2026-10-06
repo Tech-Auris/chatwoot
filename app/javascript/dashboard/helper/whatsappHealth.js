@@ -20,3 +20,42 @@ export const accountStatusDot = status => {
   if (status === 'PENDING') return 'bg-n-amber-9';
   return 'bg-n-ruby-9';
 };
+
+// Statuses that stop a new conversation from going out of a number (the
+// pencil). Low quality alone does not: the number still sends. A number with
+// no health read yet is let through.
+const BLOCKING_PHONE_STATUSES = {
+  BANNED: 'BANNED',
+  DISCONNECTED: 'NUMBER_DISCONNECTED',
+  DELETED: 'DELETED',
+  PENDING: 'PENDING',
+  UNVERIFIED: 'PENDING',
+  RESTRICTED: 'RESTRICTED',
+};
+const BLOCKING_ACCOUNT_STATUSES = [
+  'REJECTED',
+  'DISABLED',
+  'RESTRICTED',
+  'DECLINED',
+  'FLAGGED',
+];
+
+export const sendBlockReason = inbox => {
+  if (inbox?.channel_type !== 'Channel::Whatsapp') return null;
+
+  const connection = inbox.provider_connection || {};
+  if (['baileys', 'zapi'].includes(inbox.provider)) {
+    if (connection.connection === 'open') return null;
+    return connection.connection === 'connecting'
+      ? 'CONNECTING'
+      : 'DISCONNECTED';
+  }
+
+  const health = connection.health;
+  if (!health) return null;
+  if (BLOCKING_PHONE_STATUSES[health.phone_status])
+    return BLOCKING_PHONE_STATUSES[health.phone_status];
+  if (BLOCKING_ACCOUNT_STATUSES.includes(health.account_review_status))
+    return 'ACCOUNT_BLOCKED';
+  return null;
+};

@@ -645,6 +645,16 @@
         "TAG_INPUT_PLACEHOLDER": "Digite pelo menos 2 caracteres para pesquisar por nome, e-mail ou número de telefone",
         "CONTACT_CREATING": "Criando contato..."
       },
+      "INBOX_BLOCKED": {
+        "DISCONNECTED": "Este número está desconectado. Reconecte o WhatsApp em Configurações → Caixas de Entrada para enviar por ele.",
+        "CONNECTING": "Este número está reconectando. Aguarde a conexão terminar para enviar por ele.",
+        "BANNED": "Este número foi banido pelo WhatsApp e não pode enviar mensagens.",
+        "NUMBER_DISCONNECTED": "Este número está desconectado da API oficial do WhatsApp. Verifique-o no Meta Business Manager.",
+        "DELETED": "Este número foi removido da conta do WhatsApp Business.",
+        "PENDING": "O cadastro deste número no WhatsApp ainda não foi concluído.",
+        "RESTRICTED": "Este número atingiu o limite de novas conversas do WhatsApp. Ele ainda responde quem escreveu nas últimas 24h, mas não pode iniciar conversas agora.",
+        "ACCOUNT_BLOCKED": "A conta do WhatsApp Business deste número foi reprovada ou restrita pelo Meta. Verifique-a no Meta Business Manager."
+      },
       "INBOX_SELECTOR": {
         "LABEL": "Via:",
         "BUTTON": "Mostrar Caixas de Entrada"

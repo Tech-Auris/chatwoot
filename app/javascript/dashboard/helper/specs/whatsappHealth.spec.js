@@ -1,4 +1,9 @@
-import { qualityKey, qualityStyle, accountStatusDot } from '../whatsappHealth';
+import {
+  qualityKey,
+  qualityStyle,
+  accountStatusDot,
+  sendBlockReason,
+} from '../whatsappHealth';
 
 describe('whatsappHealth', () => {
   it('reads a ban from the number status, over the quality rating', () => {
@@ -20,5 +25,54 @@ describe('whatsappHealth', () => {
     expect(accountStatusDot('APPROVED')).toBe('bg-n-teal-9');
     expect(accountStatusDot('PENDING')).toBe('bg-n-amber-9');
     expect(accountStatusDot('REJECTED')).toBe('bg-n-ruby-9');
+  });
+
+  describe('sendBlockReason', () => {
+    const baileys = connection => ({
+      channel_type: 'Channel::Whatsapp',
+      provider: 'baileys',
+      provider_connection: { connection },
+    });
+    const cloud = health => ({
+      channel_type: 'Channel::Whatsapp',
+      provider: 'whatsapp_cloud',
+      provider_connection: { health },
+    });
+
+    it('lets a connected unofficial number send and stops the others', () => {
+      expect(sendBlockReason(baileys('open'))).toBeNull();
+      expect(sendBlockReason(baileys('connecting'))).toBe('CONNECTING');
+      expect(sendBlockReason(baileys('close'))).toBe('DISCONNECTED');
+      expect(sendBlockReason(baileys(undefined))).toBe('DISCONNECTED');
+    });
+
+    it('stops an official number that is banned, off or restricted', () => {
+      expect(sendBlockReason(cloud({ phone_status: 'BANNED' }))).toBe('BANNED');
+      expect(sendBlockReason(cloud({ phone_status: 'DISCONNECTED' }))).toBe(
+        'NUMBER_DISCONNECTED'
+      );
+      expect(sendBlockReason(cloud({ phone_status: 'RESTRICTED' }))).toBe(
+        'RESTRICTED'
+      );
+      expect(
+        sendBlockReason(
+          cloud({
+            phone_status: 'CONNECTED',
+            account_review_status: 'REJECTED',
+          })
+        )
+      ).toBe('ACCOUNT_BLOCKED');
+    });
+
+    it('lets low quality, a flagged number and an unread number send', () => {
+      expect(
+        sendBlockReason(
+          cloud({ phone_status: 'CONNECTED', quality_rating: 'RED' })
+        )
+      ).toBeNull();
+      expect(sendBlockReason(cloud({ phone_status: 'FLAGGED' }))).toBeNull();
+      expect(sendBlockReason(cloud(undefined))).toBeNull();
+      expect(sendBlockReason({ channel_type: 'Channel::Email' })).toBeNull();
+    });
   });
 });
