@@ -437,6 +437,40 @@ RSpec.describe Conversations::MessageWindowService do
     end
   end
 
+  # A customer who came from a Click-to-WhatsApp ad keeps the conversation
+  # open for 72h on the official API — only when the referral carries the ad
+  # click id Meta sends for ads.
+  describe 'on WhatsApp Cloud channels with a Click-to-WhatsApp ad' do
+    let(:whatsapp_channel) { create(:channel_whatsapp, provider: 'whatsapp_cloud', sync_templates: false, validate_provider_config: false) }
+    let(:conversation) do
+      create(:conversation, inbox: whatsapp_channel.inbox, account: whatsapp_channel.account,
+                            additional_attributes: { 'campaign_referral' => { 'title' => 'Avaliação' } })
+    end
+
+    def incoming_from_ad(hours_ago, referral)
+      create(:message, account: conversation.account, inbox: conversation.inbox, conversation: conversation,
+                       message_type: :incoming, created_at: hours_ago.hours.ago, content_attributes: { referral: referral })
+    end
+
+    it 'can reply 30h after the ad message' do
+      incoming_from_ad(30, { 'source_type' => 'ad', 'ctwa_clid' => 'ARAkLk' })
+
+      expect(described_class.new(conversation).can_reply?).to be true
+    end
+
+    it 'cannot reply once the 72h are over' do
+      incoming_from_ad(80, { 'source_type' => 'ad', 'ctwa_clid' => 'ARAkLk' })
+
+      expect(described_class.new(conversation).can_reply?).to be false
+    end
+
+    it 'does not count a referral without the ad click id as an ad' do
+      incoming_from_ad(30, { 'source_type' => 'post', 'title' => 'Post' })
+
+      expect(described_class.new(conversation).can_reply?).to be false
+    end
+  end
+
   describe 'on WhatsApp Baileys channels' do
     let!(:whatsapp_channel) { create(:channel_whatsapp, provider: 'baileys', sync_templates: false, validate_provider_config: false) }
     let!(:whatsapp_inbox) { create(:inbox, channel: whatsapp_channel, account: whatsapp_channel.account) }

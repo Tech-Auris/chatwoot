@@ -8,6 +8,7 @@ class Conversations::MessageWindowService
 
   def can_reply?
     return true if messaging_window.blank?
+    return true if ctwa_window_open?
 
     last_message_in_messaging_window?(messaging_window)
   end
@@ -31,6 +32,15 @@ class Conversations::MessageWindowService
     when 'Channel::TwilioSms'
       twilio_messaging_window
     end
+  end
+
+  # On the official WhatsApp API, a customer who came from a Click-to-WhatsApp
+  # ad keeps the conversation open for 72h (the window the conversation chip
+  # shows as "CTWA 72h"), not only the usual 24h.
+  def ctwa_window_open?
+    return false unless @conversation.inbox.channel_type == 'Channel::Whatsapp'
+
+    @conversation.messaging_window&.dig(:kind) == 'ctwa_72h'
   end
 
   def last_message_in_messaging_window?(time)

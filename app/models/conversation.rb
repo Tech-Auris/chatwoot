@@ -250,7 +250,9 @@ class Conversation < ApplicationRecord
     channel.is_a?(Channel::Whatsapp) && channel.provider == 'whatsapp_cloud'
   end
 
-  # Last inbound message that carried a `content_attributes.referral` payload.
+  # Last inbound message that came from a Click-to-WhatsApp ad: its referral
+  # carries the ad click id (`ctwa_clid`) Meta only sends for ads. A referral
+  # without it (a post, a link preview) does not open the 72h window.
   # Fast path: skip the scan if the conversation has never received a CTWA.
   # `additional_attributes.campaign_referral` gets rewritten on every new
   # CTWA touch, so a blank value here means the conversation has no CTWA
@@ -262,7 +264,7 @@ class Conversation < ApplicationRecord
     # (Rails' `store coder: JSON` on the Message model) before jsonb traversal.
     # Same pattern as Message.hide_removed_reactions.
     messages.incoming
-            .where("((content_attributes#>>'{}')::jsonb -> 'referral') IS NOT NULL")
+            .where("((content_attributes#>>'{}')::jsonb -> 'referral' ->> 'ctwa_clid') <> ''")
             .maximum(:created_at)
   end
 
