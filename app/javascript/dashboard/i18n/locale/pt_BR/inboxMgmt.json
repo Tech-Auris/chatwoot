@@ -23,7 +23,7 @@
       "404": "Não há caixas de entrada anexadas a esta conta.",
       "COLUMNS": {
         "NAME": "Nome e conexão",
-        "ADDRESS": "Número, @ ou site",
+        "ADDRESS": "Número, {'@'} ou site",
         "STATUS": "Qualidade ou status",
         "ID": "ID"
       }
