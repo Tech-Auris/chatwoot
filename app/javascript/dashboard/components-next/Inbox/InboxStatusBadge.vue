@@ -8,7 +8,7 @@ import {
 } from 'dashboard/helper/whatsappHealth';
 
 // Official API numbers: account status + quality, refreshed from Meta every
-// 30 minutes. Baileys / Z-API numbers: whether the phone is connected.
+// 15 minutes. Baileys / Z-API numbers: whether the phone is connected.
 // Any other inbox renders nothing.
 const props = defineProps({
   inbox: {

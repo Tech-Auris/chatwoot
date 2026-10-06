@@ -648,6 +648,16 @@
         "TAG_INPUT_PLACEHOLDER": "Enter at least 2 characters to search by name, email, or phone number",
         "CONTACT_CREATING": "Creating contact..."
       },
+      "INBOX_BLOCKED": {
+        "DISCONNECTED": "This number is disconnected. Reconnect WhatsApp in Settings → Inboxes to send from it.",
+        "CONNECTING": "This number is reconnecting. Wait for the connection to finish to send from it.",
+        "BANNED": "This number was banned by WhatsApp and cannot send messages.",
+        "NUMBER_DISCONNECTED": "This number is disconnected from the WhatsApp official API. Check it in Meta Business Manager.",
+        "DELETED": "This number was removed from the WhatsApp Business account.",
+        "PENDING": "This number's WhatsApp registration is not complete yet.",
+        "RESTRICTED": "This number reached the WhatsApp limit for new conversations. It still replies to people who wrote in the last 24h, but cannot start conversations now.",
+        "ACCOUNT_BLOCKED": "This number's WhatsApp Business account was rejected or restricted by Meta. Check it in Meta Business Manager."
+      },
       "INBOX_SELECTOR": {
         "LABEL": "Via:",
         "BUTTON": "Show inboxes"

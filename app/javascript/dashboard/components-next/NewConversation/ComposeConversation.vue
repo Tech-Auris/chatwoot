@@ -7,6 +7,7 @@ import { useUISettings } from 'dashboard/composables/useUISettings';
 import { useInboxSignatures } from 'dashboard/composables/useInboxSignatures';
 import { useAlert } from 'dashboard/composables';
 import { ExceptionWithMessage } from 'shared/helpers/CustomErrors';
+import { sendBlockReason } from 'dashboard/helper/whatsappHealth';
 import { debounce } from '@chatwoot/utils';
 import { emitter } from 'shared/helpers/mitt';
 import { BUS_EVENTS } from 'shared/constants/busEvents';
@@ -226,6 +227,14 @@ const createGroup = async ({ inboxId, subject, participants }) => {
 };
 
 const createConversation = async ({ payload, isFromWhatsApp }) => {
+  // The number may have dropped after it was picked.
+  const blockReason = sendBlockReason(
+    store.getters['inboxes/getInbox'](targetInbox.value?.id)
+  );
+  if (blockReason) {
+    useAlert(t(`COMPOSE_NEW_CONVERSATION.FORM.INBOX_BLOCKED.${blockReason}`));
+    return false;
+  }
   try {
     const data = await store.dispatch('contactConversations/create', {
       params: payload,
