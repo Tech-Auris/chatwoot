@@ -24,6 +24,7 @@
 
 class Channel::Whatsapp < ApplicationRecord # rubocop:disable Metrics/ClassLength
   include Channelable
+  include WhatsappSendBlock
   include Reauthorizable
 
   self.table_name = 'channel_whatsapp'

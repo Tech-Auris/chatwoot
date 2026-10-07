@@ -43,7 +43,10 @@ const BLOCKING_PHONE_STATUSES = {
   RESTRICTED: 'RESTRICTED',
 };
 
-export const sendBlockReason = inbox => {
+// `startsConversation`: the pencil and campaigns open a conversation, which a
+// RESTRICTED number (new-contact limit reached) cannot do; replying in an open
+// conversation it still can.
+export const sendBlockReason = (inbox, { startsConversation = true } = {}) => {
   if (inbox?.channel_type !== 'Channel::Whatsapp') return null;
 
   const connection = inbox.provider_connection || {};
@@ -57,5 +60,11 @@ export const sendBlockReason = inbox => {
   const health = connection.health;
   if (!health) return null;
   if (health.can_send_message === 'BLOCKED') return 'META_BLOCKED';
+  if (health.phone_status === 'RESTRICTED' && !startsConversation) return null;
   return BLOCKING_PHONE_STATUSES[health.phone_status] || null;
 };
+
+// Meta's own reasons and fixes when it blocks the number (Saúde da conta keeps
+// them with the number's health).
+export const metaBlockErrors = inbox =>
+  inbox?.provider_connection?.health?.health_errors || [];

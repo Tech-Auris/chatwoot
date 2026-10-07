@@ -39,6 +39,7 @@ class Macros::ExecutionService < ActionService
 
   def send_message(message)
     return if conversation_a_tweet?
+    return note_message_not_sent if number_block_message
 
     params = { content: message[0], private: false }
 
@@ -49,6 +50,7 @@ class Macros::ExecutionService < ActionService
 
   def send_attachment(blob_ids)
     return if conversation_a_tweet?
+    return note_message_not_sent if number_block_message
 
     return unless @macro.files.attached?
 
@@ -61,6 +63,20 @@ class Macros::ExecutionService < ActionService
     # Added reload here to ensure conversation us persistent with the latest updates
     mb = Messages::MessageBuilder.new(@user, @conversation.reload, params)
     mb.perform
+  end
+
+  # A number that cannot send right now would only fail the message: the
+  # macro runs its other actions and leaves a private note saying why.
+  def number_block_message
+    channel = @conversation.inbox.channel
+    return unless channel.respond_to?(:send_block_message)
+
+    @number_block_message ||= channel.send_block_message(starts_conversation: false)
+  end
+
+  def note_message_not_sent
+    content = I18n.t('macros.message_not_sent', name: @macro.name, reason: number_block_message)
+    Messages::MessageBuilder.new(@user, @conversation.reload, { content: content, private: true }).perform
   end
 
   def send_webhook_event(webhook_url)

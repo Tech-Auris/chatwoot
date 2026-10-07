@@ -61,6 +61,15 @@ describe('whatsappHealth', () => {
       ).toBe('META_BLOCKED');
     });
 
+    it('lets a restricted number reply in an open conversation', () => {
+      const restricted = cloud({ phone_status: 'RESTRICTED' });
+
+      expect(sendBlockReason(restricted)).toBe('RESTRICTED');
+      expect(
+        sendBlockReason(restricted, { startsConversation: false })
+      ).toBeNull();
+    });
+
     it('lets low quality, a flagged number and an unread number send', () => {
       expect(
         sendBlockReason(
