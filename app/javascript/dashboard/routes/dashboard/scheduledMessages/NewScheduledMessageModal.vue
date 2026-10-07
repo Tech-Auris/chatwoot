@@ -7,6 +7,11 @@ import { useMapGetter, useStore } from 'dashboard/composables/store';
 import VariableList from 'dashboard/components/widgets/conversation/VariableList.vue';
 import WhatsappTemplatesModal from 'dashboard/components/widgets/conversation/WhatsappTemplates/Modal.vue';
 import { INBOX_TYPES } from 'dashboard/helper/inbox';
+import { vOnClickOutside } from '@vueuse/components';
+import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu.vue';
+import Button from 'dashboard/components-next/button/Button.vue';
+import InboxStatusBadge from 'dashboard/components-next/Inbox/InboxStatusBadge.vue';
+import { sendBlockReason } from 'dashboard/helper/whatsappHealth';
 
 // A lean v1 of the composer that lets the operator schedule a message
 // from the Agendadas panel without having to open a conversation first.
@@ -195,11 +200,34 @@ const selectedContactLabel = computed(() => {
   return c.name ? `${c.name} (${detail})` : detail;
 });
 
-const selectedInboxLabel = computed(() => {
-  const inbox = selectedInbox.value;
-  if (!inbox) return '';
-  const phone = inbox.phone_number;
-  return phone ? `${inbox.name} (${phone})` : inbox.name;
+const inboxLabel = inbox =>
+  inbox.phone_number ? `${inbox.name} (${inbox.phone_number})` : inbox.name;
+
+const selectedInboxLabel = computed(() =>
+  selectedInbox.value ? inboxLabel(selectedInbox.value) : ''
+);
+
+// Same picker as the pencil's "Via:", with each number's status. Unlike the
+// pencil it does not stop the choice: the message goes out later, and the
+// number may be back by then — a number with a problem only gets a warning.
+const showInboxDropdown = ref(false);
+const findInbox = id => (myInboxes.value || []).find(i => i.id === id);
+const inboxMenuItems = computed(() =>
+  inboxOptionsForVia.value.map(inbox => ({
+    label: inboxLabel(inbox),
+    value: inbox.id,
+    action: 'inbox',
+  }))
+);
+const pickInbox = ({ value }) => {
+  selectedInboxId.value = value;
+  showInboxDropdown.value = false;
+};
+const selectedInboxWarning = computed(() => {
+  const reason = sendBlockReason(selectedInbox.value);
+  return reason
+    ? t(`COMPOSE_NEW_CONVERSATION.FORM.INBOX_BLOCKED.${reason}`)
+    : '';
 });
 
 const hasTemplate = computed(
@@ -330,8 +358,10 @@ const canSubmit = computed(() => {
   if (!scheduledAt.value) return false;
   if (isSaving.value) return false;
   // Template picked → basta ter `templateParams` (content vem renderizado
-  // do próprio parser). Sem template → o texto livre precisa existir.
+  // do próprio parser). Official API numbers only send templates, like the
+  // pencil; Baileys / Z-API need the free text.
   if (hasTemplate.value) return true;
+  if (isWhatsappCloudInbox.value) return false;
   return message.value.trim().length > 0;
 });
 
@@ -437,7 +467,7 @@ watch(selectedInboxId, () => {
           </button>
         </header>
 
-        <div class="flex-1 overflow-y-auto px-6 pb-5 flex flex-col gap-4">
+        <div class="flex-1 overflow-y-auto px-6 pt-2 pb-5 flex flex-col gap-4">
           <!-- Para: label inline + chip compacto quando o contato está
                escolhido, ou input de busca full-width com dropdown
                inferior quando ainda não. Mesmo shape que o lápis usa
@@ -520,6 +550,7 @@ watch(selectedInboxId, () => {
                 <span class="text-sm truncate text-n-slate-12">
                   {{ selectedInboxLabel }}
                 </span>
+                <InboxStatusBadge :inbox="selectedInbox" labeled />
                 <button
                   type="button"
                   class="!p-0 w-5 h-5 inline-flex items-center justify-center rounded text-n-slate-11 hover:text-n-slate-12 hover:bg-n-alpha-3"
@@ -528,37 +559,44 @@ watch(selectedInboxId, () => {
                   <span class="i-lucide-x size-3.5" />
                 </button>
               </div>
-              <!-- appearance-none + chevron custom absoluto — o CSS
-                   global do `<select>` (em `_base.scss`) usa uma
-                   `background-position` inválida que os navegadores
-                   descartam, e o triângulo cai no top-left. -->
               <div
                 v-else-if="inboxOptionsForVia.length"
-                class="relative flex-1 min-w-0"
+                v-on-click-outside="() => (showInboxDropdown = false)"
+                class="relative flex items-center h-7"
               >
-                <select
-                  v-model="selectedInboxId"
-                  class="appearance-none !bg-none w-full border border-n-slate-3 rounded-md pl-3 pr-8 h-7 text-sm text-n-slate-12 focus:border-n-brand focus:outline-none"
+                <button
+                  type="button"
+                  class="!p-0 text-sm text-n-slate-11 hover:text-n-slate-12"
+                  @click="showInboxDropdown = !showInboxDropdown"
                 >
-                  <option :value="null" disabled>
-                    {{ t('SCHEDULED.NEW.INBOX_PLACEHOLDER') }}
-                  </option>
-                  <option
-                    v-for="inbox in inboxOptionsForVia"
-                    :key="inbox.id"
-                    :value="inbox.id"
-                  >
-                    {{ inbox.name }}
-                  </option>
-                </select>
-                <span
-                  class="i-lucide-chevron-down size-4 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-n-slate-11"
-                />
+                  {{ t('SCHEDULED.NEW.INBOX_PLACEHOLDER') }}
+                </button>
+                <DropdownMenu
+                  v-if="showInboxDropdown"
+                  :menu-items="inboxMenuItems"
+                  class="ltr:left-0 rtl:right-0 z-[100] top-8 max-h-56 w-fit max-w-lg dark:!outline-n-slate-5"
+                  @action="pickInbox"
+                >
+                  <template #trailing-icon="{ item }">
+                    <InboxStatusBadge
+                      class="ltr:ml-auto rtl:mr-auto ltr:pl-2 rtl:pr-2"
+                      :inbox="findInbox(item.value)"
+                      labeled
+                    />
+                  </template>
+                </DropdownMenu>
               </div>
               <p v-else-if="selectedContact" class="text-xs text-n-amber-11">
                 {{ t('SCHEDULED.NEW.INBOX_UNREACHABLE') }}
               </p>
             </div>
+            <p
+              v-if="selectedInboxWarning"
+              class="mt-2 mb-0 rounded-md bg-n-amber-3 px-3 py-2 text-xs text-n-amber-11"
+            >
+              {{ selectedInboxWarning }}
+              {{ t('SCHEDULED.NEW.INBOX_WARNING') }}
+            </p>
             <!-- WhatsApp Cloud (oficial da Meta): fora da janela de 24h
                  só aceita envio como template. Botão compacto abaixo
                  do Via ("Selecione o modelo") abre o TemplatesPicker;
@@ -567,19 +605,17 @@ watch(selectedInboxId, () => {
               v-if="isWhatsappCloudInbox && !hasTemplate"
               class="mt-2 flex items-center gap-2"
             >
-              <button
+              <Button
                 type="button"
-                class="inline-flex items-center gap-1.5 rounded-md border border-n-slate-3 text-n-slate-12 px-3 h-7 text-xs font-medium hover:bg-n-alpha-2"
+                icon="i-ri-whatsapp-line"
+                :label="
+                  t('COMPOSE_NEW_CONVERSATION.FORM.WHATSAPP_OPTIONS.LABEL')
+                "
+                color="slate"
+                size="sm"
+                class="!text-xs font-medium"
                 @click="openTemplatePicker"
-              >
-                <span
-                  class="i-lucide-message-square size-3.5 text-n-slate-11"
-                />
-                {{ t('SCHEDULED.NEW.PICK_TEMPLATE') }}
-              </button>
-              <span class="text-xs text-n-amber-11">
-                {{ t('SCHEDULED.NEW.WHATSAPP_CLOUD_TEMPLATE_NOTICE') }}
-              </span>
+              />
             </div>
             <div
               v-else-if="hasTemplate"
@@ -607,7 +643,7 @@ watch(selectedInboxId, () => {
                separado. Quando um template do WhatsApp Cloud já foi
                escolhido, o campo vira preview readonly (o texto vem
                renderizado do parser com as variáveis preenchidas). -->
-          <div class="relative">
+          <div v-if="!isWhatsappCloudInbox || hasTemplate" class="relative">
             <div class="flex items-baseline justify-between gap-2">
               <label class="text-sm font-medium text-n-slate-12">
                 {{

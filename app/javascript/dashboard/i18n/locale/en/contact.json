@@ -136,6 +136,10 @@
         "PLACEHOLDER": "Enter the city name",
         "LABEL": "City Name"
       },
+      "LANGUAGE": {
+        "PLACEHOLDER": "Select the language",
+        "LABEL": "Language"
+      },
       "SOCIAL_PROFILES": {
         "FACEBOOK": {
           "PLACEHOLDER": "Enter the Facebook username",
