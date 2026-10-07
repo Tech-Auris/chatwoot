@@ -5,6 +5,7 @@ import countries from 'shared/constants/countries';
 import { useStoreGetters, useMapGetter } from 'dashboard/composables/store';
 
 import {
+  funnelStageDot,
   getActionOptions,
   getConditionOptions,
 } from 'dashboard/helper/automationHelper';
@@ -111,6 +112,7 @@ export default function useAutomationValues() {
     (funnelStages.value || []).map(stage => ({
       id: stage.id,
       name: stage.name,
+      icon: funnelStageDot(stage.color),
       requires_loss_reason: stage.requires_loss_reason,
     }))
   );
