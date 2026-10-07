@@ -39,7 +39,8 @@
       "INTERNAL_CHAT_MENTION": "Mentioned",
       "INTERNAL_CHAT_NEW_MESSAGE": "Direct message",
       "SNOOZED_UNTIL": "Snoozed for {time}",
-      "SNOOZED_ENDS": "Snooze ended"
+      "SNOOZED_ENDS": "Snooze ended",
+      "CAMPAIGN_NOT_SENT": "Campaign not sent"
     },
     "NO_CONTENT": "No content available",
     "MENU_ITEM": {

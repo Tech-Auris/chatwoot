@@ -147,7 +147,8 @@
       "CARD": {
         "STATUS": {
           "COMPLETED": "Concluído",
-          "SCHEDULED": "Agendada"
+          "SCHEDULED": "Agendada",
+          "NOT_SENT": "Não enviada"
         },
         "CAMPAIGN_DETAILS": {
           "SENT_FROM": "Enviado de",
@@ -249,6 +250,14 @@
           "API": {
             "SUCCESS_MESSAGE": "Campanha do WhatsApp criada com sucesso",
             "ERROR_MESSAGE": "Houve um erro. Por favor, tente novamente."
+          },
+          "NUMBER_STATUS": {
+            "BUSINESS_MANAGER": "Abrir o Meta Business Manager",
+            "RESTRICTED_TIP": "Aguarde o limite liberar ou use outro número.",
+            "LIMITED": "O Meta está limitando os envios deste número. A campanha pode não chegar a todos.",
+            "QUALITY_LOW": "A qualidade deste número está Baixa. Uma campanha agora pode levar a restrições ou ao banimento. Prefira os pacientes que conversaram recentemente, divida o público em lotes e revise o modelo.",
+            "QUALITY_MEDIUM": "A qualidade deste número está Média. Prefira os pacientes que conversaram recentemente e divida o público em lotes.",
+            "OVER_DAILY_LIMIT": "O público ({count} contatos) passa do limite diário deste número ({limit} novas conversas em 24h). Divida a campanha em dias: o que passar do limite é recusado pelo Meta."
           }
         }
       },

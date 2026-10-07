@@ -138,6 +138,7 @@ const goBack = () =>
         :audience-file-name="campaign.audience_file_name"
         :cadence-seconds="campaign.cadence_seconds"
         :conversation-label="campaign.conversation_label"
+        :failure-reason="campaign.failure_reason"
         hide-actions
       />
 

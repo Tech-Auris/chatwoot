@@ -298,6 +298,7 @@ pt_BR:
       sla_missed_resolution: 'Meta de SLA de Resolução não alcançada para a conversa (#%{display_id})'
       internal_chat_mention: 'Você foi mencionado em %{name}'
       internal_chat_new_message: 'Nova mensagem de %{name}'
+      campaign_not_sent: 'Campanha "%{title}" não foi enviada'
     attachment: 'Anexo'
     no_content: 'Sem conteúdo'
   conversations:

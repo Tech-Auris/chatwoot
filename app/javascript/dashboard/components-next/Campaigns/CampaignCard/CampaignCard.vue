@@ -63,6 +63,11 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  // Set when the campaign did not start because its number could not send.
+  failureReason: {
+    type: String,
+    default: '',
+  },
   // The report page reuses this card to show the campaign it is reporting on,
   // where editing, deleting or opening the report again make no sense.
   hideActions: {
@@ -85,7 +90,8 @@ const isActive = computed(() =>
 
 const statusTextColor = computed(() => ({
   'text-n-teal-11': isActive.value,
-  'text-n-slate-12': !isActive.value,
+  'text-n-ruby-11': props.failureReason,
+  'text-n-slate-12': !isActive.value && !props.failureReason,
 }));
 
 const campaignStatus = computed(() => {
@@ -94,6 +100,8 @@ const campaignStatus = computed(() => {
       ? t('CAMPAIGN.LIVE_CHAT.CARD.STATUS.ENABLED')
       : t('CAMPAIGN.LIVE_CHAT.CARD.STATUS.DISABLED');
   }
+
+  if (props.failureReason) return t('CAMPAIGN.WHATSAPP.CARD.STATUS.NOT_SENT');
 
   return props.status === STATUS_COMPLETED
     ? t('CAMPAIGN.SMS.CARD.STATUS.COMPLETED')
@@ -171,6 +179,9 @@ const hasCampaignDetails = computed(
         v-dompurify-html="formatMessage(message, false, false, false)"
         class="text-sm text-n-slate-11 line-clamp-1 [&>p]:mb-0 h-6"
       />
+      <p v-if="failureReason" class="mb-0 text-sm text-n-ruby-11">
+        {{ failureReason }}
+      </p>
       <div class="flex items-center w-full h-6 gap-2 overflow-hidden">
         <LiveChatCampaignDetails
           v-if="isLiveChatType"

@@ -200,11 +200,28 @@ const openInternalChatChannel = async notificationItem => {
   }
 };
 
+// A campaign that did not start has no conversation: its report shows why.
+const openCampaignReport = async notificationItem => {
+  const { primaryActor } = notificationItem;
+  await markAndUpdateCount(notificationItem);
+  router.push({
+    name: 'campaigns_whatsapp_report',
+    params: {
+      accountId: route.params.accountId,
+      campaignId: primaryActor.displayId,
+    },
+  });
+};
+
 const openConversation = async notificationItem => {
   const { notificationType } = notificationItem;
 
   if (notificationType?.startsWith('internal_chat')) {
     openInternalChatChannel(notificationItem);
+    return;
+  }
+  if (notificationType === 'campaign_not_sent') {
+    openCampaignReport(notificationItem);
     return;
   }
 

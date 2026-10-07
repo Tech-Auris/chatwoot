@@ -323,6 +323,7 @@ en:
       sla_missed_resolution: 'SLA target resolution missed for conversation (#%{display_id})'
       internal_chat_mention: 'You have been mentioned in %{name}'
       internal_chat_new_message: 'New message from %{name}'
+      campaign_not_sent: 'Campaign "%{title}" was not sent'
     attachment: 'Attachment'
     no_content: 'No content'
   conversations:

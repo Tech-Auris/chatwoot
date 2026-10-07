@@ -12,7 +12,7 @@ class Api::V1::Accounts::CampaignsController < Api::V1::Accounts::BaseController
   def show; end
 
   def create
-    @campaign = Current.account.campaigns.create!(campaign_params)
+    @campaign = Current.account.campaigns.create!(campaign_params.merge(creator: Current.user))
   end
 
   def update

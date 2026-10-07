@@ -45,7 +45,8 @@ class Notification < ApplicationRecord
     sla_missed_next_response: 7,
     sla_missed_resolution: 8,
     internal_chat_mention: 9,
-    internal_chat_new_message: 10
+    internal_chat_new_message: 10,
+    campaign_not_sent: 11
   }.freeze
 
   # Internal chat notifications don't have email mailers/templates yet, so email
@@ -92,7 +93,7 @@ class Notification < ApplicationRecord
     }
   end
 
-  # rubocop:disable Metrics/MethodLength
+  # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
   def push_message_title
     notification_title_map = {
       'conversation_creation' => 'notifications.notification_title.conversation_creation',
@@ -104,7 +105,8 @@ class Notification < ApplicationRecord
       'sla_missed_next_response' => 'notifications.notification_title.sla_missed_next_response',
       'sla_missed_resolution' => 'notifications.notification_title.sla_missed_resolution',
       'internal_chat_mention' => 'notifications.notification_title.internal_chat_mention',
-      'internal_chat_new_message' => 'notifications.notification_title.internal_chat_new_message'
+      'internal_chat_new_message' => 'notifications.notification_title.internal_chat_new_message',
+      'campaign_not_sent' => 'notifications.notification_title.campaign_not_sent'
     }
 
     i18n_key = notification_title_map[notification_type]
@@ -117,11 +119,13 @@ class Notification < ApplicationRecord
       I18n.t(i18n_key, display_id: conversation.display_id)
     elsif INTERNAL_CHAT_NOTIFICATION_TYPES.include?(notification_type)
       I18n.t(i18n_key, name: internal_chat_actor_name)
+    elsif notification_type == 'campaign_not_sent'
+      I18n.t(i18n_key, title: primary_actor.title)
     else
       I18n.t(i18n_key, display_id: primary_actor.display_id)
     end
   end
-  # rubocop:enable Metrics/MethodLength
+  # rubocop:enable Metrics/MethodLength, Metrics/AbcSize
 
   def push_message_body
     case notification_type
@@ -132,6 +136,8 @@ class Notification < ApplicationRecord
       message_body(secondary_actor)
     when 'conversation_assignment', 'sla_missed_next_response', 'sla_missed_resolution'
       message_body((conversation.messages.incoming.last || conversation.messages.outgoing.last))
+    when 'campaign_not_sent'
+      "#{primary_actor.title}: #{primary_actor.failure_reason}"
     else
       ''
     end
@@ -193,7 +199,7 @@ class Notification < ApplicationRecord
 
   # Internal chat types have no email mailer/templates yet (deferred), so skip email delivery.
   def email_delivery_supported?
-    INTERNAL_CHAT_NOTIFICATION_TYPES.exclude?(notification_type)
+    (INTERNAL_CHAT_NOTIFICATION_TYPES + %w[campaign_not_sent]).exclude?(notification_type)
   end
 
   def user_subscribed_to_notification?(delivery_type)
