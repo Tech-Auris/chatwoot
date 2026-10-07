@@ -10,6 +10,7 @@ import CampaignLayout from 'dashboard/components-next/Campaigns/CampaignLayout.v
 import CampaignList from 'dashboard/components-next/Campaigns/Pages/CampaignPage/CampaignList.vue';
 import WhatsAppCampaignDialog from 'dashboard/components-next/Campaigns/Pages/CampaignPage/WhatsAppCampaign/WhatsAppCampaignDialog.vue';
 import ConfirmDeleteCampaignDialog from 'dashboard/components-next/Campaigns/Pages/CampaignPage/ConfirmDeleteCampaignDialog.vue';
+import PaginationFooter from 'dashboard/components-next/pagination/PaginationFooter.vue';
 import WhatsAppCampaignEmptyState from 'dashboard/components-next/Campaigns/EmptyState/WhatsAppCampaignEmptyState.vue';
 
 const { t } = useI18n();
@@ -27,6 +28,19 @@ const confirmDeleteCampaignDialogRef = ref(null);
 
 const WhatsAppCampaigns = computed(
   () => getters['campaigns/getWhatsAppCampaigns'].value
+);
+
+// Most recent first, a page at a time (the list is already loaded whole).
+const PER_PAGE = 10;
+const currentPage = ref(1);
+const sortedCampaigns = computed(() =>
+  [...(WhatsAppCampaigns.value || [])].sort((a, b) => b.id - a.id)
+);
+const pagedCampaigns = computed(() =>
+  sortedCampaigns.value.slice(
+    (currentPage.value - 1) * PER_PAGE,
+    currentPage.value * PER_PAGE
+  )
 );
 
 const hasNoWhatsAppCampaigns = computed(
@@ -65,12 +79,21 @@ const handleDelete = campaign => {
     >
       <Spinner />
     </div>
-    <CampaignList
-      v-else-if="!hasNoWhatsAppCampaigns"
-      :campaigns="WhatsAppCampaigns"
-      @report="handleReport"
-      @delete="handleDelete"
-    />
+    <div v-else-if="!hasNoWhatsAppCampaigns" class="flex flex-col gap-4">
+      <CampaignList
+        :campaigns="pagedCampaigns"
+        @report="handleReport"
+        @delete="handleDelete"
+      />
+      <PaginationFooter
+        v-if="sortedCampaigns.length > PER_PAGE"
+        :current-page="currentPage"
+        :total-items="sortedCampaigns.length"
+        :items-per-page="PER_PAGE"
+        class="!px-0"
+        @update:current-page="currentPage = $event"
+      />
+    </div>
     <WhatsAppCampaignEmptyState
       v-else
       :title="t('CAMPAIGN.WHATSAPP.EMPTY_STATE.TITLE')"

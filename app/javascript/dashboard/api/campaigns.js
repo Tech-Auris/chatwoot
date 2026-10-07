@@ -21,8 +21,10 @@ class CampaignsAPI extends ApiClient {
   }
 
   // Delivery report of a campaign: totals plus one row per message.
-  report(campaignId, page = 1) {
-    return axios.get(`${this.url}/${campaignId}/report`, { params: { page } });
+  report(campaignId, { page = 1, q = '', status = '' } = {}) {
+    return axios.get(`${this.url}/${campaignId}/report`, {
+      params: { page, q: q || undefined, status: status || undefined },
+    });
   }
 
   // Lists who a campaign would reach, for either audience source, before the
