@@ -21,7 +21,6 @@
     },
     "NEW": {
       "BUTTON": "Agendar mensagem",
-      "TITLE": "Agendar mensagem",
       "CONTACT_LABEL": "Para",
       "CONTACT_PLACEHOLDER": "Digite pelo menos 2 caracteres para pesquisar por nome, e-mail ou número",
       "CLEAR_CONTACT": "Limpar contato",
@@ -30,22 +29,7 @@
       "INBOX_PLACEHOLDER": "Selecione uma caixa de entrada",
       "INBOX_WARNING": "A mensagem só sai se o número estiver funcionando no horário agendado.",
       "INBOX_UNREACHABLE": "Este contato não está em nenhuma caixa de entrada onde você tem acesso.",
-      "PICK_TEMPLATE_CONFIRM": "Usar este template",
-      "TEMPLATE_SELECTED": "Template: {name}",
-      "CLEAR_TEMPLATE": "Trocar template",
-      "TEMPLATE_PREVIEW_LABEL": "Prévia do template",
-      "MESSAGE_LABEL": "Mensagem",
-      "MESSAGE_PLACEHOLDER": "Escreva a mensagem que será enviada no horário programado…",
-      "VARIABLE_HINT_PREFIX": "Digite",
-      "VARIABLE_HINT_SUFFIX": "para inserir variáveis",
-      "SCHEDULE_LABEL": "Programar envio",
-      "HOLD_ON_REPLY": "Reter se o cliente responder primeiro",
-      "HOLD_ON_REPLY_HINT": "Se o cliente enviar uma mensagem antes desta ser enviada, ela ficará retida para revisão em vez de ser enviada automaticamente.",
-      "CANCEL": "Cancelar",
-      "SUBMIT": "Agendar",
-      "SAVING": "Agendando…",
-      "DONE": "Mensagem agendada com sucesso.",
-      "FAILED": "Não foi possível agendar a mensagem. Verifique os campos e tente novamente."
+      "DONE": "Mensagem agendada com sucesso."
     }
   }
 }

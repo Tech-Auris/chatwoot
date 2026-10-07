@@ -589,6 +589,8 @@
     },
     "ERRORS": {
       "CONTENT_REQUIRED": "Adicione uma mensagem, template ou anexo antes de salvar.",
+      "TEMPLATE_REQUIRED": "Selecione um modelo: números oficiais do WhatsApp só enviam modelos aprovados.",
+      "RECIPIENT_REQUIRED": "Escolha o contato e a caixa de entrada para enviar.",
       "CONTENT_TOO_LONG": "A mensagem é muito longa. Máximo de {maxLength} caracteres permitidos.",
       "DATETIME_REQUIRED": "Selecione uma data e hora para agendar a mensagem.",
       "SCHEDULE_IN_PAST": "O horário agendado deve ser no futuro.",

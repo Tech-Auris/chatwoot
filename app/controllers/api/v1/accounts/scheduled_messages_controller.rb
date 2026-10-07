@@ -29,30 +29,18 @@ class Api::V1::Accounts::ScheduledMessagesController < Api::V1::Accounts::BaseCo
     }
   end
 
-  # Creates a scheduled message straight from the account-wide panel —
-  # no conversation id required. Given a `contact_id + inbox_id` we
-  # find-or-create the ContactInbox and reuse an open conversation for
-  # that pair, else create one via `ConversationBuilder`. The result
-  # feeds into the per-conversation ScheduledMessage create path so the
-  # rest of the stack behaves the same as if the message had been
-  # scheduled from the conversation drawer.
-  def create
+  # The panel schedules with the same form as the conversation drawer, which
+  # saves through the per-conversation endpoints. Given a `contact_id +
+  # inbox_id`, this finds the open conversation for that pair, or creates
+  # one, and answers its display id for the form to save against.
+  def conversation
     contact = Current.account.contacts.find_by(id: params[:contact_id])
     return render(json: { error: 'contact_not_found' }, status: :not_found) if contact.blank?
 
     inbox = accessible_inbox_by_id(params[:inbox_id])
     return render(json: { error: 'inbox_not_accessible' }, status: :forbidden) if inbox.blank?
 
-    conversation = resolve_conversation(contact: contact, inbox: inbox)
-    scheduled_message = build_scheduled_message(conversation, inbox)
-    return render_scheduled_message_errors(scheduled_message) unless scheduled_message.persisted?
-
-    Rails.configuration.dispatcher.dispatch(
-      Events::Types::SCHEDULED_MESSAGE_CREATED,
-      Time.zone.now,
-      scheduled_message: scheduled_message
-    )
-    render json: { id: scheduled_message.id, conversation_id: conversation.display_id }
+    render json: { conversation_id: resolve_conversation(contact: contact, inbox: inbox).display_id }
   end
 
   # Cancels a pending scheduled message from the panel. Uses the same
@@ -167,33 +155,5 @@ class Api::V1::Accounts::ScheduledMessagesController < Api::V1::Accounts::BaseCo
       ),
       contact_inbox: contact_inbox
     ).perform
-  end
-
-  # A WhatsApp Cloud sale scheduled outside the 24h window can only
-  # dispatch as an approved template; the model's `content_optional?`
-  # already accepts a blank `content` when `template_params` is present,
-  # and the send job passes `template_params` down to MessageBuilder,
-  # which routes to the template path. All this needs on the panel side
-  # is to accept the nested hash from the form.
-  def build_scheduled_message(conversation, inbox)
-    conversation.scheduled_messages.create(
-      account: Current.account,
-      inbox: inbox,
-      author: Current.user,
-      content: params[:content],
-      template_params: scheduled_message_template_params,
-      scheduled_at: params[:scheduled_at],
-      hold_on_reply: ActiveModel::Type::Boolean.new.cast(params[:hold_on_reply]) || false,
-      status: :pending
-    )
-  end
-
-  def scheduled_message_template_params
-    permitted = params.permit(template_params: {}).to_h[:template_params]
-    permitted.presence
-  end
-
-  def render_scheduled_message_errors(scheduled_message)
-    render json: { errors: scheduled_message.errors.full_messages }, status: :unprocessable_entity
   end
 end

@@ -16,8 +16,16 @@ import { INBOX_TYPES } from 'dashboard/helper/inbox';
  * @param {Object} options.inbox - Current inbox object (has channel_type, medium, etc.)
  * @param {Function} options.attachFile - Callback to handle file attachment
  * @param {boolean} options.isPrivateNote - Whether the upload is for a private note
+ * @param {boolean} options.directUpload - Direct uploads go through the open
+ *   conversation; pass false where there is none yet (the file then travels
+ *   with the form, as when direct uploads are off)
  */
-export const useFileUpload = ({ inbox, attachFile, isPrivateNote = false }) => {
+export const useFileUpload = ({
+  inbox,
+  attachFile,
+  isPrivateNote = false,
+  directUpload = true,
+}) => {
   const { t } = useI18n();
 
   const accountId = useMapGetter('getCurrentAccountId');
@@ -110,7 +118,7 @@ export const useFileUpload = ({ inbox, attachFile, isPrivateNote = false }) => {
   };
 
   const onFileUpload = file => {
-    if (globalConfig.value.directUploadsEnabled) {
+    if (directUpload && globalConfig.value.directUploadsEnabled) {
       handleDirectFileUpload(file);
     } else {
       handleIndirectFileUpload(file);
