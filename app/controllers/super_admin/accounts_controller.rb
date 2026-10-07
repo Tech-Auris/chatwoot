@@ -1,4 +1,15 @@
 class SuperAdmin::AccountsController < SuperAdmin::ApplicationController
+  # A new account starts with the funnel on and reports in Brasília time —
+  # how every Auris clinic works. Only the form's starting values: unticking
+  # the funnel on the form still creates the account without it.
+  NEW_ACCOUNT_DEFAULTS = { funnel_enabled: true, reporting_timezone: 'America/Sao_Paulo' }.freeze
+
+  def new
+    resource = new_resource(NEW_ACCOUNT_DEFAULTS)
+    authorize_resource(resource)
+    render locals: { page: Administrate::Page::Form.new(dashboard, resource) }
+  end
+
   # Overwrite any of the RESTful controller actions to implement custom behavior
   # For example, you may want to send an email after a foo is updated.
   #

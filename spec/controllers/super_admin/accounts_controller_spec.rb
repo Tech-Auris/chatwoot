@@ -32,6 +32,16 @@ RSpec.describe 'Super Admin accounts API', type: :request do
         expect(response.body).to include('Disponível depois de criar a conta')
       end
 
+      it 'starts a new account with the funnel on and reports in Brasília time' do
+        sign_in(super_admin, scope: :super_admin)
+
+        get '/super_admin/accounts/new'
+
+        page = Nokogiri::HTML(response.body)
+        expect(page.at_css('input[type=checkbox][name="auris_settings[funnel_enabled]"]')['checked']).to eq('checked')
+        expect(page.at_css('select[name="account[reporting_timezone]"] option[selected]')['value']).to eq('America/Sao_Paulo')
+      end
+
       it 'shows the secretary section on the edit page' do
         sign_in(super_admin, scope: :super_admin)
 
