@@ -839,8 +839,8 @@ export default {
     class="flex flex-col justify-between flex-grow h-full min-w-0 m-0"
   >
     <div ref="topBannerRef">
+      <WhatsappConnectionBanner :inbox="currentInbox" class="mt-2 mx-2" />
       <template v-if="isAWhatsAppBaileysChannel || isAWhatsAppZapiChannel">
-        <WhatsappConnectionBanner :inbox="currentInbox" class="mt-2 mx-2" />
         <Banner
           v-if="showReachoutRestriction"
           color-scheme="alert"

@@ -86,25 +86,12 @@ const isSubmitting = computed(
 );
 const currentInbox = computed(() => inboxGetter.value(inboxId.value));
 
-// A disconnected Baileys / Z-API number is fixed right in the banner, so the
-// schedule waits for it; a draft can still be saved.
-const isUnofficialDisconnected = computed(
-  () =>
-    ['baileys', 'zapi'].includes(currentInbox.value?.provider) &&
-    currentInbox.value.provider_connection?.connection !== 'open'
+// A number that cannot send shows why in the banner (and how to connect it
+// when that is the fix), and the schedule waits for it; a draft can still be
+// saved. The conversation already exists, so a restricted number still can.
+const isNumberBlocked = computed(() =>
+  Boolean(sendBlockReason(currentInbox.value, { startsConversation: false }))
 );
-
-// The conversation already exists, so a restricted number can still reply.
-// A disconnected Baileys / Z-API number gets the connection banner instead.
-const inboxWarning = computed(() => {
-  if (['baileys', 'zapi'].includes(currentInbox.value?.provider)) return '';
-  const reason = sendBlockReason(currentInbox.value, {
-    startsConversation: false,
-  });
-  return reason
-    ? t(`COMPOSE_NEW_CONVERSATION.FORM.INBOX_BLOCKED.${reason}`)
-    : '';
-});
 
 const whatsAppTemplates = computed(() => {
   return store.getters['inboxes/getWhatsAppTemplates'](inboxId.value) || [];
@@ -667,16 +654,7 @@ watch(
         v-model:inbox-id="pickedInboxId"
         :has-error="recipientError"
       />
-      <template v-else>
-        <WhatsappConnectionBanner :inbox="currentInbox" />
-        <p
-          v-if="inboxWarning"
-          class="mb-0 rounded-md bg-n-amber-3 px-3 py-2 text-xs text-n-amber-11"
-        >
-          {{ inboxWarning }}
-          {{ t('SCHEDULED.NEW.INBOX_WARNING') }}
-        </p>
-      </template>
+      <WhatsappConnectionBanner v-else :inbox="currentInbox" />
 
       <div class="flex flex-col gap-2">
         <span class="text-sm font-medium text-n-slate-12">
@@ -844,7 +822,7 @@ watch(
             blue
             :label="t('SCHEDULED_MESSAGES.MODAL.SCHEDULE')"
             :is-loading="isSubmitting"
-            :disabled="isSubmitting || isUnofficialDisconnected"
+            :disabled="isSubmitting || isNumberBlocked"
             class="rounded-r-none"
             @click="submit('pending')"
           />

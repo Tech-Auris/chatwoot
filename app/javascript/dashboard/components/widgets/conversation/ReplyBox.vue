@@ -18,7 +18,6 @@ import ArticleSearchPopover from 'dashboard/routes/dashboard/helpcenter/componen
 import CopilotEditorSection from './CopilotEditorSection.vue';
 import MessageSignatureMissingAlert from './MessageSignatureMissingAlert.vue';
 import ReplyBoxBanner from './ReplyBoxBanner.vue';
-import NumberBlockedBanner from 'dashboard/components-next/Inbox/NumberBlockedBanner.vue';
 import { sendBlockReason } from 'dashboard/helper/whatsappHealth';
 import QuotedEmailPreview from './QuotedEmailPreview.vue';
 import { REPLY_EDITOR_MODES } from 'dashboard/components/widgets/WootWriter/constants';
@@ -70,7 +69,6 @@ export default {
     AttachmentPreview,
     AudioRecorder,
     ReplyBoxBanner,
-    NumberBlockedBanner,
     EmojiIconPicker,
     MessageSignatureMissingAlert,
     ReplyBottomPanel,
@@ -1391,12 +1389,6 @@ export default {
 
 <template>
   <ReplyBoxBanner :message="message" :is-on-private-note="isOnPrivateNote" />
-  <!-- Baileys / Z-API already get the "not connected" banner above the
-       messages; repeating it here would say the same thing twice. -->
-  <NumberBlockedBanner
-    v-if="!isPrivate && !isAWhatsAppBaileysChannel && !isAWhatsAppZapiChannel"
-    :inbox="inbox"
-  />
   <div ref="replyEditor" class="reply-box" :class="replyBoxClass">
     <ReplyTopPanel
       :mode="replyType"
