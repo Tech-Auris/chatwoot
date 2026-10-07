@@ -660,7 +660,7 @@
         "DELETED": "This number was removed from the WhatsApp Business account.",
         "PENDING": "This number's WhatsApp registration is not complete yet.",
         "RESTRICTED": "This number reached the WhatsApp limit for new conversations. It still replies to people who wrote in the last 24h, but cannot start conversations now.",
-        "ACCOUNT_BLOCKED": "This number's WhatsApp Business account was rejected or restricted by Meta. Check it in Meta Business Manager."
+        "META_BLOCKED": "Meta is not letting this number send messages. See why in Settings → Inboxes → Account health."
       },
       "INBOX_SELECTOR": {
         "LABEL": "Via:",

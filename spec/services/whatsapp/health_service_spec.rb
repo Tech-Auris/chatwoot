@@ -25,7 +25,16 @@ RSpec.describe Whatsapp::HealthService do
       messaging_limit_tier: 'TIER_UNKNOWN',
       account_mode: 'LIVE',
       code_verification_status: 'VERIFIED',
-      webhook_configuration: {}
+      webhook_configuration: {},
+      health_status: {
+        can_send_message: 'BLOCKED',
+        entities: [
+          { entity_type: 'PHONE_NUMBER', id: 'phone-123', can_send_message: 'AVAILABLE' },
+          { entity_type: 'WABA', id: '123456789', can_send_message: 'BLOCKED',
+            errors: [{ error_code: 141_010, error_description: 'The Business has not passed business verification.',
+                       possible_solution: 'Visit business settings and start or resolve the business verification request.' }] }
+        ]
+      }
     }.to_json
   end
 
@@ -79,8 +88,23 @@ RSpec.describe Whatsapp::HealthService do
       service.fetch_health_status
 
       expect(channel.reload.provider_connection['health'])
-        .to eq('quality_rating' => 'GREEN', 'phone_status' => 'BANNED', 'account_review_status' => 'APPROVED')
+        .to include('quality_rating' => 'GREEN', 'phone_status' => 'BANNED', 'account_review_status' => 'APPROVED',
+                    'can_send_message' => 'BLOCKED')
       expect(channel.provider_connection_data[:health]).to include('quality_rating' => 'GREEN')
+    end
+
+    # Meta's `health_status` is what says whether the number can send; a
+    # rejected account review alone does not stop it.
+    it 'returns whether Meta lets the number send, with the reason and the fix Meta gives' do
+      stub_request(:get, %r{graph.facebook.com/.+/#{waba_id}})
+        .with(query: hash_including(fields: 'account_review_status,business_verification_status'))
+        .to_return(status: 200, body: { account_review_status: 'REJECTED' }.to_json, headers: { 'Content-Type' => 'application/json' })
+
+      result = service.fetch_health_status
+
+      expect(result[:can_send_message]).to eq('BLOCKED')
+      expect(result[:health_errors].first).to include('error_code' => 141_010,
+                                                      'error_description' => 'The Business has not passed business verification.')
     end
 
     it 'still returns the phone health data when the WABA call fails' do

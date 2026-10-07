@@ -4,7 +4,11 @@ import { useI18n } from 'vue-i18n';
 
 import ButtonV4 from 'next/button/Button.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
-import { qualityKey, qualityStyle } from 'dashboard/helper/whatsappHealth';
+import {
+  qualityKey,
+  qualityStyle,
+  SEND_STATUS_DOTS,
+} from 'dashboard/helper/whatsappHealth';
 
 const props = defineProps({
   healthData: {
@@ -20,16 +24,6 @@ const props = defineProps({
 const emit = defineEmits(['registerWebhook']);
 
 const { t, te } = useI18n();
-
-// Same scale as Meta's WhatsApp Manager: a dot plus Alta / Média / Baixa.
-// A banned number gets a solid badge so it never reads as a plain "Baixa".
-const QUALITY_STYLES = {
-  GREEN: { badge: 'bg-n-alpha-2 text-n-slate-12', dot: 'bg-n-teal-9' },
-  YELLOW: { badge: 'bg-n-alpha-2 text-n-slate-12', dot: 'bg-n-amber-9' },
-  RED: { badge: 'bg-n-alpha-2 text-n-slate-12', dot: 'bg-n-ruby-9' },
-  BANNED: { badge: 'bg-n-ruby-9 text-white', dot: 'bg-white' },
-  UNKNOWN: { badge: 'bg-n-alpha-2 text-n-slate-11', dot: 'bg-n-slate-8' },
-};
 
 const STATUS_COLORS = {
   APPROVED: 'text-n-teal-11',
@@ -77,15 +71,26 @@ const healthItems = computed(() => {
     display_phone_number: displayPhoneNumber,
     verified_name: verifiedName,
     name_status: nameStatus,
-    quality_rating: qualityRating,
-    phone_status: phoneStatus,
     messaging_limit_tier: messagingLimitTier,
     account_mode: accountMode,
     account_review_status: accountReviewStatus,
     business_verification_status: businessVerificationStatus,
+    can_send_message: canSendMessage,
+    health_errors: healthErrors,
   } = props.healthData;
 
   return [
+    // Meta's answer to "can this number send now?", with Meta's own reason
+    // and fix when it cannot.
+    {
+      key: 'sendStatus',
+      label: t('INBOX_MGMT.ACCOUNT_HEALTH.FIELDS.SEND_STATUS.LABEL'),
+      value: canSendMessage,
+      errors: healthErrors || [],
+      tooltip: t('INBOX_MGMT.ACCOUNT_HEALTH.FIELDS.SEND_STATUS.TOOLTIP'),
+      show: !!canSendMessage,
+      type: 'send',
+    },
     {
       key: 'displayPhoneNumber',
       label: t('INBOX_MGMT.ACCOUNT_HEALTH.FIELDS.DISPLAY_PHONE_NUMBER.LABEL'),
@@ -115,7 +120,7 @@ const healthItems = computed(() => {
     {
       key: 'qualityRating',
       label: t('INBOX_MGMT.ACCOUNT_HEALTH.FIELDS.QUALITY_RATING.LABEL'),
-      value: phoneStatus === 'BANNED' ? 'BANNED' : qualityRating || 'UNKNOWN',
+      value: qualityKey(props.healthData),
       tooltip: t('INBOX_MGMT.ACCOUNT_HEALTH.FIELDS.QUALITY_RATING.TOOLTIP'),
       show: true,
       type: 'quality',
@@ -189,8 +194,7 @@ const translateValue = (group, value) => {
   return te(key) ? t(key) : value;
 };
 
-const getQualityStyle = rating =>
-  QUALITY_STYLES[rating] || QUALITY_STYLES.UNKNOWN;
+const getQualityStyle = qualityStyle;
 
 const formatQualityDisplay = rating =>
   translateValue('QUALITY_RATINGS', rating);
@@ -322,6 +326,35 @@ const handleRegisterWebhook = () => {
             >
               {{ formatAccountStatusDisplay(item.value) }}
             </span>
+            <div
+              v-else-if="item.type === 'send'"
+              class="flex flex-col gap-2 min-w-0"
+            >
+              <span
+                class="inline-flex items-center gap-1.5 self-start px-2 py-0.5 min-h-6 text-label-small rounded-md bg-n-alpha-2 text-n-slate-12"
+              >
+                <span
+                  class="size-2 rounded-full"
+                  :class="SEND_STATUS_DOTS[item.value] || 'bg-n-slate-8'"
+                />
+                {{ translateValue('SEND_STATUSES', item.value) }}
+              </span>
+              <div
+                v-for="error in item.errors"
+                :key="error.error_code"
+                class="flex flex-col gap-1 text-body-main text-n-slate-11"
+              >
+                <span class="text-n-slate-12">{{
+                  error.error_description
+                }}</span>
+                <span v-if="error.possible_solution">
+                  {{
+                    t('INBOX_MGMT.ACCOUNT_HEALTH.FIELDS.SEND_STATUS.SOLUTION')
+                  }}:
+                  {{ error.possible_solution }}
+                </span>
+              </div>
+            </div>
             <span
               v-else-if="item.type === 'verification'"
               class="inline-flex items-center px-2 py-0.5 min-h-6 text-label-small rounded-md bg-n-alpha-2"

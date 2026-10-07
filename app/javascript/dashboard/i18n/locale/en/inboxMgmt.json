@@ -791,6 +791,11 @@
           "LABEL": "Account mode",
           "TOOLTIP": "Current operating mode of your WhatsApp account"
         },
+        "SEND_STATUS": {
+          "LABEL": "Message sending",
+          "TOOLTIP": "Whether Meta lets this number send messages now, considering the number, the WhatsApp Business account, the business and the app.",
+          "SOLUTION": "How to fix"
+        },
         "ACCOUNT_REVIEW_STATUS": {
           "LABEL": "Account status",
           "TOOLTIP": "Review status of your WhatsApp Business Account. Flagged, declined, restricted or disabled means Meta has limited or blocked this account."
@@ -840,6 +845,11 @@
         "MODES": {
           "SANDBOX": "Sandbox",
           "LIVE": "Live"
+        },
+        "SEND_STATUSES": {
+          "AVAILABLE": "Available",
+          "LIMITED": "Limited",
+          "BLOCKED": "Blocked"
         },
         "QUALITY_RATINGS": {
           "GREEN": "High",

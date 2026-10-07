@@ -56,12 +56,9 @@ describe('whatsappHealth', () => {
       );
       expect(
         sendBlockReason(
-          cloud({
-            phone_status: 'CONNECTED',
-            account_review_status: 'REJECTED',
-          })
+          cloud({ phone_status: 'CONNECTED', can_send_message: 'BLOCKED' })
         )
-      ).toBe('ACCOUNT_BLOCKED');
+      ).toBe('META_BLOCKED');
     });
 
     it('lets low quality, a flagged number and an unread number send', () => {
@@ -71,6 +68,19 @@ describe('whatsappHealth', () => {
         )
       ).toBeNull();
       expect(sendBlockReason(cloud({ phone_status: 'FLAGGED' }))).toBeNull();
+      // A rejected account review can sit on a number that sends normally.
+      expect(
+        sendBlockReason(
+          cloud({
+            phone_status: 'CONNECTED',
+            account_review_status: 'REJECTED',
+            can_send_message: 'AVAILABLE',
+          })
+        )
+      ).toBeNull();
+      expect(
+        sendBlockReason(cloud({ can_send_message: 'LIMITED' }))
+      ).toBeNull();
       expect(sendBlockReason(cloud(undefined))).toBeNull();
       expect(sendBlockReason({ channel_type: 'Channel::Email' })).toBeNull();
     });

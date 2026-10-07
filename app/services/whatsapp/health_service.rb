@@ -77,6 +77,7 @@ class Whatsapp::HealthService
       id
       quality_rating
       status
+      health_status
       messaging_limit_tier
       code_verification_status
       account_mode
@@ -122,6 +123,19 @@ class Whatsapp::HealthService
       platform_type: response['platform_type'],
       certificate: response['certificate'],
       business_id: @channel.provider_config['business_account_id']
+    }.merge(send_health(response['health_status']))
+  end
+
+  # Meta's own answer to "can this number send now?", covering the number,
+  # the WABA, the business and the app together. Unlike
+  # `account_review_status`, a REJECTED review does not mean the number
+  # stopped sending. The errors are every blocking reason Meta lists, with
+  # Meta's own fix for it.
+  def send_health(health_status)
+    errors = Array(health_status&.dig('entities')).flat_map { |entity| Array(entity['errors']) }
+    {
+      can_send_message: health_status&.dig('can_send_message'),
+      health_errors: errors.map { |error| error.slice('error_code', 'error_description', 'possible_solution') }
     }
   end
 

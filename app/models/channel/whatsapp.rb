@@ -189,7 +189,8 @@ class Channel::Whatsapp < ApplicationRecord # rubocop:disable Metrics/ClassLengt
   # Whatsapp::HealthService, kept here so lists (the "Via:" picker, the inbox
   # grid) can show them without calling Meta for every inbox.
   def update_health_summary!(health)
-    summary = health.to_h.stringify_keys.slice('quality_rating', 'phone_status', 'account_review_status')
+    summary = health.to_h.stringify_keys.slice('quality_rating', 'phone_status', 'account_review_status', 'can_send_message',
+                                               'health_errors')
     with_lock { update_provider_connection!(provider_connection.merge('health' => summary)) }
   end
 
