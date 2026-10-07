@@ -28,6 +28,8 @@ pt_BR:
     pending: "O cadastro deste número no WhatsApp não foi concluído."
     restricted: "Este número atingiu o limite de novas conversas do WhatsApp."
     meta_blocked: "O Meta não está permitindo enviar mensagens por este número."
+  scheduled_messages:
+    not_sent: 'A mensagem agendada não foi enviada: %{reason}'
   hello: 'Olá, mundo'
   activerecord:
     attributes:

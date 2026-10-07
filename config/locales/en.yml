@@ -41,6 +41,8 @@ en:
     pending: "This number's WhatsApp registration is not complete."
     restricted: "This number reached the WhatsApp limit for new conversations."
     meta_blocked: "Meta is not letting this number send messages."
+  scheduled_messages:
+    not_sent: 'The scheduled message was not sent: %{reason}'
   hello: 'Hello world'
   activerecord:
     attributes:
