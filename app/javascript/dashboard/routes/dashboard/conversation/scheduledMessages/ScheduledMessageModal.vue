@@ -86,6 +86,14 @@ const isSubmitting = computed(
 );
 const currentInbox = computed(() => inboxGetter.value(inboxId.value));
 
+// A disconnected Baileys / Z-API number is fixed right in the banner, so the
+// schedule waits for it; a draft can still be saved.
+const isUnofficialDisconnected = computed(
+  () =>
+    ['baileys', 'zapi'].includes(currentInbox.value?.provider) &&
+    currentInbox.value.provider_connection?.connection !== 'open'
+);
+
 // The conversation already exists, so a restricted number can still reply.
 // A disconnected Baileys / Z-API number gets the connection banner instead.
 const inboxWarning = computed(() => {
@@ -836,7 +844,7 @@ watch(
             blue
             :label="t('SCHEDULED_MESSAGES.MODAL.SCHEDULE')"
             :is-loading="isSubmitting"
-            :disabled="isSubmitting"
+            :disabled="isSubmitting || isUnofficialDisconnected"
             class="rounded-r-none"
             @click="submit('pending')"
           />
