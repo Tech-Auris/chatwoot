@@ -15,6 +15,7 @@ import AudiencePreviewDialog from 'dashboard/components-next/Campaigns/Pages/Cam
 import TemplateQualityWarning from 'dashboard/components-next/whatsapp/TemplateQualityWarning.vue';
 import {
   templateQualityKey,
+  templateQualityDot,
   templateQualityBlocksCampaign,
 } from 'dashboard/helper/templateQuality';
 
@@ -127,10 +128,12 @@ const templateOptions = computed(() => {
       .replace(/_/g, ' ')
       .replace(/\b\w/g, l => l.toUpperCase());
 
-    const quality = t(`META_TEMPLATES.QUALITY.${templateQualityKey(template)}`);
+    const qualityKey = templateQualityKey(template);
+    const quality = t(`META_TEMPLATES.QUALITY.${qualityKey}`);
     return {
       value: template.id,
       label: `${friendlyName} (${template.language || 'en'}) · ${quality}`,
+      dotClass: templateQualityDot(qualityKey),
       template: template,
     };
   });
