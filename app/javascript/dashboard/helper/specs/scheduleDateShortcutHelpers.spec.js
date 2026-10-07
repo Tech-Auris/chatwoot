@@ -3,8 +3,6 @@ import {
   getTomorrowDate,
   getMondayDate,
   applyHour,
-  formatShortDate,
-  formatHour,
   getScheduleShortcuts,
   preProcessDateInput,
   parseNaturalDate,
@@ -78,39 +76,6 @@ describe('#scheduleDateShortcutHelpers', () => {
       const original = new Date('2023-06-14T00:00:00');
       applyHour(original, 18);
       expect(original.getHours()).toBe(0);
-    });
-  });
-
-  describe('formatShortDate', () => {
-    const date = new Date('2023-03-15T00:00:00');
-
-    it('formats with en locale using month name', () => {
-      const result = formatShortDate(date, 'en');
-      expect(result).toMatch(/Mar.*15|15.*Mar/i);
-    });
-
-    it('handles underscore locale tags like pt_BR', () => {
-      expect(() => formatShortDate(date, 'pt_BR')).not.toThrow();
-    });
-
-    it('falls back to en for empty locale', () => {
-      expect(() => formatShortDate(date, '')).not.toThrow();
-    });
-  });
-
-  describe('formatHour', () => {
-    it('formats 8 for en locale with AM', () => {
-      const result = formatHour(8, 'en');
-      expect(result).toMatch(/8.*AM/i);
-    });
-
-    it('formats 13 for en locale with PM', () => {
-      const result = formatHour(13, 'en');
-      expect(result).toMatch(/1.*PM/i);
-    });
-
-    it('handles underscore locale tags', () => {
-      expect(() => formatHour(18, 'pt_BR')).not.toThrow();
     });
   });
 
@@ -265,13 +230,15 @@ describe('#scheduleDateShortcutHelpers', () => {
   describe('formatFullDateTime', () => {
     const date = new Date('2023-03-17T08:00:00');
 
-    it('formats in EN locale', () => {
-      const result = formatFullDateTime(date, 'en');
-      expect(result).toMatch(/Mar.*17.*2023.*8.*00/i);
+    it('formats as numbers, day first in pt_BR', () => {
+      expect(formatFullDateTime(date, 'pt_BR')).toBe('17/03/2023 08:00');
+      expect(formatFullDateTime(date, 'en')).toBe('03/17/2023 08:00 AM');
     });
 
-    it('handles pt_BR locale without errors', () => {
-      expect(() => formatFullDateTime(date, 'pt_BR')).not.toThrow();
+    it('reads back what it writes', () => {
+      const now = new Date('2023-03-10T10:00:00');
+      const typed = formatFullDateTime(date, 'pt_BR');
+      expect(parseNaturalDate(typed, 'pt_BR', now)).toEqual(date);
     });
   });
 
@@ -327,12 +294,9 @@ describe('#scheduleDateShortcutHelpers', () => {
       expect(shortcuts[2].dateTime).toEqual(new Date('2023-06-26T08:00:00'));
     });
 
-    it('includes formatted date and time', () => {
-      const shortcuts = getScheduleShortcuts(wednesday, 'en');
-      shortcuts.forEach(s => {
-        expect(s.formattedDate).toBeTruthy();
-        expect(s.formattedTime).toBeTruthy();
-      });
+    it('shows each date as numbers', () => {
+      const shortcuts = getScheduleShortcuts(wednesday, 'pt_BR');
+      expect(shortcuts[0].detail).toBe('15/06/2023 08:00');
     });
 
     it('handles pt_BR locale', () => {
