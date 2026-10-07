@@ -27,7 +27,7 @@ class Sales::ConvertQuoteService
 
   attr_reader :quote
 
-  # Every clinic works in Portuguese, on Brasília time.
+  # Every clinic works in Portuguese, on Brasília time, with the funnel on.
   ACCOUNT_LOCALE = 'pt_BR'.freeze
   REPORTING_TIMEZONE = 'America/Sao_Paulo'.freeze
   AURIS_ADMIN_CONFIG = 'COMMERCIAL_ACCOUNT_ADMIN_USER_ID'.freeze
@@ -41,7 +41,7 @@ class Sales::ConvertQuoteService
   # so the sign-up questionnaire (`onboarding_step`) is skipped.
   def build_account
     customer, account = AccountBuilder.new(**builder_attributes).perform
-    account.update!(locale: ACCOUNT_LOCALE, reporting_timezone: REPORTING_TIMEZONE,
+    account.update!(locale: ACCOUNT_LOCALE, reporting_timezone: REPORTING_TIMEZONE, funnel_enabled: true,
                     custom_attributes: account.custom_attributes.except('onboarding_step'))
     account.update!(stripe_customer_id: quote.stripe_customer_id) if quote.stripe_customer_id.present?
     account.account_users.find_by!(user: customer).update!(role: :manager)

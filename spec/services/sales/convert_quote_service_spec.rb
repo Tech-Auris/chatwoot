@@ -26,11 +26,12 @@ RSpec.describe Sales::ConvertQuoteService do
     expect(account.users.pluck(:email)).to include('contato@clinicacinco.com.br')
   end
 
-  it 'sets the account up in Portuguese, on Brasília time, without the sign-up questionnaire' do
+  it 'sets the account up in Portuguese, on Brasília time, with the funnel on and without the sign-up questionnaire' do
     account = described_class.new(quote: quote).perform.account.reload
 
     expect(account.locale).to eq('pt_BR')
     expect(account.reporting_timezone).to eq('America/Sao_Paulo')
+    expect(account.funnel_enabled).to be(true)
     expect(account.custom_attributes).not_to have_key('onboarding_step')
   end
 
