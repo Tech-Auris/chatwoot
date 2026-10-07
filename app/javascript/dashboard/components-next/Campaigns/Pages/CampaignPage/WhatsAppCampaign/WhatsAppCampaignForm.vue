@@ -130,10 +130,13 @@ const templateOptions = computed(() => {
 
     const qualityKey = templateQualityKey(template);
     const quality = t(`META_TEMPLATES.QUALITY.${qualityKey}`);
+    const lead = `${friendlyName} (${template.language || 'en'}) ·`;
     return {
       value: template.id,
-      label: `${friendlyName} (${template.language || 'en'}) · ${quality}`,
+      label: `${lead} ${quality}`,
+      dotLead: lead,
       dotClass: templateQualityDot(qualityKey),
+      dotLabel: quality,
       template: template,
     };
   });

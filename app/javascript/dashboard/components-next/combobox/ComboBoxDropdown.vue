@@ -104,13 +104,17 @@ defineExpose({
           }"
           class="flex items-center gap-2 text-n-slate-12"
         >
-          <!-- Optional coloured dot before the label (e.g. template quality). -->
-          <span
-            v-if="option.dotClass"
-            class="size-2 rounded-full shrink-0"
-            :class="option.dotClass"
-          />
-          {{ option.label }}
+          <!-- Optional coloured dot before a trailing detail, e.g.
+               "Name (pt_BR) · ● Média" for a template's quality. -->
+          <template v-if="option.dotClass">
+            {{ option.dotLead }}
+            <span
+              class="size-2 rounded-full shrink-0"
+              :class="option.dotClass"
+            />
+            {{ option.dotLabel }}
+          </template>
+          <template v-else>{{ option.label }}</template>
         </span>
         <span
           v-if="isSelected(option)"
