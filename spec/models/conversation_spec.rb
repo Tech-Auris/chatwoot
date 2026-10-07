@@ -1362,7 +1362,7 @@ RSpec.describe Conversation do
       conversation.update!(additional_attributes: { 'campaign_referral' => { 'title' => 'Ad X' } })
       travel_to(10.hours.ago) do
         create(:message, conversation: conversation, inbox: cloud_inbox, account: cloud_inbox.account, message_type: :incoming,
-                         content_attributes: { referral: { title: 'Ad X' } })
+                         content_attributes: { referral: { title: 'Ad X', ctwa_clid: 'ARAkLk' } })
       end
 
       window = conversation.messaging_window
@@ -1370,11 +1370,21 @@ RSpec.describe Conversation do
       expect(window[:expires_at]).to be_within(1.minute).of(62.hours.from_now)
     end
 
+    it 'does not open the 72h window for a referral without the ad click id' do
+      conversation.update!(additional_attributes: { 'campaign_referral' => { 'title' => 'Post' } })
+      travel_to(30.hours.ago) do
+        create(:message, conversation: conversation, inbox: cloud_inbox, account: cloud_inbox.account, message_type: :incoming,
+                         content_attributes: { referral: { title: 'Post', source_type: 'post' } })
+      end
+
+      expect(conversation.messaging_window[:kind]).to eq('closed')
+    end
+
     it 'falls back to standard_24h once the CTWA 72h has expired' do
       conversation.update!(additional_attributes: { 'campaign_referral' => { 'title' => 'Ad X' } })
       travel_to(80.hours.ago) do
         create(:message, conversation: conversation, inbox: cloud_inbox, account: cloud_inbox.account, message_type: :incoming,
-                         content_attributes: { referral: { title: 'Ad X' } })
+                         content_attributes: { referral: { title: 'Ad X', ctwa_clid: 'ARAkLk' } })
       end
       travel_to(2.hours.ago) do
         create(:message, conversation: conversation, inbox: cloud_inbox, account: cloud_inbox.account, message_type: :incoming)
