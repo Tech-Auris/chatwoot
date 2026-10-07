@@ -1,4 +1,28 @@
 ---
+- tag: v4.15.1-auris.1.67
+  published_at: '2026-10-07T18:00:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.67
+  notes:
+    en: |-
+      ### ✨ What's new
+
+      - **One form to schedule messages.** Scheduling from the conversation or from the Scheduled messages screen opens the same complete form, with attachment, template, recurrence and variables (type `{{`). From the Scheduled messages screen, you pick the patient and the number right in the form.
+      - **Language in the quick contact edit.** The contact panel opened from the conversation now has the Language field.
+
+      ### ⚡ Improvements
+
+      - **Patients from ads can get a reply for 72 hours.** On official numbers, a patient who started the conversation from a WhatsApp ad can receive normal messages for up to 72 hours, as the conversation badge shows.
+      - **Numbers that work are no longer blocked.** Some official numbers were shown as blocked while still sending; they can be picked again.
+    pt_BR: |-
+      ### ✨ Novidades
+
+      - **Um só formulário para agendar mensagens.** Agendar pela conversa ou pela tela Mensagens agendadas abre o mesmo formulário completo, com anexo, modelo, recorrência e variáveis (digite `{{`). Pela tela de agendadas, você escolhe o paciente e o número no próprio formulário.
+      - **Idioma na edição rápida do contato.** O painel do contato aberto pela conversa ganhou o campo Idioma.
+
+      ### ⚡ Melhorias
+
+      - **Pacientes de anúncio podem receber resposta por 72 horas.** Nos números oficiais, quem começou a conversa por um anúncio do WhatsApp pode receber mensagens normais por até 72 horas, como mostra o selo da conversa.
+      - **Números que funcionam não aparecem mais como bloqueados.** Alguns números oficiais apareciam bloqueados mesmo enviando normalmente; eles voltam a poder ser escolhidos.
 - tag: v4.15.1-auris.1.66
   published_at: '2026-10-06T12:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.66
@@ -356,14 +380,6 @@
 - tag: v4.15.1-auris.1.51.3
   published_at: '2026-08-30T22:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.51.3
-  notes:
-    en: |-
-      Bug fixes and internal improvements.
-    pt_BR: |-
-      Correções de bugs e melhorias internas.
-- tag: v4.15.1-auris.1.51.2
-  published_at: '2026-08-30T20:00:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.51.2
   notes:
     en: |-
       Bug fixes and internal improvements.
