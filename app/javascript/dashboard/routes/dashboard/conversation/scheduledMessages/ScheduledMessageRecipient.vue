@@ -7,6 +7,7 @@ import { useMapGetter } from 'dashboard/composables/store';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu.vue';
 import InboxStatusBadge from 'dashboard/components-next/Inbox/InboxStatusBadge.vue';
 import { sendBlockReason } from 'dashboard/helper/whatsappHealth';
+import WhatsappConnectionBanner from 'dashboard/components-next/Inbox/WhatsappConnectionBanner.vue';
 
 // "Para" and "Via" rows of the schedule form, shown when it is opened outside
 // a conversation (Mensagens agendadas). Same shape as the pencil's pickers:
@@ -66,7 +67,9 @@ const inboxMenuItems = computed(() =>
   }))
 );
 
+// A disconnected Baileys / Z-API number gets the connection banner instead.
 const inboxWarning = computed(() => {
+  if (['baileys', 'zapi'].includes(selectedInbox.value?.provider)) return '';
   const reason = sendBlockReason(selectedInbox.value);
   return reason
     ? t(`COMPOSE_NEW_CONVERSATION.FORM.INBOX_BLOCKED.${reason}`)
@@ -229,6 +232,7 @@ const pickInbox = ({ value }) => {
         {{ t('SCHEDULED.NEW.INBOX_UNREACHABLE') }}
       </p>
     </div>
+    <WhatsappConnectionBanner :inbox="selectedInbox" />
     <p
       v-if="inboxWarning"
       class="mb-0 rounded-md bg-n-amber-3 px-3 py-2 text-xs text-n-amber-11"

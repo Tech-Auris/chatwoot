@@ -23,6 +23,7 @@ import ScheduleDateShortcuts from './ScheduleDateShortcuts.vue';
 import ScheduledMessageRecipient from './ScheduledMessageRecipient.vue';
 import { INBOX_TYPES } from 'dashboard/helper/inbox';
 import { sendBlockReason } from 'dashboard/helper/whatsappHealth';
+import WhatsappConnectionBanner from 'dashboard/components-next/Inbox/WhatsappConnectionBanner.vue';
 import RecurrenceDropdown from './RecurrenceDropdown.vue';
 import RecurrenceCustomModal from './RecurrenceCustomModal.vue';
 
@@ -86,7 +87,9 @@ const isSubmitting = computed(
 const currentInbox = computed(() => inboxGetter.value(inboxId.value));
 
 // The conversation already exists, so a restricted number can still reply.
+// A disconnected Baileys / Z-API number gets the connection banner instead.
 const inboxWarning = computed(() => {
+  if (['baileys', 'zapi'].includes(currentInbox.value?.provider)) return '';
   const reason = sendBlockReason(currentInbox.value, {
     startsConversation: false,
   });
@@ -656,13 +659,16 @@ watch(
         v-model:inbox-id="pickedInboxId"
         :has-error="recipientError"
       />
-      <p
-        v-else-if="inboxWarning"
-        class="mb-0 rounded-md bg-n-amber-3 px-3 py-2 text-xs text-n-amber-11"
-      >
-        {{ inboxWarning }}
-        {{ t('SCHEDULED.NEW.INBOX_WARNING') }}
-      </p>
+      <template v-else>
+        <WhatsappConnectionBanner :inbox="currentInbox" />
+        <p
+          v-if="inboxWarning"
+          class="mb-0 rounded-md bg-n-amber-3 px-3 py-2 text-xs text-n-amber-11"
+        >
+          {{ inboxWarning }}
+          {{ t('SCHEDULED.NEW.INBOX_WARNING') }}
+        </p>
+      </template>
 
       <div class="flex flex-col gap-2">
         <span class="text-sm font-medium text-n-slate-12">
