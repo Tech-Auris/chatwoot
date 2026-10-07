@@ -11,7 +11,8 @@
       "STATUS": "Status",
       "CATEGORY": "Categoria",
       "SEARCH": "Buscar",
-      "SEARCH_PLACEHOLDER": "Nome do template ou idioma"
+      "SEARCH_PLACEHOLDER": "Nome do template ou idioma",
+      "QUALITY": "Qualidade"
     },
     "STATUS": {
       "ALL": "Todos os status",
@@ -32,7 +33,8 @@
       "NAME": "Nome",
       "CATEGORY": "Categoria",
       "LANGUAGE": "Idioma",
-      "STATUS": "Status"
+      "STATUS": "Status",
+      "QUALITY": "Qualidade"
     },
     "SYNC": {
       "BUTTON": "Sincronizar com Meta",
@@ -178,6 +180,33 @@
     },
     "COMING_SOON": {
       "MESSAGE": "O gerenciamento de templates Meta vai aparecer aqui em breve. Enquanto isso, continue usando o business.facebook.com."
+    },
+    "QUALITY": {
+      "ALL": "Todas as qualidades",
+      "GREEN": "Alta",
+      "YELLOW": "Média",
+      "RED": "Baixa",
+      "UNKNOWN": "Sem classificação ainda",
+      "PAUSED": "Pausado pelo Meta",
+      "DISABLED": "Desativado pelo Meta",
+      "EVALUATED_AT": "Avaliada em {date}",
+      "WARNING": {
+        "TITLE": "Qualidade {quality} neste modelo.",
+        "REFUSED": "{quality}: o Meta vai recusar o envio enquanto o modelo estiver nesse estado.",
+        "BLOCKED_LOW": "Envio bloqueado: este modelo está com qualidade Baixa. Enviar para muitos pacientes agora pode piorar a qualidade do número. Escolha outro modelo ou siga as sugestões.",
+        "BLOCKED": "Envio bloqueado: este modelo está {quality}. Enviar para muitos pacientes agora pode piorar a qualidade do número. Escolha outro modelo ou siga as sugestões.",
+        "BODY": "Pacientes estão bloqueando ou ignorando esta mensagem. Se piorar, o Meta pode pausar o modelo e reduzir o limite do número.",
+        "HELPS": "O que ajuda:",
+        "TIPS": {
+          "RECENT": "Enviar só para quem conversou com a clínica recentemente ou pediu contato.",
+          "PERSONALIZE": "Personalizar a abertura (nome do paciente, procedimento de interesse).",
+          "WHO_AND_WHY": "Deixar claro quem está falando e por quê, logo na primeira linha.",
+          "OPT_OUT": "Incluir um botão para não receber mais mensagens (\"Parar promoções\").",
+          "FREQUENCY": "Reduzir a frequência de envios para o mesmo paciente.",
+          "UTILITY": "Se o conteúdo for aviso de consulta, e não promoção, usar um modelo de Utilidade.",
+          "NEW_VERSION": "Se continuar baixa, criar uma nova versão do modelo com outro texto."
+        }
+      }
     }
   }
 }

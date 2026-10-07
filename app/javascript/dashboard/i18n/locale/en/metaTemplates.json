@@ -11,7 +11,8 @@
       "STATUS": "Status",
       "CATEGORY": "Category",
       "SEARCH": "Search",
-      "SEARCH_PLACEHOLDER": "Template name or language"
+      "SEARCH_PLACEHOLDER": "Template name or language",
+      "QUALITY": "Quality"
     },
     "STATUS": {
       "ALL": "All statuses",
@@ -32,7 +33,8 @@
       "NAME": "Name",
       "CATEGORY": "Category",
       "LANGUAGE": "Language",
-      "STATUS": "Status"
+      "STATUS": "Status",
+      "QUALITY": "Quality"
     },
     "SYNC": {
       "BUTTON": "Sync with Meta",
@@ -178,6 +180,33 @@
     },
     "COMING_SOON": {
       "MESSAGE": "Meta template management will land here soon. For now, keep using business.facebook.com."
+    },
+    "QUALITY": {
+      "ALL": "All qualities",
+      "GREEN": "High",
+      "YELLOW": "Medium",
+      "RED": "Low",
+      "UNKNOWN": "Not rated yet",
+      "PAUSED": "Paused by Meta",
+      "DISABLED": "Disabled by Meta",
+      "EVALUATED_AT": "Rated on {date}",
+      "WARNING": {
+        "TITLE": "{quality} quality on this template.",
+        "REFUSED": "{quality}: Meta refuses to send it while the template stays in this state.",
+        "BLOCKED_LOW": "Sending blocked: this template has Low quality. Sending to many patients now can lower the number's quality. Pick another template or follow the suggestions.",
+        "BLOCKED": "Sending blocked: this template is {quality}. Sending to many patients now can lower the number's quality. Pick another template or follow the suggestions.",
+        "BODY": "Patients are blocking or ignoring this message. If it gets worse, Meta may pause the template and lower the number's limit.",
+        "HELPS": "What helps:",
+        "TIPS": {
+          "RECENT": "Send only to people who talked to the clinic recently or asked to be contacted.",
+          "PERSONALIZE": "Personalize the opening (patient name, procedure of interest).",
+          "WHO_AND_WHY": "Make clear who is writing and why, in the first line.",
+          "OPT_OUT": "Add a button to stop receiving messages (\"Stop promotions\").",
+          "FREQUENCY": "Send less often to the same patient.",
+          "UTILITY": "If it is an appointment notice, not a promotion, use a Utility template.",
+          "NEW_VERSION": "If it stays low, create a new version of the template with different text."
+        }
+      }
     }
   }
 }

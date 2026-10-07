@@ -1,4 +1,9 @@
 class Whatsapp::Providers::WhatsappCloudService < Whatsapp::Providers::BaseService # rubocop:disable Metrics/ClassLength
+  # Asked explicitly so the sync also brings each template's quality
+  # (`quality_score`: score + date), which Meta leaves out by default.
+  TEMPLATE_FIELDS = %w[id name language status category sub_category previous_category components parameter_format
+                       rejected_reason quality_score].join(',').freeze
+
   def send_message(phone_number, message)
     @message = message
 
@@ -33,7 +38,9 @@ class Whatsapp::Providers::WhatsappCloudService < Whatsapp::Providers::BaseServi
   def sync_templates
     # ensuring that channels with wrong provider config wouldn't keep trying to sync templates
     whatsapp_channel.mark_message_templates_updated
-    templates = fetch_whatsapp_templates("#{business_account_path}/message_templates?access_token=#{whatsapp_channel.provider_config['api_key']}")
+    templates = fetch_whatsapp_templates(
+      "#{business_account_path}/message_templates?fields=#{TEMPLATE_FIELDS}&access_token=#{whatsapp_channel.provider_config['api_key']}"
+    )
     return if templates.blank?
 
     # Turn `example.header_handle` into a reusable media_id on our side:

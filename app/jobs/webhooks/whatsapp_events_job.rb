@@ -6,6 +6,12 @@ class Webhooks::WhatsappEventsJob < MutexApplicationJob
   # the inbound flow with SendReplyJob, which already lives on :high.
   queue_as :high
 
+  # Template webhooks and the service that applies each one.
+  TEMPLATE_EVENT_SERVICES = {
+    'message_template_status_update' => 'Whatsapp::TemplateStatusUpdateService',
+    'message_template_quality_update' => 'Whatsapp::TemplateQualityUpdateService'
+  }.freeze
+
   # Retry budget (19 × 2s = 38s) must exceed the 30s lock TTL set in `perform`, otherwise
   # a webhook that arrives just after the lock is acquired can exhaust retries before the
   # holder finishes and silently drop its message.
@@ -34,7 +40,7 @@ class Webhooks::WhatsappEventsJob < MutexApplicationJob
   end
 
   def perform(params = {})
-    return handle_template_status_update(params) if template_status_update_event?(params)
+    return handle_template_event(params) if template_event?(params)
 
     channel = find_channel_from_whatsapp_business_payload(params)
 
@@ -160,28 +166,29 @@ class Webhooks::WhatsappEventsJob < MutexApplicationJob
     find_channel_by_url_param(params)
   end
 
-  # `message_template_status_update` webhooks arrive per-WABA, not per-phone.
-  # They have no `metadata.display_phone_number`, so the regular channel
-  # lookup returns nil and the event would be silently dropped. Route them
-  # early to the dedicated service, matching every Cloud channel that shares
-  # this WABA id (a WABA can host multiple phones — each one keeps its own
-  # `message_templates` cache).
-  def template_status_update_event?(params)
+  # Template webhooks (status and quality changes) arrive per-WABA, not
+  # per-phone. They have no `metadata.display_phone_number`, so the regular
+  # channel lookup returns nil and the event would be silently dropped. Route
+  # them early to the dedicated service, matching every Cloud channel that
+  # shares this WABA id (a WABA can host multiple phones — each one keeps its
+  # own `message_templates` cache).
+  def template_event?(params)
     return false unless params[:object].to_s == 'whatsapp_business_account'
 
-    params.dig(:entry, 0, :changes, 0, :field).to_s == 'message_template_status_update'
+    TEMPLATE_EVENT_SERVICES.key?(params.dig(:entry, 0, :changes, 0, :field).to_s)
   end
 
   # Meta delivers these to the callback URL of an official (Cloud) number on
   # the same WABA, where the Meta signature is checked. Arriving on a Baileys /
   # Z-API number's URL, or naming another WABA, the payload can only be forged:
   # it would flip any clinic's templates to approved or rejected.
-  def handle_template_status_update(params)
+  def handle_template_event(params)
     waba_id = params.dig(:entry, 0, :id).to_s
     event_value = params.dig(:entry, 0, :changes, 0, :value) || {}
     return unless template_status_from_official_number?(params[:phone_number], waba_id)
 
-    channels_by_waba_id(waba_id).each { |channel| Whatsapp::TemplateStatusUpdateService.new(channel, event_value).perform }
+    service = TEMPLATE_EVENT_SERVICES[params.dig(:entry, 0, :changes, 0, :field).to_s].constantize
+    channels_by_waba_id(waba_id).each { |channel| service.new(channel, event_value).perform }
   end
 
   def template_status_from_official_number?(phone_number, waba_id)
