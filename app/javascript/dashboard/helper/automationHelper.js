@@ -392,3 +392,26 @@ export const showActionInput = (automationActionTypes, action) => {
   const type = automationActionTypes.find(i => i.key === action)?.inputType;
   return !!type;
 };
+
+/**
+ * The loss reason only means something on a lost conversation, so it is
+ * offered once a condition picks a stage that asks for one (Perdido) — and
+ * kept for rules that already use it.
+ * @param {Array} conditions - Rule conditions, values as ids or options.
+ * @param {Array} funnelStages - Stages with `requires_loss_reason`.
+ * @returns {boolean}
+ */
+export const offersLossReasonCondition = (conditions, funnelStages) => {
+  const lostStageIds = (funnelStages || [])
+    .filter(stage => stage.requires_loss_reason)
+    .map(stage => stage.id);
+  return (conditions || []).some(
+    condition =>
+      condition.attribute_key === 'loss_reason_id' ||
+      (condition.attribute_key === 'funnel_stage_id' &&
+        condition.filter_operator === 'equal_to' &&
+        [condition.values || []]
+          .flat()
+          .some(value => lostStageIds.includes(value?.id ?? value)))
+  );
+};

@@ -40,34 +40,7 @@ class CsatSurveyService
   end
 
   def csat_allowed_by_survey_rules?
-    return true unless survey_rules_configured?
-
-    labels = conversation.label_list
-    return true if rule_values.empty?
-
-    case rule_operator
-    when 'contains'
-      rule_values.any? { |label| labels.include?(label) }
-    when 'does_not_contain'
-      rule_values.none? { |label| labels.include?(label) }
-    else
-      true
-    end
-  end
-
-  def survey_rules_configured?
-    return false if csat_config.blank?
-    return false if csat_config['survey_rules'].blank?
-
-    rule_values.any?
-  end
-
-  def rule_operator
-    csat_config.dig('survey_rules', 'operator') || 'contains'
-  end
-
-  def rule_values
-    csat_config.dig('survey_rules', 'values') || []
+    Csat::SurveyRules.new(conversation: conversation, survey_rules: csat_config&.dig('survey_rules')).allowed?
   end
 
   def whatsapp_channel?
