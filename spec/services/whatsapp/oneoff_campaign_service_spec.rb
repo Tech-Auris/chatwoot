@@ -84,7 +84,7 @@ describe Whatsapp::OneoffCampaignService do
         chosen = create(:contact, :with_phone_number, account: account)
         campaign.update!(audience: [{ 'type' => 'Contact', 'id' => chosen.id }])
 
-        described_class.new(campaign: campaign).perform
+        perform_enqueued_jobs(only: Campaigns::DispatchContactJob) { described_class.new(campaign: campaign).perform }
 
         expect(Conversation.where(campaign_id: campaign.id).pluck(:contact_id)).to eq([chosen.id])
       end
@@ -93,7 +93,7 @@ describe Whatsapp::OneoffCampaignService do
         contact = create(:contact, :with_phone_number, account: account)
         campaign.update!(audience: [{ 'type' => 'Contact', 'id' => contact.id }], conversation_label: 'campanha-agosto')
 
-        described_class.new(campaign: campaign).perform
+        perform_enqueued_jobs(only: Campaigns::DispatchContactJob) { described_class.new(campaign: campaign).perform }
 
         conversation = Conversation.find_by(campaign_id: campaign.id)
         expect(conversation.label_list).to include('campanha-agosto')
@@ -103,29 +103,35 @@ describe Whatsapp::OneoffCampaignService do
         contact = create(:contact, :with_phone_number, account: account)
         campaign.update!(audience: [{ 'type' => 'Contact', 'id' => contact.id }])
 
-        described_class.new(campaign: campaign).perform
+        perform_enqueued_jobs(only: Campaigns::DispatchContactJob) { described_class.new(campaign: campaign).perform }
 
         expect(Conversation.find_by(campaign_id: campaign.id).label_list).to be_empty
       end
 
-      # Without pacing the whole audience is enqueued at once, which puts a
-      # campaign ahead of the replies agents are typing and bursts templates
-      # at the number.
-      it 'spaces the audience by the campaign cadence, on the campaign queue' do
+      # Creating every conversation and message the moment the campaign starts
+      # spiked the server's CPU (232 contacts in one minute). Each contact now
+      # gets its own job, a cadence apart, and nothing is created up front.
+      it 'schedules one contact per cadence instead of creating them all at once' do
         campaign.update!(cadence_seconds: 30)
-        Redis::Alfred.delete("campaign_dispatch_position:#{campaign.id}")
         create_list(:contact, 3, :with_phone_number, account: account)
           .each { |contact| contact.update_labels([label1.title]) }
 
-        described_class.new(campaign: campaign).perform
+        expect { described_class.new(campaign: campaign).perform }.not_to change(Conversation, :count)
 
-        waits = enqueued_jobs.select { |job| job['job_class'] == 'SendReplyJob' }
-                             .map { |job| job['scheduled_at'].present? ? (Time.zone.parse(job['scheduled_at'].to_s) - Time.current).round : 0 }
-        queues = enqueued_jobs.select { |job| job['job_class'] == 'SendReplyJob' }.pluck('queue_name').uniq
+        jobs = enqueued_jobs.select { |job| job['job_class'] == 'Campaigns::DispatchContactJob' }
+        waits = jobs.map { |job| job['scheduled_at'].present? ? (Time.zone.parse(job['scheduled_at'].to_s) - Time.current).round : 0 }
+        expect(jobs.pluck('queue_name').uniq).to eq(['campaign'])
+        expect(waits.sort).to match([be_within(2).of(0), be_within(2).of(30), be_within(2).of(60)])
+      end
 
-        expect(queues).to eq(['campaign'])
-        expect(waits.sort).to all(be_between(0, 65))
-        expect(waits.sort.each_cons(2).map { |a, b| b - a }).to all(be_within(5).of(30))
+      it 'creates the conversation and the message when the turn of the contact comes' do
+        contact = create(:contact, :with_phone_number, account: account)
+        campaign.update!(audience: [{ 'type' => 'Contact', 'id' => contact.id }])
+
+        perform_enqueued_jobs(only: Campaigns::DispatchContactJob) { described_class.new(campaign: campaign).perform }
+
+        conversation = Conversation.find_by(campaign_id: campaign.id)
+        expect(conversation.messages.outgoing.count).to eq(1)
       end
 
       it 'marks campaign as completed' do
