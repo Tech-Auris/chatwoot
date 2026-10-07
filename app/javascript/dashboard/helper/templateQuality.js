@@ -39,3 +39,12 @@ export const templateQualityDate = template => {
   const date = template?.quality_score?.date;
   return date ? new Date(date * 1000) : null;
 };
+
+// The stored template a saved `template_params` points at, to read its
+// current quality.
+export const findTemplate = (templates, params) =>
+  (templates || []).find(
+    template =>
+      template.name === params?.name &&
+      (!params?.language || template.language === params.language)
+  );

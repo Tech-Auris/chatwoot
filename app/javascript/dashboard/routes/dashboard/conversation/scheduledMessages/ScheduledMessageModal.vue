@@ -12,6 +12,9 @@ import { MESSAGE_MAX_LENGTH } from 'shared/helpers/MessageTypeHelper';
 
 import WootMessageEditor from 'dashboard/components/widgets/WootWriter/Editor.vue';
 import NextButton from 'dashboard/components-next/button/Button.vue';
+import TemplateQualityBadge from 'dashboard/components-next/whatsapp/TemplateQualityBadge.vue';
+import TemplateQualityWarning from 'dashboard/components-next/whatsapp/TemplateQualityWarning.vue';
+import { findTemplate } from 'dashboard/helper/templateQuality';
 import AttachmentPreviews from 'dashboard/components-next/NewConversation/components/AttachmentPreviews.vue';
 import DropdownContainer from 'next/dropdown-menu/base/DropdownContainer.vue';
 import DropdownBody from 'next/dropdown-menu/base/DropdownBody.vue';
@@ -257,6 +260,11 @@ const displayAttachments = computed(() => {
 const templateName = computed(() => {
   return templateParams.value?.name || templateParams.value?.id || null;
 });
+
+// The quality can still change until the scheduled time; this is today's.
+const selectedTemplate = computed(() =>
+  findTemplate(whatsAppTemplates.value, templateParams.value)
+);
 
 const clearTemplate = () => {
   templateParams.value = null;
@@ -738,6 +746,10 @@ watch(
                 })
               }}
             </span>
+            <TemplateQualityBadge
+              v-if="selectedTemplate"
+              :template="selectedTemplate"
+            />
             <NextButton
               ghost
               xs
@@ -746,6 +758,10 @@ watch(
               @click="clearTemplate"
             />
           </div>
+          <TemplateQualityWarning
+            v-if="hasTemplate && selectedTemplate"
+            :template="selectedTemplate"
+          />
           <AttachmentPreviews
             v-if="displayAttachments.length"
             class="!p-0"

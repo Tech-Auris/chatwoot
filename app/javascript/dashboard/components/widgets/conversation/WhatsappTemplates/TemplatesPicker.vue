@@ -8,6 +8,7 @@ import {
   findComponentByType,
 } from 'dashboard/helper/templateHelper';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
+import TemplateQualityBadge from 'dashboard/components-next/whatsapp/TemplateQualityBadge.vue';
 import { useI18n } from 'vue-i18n';
 
 const props = defineProps({
@@ -109,11 +110,14 @@ const refreshTemplates = async () => {
               <p class="text-sm">
                 {{ template.name }}
               </p>
-              <span
-                class="inline-block px-2 py-1 text-xs leading-none rounded-lg cursor-default bg-n-slate-3 text-n-slate-12"
-              >
-                {{ t('WHATSAPP_TEMPLATES.PICKER.LABELS.LANGUAGE') }}:
-                {{ template.language }}
+              <span class="flex items-center gap-2">
+                <TemplateQualityBadge :template="template" />
+                <span
+                  class="inline-block px-2 py-1 text-xs leading-none rounded-lg cursor-default bg-n-slate-3 text-n-slate-12"
+                >
+                  {{ t('WHATSAPP_TEMPLATES.PICKER.LABELS.LANGUAGE') }}:
+                  {{ template.language }}
+                </span>
               </span>
             </div>
             <!-- Header -->

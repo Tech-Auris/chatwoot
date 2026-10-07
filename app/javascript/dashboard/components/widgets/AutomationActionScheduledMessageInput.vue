@@ -8,6 +8,9 @@ import FileUpload from 'vue-upload-component';
 import WootMessageEditor from 'dashboard/components/widgets/WootWriter/Editor.vue';
 import DurationInput from 'dashboard/components-next/input/DurationInput.vue';
 import NextButton from 'dashboard/components-next/button/Button.vue';
+import TemplateQualityBadge from 'dashboard/components-next/whatsapp/TemplateQualityBadge.vue';
+import TemplateQualityWarning from 'dashboard/components-next/whatsapp/TemplateQualityWarning.vue';
+import { findTemplate } from 'dashboard/helper/templateQuality';
 import WhatsappTemplates from 'dashboard/components/widgets/conversation/WhatsappTemplates/Modal.vue';
 import { DURATION_UNITS } from 'dashboard/components-next/input/constants';
 import { DEFAULT_SCHEDULED_MESSAGE_DELAY_MINUTES } from 'dashboard/routes/dashboard/settings/automation/constants.js';
@@ -184,6 +187,13 @@ const inboxIdForTemplates = computed(() => {
   return inboxWithTemplates ?? null;
 });
 
+const selectedTemplate = computed(() =>
+  findTemplate(
+    store.getters['inboxes/getWhatsAppTemplates'](inboxIdForTemplates.value),
+    templateParams.value
+  )
+);
+
 // Check if any inbox has WhatsApp templates
 const showWhatsappTemplates = computed(() => {
   return inboxIdForTemplates.value !== null;
@@ -300,8 +310,16 @@ const clearTemplate = () => {
       <span>
         {{ t('AUTOMATION.ACTION.TEMPLATE_SELECTED', { name: templateName }) }}
       </span>
+      <TemplateQualityBadge
+        v-if="selectedTemplate"
+        :template="selectedTemplate"
+      />
       <NextButton ghost xs slate icon="i-lucide-x" @click="clearTemplate" />
     </div>
+    <TemplateQualityWarning
+      v-if="hasTemplate && selectedTemplate"
+      :template="selectedTemplate"
+    />
 
     <WhatsappTemplates
       v-model:show="showWhatsAppTemplatesModal"

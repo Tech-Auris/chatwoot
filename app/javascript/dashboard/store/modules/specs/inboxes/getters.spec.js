@@ -160,7 +160,7 @@ describe('#getters', () => {
       expect(getters.getFilteredWhatsAppTemplates(state)(1)).toEqual([]);
     });
 
-    it('filters out non-approved templates', () => {
+    it('keeps approved, paused and disabled templates only', () => {
       const mixedStatusTemplates = [
         {
           name: 'pending_template',
@@ -177,6 +177,11 @@ describe('#getters', () => {
           status: 'approved',
           components: [{ type: 'BODY', text: 'Test' }],
         },
+        {
+          name: 'paused_template',
+          status: 'PAUSED',
+          components: [{ type: 'BODY', text: 'Test' }],
+        },
       ];
 
       const state = {
@@ -190,8 +195,10 @@ describe('#getters', () => {
       };
 
       const result = getters.getFilteredWhatsAppTemplates(state)(1);
-      expect(result).toHaveLength(1);
-      expect(result[0].name).toBe('approved_template');
+      expect(result.map(template => template.name)).toEqual([
+        'approved_template',
+        'paused_template',
+      ]);
     });
 
     it('filters out interactive templates (LIST, PRODUCT, CATALOG)', () => {

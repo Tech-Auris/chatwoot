@@ -1,6 +1,8 @@
 <script setup>
 import WhatsAppTemplateParser from 'dashboard/components-next/whatsapp/WhatsAppTemplateParser.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
+import TemplateQualityBadge from 'dashboard/components-next/whatsapp/TemplateQualityBadge.vue';
+import TemplateQualityWarning from 'dashboard/components-next/whatsapp/TemplateQualityWarning.vue';
 import { useI18n } from 'vue-i18n';
 
 defineProps({
@@ -25,6 +27,10 @@ const handleBack = () => {
 
 <template>
   <div class="flex flex-col gap-4 px-4 pt-6 pb-5 items-start w-[28.75rem]">
+    <div class="flex flex-col gap-2 w-full">
+      <TemplateQualityBadge :template="template" class="self-start" />
+      <TemplateQualityWarning :template="template" />
+    </div>
     <div class="w-full">
       <WhatsAppTemplateParser
         :template="template"

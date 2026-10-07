@@ -12,6 +12,11 @@ import ComboBox from 'dashboard/components-next/combobox/ComboBox.vue';
 import TagMultiSelectComboBox from 'dashboard/components-next/combobox/TagMultiSelectComboBox.vue';
 import WhatsAppTemplateParser from 'dashboard/components-next/whatsapp/WhatsAppTemplateParser.vue';
 import AudiencePreviewDialog from 'dashboard/components-next/Campaigns/Pages/CampaignPage/AudiencePreviewDialog.vue';
+import TemplateQualityWarning from 'dashboard/components-next/whatsapp/TemplateQualityWarning.vue';
+import {
+  templateQualityKey,
+  templateQualityBlocksCampaign,
+} from 'dashboard/helper/templateQuality';
 
 const emit = defineEmits(['submit', 'cancel']);
 
@@ -122,9 +127,10 @@ const templateOptions = computed(() => {
       .replace(/_/g, ' ')
       .replace(/\b\w/g, l => l.toUpperCase());
 
+    const quality = t(`META_TEMPLATES.QUALITY.${templateQualityKey(template)}`);
     return {
       value: template.id,
-      label: `${friendlyName} (${template.language || 'en'})`,
+      label: `${friendlyName} (${template.language || 'en'}) · ${quality}`,
       template: template,
     };
   });
@@ -249,8 +255,17 @@ watch(
   }
 );
 
+// A Baixa, paused or disabled template would only hurt the number when sent
+// to a whole audience, so the campaign waits for another template.
+const isTemplateBlocked = computed(() =>
+  templateQualityBlocksCampaign(templateQualityKey(selectedTemplate.value))
+);
+
 const isSubmitDisabled = computed(
-  () => v$.value.$invalid || !hasRequiredTemplateParams.value
+  () =>
+    v$.value.$invalid ||
+    !hasRequiredTemplateParams.value ||
+    isTemplateBlocked.value
 );
 
 const formatToUTCString = localDateTime =>
@@ -356,6 +371,12 @@ watch(
         {{ t('CAMPAIGN.WHATSAPP.CREATE.FORM.TEMPLATE.INFO') }}
       </p>
     </div>
+
+    <TemplateQualityWarning
+      v-if="selectedTemplate"
+      :template="selectedTemplate"
+      :blocked="isTemplateBlocked"
+    />
 
     <!-- Template Parser -->
     <WhatsAppTemplateParser

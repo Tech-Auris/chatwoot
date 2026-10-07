@@ -119,6 +119,8 @@ en:
     marketing_ad_account:
       invalid_id: 'Enter the ad account id as digits, e.g. act_1234567890.'
       already_added: 'This ad account is already on the list.'
+    campaigns:
+      template_quality_blocked: 'Sending blocked: this template has Low quality or was paused or disabled by Meta. Pick another template.'
     automation:
       scheduled_message:
         delay_out_of_range: Delay must be between 1 minute and 999 days

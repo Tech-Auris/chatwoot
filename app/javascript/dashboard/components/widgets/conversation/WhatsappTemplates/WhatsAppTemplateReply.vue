@@ -1,6 +1,7 @@
 <script setup>
 import WhatsAppTemplateParser from 'dashboard/components-next/whatsapp/WhatsAppTemplateParser.vue';
 import NextButton from 'dashboard/components-next/button/Button.vue';
+import TemplateQualityWarning from 'dashboard/components-next/whatsapp/TemplateQualityWarning.vue';
 
 const props = defineProps({
   template: {
@@ -25,7 +26,8 @@ const handleResetTemplate = () => {
 </script>
 
 <template>
-  <div class="w-full">
+  <div class="flex flex-col gap-3 w-full">
+    <TemplateQualityWarning :template="props.template" />
     <WhatsAppTemplateParser
       :template="props.template"
       :send-button-label="props.sendButtonLabel"
