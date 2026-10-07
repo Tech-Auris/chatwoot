@@ -140,6 +140,14 @@ const validateSingleAction = action => {
     return ACTION_PARAMETERS_REQUIRED;
   }
 
+  if (
+    action.action_name === 'move_to_funnel_stage' &&
+    action.action_params[0]?.requires_loss_reason &&
+    !action.action_params[1]
+  ) {
+    return 'LOSS_REASON_REQUIRED';
+  }
+
   if (action.action_name === 'create_scheduled_message') {
     const params = action.action_params?.[0];
     if (!params || typeof params !== 'object') {

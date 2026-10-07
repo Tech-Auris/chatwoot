@@ -32,6 +32,7 @@
 #  display_id             :integer          not null
 #  funnel_stage_id        :bigint
 #  inbox_id               :integer          not null
+#  loss_reason_id         :bigint
 #  sla_policy_id          :bigint
 #  team_id                :bigint
 #
@@ -52,6 +53,7 @@
 #  index_conversations_on_identifier_and_account_id   (identifier,account_id)
 #  index_conversations_on_inbox_id                    (inbox_id)
 #  index_conversations_on_inbox_id_and_group_type     (inbox_id,group_type)
+#  index_conversations_on_loss_reason_id              (loss_reason_id)
 #  index_conversations_on_priority                    (priority)
 #  index_conversations_on_status_and_account_id       (status,account_id)
 #  index_conversations_on_status_and_priority         (status,priority)
@@ -62,6 +64,7 @@
 # Foreign Keys
 #
 #  fk_rails_...  (funnel_stage_id => funnel_stages.id) ON DELETE => nullify
+#  fk_rails_...  (loss_reason_id => loss_reasons.id) ON DELETE => nullify
 #
 
 class Conversation < ApplicationRecord
@@ -125,6 +128,8 @@ class Conversation < ApplicationRecord
   belongs_to :team, optional: true
   belongs_to :campaign, optional: true
   belongs_to :funnel_stage, optional: true
+  # Why the conversation was lost, while it sits on a stage that asks for one.
+  belongs_to :loss_reason, optional: true
 
   has_many :mentions, dependent: :destroy_async
   has_many :messages, dependent: :destroy_async, autosave: true

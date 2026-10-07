@@ -103,4 +103,33 @@ describe('validateAutomation', () => {
       expect(validateAutomation(automation)).toEqual({});
     }
   );
+
+  it('asks for the loss reason when moving to a stage that needs one', () => {
+    const moveTo = actionParams => ({
+      name: 'Lost',
+      description: 'Mark as lost',
+      event_name: 'conversation_updated',
+      conditions: [
+        {
+          attribute_key: 'status',
+          filter_operator: 'equal_to',
+          values: 'open',
+        },
+      ],
+      actions: [
+        { action_name: 'move_to_funnel_stage', action_params: actionParams },
+      ],
+    });
+    const lost = { id: 8, name: 'Perdido', requires_loss_reason: true };
+
+    expect(validateAutomation(moveTo([lost]))).toEqual({
+      action_0: 'LOSS_REASON_REQUIRED',
+    });
+    expect(
+      validateAutomation(moveTo([lost, { id: 1, name: 'Achou caro' }]))
+    ).toEqual({});
+    expect(validateAutomation(moveTo([{ id: 2, name: 'Agendado' }]))).toEqual(
+      {}
+    );
+  });
 });

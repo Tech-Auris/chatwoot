@@ -60,6 +60,7 @@ onMounted(() => {
   store.dispatch('labels/get');
   store.dispatch('campaigns/get');
   store.dispatch('funnelStages/get');
+  store.dispatch('lossReasons/get');
   store.dispatch('automations/get');
   store.dispatch('conversionEvents/get');
   if (isSLAEnabled.value) {

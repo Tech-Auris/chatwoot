@@ -28,6 +28,7 @@ export default function useAutomationValues() {
   const labels = useMapGetter('labels/getLabels');
   const teams = useMapGetter('teams/getTeams');
   const funnelStages = useMapGetter('funnelStages/getFunnelStages');
+  const lossReasons = useMapGetter('lossReasons/getLossReasons');
   const slaPolicies = useMapGetter('sla/getSLA');
 
   const booleanFilterOptions = computed(() => [
@@ -104,13 +105,14 @@ export default function useAutomationValues() {
       .map(ev => ({ id: ev.id, name: ev.name }))
   );
 
-  // Stages a rule can move a conversation to. The ones that demand a loss
-  // reason (Perdido) are left out: a rule has no reason to give, so the move
-  // would always be refused.
+  // Stages a rule can move a conversation to. A stage that demands a loss
+  // reason (Perdido) carries the flag, so the action asks for the reason too.
   const funnelStageOptions = computed(() =>
-    (funnelStages.value || [])
-      .filter(stage => !stage.requires_loss_reason)
-      .map(stage => ({ id: stage.id, name: stage.name }))
+    (funnelStages.value || []).map(stage => ({
+      id: stage.id,
+      name: stage.name,
+      requires_loss_reason: stage.requires_loss_reason,
+    }))
   );
 
   /**
@@ -146,6 +148,7 @@ export default function useAutomationValues() {
       messageTypeOptions: messageTypeOptions.value,
       teams: teams.value,
       funnelStages: funnelStages.value,
+      lossReasons: lossReasons.value,
       languages,
       countries,
       origemOptions: origemOptions.value,

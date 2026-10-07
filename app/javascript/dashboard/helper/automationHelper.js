@@ -128,6 +128,7 @@ export const getConditionOptions = ({
   agents,
   aiStatusOptions,
   funnelStages,
+  lossReasons,
   booleanFilterOptions,
   campaigns,
   contacts,
@@ -186,6 +187,7 @@ export const getConditionOptions = ({
         },
       }),
     })),
+    loss_reason_id: (lossReasons || []).map(({ id, name }) => ({ id, name })),
     origem: origemOptions,
   };
 
