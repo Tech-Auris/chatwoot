@@ -1391,7 +1391,12 @@ export default {
 
 <template>
   <ReplyBoxBanner :message="message" :is-on-private-note="isOnPrivateNote" />
-  <NumberBlockedBanner v-if="!isPrivate" :inbox="inbox" />
+  <!-- Baileys / Z-API already get the "not connected" banner above the
+       messages; repeating it here would say the same thing twice. -->
+  <NumberBlockedBanner
+    v-if="!isPrivate && !isAWhatsAppBaileysChannel && !isAWhatsAppZapiChannel"
+    :inbox="inbox"
+  />
   <div ref="replyEditor" class="reply-box" :class="replyBoxClass">
     <ReplyTopPanel
       :mode="replyType"
