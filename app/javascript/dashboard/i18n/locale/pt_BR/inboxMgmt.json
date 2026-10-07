@@ -787,6 +787,11 @@
           "LABEL": "Modo da conta",
           "TOOLTIP": "Modo de operação atual da sua conta do WhatsApp"
         },
+        "SEND_STATUS": {
+          "LABEL": "Envio de mensagens",
+          "TOOLTIP": "Se o Meta permite enviar mensagens por este número agora, considerando o número, a conta do WhatsApp Business, a empresa e o app.",
+          "SOLUTION": "Como resolver"
+        },
         "ACCOUNT_REVIEW_STATUS": {
           "LABEL": "Status da conta",
           "TOOLTIP": "Status de revisão da sua Conta do WhatsApp Business. Sinalizada, recusada, restrita ou desabilitada significa que a Meta limitou ou bloqueou esta conta."
@@ -836,6 +841,11 @@
         "MODES": {
           "SANDBOX": "Sandbox",
           "LIVE": "Em tempo real"
+        },
+        "SEND_STATUSES": {
+          "AVAILABLE": "Disponível",
+          "LIMITED": "Limitado",
+          "BLOCKED": "Bloqueado"
         },
         "QUALITY_RATINGS": {
           "GREEN": "Alta",

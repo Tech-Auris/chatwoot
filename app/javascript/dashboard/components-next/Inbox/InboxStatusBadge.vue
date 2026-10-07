@@ -5,6 +5,7 @@ import {
   qualityKey,
   qualityStyle,
   accountStatusDot,
+  SEND_STATUS_DOTS,
 } from 'dashboard/helper/whatsappHealth';
 
 // Official API numbers: account status + quality, refreshed from Meta every
@@ -71,7 +72,17 @@ const allBadges = computed(() => {
 
   const quality = qualityKey(health);
   const list = [];
-  if (health.account_review_status) {
+  // Whether Meta lets the number send; the account review status is only the
+  // fallback for a number not refreshed since this field existed.
+  if (health.can_send_message) {
+    list.push({
+      key: 'send',
+      prefix: 'STATUS',
+      label: translateValue('SEND_STATUSES', health.can_send_message),
+      badge: 'bg-n-alpha-2 text-n-slate-12',
+      dot: SEND_STATUS_DOTS[health.can_send_message] || 'bg-n-slate-8',
+    });
+  } else if (health.account_review_status) {
     list.push({
       key: 'account',
       prefix: 'STATUS',

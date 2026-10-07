@@ -15,6 +15,14 @@ export const qualityKey = ({ quality_rating: rating, phone_status: status }) =>
 export const qualityStyle = key =>
   QUALITY_STYLES[key] || QUALITY_STYLES.UNKNOWN;
 
+// Meta's `health_status.can_send_message`: whether the number can send now,
+// covering the number, the account (WABA), the business and the app.
+export const SEND_STATUS_DOTS = {
+  AVAILABLE: 'bg-n-teal-9',
+  LIMITED: 'bg-n-amber-9',
+  BLOCKED: 'bg-n-ruby-9',
+};
+
 export const accountStatusDot = status => {
   if (status === 'APPROVED') return 'bg-n-teal-9';
   if (status === 'PENDING') return 'bg-n-amber-9';
@@ -22,8 +30,10 @@ export const accountStatusDot = status => {
 };
 
 // Statuses that stop a new conversation from going out of a number (the
-// pencil). Low quality alone does not: the number still sends. A number with
-// no health read yet is let through.
+// pencil). Meta saying the number cannot send (BLOCKED) wins; the account
+// review status does not block — a REJECTED review can sit on a number that
+// sends normally. Low quality alone does not block either. A number with no
+// health read yet is let through.
 const BLOCKING_PHONE_STATUSES = {
   BANNED: 'BANNED',
   DISCONNECTED: 'NUMBER_DISCONNECTED',
@@ -32,13 +42,6 @@ const BLOCKING_PHONE_STATUSES = {
   UNVERIFIED: 'PENDING',
   RESTRICTED: 'RESTRICTED',
 };
-const BLOCKING_ACCOUNT_STATUSES = [
-  'REJECTED',
-  'DISABLED',
-  'RESTRICTED',
-  'DECLINED',
-  'FLAGGED',
-];
 
 export const sendBlockReason = inbox => {
   if (inbox?.channel_type !== 'Channel::Whatsapp') return null;
@@ -53,9 +56,6 @@ export const sendBlockReason = inbox => {
 
   const health = connection.health;
   if (!health) return null;
-  if (BLOCKING_PHONE_STATUSES[health.phone_status])
-    return BLOCKING_PHONE_STATUSES[health.phone_status];
-  if (BLOCKING_ACCOUNT_STATUSES.includes(health.account_review_status))
-    return 'ACCOUNT_BLOCKED';
-  return null;
+  if (health.can_send_message === 'BLOCKED') return 'META_BLOCKED';
+  return BLOCKING_PHONE_STATUSES[health.phone_status] || null;
 };
