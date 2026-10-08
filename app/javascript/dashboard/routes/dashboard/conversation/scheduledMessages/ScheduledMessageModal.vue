@@ -24,6 +24,7 @@ import ScheduledMessageRecipient from './ScheduledMessageRecipient.vue';
 import { INBOX_TYPES } from 'dashboard/helper/inbox';
 import { sendBlockReason } from 'dashboard/helper/whatsappHealth';
 import WhatsappConnectionBanner from 'dashboard/components-next/Inbox/WhatsappConnectionBanner.vue';
+import InboxStatusBadge from 'dashboard/components-next/Inbox/InboxStatusBadge.vue';
 import RecurrenceDropdown from './RecurrenceDropdown.vue';
 import RecurrenceCustomModal from './RecurrenceCustomModal.vue';
 
@@ -654,7 +655,18 @@ watch(
         v-model:inbox-id="pickedInboxId"
         :has-error="recipientError"
       />
-      <WhatsappConnectionBanner v-else :inbox="currentInbox" />
+      <!-- The conversation's number, with its status and quality as in the
+           pencil; a Baileys / Z-API phone not connected also gets the banner. -->
+      <div v-else class="flex flex-col gap-2">
+        <div class="flex items-center gap-2 min-w-0 text-sm">
+          <span class="font-medium text-n-slate-11 whitespace-nowrap">
+            {{ t('COMPOSE_NEW_CONVERSATION.FORM.INBOX_SELECTOR.LABEL') }}
+          </span>
+          <span class="truncate text-n-slate-12">{{ currentInbox?.name }}</span>
+          <InboxStatusBadge :inbox="currentInbox" labeled />
+        </div>
+        <WhatsappConnectionBanner :inbox="currentInbox" />
+      </div>
 
       <div class="flex flex-col gap-2">
         <span class="text-sm font-medium text-n-slate-12">

@@ -294,12 +294,12 @@ export default {
     charactersRemaining() {
       return this.maxLength - this.message.length;
     },
-    // A number that cannot send right now (disconnected, banned, blocked by
-    // Meta…) keeps the reply from going out; private notes still do. The
-    // conversation is already open, so a RESTRICTED number may still reply.
+    // A Baileys / Z-API phone that is not connected keeps the reply from
+    // going out (the banner above the messages says how to connect it);
+    // private notes still do.
     numberBlockReason() {
       if (this.isPrivate) return null;
-      return sendBlockReason(this.inbox, { startsConversation: false });
+      return sendBlockReason(this.inbox);
     },
     isReplyButtonDisabled() {
       if (this.numberBlockReason) return true;
