@@ -22,12 +22,6 @@ pt_BR:
   whatsapp_send_block:
     disconnected: "Este número está desconectado."
     connecting: "Este número está reconectando."
-    banned: "Este número foi banido pelo WhatsApp."
-    number_disconnected: "Este número está desconectado da API oficial do WhatsApp."
-    deleted: "Este número foi removido da conta do WhatsApp Business."
-    pending: "O cadastro deste número no WhatsApp não foi concluído."
-    restricted: "Este número atingiu o limite de novas conversas do WhatsApp."
-    meta_blocked: "O Meta não está permitindo enviar mensagens por este número."
   hello: 'Olá, mundo'
   activerecord:
     attributes:
@@ -298,7 +292,6 @@ pt_BR:
       sla_missed_resolution: 'Meta de SLA de Resolução não alcançada para a conversa (#%{display_id})'
       internal_chat_mention: 'Você foi mencionado em %{name}'
       internal_chat_new_message: 'Nova mensagem de %{name}'
-      campaign_not_sent: 'Campanha "%{title}" não foi enviada'
     attachment: 'Anexo'
     no_content: 'Sem conteúdo'
   conversations:

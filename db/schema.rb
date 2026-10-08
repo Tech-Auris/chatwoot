@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_07_190000) do
+ActiveRecord::Schema[7.1].define(version: 2026_10_04_120000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -384,8 +384,6 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_07_190000) do
     t.integer "cadence_seconds", default: 10, null: false
     t.string "conversation_label"
     t.string "audience_file_name"
-    t.string "failure_reason"
-    t.bigint "creator_id"
     t.index ["account_id"], name: "index_campaigns_on_account_id"
     t.index ["campaign_status"], name: "index_campaigns_on_campaign_status"
     t.index ["campaign_type"], name: "index_campaigns_on_campaign_type"

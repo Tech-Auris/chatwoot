@@ -331,7 +331,6 @@ RSpec.describe 'Campaigns API', type: :request do
 
         expect(response).to have_http_status(:success)
         expect(JSON.parse(response.body, symbolize_names: true)[:title]).to eq('test')
-        expect(account.campaigns.last.creator).to eq(administrator)
       end
 
       it 'creates a new ongoing campaign' do

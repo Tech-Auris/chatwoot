@@ -147,8 +147,7 @@
       "CARD": {
         "STATUS": {
           "COMPLETED": "Completed",
-          "SCHEDULED": "Scheduled",
-          "NOT_SENT": "Not sent"
+          "SCHEDULED": "Scheduled"
         },
         "CAMPAIGN_DETAILS": {
           "SENT_FROM": "Sent from",

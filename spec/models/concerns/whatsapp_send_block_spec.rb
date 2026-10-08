@@ -6,37 +6,20 @@ RSpec.describe WhatsappSendBlock do
                              validate_provider_config: false, sync_templates: false)
   end
 
-  def cloud(health)
-    channel('whatsapp_cloud', { 'health' => health })
-  end
-
   it 'lets a connected unofficial number send and stops the others' do
     expect(channel('baileys', { 'connection' => 'open' }).send_block_reason).to be_nil
     expect(channel('zapi', { 'connection' => 'connecting' }).send_block_reason).to eq(:connecting)
     expect(channel('baileys', { 'connection' => 'close' }).send_block_reason).to eq(:disconnected)
   end
 
-  it "follows Meta's health status over the account review" do
-    expect(cloud('can_send_message' => 'BLOCKED').send_block_reason).to eq(:meta_blocked)
-    expect(cloud('can_send_message' => 'AVAILABLE', 'account_review_status' => 'REJECTED').send_block_reason).to be_nil
-    expect(cloud('phone_status' => 'BANNED').send_block_reason).to eq(:banned)
+  # Meta has accepted sends while reporting the number as blocked.
+  it 'never stops an official number, whatever Meta reports' do
+    health = { 'can_send_message' => 'BLOCKED', 'phone_status' => 'BANNED' }
+
+    expect(channel('whatsapp_cloud', { 'health' => health }).send_block_reason).to be_nil
   end
 
-  it 'blocks a restricted number only for what starts a conversation' do
-    restricted = cloud('phone_status' => 'RESTRICTED')
-
-    expect(restricted.send_block_reason).to eq(:restricted)
-    expect(restricted.send_block_reason(starts_conversation: false)).to be_nil
-  end
-
-  it 'lets an official number not read yet send' do
-    expect(channel('whatsapp_cloud', {}).send_block_reason).to be_nil
-  end
-
-  it "explains the reason, with Meta's own description when Meta blocks it" do
-    blocked = cloud('can_send_message' => 'BLOCKED',
-                    'health_errors' => [{ 'error_description' => 'The Business has not passed business verification.' }])
-
-    expect(blocked.send_block_message).to eq("#{I18n.t('whatsapp_send_block.meta_blocked')} The Business has not passed business verification.")
+  it 'explains the reason in words' do
+    expect(channel('baileys', { 'connection' => 'close' }).send_block_message).to eq(I18n.t('whatsapp_send_block.disconnected'))
   end
 end

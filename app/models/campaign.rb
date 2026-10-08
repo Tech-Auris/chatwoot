@@ -11,7 +11,6 @@
 #  conversation_label                 :string
 #  description                        :text
 #  enabled                            :boolean          default(TRUE)
-#  failure_reason                     :string
 #  message                            :text             not null
 #  scheduled_at                       :datetime
 #  template_params                    :jsonb            not null
@@ -21,7 +20,6 @@
 #  created_at                         :datetime         not null
 #  updated_at                         :datetime         not null
 #  account_id                         :bigint           not null
-#  creator_id                         :bigint
 #  display_id                         :integer          not null
 #  inbox_id                           :bigint           not null
 #  sender_id                          :integer
@@ -57,14 +55,10 @@ class Campaign < ApplicationRecord
   validate :prevent_completed_campaign_from_update, on: :update
   validate :sender_must_belong_to_account
   validate :inbox_must_belong_to_account
-  validate :whatsapp_number_must_be_able_to_send, on: :create
 
   belongs_to :account
   belongs_to :inbox
   belongs_to :sender, class_name: 'User', optional: true
-  # Who created the campaign, told when it cannot go out. Unlike `sender`, it
-  # does not sign the messages.
-  belongs_to :creator, class_name: 'User', optional: true
 
   enum campaign_type: { ongoing: 0, one_off: 1 }
   # TODO : enabled attribute is unneccessary . lets move that to the campaign status with additional statuses like draft, disabled etc.
@@ -82,10 +76,6 @@ class Campaign < ApplicationRecord
     execute_campaign
   end
 
-  def push_event_data
-    { id: id, display_id: display_id, title: title, inbox_id: inbox_id, failure_reason: failure_reason, meta: {} }
-  end
-
   private
 
   def execute_campaign
@@ -95,34 +85,8 @@ class Campaign < ApplicationRecord
     when 'Sms'
       Sms::OneoffSmsCampaignService.new(campaign: self).perform
     when 'Whatsapp'
-      return unless account.feature_enabled?(:whatsapp_campaign)
-      return not_sent!(number_block_message) if number_block_message
-
-      Whatsapp::OneoffCampaignService.new(campaign: self).perform
+      Whatsapp::OneoffCampaignService.new(campaign: self).perform if account.feature_enabled?(:whatsapp_campaign)
     end
-  end
-
-  # A campaign opens conversations, so a number that reached its new-contact
-  # limit (RESTRICTED) cannot run one either.
-  def number_block_message
-    channel = inbox.channel
-    channel.send_block_message(starts_conversation: true) if channel.respond_to?(:send_block_message)
-  end
-
-  def whatsapp_number_must_be_able_to_send
-    return unless inbox&.inbox_type == 'Whatsapp'
-
-    message = number_block_message
-    errors.add(:base, message) if message
-  end
-
-  # The number broke down between scheduling and the start: the campaign does
-  # not start, keeps the reason, and whoever created it is told.
-  def not_sent!(reason)
-    update!(campaign_status: :completed, failure_reason: reason)
-    return if creator.blank?
-
-    NotificationBuilder.new(notification_type: 'campaign_not_sent', user: creator, account: account, primary_actor: self).perform
   end
 
   def set_display_id

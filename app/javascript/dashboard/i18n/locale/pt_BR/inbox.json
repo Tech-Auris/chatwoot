@@ -39,8 +39,7 @@
       "INTERNAL_CHAT_MENTION": "Mencionado",
       "INTERNAL_CHAT_NEW_MESSAGE": "Mensagem direta",
       "SNOOZED_UNTIL": "Adiado para {time}",
-      "SNOOZED_ENDS": "Adiamento encerrado",
-      "CAMPAIGN_NOT_SENT": "Campanha não enviada"
+      "SNOOZED_ENDS": "Adiamento encerrado"
     },
     "NO_CONTENT": "Nenhum conteúdo disponível",
     "MENU_ITEM": {

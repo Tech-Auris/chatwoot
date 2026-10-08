@@ -14,7 +14,7 @@ import WhatsAppTemplateParser from 'dashboard/components-next/whatsapp/WhatsAppT
 import AudiencePreviewDialog from 'dashboard/components-next/Campaigns/Pages/CampaignPage/AudiencePreviewDialog.vue';
 import NumberBlockedBanner from 'dashboard/components-next/Inbox/NumberBlockedBanner.vue';
 import {
-  sendBlockReason,
+  sendWarningReason,
   campaignWarnings,
 } from 'dashboard/helper/whatsappHealth';
 
@@ -258,9 +258,11 @@ const selectedInbox = computed(() =>
   formState.inboxes.value?.find(inbox => inbox.id === state.inboxId)
 );
 
-// A campaign opens conversations, so it follows the pencil: a number that
-// cannot start one blocks the campaign.
-const numberBlockReason = computed(() => sendBlockReason(selectedInbox.value));
+// Meta's status on the number, as a warning: campaigns run on official
+// numbers, and Meta has accepted sends while reporting them blocked.
+const numberWarningReason = computed(() =>
+  sendWarningReason(selectedInbox.value)
+);
 
 const BUSINESS_MANAGER_URL =
   'https://business.facebook.com/wa/manage/phone-numbers/';
@@ -291,16 +293,11 @@ watch(
 );
 
 const numberWarnings = computed(() =>
-  numberBlockReason.value
-    ? []
-    : campaignWarnings(selectedInbox.value, audienceCount.value)
+  campaignWarnings(selectedInbox.value, audienceCount.value)
 );
 
 const isSubmitDisabled = computed(
-  () =>
-    v$.value.$invalid ||
-    !hasRequiredTemplateParams.value ||
-    Boolean(numberBlockReason.value)
+  () => v$.value.$invalid || !hasRequiredTemplateParams.value
 );
 
 const formatToUTCString = localDateTime =>
@@ -387,14 +384,14 @@ watch(
         :message="formErrors.inbox"
         class="[&>div>button]:bg-n-alpha-black2 [&>div>button:not(.focused)]:dark:outline-n-weak [&>div>button:not(.focused)]:hover:!outline-n-slate-6"
       />
-      <template v-if="numberBlockReason">
+      <template v-if="numberWarningReason">
         <NumberBlockedBanner
           :inbox="selectedInbox"
           starts-conversation
           class="!mx-0 !mb-0 mt-1"
         />
         <p class="mb-0 text-xs text-n-slate-11">
-          <template v-if="numberBlockReason === 'RESTRICTED'">
+          <template v-if="numberWarningReason === 'RESTRICTED'">
             {{
               t('CAMPAIGN.WHATSAPP.CREATE.FORM.NUMBER_STATUS.RESTRICTED_TIP')
             }}

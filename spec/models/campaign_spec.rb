@@ -180,41 +180,4 @@ RSpec.describe Campaign do
       )
     end
   end
-
-  context 'when the WhatsApp number cannot start conversations' do
-    let(:account) { create(:account) }
-    let(:creator) { create(:user, account: account, role: :administrator) }
-    let(:channel) do
-      create(:channel_whatsapp, account: account, provider: 'whatsapp_cloud', validate_provider_config: false, sync_templates: false)
-    end
-    let(:template_params) { { 'name' => 'sample', 'language' => 'pt_BR' } }
-
-    def restrict_number(phone_status)
-      channel.update!(provider_connection: { 'health' => { 'phone_status' => phone_status } })
-    end
-
-    before { account.enable_features!(:whatsapp_campaign) }
-
-    it 'refuses to create a campaign on a restricted number' do
-      restrict_number('RESTRICTED')
-      campaign = build(:campaign, inbox: channel.inbox, account: account, template_params: template_params)
-
-      expect(campaign).not_to be_valid
-      expect(campaign.errors[:base]).to include(I18n.t('whatsapp_send_block.restricted'))
-    end
-
-    it 'does not start a scheduled campaign and tells whoever created it' do
-      campaign = create(:campaign, inbox: channel.inbox, account: account, template_params: template_params, creator: creator)
-      restrict_number('BANNED')
-
-      expect(Whatsapp::OneoffCampaignService).not_to receive(:new)
-      campaign.trigger!
-
-      expect(campaign.reload).to be_completed
-      expect(campaign.failure_reason).to eq(I18n.t('whatsapp_send_block.banned'))
-      notification = creator.notifications.last
-      expect(notification.notification_type).to eq('campaign_not_sent')
-      expect(notification.push_message_body).to include(campaign.title)
-    end
-  end
 end
