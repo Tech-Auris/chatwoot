@@ -1,7 +1,7 @@
 <div class="field-unit__label">
   <%= f.label :follow_up, 'Follow-up' %>
 </div>
-<div class="field-unit__field flex flex-col gap-4">
+<div class="field-unit__field flex flex-col gap-4 p-4 bg-white rounded-lg shadow-sm outline outline-1 outline-n-container">
   <div>
     <p class="text-sm text-slate-600 mb-2">Minutos de espera antes de cada FUP, contados a partir do anterior. Deixe em branco os que não serão usados.</p>
     <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
@@ -13,7 +13,7 @@
       <% end %>
     </div>
   </div>
-  <div class="flex flex-col gap-3 p-3 bg-white rounded-lg shadow-sm outline outline-1 outline-n-container">
+  <div class="flex flex-col gap-3 pt-4 border-t border-slate-200">
     <div class="flex items-center justify-between">
       <span class="text-sm text-slate-700">Encerramento por falta de resposta</span>
       <%= hidden_field_tag 'follow_up[end_flow][enabled]', '0', id: nil %>

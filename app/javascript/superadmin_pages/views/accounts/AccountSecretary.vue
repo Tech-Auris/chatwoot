@@ -140,7 +140,9 @@ onMounted(load);
 <template>
   <!-- Lives inside the account form: the named fields below are posted with
        "Update Account" and saved by AccountsController#update. -->
-  <div class="flex flex-col gap-4">
+  <div
+    class="flex flex-col gap-4 p-4 bg-white rounded-lg shadow-sm outline outline-1 outline-n-container"
+  >
     <p v-if="loading" class="text-sm text-n-slate-11">Carregando…</p>
 
     <template v-else>
@@ -315,9 +317,6 @@ onMounted(load);
         </div>
       </div>
 
-      <p class="text-xs text-n-slate-11">
-        Salvo junto com a conta, no botão "Update Account".
-      </p>
       <div v-if="message || error" class="flex items-center gap-4">
         <span v-if="message" class="text-sm text-n-teal-11">
           {{ message }}
