@@ -172,7 +172,9 @@ const closeOnlineModal = () => {
   />
 
   <div class="flex flex-col w-full gap-3 lg:flex-row lg:items-center mb-4">
-    <fieldset class="flex items-center gap-4 text-sm text-n-slate-12">
+    <fieldset
+      class="flex items-center gap-4 m-0 p-0 border-0 text-sm text-n-slate-12"
+    >
       <legend class="sr-only">
         {{ $t('IA_HUMAN_DISTRIBUTION_REPORT.DATE_BASIS.LABEL') }}
       </legend>
@@ -200,9 +202,15 @@ const closeOnlineModal = () => {
       </label>
     </fieldset>
 
+    <WootDatePicker
+      v-model:date-range="customDateRange"
+      v-model:range-type="selectedDateRange"
+      @date-range-changed="onDateRangeChange"
+    />
+
     <select
       v-model="inboxId"
-      class="bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg pl-3 pr-9 py-2 text-sm text-n-slate-12 focus:outline-n-brand lg:w-64"
+      class="!mb-0 h-10 bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg pl-3 pr-9 text-sm text-n-slate-12 focus:outline-n-brand lg:w-64"
       @change="onInboxChange"
     >
       <option value="">
@@ -212,12 +220,6 @@ const closeOnlineModal = () => {
         {{ inbox.name }}
       </option>
     </select>
-
-    <WootDatePicker
-      v-model:date-range="customDateRange"
-      v-model:range-type="selectedDateRange"
-      @date-range-changed="onDateRangeChange"
-    />
   </div>
 
   <div
