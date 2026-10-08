@@ -1,4 +1,36 @@
 ---
+- tag: v4.15.1-auris.1.68
+  published_at: '2026-10-08T20:00:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.68
+  notes:
+    en: |-
+      ### ✨ What's new
+
+      - **See each template's quality.** When you pick a WhatsApp template (pencil, reply box or scheduling), it shows how Meta rates it: High, Medium or Low, with a tip when it's worth caution.
+
+      ### ⚡ Improvements
+
+      - **A warning when the number can't send.** If the number has a problem, the conversation tells you before you send. A disconnected number shows a button to reconnect, and a scheduled message that couldn't go out tells you why.
+      - **Number status explained.** Hover over the number's status and quality to see what they mean.
+      - **Dates as numbers when scheduling.** Scheduling shows dates like 08/10/2026 08:00, and typing a date starts from today's date and time.
+
+      ### 🐛 Fixes
+
+      - **Notices readable in dark mode.** The text of notices that disappeared on the dark theme now shows normally.
+    pt_BR: |-
+      ### ✨ Novidades
+
+      - **Veja a qualidade de cada modelo.** Ao escolher um modelo do WhatsApp (pelo lápis, na caixa de resposta ou no agendamento), aparece a nota que o Meta dá a ele: Alta, Média ou Baixa, com uma dica quando vale tomar cuidado.
+
+      ### ⚡ Melhorias
+
+      - **Aviso quando o número não consegue enviar.** Se o número estiver com problema, a conversa avisa antes de você enviar. Um número desconectado mostra o botão para reconectar, e uma mensagem agendada que não pôde sair mostra o motivo.
+      - **Status do número explicado.** Passe o mouse sobre o status e a qualidade do número para ver o que significam.
+      - **Datas em números no agendamento.** O agendamento mostra datas como 08/10/2026 08:00, e ao digitar a data ela já vem com a data e hora de agora.
+
+      ### 🐛 Correções
+
+      - **Avisos legíveis no tema escuro.** O texto dos avisos que sumia no tema escuro agora aparece normalmente.
 - tag: v4.15.1-auris.1.67
   published_at: '2026-10-07T18:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.67
@@ -372,14 +404,6 @@
 - tag: v4.15.1-auris.1.51.4
   published_at: '2026-08-31T00:30:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.51.4
-  notes:
-    en: |-
-      Bug fixes and internal improvements.
-    pt_BR: |-
-      Correções de bugs e melhorias internas.
-- tag: v4.15.1-auris.1.51.3
-  published_at: '2026-08-30T22:00:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.51.3
   notes:
     en: |-
       Bug fixes and internal improvements.
