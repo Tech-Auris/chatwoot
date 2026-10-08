@@ -106,6 +106,13 @@ defineExpose({
         >
           {{ option.label }}
         </span>
+        <!-- Optional detail after the label, e.g. a number's status badges. -->
+        <component
+          :is="option.trailing.component"
+          v-if="option.trailing"
+          v-bind="option.trailing.props"
+          class="ltr:ml-auto rtl:mr-auto"
+        />
         <span
           v-if="isSelected(option)"
           class="flex-shrink-0 i-lucide-check size-4 text-n-slate-11"

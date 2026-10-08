@@ -3,6 +3,7 @@ import {
   qualityStyle,
   accountStatusDot,
   sendBlockReason,
+  campaignWarnings,
 } from '../whatsappHealth';
 
 describe('whatsappHealth', () => {
@@ -52,6 +53,37 @@ describe('whatsappHealth', () => {
       };
       expect(sendBlockReason(cloud)).toBeNull();
       expect(sendBlockReason({ channel_type: 'Channel::Email' })).toBeNull();
+    });
+  });
+
+  describe('campaignWarnings', () => {
+    const inbox = health => ({ provider_connection: { health } });
+
+    it('warns about Meta limiting sends and the quality rating', () => {
+      const warnings = campaignWarnings(
+        inbox({
+          can_send_message: 'LIMITED',
+          quality_rating: 'RED',
+          health_errors: [{ error_description: 'Too many reports' }],
+        })
+      );
+
+      expect(warnings).toEqual([
+        { key: 'LIMITED', details: ['Too many reports'] },
+        { key: 'QUALITY_LOW' },
+      ]);
+    });
+
+    it('warns when the audience is over the daily limit', () => {
+      const number = inbox({ messaging_limit_tier: 'TIER_250' });
+
+      expect(campaignWarnings(number, 250)).toEqual([]);
+      expect(campaignWarnings(number, 1000)).toEqual([
+        { key: 'OVER_DAILY_LIMIT', params: { count: 1000, limit: 250 } },
+      ]);
+      expect(
+        campaignWarnings(inbox({ messaging_limit_tier: 'TIER_UNLIMITED' }), 1e6)
+      ).toEqual([]);
     });
   });
 });

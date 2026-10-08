@@ -249,6 +249,12 @@
           "API": {
             "SUCCESS_MESSAGE": "WhatsApp campaign created successfully",
             "ERROR_MESSAGE": "There was an error. Please try again."
+          },
+          "NUMBER_STATUS": {
+            "LIMITED": "Meta is limiting what this number can send. The campaign may not reach everyone.",
+            "QUALITY_LOW": "This number's quality is Low. A campaign now can lead to restrictions or a ban. Prefer patients who talked to you recently, split the audience into batches and review the template.",
+            "QUALITY_MEDIUM": "This number's quality is Medium. Prefer patients who talked to you recently and split the audience into batches.",
+            "OVER_DAILY_LIMIT": "The audience ({count} contacts) is over this number's daily limit ({limit} new conversations in 24h). Split the campaign over several days: Meta refuses whatever goes over the limit."
           }
         }
       },
