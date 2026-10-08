@@ -784,7 +784,9 @@
       "VIA_TEAM": "✅ via team",
       "VIA_TEAM_OFFLINE": "🟧 via team (agent offline)",
       "FAILED": "⚠️ not assigned",
-      "FAILED_NO_ONLINE": "🔴 nobody online"
+      "FAILED_NO_ONLINE": "🔴 nobody online",
+      "AVG_FIRST_HUMAN_REPLY": "⏱ Average time to first human reply",
+      "WITHOUT_HUMAN_REPLY": "💬 No human reply yet"
     },
     "COLUMNS": {
       "DATETIME": "Transfer date / time",
@@ -794,13 +796,17 @@
       "TEAM": "Team",
       "AGENT": "Assigned agent",
       "ONLINE_TEAM_MEMBERS": "On at the time",
-      "STATUS": "Status"
+      "STATUS": "Status",
+      "FIRST_HUMAN_REPLY": "First human reply"
     },
     "EMPTY_STATE": "No assignments found for the current filters.",
     "LOADING": "Loading…",
     "DASH": "—",
     "HASH_ID": "#{id}",
     "MORE_DOTS": "…",
-    "ONLINE_LIST_HEADER": "{count} agents online at the time"
+    "ONLINE_LIST_HEADER": "{count} agents online at the time",
+    "REPLIED_BY": "by {name}",
+    "NO_HUMAN_REPLY": "No reply",
+    "WAITING_FOR": "{time} ago"
   }
 }

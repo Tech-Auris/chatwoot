@@ -127,6 +127,22 @@ const transferRate = computed(() => {
   return `${Math.round((totals.value.total / totals.value.leads_created) * 100)}%`;
 });
 
+// Wall-clock durations as the team says them: 45s, 31min, 13h34min, 2d 3h.
+const humanDuration = seconds => {
+  const total = Math.max(Math.round(seconds), 0);
+  const days = Math.floor(total / 86400);
+  const hours = Math.floor((total % 86400) / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  if (days) return `${days}d ${hours}h`;
+  if (hours) return `${hours}h${String(minutes).padStart(2, '0')}min`;
+  if (minutes) return `${minutes}min`;
+  return `${total}s`;
+};
+
+// How long an unanswered handover has been waiting so far.
+const waitingFor = row =>
+  humanDuration((Date.now() - new Date(row.timestamp).getTime()) / 1000);
+
 const ONLINE_VISIBLE_LIMIT = 3;
 
 const visibleOnlineMembers = row =>
@@ -196,11 +212,7 @@ const closeOnlineModal = () => {
     {{ $t('IA_HUMAN_DISTRIBUTION_REPORT.ERROR_LOAD', { error }) }}
   </div>
 
-  <div
-    v-if="hasFetched"
-    class="grid grid-cols-2 gap-3 mb-6"
-    :class="showLeadsCreated ? 'md:grid-cols-6' : 'md:grid-cols-5'"
-  >
+  <div v-if="hasFetched" class="grid grid-cols-2 gap-3 mb-6 md:grid-cols-4">
     <div
       v-if="showLeadsCreated"
       class="bg-n-solid-2 outline outline-1 outline-n-container rounded-xl shadow px-4 py-3"
@@ -277,6 +289,33 @@ const closeOnlineModal = () => {
         }}</span>
       </div>
     </div>
+    <div
+      class="bg-n-solid-2 outline outline-1 outline-n-container rounded-xl shadow px-4 py-3"
+    >
+      <div class="text-xs text-n-slate-11">
+        {{ $t('IA_HUMAN_DISTRIBUTION_REPORT.KPI.AVG_FIRST_HUMAN_REPLY') }}
+      </div>
+      <div class="text-2xl font-medium text-n-slate-12 mt-1">
+        {{
+          totals.avg_first_reply_seconds == null
+            ? $t('IA_HUMAN_DISTRIBUTION_REPORT.DASH')
+            : humanDuration(totals.avg_first_reply_seconds)
+        }}
+      </div>
+    </div>
+    <div
+      class="bg-n-solid-2 outline outline-1 outline-n-container rounded-xl shadow px-4 py-3"
+    >
+      <div class="text-xs text-n-slate-11">
+        {{ $t('IA_HUMAN_DISTRIBUTION_REPORT.KPI.WITHOUT_HUMAN_REPLY') }}
+      </div>
+      <div class="text-2xl font-medium text-n-ruby-11 mt-1">
+        {{ totals.without_human_reply }}
+        <span class="text-xs text-n-slate-11 ml-1">{{
+          pct(totals.without_human_reply)
+        }}</span>
+      </div>
+    </div>
   </div>
 
   <div
@@ -306,6 +345,9 @@ const closeOnlineModal = () => {
           </th>
           <th class="text-left px-5 py-3 font-medium text-sm">
             {{ $t('IA_HUMAN_DISTRIBUTION_REPORT.COLUMNS.ONLINE_TEAM_MEMBERS') }}
+          </th>
+          <th class="text-left px-5 py-3 font-medium text-sm whitespace-nowrap">
+            {{ $t('IA_HUMAN_DISTRIBUTION_REPORT.COLUMNS.FIRST_HUMAN_REPLY') }}
           </th>
           <th class="text-left px-5 py-3 font-medium text-sm whitespace-nowrap">
             {{ $t('IA_HUMAN_DISTRIBUTION_REPORT.COLUMNS.STATUS') }}
@@ -384,6 +426,32 @@ const closeOnlineModal = () => {
             </template>
           </td>
           <td class="px-5 py-3 whitespace-nowrap">
+            <template v-if="row.first_reply_seconds != null">
+              <div class="text-n-slate-12">
+                {{ humanDuration(row.first_reply_seconds) }}
+              </div>
+              <div v-if="row.first_reply_by" class="text-xs text-n-slate-11">
+                {{
+                  $t('IA_HUMAN_DISTRIBUTION_REPORT.REPLIED_BY', {
+                    name: row.first_reply_by,
+                  })
+                }}
+              </div>
+            </template>
+            <template v-else>
+              <div class="text-n-ruby-11">
+                {{ $t('IA_HUMAN_DISTRIBUTION_REPORT.NO_HUMAN_REPLY') }}
+              </div>
+              <div class="text-xs text-n-slate-11">
+                {{
+                  $t('IA_HUMAN_DISTRIBUTION_REPORT.WAITING_FOR', {
+                    time: waitingFor(row),
+                  })
+                }}
+              </div>
+            </template>
+          </td>
+          <td class="px-5 py-3 whitespace-nowrap">
             <span
               class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs"
               :class="statusPillClass(row.status_tag)"
@@ -393,12 +461,12 @@ const closeOnlineModal = () => {
           </td>
         </tr>
         <tr v-if="!rows.length && !loading">
-          <td colspan="8" class="px-5 py-8 text-center text-n-slate-11">
+          <td colspan="9" class="px-5 py-8 text-center text-n-slate-11">
             {{ $t('IA_HUMAN_DISTRIBUTION_REPORT.EMPTY_STATE') }}
           </td>
         </tr>
         <tr v-if="loading">
-          <td colspan="8" class="px-5 py-8 text-center text-n-slate-11">
+          <td colspan="9" class="px-5 py-8 text-center text-n-slate-11">
             {{ $t('IA_HUMAN_DISTRIBUTION_REPORT.LOADING') }}
           </td>
         </tr>
