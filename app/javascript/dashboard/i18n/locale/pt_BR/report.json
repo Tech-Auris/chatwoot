@@ -774,6 +774,7 @@
     "DESCRIPTION": "Auditoria das atribuições feitas pela IA Auris.",
     "ALL_INBOXES": "Todas as caixas",
     "DATE_BASIS": {
+      "LABEL": "Tipo:",
       "TRANSFER": "Por data da transferência",
       "LEAD_CREATED": "Por data de criação do lead"
     },
@@ -784,23 +785,29 @@
       "VIA_TEAM": "✅ via time",
       "VIA_TEAM_OFFLINE": "🟧 via time (agente offline)",
       "FAILED": "⚠️ sem atribuir",
-      "FAILED_NO_ONLINE": "🔴 ninguém ativo"
+      "FAILED_NO_ONLINE": "🔴 ninguém ativo",
+      "AVG_FIRST_HUMAN_REPLY": "⏱ Tempo médio até a 1ª resposta humana",
+      "WITHOUT_HUMAN_REPLY": "💬 Sem resposta humana ainda"
     },
     "COLUMNS": {
-      "DATETIME": "Data / Hora da transferência",
+      "DATETIME": "Transferência",
       "LEAD_CREATED": "Criação do lead",
       "CONVERSATION": "Conversa",
       "INBOX": "Inbox",
       "TEAM": "Time",
       "AGENT": "Agente atribuído",
       "ONLINE_TEAM_MEMBERS": "On no momento",
-      "STATUS": "Status"
+      "STATUS": "Status",
+      "FIRST_HUMAN_REPLY": "1ª resposta humana"
     },
     "EMPTY_STATE": "Nenhuma atribuição encontrada para os filtros atuais.",
     "LOADING": "Carregando…",
     "DASH": "—",
     "HASH_ID": "#{id}",
     "MORE_DOTS": "…",
-    "ONLINE_LIST_HEADER": "{count} agentes online no momento"
+    "ONLINE_LIST_HEADER": "{count} agentes online no momento",
+    "REPLIED_BY": "por {name}",
+    "NO_HUMAN_REPLY": "Sem resposta",
+    "WAITING_FOR": "há {time}"
   }
 }
