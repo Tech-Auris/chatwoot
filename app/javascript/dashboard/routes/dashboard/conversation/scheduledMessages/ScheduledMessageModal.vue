@@ -86,11 +86,11 @@ const isSubmitting = computed(
 );
 const currentInbox = computed(() => inboxGetter.value(inboxId.value));
 
-// A number that cannot send shows why in the banner (and how to connect it
-// when that is the fix), and the schedule waits for it; a draft can still be
-// saved. The conversation already exists, so a restricted number still can.
+// A Baileys / Z-API number that is not connected shows how to connect it in
+// the banner, and the schedule waits for it; a draft can still be saved.
+// Meta's status on an official number is only a warning there.
 const isNumberBlocked = computed(() =>
-  Boolean(sendBlockReason(currentInbox.value, { startsConversation: false }))
+  Boolean(sendBlockReason(currentInbox.value))
 );
 
 const whatsAppTemplates = computed(() => {

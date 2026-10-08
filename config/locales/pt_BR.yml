@@ -22,12 +22,6 @@ pt_BR:
   whatsapp_send_block:
     disconnected: "Este número está desconectado."
     connecting: "Este número está reconectando."
-    banned: "Este número foi banido pelo WhatsApp."
-    number_disconnected: "Este número está desconectado da API oficial do WhatsApp."
-    deleted: "Este número foi removido da conta do WhatsApp Business."
-    pending: "O cadastro deste número no WhatsApp não foi concluído."
-    restricted: "Este número atingiu o limite de novas conversas do WhatsApp."
-    meta_blocked: "O Meta não está permitindo enviar mensagens por este número."
   scheduled_messages:
     not_sent: 'A mensagem agendada não foi enviada: %{reason}'
   hello: 'Olá, mundo'
