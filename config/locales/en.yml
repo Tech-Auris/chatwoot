@@ -35,6 +35,8 @@ en:
   whatsapp_send_block:
     disconnected: "This number is disconnected."
     connecting: "This number is reconnecting."
+  scheduled_messages:
+    not_sent: 'The scheduled message was not sent: %{reason}'
   hello: 'Hello world'
   activerecord:
     attributes:

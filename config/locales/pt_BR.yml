@@ -22,6 +22,8 @@ pt_BR:
   whatsapp_send_block:
     disconnected: "Este número está desconectado."
     connecting: "Este número está reconectando."
+  scheduled_messages:
+    not_sent: 'A mensagem agendada não foi enviada: %{reason}'
   hello: 'Olá, mundo'
   activerecord:
     attributes:

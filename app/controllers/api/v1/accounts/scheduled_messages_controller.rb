@@ -93,6 +93,7 @@ class Api::V1::Accounts::ScheduledMessagesController < Api::V1::Accounts::BaseCo
     {
       id: scheduled_message.id,
       status: scheduled_message.status,
+      failure_reason: scheduled_message.failure_reason,
       scheduled_at: scheduled_message.scheduled_at&.iso8601,
       content: scheduled_message.content,
       hold_on_reply: scheduled_message.hold_on_reply,

@@ -27,7 +27,6 @@
       "SEARCHING": "Searching…",
       "INBOX_LABEL": "Via",
       "INBOX_PLACEHOLDER": "Pick an inbox",
-      "INBOX_WARNING": "The message will only go out if the number is working at the scheduled time.",
       "INBOX_UNREACHABLE": "This contact is not on any inbox you have access to.",
       "DONE": "Message scheduled."
     }

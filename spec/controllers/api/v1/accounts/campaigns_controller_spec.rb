@@ -163,6 +163,52 @@ RSpec.describe 'Campaigns API', type: :request do
       expect(row['sent_at']).to eq(row['created_at'])
     end
 
+    def message_for(contact_name, phone, status:, error: nil)
+      contact = create(:contact, account: account, name: contact_name, phone_number: phone)
+      conv = create(:conversation, account: account, inbox: inbox, contact: contact)
+      create(:message, account: account, inbox: inbox, conversation: conv, status: status, external_error: error,
+                       additional_attributes: { 'campaign_id' => campaign.id })
+    end
+
+    it 'finds rows by contact name or by phone typed with formatting' do
+      message_for('Maria Souza', '+5511992963408', status: :delivered)
+      message_for('João Lima', '+5511900000001', status: :delivered)
+
+      get "/api/v1/accounts/#{account.id}/campaigns/#{campaign.display_id}/report",
+          params: { q: 'maria' }, headers: administrator.create_new_auth_token
+      expect(response.parsed_body['messages'].pluck('contact_name')).to eq(['Maria Souza'])
+
+      get "/api/v1/accounts/#{account.id}/campaigns/#{campaign.display_id}/report",
+          params: { q: '99296-3408' }, headers: administrator.create_new_auth_token
+      expect(response.parsed_body['messages'].pluck('contact_name')).to eq(['Maria Souza'])
+    end
+
+    it 'filters rows by status while the totals keep covering the whole campaign' do
+      message_for('Maria Souza', '+5511992963408', status: :delivered)
+      message_for('João Lima', '+5511900000001', status: :failed, error: 'Número inválido')
+
+      get "/api/v1/accounts/#{account.id}/campaigns/#{campaign.display_id}/report",
+          params: { status: 'failed' }, headers: administrator.create_new_auth_token
+
+      body = response.parsed_body
+      expect(body['messages'].pluck('contact_name')).to eq(['João Lima'])
+      expect(body['summary']['total']).to eq(2)
+      expect(body['meta']['per_page']).to eq(25)
+    end
+
+    it 'counts the failures by error, most frequent first' do
+      message_for('A', '+5511900000001', status: :failed, error: 'Re-engagement message')
+      message_for('B', '+5511900000002', status: :failed, error: 'Re-engagement message')
+      message_for('C', '+5511900000003', status: :failed, error: 'Número inválido')
+      message_for('D', '+5511900000004', status: :delivered)
+
+      get "/api/v1/accounts/#{account.id}/campaigns/#{campaign.display_id}/report",
+          headers: administrator.create_new_auth_token
+
+      expect(response.parsed_body['failure_reasons']).to eq([{ 'error' => 'Re-engagement message', 'count' => 2 },
+                                                             { 'error' => 'Número inválido', 'count' => 1 }])
+    end
+
     it 'lists each send with the contact and the conversation to open' do
       message = campaign_message(status: :delivered)
 

@@ -5,6 +5,7 @@
 #  id                             :bigint           not null, primary key
 #  author_type                    :string
 #  content                        :text
+#  failure_reason                 :string
 #  hold_on_reply                  :boolean          default(FALSE), not null
 #  scheduled_at                   :datetime
 #  status                         :integer          default("draft"), not null

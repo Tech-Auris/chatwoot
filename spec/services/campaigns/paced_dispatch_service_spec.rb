@@ -16,47 +16,18 @@ RSpec.describe Campaigns::PacedDispatchService do
                      additional_attributes: { 'campaign_id' => campaign.id })
   end
 
-  before { Redis::Alfred.delete("campaign_dispatch_position:#{campaign.id}") }
-
   describe '#perform' do
-    it 'sends the first message of a campaign immediately' do
+    # The campaign already creates one contact per cadence; each message then
+    # leaves half an interval later, so creating and sending alternate.
+    it 'sends the message half a cadence after it is created, on the campaign queue' do
       expect { described_class.new(message: campaign_message).perform }
-        .to have_enqueued_job(SendReplyJob).on_queue('campaign').at(:no_wait)
+        .to have_enqueued_job(SendReplyJob).on_queue('campaign').at(a_value_within(2.seconds).of(15.seconds.from_now))
     end
 
-    # The whole point: each message waits one more interval than the previous
-    # one, so the rhythm holds regardless of how many workers are free.
-    it 'spaces each following message by the campaign cadence' do
-      described_class.new(message: campaign_message).perform
+    it 'stamps when the message is going to be dispatched, for the campaign report' do
+      message = persisted_campaign_message
 
-      expect { described_class.new(message: campaign_message).perform }
-        .to have_enqueued_job(SendReplyJob).on_queue('campaign').at(a_value_within(5.seconds).of(30.seconds.from_now))
-
-      expect { described_class.new(message: campaign_message).perform }
-        .to have_enqueued_job(SendReplyJob).on_queue('campaign').at(a_value_within(5.seconds).of(60.seconds.from_now))
-    end
-
-    it 'counts positions per campaign, so one campaign does not delay another' do
-      other = create(:campaign, account: account, inbox: inbox, cadence_seconds: 30)
-      Redis::Alfred.delete("campaign_dispatch_position:#{other.id}")
-      described_class.new(message: campaign_message).perform
-
-      expect { described_class.new(message: campaign_message(campaign_id: other.id)).perform }
-        .to have_enqueued_job(SendReplyJob).on_queue('campaign').at(:no_wait)
-    end
-
-    # Every message of a campaign is created in the same instant and only the
-    # dispatch is spaced out, so `created_at` says nothing about the send and
-    # the report has nothing to show without this stamp. Exercised through
-    # message creation, which is the only path that reaches the service.
-    it 'stamps when each message is going to be dispatched' do
-      first = persisted_campaign_message
-      second = persisted_campaign_message
-
-      first_at = first.reload.additional_attributes['campaign_dispatch_at']
-      second_at = second.reload.additional_attributes['campaign_dispatch_at']
-      expect(first_at).to be_present
-      expect(second_at - first_at).to be_within(5).of(30)
+      expect(message.reload.additional_attributes['campaign_dispatch_at']).to be_within(2).of(15.seconds.from_now.to_i)
     end
 
     it 'declines messages that do not belong to a campaign' do

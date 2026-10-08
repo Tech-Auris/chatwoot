@@ -326,6 +326,12 @@ const statusPillClass = status => {
                   >
                     {{ item.content || t('SCHEDULED.NO_CONTENT') }}
                   </p>
+                  <p
+                    v-if="item.status === 'failed' && item.failure_reason"
+                    class="mt-1.5 mb-0 text-xs text-n-ruby-11"
+                  >
+                    {{ item.failure_reason }}
+                  </p>
                 </div>
                 <div
                   class="text-right text-xs text-n-slate-11 flex-shrink-0 pl-2"

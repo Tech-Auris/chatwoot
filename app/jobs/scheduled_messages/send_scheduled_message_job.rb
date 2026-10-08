@@ -25,6 +25,7 @@ class ScheduledMessages::SendScheduledMessageJob < ApplicationJob
   def send_if_ready(scheduled_message)
     return unless scheduled_message.pending?
     return unless scheduled_message.due_for_sending?
+    return fail_for_unusable_number(scheduled_message) if number_block_message(scheduled_message)
 
     message = send_message(scheduled_message)
     update_scheduled_message_status(scheduled_message, message)
@@ -43,6 +44,36 @@ class ScheduledMessages::SendScheduledMessageJob < ApplicationJob
     params.merge!(scheduled_message_content_attributes(scheduled_message))
 
     Messages::MessageBuilder.new(message_author(scheduled_message), scheduled_message.conversation, params).perform
+  end
+
+  def number_block_message(scheduled_message)
+    channel = scheduled_message.inbox.channel
+    return unless channel.respond_to?(:send_block_message)
+
+    @number_block_message ||= channel.send_block_message
+  end
+
+  # A number that cannot send at the scheduled time would only fail the
+  # message: the schedule fails with the reason, the author is told through a
+  # private note that mentions them (the usual mention notification), and a
+  # recurring series moves on to its next date.
+  def fail_for_unusable_number(scheduled_message)
+    reason = number_block_message(scheduled_message)
+    scheduled_message.update!(status: :failed, failure_reason: reason)
+    dispatch_event(scheduled_message)
+    note_author_of_failure(scheduled_message, reason)
+    handle_recurrence_on_failure(scheduled_message)
+  end
+
+  def note_author_of_failure(scheduled_message, reason)
+    author = scheduled_message.author
+    mention = author.is_a?(User) ? "[@#{author.name}](mention://user/#{author.id}/#{ERB::Util.url_encode(author.name)}) " : ''
+    I18n.with_locale(scheduled_message.account.locale) do
+      scheduled_message.conversation.messages.create!(
+        account: scheduled_message.account, inbox: scheduled_message.inbox, message_type: :outgoing, private: true,
+        content: "#{mention}#{I18n.t('scheduled_messages.not_sent', reason: reason)}"
+      )
+    end
   end
 
   def message_author(scheduled_message)
@@ -104,7 +135,7 @@ class ScheduledMessages::SendScheduledMessageJob < ApplicationJob
         message_type: :activity,
         content: I18n.t(
           'conversations.activity.recurring_message_failed',
-          next_date: I18n.l(next_message.scheduled_at, format: :short)
+          next_date: next_message.scheduled_at.in_time_zone(scheduled_message.account.reporting_timezone || 'UTC').strftime('%d/%m/%Y %H:%M')
         )
       )
     end

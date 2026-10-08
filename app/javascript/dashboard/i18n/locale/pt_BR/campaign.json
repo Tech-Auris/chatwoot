@@ -269,9 +269,17 @@
         "SENT_AT": "Envio",
         "CONVERSATION": "Conversa",
         "OPEN_CONVERSATION": "Abrir conversa",
-        "PREVIOUS": "Anterior",
-        "NEXT": "Próxima",
-        "PAGE": "Página {current} de {total}",
+        "SEARCH_PLACEHOLDER": "Buscar por nome ou telefone",
+        "ALL_STATUSES": "Todos os status",
+        "NO_RESULTS": "Nenhum envio encontrado com esses filtros.",
+        "FAILURES": {
+          "OPEN": "Ver falhas por motivo",
+          "TITLE": "Falhas por motivo",
+          "SUBTITLE": "Quantidade de mensagens que falharam em cada erro informado pelo WhatsApp.",
+          "ERROR": "Motivo",
+          "COUNT": "Mensagens",
+          "UNKNOWN": "Sem motivo informado"
+        },
         "SUMMARY": {
           "TOTAL": "Mensagens",
           "ACCEPTED": "Aceitas pela Meta",
