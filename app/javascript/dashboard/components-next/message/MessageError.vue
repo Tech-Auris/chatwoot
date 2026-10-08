@@ -19,14 +19,12 @@ const { orientation, status, createdAt, content, attachments } =
 
 const { t } = useI18n();
 
-// Retrying through a number that cannot send would only fail again: the
-// button stays off, with the reason in its tooltip.
+// Retrying through a Baileys / Z-API phone that is not connected would only
+// fail again: the button stays off, with the reason in its tooltip.
 const currentChat = useMapGetter('getSelectedChat');
 const getInbox = useMapGetter('inboxes/getInbox');
 const retryBlockReason = computed(() =>
-  sendBlockReason(getInbox.value(currentChat.value?.inbox_id), {
-    startsConversation: false,
-  })
+  sendBlockReason(getInbox.value(currentChat.value?.inbox_id))
 );
 const retryBlockedTooltip = computed(() =>
   retryBlockReason.value

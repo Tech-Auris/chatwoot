@@ -251,8 +251,6 @@
             "ERROR_MESSAGE": "There was an error. Please try again."
           },
           "NUMBER_STATUS": {
-            "BUSINESS_MANAGER": "Open Meta Business Manager",
-            "RESTRICTED_TIP": "Wait for the limit to reset or use another number.",
             "LIMITED": "Meta is limiting what this number can send. The campaign may not reach everyone.",
             "QUALITY_LOW": "This number's quality is Low. A campaign now can lead to restrictions or a ban. Prefer patients who talked to you recently, split the audience into batches and review the template.",
             "QUALITY_MEDIUM": "This number's quality is Medium. Prefer patients who talked to you recently and split the audience into batches.",

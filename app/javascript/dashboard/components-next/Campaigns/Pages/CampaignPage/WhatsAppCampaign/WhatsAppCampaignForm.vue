@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, computed, watch, ref } from 'vue';
+import { reactive, computed, watch, ref, markRaw } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useVuelidate } from '@vuelidate/core';
 import { required, requiredIf, minLength } from '@vuelidate/validators';
@@ -12,11 +12,8 @@ import ComboBox from 'dashboard/components-next/combobox/ComboBox.vue';
 import TagMultiSelectComboBox from 'dashboard/components-next/combobox/TagMultiSelectComboBox.vue';
 import WhatsAppTemplateParser from 'dashboard/components-next/whatsapp/WhatsAppTemplateParser.vue';
 import AudiencePreviewDialog from 'dashboard/components-next/Campaigns/Pages/CampaignPage/AudiencePreviewDialog.vue';
-import NumberBlockedBanner from 'dashboard/components-next/Inbox/NumberBlockedBanner.vue';
-import {
-  sendWarningReason,
-  campaignWarnings,
-} from 'dashboard/helper/whatsappHealth';
+import InboxStatusBadge from 'dashboard/components-next/Inbox/InboxStatusBadge.vue';
+import { campaignWarnings } from 'dashboard/helper/whatsappHealth';
 
 const emit = defineEmits(['submit', 'cancel']);
 
@@ -114,8 +111,13 @@ const audienceList = computed(() =>
   mapToOptions(formState.labels.value, 'id', 'title')
 );
 
+// Each number with its status and quality, as in the pencil.
 const inboxOptions = computed(() =>
-  mapToOptions(formState.inboxes.value, 'id', 'name')
+  (formState.inboxes.value || []).map(inbox => ({
+    value: inbox.id,
+    label: inbox.name,
+    trailing: { component: markRaw(InboxStatusBadge), props: { inbox } },
+  }))
 );
 
 const templateOptions = computed(() => {
@@ -258,15 +260,6 @@ const selectedInbox = computed(() =>
   formState.inboxes.value?.find(inbox => inbox.id === state.inboxId)
 );
 
-// Meta's status on the number, as a warning: campaigns run on official
-// numbers, and Meta has accepted sends while reporting them blocked.
-const numberWarningReason = computed(() =>
-  sendWarningReason(selectedInbox.value)
-);
-
-const BUSINESS_MANAGER_URL =
-  'https://business.facebook.com/wa/manage/phone-numbers/';
-
 // Contacts the campaign would reach, to compare with the number's daily limit.
 const audienceCount = ref(0);
 watch(
@@ -384,31 +377,12 @@ watch(
         :message="formErrors.inbox"
         class="[&>div>button]:bg-n-alpha-black2 [&>div>button:not(.focused)]:dark:outline-n-weak [&>div>button:not(.focused)]:hover:!outline-n-slate-6"
       />
-      <template v-if="numberWarningReason">
-        <NumberBlockedBanner
-          :inbox="selectedInbox"
-          starts-conversation
-          class="!mx-0 !mb-0 mt-1"
-        />
-        <p class="mb-0 text-xs text-n-slate-11">
-          <template v-if="numberWarningReason === 'RESTRICTED'">
-            {{
-              t('CAMPAIGN.WHATSAPP.CREATE.FORM.NUMBER_STATUS.RESTRICTED_TIP')
-            }}
-          </template>
-          <a
-            v-else
-            :href="BUSINESS_MANAGER_URL"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="text-n-blue-text"
-          >
-            {{
-              t('CAMPAIGN.WHATSAPP.CREATE.FORM.NUMBER_STATUS.BUSINESS_MANAGER')
-            }}
-          </a>
-        </p>
-      </template>
+      <InboxStatusBadge
+        v-if="selectedInbox"
+        :inbox="selectedInbox"
+        labeled
+        class="mt-1"
+      />
     </div>
 
     <div class="flex flex-col gap-1">

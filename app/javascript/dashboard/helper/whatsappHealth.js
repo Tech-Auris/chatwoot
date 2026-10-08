@@ -29,57 +29,17 @@ export const accountStatusDot = status => {
   return 'bg-n-ruby-9';
 };
 
-// Number statuses worth a warning. Meta saying the number cannot send
-// (BLOCKED) wins; the account review status alone is not one — a REJECTED
-// review can sit on a number that sends normally. Low quality alone is not
-// either. A number with no health read yet gets none.
-const WARNING_PHONE_STATUSES = {
-  BANNED: 'BANNED',
-  DISCONNECTED: 'NUMBER_DISCONNECTED',
-  DELETED: 'DELETED',
-  PENDING: 'PENDING',
-  UNVERIFIED: 'PENDING',
-  RESTRICTED: 'RESTRICTED',
+// Why sending from this number is stopped: only a Baileys / Z-API phone that
+// is not connected, whose message really cannot go out. Meta's statuses on an
+// official number are shown as the number's status badges, never as a block
+// — Meta has accepted sends while reporting the number as blocked.
+export const sendBlockReason = inbox => {
+  if (!['baileys', 'zapi'].includes(inbox?.provider)) return null;
+
+  const { connection } = inbox.provider_connection || {};
+  if (connection === 'open') return null;
+  return connection === 'connecting' ? 'CONNECTING' : 'DISCONNECTED';
 };
-
-const isUnofficial = inbox => ['baileys', 'zapi'].includes(inbox?.provider);
-
-// Why sending from this number may not work, shown as a warning.
-// `startsConversation`: the pencil and campaigns open a conversation, which a
-// RESTRICTED number (new-contact limit reached) cannot do; replying in an open
-// conversation it still can.
-export const sendWarningReason = (
-  inbox,
-  { startsConversation = true } = {}
-) => {
-  if (inbox?.channel_type !== 'Channel::Whatsapp') return null;
-
-  const connection = inbox.provider_connection || {};
-  if (isUnofficial(inbox)) {
-    if (connection.connection === 'open') return null;
-    return connection.connection === 'connecting'
-      ? 'CONNECTING'
-      : 'DISCONNECTED';
-  }
-
-  const health = connection.health;
-  if (!health) return null;
-  if (health.can_send_message === 'BLOCKED') return 'META_BLOCKED';
-  if (health.phone_status === 'RESTRICTED' && !startsConversation) return null;
-  return WARNING_PHONE_STATUSES[health.phone_status] || null;
-};
-
-// Why sending from this number is stopped. Only a Baileys / Z-API phone that is
-// not connected: its message really cannot go out. Meta's statuses on an
-// official number are warnings only — Meta has accepted sends while reporting
-// the number as blocked, so stopping them turned working numbers away.
-export const sendBlockReason = (inbox, options = {}) =>
-  isUnofficial(inbox) ? sendWarningReason(inbox, options) : null;
-
-// Meta's own reasons and fixes when it blocks the number (Saúde da conta keeps
-// them with the number's health).
-export const metaBlockErrors = inbox =>
-  inbox?.provider_connection?.health?.health_errors || [];
 
 // New conversations a number may open in 24h, from Meta's
 // `messaging_limit_tier`. Unlimited and unknown tiers give no limit.
@@ -103,7 +63,9 @@ export const campaignWarnings = (inbox, audienceCount = 0) => {
   if (health.can_send_message === 'LIMITED') {
     warnings.push({
       key: 'LIMITED',
-      details: metaBlockErrors(inbox).map(error => error.error_description),
+      details: (health.health_errors || []).map(
+        error => error.error_description
+      ),
     });
   }
   if (health.quality_rating === 'RED') warnings.push({ key: 'QUALITY_LOW' });
