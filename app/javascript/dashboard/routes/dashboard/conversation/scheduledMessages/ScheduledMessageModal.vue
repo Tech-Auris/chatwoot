@@ -25,6 +25,9 @@ import Switch from 'dashboard/components-next/switch/Switch.vue';
 import ScheduleDateShortcuts from './ScheduleDateShortcuts.vue';
 import ScheduledMessageRecipient from './ScheduledMessageRecipient.vue';
 import { INBOX_TYPES } from 'dashboard/helper/inbox';
+import { sendBlockReason } from 'dashboard/helper/whatsappHealth';
+import WhatsappConnectionBanner from 'dashboard/components-next/Inbox/WhatsappConnectionBanner.vue';
+import InboxStatusBadge from 'dashboard/components-next/Inbox/InboxStatusBadge.vue';
 import RecurrenceDropdown from './RecurrenceDropdown.vue';
 import RecurrenceCustomModal from './RecurrenceCustomModal.vue';
 
@@ -86,6 +89,13 @@ const isSubmitting = computed(
   () => isCreating.value || isUpdating.value || isResolvingConversation.value
 );
 const currentInbox = computed(() => inboxGetter.value(inboxId.value));
+
+// A Baileys / Z-API number that is not connected shows how to connect it in
+// the banner, and the schedule waits for it; a draft can still be saved.
+// Meta's status on an official number is only a warning there.
+const isNumberBlocked = computed(() =>
+  Boolean(sendBlockReason(currentInbox.value))
+);
 
 const whatsAppTemplates = computed(() => {
   return store.getters['inboxes/getWhatsAppTemplates'](inboxId.value) || [];
@@ -653,6 +663,18 @@ watch(
         v-model:inbox-id="pickedInboxId"
         :has-error="recipientError"
       />
+      <!-- The conversation's number, with its status and quality as in the
+           pencil; a Baileys / Z-API phone not connected also gets the banner. -->
+      <div v-else class="flex flex-col gap-2">
+        <div class="flex items-center gap-2 min-w-0 text-sm">
+          <span class="font-medium text-n-slate-11 whitespace-nowrap">
+            {{ t('COMPOSE_NEW_CONVERSATION.FORM.INBOX_SELECTOR.LABEL') }}
+          </span>
+          <span class="truncate text-n-slate-12">{{ currentInbox?.name }}</span>
+          <InboxStatusBadge :inbox="currentInbox" labeled />
+        </div>
+        <WhatsappConnectionBanner :inbox="currentInbox" />
+      </div>
 
       <div class="flex flex-col gap-2">
         <span class="text-sm font-medium text-n-slate-12">
@@ -828,7 +850,7 @@ watch(
             blue
             :label="t('SCHEDULED_MESSAGES.MODAL.SCHEDULE')"
             :is-loading="isSubmitting"
-            :disabled="isSubmitting"
+            :disabled="isSubmitting || isNumberBlocked"
             class="rounded-r-none"
             @click="submit('pending')"
           />

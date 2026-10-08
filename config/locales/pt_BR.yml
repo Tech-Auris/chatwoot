@@ -17,6 +17,13 @@
 #To learn more, please read the Rails Internationalization guide
 #available at https://guides.rubyonrails.org/i18n.html.
 pt_BR:
+  macros:
+    message_not_sent: 'Macro "%{name}": a mensagem não foi enviada. %{reason}'
+  whatsapp_send_block:
+    disconnected: "Este número está desconectado."
+    connecting: "Este número está reconectando."
+  scheduled_messages:
+    not_sent: 'A mensagem agendada não foi enviada: %{reason}'
   hello: 'Olá, mundo'
   activerecord:
     attributes:
@@ -102,6 +109,8 @@ pt_BR:
       scheduled_message:
         delay_out_of_range: O atraso deve ser entre 1 minuto e 999 dias
         content_attachment_or_template_required: A mensagem agendada deve ter conteúdo, anexo ou template
+      funnel_move:
+        loss_reason_required: Mover para esta etapa do funil exige um motivo da perda
     saml:
       feature_not_enabled: SAML não está habilitado para esta conta
       sso_not_enabled: O SSO via SAML não está habilitado para esta instalação

@@ -24,6 +24,7 @@
 
 class Channel::Whatsapp < ApplicationRecord # rubocop:disable Metrics/ClassLength
   include Channelable
+  include WhatsappSendBlock
   include Reauthorizable
 
   self.table_name = 'channel_whatsapp'
@@ -190,7 +191,7 @@ class Channel::Whatsapp < ApplicationRecord # rubocop:disable Metrics/ClassLengt
   # grid) can show them without calling Meta for every inbox.
   def update_health_summary!(health)
     summary = health.to_h.stringify_keys.slice('quality_rating', 'phone_status', 'account_review_status', 'can_send_message',
-                                               'health_errors')
+                                               'health_errors', 'messaging_limit_tier')
     with_lock { update_provider_connection!(provider_connection.merge('health' => summary)) }
   end
 

@@ -104,7 +104,8 @@
       "ATTACHMENT_ADD": "Add attachment",
       "TEMPLATE_SELECT": "Use template",
       "TEMPLATE_SELECTED": "Template: {name}",
-      "TEMPLATE_USE": "Use this template"
+      "TEMPLATE_USE": "Use this template",
+      "LOSS_REASON_PLACEHOLDER": "Loss reason"
     },
     "TOGGLE": {
       "ACTIVATION_TITLE": "Activate Automation Rule",
@@ -132,7 +133,8 @@
       "VALUE_MUST_BE_BETWEEN_1_AND_998": "Value must be between 1 and 998",
       "ACTION_PARAMETERS_REQUIRED": "Action parameters are required",
       "ATLEAST_ONE_CONDITION_REQUIRED": "At least one condition is required",
-      "ATLEAST_ONE_ACTION_REQUIRED": "At least one action is required"
+      "ATLEAST_ONE_ACTION_REQUIRED": "At least one action is required",
+      "LOSS_REASON_REQUIRED": "Pick the loss reason"
     },
     "NONE_OPTION": "None",
     "LAST_RESPONDING_AGENT": "Last Responding Agent",
@@ -202,7 +204,8 @@
       "LABELS": "Labels",
       "AI_ENABLED": "AI Status",
       "FUNNEL_STAGE": "Funnel stage",
-      "ORIGEM": "Lead origin"
+      "ORIGEM": "Lead origin",
+      "LOSS_REASON": "Loss reason"
     },
     "AI_STATUS_TYPES": {
       "ENABLED": "AI Enabled",

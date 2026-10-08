@@ -50,24 +50,19 @@ export const applyHour = (date, hour) =>
   setSeconds(setMinutes(setHours(new Date(date), hour), 0), 0);
 
 /**
- * Format an hour (0-23) as a locale-aware time string (e.g. '18:00' or '6:00 PM').
+ * Format a Date as numbers, the way it is typed: '17/03/2026 08:00' (pt-BR) or
+ * '03/17/2026 08:00 AM' (en).
  */
-export const formatHour = (hour, locale = 'en') => {
-  const date = new Date(2023, 0, 1, hour, 0, 0);
-  return new Intl.DateTimeFormat(toBcp47(locale), {
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(date);
-};
-
-/**
- * Format a date as a locale-aware short date with month name (e.g. '11 de mar.' / 'Mar 11').
- */
-export const formatShortDate = (date, locale = 'en') =>
+export const formatFullDateTime = (date, locale = 'en') =>
   new Intl.DateTimeFormat(toBcp47(locale), {
-    day: 'numeric',
-    month: 'short',
-  }).format(date);
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+    .format(date)
+    .replace(',', '');
 
 /**
  * Build the 3 predefined schedule shortcuts with pre-computed dates.
@@ -101,15 +96,7 @@ export const getScheduleShortcuts = (now = new Date(), locale = 'en') => {
   return shortcuts
     .map(s => {
       const dateTime = applyHour(s.date, s.hour);
-      const formattedDate = formatShortDate(s.date, locale);
-      const formattedTime = formatHour(s.hour, locale);
-      return {
-        ...s,
-        dateTime,
-        formattedDate,
-        formattedTime,
-        detail: `${formattedDate}, ${formattedTime}`,
-      };
+      return { ...s, dateTime, detail: formatFullDateTime(dateTime, locale) };
     })
     .filter(s => !isBefore(s.dateTime, now));
 };
@@ -184,16 +171,3 @@ export const parseNaturalDate = (text, locale = 'en', now = new Date()) => {
       : fallbackResults;
   return best.length ? best[0].start.date() : null;
 };
-
-/**
- * Format a Date as a full locale-aware date-time string for preview display.
- * e.g. '17 de mar. de 2026, 08:00' (pt-BR) or 'Mar 17, 2026, 8:00 AM' (en)
- */
-export const formatFullDateTime = (date, locale = 'en') =>
-  new Intl.DateTimeFormat(toBcp47(locale), {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(date);

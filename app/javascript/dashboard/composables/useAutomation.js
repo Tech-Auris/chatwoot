@@ -58,7 +58,8 @@ export function useAutomation(startValue = null) {
 
       Object.values(automationTypes).forEach(automationType => {
         automationType.conditions = automationType.conditions.filter(
-          condition => condition.key !== 'funnel_stage_id'
+          condition =>
+            !['funnel_stage_id', 'loss_reason_id'].includes(condition.key)
         );
       });
     },

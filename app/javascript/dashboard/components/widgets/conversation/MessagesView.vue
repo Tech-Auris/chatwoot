@@ -1,5 +1,5 @@
 <script>
-import { computed, ref, provide, useTemplateRef } from 'vue';
+import { ref, provide, useTemplateRef } from 'vue';
 import { useElementSize } from '@vueuse/core';
 // composable
 import { useLabelSuggestions } from 'dashboard/composables/useLabelSuggestions';
@@ -40,7 +40,7 @@ import { REPLY_POLICY } from 'shared/constants/links';
 import wootConstants from 'dashboard/constants/globals';
 import { LOCAL_STORAGE_KEYS } from 'dashboard/constants/localStorage';
 import { INBOX_TYPES } from 'dashboard/helper/inbox';
-import WhatsappLinkDeviceModal from '../../../routes/dashboard/settings/inbox/components/WhatsappLinkDeviceModal.vue';
+import WhatsappConnectionBanner from 'dashboard/components-next/Inbox/WhatsappConnectionBanner.vue';
 import { isInboxAdminInGroup } from 'dashboard/helper/phoneHelper';
 import {
   isReachoutRestricted,
@@ -59,14 +59,11 @@ export default {
     ConversationLabelSuggestion,
     Spinner,
     ResizableEditorWrapper,
-    WhatsappLinkDeviceModal,
+    WhatsappConnectionBanner,
   },
   mixins: [inboxMixin],
   setup() {
-    const { isAdmin, isManager } = useAdmin();
-    const canManageInboxConnection = computed(
-      () => isAdmin.value || isManager.value
-    );
+    const { isAdmin } = useAdmin();
     const isPopOutReplyBox = ref(false);
     const conversationPanelRef = ref(null);
     const resizableEditorWrapperRef = ref(null);
@@ -104,7 +101,6 @@ export default {
       containerHeight,
       topBannerHeight,
       isAdmin,
-      canManageInboxConnection,
       isPopOutReplyBox,
     };
   },
@@ -117,7 +113,6 @@ export default {
       isProgrammaticScroll: false,
       messageSentSinceOpened: false,
       labelSuggestions: [],
-      showLinkDeviceModal: false,
     };
   },
 
@@ -834,25 +829,6 @@ export default {
     onOpenGroupsEnabledLink() {
       window.open(wootConstants.FAZER_AI_GUIDES_URL, '_blank');
     },
-    onOpenLinkDeviceModal() {
-      this.showLinkDeviceModal = true;
-    },
-    onCloseLinkDeviceModal() {
-      this.showLinkDeviceModal = false;
-    },
-    onSetupProviderConnection() {
-      this.$store
-        .dispatch('inboxes/setupChannelProvider', this.inbox.id)
-        .catch(e => {
-          // eslint-disable-next-line no-console
-          console.error('Error setting up provider connection:', e);
-          useAlert(
-            this.$t(
-              'CONVERSATION.INBOX.WHATSAPP_PROVIDER_CONNECTION.RECONNECT_FAILED'
-            )
-          );
-        });
-    },
   },
 };
 </script>
@@ -863,43 +839,8 @@ export default {
     class="flex flex-col justify-between flex-grow h-full min-w-0 m-0"
   >
     <div ref="topBannerRef">
+      <WhatsappConnectionBanner :inbox="currentInbox" class="mt-2 mx-2" />
       <template v-if="isAWhatsAppBaileysChannel || isAWhatsAppZapiChannel">
-        <WhatsappLinkDeviceModal
-          v-if="showLinkDeviceModal"
-          :show="showLinkDeviceModal"
-          :on-close="onCloseLinkDeviceModal"
-          :inbox="currentInbox"
-        />
-        <Banner
-          v-if="inboxProviderConnection !== 'open'"
-          color-scheme="alert"
-          class="mt-2 mx-2 rounded-lg overflow-hidden"
-          :banner-message="
-            canManageInboxConnection
-              ? $t(
-                  'CONVERSATION.INBOX.WHATSAPP_PROVIDER_CONNECTION.NOT_CONNECTED'
-                )
-              : $t(
-                  'CONVERSATION.INBOX.WHATSAPP_PROVIDER_CONNECTION.NOT_CONNECTED_CONTACT_ADMIN'
-                )
-          "
-          has-action-button
-          :action-button-label="
-            canManageInboxConnection
-              ? $t(
-                  'CONVERSATION.INBOX.WHATSAPP_PROVIDER_CONNECTION.LINK_DEVICE'
-                )
-              : ''
-          "
-          :action-button-icon="
-            canManageInboxConnection ? '' : 'i-lucide-refresh-cw'
-          "
-          @primary-action="
-            canManageInboxConnection
-              ? onOpenLinkDeviceModal()
-              : onSetupProviderConnection()
-          "
-        />
         <Banner
           v-if="showReachoutRestriction"
           color-scheme="alert"

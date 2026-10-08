@@ -285,15 +285,21 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController #
     formatted = {
       'display_type' => config['display_type'] || 'emoji',
       'message' => config['message'] || '',
-      :survey_rules => {
-        'operator' => config.dig('survey_rules', 'operator') || 'contains',
-        'values' => config.dig('survey_rules', 'values') || []
-      },
+      :survey_rules => { 'conditions' => survey_rule_conditions(config['survey_rules'] || {}) },
       'button_text' => config['button_text'] || 'Please rate us',
       'language' => config['language'] || 'en'
     }
     format_template_config(config, formatted)
     formatted
+  end
+
+  # Callers still sending the single label rule (`operator` + `values`) get
+  # it saved as that one condition.
+  def survey_rule_conditions(rules)
+    return rules['conditions'] if rules['conditions']
+    return [] if rules['values'].blank?
+
+    [{ 'attribute_key' => 'labels', 'filter_operator' => rules['operator'] || 'contains', 'values' => rules['values'] }]
   end
 
   def format_template_config(config, formatted)
@@ -305,7 +311,7 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController #
      :enable_auto_assignment, :working_hours_enabled, :out_of_office_message, :timezone, :allow_messages_after_resolved,
      :lock_to_single_conversation, :portal_id, :sender_name_type, :business_name, :split_messages,
      { csat_config: [:display_type, :message, :button_text, :language,
-                     { survey_rules: [:operator, { values: [] }],
+                     { survey_rules: [:operator, { values: [], conditions: [:attribute_key, :filter_operator, :query_operator, { values: [] }] }],
                        template: [:name, :template_id, :friendly_name, :content_sid, :approval_sid,
                                   :created_at, :linked_at, :language, :source, :status, { body_variables: {} }] }] }]
   end

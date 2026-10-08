@@ -56,9 +56,11 @@ const onSelectShortcut = shortcut => {
   emit('update:modelValue', shortcut.dateTime);
 };
 
+// Starts from the current date and time, so the operator only edits what
+// changes instead of typing the whole date.
 const onSelectCustom = () => {
   selectedKey.value = SHORTCUT_KEYS.CUSTOM;
-  customText.value = '';
+  customText.value = formatFullDateTime(new Date(), locale.value);
   parsedDate.value = null;
   datePickerOpen.value = false;
   emit('update:modelValue', null);

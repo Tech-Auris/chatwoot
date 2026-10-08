@@ -84,5 +84,38 @@ RSpec.describe ScheduledMessages::SendScheduledMessageJob, type: :job do
         expect { described_class.new.perform(future.id) }.not_to(change { conversation.messages.count })
       end
     end
+
+    context 'when the WhatsApp number cannot send at the scheduled time' do
+      let(:channel) do
+        create(:channel_whatsapp, account: account, provider: 'baileys', provider_connection: { 'connection' => 'close' },
+                                  sync_templates: false, validate_provider_config: false)
+      end
+      let(:inbox) { channel.inbox }
+
+      before { create(:inbox_member, user: author, inbox: inbox) }
+
+      it 'fails with the reason and mentions the author in a private note' do
+        travel_to(3.minutes.from_now) do
+          described_class.new.perform(scheduled_message.id)
+
+          expect(scheduled_message.reload.status).to eq('failed')
+          expect(scheduled_message.failure_reason).to eq(I18n.t('whatsapp_send_block.disconnected'))
+          note = conversation.messages.last
+          expect(note.private).to be(true)
+          expect(note.content).to include("mention://user/#{author.id}/")
+          expect(conversation.messages.where(private: false, message_type: :outgoing)).to be_empty
+        end
+      end
+
+      it 'moves a recurring series on to its next date' do
+        recurring = create(:recurring_scheduled_message, conversation: conversation, author: author)
+        scheduled_message.update!(recurring_scheduled_message: recurring)
+
+        travel_to(3.minutes.from_now) do
+          expect { described_class.new.perform(scheduled_message.id) }
+            .to change { recurring.scheduled_messages.count }.by(1)
+        end
+      end
+    end
   end
 end

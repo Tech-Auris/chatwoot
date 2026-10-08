@@ -30,6 +30,13 @@
 # available at https://guides.rubyonrails.org/i18n.html.
 
 en:
+  macros:
+    message_not_sent: 'Macro "%{name}": the message was not sent. %{reason}'
+  whatsapp_send_block:
+    disconnected: "This number is disconnected."
+    connecting: "This number is reconnecting."
+  scheduled_messages:
+    not_sent: 'The scheduled message was not sent: %{reason}'
   hello: 'Hello world'
   activerecord:
     attributes:
@@ -125,6 +132,8 @@ en:
       scheduled_message:
         delay_out_of_range: Delay must be between 1 minute and 999 days
         content_attachment_or_template_required: Scheduled message must have content, attachment, or template
+      funnel_move:
+        loss_reason_required: Moving to this funnel stage needs a loss reason
     scheduled_messages:
       cannot_delete_processed: Cannot delete a scheduled message that has already been sent or failed
     saml:

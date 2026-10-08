@@ -52,8 +52,9 @@ const getInbox = useMapGetter('inboxes/getInbox');
 
 const blockReason = inboxId => sendBlockReason(getInbox.value(inboxId));
 
-// A number that cannot send (disconnected, banned…) stays in the list with
-// its status, but picking it explains why instead of selecting it.
+// A Baileys / Z-API phone that is not connected stays in the list with its
+// status, but picking it explains why instead of selecting it. Official
+// numbers only show their status.
 const onInboxAction = item => {
   const reason = blockReason(item.value);
   if (reason) {

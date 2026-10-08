@@ -541,4 +541,30 @@ describe('showActionInput', () => {
       helpers.showActionInput(mockActionTypes, 'non_existent_action')
     ).toBe(false);
   });
+
+  it('offers the loss reason only once a condition picks the lost stage', () => {
+    const stages = [
+      { id: 1, name: 'Agendado', requires_loss_reason: false },
+      { id: 8, name: 'Perdido', requires_loss_reason: true },
+    ];
+    const stage = (values, filterOperator = 'equal_to') => ({
+      attribute_key: 'funnel_stage_id',
+      filter_operator: filterOperator,
+      values,
+    });
+
+    expect(
+      helpers.offersLossReasonCondition([stage([{ id: 8 }])], stages)
+    ).toBe(true);
+    expect(helpers.offersLossReasonCondition([stage([8])], stages)).toBe(true);
+    expect(
+      helpers.offersLossReasonCondition([stage([{ id: 1 }])], stages)
+    ).toBe(false);
+    expect(
+      helpers.offersLossReasonCondition(
+        [stage([{ id: 8 }], 'not_equal_to')],
+        stages
+      )
+    ).toBe(false);
+  });
 });

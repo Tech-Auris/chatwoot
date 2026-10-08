@@ -249,6 +249,12 @@
           "API": {
             "SUCCESS_MESSAGE": "Campanha do WhatsApp criada com sucesso",
             "ERROR_MESSAGE": "Houve um erro. Por favor, tente novamente."
+          },
+          "NUMBER_STATUS": {
+            "LIMITED": "O Meta está limitando os envios deste número. A campanha pode não chegar a todos.",
+            "QUALITY_LOW": "A qualidade deste número está Baixa. Uma campanha agora pode levar a restrições ou ao banimento. Prefira os pacientes que conversaram recentemente, divida o público em lotes e revise o modelo.",
+            "QUALITY_MEDIUM": "A qualidade deste número está Média. Prefira os pacientes que conversaram recentemente e divida o público em lotes.",
+            "OVER_DAILY_LIMIT": "O público ({count} contatos) passa do limite diário deste número ({limit} novas conversas em 24h). Divida a campanha em dias: o que passar do limite é recusado pelo Meta."
           }
         }
       },
@@ -263,9 +269,17 @@
         "SENT_AT": "Envio",
         "CONVERSATION": "Conversa",
         "OPEN_CONVERSATION": "Abrir conversa",
-        "PREVIOUS": "Anterior",
-        "NEXT": "Próxima",
-        "PAGE": "Página {current} de {total}",
+        "SEARCH_PLACEHOLDER": "Buscar por nome ou telefone",
+        "ALL_STATUSES": "Todos os status",
+        "NO_RESULTS": "Nenhum envio encontrado com esses filtros.",
+        "FAILURES": {
+          "OPEN": "Ver falhas por motivo",
+          "TITLE": "Falhas por motivo",
+          "SUBTITLE": "Quantidade de mensagens que falharam em cada erro informado pelo WhatsApp.",
+          "ERROR": "Motivo",
+          "COUNT": "Mensagens",
+          "UNKNOWN": "Sem motivo informado"
+        },
         "SUMMARY": {
           "TOTAL": "Mensagens",
           "ACCEPTED": "Aceitas pela Meta",

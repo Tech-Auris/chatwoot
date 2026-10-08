@@ -32,6 +32,7 @@ class AutomationRule < ApplicationRecord
   validate :query_operator_presence
   validate :query_operator_value
   validate :scheduled_message_params
+  validate :funnel_move_loss_reason
   validates :account_id, presence: true
 
   after_update_commit :reauthorized!, if: -> { saved_change_to_conditions? }
@@ -40,7 +41,7 @@ class AutomationRule < ApplicationRecord
 
   def conditions_attributes
     %w[content email country_code status message_type browser_language assignee_id team_id referer city company company_name inbox_id
-       mail_subject phone_number priority conversation_language labels private_note ai_enabled funnel_stage_id origem]
+       mail_subject phone_number priority conversation_language labels private_note ai_enabled funnel_stage_id loss_reason_id origem]
   end
 
   def actions_attributes
@@ -117,6 +118,19 @@ class AutomationRule < ApplicationRecord
       next unless action['action_name'] == 'create_scheduled_message'
 
       validate_scheduled_message_action(action)
+    end
+  end
+
+  # Moving to a stage that asks for a loss reason (Perdido) needs one: the
+  # rule gives it as the second param, `[stage_id, loss_reason_id]`.
+  def funnel_move_loss_reason
+    Array(actions).each do |action|
+      next unless action['action_name'] == 'move_to_funnel_stage'
+
+      stage_id, loss_reason_id = Array(action['action_params'])
+      next if loss_reason_id.present? || !FunnelStage.exists?(id: stage_id, requires_loss_reason: true)
+
+      errors.add(:actions, I18n.t('errors.automation.funnel_move.loss_reason_required'))
     end
   end
 
