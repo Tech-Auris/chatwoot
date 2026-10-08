@@ -102,9 +102,19 @@ defineExpose({
           :class="{
             'font-medium': isSelected(option),
           }"
-          class="text-n-slate-12"
+          class="flex items-center gap-2 text-n-slate-12"
         >
-          {{ option.label }}
+          <!-- Optional coloured dot before a trailing detail, e.g.
+               "Name (pt_BR) · ● Média" for a template's quality. -->
+          <template v-if="option.dotClass">
+            {{ option.dotLead }}
+            <span
+              class="size-2 rounded-full shrink-0"
+              :class="option.dotClass"
+            />
+            {{ option.dotLabel }}
+          </template>
+          <template v-else>{{ option.label }}</template>
         </span>
         <!-- Optional detail after the label, e.g. a number's status badges. -->
         <component

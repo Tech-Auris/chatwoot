@@ -180,4 +180,30 @@ RSpec.describe Campaign do
       )
     end
   end
+
+  context 'when the WhatsApp template has poor quality' do
+    let(:account) { create(:account) }
+    let(:channel) do
+      create(:channel_whatsapp, account: account, provider: 'whatsapp_cloud', validate_provider_config: false, sync_templates: false)
+    end
+    let(:template_params) { { 'name' => 'promo', 'language' => 'pt_BR' } }
+
+    def campaign_with_template(quality: nil, status: 'APPROVED')
+      channel.message_templates = [{ 'name' => 'promo', 'language' => 'pt_BR', 'status' => status,
+                                     'quality_score' => quality && { 'score' => quality } }]
+      channel.save!(validate: false)
+      build(:campaign, inbox: channel.inbox, account: account, template_params: template_params)
+    end
+
+    it 'refuses a Low, paused or disabled template' do
+      expect(campaign_with_template(quality: 'RED')).not_to be_valid
+      expect(campaign_with_template(status: 'PAUSED')).not_to be_valid
+      expect(campaign_with_template(status: 'DISABLED')).not_to be_valid
+    end
+
+    it 'accepts a Medium or not yet rated template' do
+      expect(campaign_with_template(quality: 'YELLOW')).to be_valid
+      expect(campaign_with_template).to be_valid
+    end
+  end
 end

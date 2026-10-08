@@ -73,8 +73,13 @@ export const getters = {
         return false;
       }
 
-      // Only show approved templates
-      if (template.status.toLowerCase() !== 'approved') {
+      // Approved templates, plus the ones Meta paused or disabled: they stay
+      // visible with their quality warning instead of vanishing.
+      if (
+        !['approved', 'paused', 'disabled'].includes(
+          template.status.toLowerCase()
+        )
+      ) {
         return false;
       }
 

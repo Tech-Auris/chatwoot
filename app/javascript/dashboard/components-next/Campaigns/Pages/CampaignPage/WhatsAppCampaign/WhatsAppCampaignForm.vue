@@ -12,6 +12,12 @@ import ComboBox from 'dashboard/components-next/combobox/ComboBox.vue';
 import TagMultiSelectComboBox from 'dashboard/components-next/combobox/TagMultiSelectComboBox.vue';
 import WhatsAppTemplateParser from 'dashboard/components-next/whatsapp/WhatsAppTemplateParser.vue';
 import AudiencePreviewDialog from 'dashboard/components-next/Campaigns/Pages/CampaignPage/AudiencePreviewDialog.vue';
+import TemplateQualityWarning from 'dashboard/components-next/whatsapp/TemplateQualityWarning.vue';
+import {
+  templateQualityKey,
+  templateQualityDot,
+  templateQualityBlocksCampaign,
+} from 'dashboard/helper/templateQuality';
 import InboxStatusBadge from 'dashboard/components-next/Inbox/InboxStatusBadge.vue';
 import { campaignWarnings } from 'dashboard/helper/whatsappHealth';
 
@@ -135,9 +141,15 @@ const templateOptions = computed(() => {
       .replace(/_/g, ' ')
       .replace(/\b\w/g, l => l.toUpperCase());
 
+    const qualityKey = templateQualityKey(template);
+    const quality = t(`META_TEMPLATES.QUALITY.${qualityKey}`);
+    const lead = `${friendlyName} (${template.language || 'en'}) ·`;
     return {
       value: template.id,
-      label: `${friendlyName} (${template.language || 'en'})`,
+      label: `${lead} ${quality}`,
+      dotLead: lead,
+      dotClass: templateQualityDot(qualityKey),
+      dotLabel: quality,
       template: template,
     };
   });
@@ -262,6 +274,10 @@ watch(
   }
 );
 
+// A Baixa, paused or disabled template would only hurt the number when sent
+// to a whole audience, so the campaign waits for another template.
+const isTemplateBlocked = computed(() =>
+  templateQualityBlocksCampaign(templateQualityKey(selectedTemplate.value))
 const selectedInbox = computed(() =>
   formState.inboxes.value?.find(inbox => inbox.id === state.inboxId)
 );
@@ -296,7 +312,10 @@ const numberWarnings = computed(() =>
 );
 
 const isSubmitDisabled = computed(
-  () => v$.value.$invalid || !hasRequiredTemplateParams.value
+  () =>
+    v$.value.$invalid ||
+    !hasRequiredTemplateParams.value ||
+    isTemplateBlocked.value
 );
 
 const formatToUTCString = localDateTime =>
@@ -408,6 +427,12 @@ watch(
         {{ t('CAMPAIGN.WHATSAPP.CREATE.FORM.TEMPLATE.INFO') }}
       </p>
     </div>
+
+    <TemplateQualityWarning
+      v-if="selectedTemplate"
+      :template="selectedTemplate"
+      :blocked="isTemplateBlocked"
+    />
 
     <!-- Template Parser -->
     <WhatsAppTemplateParser

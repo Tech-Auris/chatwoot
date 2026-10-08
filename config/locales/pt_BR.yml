@@ -103,6 +103,8 @@ pt_BR:
     marketing_ad_account:
       invalid_id: 'Informe o ID da conta de anúncios com números, por exemplo act_1234567890.'
       already_added: 'Esta conta de anúncios já está na lista.'
+    campaigns:
+      template_quality_blocked: 'Envio bloqueado: este modelo está com qualidade Baixa ou foi pausado/desativado pelo Meta. Escolha outro modelo.'
     automation:
       scheduled_message:
         delay_out_of_range: O atraso deve ser entre 1 minuto e 999 dias

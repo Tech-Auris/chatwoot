@@ -7,6 +7,7 @@ import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Popover from 'dashboard/components-next/popover/Popover.vue';
 import WhatsappTemplate from './WhatsappTemplate.vue';
+import TemplateQualityBadge from 'dashboard/components-next/whatsapp/TemplateQualityBadge.vue';
 
 const props = defineProps({
   inboxId: {
@@ -104,7 +105,12 @@ const handleSendMessage = (template, hide) => {
           class="flex flex-col gap-2 p-2 w-full rounded-lg cursor-pointer dark:hover:bg-n-alpha-3 hover:bg-n-alpha-1"
           @click="handleTemplateClick(template)"
         >
-          <span class="text-sm text-n-slate-12">{{ template.name }}</span>
+          <span class="flex items-center justify-between gap-2">
+            <span class="text-sm text-n-slate-12 truncate">
+              {{ template.name }}
+            </span>
+            <TemplateQualityBadge :template="template" />
+          </span>
           <p class="mb-0 text-xs leading-5 text-n-slate-11 line-clamp-2">
             {{ getTemplateBody(template) }}
           </p>
