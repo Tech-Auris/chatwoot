@@ -774,6 +774,7 @@
     "DESCRIPTION": "Audit of assignments made by Auris AI.",
     "ALL_INBOXES": "All inboxes",
     "DATE_BASIS": {
+      "LABEL": "Type:",
       "TRANSFER": "By transfer date",
       "LEAD_CREATED": "By lead creation date"
     },
@@ -789,7 +790,7 @@
       "WITHOUT_HUMAN_REPLY": "💬 No human reply yet"
     },
     "COLUMNS": {
-      "DATETIME": "Transfer date / time",
+      "DATETIME": "Handover",
       "LEAD_CREATED": "Lead created",
       "CONVERSATION": "Conversation",
       "INBOX": "Inbox",

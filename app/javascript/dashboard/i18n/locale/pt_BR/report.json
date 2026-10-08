@@ -774,6 +774,7 @@
     "DESCRIPTION": "Auditoria das atribuições feitas pela IA Auris.",
     "ALL_INBOXES": "Todas as caixas",
     "DATE_BASIS": {
+      "LABEL": "Tipo:",
       "TRANSFER": "Por data da transferência",
       "LEAD_CREATED": "Por data de criação do lead"
     },
@@ -789,7 +790,7 @@
       "WITHOUT_HUMAN_REPLY": "💬 Sem resposta humana ainda"
     },
     "COLUMNS": {
-      "DATETIME": "Data / Hora da transferência",
+      "DATETIME": "Transferência",
       "LEAD_CREATED": "Criação do lead",
       "CONVERSATION": "Conversa",
       "INBOX": "Inbox",

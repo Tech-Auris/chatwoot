@@ -171,7 +171,35 @@ const closeOnlineModal = () => {
     :header-description="$t('IA_HUMAN_DISTRIBUTION_REPORT.DESCRIPTION')"
   />
 
-  <div class="flex flex-col w-full gap-3 lg:flex-row mb-4">
+  <div class="flex flex-col w-full gap-3 lg:flex-row lg:items-center mb-4">
+    <fieldset class="flex items-center gap-4 text-sm text-n-slate-12">
+      <legend class="sr-only">
+        {{ $t('IA_HUMAN_DISTRIBUTION_REPORT.DATE_BASIS.LABEL') }}
+      </legend>
+      <span aria-hidden="true" class="text-n-slate-11">
+        {{ $t('IA_HUMAN_DISTRIBUTION_REPORT.DATE_BASIS.LABEL') }}
+      </span>
+      <label
+        v-for="basis in ['transfer', 'lead_created']"
+        :key="basis"
+        class="flex items-center gap-2 cursor-pointer whitespace-nowrap"
+      >
+        <input
+          v-model="dateBasis"
+          type="radio"
+          name="date-basis"
+          :value="basis"
+          class="m-0"
+          @change="onDateBasisChange"
+        />
+        {{
+          basis === 'transfer'
+            ? $t('IA_HUMAN_DISTRIBUTION_REPORT.DATE_BASIS.TRANSFER')
+            : $t('IA_HUMAN_DISTRIBUTION_REPORT.DATE_BASIS.LEAD_CREATED')
+        }}
+      </label>
+    </fieldset>
+
     <select
       v-model="inboxId"
       class="bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg pl-3 pr-9 py-2 text-sm text-n-slate-12 focus:outline-n-brand lg:w-64"
@@ -182,19 +210,6 @@ const closeOnlineModal = () => {
       </option>
       <option v-for="inbox in inboxes" :key="inbox.id" :value="inbox.id">
         {{ inbox.name }}
-      </option>
-    </select>
-
-    <select
-      v-model="dateBasis"
-      class="bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg pl-3 pr-9 py-2 text-sm text-n-slate-12 focus:outline-n-brand lg:w-64"
-      @change="onDateBasisChange"
-    >
-      <option value="transfer">
-        {{ $t('IA_HUMAN_DISTRIBUTION_REPORT.DATE_BASIS.TRANSFER') }}
-      </option>
-      <option value="lead_created">
-        {{ $t('IA_HUMAN_DISTRIBUTION_REPORT.DATE_BASIS.LEAD_CREATED') }}
       </option>
     </select>
 
