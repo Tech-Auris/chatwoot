@@ -81,6 +81,7 @@ Rails.application.routes.draw do
           end
           resources :agents, only: [:index, :create, :update, :destroy] do
             post :bulk_create, on: :collection
+            get :memberships, on: :member
           end
           get 'media_hub', to: 'media_hub#index', defaults: { format: :json }
           delete 'media_hub', to: 'media_hub#destroy', defaults: { format: :json }

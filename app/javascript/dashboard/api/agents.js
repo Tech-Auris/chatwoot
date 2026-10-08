@@ -7,6 +7,10 @@ class Agents extends ApiClient {
     super('agents', { accountScoped: true });
   }
 
+  memberships(id) {
+    return axios.get(`${this.url}/${id}/memberships`);
+  }
+
   bulkInvite({ emails }) {
     return axios.post(`${this.url}/bulk_create`, {
       emails,

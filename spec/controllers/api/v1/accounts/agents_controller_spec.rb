@@ -140,6 +140,47 @@ RSpec.describe 'Agents API', type: :request do
         expect(response_data['auto_offline']).to be(false)
         expect(other_agent.account_users.first.role).to eq('administrator')
       end
+
+      it 'sets the inboxes and teams the agent belongs to, in the inbox and team member records' do
+        kept_inbox = create(:inbox, account: account)
+        dropped_inbox = create(:inbox, account: account)
+        create(:inbox_member, inbox: kept_inbox, user: other_agent)
+        create(:inbox_member, inbox: dropped_inbox, user: other_agent)
+        new_inbox = create(:inbox, account: account)
+        team = create(:team, account: account)
+
+        put "/api/v1/accounts/#{account.id}/agents/#{other_agent.id}",
+            params: { inbox_ids: [kept_inbox.id, new_inbox.id], team_ids: [team.id] },
+            headers: admin.create_new_auth_token,
+            as: :json
+
+        expect(response).to have_http_status(:success)
+        expect(InboxMember.where(user: other_agent).pluck(:inbox_id)).to contain_exactly(kept_inbox.id, new_inbox.id)
+        expect(team.members).to contain_exactly(other_agent)
+      end
+
+      it 'keeps the inboxes and teams when the call does not send them' do
+        inbox = create(:inbox, account: account)
+        create(:inbox_member, inbox: inbox, user: other_agent)
+
+        put "/api/v1/accounts/#{account.id}/agents/#{other_agent.id}",
+            params: { name: 'Renamed' },
+            headers: admin.create_new_auth_token,
+            as: :json
+
+        expect(InboxMember.where(user: other_agent).pluck(:inbox_id)).to eq([inbox.id])
+      end
+
+      it 'lists the inboxes and teams the agent is in' do
+        inbox = create(:inbox, account: account)
+        create(:inbox_member, inbox: inbox, user: other_agent)
+
+        get "/api/v1/accounts/#{account.id}/agents/#{other_agent.id}/memberships",
+            headers: admin.create_new_auth_token,
+            as: :json
+
+        expect(response.parsed_body).to eq('inbox_ids' => [inbox.id], 'team_ids' => [])
+      end
     end
   end
 
@@ -176,6 +217,17 @@ RSpec.describe 'Agents API', type: :request do
         expect(response).to conform_schema(200)
         expect(response.parsed_body['email']).to eq(params[:email])
         expect(account.users.last.name).to eq('NewUser')
+      end
+
+      it 'puts the new agent in the chosen inboxes' do
+        inbox = create(:inbox, account: account)
+
+        post "/api/v1/accounts/#{account.id}/agents",
+             params: params.merge(email: Faker::Internet.email, inbox_ids: [inbox.id]),
+             headers: admin.create_new_auth_token,
+             as: :json
+
+        expect(inbox.members.pluck(:email)).to eq([response.parsed_body['email']])
       end
     end
   end
