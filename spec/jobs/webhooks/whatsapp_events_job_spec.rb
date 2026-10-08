@@ -333,6 +333,19 @@ RSpec.describe Webhooks::WhatsappEventsJob do
       expect(service).to have_received(:perform)
     end
 
+    it 'stores the new quality on the template when Meta reports a quality change' do
+      channel.message_templates = [{ 'id' => '42', 'name' => 'confirmacao_agenda', 'status' => 'APPROVED' }]
+      channel.save!(validate: false)
+      template_payload[:entry][0][:changes][0] = {
+        field: 'message_template_quality_update',
+        value: { previous_quality_score: 'GREEN', new_quality_score: 'RED', message_template_id: 42 }
+      }
+
+      job.perform_now(template_payload)
+
+      expect(channel.reload.message_templates.first['quality_score']).to include('score' => 'RED')
+    end
+
     it 'skips the phone-number channel lookup entirely (no "Inactive WhatsApp channel" warning)' do
       allow(Whatsapp::TemplateStatusUpdateService).to receive(:new)
         .and_return(instance_double(Whatsapp::TemplateStatusUpdateService, perform: true))

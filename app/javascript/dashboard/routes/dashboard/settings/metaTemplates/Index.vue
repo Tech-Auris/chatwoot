@@ -12,6 +12,8 @@ import Button from 'dashboard/components-next/button/Button.vue';
 import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
 import Spinner from 'shared/components/Spinner.vue';
 import StatusBadge from './components/StatusBadge.vue';
+import TemplateQualityBadge from 'dashboard/components-next/whatsapp/TemplateQualityBadge.vue';
+import { templateScore } from 'dashboard/helper/templateQuality';
 import TemplateDetailDrawer from './components/TemplateDetailDrawer.vue';
 
 import MetaTemplatesAPI from 'dashboard/api/metaTemplates';
@@ -61,6 +63,7 @@ const inboxesResolved = ref(inboxes.value.length > 0);
 const search = ref('');
 const statusFilter = ref('ALL');
 const categoryFilter = ref('ALL');
+const qualityFilter = ref('ALL');
 const selectedTemplate = ref(null);
 const drawerOpen = ref(false);
 
@@ -74,6 +77,7 @@ const STATUS_OPTIONS = [
   'IN_APPEAL',
 ];
 const CATEGORY_OPTIONS = ['ALL', 'MARKETING', 'UTILITY', 'AUTHENTICATION'];
+const QUALITY_OPTIONS = ['ALL', 'GREEN', 'YELLOW', 'RED', 'UNKNOWN'];
 
 // Client-side filter chain: status → category → free-text search on
 // name. The API returns everything in one go so all filtering stays
@@ -91,6 +95,9 @@ const filteredTemplates = computed(() => {
     list = list.filter(
       t2 => (t2.category || '').toUpperCase() === categoryFilter.value
     );
+  }
+  if (qualityFilter.value !== 'ALL') {
+    list = list.filter(t2 => templateScore(t2) === qualityFilter.value);
   }
   if (search.value.trim()) {
     list = picoSearch(list, search.value.trim(), ['name', 'language']);
@@ -380,6 +387,17 @@ onActivated(() => {
                 </option>
               </select>
             </label>
+            <label class="flex flex-col gap-1 text-xs text-n-slate-11">
+              {{ t('META_TEMPLATES.FILTERS.QUALITY') }}
+              <select
+                v-model="qualityFilter"
+                class="bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg pl-3 pr-9 h-10 text-sm text-n-slate-12 focus:outline-n-brand min-w-44"
+              >
+                <option v-for="q in QUALITY_OPTIONS" :key="q" :value="q">
+                  {{ t(`META_TEMPLATES.QUALITY.${q}`) }}
+                </option>
+              </select>
+            </label>
             <!-- Native input with the exact same class shape used on the
                  three selects. The Chatwoot `<Input>` component wraps
                  itself in an extra flex container that adds spacing and
@@ -449,6 +467,9 @@ onActivated(() => {
                 <th class="text-left px-4 py-2 font-medium">
                   {{ t('META_TEMPLATES.TABLE.STATUS') }}
                 </th>
+                <th class="text-left px-4 py-2 font-medium">
+                  {{ t('META_TEMPLATES.TABLE.QUALITY') }}
+                </th>
               </tr>
             </thead>
             <tbody class="divide-y divide-n-weak">
@@ -469,6 +490,9 @@ onActivated(() => {
                 </td>
                 <td class="px-4 py-3">
                   <StatusBadge :status="template.status" />
+                </td>
+                <td class="px-4 py-3">
+                  <TemplateQualityBadge :template="template" score-only />
                 </td>
               </tr>
             </tbody>

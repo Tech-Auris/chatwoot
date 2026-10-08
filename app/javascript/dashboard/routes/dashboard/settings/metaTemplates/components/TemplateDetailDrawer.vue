@@ -3,6 +3,9 @@ import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useMapGetter } from 'dashboard/composables/store';
 import StatusBadge from './StatusBadge.vue';
+import TemplateQualityBadge from 'dashboard/components-next/whatsapp/TemplateQualityBadge.vue';
+import TemplateQualityWarning from 'dashboard/components-next/whatsapp/TemplateQualityWarning.vue';
+import { templateQualityDate } from 'dashboard/helper/templateQuality';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Spinner from 'shared/components/Spinner.vue';
 import MetaTemplatesAPI from 'dashboard/api/metaTemplates';
@@ -147,6 +150,11 @@ watch(
   },
   { immediate: true }
 );
+
+const qualityDate = computed(() => {
+  const date = templateQualityDate(props.template);
+  return date ? date.toLocaleDateString() : '';
+});
 </script>
 
 <template>
@@ -181,6 +189,16 @@ watch(
       </header>
 
       <div class="flex-1 overflow-y-auto p-5 space-y-4">
+        <div class="flex flex-wrap items-center gap-2 text-xs text-n-slate-11">
+          {{ t('META_TEMPLATES.TABLE.QUALITY') }}
+          <TemplateQualityBadge :template="template" score-only />
+          <span v-if="qualityDate">
+            {{
+              t('META_TEMPLATES.QUALITY.EVALUATED_AT', { date: qualityDate })
+            }}
+          </span>
+        </div>
+        <TemplateQualityWarning :template="template" />
         <div
           v-if="rejectedReason"
           class="px-3 py-2 rounded-md bg-n-ruby-3 text-n-ruby-12 text-sm"
