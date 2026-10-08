@@ -392,6 +392,16 @@ watch(previewContent, () => {
       <span>{{ t('SCHEDULED_MESSAGES.ITEM.HELD_REASON') }}</span>
     </div>
 
+    <div
+      v-if="
+        scheduledMessage.status === 'failed' && scheduledMessage.failure_reason
+      "
+      class="flex items-start gap-1.5 rounded-lg bg-n-ruby-2 px-3 py-2 text-xs text-n-ruby-11"
+    >
+      <Icon icon="i-lucide-x-circle" class="size-3 shrink-0 mt-0.5" />
+      <span>{{ scheduledMessage.failure_reason }}</span>
+    </div>
+
     <div v-if="hasPreviewContent && collapsible && showToggle">
       <Button
         variant="faded"
@@ -501,6 +511,7 @@ watch(previewContent, () => {
           </span>
         </div>
         <span
+          v-tooltip.top="child.failure_reason"
           class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium shrink-0"
           :class="
             child.status === 'sent'

@@ -27,7 +27,6 @@
       "SEARCHING": "Pesquisando…",
       "INBOX_LABEL": "Via",
       "INBOX_PLACEHOLDER": "Selecione uma caixa de entrada",
-      "INBOX_WARNING": "A mensagem só sai se o número estiver funcionando no horário agendado.",
       "INBOX_UNREACHABLE": "Este contato não está em nenhuma caixa de entrada onde você tem acesso.",
       "DONE": "Mensagem agendada com sucesso."
     }
