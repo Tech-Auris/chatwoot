@@ -111,13 +111,16 @@ const audienceList = computed(() =>
   mapToOptions(formState.labels.value, 'id', 'title')
 );
 
-// Each number with its status and quality, as in the pencil.
+// Campaigns go out through Meta's templates, so only official API numbers
+// are offered, each with its status and quality as in the pencil.
 const inboxOptions = computed(() =>
-  (formState.inboxes.value || []).map(inbox => ({
-    value: inbox.id,
-    label: inbox.name,
-    trailing: { component: markRaw(InboxStatusBadge), props: { inbox } },
-  }))
+  (formState.inboxes.value || [])
+    .filter(inbox => inbox.provider === 'whatsapp_cloud')
+    .map(inbox => ({
+      value: inbox.id,
+      label: inbox.name,
+      trailing: { component: markRaw(InboxStatusBadge), props: { inbox } },
+    }))
 );
 
 const templateOptions = computed(() => {
