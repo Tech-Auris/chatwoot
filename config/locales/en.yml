@@ -35,12 +35,6 @@ en:
   whatsapp_send_block:
     disconnected: "This number is disconnected."
     connecting: "This number is reconnecting."
-    banned: "This number was banned by WhatsApp."
-    number_disconnected: "This number is disconnected from the WhatsApp official API."
-    deleted: "This number was removed from the WhatsApp Business account."
-    pending: "This number's WhatsApp registration is not complete."
-    restricted: "This number reached the WhatsApp limit for new conversations."
-    meta_blocked: "Meta blocked sending messages from this number through the API, which is what AurisChat uses. If the number uses coexistence, the WhatsApp Business app on the phone may keep sending normally. See why in Settings → Inboxes → Account health."
   scheduled_messages:
     not_sent: 'The scheduled message was not sent: %{reason}'
   hello: 'Hello world'

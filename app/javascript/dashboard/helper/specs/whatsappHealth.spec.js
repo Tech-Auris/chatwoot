@@ -3,6 +3,7 @@ import {
   qualityStyle,
   accountStatusDot,
   sendBlockReason,
+  sendWarningReason,
 } from '../whatsappHealth';
 
 describe('whatsappHealth', () => {
@@ -46,16 +47,18 @@ describe('whatsappHealth', () => {
       expect(sendBlockReason(baileys(undefined))).toBe('DISCONNECTED');
     });
 
-    it('stops an official number that is banned, off or restricted', () => {
-      expect(sendBlockReason(cloud({ phone_status: 'BANNED' }))).toBe('BANNED');
-      expect(sendBlockReason(cloud({ phone_status: 'DISCONNECTED' }))).toBe(
+    it('warns about an official number that is banned, off or restricted', () => {
+      expect(sendWarningReason(cloud({ phone_status: 'BANNED' }))).toBe(
+        'BANNED'
+      );
+      expect(sendWarningReason(cloud({ phone_status: 'DISCONNECTED' }))).toBe(
         'NUMBER_DISCONNECTED'
       );
-      expect(sendBlockReason(cloud({ phone_status: 'RESTRICTED' }))).toBe(
+      expect(sendWarningReason(cloud({ phone_status: 'RESTRICTED' }))).toBe(
         'RESTRICTED'
       );
       expect(
-        sendBlockReason(
+        sendWarningReason(
           cloud({ phone_status: 'CONNECTED', can_send_message: 'BLOCKED' })
         )
       ).toBe('META_BLOCKED');
@@ -64,9 +67,18 @@ describe('whatsappHealth', () => {
     it('lets a restricted number reply in an open conversation', () => {
       const restricted = cloud({ phone_status: 'RESTRICTED' });
 
-      expect(sendBlockReason(restricted)).toBe('RESTRICTED');
+      expect(sendWarningReason(restricted)).toBe('RESTRICTED');
       expect(
-        sendBlockReason(restricted, { startsConversation: false })
+        sendWarningReason(restricted, { startsConversation: false })
+      ).toBeNull();
+    });
+
+    // Meta has accepted sends while reporting the number as blocked.
+    it('never stops an official number, whatever Meta reports', () => {
+      expect(
+        sendBlockReason(
+          cloud({ phone_status: 'BANNED', can_send_message: 'BLOCKED' })
+        )
       ).toBeNull();
     });
 

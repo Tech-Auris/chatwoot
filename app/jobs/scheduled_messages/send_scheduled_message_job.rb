@@ -46,12 +46,11 @@ class ScheduledMessages::SendScheduledMessageJob < ApplicationJob
     Messages::MessageBuilder.new(message_author(scheduled_message), scheduled_message.conversation, params).perform
   end
 
-  # The conversation is already open, so a RESTRICTED number may still send.
   def number_block_message(scheduled_message)
     channel = scheduled_message.inbox.channel
     return unless channel.respond_to?(:send_block_message)
 
-    @number_block_message ||= channel.send_block_message(starts_conversation: false)
+    @number_block_message ||= channel.send_block_message
   end
 
   # A number that cannot send at the scheduled time would only fail the

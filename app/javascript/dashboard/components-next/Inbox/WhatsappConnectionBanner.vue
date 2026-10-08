@@ -4,15 +4,16 @@ import { useI18n } from 'vue-i18n';
 import { useStore } from 'dashboard/composables/store';
 import { useAlert } from 'dashboard/composables';
 import { useAdmin } from 'dashboard/composables/useAdmin';
-import { sendBlockReason } from 'dashboard/helper/whatsappHealth';
+import { sendWarningReason } from 'dashboard/helper/whatsappHealth';
 import Banner from 'dashboard/components/ui/Banner.vue';
 import WhatsappLinkDeviceModal from 'dashboard/routes/dashboard/settings/inbox/components/WhatsappLinkDeviceModal.vue';
 
-// Why messages cannot go out of this WhatsApp number right now. A Baileys /
-// Z-API number gets the way to connect it right there: the QR code for admins
-// and managers, a reconnect attempt for everyone else. An official API number
-// gets the reason; Meta's own detail stays on Saúde da conta. Renders nothing
-// while the number can send.
+// Why messages may not go out of this WhatsApp number right now. A Baileys /
+// Z-API number that is not connected cannot send (red), and gets the way to
+// connect it right there: the QR code for admins and managers, a reconnect
+// attempt for everyone else. On an official API number Meta's status is only
+// a warning (amber): Meta has accepted sends while reporting it blocked.
+// Renders nothing while the number is fine.
 const props = defineProps({
   inbox: {
     type: Object,
@@ -38,7 +39,9 @@ const isUnofficial = computed(() =>
 );
 
 const reason = computed(() =>
-  sendBlockReason(props.inbox, { startsConversation: props.startsConversation })
+  sendWarningReason(props.inbox, {
+    startsConversation: props.startsConversation,
+  })
 );
 
 const message = computed(() => {
@@ -83,7 +86,7 @@ const onAction = () => {
       :inbox="inbox"
     />
     <Banner
-      color-scheme="alert"
+      :color-scheme="isUnofficial ? 'alert' : 'warning'"
       class="rounded-lg overflow-hidden"
       :banner-message="message"
       :has-action-button="isUnofficial"
