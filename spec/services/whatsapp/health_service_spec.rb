@@ -29,10 +29,14 @@ RSpec.describe Whatsapp::HealthService do
       health_status: {
         can_send_message: 'BLOCKED',
         entities: [
-          { entity_type: 'PHONE_NUMBER', id: 'phone-123', can_send_message: 'AVAILABLE' },
+          { entity_type: 'PHONE_NUMBER', id: 'phone-123', can_send_message: 'LIMITED',
+            errors: [{ error_code: 138_024, error_description: 'WhatsApp Business calling cannot use SIP because it is not enabled' }],
+            additional_info: ['Your display name has not been approved yet.'] },
           { entity_type: 'WABA', id: '123456789', can_send_message: 'BLOCKED',
             errors: [{ error_code: 141_010, error_description: 'The Business has not passed business verification.',
-                       possible_solution: 'Visit business settings and start or resolve the business verification request.' }] }
+                       possible_solution: 'Visit business settings and start or resolve the business verification request.' }] },
+          { entity_type: 'APP', id: 'app-1', can_send_message: 'AVAILABLE',
+            errors: [{ error_code: 138_025, error_description: 'This app cannot use SIP for WhatsApp Business calling' }] }
         ]
       }
     }.to_json
@@ -103,8 +107,10 @@ RSpec.describe Whatsapp::HealthService do
       result = service.fetch_health_status
 
       expect(result[:can_send_message]).to eq('BLOCKED')
-      expect(result[:health_errors].first).to include('error_code' => 141_010,
-                                                      'error_description' => 'The Business has not passed business verification.')
+      # Calling (SIP) errors say nothing about sending messages, so they are left out.
+      expect(result[:health_errors].pluck('error_description')).to eq(
+        ['Your display name has not been approved yet.', 'The Business has not passed business verification.']
+      )
     end
 
     it 'still returns the phone health data when the WABA call fails' do

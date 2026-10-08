@@ -129,14 +129,23 @@ class Whatsapp::HealthService
   # Meta's own answer to "can this number send now?", covering the number,
   # the WABA, the business and the app together. Unlike
   # `account_review_status`, a REJECTED review does not mean the number
-  # stopped sending. The errors are every blocking reason Meta lists, with
-  # Meta's own fix for it.
+  # stopped sending. The errors are the reasons Meta gives on the parts that
+  # block or limit sending, with Meta's own fix, plus the notes it adds there
+  # (e.g. a display name still waiting for approval).
   def send_health(health_status)
-    errors = Array(health_status&.dig('entities')).flat_map { |entity| Array(entity['errors']) }
+    entities = Array(health_status&.dig('entities')).reject { |entity| entity['can_send_message'] == 'AVAILABLE' }
     {
       can_send_message: health_status&.dig('can_send_message'),
-      health_errors: errors.map { |error| error.slice('error_code', 'error_description', 'possible_solution') }
+      health_errors: entities.flat_map { |entity| sending_errors(entity) }
     }
+  end
+
+  # Voice calling (SIP, codes 138xxx) has its own errors on the same parts;
+  # they say nothing about sending messages.
+  def sending_errors(entity)
+    errors = Array(entity['errors']).reject { |error| error['error_code'].to_s.start_with?('138') }
+    notes = Array(entity['additional_info']).map { |info| { 'error_description' => info } }
+    errors.map { |error| error.slice('error_code', 'error_description', 'possible_solution') } + notes
   end
 
   def build_expected_webhook_url

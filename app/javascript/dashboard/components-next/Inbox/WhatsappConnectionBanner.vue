@@ -62,8 +62,10 @@ const message = computed(() => {
           'CONVERSATION.INBOX.WHATSAPP_PROVIDER_CONNECTION.NOT_CONNECTED_CONTACT_ADMIN'
         );
   }
+  // Meta's reason, then that it only stops the API: on a coexistence number
+  // the WhatsApp Business app keeps sending, which otherwise looks like a bug.
   if (reason.value === 'META_BLOCKED' && metaMessage.value) {
-    return metaMessage.value;
+    return `${metaMessage.value} ${t('COMPOSE_NEW_CONVERSATION.FORM.INBOX_BLOCKED.API_ONLY_NOTE')}`;
   }
   return t(`COMPOSE_NEW_CONVERSATION.FORM.INBOX_BLOCKED.${reason.value}`);
 });
