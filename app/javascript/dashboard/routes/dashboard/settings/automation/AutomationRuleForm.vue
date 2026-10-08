@@ -115,9 +115,23 @@ const eventName = computed(() => automation.value?.event_name);
 
 const funnelStages = useMapGetter('funnelStages/getFunnelStages');
 
-const offersLossReason = computed(() =>
-  offersLossReasonCondition(automation.value?.conditions, funnelStages.value)
-);
+// The loss reason only means something on a lost conversation, so it is
+// offered once a condition picks a stage that asks for one (Perdido) — and
+// kept for a rule that already uses it.
+const offersLossReason = computed(() => {
+  const lostStageIds = (funnelStages.value || [])
+    .filter(stage => stage.requires_loss_reason)
+    .map(stage => stage.id);
+  return (automation.value?.conditions || []).some(
+    condition =>
+      condition.attribute_key === 'loss_reason_id' ||
+      (condition.attribute_key === 'funnel_stage_id' &&
+        condition.filter_operator === 'equal_to' &&
+        [condition.values || []]
+          .flat()
+          .some(value => lostStageIds.includes(value?.id ?? value)))
+  );
+});
 
 const filterTypes = computed(() => {
   const event = eventName.value;

@@ -29,33 +29,55 @@ export const accountStatusDot = status => {
   return 'bg-n-ruby-9';
 };
 
-// Statuses that stop a new conversation from going out of a number (the
-// pencil). Meta saying the number cannot send (BLOCKED) wins; the account
-// review status does not block — a REJECTED review can sit on a number that
-// sends normally. Low quality alone does not block either. A number with no
-// health read yet is let through.
-const BLOCKING_PHONE_STATUSES = {
-  BANNED: 'BANNED',
-  DISCONNECTED: 'NUMBER_DISCONNECTED',
-  DELETED: 'DELETED',
-  PENDING: 'PENDING',
-  UNVERIFIED: 'PENDING',
-  RESTRICTED: 'RESTRICTED',
+// Why sending from this number is stopped: only a Baileys / Z-API phone that
+// is not connected, whose message really cannot go out. Meta's statuses on an
+// official number are shown as the number's status badges, never as a block
+// — Meta has accepted sends while reporting the number as blocked.
+export const sendBlockReason = inbox => {
+  if (!['baileys', 'zapi'].includes(inbox?.provider)) return null;
+
+  const { connection } = inbox.provider_connection || {};
+  if (connection === 'open') return null;
+  return connection === 'connecting' ? 'CONNECTING' : 'DISCONNECTED';
 };
 
-export const sendBlockReason = inbox => {
-  if (inbox?.channel_type !== 'Channel::Whatsapp') return null;
+// New conversations a number may open in 24h, from Meta's
+// `messaging_limit_tier`. Unlimited and unknown tiers give no limit.
+const DAILY_LIMITS = {
+  TIER_50: 50,
+  TIER_250: 250,
+  TIER_1K: 1000,
+  TIER_2K: 2000,
+  TIER_10K: 10000,
+  TIER_100K: 100000,
+};
 
-  const connection = inbox.provider_connection || {};
-  if (['baileys', 'zapi'].includes(inbox.provider)) {
-    if (connection.connection === 'open') return null;
-    return connection.connection === 'connecting'
-      ? 'CONNECTING'
-      : 'DISCONNECTED';
+// What a campaign should know about its number before going out, without
+// blocking it: Meta limiting the sends, the quality rating, and an audience
+// past the daily limit.
+export const campaignWarnings = (inbox, audienceCount = 0) => {
+  const health = inbox?.provider_connection?.health;
+  if (!health) return [];
+
+  const warnings = [];
+  if (health.can_send_message === 'LIMITED') {
+    warnings.push({
+      key: 'LIMITED',
+      details: (health.health_errors || []).map(
+        error => error.error_description
+      ),
+    });
   }
-
-  const health = connection.health;
-  if (!health) return null;
-  if (health.can_send_message === 'BLOCKED') return 'META_BLOCKED';
-  return BLOCKING_PHONE_STATUSES[health.phone_status] || null;
+  if (health.quality_rating === 'RED') warnings.push({ key: 'QUALITY_LOW' });
+  if (health.quality_rating === 'YELLOW') {
+    warnings.push({ key: 'QUALITY_MEDIUM' });
+  }
+  const limit = DAILY_LIMITS[health.messaging_limit_tier];
+  if (limit && audienceCount > limit) {
+    warnings.push({
+      key: 'OVER_DAILY_LIMIT',
+      params: { count: audienceCount, limit },
+    });
+  }
+  return warnings;
 };

@@ -5,6 +5,8 @@ import { useI18n } from 'vue-i18n';
 import { useMessageContext } from './provider.js';
 import { hasOneDayPassed } from 'shared/helpers/timeHelper';
 import { ORIENTATION, MESSAGE_STATUS } from './constants';
+import { useMapGetter } from 'dashboard/composables/store';
+import { sendBlockReason } from 'dashboard/helper/whatsappHealth';
 
 defineProps({
   error: { type: String, required: true },
@@ -16,6 +18,19 @@ const { orientation, status, createdAt, content, attachments } =
   useMessageContext();
 
 const { t } = useI18n();
+
+// Retrying through a Baileys / Z-API phone that is not connected would only
+// fail again: the button stays off, with the reason in its tooltip.
+const currentChat = useMapGetter('getSelectedChat');
+const getInbox = useMapGetter('inboxes/getInbox');
+const retryBlockReason = computed(() =>
+  sendBlockReason(getInbox.value(currentChat.value?.inbox_id))
+);
+const retryBlockedTooltip = computed(() =>
+  retryBlockReason.value
+    ? t(`COMPOSE_NEW_CONVERSATION.FORM.INBOX_BLOCKED.${retryBlockReason.value}`)
+    : ''
+);
 
 const canRetry = computed(() => {
   const hasContent = content.value !== null;
@@ -46,14 +61,15 @@ const canRetry = computed(() => {
         {{ error }}
       </div>
     </div>
-    <button
-      v-if="canRetry"
-      type="button"
-      :disabled="status !== MESSAGE_STATUS.FAILED"
-      class="bg-n-alpha-2 rounded-md size-5 grid place-content-center cursor-pointer"
-      @click="emit('retry')"
-    >
-      <Icon icon="i-lucide-refresh-ccw" class="text-n-ruby-11 size-[14px]" />
-    </button>
+    <span v-if="canRetry" v-tooltip.top="retryBlockedTooltip">
+      <button
+        type="button"
+        :disabled="status !== MESSAGE_STATUS.FAILED || !!retryBlockReason"
+        class="bg-n-alpha-2 rounded-md size-5 grid place-content-center cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+        @click="emit('retry')"
+      >
+        <Icon icon="i-lucide-refresh-ccw" class="text-n-ruby-11 size-[14px]" />
+      </button>
+    </span>
   </div>
 </template>
