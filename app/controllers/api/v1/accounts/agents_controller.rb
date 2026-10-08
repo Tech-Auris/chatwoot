@@ -20,11 +20,19 @@ class Api::V1::Accounts::AgentsController < Api::V1::Accounts::BaseController
     )
 
     @agent = builder.perform
+    update_memberships
   end
 
   def update
     @agent.update!(agent_params.slice(:name).compact)
     @agent.current_account_user.update!(agent_params.slice(*account_user_attributes).compact)
+    update_memberships
+  end
+
+  # The inboxes and teams the agent is in, for the edit form.
+  def memberships
+    service = memberships_service
+    render json: { inbox_ids: service.inbox_ids, team_ids: service.team_ids }
   end
 
   def destroy
@@ -61,6 +69,19 @@ class Api::V1::Accounts::AgentsController < Api::V1::Accounts::BaseController
 
   def check_authorization
     super(User)
+  end
+
+  def memberships_service
+    Agents::MembershipsService.new(account: Current.account, user: @agent)
+  end
+
+  # Only the lists the form sent: an API call without them keeps the agent's
+  # inboxes and teams as they are.
+  def update_memberships
+    lists = params.slice(:inbox_ids, :team_ids).permit(inbox_ids: [], team_ids: [])
+    return if lists.empty?
+
+    memberships_service.assign(inbox_ids: lists[:inbox_ids], team_ids: lists[:team_ids])
   end
 
   def fetch_agent

@@ -123,6 +123,20 @@
           "INPUT": "Search for agents"
         }
       }
+    },
+    "MEMBERSHIPS": {
+      "INBOXES": {
+        "LABEL": "Inboxes",
+        "PLACEHOLDER": "Add inbox…",
+        "EMPTY": "The account has no inboxes."
+      },
+      "TEAMS": {
+        "LABEL": "Teams",
+        "PLACEHOLDER": "Add team…",
+        "EMPTY": "The account has no teams."
+      },
+      "SELECT_ALL": "Select all",
+      "CLEAR": "Clear"
     }
   }
 }
