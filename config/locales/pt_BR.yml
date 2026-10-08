@@ -107,6 +107,8 @@ pt_BR:
       scheduled_message:
         delay_out_of_range: O atraso deve ser entre 1 minuto e 999 dias
         content_attachment_or_template_required: A mensagem agendada deve ter conteúdo, anexo ou template
+      funnel_move:
+        loss_reason_required: Mover para esta etapa do funil exige um motivo da perda
     saml:
       feature_not_enabled: SAML não está habilitado para esta conta
       sso_not_enabled: O SSO via SAML não está habilitado para esta instalação

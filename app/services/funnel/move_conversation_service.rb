@@ -71,8 +71,9 @@ class Funnel::MoveConversationService
     loss_reason_id.present? && loss_reason.nil?
   end
 
+  # Leaving the lost stage clears the reason, so rules never read a stale one.
   def apply_stage_change!
-    conversation.update!(funnel_stage_id: target_stage.id)
+    conversation.update!(funnel_stage_id: target_stage.id, loss_reason_id: target_stage.requires_loss_reason? ? loss_reason&.id : nil)
   end
 
   # Fires marketing-conversion triggers configured for this funnel stage.

@@ -58,6 +58,18 @@ RSpec.describe Funnel::MoveConversationService do
     move(target_stage_id: lost.id, loss_reason_id: reason.id)
 
     expect(conversation.reload.funnel_stage).to eq(lost)
+    expect(conversation.loss_reason).to eq(reason)
+  end
+
+  # Rules read the reason off the conversation; once it leaves the lost stage
+  # the old reason must not keep matching them.
+  it 'clears the loss reason when the conversation leaves the lost stage' do
+    lost = create(:funnel_stage, name: 'Perdido', requires_loss_reason: true)
+    move(target_stage_id: lost.id, loss_reason_id: create(:loss_reason).id)
+
+    move(target_stage_id: stage.id)
+
+    expect(conversation.reload.loss_reason).to be_nil
   end
 
   # Fase 2 · PR B: moving into a stage fires the marketing-conversion trigger

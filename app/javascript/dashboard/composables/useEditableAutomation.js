@@ -87,6 +87,16 @@ export function useEditableAutomation() {
         [...params].includes(item.id)
       );
     }
+    if (inputType === 'funnel_stage') {
+      const [stageId, lossReasonId] = params;
+      const stage = getActionDropdownValues(action.action_name).find(
+        item => item.id === stageId
+      );
+      const lossReason = getConditionDropdownValues('loss_reason_id').find(
+        item => item.id === lossReasonId
+      );
+      return [stage, lossReason].filter(Boolean);
+    }
     if (inputType === 'scheduled_message') {
       // Keep as array to maintain consistent format with how the component emits updates
       return params[0] ? [params[0]] : [];

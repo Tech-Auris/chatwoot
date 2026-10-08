@@ -187,4 +187,26 @@ RSpec.describe AutomationRule do
       expect(rule.errors[:actions]).to be_present
     end
   end
+
+  describe 'move_to_funnel_stage action validation' do
+    let(:account) { create(:account) }
+    let(:lost) { create(:funnel_stage, name: 'Perdido', requires_loss_reason: true) }
+
+    def rule_moving_to(params)
+      FactoryBot.build(:automation_rule,
+                       account: account,
+                       event_name: 'conversation_created',
+                       conditions: [{ attribute_key: 'status', filter_operator: 'equal_to', values: ['open'], query_operator: nil }],
+                       actions: [{ action_name: 'move_to_funnel_stage', action_params: params }])
+    end
+
+    it 'needs a loss reason to move to the lost stage' do
+      expect(rule_moving_to([lost.id])).not_to be_valid
+      expect(rule_moving_to([lost.id, create(:loss_reason).id])).to be_valid
+    end
+
+    it 'needs no reason for any other stage' do
+      expect(rule_moving_to([create(:funnel_stage, name: 'Agendado').id])).to be_valid
+    end
+  end
 end

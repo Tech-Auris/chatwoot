@@ -104,7 +104,8 @@
       "ATTACHMENT_ADD": "Adicionar anexo",
       "TEMPLATE_SELECT": "Usar template",
       "TEMPLATE_SELECTED": "Template: {name}",
-      "TEMPLATE_USE": "Usar este template"
+      "TEMPLATE_USE": "Usar este template",
+      "LOSS_REASON_PLACEHOLDER": "Motivo da perda"
     },
     "TOGGLE": {
       "ACTIVATION_TITLE": "Ativar regra de automação",
@@ -132,7 +133,8 @@
       "VALUE_MUST_BE_BETWEEN_1_AND_998": "O valor deve ser entre 1 e 998",
       "ACTION_PARAMETERS_REQUIRED": "Os parâmetros de ação são necessários",
       "ATLEAST_ONE_CONDITION_REQUIRED": "Pelo menos uma condição é necessária",
-      "ATLEAST_ONE_ACTION_REQUIRED": "Pelo menos uma ação é necessária"
+      "ATLEAST_ONE_ACTION_REQUIRED": "Pelo menos uma ação é necessária",
+      "LOSS_REASON_REQUIRED": "Informe o motivo da perda"
     },
     "NONE_OPTION": "Nenhuma",
     "LAST_RESPONDING_AGENT": "Último Agente que Respondeu",
@@ -202,7 +204,8 @@
       "LABELS": "Etiquetas",
       "AI_ENABLED": "Status da IA",
       "FUNNEL_STAGE": "Etapa do funil",
-      "ORIGEM": "Origem do lead"
+      "ORIGEM": "Origem do lead",
+      "LOSS_REASON": "Motivo da perda"
     },
     "AI_STATUS_TYPES": {
       "ENABLED": "IA Ativada",

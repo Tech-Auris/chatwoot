@@ -98,16 +98,17 @@ class ActionService
   # uses, so the move lands in the stage history (as "Automação", no user) and
   # fires the stage's marketing conversions like a manual move. Already on that
   # stage → no-op, so a rule matching every new message doesn't pile up
-  # repeated moves and conversion events. Stages that need a loss reason can't
-  # be picked here (the rule has no reason to give) and fail in the service.
+  # repeated moves and conversion events. A stage that needs a loss reason
+  # (Perdido) gets it as the second value.
   def move_to_funnel_stage(values = [])
-    stage_id = Array(values).first.to_i
-    return if stage_id.zero? || @conversation.funnel_stage_id == stage_id
+    stage_id, loss_reason_id = Array(values)
+    return if stage_id.to_i.zero? || @conversation.funnel_stage_id == stage_id.to_i
 
     ::Funnel::MoveConversationService.new(
       account: @conversation.account,
       conversation_display_id: @conversation.display_id,
-      target_stage_id: stage_id,
+      target_stage_id: stage_id.to_i,
+      loss_reason_id: loss_reason_id.presence,
       source: 'automation'
     ).perform
   end

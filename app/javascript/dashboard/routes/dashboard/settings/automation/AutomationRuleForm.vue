@@ -2,6 +2,7 @@
 import { ref, computed, h, useTemplateRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAccount } from 'dashboard/composables/useAccount';
+import { useMapGetter } from 'dashboard/composables/store';
 import { useOperators } from 'dashboard/components-next/filter/operators';
 import ConditionRow from 'dashboard/components-next/filter/ConditionRow.vue';
 import AutomationActionInput from 'dashboard/components/widgets/AutomationActionInput.vue';
@@ -111,11 +112,34 @@ const getTranslatedAttributes = (type, event) => {
 
 const eventName = computed(() => automation.value?.event_name);
 
+const funnelStages = useMapGetter('funnelStages/getFunnelStages');
+
+// The loss reason only means something on a lost conversation, so it is
+// offered once a condition picks a stage that asks for one (Perdido) — and
+// kept for a rule that already uses it.
+const offersLossReason = computed(() => {
+  const lostStageIds = (funnelStages.value || [])
+    .filter(stage => stage.requires_loss_reason)
+    .map(stage => stage.id);
+  return (automation.value?.conditions || []).some(
+    condition =>
+      condition.attribute_key === 'loss_reason_id' ||
+      (condition.attribute_key === 'funnel_stage_id' &&
+        condition.filter_operator === 'equal_to' &&
+        [condition.values || []]
+          .flat()
+          .some(value => lostStageIds.includes(value?.id ?? value)))
+  );
+});
+
 const filterTypes = computed(() => {
   const event = eventName.value;
   if (!event || !props.automationTypes[event]) return [];
 
-  const attributes = getTranslatedAttributes(props.automationTypes, event);
+  const attributes = getTranslatedAttributes(
+    props.automationTypes,
+    event
+  ).filter(attr => attr.key !== 'loss_reason_id' || offersLossReason.value);
 
   return attributes.map(attr => {
     if (attr.disabled) {

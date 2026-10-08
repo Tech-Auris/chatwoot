@@ -95,6 +95,14 @@ export const generateConditionOptions = (options, key = 'id') => {
   });
 };
 
+// The colour dot the funnel board and the conversation header paint, so a
+// stage is recognized by colour wherever it is offered.
+export const funnelStageDot = color =>
+  h('span', {
+    class: 'rounded-full',
+    style: { backgroundColor: color, height: '6px', width: '6px' },
+  });
+
 export const getActionOptions = ({
   agents,
   teams,
@@ -128,6 +136,7 @@ export const getConditionOptions = ({
   agents,
   aiStatusOptions,
   funnelStages,
+  lossReasons,
   booleanFilterOptions,
   campaigns,
   contacts,
@@ -171,21 +180,13 @@ export const getConditionOptions = ({
     labels: generateConditionOptions(labels, 'title'),
     ai_enabled: aiStatusOptions,
     // Stages carry `name`, not the `title` that `generateConditionOptions`
-    // reads — mapping them through it would list options with no label. The
-    // colour dot is the same one the funnel board and the conversation header
-    // paint, so a stage is recognized by colour wherever it is offered.
+    // reads — mapping them through it would list options with no label.
     funnel_stage_id: (funnelStages || []).map(stage => ({
       id: stage.id,
       name: stage.name,
-      icon: h('span', {
-        class: 'rounded-full',
-        style: {
-          backgroundColor: stage.color,
-          height: '6px',
-          width: '6px',
-        },
-      }),
+      icon: funnelStageDot(stage.color),
     })),
+    loss_reason_id: (lossReasons || []).map(({ id, name }) => ({ id, name })),
     origem: origemOptions,
   };
 

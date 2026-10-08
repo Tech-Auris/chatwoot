@@ -99,6 +99,12 @@ export const AUTOMATIONS = {
         filterOperators: OPERATOR_TYPES_1,
       },
       {
+        key: 'loss_reason_id',
+        name: 'LOSS_REASON',
+        inputType: 'multi_select',
+        filterOperators: OPERATOR_TYPES_1,
+      },
+      {
         key: 'origem',
         name: 'ORIGEM',
         inputType: 'multi_select',
@@ -279,6 +285,12 @@ export const AUTOMATIONS = {
       {
         key: 'funnel_stage_id',
         name: 'FUNNEL_STAGE',
+        inputType: 'multi_select',
+        filterOperators: OPERATOR_TYPES_1,
+      },
+      {
+        key: 'loss_reason_id',
+        name: 'LOSS_REASON',
         inputType: 'multi_select',
         filterOperators: OPERATOR_TYPES_1,
       },
@@ -471,6 +483,12 @@ export const AUTOMATIONS = {
         filterOperators: OPERATOR_TYPES_1,
       },
       {
+        key: 'loss_reason_id',
+        name: 'LOSS_REASON',
+        inputType: 'multi_select',
+        filterOperators: OPERATOR_TYPES_1,
+      },
+      {
         key: 'origem',
         name: 'ORIGEM',
         inputType: 'multi_select',
@@ -653,6 +671,12 @@ export const AUTOMATIONS = {
         filterOperators: OPERATOR_TYPES_1,
       },
       {
+        key: 'loss_reason_id',
+        name: 'LOSS_REASON',
+        inputType: 'multi_select',
+        filterOperators: OPERATOR_TYPES_1,
+      },
+      {
         key: 'origem',
         name: 'ORIGEM',
         inputType: 'multi_select',
@@ -821,6 +845,12 @@ export const AUTOMATIONS = {
       {
         key: 'funnel_stage_id',
         name: 'FUNNEL_STAGE',
+        inputType: 'multi_select',
+        filterOperators: OPERATOR_TYPES_1,
+      },
+      {
+        key: 'loss_reason_id',
+        name: 'LOSS_REASON',
         inputType: 'multi_select',
         filterOperators: OPERATOR_TYPES_1,
       },
@@ -1056,7 +1086,7 @@ export const AUTOMATION_ACTION_TYPES = [
   {
     key: 'move_to_funnel_stage',
     label: 'MOVE_TO_FUNNEL_STAGE',
-    inputType: 'search_select',
+    inputType: 'funnel_stage',
   },
 ];
 
