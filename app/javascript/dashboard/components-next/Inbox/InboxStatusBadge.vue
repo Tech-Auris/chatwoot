@@ -72,17 +72,10 @@ const allBadges = computed(() => {
 
   const quality = qualityKey(health);
   const list = [];
-  // Whether Meta lets the number send; the account review status is only the
-  // fallback for a number not refreshed since this field existed.
-  if (health.can_send_message) {
-    list.push({
-      key: 'send',
-      prefix: 'STATUS',
-      label: translateValue('SEND_STATUSES', health.can_send_message),
-      badge: 'bg-n-alpha-2 text-n-slate-12',
-      dot: SEND_STATUS_DOTS[health.can_send_message] || 'bg-n-slate-8',
-    });
-  } else if (health.account_review_status) {
+  // The account status, as on Saúde da conta. Meta's "can send" answer is only
+  // the fallback for a number whose account status was never read: it is not a
+  // block (Meta has accepted sends while reporting the number as blocked).
+  if (health.account_review_status) {
     list.push({
       key: 'account',
       prefix: 'STATUS',
@@ -92,12 +85,23 @@ const allBadges = computed(() => {
       ),
       badge: 'bg-n-alpha-2 text-n-slate-12',
       dot: accountStatusDot(health.account_review_status),
+      hint: t('INBOX_MGMT.ACCOUNT_HEALTH.FIELDS.ACCOUNT_REVIEW_STATUS.TOOLTIP'),
+    });
+  } else if (health.can_send_message) {
+    list.push({
+      key: 'send',
+      prefix: 'STATUS',
+      label: translateValue('SEND_STATUSES', health.can_send_message),
+      badge: 'bg-n-alpha-2 text-n-slate-12',
+      dot: SEND_STATUS_DOTS[health.can_send_message] || 'bg-n-slate-8',
+      hint: t('INBOX_MGMT.ACCOUNT_HEALTH.FIELDS.SEND_STATUS.TOOLTIP'),
     });
   }
   list.push({
     key: 'quality',
     prefix: 'QUALITY',
     label: translateValue('QUALITY_RATINGS', quality),
+    hint: t('INBOX_MGMT.ACCOUNT_HEALTH.FIELDS.QUALITY_RATING.TOOLTIP'),
     ...qualityStyle(quality),
   });
   return list;
@@ -116,6 +120,7 @@ const badges = computed(() =>
     <template v-for="(item, index) in badges" :key="item.key">
       <span v-if="labeled && index > 0" class="text-xs text-n-slate-11">-</span>
       <span
+        v-tooltip.top="item.hint"
         class="inline-flex items-center gap-1.5 px-1.5 h-5 text-xs rounded-md whitespace-nowrap"
         :class="item.badge"
       >
