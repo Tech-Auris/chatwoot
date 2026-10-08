@@ -119,7 +119,10 @@ const inboxOptions = computed(() =>
     .map(inbox => ({
       value: inbox.id,
       label: inbox.name,
-      trailing: { component: markRaw(InboxStatusBadge), props: { inbox } },
+      trailing: {
+        component: markRaw(InboxStatusBadge),
+        props: { inbox, labeled: true },
+      },
     }))
 );
 
