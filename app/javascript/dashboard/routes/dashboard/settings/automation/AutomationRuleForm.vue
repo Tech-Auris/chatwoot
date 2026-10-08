@@ -12,6 +12,7 @@ import {
   generateAutomationPayload,
   getAttributes,
   getFileName,
+  offersLossReasonCondition,
   showActionInput,
 } from 'dashboard/helper/automationHelper';
 import { validateAutomation } from 'dashboard/helper/validations';

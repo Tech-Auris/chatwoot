@@ -890,8 +890,9 @@ RSpec.describe 'Inboxes API', type: :request do
 
           json_response = response.parsed_body
           saved_config = json_response['csat_config']
-          expect(saved_config['survey_rules']['operator']).to eq('contains')
-          expect(saved_config['survey_rules']['values']).to match_array(%w[support help])
+          expect(saved_config['survey_rules']['conditions']).to eq(
+            [{ 'attribute_key' => 'labels', 'filter_operator' => 'contains', 'values' => %w[support help] }]
+          )
         end
 
         it 'includes CSAT configuration in inbox list' do
@@ -907,6 +908,21 @@ RSpec.describe 'Inboxes API', type: :request do
           expect(found_inbox['csat_config']).to be_present
           expect(found_inbox['csat_config']['display_type']).to eq('emoji')
         end
+      end
+
+      it 'saves a survey rule made of conditions' do
+        conditions = [
+          { 'attribute_key' => 'funnel_stage_id', 'filter_operator' => 'equal_to', 'values' => [8], 'query_operator' => 'and' },
+          { 'attribute_key' => 'loss_reason_id', 'filter_operator' => 'equal_to', 'values' => [1] }
+        ]
+
+        patch "/api/v1/accounts/#{account.id}/inboxes/#{inbox.id}",
+              params: { csat_survey_enabled: true, csat_config: csat_config.merge('survey_rules' => { 'conditions' => conditions }) },
+              headers: admin.create_new_auth_token,
+              as: :json
+
+        expect(response).to have_http_status(:success)
+        expect(inbox.reload.csat_config['survey_rules']['conditions']).to eq(conditions)
       end
 
       it 'successfully updates inbox with template configuration' do
