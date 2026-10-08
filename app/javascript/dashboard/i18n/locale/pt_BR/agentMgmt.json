@@ -123,6 +123,20 @@
           "INPUT": "Pesquisar por agentes"
         }
       }
+    },
+    "MEMBERSHIPS": {
+      "INBOXES": {
+        "LABEL": "Caixas de entrada",
+        "PLACEHOLDER": "Adicionar caixa…",
+        "EMPTY": "A conta não tem caixas de entrada."
+      },
+      "TEAMS": {
+        "LABEL": "Times",
+        "PLACEHOLDER": "Adicionar time…",
+        "EMPTY": "A conta não tem times."
+      },
+      "SELECT_ALL": "Selecionar todas",
+      "CLEAR": "Limpar"
     }
   }
 }

@@ -8,6 +8,26 @@ class Whatsapp::OneoffCampaignService
     process_audience
   end
 
+  # One contact's conversation, label and template message, run by
+  # Campaigns::DispatchContactJob at its slot in the campaign.
+  def dispatch_contact(contact)
+    Rails.logger.info "Processing contact: #{contact.name} (#{contact.phone_number})"
+    return unless eligible_contact?(contact)
+
+    rendered_template_params = render_template_params_for(contact)
+    rendered_body = render_template_body(rendered_template_params)
+    return log_skip(contact, 'template body could not be rendered') if rendered_body.blank?
+
+    contact_inbox = ContactInboxBuilder.new(contact: contact, inbox: inbox).perform
+    return log_skip(contact, 'failed to resolve contact inbox') if contact_inbox.blank?
+
+    dispatch_to(contact_inbox, rendered_body, rendered_template_params)
+  rescue StandardError => e
+    Rails.logger.error "Failed to dispatch campaign message to #{contact.name}: #{e.message}"
+    Rails.logger.error "Backtrace: #{e.backtrace.first(5).join("\n")}"
+    nil
+  end
+
   private
 
   delegate :inbox, to: :campaign
@@ -59,24 +79,6 @@ class Whatsapp::OneoffCampaignService
     campaign.account.contacts.tagged_with(extract_audience_labels, any: true)
   end
 
-  def process_contact(contact)
-    Rails.logger.info "Processing contact: #{contact.name} (#{contact.phone_number})"
-    return unless eligible_contact?(contact)
-
-    rendered_template_params = render_template_params_for(contact)
-    rendered_body = render_template_body(rendered_template_params)
-    return log_skip(contact, 'template body could not be rendered') if rendered_body.blank?
-
-    contact_inbox = ContactInboxBuilder.new(contact: contact, inbox: inbox).perform
-    return log_skip(contact, 'failed to resolve contact inbox') if contact_inbox.blank?
-
-    dispatch_to(contact_inbox, rendered_body, rendered_template_params)
-  rescue StandardError => e
-    Rails.logger.error "Failed to dispatch campaign message to #{contact.name}: #{e.message}"
-    Rails.logger.error "Backtrace: #{e.backtrace.first(5).join("\n")}"
-    nil
-  end
-
   def dispatch_to(contact_inbox, rendered_body, rendered_template_params)
     conversation = build_campaign_conversation(contact_inbox)
     apply_conversation_label(conversation)
@@ -95,13 +97,18 @@ class Whatsapp::OneoffCampaignService
     nil
   end
 
+  # One job per contact, a cadence apart: the first right away, each next one
+  # an interval later. Each job then sends its message half an interval after
+  # creating it (Campaigns::PacedDispatchService), so creating and sending
+  # alternate instead of piling up.
   def process_audience
-    contacts = audience_contacts
-    Rails.logger.info "Processing #{contacts.count} contacts for campaign #{campaign.id}"
+    contact_ids = audience_contacts.pluck(:id)
+    Rails.logger.info "Scheduling #{contact_ids.size} contacts for campaign #{campaign.id}"
 
-    contacts.each { |contact| process_contact(contact) }
-
-    Rails.logger.info "Campaign #{campaign.id} processing completed"
+    cadence = campaign.cadence_seconds.to_i
+    contact_ids.each_with_index do |contact_id, index|
+      Campaigns::DispatchContactJob.set(wait: index * cadence).perform_later(campaign.id, contact_id)
+    end
   end
 
   def render_template_params_for(contact)

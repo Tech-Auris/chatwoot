@@ -8,7 +8,36 @@ class Api::V2::Accounts::IaHumanDistributionReportsController < Api::V1::Account
     COUNT(*) FILTER (WHERE agent_assigned_id IS NOT NULL AND agent_assigned_id = ANY(online_user_ids)) AS assigned_via_team,
     COUNT(*) FILTER (WHERE agent_assigned_id IS NOT NULL AND NOT (agent_assigned_id = ANY(online_user_ids))) AS assigned_via_team_offline,
     COUNT(*) FILTER (WHERE agent_assigned_id IS NULL AND cardinality(online_user_ids) > 0) AS failed_with_online,
-    COUNT(*) FILTER (WHERE agent_assigned_id IS NULL AND cardinality(online_user_ids) = 0) AS failed_no_online
+    COUNT(*) FILTER (WHERE agent_assigned_id IS NULL AND cardinality(online_user_ids) = 0) AS failed_no_online,
+    AVG(EXTRACT(EPOCH FROM first_reply.replied_at - ai_assignment_attempts.created_at))::integer AS avg_first_reply_seconds,
+    COUNT(*) FILTER (WHERE first_reply.replied_at IS NULL) AS without_human_reply
+  SQL
+
+  # First message a human sent the patient after this handover and before the
+  # next one: public, outgoing, not from the IA user (it writes as a regular
+  # user), not an automation, campaign or reaction. A reply sent from the
+  # WhatsApp app itself (echo) counts as human too.
+  FIRST_REPLY_JOIN_SQL = <<~SQL.squish.freeze
+    LEFT JOIN LATERAL (
+      SELECT messages.created_at AS replied_at, messages.sender_id AS replier_id
+      FROM messages
+      LEFT JOIN users ON messages.sender_type = 'User' AND users.id = messages.sender_id
+      WHERE messages.conversation_id = ai_assignment_attempts.conversation_id
+        AND messages.message_type = 1 AND messages.private = false
+        AND messages.created_at > ai_assignment_attempts.created_at
+        AND messages.created_at < COALESCE((
+          SELECT MIN(next_attempt.created_at) FROM ai_assignment_attempts next_attempt
+          WHERE next_attempt.conversation_id = ai_assignment_attempts.conversation_id
+            AND next_attempt.created_at > ai_assignment_attempts.created_at
+        ), 'infinity')
+        AND ((users.id IS NOT NULL AND users.id <> :ai_user_id AND users.name !~* 'auris')
+             OR messages.content_attributes ->> 'external_echo' IS NOT NULL)
+        AND messages.content_attributes ->> 'automation_rule_id' IS NULL
+        AND messages.additional_attributes ->> 'campaign_id' IS NULL
+        AND COALESCE(messages.content_attributes ->> 'is_reaction', 'false') <> 'true'
+      ORDER BY messages.created_at
+      LIMIT 1
+    ) first_reply ON true
   SQL
 
   before_action :check_authorization
@@ -40,7 +69,10 @@ class Api::V2::Accounts::IaHumanDistributionReportsController < Api::V1::Account
   end
 
   def page_rows(scope)
-    scope.includes(:conversation, :team, :agent_assigned).page(current_page).per(PER_PAGE).map { |attempt| build_row(attempt) }
+    attempts = scope.select('ai_assignment_attempts.*, first_reply.replied_at, first_reply.replier_id')
+                    .includes(:conversation, :team, :agent_assigned).page(current_page).per(PER_PAGE).to_a
+    repliers = User.where(id: attempts.filter_map(&:replier_id)).pluck(:id, :name).to_h
+    attempts.map { |attempt| build_row(attempt, repliers) }
   end
 
   def parse_unix_timestamp(raw)
@@ -61,6 +93,7 @@ class Api::V2::Accounts::IaHumanDistributionReportsController < Api::V1::Account
             else
               scope.where(created_at: range).order(created_at: :desc, id: :desc)
             end
+    scope = scope.joins(ActiveRecord::Base.sanitize_sql([FIRST_REPLY_JOIN_SQL, { ai_user_id: Conversation.ai_user_id || 0 }]))
     inbox_id ? scope.for_inbox(inbox_id) : scope
   end
 
@@ -68,13 +101,10 @@ class Api::V2::Accounts::IaHumanDistributionReportsController < Api::V1::Account
     scope.unscope(:order).select(STATUS_COUNTS_SQL).take.attributes.except('id').symbolize_keys
   end
 
-  def build_row(attempt)
-    in_brt = attempt.created_at.in_time_zone(TZ)
+  def build_row(attempt, repliers)
     status_tag = attempt.status_tag
     {
-      timestamp: in_brt.iso8601,
-      date_label: in_brt.strftime('%d/%m/%Y'),
-      time_label: in_brt.strftime('%H:%M:%S'),
+      **transfer_time_fields(attempt),
       lead_created_label: lead_created_label(attempt.conversation),
       conversation_id: attempt.conversation&.display_id,
       inbox_id: attempt.conversation&.inbox_id,
@@ -86,7 +116,20 @@ class Api::V2::Accounts::IaHumanDistributionReportsController < Api::V1::Account
       online_team_members: online_member_names(attempt.online_user_ids),
       status_tag: status_tag,
       status_text: status_text_for(status_tag)
-    }
+    }.merge(first_reply_fields(attempt, repliers))
+  end
+
+  def transfer_time_fields(attempt)
+    in_brt = attempt.created_at.in_time_zone(TZ)
+    { timestamp: in_brt.iso8601, date_label: in_brt.strftime('%d/%m/%Y'), time_label: in_brt.strftime('%H:%M:%S') }
+  end
+
+  # Wall-clock time from the handover to the first human reply; nil while
+  # nobody has answered (the screen then shows how long it has been waiting).
+  def first_reply_fields(attempt, repliers)
+    return { first_reply_seconds: nil, first_reply_by: nil } if attempt.replied_at.nil?
+
+    { first_reply_seconds: (attempt.replied_at - attempt.created_at).to_i, first_reply_by: repliers[attempt.replier_id] }
   end
 
   # Every lead (conversation) that came in during the range, handed over or not,

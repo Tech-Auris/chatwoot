@@ -58,6 +58,15 @@ describe ActionService do
 
       expect { action_service.move_to_funnel_stage([scheduled.id]) }.not_to change(FunnelStageChange, :count)
     end
+
+    it 'moves to the lost stage with the loss reason given as the second value' do
+      lost = create(:funnel_stage, name: "lost_#{SecureRandom.hex(4)}", requires_loss_reason: true)
+      reason = create(:loss_reason)
+
+      action_service.move_to_funnel_stage([lost.id, reason.id])
+
+      expect(conversation.reload).to have_attributes(funnel_stage_id: lost.id, loss_reason_id: reason.id)
+    end
   end
 
   describe '#assign_origem' do

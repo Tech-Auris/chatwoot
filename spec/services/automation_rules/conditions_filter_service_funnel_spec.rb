@@ -42,4 +42,21 @@ RSpec.describe AutomationRules::ConditionsFilterService do
 
     expect(described_class.new(rule_for([stage.id]), conversation).perform).to be false
   end
+
+  context 'with the loss reason condition' do
+    let(:reason) { create(:loss_reason) }
+    let(:rule) do
+      create(:automation_rule, account: account, event_name: 'conversation_updated',
+                               conditions: [{ attribute_key: 'loss_reason_id', filter_operator: 'equal_to', values: [reason.id],
+                                              query_operator: nil }.with_indifferent_access])
+    end
+
+    it 'matches a conversation lost for that reason only' do
+      lost = create(:conversation, account: account, inbox: inbox, funnel_stage: other_stage, loss_reason: reason)
+      other = create(:conversation, account: account, inbox: inbox, funnel_stage: other_stage, loss_reason: create(:loss_reason))
+
+      expect(described_class.new(rule, lost).perform).to be true
+      expect(described_class.new(rule, other).perform).to be false
+    end
+  end
 end

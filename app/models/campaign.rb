@@ -55,6 +55,7 @@ class Campaign < ApplicationRecord
   validate :prevent_completed_campaign_from_update, on: :update
   validate :sender_must_belong_to_account
   validate :inbox_must_belong_to_account
+  validate :template_quality_must_allow_sending, on: :create
 
   belongs_to :account
   belongs_to :inbox
@@ -117,6 +118,28 @@ class Campaign < ApplicationRecord
 
     use_http_protocol = trigger_rules['url'].starts_with?('http://') || trigger_rules['url'].starts_with?('https://')
     errors.add(:url, 'invalid') if inbox.inbox_type == 'Website' && !use_http_protocol
+  end
+
+  # Meta rates each template by how patients react to it. Sending a Low (RED),
+  # paused or disabled one to a whole audience only hurts the number, so the
+  # campaign is refused; Medium (YELLOW) goes out with a warning on screen.
+  def template_quality_must_allow_sending
+    return unless inbox&.inbox_type == 'Whatsapp' && template_params.present?
+    return unless template_quality_blocks?(campaign_template)
+
+    errors.add(:base, I18n.t('errors.campaigns.template_quality_blocked'))
+  end
+
+  def campaign_template
+    Array(inbox.channel.message_templates).find do |template|
+      template['name'] == template_params['name'] && template['language'] == template_params['language']
+    end
+  end
+
+  def template_quality_blocks?(template)
+    return false if template.blank?
+
+    template.dig('quality_score', 'score') == 'RED' || template['status'].in?(%w[PAUSED DISABLED])
   end
 
   def inbox_must_belong_to_account

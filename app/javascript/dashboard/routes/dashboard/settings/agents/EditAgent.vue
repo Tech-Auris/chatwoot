@@ -1,11 +1,13 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useVuelidate } from '@vuelidate/core';
 import { required, minLength } from '@vuelidate/validators';
 import { useStore, useMapGetter } from 'dashboard/composables/store';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
 import Button from 'dashboard/components-next/button/Button.vue';
+import AgentMembershipsFields from './AgentMembershipsFields.vue';
+import AgentAPI from 'dashboard/api/agents';
 import Auth from '../../../../api/auth';
 import wootConstants from 'dashboard/constants/globals';
 
@@ -45,6 +47,19 @@ const emit = defineEmits(['close']);
 const { AVAILABILITY_STATUS_KEYS } = wootConstants;
 
 const store = useStore();
+
+// Starts from the inboxes and teams the agent is already in. Until they
+// arrive nothing is sent, so a failed read never empties them.
+const inboxIds = ref([]);
+const teamIds = ref([]);
+const membershipsLoaded = ref(false);
+
+onMounted(async () => {
+  const { data } = await AgentAPI.memberships(props.id);
+  inboxIds.value = data.inbox_ids;
+  teamIds.value = data.team_ids;
+  membershipsLoaded.value = true;
+});
 const { t } = useI18n();
 
 const agentName = ref(props.name);
@@ -132,6 +147,10 @@ const editAgent = async () => {
       name: agentName.value,
       availability: agentAvailability.value,
     };
+    if (membershipsLoaded.value) {
+      payload.inbox_ids = inboxIds.value;
+      payload.team_ids = teamIds.value;
+    }
 
     if (selectedRole.value.name.startsWith('custom_')) {
       payload.custom_role_id = selectedRole.value.id;
@@ -208,6 +227,11 @@ const resetPassword = async () => {
           </span>
         </label>
       </div>
+
+      <AgentMembershipsFields
+        v-model:inbox-ids="inboxIds"
+        v-model:team-ids="teamIds"
+      />
 
       <div class="flex flex-row justify-start w-full gap-2 px-0 py-2">
         <div class="w-[50%] ltr:text-left rtl:text-right">

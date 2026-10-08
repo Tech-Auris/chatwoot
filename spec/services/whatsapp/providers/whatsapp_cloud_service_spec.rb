@@ -271,21 +271,25 @@ describe Whatsapp::Providers::WhatsappCloudService do
 
   describe '#sync_templates' do
     context 'when called' do
+      let(:templates_url) do
+        "https://graph.facebook.com/v22.0/123456789/message_templates?fields=#{described_class::TEMPLATE_FIELDS}&access_token=test_key"
+      end
+
       it 'updated the message templates' do
-        stub_request(:get, 'https://graph.facebook.com/v22.0/123456789/message_templates?access_token=test_key')
+        stub_request(:get, templates_url)
           .to_return(
             { status: 200, headers: response_headers,
               body: { data: [
                 { id: '123456789', name: 'test_template' }
-              ], paging: { next: 'https://graph.facebook.com/v22.0/123456789/message_templates?access_token=test_key' } }.to_json },
+              ], paging: { next: templates_url } }.to_json },
             { status: 200, headers: response_headers,
               body: { data: [
                 { id: '123456789', name: 'next_template' }
-              ], paging: { next: 'https://graph.facebook.com/v22.0/123456789/message_templates?access_token=test_key' } }.to_json },
+              ], paging: { next: templates_url } }.to_json },
             { status: 200, headers: response_headers,
               body: { data: [
                 { id: '123456789', name: 'last_template' }
-              ], paging: { prev: 'https://graph.facebook.com/v22.0/123456789/message_templates?access_token=test_key' } }.to_json }
+              ], paging: { prev: templates_url } }.to_json }
           )
 
         timstamp = whatsapp_channel.reload.message_templates_last_updated
@@ -297,7 +301,7 @@ describe Whatsapp::Providers::WhatsappCloudService do
       end
 
       it 'updates message_templates_last_updated even when template request fails' do
-        stub_request(:get, 'https://graph.facebook.com/v22.0/123456789/message_templates?access_token=test_key')
+        stub_request(:get, templates_url)
           .to_return(status: 401)
 
         timstamp = whatsapp_channel.reload.message_templates_last_updated
@@ -311,7 +315,7 @@ describe Whatsapp::Providers::WhatsappCloudService do
       # stores the returned id on the template, so the send flow can
       # send `{image: {id: ...}}` instead of a URL Meta cannot fetch.
       it 'resolves a header_media_id for templates with an IMAGE header' do
-        stub_request(:get, 'https://graph.facebook.com/v22.0/123456789/message_templates?access_token=test_key')
+        stub_request(:get, templates_url)
           .to_return(status: 200, headers: response_headers, body: {
             data: [
               { id: '1', name: 'confirmacao',
@@ -350,7 +354,7 @@ describe Whatsapp::Providers::WhatsappCloudService do
                                      ] }
                                  ])
 
-        stub_request(:get, 'https://graph.facebook.com/v22.0/123456789/message_templates?access_token=test_key')
+        stub_request(:get, templates_url)
           .to_return(status: 200, headers: response_headers, body: {
             data: [
               { id: '1', name: 'confirmacao',

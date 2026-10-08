@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_07_180000) do
+ActiveRecord::Schema[7.1].define(version: 2026_10_08_120000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -816,6 +816,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_07_180000) do
     t.bigint "funnel_stage_id"
     t.boolean "ai_enabled", default: true, null: false
     t.string "origem"
+    t.bigint "loss_reason_id"
     t.index ["account_id", "display_id"], name: "index_conversations_on_account_id_and_display_id", unique: true
     t.index ["account_id", "group_type"], name: "index_conversations_on_account_id_and_group_type"
     t.index ["account_id", "id"], name: "index_conversations_on_id_and_account_id"
@@ -831,6 +832,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_07_180000) do
     t.index ["identifier", "account_id"], name: "index_conversations_on_identifier_and_account_id"
     t.index ["inbox_id", "group_type"], name: "index_conversations_on_inbox_id_and_group_type"
     t.index ["inbox_id"], name: "index_conversations_on_inbox_id"
+    t.index ["loss_reason_id"], name: "index_conversations_on_loss_reason_id"
     t.index ["priority"], name: "index_conversations_on_priority"
     t.index ["status", "account_id"], name: "index_conversations_on_status_and_account_id"
     t.index ["status", "priority"], name: "index_conversations_on_status_and_priority"
@@ -2137,6 +2139,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_07_180000) do
   add_foreign_key "canned_responses", "inboxes"
   add_foreign_key "contacts", "languages"
   add_foreign_key "conversations", "funnel_stages", on_delete: :nullify
+  add_foreign_key "conversations", "loss_reasons", on_delete: :nullify
   add_foreign_key "conversion_event_dispatches", "accounts"
   add_foreign_key "conversion_event_dispatches", "conversations"
   add_foreign_key "conversion_event_dispatches", "conversion_events"

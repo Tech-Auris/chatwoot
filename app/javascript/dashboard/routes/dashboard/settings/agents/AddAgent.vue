@@ -6,10 +6,14 @@ import { useAlert } from 'dashboard/composables';
 import { useVuelidate } from '@vuelidate/core';
 import { required, email } from '@vuelidate/validators';
 import Button from 'dashboard/components-next/button/Button.vue';
+import AgentMembershipsFields from './AgentMembershipsFields.vue';
 
 const emit = defineEmits(['close']);
 
 const store = useStore();
+
+const inboxIds = ref([]);
+const teamIds = ref([]);
 const { t } = useI18n();
 
 const agentName = ref('');
@@ -74,6 +78,8 @@ const addAgent = async () => {
     const payload = {
       name: agentName.value,
       email: agentEmail.value,
+      inbox_ids: inboxIds.value,
+      team_ids: teamIds.value,
     };
 
     if (selectedRole.value.name.startsWith('custom_')) {
@@ -151,6 +157,11 @@ const addAgent = async () => {
           />
         </label>
       </div>
+
+      <AgentMembershipsFields
+        v-model:inbox-ids="inboxIds"
+        v-model:team-ids="teamIds"
+      />
 
       <div class="flex flex-row justify-end w-full gap-2 px-0 py-2">
         <Button

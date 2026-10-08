@@ -1186,13 +1186,13 @@
       },
       "SURVEY_RULE": {
         "LABEL": "Regra de pesquisa",
-        "DESCRIPTION_PREFIX": "Enviar a pesquisa se a conversa",
-        "DESCRIPTION_SUFFIX": "qualquer uma das etiquetas",
-        "OPERATOR": {
-          "CONTAINS": "contém",
-          "DOES_NOT_CONTAINS": "não contém"
+        "DESCRIPTION": "Enviar a pesquisa somente quando a conversa atender às condições abaixo. Sem condições, a pesquisa vai para todas as conversas resolvidas.",
+        "ATTRIBUTES": {
+          "LABELS": "Etiquetas",
+          "FUNNEL_STAGE": "Etapa do funil",
+          "LOSS_REASON": "Motivo da perda"
         },
-        "SELECT_PLACEHOLDER": "selecionar etiquetas"
+        "ADD_CONDITION": "Adicionar condição"
       },
       "NOTE": "Nota: pesquisas de CSAT são enviadas apenas uma vez por conversa",
       "WHATSAPP_NOTE": "Nota: Você pode criar um novo modelo (que será enviado para aprovação do WhatsApp como Utilidade, embora a Meta possa classificá-lo como Marketing com base no conteúdo) ou usar um modelo aprovado existente do seu gerenciador de modelos da Meta. As pesquisas são enviadas apenas uma vez por conversa, conforme a regra da pesquisa.",

@@ -13,7 +13,6 @@ import SettingsToggleSection from 'dashboard/components-next/Settings/SettingsTo
 import CSATDisplayTypeSelector from './components/CSATDisplayTypeSelector.vue';
 import CSATTemplate from 'dashboard/components-next/template-preview/CSATTemplate.vue';
 import Editor from 'dashboard/components-next/Editor/Editor.vue';
-import FilterSelect from 'dashboard/components-next/filter/inputs/FilterSelect.vue';
 import NextButton from 'dashboard/components-next/button/Button.vue';
 import TabBar from 'dashboard/components-next/tabbar/TabBar.vue';
 import Input from 'dashboard/components-next/input/Input.vue';
@@ -21,6 +20,7 @@ import ComboBox from 'dashboard/components-next/combobox/ComboBox.vue';
 import whatsappTemplateLanguages from './whatsappTemplateLanguages.js';
 import ConfirmTemplateUpdateDialog from './components/ConfirmTemplateUpdateDialog.vue';
 import ExistingTemplateSelector from './components/ExistingTemplateSelector.vue';
+import CsatSurveyRuleConditions from './components/CsatSurveyRuleConditions.vue';
 
 const props = defineProps({
   inbox: { type: Object, required: true },
@@ -29,6 +29,8 @@ const props = defineProps({
 const { t } = useI18n();
 const store = useStore();
 const labels = useMapGetter('labels/getLabels');
+const funnelStages = useMapGetter('funnelStages/getFunnelStages');
+const lossReasons = useMapGetter('lossReasons/getLossReasons');
 const { captainEnabled } = useCaptain();
 
 const { isATwilioWhatsAppChannel, isAWhatsAppCloudChannel } = useInbox(
@@ -43,15 +45,13 @@ const isTemplateRequiredWhatsAppChannel = computed(
 const isUpdating = ref(false);
 const utilityAnalysisLoading = ref(false);
 const utilityAnalysisResult = ref(null);
-const selectedLabelValues = ref([]);
-const currentLabel = ref('');
+const surveyConditions = ref([]);
 
 const state = reactive({
   csatSurveyEnabled: false,
   displayType: 'emoji',
   message: '',
   templateButtonText: 'Please rate us',
-  surveyRuleOperator: 'contains',
   templateLanguage: 'en',
 });
 
@@ -83,25 +83,6 @@ const originalTemplateValues = ref({
   templateButtonText: '',
   templateLanguage: '',
 });
-
-const filterTypes = [
-  {
-    label: t('INBOX_MGMT.CSAT.SURVEY_RULE.OPERATOR.CONTAINS'),
-    value: 'contains',
-  },
-  {
-    label: t('INBOX_MGMT.CSAT.SURVEY_RULE.OPERATOR.DOES_NOT_CONTAINS'),
-    value: 'does_not_contain',
-  },
-];
-
-const labelOptions = computed(() =>
-  labels.value?.length
-    ? labels.value
-        .map(label => ({ label: label.title, value: label.title }))
-        .filter(label => !selectedLabelValues.value.includes(label.value))
-    : []
-);
 
 const languageOptions = computed(() =>
   whatsappTemplateLanguages.map(({ name, id }) => ({
@@ -209,6 +190,45 @@ const templateApprovalStatus = computed(() => {
   };
 });
 
+// The rule is saved with ids; the condition rows show the matching options.
+// A rule saved before the conditions list was a single label rule.
+const toOption = (key, id) => {
+  const list = {
+    funnel_stage_id: funnelStages.value,
+    loss_reason_id: lossReasons.value,
+  }[key];
+  if (!list) return { id, name: id };
+  const found = list.find(item => item.id === id);
+  return { id, name: found?.name ?? String(id) };
+};
+
+const initializeSurveyConditions = (surveyRules = {}) => {
+  const conditions =
+    surveyRules.conditions ||
+    (surveyRules.values?.length
+      ? [
+          {
+            attribute_key: 'labels',
+            filter_operator: surveyRules.operator || 'contains',
+            values: surveyRules.values,
+          },
+        ]
+      : []);
+  surveyConditions.value = conditions.map(condition => ({
+    query_operator: 'and',
+    ...condition,
+    values: (condition.values || []).map(id =>
+      toOption(condition.attribute_key, id)
+    ),
+  }));
+};
+
+const surveyConditionsPayload = () =>
+  surveyConditions.value.map(condition => ({
+    ...condition,
+    values: [condition.values || []].flat().map(value => value?.id ?? value),
+  }));
+
 const initializeState = () => {
   if (!props.inbox) return;
 
@@ -230,11 +250,7 @@ const initializeState = () => {
   state.message = message;
   state.templateButtonText = buttonText;
   state.templateLanguage = language;
-  state.surveyRuleOperator = surveyRules.operator || 'contains';
-
-  selectedLabelValues.value = Array.isArray(surveyRules.values)
-    ? [...surveyRules.values]
-    : [];
+  initializeSurveyConditions(surveyRules);
 
   // Store original template values for change detection
   if (isTemplateRequiredWhatsAppChannel.value) {
@@ -289,21 +305,20 @@ const checkTemplateStatus = async () => {
   }
 };
 
-onMounted(() => {
+onMounted(async () => {
   initializeState();
-  if (!labels.value?.length) store.dispatch('labels/get');
+  // The conditions show stage and reason names, so they are read again once
+  // those lists arrive.
+  await Promise.all([
+    labels.value?.length ? null : store.dispatch('labels/get'),
+    store.dispatch('funnelStages/get'),
+    store.dispatch('lossReasons/get'),
+  ]);
+  initializeSurveyConditions(props.inbox?.csat_config?.survey_rules);
   if (isTemplateRequiredWhatsAppChannel.value) checkTemplateStatus();
 });
 
 watch(() => props.inbox, initializeState, { immediate: true });
-
-const handleLabelSelect = value => {
-  if (!value || selectedLabelValues.value.includes(value)) {
-    return;
-  }
-
-  selectedLabelValues.value.push(value);
-};
 
 const updateDisplayType = type => {
   state.displayType = type;
@@ -386,17 +401,6 @@ const getUtilityClassificationClass = classification => {
     return 'bg-n-ruby-3 text-n-ruby-11';
   }
   return 'bg-n-amber-3 text-n-amber-11';
-};
-
-const updateSurveyRuleOperator = operator => {
-  state.surveyRuleOperator = operator;
-};
-
-const removeLabel = label => {
-  const index = selectedLabelValues.value.indexOf(label);
-  if (index !== -1) {
-    selectedLabelValues.value.splice(index, 1);
-  }
 };
 
 // Check if template-related fields have changed
@@ -564,10 +568,7 @@ const performSave = async () => {
           ? existingTemplateButtonText.value
           : state.templateButtonText,
       language: state.templateLanguage,
-      survey_rules: {
-        operator: state.surveyRuleOperator,
-        values: selectedLabelValues.value,
-      },
+      survey_rules: { conditions: surveyConditionsPayload() },
     };
 
     // Use new template data if created/linked, otherwise preserve existing template information
@@ -876,42 +877,11 @@ const handleConfirmTemplateUpdate = async () => {
             :label="$t('INBOX_MGMT.CSAT.SURVEY_RULE.LABEL')"
             name="survey_rule"
           >
-            <div class="mb-4">
-              <span
-                class="inline-flex flex-wrap gap-1.5 items-center text-sm text-n-slate-12"
-              >
-                {{ $t('INBOX_MGMT.CSAT.SURVEY_RULE.DESCRIPTION_PREFIX') }}
-                <FilterSelect
-                  v-model="state.surveyRuleOperator"
-                  variant="faded"
-                  :options="filterTypes"
-                  class="inline-flex shrink-0"
-                  @update:model-value="updateSurveyRuleOperator"
-                />
-                {{ $t('INBOX_MGMT.CSAT.SURVEY_RULE.DESCRIPTION_SUFFIX') }}
-
-                <NextButton
-                  v-for="label in selectedLabelValues"
-                  :key="label"
-                  sm
-                  faded
-                  slate
-                  trailing-icon
-                  :label="label"
-                  icon="i-lucide-x"
-                  class="inline-flex shrink-0"
-                  @click="removeLabel(label)"
-                />
-                <FilterSelect
-                  v-model="currentLabel"
-                  :options="labelOptions"
-                  :label="$t('INBOX_MGMT.CSAT.SURVEY_RULE.SELECT_PLACEHOLDER')"
-                  hide-label
-                  variant="faded"
-                  class="inline-flex shrink-0"
-                  @update:model-value="handleLabelSelect"
-                />
-              </span>
+            <div class="flex flex-col gap-2 mb-4">
+              <p class="mb-0 text-sm text-n-slate-11">
+                {{ $t('INBOX_MGMT.CSAT.SURVEY_RULE.DESCRIPTION') }}
+              </p>
+              <CsatSurveyRuleConditions v-model="surveyConditions" />
             </div>
           </WithLabel>
           <p class="text-sm italic text-n-slate-11">

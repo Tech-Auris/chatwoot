@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, computed, watch, ref } from 'vue';
+import { reactive, computed, watch, ref, markRaw } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useVuelidate } from '@vuelidate/core';
 import { required, requiredIf, minLength } from '@vuelidate/validators';
@@ -12,6 +12,14 @@ import ComboBox from 'dashboard/components-next/combobox/ComboBox.vue';
 import TagMultiSelectComboBox from 'dashboard/components-next/combobox/TagMultiSelectComboBox.vue';
 import WhatsAppTemplateParser from 'dashboard/components-next/whatsapp/WhatsAppTemplateParser.vue';
 import AudiencePreviewDialog from 'dashboard/components-next/Campaigns/Pages/CampaignPage/AudiencePreviewDialog.vue';
+import TemplateQualityWarning from 'dashboard/components-next/whatsapp/TemplateQualityWarning.vue';
+import {
+  templateQualityKey,
+  templateQualityDot,
+  templateQualityBlocksCampaign,
+} from 'dashboard/helper/templateQuality';
+import InboxStatusBadge from 'dashboard/components-next/Inbox/InboxStatusBadge.vue';
+import { campaignWarnings } from 'dashboard/helper/whatsappHealth';
 
 const emit = defineEmits(['submit', 'cancel']);
 
@@ -109,8 +117,19 @@ const audienceList = computed(() =>
   mapToOptions(formState.labels.value, 'id', 'title')
 );
 
+// Campaigns go out through Meta's templates, so only official API numbers
+// are offered, each with its status and quality as in the pencil.
 const inboxOptions = computed(() =>
-  mapToOptions(formState.inboxes.value, 'id', 'name')
+  (formState.inboxes.value || [])
+    .filter(inbox => inbox.provider === 'whatsapp_cloud')
+    .map(inbox => ({
+      value: inbox.id,
+      label: inbox.name,
+      trailing: {
+        component: markRaw(InboxStatusBadge),
+        props: { inbox, labeled: true },
+      },
+    }))
 );
 
 const templateOptions = computed(() => {
@@ -122,9 +141,15 @@ const templateOptions = computed(() => {
       .replace(/_/g, ' ')
       .replace(/\b\w/g, l => l.toUpperCase());
 
+    const qualityKey = templateQualityKey(template);
+    const quality = t(`META_TEMPLATES.QUALITY.${qualityKey}`);
+    const lead = `${friendlyName} (${template.language || 'en'}) ·`;
     return {
       value: template.id,
-      label: `${friendlyName} (${template.language || 'en'})`,
+      label: `${lead} ${quality}`,
+      dotLead: lead,
+      dotClass: templateQualityDot(qualityKey),
+      dotLabel: quality,
       template: template,
     };
   });
@@ -249,8 +274,48 @@ watch(
   }
 );
 
+// A Baixa, paused or disabled template would only hurt the number when sent
+// to a whole audience, so the campaign waits for another template.
+const isTemplateBlocked = computed(() =>
+  templateQualityBlocksCampaign(templateQualityKey(selectedTemplate.value))
+const selectedInbox = computed(() =>
+  formState.inboxes.value?.find(inbox => inbox.id === state.inboxId)
+);
+
+// Contacts the campaign would reach, to compare with the number's daily limit.
+const audienceCount = ref(0);
+watch(
+  () => [
+    state.audienceSource,
+    state.selectedAudience,
+    state.audienceContactIds,
+  ],
+  async () => {
+    if (state.audienceSource === 'file') {
+      audienceCount.value = state.audienceContactIds.length;
+      return;
+    }
+    if (!state.selectedAudience?.length) {
+      audienceCount.value = 0;
+      return;
+    }
+    const { data } = await CampaignsAPI.audiencePreview({
+      labelIds: state.selectedAudience,
+    });
+    audienceCount.value = data.meta.total_count - data.meta.without_phone_count;
+  },
+  { deep: true }
+);
+
+const numberWarnings = computed(() =>
+  campaignWarnings(selectedInbox.value, audienceCount.value)
+);
+
 const isSubmitDisabled = computed(
-  () => v$.value.$invalid || !hasRequiredTemplateParams.value
+  () =>
+    v$.value.$invalid ||
+    !hasRequiredTemplateParams.value ||
+    isTemplateBlocked.value
 );
 
 const formatToUTCString = localDateTime =>
@@ -337,6 +402,12 @@ watch(
         :message="formErrors.inbox"
         class="[&>div>button]:bg-n-alpha-black2 [&>div>button:not(.focused)]:dark:outline-n-weak [&>div>button:not(.focused)]:hover:!outline-n-slate-6"
       />
+      <InboxStatusBadge
+        v-if="selectedInbox"
+        :inbox="selectedInbox"
+        labeled
+        class="mt-1"
+      />
     </div>
 
     <div class="flex flex-col gap-1">
@@ -356,6 +427,12 @@ watch(
         {{ t('CAMPAIGN.WHATSAPP.CREATE.FORM.TEMPLATE.INFO') }}
       </p>
     </div>
+
+    <TemplateQualityWarning
+      v-if="selectedTemplate"
+      :template="selectedTemplate"
+      :blocked="isTemplateBlocked"
+    />
 
     <!-- Template Parser -->
     <WhatsAppTemplateParser
@@ -537,6 +614,23 @@ watch(
       :message="formErrors.scheduledAt"
       :message-type="formErrors.scheduledAt ? 'error' : 'info'"
     />
+
+    <ul
+      v-if="numberWarnings.length"
+      class="flex flex-col gap-1 mb-0 px-3 py-2 rounded-lg bg-n-amber-3 text-xs text-n-amber-11"
+    >
+      <li v-for="warning in numberWarnings" :key="warning.key">
+        {{
+          t(
+            `CAMPAIGN.WHATSAPP.CREATE.FORM.NUMBER_STATUS.${warning.key}`,
+            warning.params || {}
+          )
+        }}
+        <span v-for="detail in warning.details" :key="detail" class="block">
+          {{ detail }}
+        </span>
+      </li>
+    </ul>
 
     <div class="flex gap-3 justify-between items-center w-full">
       <Button

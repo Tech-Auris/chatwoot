@@ -2,6 +2,7 @@
 import AutomationActionTeamMessageInput from './AutomationActionTeamMessageInput.vue';
 import AutomationActionFileInput from './AutomationFileInput.vue';
 import AutomationActionScheduledMessageInput from './AutomationActionScheduledMessageInput.vue';
+import AutomationActionFunnelStageInput from './AutomationActionFunnelStageInput.vue';
 import WootMessageEditor from 'dashboard/components/widgets/WootWriter/Editor.vue';
 import NextButton from 'dashboard/components-next/button/Button.vue';
 import SingleSelect from 'dashboard/components-next/filter/inputs/SingleSelect.vue';
@@ -13,6 +14,7 @@ export default {
     AutomationActionTeamMessageInput,
     AutomationActionFileInput,
     AutomationActionScheduledMessageInput,
+    AutomationActionFunnelStageInput,
     WootMessageEditor,
     NextButton,
     SingleSelect,
@@ -149,6 +151,12 @@ export default {
             v-if="inputType === 'search_select'"
             v-model="action_params"
             :options="dropdownValues"
+            :dropdown-max-height="dropdownMaxHeight"
+          />
+          <AutomationActionFunnelStageInput
+            v-else-if="inputType === 'funnel_stage'"
+            v-model="action_params"
+            :stages="dropdownValues"
             :dropdown-max-height="dropdownMaxHeight"
           />
           <MultiSelect

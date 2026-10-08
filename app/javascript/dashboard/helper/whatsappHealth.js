@@ -40,3 +40,44 @@ export const sendBlockReason = inbox => {
   if (connection === 'open') return null;
   return connection === 'connecting' ? 'CONNECTING' : 'DISCONNECTED';
 };
+
+// New conversations a number may open in 24h, from Meta's
+// `messaging_limit_tier`. Unlimited and unknown tiers give no limit.
+const DAILY_LIMITS = {
+  TIER_50: 50,
+  TIER_250: 250,
+  TIER_1K: 1000,
+  TIER_2K: 2000,
+  TIER_10K: 10000,
+  TIER_100K: 100000,
+};
+
+// What a campaign should know about its number before going out, without
+// blocking it: Meta limiting the sends, the quality rating, and an audience
+// past the daily limit.
+export const campaignWarnings = (inbox, audienceCount = 0) => {
+  const health = inbox?.provider_connection?.health;
+  if (!health) return [];
+
+  const warnings = [];
+  if (health.can_send_message === 'LIMITED') {
+    warnings.push({
+      key: 'LIMITED',
+      details: (health.health_errors || []).map(
+        error => error.error_description
+      ),
+    });
+  }
+  if (health.quality_rating === 'RED') warnings.push({ key: 'QUALITY_LOW' });
+  if (health.quality_rating === 'YELLOW') {
+    warnings.push({ key: 'QUALITY_MEDIUM' });
+  }
+  const limit = DAILY_LIMITS[health.messaging_limit_tier];
+  if (limit && audienceCount > limit) {
+    warnings.push({
+      key: 'OVER_DAILY_LIMIT',
+      params: { count: audienceCount, limit },
+    });
+  }
+  return warnings;
+};

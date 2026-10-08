@@ -240,6 +240,39 @@ RSpec.describe 'IA Human Distribution Reports API', type: :request do
         expect(body['totals']).to include('total' => 3, 'assigned_via_team' => 1, 'assigned_via_team_offline' => 1,
                                           'failed_no_online' => 1, 'failed_with_online' => 0)
       end
+
+      context 'with the first human reply after the handover' do
+        before do
+          # The IA writes as a regular user: its message must not count.
+          create(:message, conversation: conv_success, account: account, inbox: inbox, message_type: :outgoing,
+                           sender: ia_user, created_at: reference_time + 5.minutes)
+          create(:message, conversation: conv_success, account: account, inbox: inbox, message_type: :outgoing,
+                           private: true, sender: agent_user, created_at: reference_time + 10.minutes)
+          create(:message, conversation: conv_success, account: account, inbox: inbox, message_type: :outgoing,
+                           sender: agent_user, created_at: reference_time + 94.minutes)
+          create(:message, conversation: conv_offline, account: account, inbox: inbox, message_type: :outgoing,
+                           sender: agent_user, created_at: reference_time + 31.minutes)
+        end
+
+        it 'shows on each row how long until a human answered, and who' do
+          get "/api/v2/accounts/#{account.id}/ia_human_distribution_reports",
+              params: { from: range_from, to: range_to },
+              headers: admin.create_new_auth_token
+
+          rows = response.parsed_body['rows'].index_by { |row| row['conversation_id'] }
+          expect(rows[conv_success.display_id]).to include('first_reply_seconds' => 94 * 60, 'first_reply_by' => 'Agente')
+          expect(rows[conv_no_online.display_id]).to include('first_reply_seconds' => nil)
+        end
+
+        it 'averages the answered handovers only and counts the unanswered apart' do
+          get "/api/v2/accounts/#{account.id}/ia_human_distribution_reports",
+              params: { from: range_from, to: range_to },
+              headers: admin.create_new_auth_token
+
+          # (94 min + 30 min) / 2 — the offline handover was 1 minute later
+          expect(response.parsed_body['totals']).to include('avg_first_reply_seconds' => 62 * 60, 'without_human_reply' => 1)
+        end
+      end
     end
   end
 end
