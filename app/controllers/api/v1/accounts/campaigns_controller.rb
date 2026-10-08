@@ -37,18 +37,22 @@ class Api::V1::Accounts::CampaignsController < Api::V1::Accounts::BaseController
 
   # Delivery report of a campaign: the totals on top and one row per message,
   # so the team can tell what actually reached each contact.
+  # The totals and the failure breakdown cover the whole campaign; the search
+  # (contact name or phone) and the status filter only narrow the rows.
   def report
     messages = campaign_messages
-    page = messages.reorder(created_at: :desc).page(params[:page] || 1).per(REPORT_PER_PAGE)
+    page = filtered_report_messages(messages).reorder(created_at: :desc).page(params[:page] || 1).per(REPORT_PER_PAGE)
 
     render json: {
       campaign: serialized_campaign,
       summary: report_summary(messages),
+      failure_reasons: failure_reasons(messages),
       messages: page.map { |message| serialize_report_message(message) },
       meta: {
         current_page: page.current_page,
         total_pages: page.total_pages,
-        total_count: page.total_count
+        total_count: page.total_count,
+        per_page: REPORT_PER_PAGE
       }
     }
   end
@@ -87,6 +91,36 @@ class Api::V1::Accounts::CampaignsController < Api::V1::Accounts::BaseController
     Current.account.messages
            .where('messages.created_at >= ?', (@campaign.scheduled_at || @campaign.created_at) - 1.hour)
            .where("messages.additional_attributes ->> 'campaign_id' = ?", @campaign.id.to_s)
+  end
+
+  REPORT_STATUSES = %w[sent delivered read failed].freeze
+
+  def filtered_report_messages(messages)
+    messages = messages.where(status: params[:status]) if REPORT_STATUSES.include?(params[:status])
+    query = params[:q].to_s.strip
+    return messages if query.blank?
+
+    messages.joins(conversation: :contact).where(contact_search_sql(query))
+  end
+
+  # Name, or phone typed with or without formatting ("11 99296-3408" finds
+  # "+5511992963408").
+  def contact_search_sql(query)
+    digits = query.gsub(/\D/, '')
+    sql = 'contacts.name ILIKE :term OR contacts.phone_number ILIKE :term'
+    sql += " OR regexp_replace(contacts.phone_number, '\\D', '', 'g') LIKE :digits" if digits.length >= 3
+    [sql, { term: "%#{ActiveRecord::Base.sanitize_sql_like(query)}%", digits: "%#{digits}%" }]
+  end
+
+  # How many messages failed with each error, most frequent first. The error
+  # sits in `content_attributes`, whose legacy rows are double-encoded JSON —
+  # `#>>'{}'` unwraps both shapes (same as Conversation#last_ctwa_referral_at).
+  FAILURE_ERROR_SQL = Arel.sql("((messages.content_attributes#>>'{}')::jsonb ->> 'external_error')")
+
+  def failure_reasons(messages)
+    messages.reorder(nil).where(status: :failed).group(FAILURE_ERROR_SQL).count
+            .map { |error, count| { error: error, count: count } }
+            .sort_by { |reason| -reason[:count] }
   end
 
   def report_summary(messages)
