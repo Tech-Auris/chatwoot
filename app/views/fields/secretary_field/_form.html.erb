@@ -1,7 +1,7 @@
 <div class="field-unit__label">
   <%= f.label :account_secretary, 'Secretária' %>
 </div>
-<div class="field-unit__field">
+<div class="field-unit__field !max-w-2xl">
   <% if f.object.persisted? %>
     <%= render_vue_component('AccountSecretary', {
       url: super_admin_account_secretary_url(f.object, format: :json),
