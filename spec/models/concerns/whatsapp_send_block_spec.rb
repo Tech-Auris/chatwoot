@@ -33,10 +33,12 @@ RSpec.describe WhatsappSendBlock do
     expect(channel('whatsapp_cloud', {}).send_block_reason).to be_nil
   end
 
-  it "explains the reason, with Meta's own description when Meta blocks it" do
+  # Meta's own reason is in English and lives on Saúde da conta; the message
+  # stays short and points there.
+  it 'explains the reason in a short message when Meta blocks it' do
     blocked = cloud('can_send_message' => 'BLOCKED',
                     'health_errors' => [{ 'error_description' => 'The Business has not passed business verification.' }])
 
-    expect(blocked.send_block_message).to eq("#{I18n.t('whatsapp_send_block.meta_blocked')} The Business has not passed business verification.")
+    expect(blocked.send_block_message).to eq(I18n.t('whatsapp_send_block.meta_blocked'))
   end
 end

@@ -4,18 +4,15 @@ import { useI18n } from 'vue-i18n';
 import { useStore } from 'dashboard/composables/store';
 import { useAlert } from 'dashboard/composables';
 import { useAdmin } from 'dashboard/composables/useAdmin';
-import {
-  sendBlockReason,
-  metaBlockErrors,
-} from 'dashboard/helper/whatsappHealth';
+import { sendBlockReason } from 'dashboard/helper/whatsappHealth';
 import Banner from 'dashboard/components/ui/Banner.vue';
 import WhatsappLinkDeviceModal from 'dashboard/routes/dashboard/settings/inbox/components/WhatsappLinkDeviceModal.vue';
 
 // Why messages cannot go out of this WhatsApp number right now. A Baileys /
 // Z-API number gets the way to connect it right there: the QR code for admins
 // and managers, a reconnect attempt for everyone else. An official API number
-// gets the reason — Meta's own reason and fix when Meta blocks it. Renders
-// nothing while the number can send.
+// gets the reason; Meta's own detail stays on Saúde da conta. Renders nothing
+// while the number can send.
 const props = defineProps({
   inbox: {
     type: Object,
@@ -44,16 +41,6 @@ const reason = computed(() =>
   sendBlockReason(props.inbox, { startsConversation: props.startsConversation })
 );
 
-const metaMessage = computed(() =>
-  metaBlockErrors(props.inbox)
-    .map(error =>
-      error.possible_solution
-        ? `${error.error_description} ${t('INBOX_MGMT.ACCOUNT_HEALTH.FIELDS.SEND_STATUS.SOLUTION')}: ${error.possible_solution}`
-        : error.error_description
-    )
-    .join(' ')
-);
-
 const message = computed(() => {
   if (isUnofficial.value) {
     return canManageConnection.value
@@ -61,11 +48,6 @@ const message = computed(() => {
       : t(
           'CONVERSATION.INBOX.WHATSAPP_PROVIDER_CONNECTION.NOT_CONNECTED_CONTACT_ADMIN'
         );
-  }
-  // Meta's reason, then that it only stops the API: on a coexistence number
-  // the WhatsApp Business app keeps sending, which otherwise looks like a bug.
-  if (reason.value === 'META_BLOCKED' && metaMessage.value) {
-    return `${metaMessage.value} ${t('COMPOSE_NEW_CONVERSATION.FORM.INBOX_BLOCKED.API_ONLY_NOTE')}`;
   }
   return t(`COMPOSE_NEW_CONVERSATION.FORM.INBOX_BLOCKED.${reason.value}`);
 });

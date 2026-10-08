@@ -657,8 +657,7 @@
         "DELETED": "Este número foi removido da conta do WhatsApp Business.",
         "PENDING": "O cadastro deste número no WhatsApp ainda não foi concluído.",
         "RESTRICTED": "Este número atingiu o limite de novas conversas do WhatsApp. Ele ainda responde quem escreveu nas últimas 24h, mas não pode iniciar conversas agora.",
-        "META_BLOCKED": "O Meta bloqueou o envio de mensagens deste número pela API, que é o caminho usado pelo AurisChat. Se o número usa coexistência, o app WhatsApp Business no celular pode continuar enviando normalmente. Veja o motivo em Configurações → Caixas de Entrada → Saúde da conta.",
-        "API_ONLY_NOTE": "Este bloqueio vale para o envio pela API, usado pelo AurisChat. Se o número usa coexistência, o app WhatsApp Business no celular pode continuar enviando normalmente."
+        "META_BLOCKED": "O Meta bloqueou o envio de mensagens deste número pela API, que é o caminho usado pelo AurisChat. Se o número usa coexistência, o app WhatsApp Business no celular pode continuar enviando normalmente. Veja o motivo em Configurações → Caixas de Entrada → Saúde da conta."
       },
       "INBOX_SELECTOR": {
         "LABEL": "Via:",

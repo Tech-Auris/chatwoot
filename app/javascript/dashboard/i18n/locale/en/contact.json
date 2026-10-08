@@ -660,8 +660,7 @@
         "DELETED": "This number was removed from the WhatsApp Business account.",
         "PENDING": "This number's WhatsApp registration is not complete yet.",
         "RESTRICTED": "This number reached the WhatsApp limit for new conversations. It still replies to people who wrote in the last 24h, but cannot start conversations now.",
-        "META_BLOCKED": "Meta blocked sending messages from this number through the API, which is what AurisChat uses. If the number uses coexistence, the WhatsApp Business app on the phone may keep sending normally. See why in Settings → Inboxes → Account health.",
-        "API_ONLY_NOTE": "This block applies to sending through the API, which AurisChat uses. If the number uses coexistence, the WhatsApp Business app on the phone may keep sending normally."
+        "META_BLOCKED": "Meta blocked sending messages from this number through the API, which is what AurisChat uses. If the number uses coexistence, the WhatsApp Business app on the phone may keep sending normally. See why in Settings → Inboxes → Account health."
       },
       "INBOX_SELECTOR": {
         "LABEL": "Via:",

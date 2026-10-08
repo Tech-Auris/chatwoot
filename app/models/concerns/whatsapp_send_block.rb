@@ -28,8 +28,7 @@ module WhatsappSendBlock
     reason = send_block_reason(starts_conversation: starts_conversation)
     return if reason.nil?
 
-    meta_detail = Array(provider_connection.dig('health', 'health_errors')).filter_map { |error| error['error_description'] }
-    [I18n.t("whatsapp_send_block.#{reason}"), *meta_detail].join(' ')
+    I18n.t("whatsapp_send_block.#{reason}")
   end
 
   private

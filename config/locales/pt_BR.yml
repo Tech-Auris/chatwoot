@@ -27,7 +27,7 @@ pt_BR:
     deleted: "Este número foi removido da conta do WhatsApp Business."
     pending: "O cadastro deste número no WhatsApp não foi concluído."
     restricted: "Este número atingiu o limite de novas conversas do WhatsApp."
-    meta_blocked: "O Meta bloqueou o envio por este número pela API, usada pelo AurisChat. Com coexistência, o app WhatsApp Business no celular pode continuar enviando."
+    meta_blocked: "O Meta bloqueou o envio de mensagens deste número pela API, que é o caminho usado pelo AurisChat. Se o número usa coexistência, o app WhatsApp Business no celular pode continuar enviando normalmente. Veja o motivo em Configurações → Caixas de Entrada → Saúde da conta."
   scheduled_messages:
     not_sent: 'A mensagem agendada não foi enviada: %{reason}'
   hello: 'Olá, mundo'

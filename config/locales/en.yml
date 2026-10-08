@@ -40,7 +40,7 @@ en:
     deleted: "This number was removed from the WhatsApp Business account."
     pending: "This number's WhatsApp registration is not complete."
     restricted: "This number reached the WhatsApp limit for new conversations."
-    meta_blocked: "Meta blocked sending from this number through the API, which AurisChat uses. With coexistence, the WhatsApp Business app on the phone may keep sending."
+    meta_blocked: "Meta blocked sending messages from this number through the API, which is what AurisChat uses. If the number uses coexistence, the WhatsApp Business app on the phone may keep sending normally. See why in Settings → Inboxes → Account health."
   scheduled_messages:
     not_sent: 'The scheduled message was not sent: %{reason}'
   hello: 'Hello world'

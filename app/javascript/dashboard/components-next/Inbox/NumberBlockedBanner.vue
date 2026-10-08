@@ -1,13 +1,9 @@
 <script setup>
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import {
-  sendBlockReason,
-  metaBlockErrors,
-} from 'dashboard/helper/whatsappHealth';
+import { sendBlockReason } from 'dashboard/helper/whatsappHealth';
 
-// Why messages cannot go out of this number right now, and what to do. With
-// Meta blocking it, Meta's own reason and fix are listed under the message.
+// Why messages cannot go out of this number right now, and what to do.
 // Renders nothing while the number can send.
 const props = defineProps({
   inbox: {
@@ -25,9 +21,6 @@ const { t } = useI18n();
 const reason = computed(() =>
   sendBlockReason(props.inbox, { startsConversation: props.startsConversation })
 );
-const errors = computed(() =>
-  reason.value === 'META_BLOCKED' ? metaBlockErrors(props.inbox) : []
-);
 </script>
 
 <template>
@@ -39,12 +32,5 @@ const errors = computed(() =>
     <span>{{
       t(`COMPOSE_NEW_CONVERSATION.FORM.INBOX_BLOCKED.${reason}`)
     }}</span>
-    <span v-for="error in errors" :key="error.error_code" class="text-xs">
-      {{ error.error_description }}
-      <template v-if="error.possible_solution">
-        {{ t('INBOX_MGMT.ACCOUNT_HEALTH.FIELDS.SEND_STATUS.SOLUTION') }}:
-        {{ error.possible_solution }}
-      </template>
-    </span>
   </div>
 </template>
