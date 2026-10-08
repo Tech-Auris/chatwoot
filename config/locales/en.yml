@@ -35,12 +35,6 @@ en:
   whatsapp_send_block:
     disconnected: "This number is disconnected."
     connecting: "This number is reconnecting."
-    banned: "This number was banned by WhatsApp."
-    number_disconnected: "This number is disconnected from the WhatsApp official API."
-    deleted: "This number was removed from the WhatsApp Business account."
-    pending: "This number's WhatsApp registration is not complete."
-    restricted: "This number reached the WhatsApp limit for new conversations."
-    meta_blocked: "Meta is not letting this number send messages."
   hello: 'Hello world'
   activerecord:
     attributes:

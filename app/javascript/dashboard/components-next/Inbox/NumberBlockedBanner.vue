@@ -3,12 +3,13 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import {
   sendBlockReason,
-  metaBlockErrors,
+  sendWarningReason,
 } from 'dashboard/helper/whatsappHealth';
 
-// Why messages cannot go out of this number right now, and what to do. With
-// Meta blocking it, Meta's own reason and fix are listed under the message.
-// Renders nothing while the number can send.
+// Why messages may not go out of this number right now. Red when sending is
+// stopped (a Baileys / Z-API phone not connected), amber when it is only a
+// warning (Meta's status on an official number). Renders nothing while the
+// number is fine.
 const props = defineProps({
   inbox: {
     type: Object,
@@ -22,11 +23,12 @@ const props = defineProps({
 
 const { t } = useI18n();
 
-const reason = computed(() =>
-  sendBlockReason(props.inbox, { startsConversation: props.startsConversation })
-);
-const errors = computed(() =>
-  reason.value === 'META_BLOCKED' ? metaBlockErrors(props.inbox) : []
+const options = computed(() => ({
+  startsConversation: props.startsConversation,
+}));
+const reason = computed(() => sendWarningReason(props.inbox, options.value));
+const blocks = computed(() =>
+  Boolean(sendBlockReason(props.inbox, options.value))
 );
 </script>
 
@@ -34,17 +36,13 @@ const errors = computed(() =>
   <div
     v-if="reason"
     role="alert"
-    class="flex flex-col gap-1 mx-2 mb-2 px-3 py-2 rounded-lg bg-n-ruby-3 text-sm text-n-ruby-11"
+    class="flex flex-col gap-1 mx-2 mb-2 px-3 py-2 rounded-lg text-sm"
+    :class="
+      blocks ? 'bg-n-ruby-3 text-n-ruby-11' : 'bg-n-amber-3 text-n-amber-11'
+    "
   >
     <span>{{
       t(`COMPOSE_NEW_CONVERSATION.FORM.INBOX_BLOCKED.${reason}`)
     }}</span>
-    <span v-for="error in errors" :key="error.error_code" class="text-xs">
-      {{ error.error_description }}
-      <template v-if="error.possible_solution">
-        {{ t('INBOX_MGMT.ACCOUNT_HEALTH.FIELDS.SEND_STATUS.SOLUTION') }}:
-        {{ error.possible_solution }}
-      </template>
-    </span>
   </div>
 </template>

@@ -71,7 +71,7 @@ class Macros::ExecutionService < ActionService
     channel = @conversation.inbox.channel
     return unless channel.respond_to?(:send_block_message)
 
-    @number_block_message ||= channel.send_block_message(starts_conversation: false)
+    @number_block_message ||= channel.send_block_message
   end
 
   def note_message_not_sent

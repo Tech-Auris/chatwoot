@@ -6,7 +6,7 @@ import { vOnClickOutside } from '@vueuse/components';
 import { useMapGetter } from 'dashboard/composables/store';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu.vue';
 import InboxStatusBadge from 'dashboard/components-next/Inbox/InboxStatusBadge.vue';
-import { sendBlockReason } from 'dashboard/helper/whatsappHealth';
+import { sendWarningReason } from 'dashboard/helper/whatsappHealth';
 
 // "Para" and "Via" rows of the schedule form, shown when it is opened outside
 // a conversation (Mensagens agendadas). Same shape as the pencil's pickers:
@@ -67,7 +67,7 @@ const inboxMenuItems = computed(() =>
 );
 
 const inboxWarning = computed(() => {
-  const reason = sendBlockReason(selectedInbox.value);
+  const reason = sendWarningReason(selectedInbox.value);
   return reason
     ? t(`COMPOSE_NEW_CONVERSATION.FORM.INBOX_BLOCKED.${reason}`)
     : '';
