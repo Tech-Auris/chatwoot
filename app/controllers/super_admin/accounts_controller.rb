@@ -51,6 +51,7 @@ class SuperAdmin::AccountsController < SuperAdmin::ApplicationController
     permitted_params[:selected_feature_flags] = params[:enabled_features].keys.map(&:to_sym) if params[:enabled_features].present?
     merge_auris_settings(permitted_params)
     merge_auris_menus(permitted_params)
+    merge_follow_up(permitted_params)
     permitted_params
   end
 
@@ -132,6 +133,24 @@ class SuperAdmin::AccountsController < SuperAdmin::ApplicationController
     permitted_params[:campaigns_live_chat_menu_enabled] = menus[:campaigns_live_chat_menu_enabled] == '1'
     permitted_params[:campaigns_sms_menu_enabled] = menus[:campaigns_sms_menu_enabled] == '1'
     permitted_params[:settings_macros_menu_enabled] = menus[:settings_macros_menu_enabled] == '1'
+  end
+
+  # Maps the "Follow-up" block (rendered by AccountFollowUpField) onto
+  # `settings.follow_up`. Blank FUP inputs are dropped.
+  def merge_follow_up(permitted_params)
+    return if params[:follow_up].blank?
+
+    follow_up = params.require(:follow_up).permit(steps: [], end_flow: %i[enabled wait_minutes summary_message escalation_message])
+    end_flow = follow_up[:end_flow] || {}
+    permitted_params[:follow_up] = {
+      steps: Array(follow_up[:steps]).compact_blank.map(&:to_i),
+      end_flow: {
+        enabled: end_flow[:enabled] == '1',
+        wait_minutes: end_flow[:wait_minutes].presence&.to_i,
+        summary_message: end_flow[:summary_message].presence,
+        escalation_message: end_flow[:escalation_message].presence
+      }
+    }
   end
 end
 

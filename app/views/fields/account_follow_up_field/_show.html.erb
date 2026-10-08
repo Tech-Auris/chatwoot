@@ -1,0 +1,6 @@
+<div class="flex flex-col gap-1 text-sm text-n-slate-12">
+  <span><%= field.steps.any? ? field.to_s : 'Sem follow-up' %></span>
+  <% if field.end_flow['enabled'] %>
+    <span>Encerramento: <%= field.end_flow['wait_minutes'] %> min após o último FUP</span>
+  <% end %>
+</div>

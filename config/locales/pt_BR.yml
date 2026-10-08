@@ -63,6 +63,9 @@ pt_BR:
     inbox_deletetion_response: Seu pedido de exclusão da caixa de entrada será processado dentro de algum tempo.
   errors:
     account:
+      follow_up:
+        invalid_steps: deve ter até %{max} follow-ups, cada um em minutos inteiros maiores que zero
+        invalid_wait_minutes: deve ter um tempo de espera em minutos inteiros maior que zero
       reporting_timezone:
         invalid: não é um fuso horário válido
       support_email:

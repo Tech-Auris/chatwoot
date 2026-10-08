@@ -45,6 +45,7 @@ class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
   include CaptainFeaturable
   include AccountEmailRateLimitable
   include AccountSettingsSchema
+  include AccountFollowUp
 
   DEFAULT_QUERY_SETTING = {
     flag_query_mode: :bit_operator,
@@ -176,7 +177,8 @@ class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
     {
       id: id,
       name: name,
-      settings: auris_settings
+      settings: auris_settings,
+      follow_up: follow_up
     }
   end
 

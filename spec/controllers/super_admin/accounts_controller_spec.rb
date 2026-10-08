@@ -296,6 +296,50 @@ RSpec.describe 'Super Admin accounts API', type: :request do
     end
   end
 
+  describe 'PUT /super_admin/accounts/{account_id} (Follow-up section)' do
+    let(:follow_up_params) do
+      { steps: ['240', '480', '', '4320', ''],
+        end_flow: { enabled: '1', wait_minutes: '60', summary_message: 'Resumo: @resumo@', escalation_message: '' } }
+    end
+
+    before { sign_in(super_admin, scope: :super_admin) }
+
+    it 'saves the follow-up times and the closing setup, dropping blank inputs' do
+      put "/super_admin/accounts/#{account.id}", params: { account: { name: account.name }, follow_up: follow_up_params }
+
+      expect(response).to have_http_status(:redirect)
+      expect(account.reload.follow_up).to eq(
+        'steps' => [240, 480, 4320],
+        'end_flow' => { 'enabled' => true, 'wait_minutes' => 60, 'summary_message' => 'Resumo: @resumo@', 'escalation_message' => nil }
+      )
+    end
+
+    it 'refuses more than five follow-ups' do
+      put "/super_admin/accounts/#{account.id}",
+          params: { account: { name: account.name }, follow_up: follow_up_params.merge(steps: %w[1 2 3 4 5 6]) }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(account.reload.follow_up).to be_nil
+    end
+
+    it 'leaves the follow-up untouched when the section was not posted' do
+      account.update!(follow_up: { steps: [60] })
+
+      put "/super_admin/accounts/#{account.id}", params: { account: { name: account.name } }
+
+      expect(account.reload.follow_up).to eq('steps' => [60])
+    end
+
+    it 'renders the follow-up inputs on the edit form' do
+      account.update!(follow_up: { steps: [240] })
+
+      get "/super_admin/accounts/#{account.id}/edit"
+
+      expect(response.body).to include('follow_up[steps][]')
+      expect(response.body).to include('value="240"')
+    end
+  end
+
   describe 'DELETE /super_admin/accounts/{account_id}' do
     context 'when it is an unauthenticated user' do
       it 'returns unauthorized' do
