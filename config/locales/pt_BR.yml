@@ -17,6 +17,11 @@
 #To learn more, please read the Rails Internationalization guide
 #available at https://guides.rubyonrails.org/i18n.html.
 pt_BR:
+  macros:
+    message_not_sent: 'Macro "%{name}": a mensagem não foi enviada. %{reason}'
+  whatsapp_send_block:
+    disconnected: "Este número está desconectado."
+    connecting: "Este número está reconectando."
   hello: 'Olá, mundo'
   activerecord:
     attributes:

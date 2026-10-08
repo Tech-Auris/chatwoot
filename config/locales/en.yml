@@ -30,6 +30,11 @@
 # available at https://guides.rubyonrails.org/i18n.html.
 
 en:
+  macros:
+    message_not_sent: 'Macro "%{name}": the message was not sent. %{reason}'
+  whatsapp_send_block:
+    disconnected: "This number is disconnected."
+    connecting: "This number is reconnecting."
   hello: 'Hello world'
   activerecord:
     attributes:

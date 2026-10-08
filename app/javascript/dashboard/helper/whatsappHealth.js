@@ -29,33 +29,14 @@ export const accountStatusDot = status => {
   return 'bg-n-ruby-9';
 };
 
-// Statuses that stop a new conversation from going out of a number (the
-// pencil). Meta saying the number cannot send (BLOCKED) wins; the account
-// review status does not block — a REJECTED review can sit on a number that
-// sends normally. Low quality alone does not block either. A number with no
-// health read yet is let through.
-const BLOCKING_PHONE_STATUSES = {
-  BANNED: 'BANNED',
-  DISCONNECTED: 'NUMBER_DISCONNECTED',
-  DELETED: 'DELETED',
-  PENDING: 'PENDING',
-  UNVERIFIED: 'PENDING',
-  RESTRICTED: 'RESTRICTED',
-};
-
+// Why sending from this number is stopped: only a Baileys / Z-API phone that
+// is not connected, whose message really cannot go out. Meta's statuses on an
+// official number are shown as the number's status badges, never as a block
+// — Meta has accepted sends while reporting the number as blocked.
 export const sendBlockReason = inbox => {
-  if (inbox?.channel_type !== 'Channel::Whatsapp') return null;
+  if (!['baileys', 'zapi'].includes(inbox?.provider)) return null;
 
-  const connection = inbox.provider_connection || {};
-  if (['baileys', 'zapi'].includes(inbox.provider)) {
-    if (connection.connection === 'open') return null;
-    return connection.connection === 'connecting'
-      ? 'CONNECTING'
-      : 'DISCONNECTED';
-  }
-
-  const health = connection.health;
-  if (!health) return null;
-  if (health.can_send_message === 'BLOCKED') return 'META_BLOCKED';
-  return BLOCKING_PHONE_STATUSES[health.phone_status] || null;
+  const { connection } = inbox.provider_connection || {};
+  if (connection === 'open') return null;
+  return connection === 'connecting' ? 'CONNECTING' : 'DISCONNECTED';
 };
