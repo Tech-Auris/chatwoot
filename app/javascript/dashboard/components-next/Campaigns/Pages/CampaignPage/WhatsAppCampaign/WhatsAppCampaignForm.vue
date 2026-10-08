@@ -278,6 +278,8 @@ watch(
 // to a whole audience, so the campaign waits for another template.
 const isTemplateBlocked = computed(() =>
   templateQualityBlocksCampaign(templateQualityKey(selectedTemplate.value))
+);
+
 const selectedInbox = computed(() =>
   formState.inboxes.value?.find(inbox => inbox.id === state.inboxId)
 );
