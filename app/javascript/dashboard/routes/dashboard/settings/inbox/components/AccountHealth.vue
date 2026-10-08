@@ -7,6 +7,7 @@ import Icon from 'dashboard/components-next/icon/Icon.vue';
 import {
   qualityKey,
   qualityStyle,
+  accountStatusDot,
   SEND_STATUS_DOTS,
 } from 'dashboard/helper/whatsappHealth';
 
@@ -36,21 +37,6 @@ const STATUS_COLORS = {
 const MODE_COLORS = {
   LIVE: 'text-n-teal-11',
   SANDBOX: 'text-n-slate-11',
-};
-
-// Meta returns WABA-level status on `account_review_status`. Values seen
-// in production: APPROVED (normal), PENDING (under review), FLAGGED /
-// DECLINED / RESTRICTED / DISABLED (Meta shows "Conta desabilitada" for
-// these in Business Manager). Anything not mapped falls back to neutral
-// so a new Meta value still renders instead of breaking the page.
-const ACCOUNT_STATUS_COLORS = {
-  APPROVED: 'text-n-teal-11',
-  PENDING: 'text-n-amber-11',
-  FLAGGED: 'text-n-ruby-9',
-  DECLINED: 'text-n-ruby-9',
-  REJECTED: 'text-n-ruby-9',
-  RESTRICTED: 'text-n-ruby-9',
-  DISABLED: 'text-n-ruby-9',
 };
 
 const VERIFICATION_COLORS = {
@@ -209,9 +195,6 @@ const getModeStatusTextColor = mode => MODE_COLORS[mode] || 'text-n-slate-12';
 
 const getStatusTextColor = status => STATUS_COLORS[status] || 'text-n-slate-12';
 
-const getAccountStatusTextColor = status =>
-  ACCOUNT_STATUS_COLORS[status] || 'text-n-slate-12';
-
 const getVerificationTextColor = status =>
   VERIFICATION_COLORS[status] || 'text-n-slate-12';
 
@@ -321,9 +304,12 @@ const handleRegisterWebhook = () => {
             </span>
             <span
               v-else-if="item.type === 'account_status'"
-              class="inline-flex items-center px-2 py-0.5 min-h-6 text-label-small rounded-md bg-n-alpha-2"
-              :class="getAccountStatusTextColor(item.value)"
+              class="inline-flex items-center gap-1.5 px-2 py-0.5 min-h-6 text-label-small rounded-md bg-n-alpha-2 text-n-slate-12"
             >
+              <span
+                class="size-2 rounded-full"
+                :class="accountStatusDot(item.value)"
+              />
               {{ formatAccountStatusDisplay(item.value) }}
             </span>
             <div
