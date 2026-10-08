@@ -4,6 +4,7 @@ json.inbox_id scheduled_message.inbox_id
 json.conversation_id scheduled_message.conversation.display_id
 json.account_id scheduled_message.account_id
 json.status scheduled_message.status
+json.failure_reason scheduled_message.failure_reason
 json.scheduled_at scheduled_message.scheduled_at&.to_i
 json.template_params scheduled_message.template_params
 json.author_id scheduled_message.author_id

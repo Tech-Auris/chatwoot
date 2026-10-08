@@ -128,6 +128,25 @@ RSpec.describe Macros::ExecutionService, type: :service do
       end
     end
 
+    # The macro runs its other actions; the message would only fail on a
+    # number that cannot send, so a private note says why instead.
+    context 'when the WhatsApp number is disconnected' do
+      let(:whatsapp) do
+        create(:channel_whatsapp, account: account, provider: 'baileys', provider_connection: { 'connection' => 'close' },
+                                  validate_provider_config: false, sync_templates: false)
+      end
+      let(:conversation) { create(:conversation, account: account, inbox: whatsapp.inbox) }
+
+      it 'leaves a private note with the reason instead of sending' do
+        service.send(:send_message, ['Test message'])
+
+        message = conversation.messages.last
+        expect(message.private).to be(true)
+        expect(message.content).to include(macro.name, I18n.t('whatsapp_send_block.disconnected'))
+        expect(conversation.messages.where(private: false, content: 'Test message')).to be_empty
+      end
+    end
+
     context 'when conversation is a tweet' do
       before { allow(service).to receive(:conversation_a_tweet?).and_return(true) }
 

@@ -6,6 +6,9 @@ import { useMapGetter } from 'dashboard/composables/store';
 import CampaignsAPI from 'dashboard/api/campaigns';
 import Button from 'dashboard/components-next/button/Button.vue';
 import CampaignCard from 'dashboard/components-next/Campaigns/CampaignCard/CampaignCard.vue';
+import PaginationFooter from 'dashboard/components-next/pagination/PaginationFooter.vue';
+import Select from 'dashboard/components-next/select/Select.vue';
+import { debounce } from '@chatwoot/utils';
 import { frontendURL } from 'dashboard/helper/URLHelper';
 
 const { t } = useI18n();
@@ -24,6 +27,12 @@ const summary = ref({
 const campaign = ref(null);
 const messages = ref([]);
 const meta = ref({ current_page: 1, total_pages: 1, total_count: 0 });
+const failureReasons = ref([]);
+const showFailures = ref(false);
+// Name or phone (with or without formatting) and status narrow the rows; the
+// totals on top keep covering the whole campaign.
+const searchQuery = ref('');
+const statusFilter = ref('');
 const isLoading = ref(false);
 const error = ref('');
 
@@ -41,9 +50,14 @@ const fetchPage = async (page = 1) => {
   error.value = '';
 
   try {
-    const { data } = await CampaignsAPI.report(campaignId.value, page);
+    const { data } = await CampaignsAPI.report(campaignId.value, {
+      page,
+      q: searchQuery.value.trim(),
+      status: statusFilter.value,
+    });
     campaign.value = data.campaign ?? campaign.value;
     summary.value = data.summary ?? summary.value;
+    failureReasons.value = data.failure_reasons ?? [];
     messages.value = data.messages ?? [];
     meta.value = data.meta ?? meta.value;
   } catch {
@@ -54,6 +68,21 @@ const fetchPage = async (page = 1) => {
 };
 
 onMounted(() => fetchPage(1));
+
+const searchFromFirstPage = debounce(() => fetchPage(1), 300);
+watch(searchQuery, searchFromFirstPage);
+watch(statusFilter, () => fetchPage(1));
+
+const statusOptions = computed(() => [
+  { value: '', label: t('CAMPAIGN.WHATSAPP.REPORT.ALL_STATUSES') },
+  ...Object.entries(STATUS_LABELS).map(([value, key]) => ({
+    value,
+    label: t(`CAMPAIGN.WHATSAPP.REPORT.STATUS.${key}`),
+  })),
+]);
+const isFiltering = computed(
+  () => !!searchQuery.value.trim() || !!statusFilter.value
+);
 
 // Vue reuses this component when only the route param changes, so mounting
 // alone doesn't cover moving between two campaign reports. The totals and rows
@@ -70,7 +99,10 @@ watch(campaignId, () => {
   };
   campaign.value = null;
   messages.value = [];
+  failureReasons.value = [];
   meta.value = { current_page: 1, total_pages: 1, total_count: 0 };
+  searchQuery.value = '';
+  statusFilter.value = '';
   fetchPage(1);
 });
 
@@ -150,17 +182,44 @@ const goBack = () =>
           <span class="text-xs text-n-slate-11">
             {{ t(`CAMPAIGN.WHATSAPP.REPORT.SUMMARY.${item.key}`) }}
           </span>
-          <span class="text-xl font-medium text-n-slate-12">
-            {{ item.value }}
-          </span>
+          <div class="flex items-center gap-2">
+            <span class="text-xl font-medium text-n-slate-12">
+              {{ item.value }}
+            </span>
+            <!-- Same "opens" mark as the funnel conversion report. -->
+            <button
+              v-if="item.key === 'FAILED' && summary.failed > 0"
+              v-tooltip.top="t('CAMPAIGN.WHATSAPP.REPORT.FAILURES.OPEN')"
+              type="button"
+              class="!p-0 text-n-slate-11 hover:text-n-slate-12"
+              :aria-label="t('CAMPAIGN.WHATSAPP.REPORT.FAILURES.OPEN')"
+              @click="showFailures = true"
+            >
+              <span class="i-lucide-square-arrow-out-up-right size-4 block" />
+            </button>
+          </div>
         </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3">
+        <input
+          v-model="searchQuery"
+          type="search"
+          :placeholder="t('CAMPAIGN.WHATSAPP.REPORT.SEARCH_PLACEHOLDER')"
+          class="!mb-0 w-80 max-w-full h-9 rounded-lg px-3 text-sm"
+        />
+        <Select v-model="statusFilter" :options="statusOptions" />
       </div>
 
       <p v-if="isLoading" class="text-sm text-n-slate-11">
         {{ t('CAMPAIGN.WHATSAPP.REPORT.LOADING') }}
       </p>
       <p v-else-if="!messages.length" class="text-sm text-n-slate-11">
-        {{ t('CAMPAIGN.WHATSAPP.REPORT.EMPTY') }}
+        {{
+          isFiltering
+            ? t('CAMPAIGN.WHATSAPP.REPORT.NO_RESULTS')
+            : t('CAMPAIGN.WHATSAPP.REPORT.EMPTY')
+        }}
       </p>
 
       <table v-else class="w-full text-sm">
@@ -215,32 +274,56 @@ const goBack = () =>
         </tbody>
       </table>
 
-      <div v-if="meta.total_pages > 1" class="flex items-center gap-3 text-sm">
-        <button
-          type="button"
-          class="text-n-blue-text disabled:opacity-40"
-          :disabled="meta.current_page <= 1"
-          @click="fetchPage(meta.current_page - 1)"
-        >
-          {{ t('CAMPAIGN.WHATSAPP.REPORT.PREVIOUS') }}
-        </button>
-        <span class="text-n-slate-11">
-          {{
-            t('CAMPAIGN.WHATSAPP.REPORT.PAGE', {
-              current: meta.current_page,
-              total: meta.total_pages,
-            })
-          }}
-        </span>
-        <button
-          type="button"
-          class="text-n-blue-text disabled:opacity-40"
-          :disabled="meta.current_page >= meta.total_pages"
-          @click="fetchPage(meta.current_page + 1)"
-        >
-          {{ t('CAMPAIGN.WHATSAPP.REPORT.NEXT') }}
-        </button>
-      </div>
+      <PaginationFooter
+        v-if="meta.total_count > (meta.per_page || 25)"
+        :current-page="meta.current_page"
+        :total-items="meta.total_count"
+        :items-per-page="meta.per_page || 25"
+        class="!px-0"
+        @update:current-page="fetchPage"
+      />
     </div>
+
+    <woot-modal
+      v-model:show="showFailures"
+      :on-close="() => (showFailures = false)"
+    >
+      <div class="flex flex-col gap-4 p-6">
+        <woot-modal-header
+          :header-title="t('CAMPAIGN.WHATSAPP.REPORT.FAILURES.TITLE')"
+          :header-content="t('CAMPAIGN.WHATSAPP.REPORT.FAILURES.SUBTITLE')"
+        />
+        <table class="w-full text-sm">
+          <thead>
+            <tr
+              class="text-left text-xs text-n-slate-11 border-b border-n-weak"
+            >
+              <th class="py-2">
+                {{ t('CAMPAIGN.WHATSAPP.REPORT.FAILURES.ERROR') }}
+              </th>
+              <th class="py-2 text-right">
+                {{ t('CAMPAIGN.WHATSAPP.REPORT.FAILURES.COUNT') }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="reason in failureReasons"
+              :key="reason.error || 'unknown'"
+              class="border-b border-n-weak/50"
+            >
+              <td class="py-2 pr-4 text-n-slate-12">
+                {{
+                  reason.error || t('CAMPAIGN.WHATSAPP.REPORT.FAILURES.UNKNOWN')
+                }}
+              </td>
+              <td class="py-2 text-right tabular-nums text-n-slate-12">
+                {{ reason.count }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </woot-modal>
   </section>
 </template>

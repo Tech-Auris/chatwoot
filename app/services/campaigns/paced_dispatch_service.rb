@@ -1,15 +1,14 @@
-# Spaces out the messages of a one-off campaign instead of firing them all at
-# once.
+# Sends a one-off campaign's message half a cadence after it is created.
 #
-# Pacing happens at enqueue time, not by holding workers: each message is
-# scheduled `cadence_seconds` after the previous one, so the rhythm holds no
-# matter how many Sidekiq workers are running. The jobs also move to their own
-# queue, which keeps a large campaign from sitting in front of the replies
-# agents and the AI are sending in live conversations.
+# The campaign already creates one contact per cadence
+# (Campaigns::DispatchContactJob), so its messages are spaced by it; sending
+# each one half an interval later makes creating and sending alternate — with
+# a 10s cadence, a contact is created at 0s, 10s, 20s… and sent at 5s, 15s,
+# 25s… — instead of both hitting the server in the same instant. The jobs
+# also run on their own queue, which keeps a large campaign from sitting in
+# front of the replies agents and the AI are sending in live conversations.
 class Campaigns::PacedDispatchService
   QUEUE = 'campaign'.freeze
-  # The counter only needs to outlive the dispatch of a single campaign.
-  COUNTER_TTL = 6.hours
 
   pattr_initialize [:message!]
 
@@ -26,8 +25,6 @@ class Campaigns::PacedDispatchService
 
   private
 
-  # `wait: 0` would still push the job through the scheduled set; the first
-  # message of a campaign has nothing to wait for.
   def job_options
     seconds = delay
     options = { queue: QUEUE }
@@ -35,9 +32,7 @@ class Campaigns::PacedDispatchService
     options
   end
 
-  # When the message actually leaves. Messages of a campaign are all created
-  # in the same instant and only their dispatch is spaced out, so `created_at`
-  # tells the operator nothing about the send — the report needs this instead.
+  # When the message actually leaves, which the campaign report shows.
   # `update_column` keeps the write out of the callback chain that is running
   # right now.
   def stamp_dispatch_at(wait_seconds)
@@ -64,17 +59,7 @@ class Campaigns::PacedDispatchService
     @cadence ||= campaign.cadence_seconds.to_i
   end
 
-  # Position of this message within the campaign, counted atomically in Redis
-  # so messages created concurrently can't land on the same slot. The first one
-  # goes out immediately and each following one waits another interval.
   def delay
-    position = ::Redis::Alfred.incr(counter_key)
-    ::Redis::Alfred.expire(counter_key, COUNTER_TTL.to_i) if position == 1
-
-    (position - 1) * cadence
-  end
-
-  def counter_key
-    "campaign_dispatch_position:#{campaign.id}"
+    cadence / 2
   end
 end

@@ -18,6 +18,7 @@ import ArticleSearchPopover from 'dashboard/routes/dashboard/helpcenter/componen
 import CopilotEditorSection from './CopilotEditorSection.vue';
 import MessageSignatureMissingAlert from './MessageSignatureMissingAlert.vue';
 import ReplyBoxBanner from './ReplyBoxBanner.vue';
+import { sendBlockReason } from 'dashboard/helper/whatsappHealth';
 import QuotedEmailPreview from './QuotedEmailPreview.vue';
 import { REPLY_EDITOR_MODES } from 'dashboard/components/widgets/WootWriter/constants';
 import WootMessageEditor from 'dashboard/components/widgets/WootWriter/Editor.vue';
@@ -293,7 +294,15 @@ export default {
     charactersRemaining() {
       return this.maxLength - this.message.length;
     },
+    // A Baileys / Z-API phone that is not connected keeps the reply from
+    // going out (the banner above the messages says how to connect it);
+    // private notes still do.
+    numberBlockReason() {
+      if (this.isPrivate) return null;
+      return sendBlockReason(this.inbox);
+    },
     isReplyButtonDisabled() {
+      if (this.numberBlockReason) return true;
       if (this.isEditorDisabled) return true;
       if (this.isATwitterInbox) return true;
       if (this.hasAttachments || this.hasRecordedAudio) return false;
