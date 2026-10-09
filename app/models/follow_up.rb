@@ -46,8 +46,18 @@ class FollowUp < ApplicationRecord
 
   before_save :stamp_processed_at, if: -> { delivery_status_changed? && !delivery_pending? }
   before_save :stamp_outcome_at, if: -> { outcome_changed? && !outcome_waiting? }
+  # The badge on the conversation header follows the FUP live. Only the
+  # dashboard is told: the full conversation_updated event would also run
+  # automations, webhooks and bots on every FUP.
+  after_commit :broadcast_conversation, on: %i[create update]
 
   private
+
+  def broadcast_conversation
+    conversation.association(:active_follow_up).reset
+    event = Events::Base.new(Events::Types::CONVERSATION_UPDATED, Time.zone.now, conversation: conversation)
+    ActionCableListener.instance.conversation_updated(event)
+  end
 
   def stamp_processed_at
     self.processed_at ||= Time.current

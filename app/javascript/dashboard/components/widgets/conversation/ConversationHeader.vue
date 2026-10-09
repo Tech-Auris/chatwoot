@@ -6,6 +6,7 @@ import { useElementSize } from '@vueuse/core';
 import BackButton from '../BackButton.vue';
 import InboxName from '../InboxName.vue';
 import AiStatusBadge from 'dashboard/components-next/Conversation/AiStatusBadge.vue';
+import FollowUpBadge from 'dashboard/components-next/Conversation/FollowUpBadge.vue';
 import FunnelStageBadge from 'dashboard/components-next/Conversation/FunnelStageBadge.vue';
 import { useAccount } from 'dashboard/composables/useAccount';
 import MoreActions from './MoreActions.vue';
@@ -214,6 +215,11 @@ const copyConversationId = async () => {
         size="md"
         :conversation-id="chat.id"
         :ai-enabled="chat.ai_enabled !== false"
+      />
+      <FollowUpBadge
+        v-if="chat?.follow_up"
+        size="md"
+        :follow-up="chat.follow_up"
       />
       <FunnelStageBadge
         v-if="chat?.id && isFunnelEnabled"

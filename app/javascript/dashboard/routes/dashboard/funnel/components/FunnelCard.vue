@@ -6,6 +6,7 @@ import { useStoreGetters } from 'dashboard/composables/store';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import ChannelIcon from 'dashboard/components-next/icon/ChannelIcon.vue';
 import AiStatusBadge from 'dashboard/components-next/Conversation/AiStatusBadge.vue';
+import FollowUpBadge from 'dashboard/components-next/Conversation/FollowUpBadge.vue';
 import { formatCurrency } from '../funnelFormatters';
 
 const props = defineProps({
@@ -179,6 +180,10 @@ const toggleLossReason = () => {
         >
           <span class="i-lucide-message-square-quote size-8" />
         </button>
+        <FollowUpBadge
+          v-if="conversation.follow_up"
+          :follow-up="conversation.follow_up"
+        />
         <button
           type="button"
           class="inline-flex items-center justify-center size-8 rounded text-n-slate-11 hover:bg-n-alpha-2"
