@@ -182,6 +182,7 @@ const toggleLossReason = () => {
         </button>
         <FollowUpBadge
           v-if="conversation.follow_up"
+          :conversation-id="conversation.id"
           :follow-up="conversation.follow_up"
         />
         <button

@@ -54,7 +54,7 @@ class FollowUp < ApplicationRecord
   private
 
   def broadcast_conversation
-    conversation.association(:active_follow_up).reset
+    conversation.association(:latest_follow_up).reset
     event = Events::Base.new(Events::Types::CONVERSATION_UPDATED, Time.zone.now, conversation: conversation)
     ActionCableListener.instance.conversation_updated(event)
   end

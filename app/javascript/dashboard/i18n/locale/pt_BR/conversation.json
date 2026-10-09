@@ -3,7 +3,34 @@
     "FOLLOW_UP": {
       "LABEL": "Follow-up {step} de {total}",
       "SENT_AT": "enviado em {time}, após {delay} sem resposta",
-      "FAILED": "o último follow-up não foi enviado"
+      "FAILED": "o último follow-up não foi enviado",
+      "ENDED": "os follow-ups terminaram sem resposta do paciente",
+      "DELIVERY": {
+        "PENDING": "Enviando",
+        "SENT": "Enviado",
+        "FAILED": "Falhou"
+      },
+      "OUTCOME": {
+        "WAITING": "Aguardando",
+        "REENGAGED": "Paciente respondeu",
+        "CLOSED": "Encerrado",
+        "NO_RESPONSE": "Sem resposta"
+      },
+      "HISTORY": {
+        "TITLE": "Follow-ups desta conversa",
+        "DESCRIPTION": "Cada follow-up que a IA enviou, da sequência mais recente para a mais antiga.",
+        "CLOSE": "Fechar",
+        "LOADING": "Carregando follow-ups…",
+        "ERROR": "Não foi possível carregar os follow-ups. Tente novamente.",
+        "EMPTY": "Esta conversa ainda não teve follow-up.",
+        "RUN": "Sequência iniciada em {date}",
+        "STEP": "Follow-up",
+        "STEP_LABEL": "Follow-up {step}",
+        "WAIT": "Espera",
+        "RAN_AT": "Executado em",
+        "DELIVERY": "Envio",
+        "OUTCOME": "Resultado"
+      }
     },
     "AI_STATUS": {
       "ON_LABEL": "IA ativa nesta conversa",

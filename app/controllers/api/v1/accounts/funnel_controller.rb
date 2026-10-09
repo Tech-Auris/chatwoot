@@ -25,7 +25,7 @@ class Api::V1::Accounts::FunnelController < Api::V1::Accounts::BaseController
     @per_page = per_page
     @current_page = current_page
     offset = (@current_page - 1) * @per_page
-    @conversations = relation.includes(:active_follow_up)
+    @conversations = relation.includes(:latest_follow_up)
                              .order(last_activity_at: :desc)
                              .offset(offset)
                              .limit(@per_page)
@@ -139,7 +139,7 @@ class Api::V1::Accounts::FunnelController < Api::V1::Accounts::BaseController
       total = totals[stage.id] || 0
       by_stage[stage.id] = if total.positive?
                              relation.where(funnel_stage_id: stage.id)
-                                     .includes(:active_follow_up)
+                                     .includes(:latest_follow_up)
                                      .order(last_activity_at: :desc)
                                      .limit(per_page)
                                      .to_a

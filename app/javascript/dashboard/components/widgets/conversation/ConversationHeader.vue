@@ -219,6 +219,7 @@ const copyConversationId = async () => {
       <FollowUpBadge
         v-if="chat?.follow_up"
         size="md"
+        :conversation-id="chat.id"
         class="mr-2"
         :follow-up="chat.follow_up"
       />

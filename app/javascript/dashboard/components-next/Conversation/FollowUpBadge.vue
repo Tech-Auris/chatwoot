@@ -1,10 +1,15 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import FollowUpHistoryDialog from './FollowUpHistoryDialog.vue';
+import { delayLabel } from './followUpFormatters';
 
-// The FUP in progress on a conversation: a ring with one slice per FUP the
-// account runs, the sent ones filled, and the current FUP number inside.
+// The conversation's FUP: a ring with one slice per FUP the account runs,
+// the sent ones filled and the current FUP number inside. Blue while a FUP
+// waits for the patient, red when its message did not go out, amber when the
+// sequence ended without an answer. Clicking opens every FUP it got.
 const props = defineProps({
+  conversationId: { type: Number, required: true },
   followUp: { type: Object, required: true },
   // `sm` fits the funnel card; `md` is the conversation header.
   size: {
@@ -15,12 +20,20 @@ const props = defineProps({
 });
 
 const { t } = useI18n();
+const historyRef = ref(null);
 
 const RADIUS = 10;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
+const STATES = {
+  running: { text: 'text-n-blue-11', stroke: 'stroke-n-blue-9' },
+  failed: { text: 'text-n-ruby-11', stroke: 'stroke-n-ruby-9' },
+  ended: { text: 'text-n-amber-11', stroke: 'stroke-n-amber-9' },
+};
+
+const state = computed(() => props.followUp.state || 'running');
+const colors = computed(() => STATES[state.value] || STATES.running);
 const total = computed(() => Math.max(props.followUp.total || 1, 1));
-const failed = computed(() => props.followUp.delivery_status === 'failed');
 
 const segment = computed(() => {
   const gap = total.value > 1 ? 2.6 : 0;
@@ -39,15 +52,6 @@ const doneDash = computed(() => {
   return [...parts, 0, CIRCUMFERENCE].join(' ');
 });
 
-const delayLabel = minutes => {
-  const days = Math.floor(minutes / 1440);
-  const hours = Math.floor((minutes % 1440) / 60);
-  const rest = minutes % 60;
-  if (days) return hours ? `${days}d ${hours}h` : `${days}d`;
-  if (hours) return rest ? `${hours}h${rest}min` : `${hours}h`;
-  return `${rest}min`;
-};
-
 const label = computed(() =>
   t('CONVERSATION.FOLLOW_UP.LABEL', {
     step: props.followUp.step,
@@ -56,8 +60,11 @@ const label = computed(() =>
 );
 
 const tooltip = computed(() => {
-  if (failed.value) {
+  if (state.value === 'failed') {
     return `${label.value} · ${t('CONVERSATION.FOLLOW_UP.FAILED')}`;
+  }
+  if (state.value === 'ended') {
+    return `${label.value} · ${t('CONVERSATION.FOLLOW_UP.ENDED')}`;
   }
   const sentAt = new Date(props.followUp.created_at * 1000).toLocaleString(
     undefined,
@@ -68,18 +75,21 @@ const tooltip = computed(() => {
     delay: delayLabel(props.followUp.delay_minutes),
   })}`;
 });
+
+const openHistory = () => historyRef.value?.open();
 </script>
 
 <template>
+  <!-- A span, not a button: the global button styles reshape the ring. -->
   <span
-    role="img"
+    role="button"
+    tabindex="0"
     :title="tooltip"
     :aria-label="tooltip"
-    class="relative inline-flex flex-shrink-0 items-center justify-center rounded-full"
-    :class="[
-      size === 'md' ? 'size-7' : 'size-6',
-      failed ? 'text-n-ruby-11' : 'text-n-blue-11',
-    ]"
+    class="relative inline-flex flex-shrink-0 items-center justify-center rounded-full cursor-pointer transition-opacity hover:opacity-80"
+    :class="[size === 'md' ? 'size-7' : 'size-6', colors.text]"
+    @click.stop.prevent="openHistory"
+    @keydown.enter.prevent="openHistory"
   >
     <svg class="size-full" viewBox="0 0 24 24" aria-hidden="true">
       <circle
@@ -98,7 +108,7 @@ const tooltip = computed(() => {
         :r="RADIUS"
         fill="none"
         stroke-width="2.4"
-        :class="failed ? 'stroke-n-ruby-9' : 'stroke-n-blue-9'"
+        :class="colors.stroke"
         :stroke-dasharray="doneDash"
         transform="rotate(-88 12 12)"
       />
@@ -107,4 +117,5 @@ const tooltip = computed(() => {
       {{ followUp.step }}
     </span>
   </span>
+  <FollowUpHistoryDialog ref="historyRef" :conversation-id="conversationId" />
 </template>
