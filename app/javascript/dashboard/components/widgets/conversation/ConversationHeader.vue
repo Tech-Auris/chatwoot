@@ -210,15 +210,20 @@ const copyConversationId = async () => {
     <div
       class="flex flex-row flex-wrap items-center justify-start xl:justify-end gap-2 w-full xl:w-auto xl:flex-shrink header-actions-wrap"
     >
+      <!-- The AI, FUP and funnel stage controls sit 12px apart; the AI badge
+           is a button, so its global padding is dropped here. -->
       <AiStatusBadge
         v-if="chat?.id"
         size="md"
+        class="!p-0 me-1"
         :conversation-id="chat.id"
         :ai-enabled="chat.ai_enabled !== false"
       />
       <FollowUpBadge
         v-if="chat?.follow_up"
         size="md"
+        :conversation-id="chat.id"
+        class="me-1"
         :follow-up="chat.follow_up"
       />
       <FunnelStageBadge

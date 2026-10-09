@@ -5,17 +5,25 @@ RSpec.describe FollowUp do
   let(:conversation) { create(:conversation, account: account) }
 
   describe 'Conversation#follow_up_badge' do
-    it 'is empty without a FUP waiting for the patient' do
+    it 'is hidden once the patient came back' do
       create(:follow_up, conversation: conversation, outcome: :reengaged)
 
       expect(conversation.reload.follow_up_badge).to be_nil
+    end
+
+    it 'shows the sequence ended without an answer, then a new FUP running' do
+      create(:follow_up, conversation: conversation, run_id: 'a', step: 3, outcome: :no_response, delivery_status: :sent)
+      expect(conversation.reload.follow_up_badge).to include(step: 3, state: 'ended')
+
+      create(:follow_up, conversation: conversation, run_id: 'b', step: 1, delivery_status: :failed)
+      expect(conversation.reload.follow_up_badge).to include(step: 1, state: 'failed')
     end
 
     it 'shows the FUP in progress out of the FUPs the account runs' do
       account.update!(settings: account.settings.merge('follow_up' => { 'steps' => [240, 480, 4320] }))
       create(:follow_up, conversation: conversation, step: 2, delay_minutes: 480, delivery_status: :sent)
 
-      expect(conversation.reload.follow_up_badge).to include(step: 2, total: 3, delay_minutes: 480, delivery_status: 'sent')
+      expect(conversation.reload.follow_up_badge).to include(step: 2, total: 3, delay_minutes: 480, delivery_status: 'sent', state: 'running')
     end
 
     it 'falls back to the current step when the account has no FUP setup' do

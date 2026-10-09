@@ -48,6 +48,14 @@ RSpec.describe 'Follow-up reports API', type: :request do
     expect(response.parsed_body['rows'].size).to eq(2)
   end
 
+  it 'filters by delivery and by result' do
+    get url, params: range.merge(delivery_status: 'failed'), headers: admin.create_new_auth_token, as: :json
+    expect(response.parsed_body['rows'].pluck('error_message')).to eq(['Template not found'])
+
+    get url, params: range.merge(outcome: 'reengaged'), headers: admin.create_new_auth_token, as: :json
+    expect(response.parsed_body['rows'].pluck('step')).to eq([2])
+  end
+
   it 'filters by the hour the FUP was sent, in Brasília time' do
     FollowUp.update_all(created_at: Time.zone.parse('2026-10-08 13:30 -03:00')) # rubocop:disable Rails/SkipsModelValidations
     window = { from: Time.zone.parse('2026-10-08 00:00 -03:00').to_i, to: Time.zone.parse('2026-10-08 23:59 -03:00').to_i }

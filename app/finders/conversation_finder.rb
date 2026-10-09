@@ -219,7 +219,7 @@ class ConversationFinder # rubocop:disable Metrics/ClassLength
     # a list of 25 from firing 25 extra queries.
     @conversations.includes(
       :taggings, :inbox, { assignee: { avatar_attachment: [:blob] } }, { contact: { avatar_attachment: [:blob] } }, :team, :contact_inbox,
-      :funnel_stage, :active_follow_up
+      :funnel_stage, :latest_follow_up
     )
   end
 
