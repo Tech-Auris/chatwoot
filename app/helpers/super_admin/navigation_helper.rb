@@ -27,7 +27,7 @@ module SuperAdmin::NavigationHelper
   # How the operation is doing and what it has on record — neither a sales nor a
   # finance matter, which is why they sit on their own.
   def operations_open?
-    params[:controller].in? %w[super_admin/reports/health_score super_admin/reports/inbox_status
+    params[:controller].in? %w[super_admin/reports/health_score super_admin/reports/inbox_status super_admin/reports/follow_up_audit
                                super_admin/terms_acceptances super_admin/terms_acceptance_requests
                                super_admin/login_events]
   end
@@ -41,6 +41,7 @@ module SuperAdmin::NavigationHelper
     [
       { label: 'Health Score', url: super_admin_reports_health_score_url },
       { label: 'Inbox status', url: super_admin_reports_inbox_status_url },
+      { label: 'Auditoria de FUP', url: super_admin_reports_follow_up_audit_url },
       terms,
       terms_campaigns,
       { label: 'Login events', url: super_admin_login_events_url }

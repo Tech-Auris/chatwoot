@@ -1056,6 +1056,9 @@ Rails.application.routes.draw do
         resource :health_score, only: [:show], controller: :health_score do
           get :data, on: :member
         end
+        resource :follow_up_audit, only: [:show], controller: :follow_up_audit do
+          get :data, on: :member
+        end
       end
       resources :inboxes, only: [], module: :inboxes do
         resource :baileys_connection, only: [:show, :create, :destroy]

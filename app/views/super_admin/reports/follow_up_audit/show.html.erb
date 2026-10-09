@@ -1,0 +1,7 @@
+<% content_for(:title) do %>
+  Auditoria de FUP
+<% end %>
+
+<%= render_vue_component('FollowUpAuditIndex', {
+  data_url: data_super_admin_reports_follow_up_audit_url(format: :json)
+}) %>
