@@ -809,5 +809,59 @@
     "REPLIED_BY": "by {name}",
     "NO_HUMAN_REPLY": "No reply",
     "WAITING_FOR": "{time} ago"
+  },
+  "FOLLOW_UP_REPORT": {
+    "HEADER": "Follow-up",
+    "DESCRIPTION": "How many follow-ups the AI sent, when, and how many patients came back to the conversation.",
+    "EXPORT": "Export CSV",
+    "ALL_INBOXES": "All inboxes",
+    "HOUR_FROM": "From",
+    "HOUR_TO": "To",
+    "ANY_HOUR": "Any hour",
+    "HOUR": "{hour}h",
+    "CONTACT_PLACEHOLDER": "Contact name or phone",
+    "ERROR_LOAD": "Could not load the report: {error}",
+    "LOADING": "Loading…",
+    "EMPTY_STATE": "No follow-up in this period.",
+    "DASH": "—",
+    "HASH_ID": "#{id}",
+    "STEP_LABEL": "FUP {step} · {delay}",
+    "KPI": {
+      "TOTAL_CONVERSATIONS": "Total conversations",
+      "TOTAL_CONVERSATIONS_HINT": "started in the period",
+      "WITH_FOLLOW_UP": "Conversations with FUP",
+      "WITH_FOLLOW_UP_HINT": "got at least one follow-up",
+      "REENGAGEMENT": "Reengagement",
+      "REENGAGEMENT_HINT": "{count} conversations: the patient replied after the FUP"
+    },
+    "SENT_TITLE": "Follow-ups sent",
+    "COLUMNS": {
+      "DATETIME": "Date / time",
+      "STEP": "FUP",
+      "CONTACT": "Contact",
+      "CONVERSATION": "Conversation",
+      "INBOX": "Inbox",
+      "DELIVERY": "Delivery",
+      "OUTCOME": "Result"
+    },
+    "DELIVERY": {
+      "PENDING": "Pending",
+      "SENT": "Sent",
+      "FAILED": "Error"
+    },
+    "OUTCOME": {
+      "WAITING": "Waiting",
+      "REENGAGED": "Came back",
+      "CLOSED": "Closed by the patient",
+      "NO_RESPONSE": "No reply"
+    },
+    "STEPS": {
+      "TITLE": "Reengagement by FUP number",
+      "DESCRIPTION": "Of each follow-up sent, how many patients replied before the next one.",
+      "STEP": "FUP number",
+      "SENT": "Sent",
+      "REENGAGED": "Came back",
+      "RATE": "Reengagement rate"
+    }
   }
 }
