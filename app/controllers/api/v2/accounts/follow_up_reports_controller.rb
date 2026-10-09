@@ -48,6 +48,13 @@ class Api::V2::Accounts::FollowUpReportsController < Api::V1::Accounts::BaseCont
     scope = scope.where(inbox_id: inbox_id) if inbox_id
     scope = filter_hours(scope)
     scope = filter_contact(scope) if params[:q].present?
+    filter_statuses(scope)
+  end
+
+  # Delivery (sent, failed, pending) and result (waiting, reengaged, ...).
+  def filter_statuses(scope)
+    scope = scope.where(delivery_status: params[:delivery_status]) if FollowUp.delivery_statuses.key?(params[:delivery_status])
+    scope = scope.where(outcome: params[:outcome]) if FollowUp.outcomes.key?(params[:outcome])
     scope
   end
 

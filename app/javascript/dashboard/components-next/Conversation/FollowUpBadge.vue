@@ -116,6 +116,6 @@ const openHistory = () => historyRef.value?.open();
     <span class="absolute text-[10px] font-bold leading-none">
       {{ followUp.step }}
     </span>
+    <FollowUpHistoryDialog ref="historyRef" :conversation-id="conversationId" />
   </span>
-  <FollowUpHistoryDialog ref="historyRef" :conversation-id="conversationId" />
 </template>

@@ -18,7 +18,17 @@ class FollowUpReportsAPI extends ApiClient {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  params({ from, to, inboxId, hourFrom, hourTo, q, page }) {
+  params({
+    from,
+    to,
+    inboxId,
+    hourFrom,
+    hourTo,
+    q,
+    deliveryStatus,
+    outcome,
+    page,
+  }) {
     return {
       from,
       to,
@@ -26,6 +36,8 @@ class FollowUpReportsAPI extends ApiClient {
       hour_from: hourFrom === '' ? undefined : hourFrom,
       hour_to: hourTo === '' ? undefined : hourTo,
       q: q || undefined,
+      delivery_status: deliveryStatus || undefined,
+      outcome: outcome || undefined,
       page,
     };
   }

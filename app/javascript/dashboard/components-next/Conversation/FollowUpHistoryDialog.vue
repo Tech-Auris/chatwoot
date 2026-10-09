@@ -88,8 +88,9 @@ defineExpose({ open });
     width="2xl"
     :title="t('CONVERSATION.FOLLOW_UP.HISTORY.TITLE')"
     :description="t('CONVERSATION.FOLLOW_UP.HISTORY.DESCRIPTION')"
-    :show-confirm-button="false"
-    :cancel-button-label="t('CONVERSATION.FOLLOW_UP.HISTORY.CLOSE')"
+    :show-cancel-button="false"
+    :confirm-button-label="t('CONVERSATION.FOLLOW_UP.HISTORY.CLOSE')"
+    @confirm="dialogRef?.close()"
   >
     <p v-if="isLoading" class="text-sm text-n-slate-11">
       {{ t('CONVERSATION.FOLLOW_UP.HISTORY.LOADING') }}
@@ -136,11 +137,7 @@ defineExpose({ open });
               class="text-n-slate-12 align-top"
             >
               <td class="py-2 pe-3 whitespace-nowrap">
-                {{
-                  t('CONVERSATION.FOLLOW_UP.HISTORY.STEP_LABEL', {
-                    step: followUp.step,
-                  })
-                }}
+                {{ followUp.step }}
               </td>
               <td class="py-2 pe-3 whitespace-nowrap">
                 {{ delayLabel(followUp.delay_minutes) }}

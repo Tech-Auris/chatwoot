@@ -862,6 +862,8 @@
       "SENT": "Sent",
       "REENGAGED": "Came back",
       "RATE": "Reengagement rate"
-    }
+    },
+    "ALL_DELIVERIES": "All deliveries",
+    "ALL_OUTCOMES": "All results"
   }
 }

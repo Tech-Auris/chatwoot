@@ -862,6 +862,8 @@
       "SENT": "Enviados",
       "REENGAGED": "Retomadas",
       "RATE": "Taxa de reengajamento"
-    }
+    },
+    "ALL_DELIVERIES": "Todos os envios",
+    "ALL_OUTCOMES": "Todos os resultados"
   }
 }

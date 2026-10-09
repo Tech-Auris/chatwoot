@@ -26,6 +26,10 @@ const inboxId = ref('');
 const hourFrom = ref('');
 const hourTo = ref('');
 const contactQuery = ref('');
+const deliveryStatus = ref('');
+const outcomeFilter = ref('');
+const DELIVERY_STATUSES = ['sent', 'failed', 'pending'];
+const OUTCOMES = ['waiting', 'reengaged', 'closed', 'no_response'];
 
 const rows = ref([]);
 const steps = ref([]);
@@ -52,6 +56,8 @@ const filters = computed(() => ({
   hourFrom: hourFrom.value,
   hourTo: hourTo.value,
   q: contactQuery.value.trim(),
+  deliveryStatus: deliveryStatus.value,
+  outcome: outcomeFilter.value,
 }));
 
 const fetchData = async (page = 1) => {
@@ -220,15 +226,43 @@ const outcomeLabel = outcome =>
       </label>
     </div>
 
-    <input
-      v-model="contactQuery"
-      type="search"
-      :placeholder="$t('FOLLOW_UP_REPORT.CONTACT_PLACEHOLDER')"
-      :aria-label="$t('FOLLOW_UP_REPORT.CONTACT_PLACEHOLDER')"
-      class="!mb-0 h-10 bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg px-3 text-sm text-n-slate-12 focus:outline-n-brand lg:w-72"
-      @keyup.enter="fetchData()"
-      @search="fetchData()"
-    />
+    <div class="flex flex-col w-full gap-3 sm:flex-row">
+      <input
+        v-model="contactQuery"
+        type="search"
+        :placeholder="$t('FOLLOW_UP_REPORT.CONTACT_PLACEHOLDER')"
+        :aria-label="$t('FOLLOW_UP_REPORT.CONTACT_PLACEHOLDER')"
+        class="!mb-0 h-10 flex-1 min-w-0 bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg px-3 text-sm text-n-slate-12 focus:outline-n-brand"
+        @keyup.enter="fetchData()"
+        @search="fetchData()"
+      />
+      <select
+        v-model="deliveryStatus"
+        :aria-label="$t('FOLLOW_UP_REPORT.TABLE.DELIVERY')"
+        class="!mb-0 h-10 bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg pl-3 pr-9 text-sm text-n-slate-12 focus:outline-n-brand sm:w-52"
+        @change="fetchData()"
+      >
+        <option value="">{{ $t('FOLLOW_UP_REPORT.ALL_DELIVERIES') }}</option>
+        <option
+          v-for="status in DELIVERY_STATUSES"
+          :key="status"
+          :value="status"
+        >
+          {{ deliveryLabel(status) }}
+        </option>
+      </select>
+      <select
+        v-model="outcomeFilter"
+        :aria-label="$t('FOLLOW_UP_REPORT.TABLE.OUTCOME')"
+        class="!mb-0 h-10 bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg pl-3 pr-9 text-sm text-n-slate-12 focus:outline-n-brand sm:w-60"
+        @change="fetchData()"
+      >
+        <option value="">{{ $t('FOLLOW_UP_REPORT.ALL_OUTCOMES') }}</option>
+        <option v-for="item in OUTCOMES" :key="item" :value="item">
+          {{ outcomeLabel(item) }}
+        </option>
+      </select>
+    </div>
   </div>
 
   <div
