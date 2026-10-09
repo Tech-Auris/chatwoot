@@ -207,6 +207,7 @@ Rails.application.routes.draw do
               end
               resources :scheduled_messages, only: [:index, :create, :update, :destroy]
               resources :recurring_scheduled_messages, only: [:index, :create, :update, :destroy]
+              resources :follow_ups, only: [:index, :create, :update]
               resources :assignments, only: [:create]
               resources :labels, only: [:create, :index]
               resource :participants, only: [:show, :create, :update, :destroy]

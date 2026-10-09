@@ -140,6 +140,7 @@ class Conversation < ApplicationRecord
   has_many :reporting_events, dependent: :destroy_async
   has_many :conversion_event_dispatches, dependent: :destroy_async
   has_many :scheduled_messages, dependent: :destroy
+  has_many :follow_ups, dependent: :destroy_async
   has_many :recurring_scheduled_messages, dependent: :destroy
 
   before_save :ensure_snooze_until_reset

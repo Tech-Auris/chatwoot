@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_08_120000) do
+ActiveRecord::Schema[7.1].define(version: 2026_10_09_120000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -1002,6 +1002,26 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_08_120000) do
     t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "follow_ups", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "conversation_id", null: false
+    t.bigint "inbox_id", null: false
+    t.bigint "message_id"
+    t.string "run_id", null: false
+    t.integer "step", null: false
+    t.integer "delay_minutes", null: false
+    t.integer "delivery_status", default: 0, null: false
+    t.integer "outcome", default: 0, null: false
+    t.text "error_message"
+    t.datetime "processed_at"
+    t.datetime "outcome_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "created_at"], name: "index_follow_ups_on_account_id_and_created_at"
+    t.index ["conversation_id", "run_id", "step"], name: "index_follow_ups_on_conversation_id_and_run_id_and_step", unique: true
+    t.index ["inbox_id"], name: "index_follow_ups_on_inbox_id"
   end
 
   create_table "funnel_stage_changes", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
