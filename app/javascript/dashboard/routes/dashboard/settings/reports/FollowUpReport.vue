@@ -177,53 +177,57 @@ const outcomeLabel = outcome =>
     />
   </ReportHeader>
 
-  <div class="flex flex-col w-full gap-3 mb-4 lg:flex-row lg:flex-wrap">
-    <WootDatePicker
-      v-model:date-range="customDateRange"
-      v-model:range-type="selectedDateRange"
-      @date-range-changed="onDateRangeChange"
-    />
+  <!-- Two rows as wide as the first one, so the contact search row ends
+       where the hour filters end. -->
+  <div class="flex flex-col w-full gap-3 mb-4 lg:w-fit">
+    <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
+      <WootDatePicker
+        v-model:date-range="customDateRange"
+        v-model:range-type="selectedDateRange"
+        @date-range-changed="onDateRangeChange"
+      />
 
-    <select
-      v-model="inboxId"
-      class="!mb-0 h-10 bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg pl-3 pr-9 text-sm text-n-slate-12 focus:outline-n-brand lg:w-64"
-      @change="fetchData()"
-    >
-      <option value="">
-        {{ $t('FOLLOW_UP_REPORT.ALL_INBOXES') }}
-      </option>
-      <option v-for="inbox in inboxes" :key="inbox.id" :value="inbox.id">
-        {{ inbox.name }}
-      </option>
-    </select>
+      <select
+        v-model="inboxId"
+        class="!mb-0 h-10 bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg pl-3 pr-9 text-sm text-n-slate-12 focus:outline-n-brand lg:w-64"
+        @change="fetchData()"
+      >
+        <option value="">
+          {{ $t('FOLLOW_UP_REPORT.ALL_INBOXES') }}
+        </option>
+        <option v-for="inbox in inboxes" :key="inbox.id" :value="inbox.id">
+          {{ inbox.name }}
+        </option>
+      </select>
 
-    <div class="flex items-center gap-2 text-sm text-n-slate-11">
-      <label class="flex items-center gap-2">
-        {{ $t('FOLLOW_UP_REPORT.HOUR_FROM') }}
-        <select
-          v-model="hourFrom"
-          class="!mb-0 h-10 bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg pl-3 pr-8 text-sm text-n-slate-12 focus:outline-n-brand"
-          @change="fetchData()"
-        >
-          <option value="">{{ $t('FOLLOW_UP_REPORT.ANY_HOUR') }}</option>
-          <option v-for="hour in HOURS" :key="hour" :value="hour">
-            {{ $t('FOLLOW_UP_REPORT.HOUR', { hour }) }}
-          </option>
-        </select>
-      </label>
-      <label class="flex items-center gap-2">
-        {{ $t('FOLLOW_UP_REPORT.HOUR_TO') }}
-        <select
-          v-model="hourTo"
-          class="!mb-0 h-10 bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg pl-3 pr-8 text-sm text-n-slate-12 focus:outline-n-brand"
-          @change="fetchData()"
-        >
-          <option value="">{{ $t('FOLLOW_UP_REPORT.ANY_HOUR') }}</option>
-          <option v-for="hour in HOURS" :key="hour" :value="hour">
-            {{ $t('FOLLOW_UP_REPORT.HOUR', { hour }) }}
-          </option>
-        </select>
-      </label>
+      <div class="flex items-center gap-2 text-sm text-n-slate-11">
+        <label class="flex items-center gap-2">
+          {{ $t('FOLLOW_UP_REPORT.HOUR_FROM') }}
+          <select
+            v-model="hourFrom"
+            class="!mb-0 h-10 bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg pl-3 pr-8 text-sm text-n-slate-12 focus:outline-n-brand"
+            @change="fetchData()"
+          >
+            <option value="">{{ $t('FOLLOW_UP_REPORT.ANY_HOUR') }}</option>
+            <option v-for="hour in HOURS" :key="hour" :value="hour">
+              {{ $t('FOLLOW_UP_REPORT.HOUR', { hour }) }}
+            </option>
+          </select>
+        </label>
+        <label class="flex items-center gap-2">
+          {{ $t('FOLLOW_UP_REPORT.HOUR_TO') }}
+          <select
+            v-model="hourTo"
+            class="!mb-0 h-10 bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg pl-3 pr-8 text-sm text-n-slate-12 focus:outline-n-brand"
+            @change="fetchData()"
+          >
+            <option value="">{{ $t('FOLLOW_UP_REPORT.ANY_HOUR') }}</option>
+            <option v-for="hour in HOURS" :key="hour" :value="hour">
+              {{ $t('FOLLOW_UP_REPORT.HOUR', { hour }) }}
+            </option>
+          </select>
+        </label>
+      </div>
     </div>
 
     <div class="flex flex-col w-full gap-3 sm:flex-row">
