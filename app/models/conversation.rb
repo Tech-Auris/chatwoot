@@ -140,6 +140,10 @@ class Conversation < ApplicationRecord
   has_many :reporting_events, dependent: :destroy_async
   has_many :conversion_event_dispatches, dependent: :destroy_async
   has_many :scheduled_messages, dependent: :destroy
+  has_many :follow_ups, dependent: :destroy_async
+  # The FUP still waiting for the patient, shown as the badge on the funnel
+  # card and the conversation header. Starting a new FUP closes the previous.
+  has_one :active_follow_up, -> { outcome_waiting.order(created_at: :desc) }, class_name: 'FollowUp', inverse_of: :conversation # rubocop:disable Rails/HasManyOrHasOneDependent
   has_many :recurring_scheduled_messages, dependent: :destroy
 
   before_save :ensure_snooze_until_reset
@@ -356,6 +360,18 @@ class Conversation < ApplicationRecord
 
   def csat_survey_link
     "#{ENV.fetch('FRONTEND_URL', nil)}/survey/responses/#{uuid}"
+  end
+
+  # The FUP in progress, for the badge on the funnel card and the header.
+  # `total` is how many FUPs the account runs, so the badge draws one slice
+  # per FUP; without a setup it falls back to the current step.
+  def follow_up_badge
+    return if active_follow_up.nil?
+
+    follow_up = active_follow_up
+    configured = Array(account.settings&.dig('follow_up', 'steps')).size
+    { step: follow_up.step, total: [configured, follow_up.step].max, delay_minutes: follow_up.delay_minutes,
+      delivery_status: follow_up.delivery_status, created_at: follow_up.created_at.to_i }
   end
 
   def dispatch_conversation_updated_event(previous_changes = nil, broadcast_metadata: nil)

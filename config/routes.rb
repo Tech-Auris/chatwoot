@@ -207,6 +207,7 @@ Rails.application.routes.draw do
               end
               resources :scheduled_messages, only: [:index, :create, :update, :destroy]
               resources :recurring_scheduled_messages, only: [:index, :create, :update, :destroy]
+              resources :follow_ups, only: [:index, :create, :update]
               resources :assignments, only: [:create]
               resources :labels, only: [:create, :index]
               resource :participants, only: [:show, :create, :update, :destroy]
@@ -686,6 +687,7 @@ Rails.application.routes.draw do
             end
           end
           resources :ia_human_distribution_reports, only: [:index]
+          resources :follow_up_reports, only: [:index]
           resources :meta_templates, only: %i[index create update destroy] do
             collection do
               post :sync
@@ -1052,6 +1054,9 @@ Rails.application.routes.draw do
           get :data, on: :member
         end
         resource :health_score, only: [:show], controller: :health_score do
+          get :data, on: :member
+        end
+        resource :follow_up_audit, only: [:show], controller: :follow_up_audit do
           get :data, on: :member
         end
       end

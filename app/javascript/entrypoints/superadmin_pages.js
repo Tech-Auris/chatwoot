@@ -5,6 +5,7 @@ import VueDOMPurifyHTML from 'vue-dompurify-html';
 import PlaygroundIndex from '../superadmin_pages/views/playground/Index.vue';
 import DashboardIndex from '../superadmin_pages/views/dashboard/Index.vue';
 import InboxStatusIndex from '../superadmin_pages/views/reports/InboxStatus.vue';
+import FollowUpAuditIndex from '../superadmin_pages/views/reports/FollowUpAudit.vue';
 import HealthScoreIndex from '../superadmin_pages/views/reports/HealthScore.vue';
 import FinancialProductsIndex from '../superadmin_pages/views/financial/Products.vue';
 import FinancialCustomerLinksIndex from '../superadmin_pages/views/financial/CustomerLinks.vue';
@@ -27,6 +28,7 @@ const ComponentMapping = {
   PlaygroundIndex: PlaygroundIndex,
   DashboardIndex: DashboardIndex,
   InboxStatusIndex: InboxStatusIndex,
+  FollowUpAuditIndex: FollowUpAuditIndex,
   HealthScoreIndex: HealthScoreIndex,
   FinancialProductsIndex: FinancialProductsIndex,
   FinancialCustomerLinksIndex: FinancialCustomerLinksIndex,

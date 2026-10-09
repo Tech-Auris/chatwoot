@@ -20,6 +20,7 @@ class Conversations::EventDataPresenter < SimpleDelegator
       priority: priority,
       summary: summary,
       ai_enabled: ai_status_enabled?,
+      follow_up: follow_up_badge,
       waiting_since: waiting_since.to_i,
       messaging_window: messaging_window,
       **push_timestamps

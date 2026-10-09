@@ -809,5 +809,59 @@
     "REPLIED_BY": "por {name}",
     "NO_HUMAN_REPLY": "Sem resposta",
     "WAITING_FOR": "há {time}"
+  },
+  "FOLLOW_UP_REPORT": {
+    "HEADER": "Follow-up",
+    "DESCRIPTION": "Quantos follow-ups a IA enviou, quando, e quantos pacientes voltaram a conversar.",
+    "EXPORT": "Exportar CSV",
+    "ALL_INBOXES": "Todas as caixas",
+    "HOUR_FROM": "De",
+    "HOUR_TO": "Até",
+    "ANY_HOUR": "Qualquer hora",
+    "HOUR": "{hour}h",
+    "CONTACT_PLACEHOLDER": "Nome ou telefone do contato",
+    "ERROR_LOAD": "Não foi possível carregar o relatório: {error}",
+    "LOADING": "Carregando…",
+    "EMPTY_STATE": "Nenhum follow-up neste período.",
+    "DASH": "—",
+    "HASH_ID": "#{id}",
+    "STEP_LABEL": "FUP {step} · {delay}",
+    "KPI": {
+      "TOTAL_CONVERSATIONS": "Total de conversas",
+      "TOTAL_CONVERSATIONS_HINT": "iniciadas no período",
+      "WITH_FOLLOW_UP": "Conversas com FUP",
+      "WITH_FOLLOW_UP_HINT": "receberam ao menos 1 follow-up",
+      "REENGAGEMENT": "Reengajamento",
+      "REENGAGEMENT_HINT": "{count} conversas: o paciente voltou a responder depois do FUP"
+    },
+    "SENT_TITLE": "Follow-ups enviados",
+    "COLUMNS": {
+      "DATETIME": "Data / hora",
+      "STEP": "FUP",
+      "CONTACT": "Contato",
+      "CONVERSATION": "Conversa",
+      "INBOX": "Caixa de entrada",
+      "DELIVERY": "Envio",
+      "OUTCOME": "Resultado"
+    },
+    "DELIVERY": {
+      "PENDING": "Pendente",
+      "SENT": "Enviado",
+      "FAILED": "Erro"
+    },
+    "OUTCOME": {
+      "WAITING": "Aguardando",
+      "REENGAGED": "Retomou",
+      "CLOSED": "Encerrado pelo paciente",
+      "NO_RESPONSE": "Sem resposta"
+    },
+    "STEPS": {
+      "TITLE": "Reengajamento por número do FUP",
+      "DESCRIPTION": "De cada follow-up enviado, quantos pacientes voltaram a responder antes do próximo.",
+      "STEP": "Número do FUP",
+      "SENT": "Enviados",
+      "REENGAGED": "Retomadas",
+      "RATE": "Taxa de reengajamento"
+    }
   }
 }

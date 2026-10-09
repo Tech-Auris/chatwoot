@@ -1,5 +1,10 @@
 {
   "CONVERSATION": {
+    "FOLLOW_UP": {
+      "LABEL": "Follow-up {step} of {total}",
+      "SENT_AT": "sent {time}, after {delay} without a reply",
+      "FAILED": "the last follow-up was not sent"
+    },
     "AI_STATUS": {
       "ON_LABEL": "AI active in this conversation",
       "OFF_LABEL": "AI off in this conversation",

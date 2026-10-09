@@ -667,6 +667,11 @@ const menuItems = computed(() => {
           label: t('SIDEBAR.REPORTS_IA_HUMAN_DISTRIBUTION'),
           to: accountScopedRoute('ia_human_distribution_report'),
         },
+        {
+          name: 'Reports Follow-up',
+          label: t('SIDEBAR.REPORTS_FOLLOW_UP'),
+          to: accountScopedRoute('follow_up_report'),
+        },
       ],
     },
     {

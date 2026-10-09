@@ -1,0 +1,13 @@
+json.id follow_up.id
+json.conversation_id follow_up.conversation.display_id
+json.inbox_id follow_up.inbox_id
+json.run_id follow_up.run_id
+json.step follow_up.step
+json.delay_minutes follow_up.delay_minutes
+json.delivery_status follow_up.delivery_status
+json.outcome follow_up.outcome
+json.error_message follow_up.error_message
+json.message_id follow_up.message_id
+json.created_at follow_up.created_at.to_i
+json.processed_at follow_up.processed_at&.to_i
+json.outcome_at follow_up.outcome_at&.to_i

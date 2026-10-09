@@ -85,6 +85,7 @@ json.origem conversation.origem
 json.priority conversation.priority
 json.summary conversation.summary
 json.ai_enabled conversation.ai_status_enabled?
+json.follow_up conversation.follow_up_badge
 # Auris: the header shows and changes the funnel stage of the conversation.
 # Serialized here so opening a conversation does not cost an extra request just
 # to learn which stage it is in.

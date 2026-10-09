@@ -24,6 +24,7 @@ import BotReports from './BotReports.vue';
 import LiveReports from './LiveReports.vue';
 import SLAReports from './SLAReports.vue';
 import IaHumanDistributionReport from './IaHumanDistributionReport.vue';
+import FollowUpReport from './FollowUpReport.vue';
 
 const meta = {
   featureFlag: FEATURE_FLAGS.REPORTS,
@@ -185,6 +186,12 @@ export default {
           // sidebar leaves available.
           meta: { ...meta, fullWidth: true },
           component: IaHumanDistributionReport,
+        },
+        {
+          path: 'follow_up',
+          name: 'follow_up_report',
+          meta: { ...meta, fullWidth: true },
+          component: FollowUpReport,
         },
       ],
     },
