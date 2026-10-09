@@ -1,4 +1,16 @@
 ---
+- tag: v4.15.1-auris.1.69
+  published_at: '2026-10-09T20:00:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.69
+  notes:
+    en: |-
+      ### ✨ What's new
+
+      - **See which follow-up is running.** When the AI is following up with a patient who stopped replying, a small ring on the funnel card and in the conversation header shows which follow-up is waiting (for example, 2 of 3). It turns red if the message could not be sent.
+    pt_BR: |-
+      ### ✨ Novidades
+
+      - **Veja qual follow-up está em andamento.** Quando a IA está fazendo follow-up com um paciente que parou de responder, um pequeno anel no card do funil e no cabeçalho da conversa mostra qual follow-up está aguardando (por exemplo, 2 de 3). Ele fica vermelho se a mensagem não pôde ser enviada.
 - tag: v4.15.1-auris.1.68
   published_at: '2026-10-08T20:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.68
@@ -396,14 +408,6 @@
 - tag: v4.15.1-auris.1.51.5
   published_at: '2026-09-01T02:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.51.5
-  notes:
-    en: |-
-      Bug fixes and internal improvements.
-    pt_BR: |-
-      Correções de bugs e melhorias internas.
-- tag: v4.15.1-auris.1.51.4
-  published_at: '2026-08-31T00:30:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.51.4
   notes:
     en: |-
       Bug fixes and internal improvements.
