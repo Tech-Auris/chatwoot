@@ -8,6 +8,9 @@
 }
 
 .field-unit__label {
+  // Wide fields (`.feature-container`) would otherwise squeeze the label
+  // out of line with the others.
+  flex-shrink: 0;
   float: left;
   margin-left: 0.625rem;
   text-align: right;

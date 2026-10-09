@@ -494,8 +494,53 @@ RSpec.describe Account do
           funnel_enabled: true,
           ai_status_uses_attribute: true,
           multi_language_ai: false
-        }
+        },
+        follow_up: nil
       )
+    end
+
+    it 'carries the follow-up setup for the n8n FUP workflow' do
+      account.update!(follow_up: { steps: [60, 480] })
+
+      expect(account.webhook_data[:follow_up]).to eq('steps' => [60, 480])
+    end
+  end
+
+  describe '#follow_up' do
+    let(:account) { create(:account) }
+
+    it 'stores the setup in settings next to the other keys' do
+      account.update!(reporting_timezone: 'America/Sao_Paulo')
+      account.update!(follow_up: { steps: [240, 480, 4320], end_flow: { enabled: true, wait_minutes: 60 } })
+
+      account.reload
+      expect(account.follow_up).to eq('steps' => [240, 480, 4320], 'end_flow' => { 'enabled' => true, 'wait_minutes' => 60 })
+      expect(account.reporting_timezone).to eq('America/Sao_Paulo')
+    end
+
+    it 'accepts no follow-up at all' do
+      account.follow_up = { steps: [] }
+
+      expect(account).to be_valid
+    end
+
+    it 'rejects more than five follow-ups' do
+      account.follow_up = { steps: [1, 2, 3, 4, 5, 6] }
+
+      expect(account).not_to be_valid
+      expect(account.errors[:follow_up]).to be_present
+    end
+
+    it 'rejects a follow-up that is not a positive whole number of minutes' do
+      account.follow_up = { steps: [60, 0] }
+
+      expect(account).not_to be_valid
+    end
+
+    it 'rejects an invalid waiting time before the conversation is closed' do
+      account.follow_up = { steps: [60], end_flow: { enabled: true, wait_minutes: -1 } }
+
+      expect(account).not_to be_valid
     end
   end
 end

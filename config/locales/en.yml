@@ -93,6 +93,9 @@ en:
 
   errors:
     account:
+      follow_up:
+        invalid_steps: must have up to %{max} follow-ups, each a whole number of minutes greater than zero
+        invalid_wait_minutes: must have a waiting time in whole minutes greater than zero
       reporting_timezone:
         invalid: is not a valid timezone
       support_email:
