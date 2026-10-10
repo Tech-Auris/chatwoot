@@ -6,11 +6,11 @@
     en: |-
       ### ✨ What's new
 
-      - **See which follow-up is running.** When the AI is following up with a patient who stopped replying, a small ring on the funnel card and in the conversation header shows which follow-up is waiting (for example, 2 of 3). It turns red if the message could not be sent.
+      - **Keep track of the conversation's follow-ups.** When the AI is following up with a patient who stopped replying, a small ring on the funnel card and in the conversation header shows which follow-up it is on (for example, 2 of 3). It is blue while waiting for the patient, red if the message could not be sent and amber when the follow-ups ended without an answer. Click it to see each follow-up sent and whether the patient replied.
     pt_BR: |-
       ### ✨ Novidades
 
-      - **Veja qual follow-up está em andamento.** Quando a IA está fazendo follow-up com um paciente que parou de responder, um pequeno anel no card do funil e no cabeçalho da conversa mostra qual follow-up está aguardando (por exemplo, 2 de 3). Ele fica vermelho se a mensagem não pôde ser enviada.
+      - **Acompanhe os follow-ups da conversa.** Quando a IA está fazendo follow-up com um paciente que parou de responder, um pequeno anel no card do funil e no cabeçalho da conversa mostra em qual follow-up ela está (por exemplo, 2 de 3). Ele fica azul enquanto aguarda o paciente, vermelho se a mensagem não pôde ser enviada e âmbar quando os follow-ups terminaram sem resposta. Clique nele para ver cada follow-up enviado e se o paciente respondeu.
 - tag: v4.15.1-auris.1.68
   published_at: '2026-10-08T20:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.68
