@@ -12,6 +12,24 @@ class MarketingIntegrationsAPI extends ApiClient {
     return axios.get(`${this.url}/${id}/pixel_events`);
   }
 
+  // Pixels of the Meta integration: every active / test pixel gets the
+  // conversions, each with its own access token.
+  getPixels(id) {
+    return axios.get(`${this.url}/${id}/pixels`);
+  }
+
+  addPixel(id, attributes) {
+    return axios.post(`${this.url}/${id}/pixels`, attributes);
+  }
+
+  updatePixel(id, pixelId, attributes) {
+    return axios.patch(`${this.url}/${id}/pixels/${pixelId}`, attributes);
+  }
+
+  removePixel(id, pixelId) {
+    return axios.delete(`${this.url}/${id}/pixels/${pixelId}`);
+  }
+
   // Ad accounts grid of the Meta integration (spend for the reports).
   getAdAccounts(id) {
     return axios.get(`${this.url}/${id}/ad_accounts`);

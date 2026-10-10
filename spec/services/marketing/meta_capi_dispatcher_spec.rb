@@ -2,10 +2,10 @@ require 'rails_helper'
 
 RSpec.describe Marketing::MetaCapiDispatcher do
   let(:account) { create(:account) }
-  let!(:integration) do
-    create(:marketing_integration,
-           account: account, provider: :meta_capi, status: :test_mode,
-           credentials: { 'pixel_id' => '999888', 'access_token' => 'EAAG_test', 'test_event_code' => 'TEST123' })
+  let(:integration) { create(:marketing_integration, account: account) }
+  let!(:pixel) do
+    create(:marketing_pixel, marketing_integration: integration, pixel_id: '999888', access_token: 'EAAG_test',
+                             test_event_code: 'TEST123', status: :test_mode)
   end
   let(:wa_channel) { create(:channel_whatsapp, account: account, sync_templates: false, validate_provider_config: false) }
   let(:wa_inbox) { create(:inbox, account: account, channel: wa_channel) }
@@ -30,7 +30,7 @@ RSpec.describe Marketing::MetaCapiDispatcher do
   let(:dispatch) do
     create(:conversion_event_dispatch,
            account: account, conversion_event: conversion_event, conversation: conversation,
-           provider: :meta_capi)
+           provider: :meta_capi, marketing_pixel: pixel)
   end
 
   # Meta returns { events_received: 1 } (or similar) on 2xx. WebMock stub
@@ -65,14 +65,14 @@ RSpec.describe Marketing::MetaCapiDispatcher do
       expect(dispatch.reload.attempts).to eq(1)
     end
 
-    # No active integration = configuration was never done or the operator
-    # disabled it after the trigger fired. Not worth retrying.
-    it 'marks permanently_failed when no active meta integration exists' do
-      integration.update!(status: :disabled)
+    # The operator disabled the pixel after the trigger fired. Not worth retrying.
+    it 'marks permanently_failed without calling Meta when the pixel was disabled' do
+      pixel.update!(status: :disabled)
 
       described_class.new(dispatch: dispatch).perform
 
       expect(dispatch.reload.status).to eq('permanently_failed')
+      expect(dispatch.response).to include('permanently_failed_reason' => 'no active meta pixel')
       expect(WebMock).not_to have_requested(:post, /graph\.facebook\.com/)
     end
   end
@@ -114,7 +114,7 @@ RSpec.describe Marketing::MetaCapiDispatcher do
       expect(event['user_data']['ctwa_clid']).to eq('CLID_ABC')
     end
 
-    it 'appends the integration test_event_code when status is test_mode' do
+    it 'appends the pixel test_event_code when the pixel is in test_mode' do
       expect(sent_body['test_event_code']).to eq('TEST123')
     end
 
@@ -132,7 +132,7 @@ RSpec.describe Marketing::MetaCapiDispatcher do
     let(:ig_dispatch) do
       create(:conversion_event_dispatch,
              account: account, conversion_event: conversion_event, conversation: ig_conv,
-             provider: :meta_capi, event_id: 'cev-ig-1')
+             provider: :meta_capi, event_id: 'cev-ig-1', marketing_pixel: pixel)
     end
 
     it 'maps Channel::Instagram to messaging_channel=instagram' do
@@ -164,8 +164,8 @@ RSpec.describe Marketing::MetaCapiDispatcher do
     end
   end
 
-  describe 'active integration (not test_mode)' do
-    before { integration.update!(status: :active) }
+  describe 'active pixel (not test_mode)' do
+    before { pixel.update!(status: :active) }
 
     it 'does not include test_event_code' do
       stub_meta_success
@@ -189,6 +189,27 @@ RSpec.describe Marketing::MetaCapiDispatcher do
 
       user_data = JSON.parse(captured[:body])['data'].first['user_data']
       expect(user_data).to eq('ctwa_clid' => 'CLID_ABC')
+    end
+  end
+
+  describe 'each pixel with its own token' do
+    let(:agency_pixel) do
+      create(:marketing_pixel, marketing_integration: integration, pixel_id: '777666', access_token: 'EAAG_agency', status: :active)
+    end
+    let(:agency_dispatch) do
+      create(:conversion_event_dispatch, account: account, conversion_event: conversion_event, conversation: conversation,
+                                         provider: :meta_capi, marketing_pixel: agency_pixel)
+    end
+
+    it 'posts to the dispatch pixel with that pixel token and the shared event_id' do
+      stub = stub_request(:post, %r{graph\.facebook\.com/v20\.0/777666/events})
+             .with { |req| JSON.parse(req.body)['access_token'] == 'EAAG_agency' }
+             .to_return(status: 200, body: '{"events_received":1}', headers: { 'Content-Type' => 'application/json' })
+
+      described_class.new(dispatch: agency_dispatch).perform
+
+      expect(stub).to have_been_requested
+      expect(agency_dispatch.reload.payload.dig('data', 0, 'event_id')).to eq(dispatch.event_id)
     end
   end
 

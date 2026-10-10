@@ -33,6 +33,7 @@
 #  conversation_id     :bigint           not null
 #  conversion_event_id :bigint           not null
 #  event_id            :string           not null
+#  marketing_pixel_id  :bigint
 #
 # Indexes
 #
@@ -40,13 +41,15 @@
 #  index_conversion_event_dispatches_on_account_id_and_status  (account_id,status)
 #  index_conversion_event_dispatches_on_conversation_id        (conversation_id)
 #  index_conversion_event_dispatches_on_conversion_event_id    (conversion_event_id)
-#  index_dispatches_on_provider_and_event_id                   (provider,event_id) UNIQUE
+#  index_conversion_event_dispatches_on_marketing_pixel_id     (marketing_pixel_id)
+#  index_dispatches_on_provider_event_id_and_pixel             (provider, event_id, COALESCE(marketing_pixel_id, (0)::bigint)) UNIQUE
 #
 # Foreign Keys
 #
 #  fk_rails_...  (account_id => accounts.id)
 #  fk_rails_...  (conversation_id => conversations.id)
 #  fk_rails_...  (conversion_event_id => conversion_events.id)
+#  fk_rails_...  (marketing_pixel_id => marketing_pixels.id) ON DELETE => nullify
 #
 class ConversionEventDispatch < ApplicationRecord
   PROVIDERS = { meta_capi: 0, google_ads_enhanced: 1 }.freeze
@@ -58,8 +61,10 @@ class ConversionEventDispatch < ApplicationRecord
   belongs_to :account
   belongs_to :conversion_event
   belongs_to :conversation
+  # The pixel a Meta dispatch went to; Google dispatches have none.
+  belongs_to :marketing_pixel, optional: true
 
-  validates :event_id, presence: true, uniqueness: { scope: :provider }
+  validates :event_id, presence: true, uniqueness: { scope: [:provider, :marketing_pixel_id] }
 
   scope :retryable, -> { where(status: %i[pending failed]) }
 

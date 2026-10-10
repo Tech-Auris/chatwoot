@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_09_120000) do
+ActiveRecord::Schema[7.1].define(version: 2026_10_10_120000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -854,11 +854,13 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_09_120000) do
     t.datetime "last_attempted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "marketing_pixel_id"
+    t.index "provider, event_id, COALESCE(marketing_pixel_id, (0)::bigint)", name: "index_dispatches_on_provider_event_id_and_pixel", unique: true
     t.index ["account_id", "status"], name: "index_conversion_event_dispatches_on_account_id_and_status"
     t.index ["conversation_id"], name: "index_conversion_event_dispatches_on_conversation_id"
     t.index ["conversion_event_id", "conversation_id"], name: "idx_on_conversion_event_id_conversation_id_43f6b9e96e"
     t.index ["conversion_event_id"], name: "index_conversion_event_dispatches_on_conversion_event_id"
-    t.index ["provider", "event_id"], name: "index_dispatches_on_provider_and_event_id", unique: true
+    t.index ["marketing_pixel_id"], name: "index_conversion_event_dispatches_on_marketing_pixel_id"
   end
 
   create_table "conversion_events", force: :cascade do |t|
@@ -1428,6 +1430,20 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_09_120000) do
     t.datetime "updated_at", null: false
     t.index ["account_id", "provider"], name: "index_marketing_integrations_on_account_and_provider", unique: true
     t.index ["status"], name: "index_marketing_integrations_on_status"
+  end
+
+  create_table "marketing_pixels", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "marketing_integration_id", null: false
+    t.string "name", null: false
+    t.string "pixel_id", null: false
+    t.text "access_token"
+    t.string "test_event_code"
+    t.integer "status", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_marketing_pixels_on_account_id"
+    t.index ["marketing_integration_id", "pixel_id"], name: "idx_on_marketing_integration_id_pixel_id_59ec8c3570", unique: true
   end
 
   create_table "mentions", force: :cascade do |t|
@@ -2163,6 +2179,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_09_120000) do
   add_foreign_key "conversion_event_dispatches", "accounts"
   add_foreign_key "conversion_event_dispatches", "conversations"
   add_foreign_key "conversion_event_dispatches", "conversion_events"
+  add_foreign_key "conversion_event_dispatches", "marketing_pixels", on_delete: :nullify
   add_foreign_key "conversion_events", "accounts"
   add_foreign_key "funnel_stage_changes", "accounts", on_delete: :cascade
   add_foreign_key "funnel_stage_changes", "loss_reasons", on_delete: :nullify
@@ -2194,6 +2211,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_09_120000) do
   add_foreign_key "marketing_ad_accounts", "accounts", on_delete: :cascade
   add_foreign_key "marketing_ad_accounts", "marketing_integrations", on_delete: :cascade
   add_foreign_key "marketing_integrations", "accounts"
+  add_foreign_key "marketing_pixels", "accounts"
+  add_foreign_key "marketing_pixels", "marketing_integrations", on_delete: :cascade
   add_foreign_key "operations_notification_acks", "accounts"
   add_foreign_key "operations_notification_acks", "operations_notifications", on_delete: :cascade
   add_foreign_key "operations_notification_acks", "users"

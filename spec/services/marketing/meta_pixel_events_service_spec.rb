@@ -2,11 +2,9 @@ require 'rails_helper'
 
 RSpec.describe Marketing::MetaPixelEventsService do
   let(:account) { create(:account) }
-  let(:integration) do
-    create(:marketing_integration,
-           account: account, provider: :meta_capi, status: :active,
-           credentials: { 'pixel_id' => '999', 'access_token' => 'EAAG_test' })
-  end
+  let(:integration) { create(:marketing_integration, account: account) }
+
+  before { create(:marketing_pixel, marketing_integration: integration, pixel_id: '999', access_token: 'EAAG_test') }
 
   def stub_stats(payload, code: 200)
     stub_request(:get, %r{graph\.facebook\.com/v20\.0/999/stats})
@@ -56,17 +54,22 @@ RSpec.describe Marketing::MetaPixelEventsService do
       expect(result[:standard]).to include('Lead')
     end
 
-    # A disabled integration whose credentials were cleared (rare, but
-    # possible after a Meta reset) — the fetcher must not blow up nor
-    # hit Graph with an empty pixel id.
-    it 'skips the fetch entirely when credentials are missing' do
-      # `disabled` bypasses the `required_credentials_present` guard on
-      # the model, so we can force blank keys through the DB.
-      integration.update!(status: :disabled)
-      # `disabled` also skips the credentials validation, so we can blank
-      # them out through the model's own setter without hitting the guard.
-      integration.credentials = { 'pixel_id' => '', 'access_token' => '' }
-      integration.save!(validate: false)
+    # One event name goes to every pixel, so the suggestions join what each
+    # pixel received; a pixel whose call fails just adds nothing.
+    it 'joins the custom events of every pixel' do
+      create(:marketing_pixel, marketing_integration: integration, pixel_id: '888', access_token: 'EAAG_other')
+      stub_stats({ data: [{ 'data' => { 'AgendarConsulta' => 2 } }] })
+      stub_request(:get, %r{graph\.facebook\.com/v20\.0/888/stats})
+        .to_return(status: 200, body: { data: [{ 'data' => { 'Orcamento' => 1, 'AgendarConsulta' => 5 } }] }.to_json,
+                   headers: { 'Content-Type' => 'application/json' })
+
+      result = described_class.new(integration: integration).perform
+
+      expect(result[:custom]).to contain_exactly('AgendarConsulta', 'Orcamento')
+    end
+
+    it 'skips the fetch entirely when the integration has no pixel' do
+      integration.pixels.destroy_all
 
       result = described_class.new(integration: integration.reload).perform
 

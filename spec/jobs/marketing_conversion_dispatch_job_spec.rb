@@ -46,6 +46,32 @@ RSpec.describe MarketingConversionDispatchJob do
       end.not_to change(ConversionEventDispatch, :count)
     end
 
+    it 'keeps one row per pixel with the same event_id, so each pixel gets the conversion' do
+      integration = create(:marketing_integration, account: account)
+      pixels = create_list(:marketing_pixel, 2, marketing_integration: integration)
+
+      pixels.each do |pixel|
+        described_class.new.perform(conversion_event_id: conversion_event.id, conversation_id: conversation.id,
+                                    provider: 'meta_capi', marketing_pixel_id: pixel.id)
+      end
+
+      rows = ConversionEventDispatch.where(provider: :meta_capi)
+      expect(rows.pluck(:marketing_pixel_id)).to match_array(pixels.map(&:id))
+      expect(rows.pluck(:event_id).uniq.size).to eq(1)
+    end
+
+    # A job enqueued before multi-pixel carries no pixel: it goes to the one
+    # the account already had.
+    it 'sends a job without pixel to the first sending pixel' do
+      integration = create(:marketing_integration, account: account)
+      first = create(:marketing_pixel, marketing_integration: integration)
+      create(:marketing_pixel, marketing_integration: integration)
+
+      described_class.new.perform(conversion_event_id: conversion_event.id, conversation_id: conversation.id, provider: 'meta_capi')
+
+      expect(ConversionEventDispatch.last.marketing_pixel_id).to eq(first.id)
+    end
+
     it 'discards silently when the conversion_event has been deleted between enqueue and run' do
       conversion_event_id = conversion_event.id
       conversion_event.destroy!

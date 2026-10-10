@@ -4,13 +4,12 @@ FactoryBot.define do
   factory :marketing_integration do
     account
     provider { :meta_capi }
-    status { :test_mode }
-    credentials do
-      {
-        'pixel_id' => '123456789',
-        'access_token' => 'EAAG_test_token',
-        'test_event_code' => 'TEST12345'
-      }
+    status { :active }
+    credentials { {} }
+
+    # The pixels conversions go to live on their own rows now.
+    trait :with_pixel do
+      after(:create) { |integration| create(:marketing_pixel, marketing_integration: integration) }
     end
 
     trait :google_ads do

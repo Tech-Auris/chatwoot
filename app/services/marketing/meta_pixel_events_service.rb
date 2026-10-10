@@ -1,4 +1,4 @@
-# Reads the event names the account's Meta pixel actually receives, so the
+# Reads the event names the account's Meta pixels actually receive, so the
 # "Nome do evento no Meta" input on the conversion-event form can suggest
 # real values instead of leaving the operator to remember the exact spelling
 # of what the BM configured.
@@ -42,18 +42,20 @@ class Marketing::MetaPixelEventsService
   def recent_custom_events
     return [] unless integration&.meta_capi?
 
-    pixel_id = integration.credentials['pixel_id']
-    access_token = integration.credentials['access_token']
-    return [] if pixel_id.blank? || access_token.blank?
+    integration.pixels.flat_map { |pixel| pixel_event_names(pixel) }.uniq - STANDARD_EVENTS
+  end
 
+  # One event name list feeds every pixel, so the suggestions are the union
+  # of what each pixel received. A pixel that fails just adds nothing.
+  def pixel_event_names(pixel)
     response = HTTParty.get(
-      "https://graph.facebook.com/#{META_API_VERSION}/#{pixel_id}/stats",
-      query: { aggregation: 'event', start_time: LOOKBACK.ago.to_i, access_token: access_token },
+      "https://graph.facebook.com/#{META_API_VERSION}/#{pixel.pixel_id}/stats",
+      query: { aggregation: 'event', start_time: LOOKBACK.ago.to_i, access_token: pixel.access_token },
       timeout: 5
     )
     return [] unless response.code.to_i == 200
 
-    extract_event_names(response.parsed_response) - STANDARD_EVENTS
+    extract_event_names(response.parsed_response)
   rescue StandardError => e
     Rails.logger.warn("[meta pixel events] #{e.class}: #{e.message}")
     []

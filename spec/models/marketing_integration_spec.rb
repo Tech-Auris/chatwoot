@@ -38,10 +38,19 @@ RSpec.describe MarketingIntegration do
   describe 'credential validation' do
     # Only enforced when the integration is live (test_mode or active). A
     # disabled row can sit with empty credentials while the operator drafts.
-    it 'requires pixel_id and access_token on an active Meta CAPI integration' do
-      integration = build(:marketing_integration, status: :active, credentials: {})
-      expect(integration).to be_invalid
-      expect(integration.errors[:credentials].first).to include('pixel_id', 'access_token')
+    # The pixels and their tokens live on `marketing_pixels`; an active Meta
+    # integration only carries the optional ads read token.
+    it 'accepts an active Meta CAPI integration without credentials' do
+      expect(build(:marketing_integration, status: :active, credentials: {})).to be_valid
+    end
+
+    it 'reads spend with the ads read token, else the first pixel token' do
+      integration = create(:marketing_integration)
+      create(:marketing_pixel, marketing_integration: integration, access_token: 'EAAG_first')
+      expect(integration.ads_read_access_token).to eq('EAAG_first')
+
+      integration.update!(credentials: { 'ads_read_token' => 'EAAG_read' })
+      expect(integration.ads_read_access_token).to eq('EAAG_read')
     end
 
     it 'requires the Google Ads keys on an active Google integration' do

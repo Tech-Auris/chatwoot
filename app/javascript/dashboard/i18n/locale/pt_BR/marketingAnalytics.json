@@ -78,7 +78,7 @@
       "LOGIN_CUSTOMER_ID": "Login Customer ID (MCC)"
     },
     "FIELD_HINTS": {
-      "ADS_READ_TOKEN": "Opcional. Token com a permissão ads_read na conta de anúncios, usado só para ler o gasto. Deixe em branco para usar o Access Token acima, que continua dedicado ao envio de conversões."
+      "ADS_READ_TOKEN": "Opcional. Token com a permissão ads_read nas contas de anúncios, usado só para ler o gasto. Em branco, usa o token do primeiro pixel."
     },
     "EVENTS": {
       "TITLE": "Eventos de conversão",
@@ -139,6 +139,21 @@
         "ACTIVE": "Ativa"
       },
       "CURRENCY": "· {currency}"
+    },
+    "PIXELS": {
+      "TITLE": "Pixels",
+      "DESCRIPTION": "Cada conversão vai para todos os pixels em modo de teste ou ativos, cada um com o seu token de acesso.",
+      "ADD": "Adicionar pixel",
+      "EMPTY": "Nenhum pixel cadastrado. Adicione o pixel do Meta que deve receber as conversões.",
+      "NAME": "Nome",
+      "NAME_PLACEHOLDER": "Ex.: Pixel principal, Pixel da agência",
+      "TOKEN_KEEP_HINT": "Deixe em branco para manter o token salvo.",
+      "SAVED": "Pixel salvo",
+      "REMOVE": "Remover pixel",
+      "REMOVE_CONFIRM": "Remover o pixel \"{name}\"? Ele deixa de receber conversões; os envios anteriores ficam no histórico.",
+      "COLUMNS": {
+        "PIXEL": "Pixel"
+      }
     }
   }
 }

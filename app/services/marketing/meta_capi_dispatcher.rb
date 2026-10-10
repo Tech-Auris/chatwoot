@@ -41,29 +41,25 @@ class Marketing::MetaCapiDispatcher
   def perform
     return if dispatch.sent?
 
-    integration = fetch_integration
-    return mark_permanently_failed!(reason: 'no active meta_capi integration') if integration.blank?
+    pixel = dispatch.marketing_pixel
+    return mark_permanently_failed!(reason: 'no active meta pixel') unless pixel&.test_mode? || pixel&.active?
 
-    payload = build_payload(integration)
+    payload = build_payload(pixel)
     dispatch.update!(payload: payload, attempts: dispatch.attempts + 1, last_attempted_at: Time.current)
 
-    response = post_to_meta(integration, payload)
+    response = post_to_meta(pixel, payload)
     handle_response(response)
   end
 
   private
 
-  def fetch_integration
-    dispatch.account.marketing_integrations
-            .where(status: %i[test_mode active])
-            .find_by(provider: :meta_capi)
-  end
-
   # `data` is an array so we could batch someday. For now we always send
-  # exactly one event per dispatch — retries stay simple.
-  def build_payload(integration)
+  # exactly one event per dispatch — retries stay simple. test_event_code
+  # makes the event land in Events Manager → Test Events instead of the real
+  # feed, while the pixel is in `test_mode`.
+  def build_payload(pixel)
     body = { data: [event_hash], partner_agent: 'aurischat-capi/1.0' }
-    body[:test_event_code] = integration.credentials['test_event_code'] if send_as_test_event?(integration)
+    body[:test_event_code] = pixel.test_event_code if pixel.send_as_test?
     body
   end
 
@@ -98,13 +94,6 @@ class Marketing::MetaCapiDispatcher
 
     captured_at = referral['captured_at'].to_i.positive? ? Time.zone.at(referral['captured_at'].to_i) : dispatch.conversation.created_at
     "fb.1.#{(captured_at.to_f * 1000).to_i}.#{referral['fbclid']}"
-  end
-
-  # test_event_code makes events show up in Meta Events Manager's Test Events
-  # tab instead of the real feed — the operator flips the integration to
-  # `active` once they've watched the test events land.
-  def send_as_test_event?(integration)
-    integration.test_mode? && integration.credentials['test_event_code'].present?
   end
 
   def messaging_channel
@@ -143,13 +132,10 @@ class Marketing::MetaCapiDispatcher
     Digest::SHA256.hexdigest(value)
   end
 
-  def post_to_meta(integration, payload)
-    pixel_id = integration.credentials['pixel_id']
-    access_token = integration.credentials['access_token']
-
+  def post_to_meta(pixel, payload)
     HTTParty.post(
-      "https://graph.facebook.com/#{META_API_VERSION}/#{pixel_id}/events",
-      body: payload.merge(access_token: access_token).to_json,
+      "https://graph.facebook.com/#{META_API_VERSION}/#{pixel.pixel_id}/events",
+      body: payload.merge(access_token: pixel.access_token).to_json,
       headers: { 'Content-Type' => 'application/json' },
       timeout: 10
     )

@@ -1,36 +1,27 @@
 # Central fan-out for Fase 2 triggers. A caller says "this conversation just
 # hit trigger T with config C" and we resolve every enabled `ConversionEvent`
 # that matches, then enqueue one dispatch job per (event, provider) pair the
-# account has an active integration for.
+# account has an active integration for — and, for Meta, one per pixel in
+# `test_mode` or `active`, each sent with its own token.
 #
 # Providers gated at two levels — cheap DB checks that we don't overload
 # Sidekiq with jobs the dispatcher would refuse:
 #   1. `ConversionEvent.<provider>_event_name` must be present (no name = no
 #      intent to send to that provider).
-#   2. The account must have a `MarketingIntegration` for that provider in
-#      `test_mode` or `active` (disabled integrations don't fire).
+#   2. Meta needs at least one pixel in `test_mode` or `active`; Google needs
+#      its `MarketingIntegration` in `test_mode` or `active`.
 #
 # Fase 2 · PR B: the enqueued `MarketingConversionDispatchJob` is a stub that
 # only persists the dispatch row. PR C/D wire the actual Meta/Google POSTs.
 class Marketing::TriggerConversionEventsService
-  PROVIDER_EVENT_COLUMNS = {
-    'meta_capi' => :meta_event_name,
-    'google_ads_enhanced' => :google_event_name
-  }.freeze
-
   pattr_initialize [:conversation!, :trigger_type!, { trigger_config: {}, explicit_event_ids: nil }]
 
   def perform
     return if conversation.blank?
 
     matching_events.each do |event|
-      enabled_providers_for(event).each do |provider|
-        MarketingConversionDispatchJob.perform_later(
-          conversion_event_id: event.id,
-          conversation_id: conversation.id,
-          provider: provider
-        )
-      end
+      meta_pixel_ids.each { |pixel_id| enqueue(event, 'meta_capi', pixel_id) } if event.meta_event_name.present?
+      enqueue(event, 'google_ads_enhanced') if event.google_event_name.present? && google_active?
     end
   end
 
@@ -59,16 +50,20 @@ class Marketing::TriggerConversionEventsService
     end
   end
 
-  def enabled_providers_for(event)
-    # `pluck(:provider)` returns the string enum keys under Rails 7; no need
-    # to reverse-lookup by integer.
-    active_provider_names = account.marketing_integrations
-                                   .where(status: %i[test_mode active])
-                                   .pluck(:provider)
+  def enqueue(event, provider, marketing_pixel_id = nil)
+    MarketingConversionDispatchJob.perform_later(
+      conversion_event_id: event.id,
+      conversation_id: conversation.id,
+      provider: provider,
+      marketing_pixel_id: marketing_pixel_id
+    )
+  end
 
-    active_provider_names.select do |provider|
-      column = PROVIDER_EVENT_COLUMNS[provider]
-      column && event.public_send(column).present?
-    end
+  def meta_pixel_ids
+    @meta_pixel_ids ||= account.marketing_pixels.sending.pluck(:id)
+  end
+
+  def google_active?
+    account.marketing_integrations.google_ads_enhanced.exists?(status: %i[test_mode active])
   end
 end

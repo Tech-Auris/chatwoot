@@ -1,8 +1,10 @@
 # Per-account credentials for a marketing-conversion provider. Two supported
 # providers today (Fase 2):
 #
-# * `meta_capi` — Meta Conversions API. Credentials shape:
-#     { "pixel_id" => "...", "access_token" => "...", "test_event_code" => nil }
+# * `meta_capi` — Meta Conversions API. The pixels conversions go to live in
+#   `marketing_pixels` (several per account, each with its own token and
+#   status); the credentials only keep the optional `ads_read_token` the
+#   spend sync uses, and the integration gates the ad accounts grid.
 # * `google_ads_enhanced` — Google Ads Enhanced Conversions. Credentials shape:
 #     { "customer_id" => "...", "conversion_id" => "...", "conversion_label" => "...",
 #       "developer_token" => "...", "oauth_refresh_token" => "..." }
@@ -39,15 +41,12 @@ class MarketingIntegration < ApplicationRecord
   PROVIDERS = { meta_capi: 0, google_ads_enhanced: 1 }.freeze
   STATUSES = { disabled: 0, test_mode: 1, active: 2 }.freeze
 
-  # `ad_account_id` is optional — only the spend-sync path uses it, and only
-  # when the operator wants CPL/ROAS in the Analytics report. CAPI itself
-  # never touches it. Format: numeric ("1234567890"), the caller prefixes
-  # with "act_" when it hits the Insights endpoint.
-  # `ads_read_token` is optional too: a token with `ads_read` on the ad
-  # account, for the spend sync only. The CAPI token is usually generated in
-  # Events Manager with nothing but pixel access, so it can't read spend; this
-  # keeps it untouched. Falls back to `access_token` when blank.
-  META_CAPI_KEYS = %w[pixel_id access_token test_event_code ad_account_id ads_read_token].freeze
+  # `ads_read_token` is optional: a token with `ads_read` on the ad accounts,
+  # for the spend sync only. A pixel's CAPI token is usually generated in
+  # Events Manager with nothing but pixel access, so it can't read spend.
+  # Falls back to the first pixel's token when blank. `ad_account_id` is the
+  # pre-grid single ad account, read once by `import_legacy_ad_account!`.
+  META_CAPI_KEYS = %w[ad_account_id ads_read_token].freeze
   # `conversion_action_id` is the numeric id of the Google Ads Conversion
   # Action (Configurações → Conversões → click into an action → the id shows in
   # the URL). The gtag-oriented `conversion_id` / `conversion_label` fields
@@ -65,9 +64,10 @@ class MarketingIntegration < ApplicationRecord
 
   belongs_to :account
   has_many :ad_accounts, class_name: 'MarketingAdAccount', dependent: :destroy
+  has_many :pixels, -> { order(:created_at, :id) }, class_name: 'MarketingPixel', dependent: :destroy, inverse_of: :marketing_integration
 
   validates :account_id, uniqueness: { scope: :provider }
-  validate :required_credentials_present, if: -> { active? || test_mode? }
+  validate :required_credentials_present, if: -> { google_ads_enhanced? && (active? || test_mode?) }
 
   def credentials
     return {} if credentials_ciphertext.blank?
@@ -82,9 +82,9 @@ class MarketingIntegration < ApplicationRecord
   end
 
   # Token the spend sync reads with: the dedicated read token when set, else
-  # the CAPI token (which rarely has ads_read).
+  # the first pixel's CAPI token (which rarely has ads_read).
   def ads_read_access_token
-    credentials['ads_read_token'].presence || credentials['access_token']
+    credentials['ads_read_token'].presence || pixels.first&.access_token
   end
 
   # Before the ad accounts grid existed, one ad account id lived in the
@@ -106,7 +106,7 @@ class MarketingIntegration < ApplicationRecord
   private
 
   def required_credentials_present
-    required = meta_capi? ? %w[pixel_id access_token] : %w[customer_id conversion_action_id developer_token oauth_refresh_token]
+    required = %w[customer_id conversion_action_id developer_token oauth_refresh_token]
     missing = required.select { |k| credentials[k].to_s.strip.empty? }
     return if missing.empty?
 
