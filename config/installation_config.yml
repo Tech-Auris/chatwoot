@@ -688,6 +688,12 @@
   value: '385'
   type: inbox_select
   locked: false
+- name: WHATSAPP_MESSAGING_WINDOW_INDICATOR_ENABLED
+  display_title: 'Mostrar janela de mensagens'
+  description: 'Mostra nas conversas do WhatsApp Cloud o selo da janela (CTWA 72h · padrão 24h · fechada), para o atendente saber quando a resposta é gratuita ou paga.'
+  value: false
+  type: toggle
+  locked: false
 - name: API_INTERNAL_IPS
   display_title: 'IPs internos'
   description: 'Um por linha: IPv4, IPv6 ou faixa (ex.: 100.62.125.0/24). Esses endereços não sofrem nenhum limite, inclusive de login. Somam-se aos da variável RACK_ATTACK_ALLOWED_IPS.'
@@ -718,6 +724,17 @@
   display_title: 'Administrador Auris das contas novas (ID do usuário)'
   description: 'Usuário da equipe Auris incluído como administrador em toda conta criada pela área de contratação. O cliente entra como gerente.'
   value: '1'
+  locked: false
+- name: COMMERCIAL_ACCOUNT_WEBHOOK_URL
+  display_title: 'Webhook de cadastro final'
+  description: 'Chamado com os dados da conta, do cliente e do plano logo depois que a área de contratação cria a conta (cartão, Pix ou Asaas). Em branco, nada é enviado.'
+  value: ''
+  locked: false
+- name: COMMERCIAL_ACCOUNT_WEBHOOK_SECRET
+  display_title: 'Segredo do webhook de cadastro final'
+  description: 'Assina cada chamada no cabeçalho X-Auris-Signature (sha256=HMAC-SHA256 do corpo), para o fluxo conferir que veio do AurisChat.'
+  value: ''
+  type: secret
   locked: false
 - name: COMMERCIAL_RESERVATION_REMINDER_TIME
   display_title: 'Horário do lembrete de último dia'

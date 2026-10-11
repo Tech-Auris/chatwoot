@@ -20,6 +20,9 @@ class Sales::ConvertQuoteService
     end
 
     quote.events.create!(event: 'converted', metadata: { account_id: account.id })
+    # Once per account, after the transaction: n8n sets up what lives outside
+    # AurisChat (Drive folders, Supabase client rows).
+    Sales::AccountCreatedWebhookJob.perform_later(quote.id)
     Result.new(quote: quote, account: account, created: true)
   end
 
