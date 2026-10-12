@@ -179,7 +179,7 @@ class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
       id: id,
       name: name,
       settings: auris_settings,
-      follow_up: follow_up
+      follow_up: follow_up_payload
     }
   end
 

@@ -688,6 +688,11 @@
   value: '385'
   type: inbox_select
   locked: false
+- name: FOLLOW_UP_END_WAIT_MINUTES
+  display_title: 'Tempo de espera após o último FUP (minutos)'
+  description: 'Padrão das contas que não definem o seu: sem resposta nesse tempo depois do último follow-up, a conversa vai para Perdido.'
+  value: 60
+  locked: false
 - name: WHATSAPP_MESSAGING_WINDOW_INDICATOR_ENABLED
   display_title: 'Mostrar janela de mensagens'
   description: 'Mostra nas conversas do WhatsApp Cloud o selo da janela (CTWA 72h · padrão 24h · fechada), para o atendente saber quando a resposta é gratuita ou paga.'

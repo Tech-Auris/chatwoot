@@ -495,14 +495,21 @@ RSpec.describe Account do
           ai_status_uses_attribute: true,
           multi_language_ai: false
         },
-        follow_up: nil
+        follow_up: { 'end_flow' => { 'wait_minutes' => 60 } }
       )
     end
 
     it 'carries the follow-up setup for the n8n FUP workflow' do
-      account.update!(follow_up: { steps: [60, 480] })
+      account.update!(follow_up: { steps: [60, 480], end_flow: { enabled: true, wait_minutes: 30 } })
 
-      expect(account.webhook_data[:follow_up]).to eq('steps' => [60, 480])
+      expect(account.webhook_data[:follow_up]).to eq('steps' => [60, 480], 'end_flow' => { 'enabled' => true, 'wait_minutes' => 30 })
+    end
+
+    it 'fills a blank wait after the last FUP with the Settings → General default' do
+      InstallationConfig.where(name: 'FOLLOW_UP_END_WAIT_MINUTES').first_or_create!(value: 90)
+      account.update!(follow_up: { steps: [60], end_flow: { enabled: false, wait_minutes: nil } })
+
+      expect(account.webhook_data[:follow_up]['end_flow']).to eq('enabled' => false, 'wait_minutes' => 90)
     end
   end
 

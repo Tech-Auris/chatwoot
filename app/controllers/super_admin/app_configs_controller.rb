@@ -12,6 +12,7 @@ class SuperAdmin::AppConfigsController < SuperAdmin::ApplicationController
   # block, by title. Settings outside every group render one per row above.
   CONFIG_GROUPS = {
     'general' => {
+      'Follow-up' => %w[FOLLOW_UP_END_WAIT_MINUTES],
       'Indicador de preço do WhatsApp' => %w[WHATSAPP_MESSAGING_WINDOW_INDICATOR_ENABLED],
       'Limites da API' => API_LIMIT_KEYS
     }
@@ -181,12 +182,13 @@ class SuperAdmin::AppConfigsController < SuperAdmin::ApplicationController
     )
   end
 
-  # Auris settings on the General screen. The messaging-window chip on WhatsApp
+  # Auris settings on the General screen. The default wait after the last FUP
+  # (AccountFollowUp) for accounts without their own. The messaging-window chip on WhatsApp
   # Cloud conversations: the backend always computes it for n8n and webhooks,
   # this only decides whether the dashboard shows it. Rack::Attack reads the
   # API limits on every request (see ApiRateLimits).
   def general_auris_configs
-    %w[WHATSAPP_MESSAGING_WINDOW_INDICATOR_ENABLED] + API_LIMIT_KEYS
+    %w[FOLLOW_UP_END_WAIT_MINUTES WHATSAPP_MESSAGING_WINDOW_INDICATOR_ENABLED] + API_LIMIT_KEYS
   end
 
   def success_notice
