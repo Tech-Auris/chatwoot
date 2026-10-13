@@ -409,6 +409,7 @@ Rails.application.routes.draw do
             member do
               get :pixel_events
             end
+            resources :pixels, only: [:index, :create, :update, :destroy], controller: 'marketing_pixels'
             resources :ad_accounts, only: [:index, :create, :update, :destroy], controller: 'marketing_ad_accounts' do
               collection do
                 post :sync

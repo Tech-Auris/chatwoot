@@ -1,5 +1,6 @@
 # Persists a `ConversionEventDispatch` for a matched trigger and hands it to
-# the right provider dispatcher. Idempotent via `event_id` — a Sidekiq
+# the right provider dispatcher. Meta gets one dispatch per pixel; they share
+# the `event_id` (Meta dedups per pixel), so the row is keyed by the pixel too. Idempotent via `event_id` — a Sidekiq
 # retry (default exponential backoff) reuses the same row and Meta/Google
 # dedup on their side.
 #
@@ -12,12 +13,13 @@ class MarketingConversionDispatchJob < ApplicationJob
   # needed if we want a different curve; keeping the default.
   discard_on ActiveRecord::RecordNotFound
 
-  def perform(conversion_event_id:, conversation_id:, provider:)
+  def perform(conversion_event_id:, conversation_id:, provider:, marketing_pixel_id: nil)
     conversion_event = ConversionEvent.find(conversion_event_id)
     conversation = Conversation.find(conversation_id)
 
     dispatch = ConversionEventDispatch.find_or_create_by!(
       provider: provider,
+      marketing_pixel_id: pixel_id_for(provider, marketing_pixel_id, conversation),
       event_id: ConversionEventDispatch.build_event_id(
         conversion_event_id: conversion_event.id,
         conversation_id: conversation.id,
@@ -34,6 +36,14 @@ class MarketingConversionDispatchJob < ApplicationJob
   end
 
   private
+
+  # Jobs enqueued before multi-pixel carry no pixel: they go to the account's
+  # first sending pixel, the one that used to be the only one.
+  def pixel_id_for(provider, marketing_pixel_id, conversation)
+    return unless provider.to_s == 'meta_capi'
+
+    marketing_pixel_id || conversation.account.marketing_pixels.sending.order(:created_at, :id).pick(:id)
+  end
 
   def dispatch_via_provider(dispatch)
     case dispatch.provider

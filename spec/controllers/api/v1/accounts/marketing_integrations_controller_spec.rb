@@ -36,28 +36,27 @@ RSpec.describe 'Marketing Integrations API', type: :request do
       get "/api/v1/accounts/#{account.id}/marketing_integrations", headers: admin.create_new_auth_token, as: :json
 
       payload = response.parsed_body['payload'].first
-      expect(payload['credentials']['pixel_id']).to eq('123456789')
-      expect(payload['credentials']['access_token']).to be_nil
-      expect(payload['credentials_set']['access_token']).to be(true)
       expect(payload['credentials']['ads_read_token']).to be_nil
       expect(payload['credentials_set']['ads_read_token']).to be(true)
     end
   end
 
   describe 'POST /api/v1/accounts/{id}/marketing_integrations' do
-    it 'creates a Meta CAPI integration in test_mode' do
+    # Pixels have their own endpoint; the Meta integration only keeps the
+    # ads read token, so pixel keys sent here are dropped.
+    it 'creates a Meta CAPI integration with just the ads read token' do
       post "/api/v1/accounts/#{account.id}/marketing_integrations",
            headers: admin.create_new_auth_token,
            params: {
-             provider: 'meta_capi', status: 'test_mode',
-             credentials: { pixel_id: '999', access_token: 'EAAG', test_event_code: 'TEST' }
+             provider: 'meta_capi', status: 'active',
+             credentials: { ads_read_token: 'EAAG_read', pixel_id: '999', access_token: 'EAAG' }
            },
            as: :json
 
       expect(response).to have_http_status(:success)
       integration = account.marketing_integrations.last
       expect(integration.provider).to eq('meta_capi')
-      expect(integration.credentials).to include('pixel_id' => '999', 'access_token' => 'EAAG')
+      expect(integration.credentials).to eq('ads_read_token' => 'EAAG_read')
     end
 
     it 'creates a Google Ads Enhanced integration in active' do
@@ -82,7 +81,7 @@ RSpec.describe 'Marketing Integrations API', type: :request do
     it 'validates the credentials against the provider vocabulary' do
       post "/api/v1/accounts/#{account.id}/marketing_integrations",
            headers: admin.create_new_auth_token,
-           params: { provider: 'meta_capi', status: 'active', credentials: { pixel_id: '' } },
+           params: { provider: 'google_ads_enhanced', status: 'active', credentials: { customer_id: '' } },
            as: :json
 
       expect(response).to have_http_status(:unprocessable_entity)
@@ -90,7 +89,9 @@ RSpec.describe 'Marketing Integrations API', type: :request do
   end
 
   describe 'PATCH /api/v1/accounts/{id}/marketing_integrations/{id}' do
-    let!(:integration) { create(:marketing_integration, account: account, status: :test_mode) }
+    let!(:integration) do
+      create(:marketing_integration, account: account, status: :test_mode, credentials: { 'ads_read_token' => 'EAAG_read' })
+    end
 
     it 'updates the status without touching credentials when they are omitted' do
       patch "/api/v1/accounts/#{account.id}/marketing_integrations/#{integration.id}",
@@ -100,20 +101,16 @@ RSpec.describe 'Marketing Integrations API', type: :request do
 
       expect(response).to have_http_status(:success)
       expect(integration.reload.status).to eq('active')
-      expect(integration.credentials['access_token']).to eq('EAAG_test_token')
+      expect(integration.credentials['ads_read_token']).to eq('EAAG_read')
     end
 
     it 'merges credentials rather than overwriting the whole hash' do
       patch "/api/v1/accounts/#{account.id}/marketing_integrations/#{integration.id}",
             headers: admin.create_new_auth_token,
-            params: { credentials: { test_event_code: 'NEW_CODE' } },
+            params: { credentials: { ad_account_id: '555' } },
             as: :json
 
-      expect(integration.reload.credentials).to include(
-        'access_token' => 'EAAG_test_token',
-        'pixel_id' => '123456789',
-        'test_event_code' => 'NEW_CODE'
-      )
+      expect(integration.reload.credentials).to include('ads_read_token' => 'EAAG_read', 'ad_account_id' => '555')
     end
   end
 
@@ -134,6 +131,7 @@ RSpec.describe 'Marketing Integrations API', type: :request do
     let!(:integration) { create(:marketing_integration, account: account, status: :test_mode) }
 
     before do
+      create(:marketing_pixel, marketing_integration: integration, pixel_id: '123456789')
       stub_request(:get, %r{graph\.facebook\.com/v20\.0/123456789/stats})
         .to_return(status: 200, body: { data: [{ 'data' => { 'AgendarConsulta' => 4 } }] }.to_json,
                    headers: { 'Content-Type' => 'application/json' })

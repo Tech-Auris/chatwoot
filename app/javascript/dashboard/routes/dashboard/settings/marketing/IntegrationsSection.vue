@@ -8,12 +8,13 @@ import { useI18n } from 'vue-i18n';
 import { useStore, useMapGetter } from 'dashboard/composables/store';
 import { useAlert } from 'dashboard/composables';
 import AdAccountsGrid from './AdAccountsGrid.vue';
+import PixelsGrid from './PixelsGrid.vue';
 
 const STATUSES = ['disabled', 'test_mode', 'active'];
+// The Meta pixels (each with its own token and status) live in PixelsGrid;
+// the integration keeps only the token the spend sync reads with, and is
+// always active — each pixel decides on its own whether it sends.
 const META_CAPI_FIELDS = [
-  { key: 'pixel_id', secret: false, required: true },
-  { key: 'access_token', secret: true, required: true },
-  { key: 'test_event_code', secret: false, required: false },
   { key: 'ads_read_token', secret: true, required: false, hint: true },
 ];
 const GOOGLE_ADS_FIELDS = [
@@ -50,7 +51,8 @@ const isSaving = provider =>
 
 const syncForm = provider => {
   const record = findByProvider(provider);
-  forms[provider].status = record?.status || 'test_mode';
+  forms[provider].status =
+    record?.status || (provider === 'meta_capi' ? 'active' : 'test_mode');
   forms[provider].credentials = { ...(record?.credentials || {}) };
   dirtyCredentials[provider] = {};
 };
@@ -129,6 +131,18 @@ const saveIntegration = async provider => {
   }
 };
 
+// The first pixel added creates the Meta integration it belongs to.
+const ensureMetaIntegration = async () => {
+  const record = findByProvider('meta_capi');
+  if (record) return record.id;
+  const created = await store.dispatch('marketingIntegrations/create', {
+    provider: 'meta_capi',
+    status: 'active',
+    credentials: {},
+  });
+  return created.id;
+};
+
 const disconnect = async provider => {
   const record = findByProvider(provider);
   if (!record) return;
@@ -193,11 +207,21 @@ const providers = computed(() => [
         </button>
       </header>
 
+      <PixelsGrid
+        v-if="provider.key === 'meta_capi'"
+        class="mb-4 pb-4 border-b border-n-weak"
+        :integration-id="findByProvider('meta_capi')?.id || null"
+        :resolve-integration-id="ensureMetaIntegration"
+      />
+
       <form
         class="grid grid-cols-1 md:grid-cols-2 gap-4"
         @submit.prevent="saveIntegration(provider.key)"
       >
-        <label class="flex flex-col gap-1 text-sm">
+        <label
+          v-if="provider.key !== 'meta_capi'"
+          class="flex flex-col gap-1 text-sm"
+        >
           <span class="text-n-slate-11">{{
             t('MARKETING_ANALYTICS.STATUS')
           }}</span>

@@ -78,7 +78,7 @@
       "LOGIN_CUSTOMER_ID": "Login Customer ID (MCC)"
     },
     "FIELD_HINTS": {
-      "ADS_READ_TOKEN": "Optional. A token with the ads_read permission on the ad account, used only to read spend. Leave blank to use the Access Token above, which stays dedicated to sending conversions."
+      "ADS_READ_TOKEN": "Optional. A token with ads_read on the ad accounts, used only to read spend. Blank uses the first pixel's token."
     },
     "EVENTS": {
       "TITLE": "Conversion events",
@@ -139,6 +139,21 @@
         "ACTIVE": "Active"
       },
       "CURRENCY": "· {currency}"
+    },
+    "PIXELS": {
+      "TITLE": "Pixels",
+      "DESCRIPTION": "Each conversion goes to every pixel in test mode or active, each with its own access token.",
+      "ADD": "Add pixel",
+      "EMPTY": "No pixel yet. Add the Meta pixel that should receive the conversions.",
+      "NAME": "Name",
+      "NAME_PLACEHOLDER": "E.g. Main pixel, Agency pixel",
+      "TOKEN_KEEP_HINT": "Leave blank to keep the stored token.",
+      "SAVED": "Pixel saved",
+      "REMOVE": "Remove pixel",
+      "REMOVE_CONFIRM": "Remove the pixel \"{name}\"? It stops receiving conversions; past sends stay in the history.",
+      "COLUMNS": {
+        "PIXEL": "Pixel"
+      }
     }
   }
 }

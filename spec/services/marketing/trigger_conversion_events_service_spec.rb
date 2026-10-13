@@ -3,9 +3,8 @@ require 'rails_helper'
 RSpec.describe Marketing::TriggerConversionEventsService do
   let(:account) { create(:account) }
   let(:conversation) { create(:conversation, account: account) }
-  let!(:meta_integration) do
-    create(:marketing_integration, account: account, provider: :meta_capi, status: :test_mode)
-  end
+  let(:meta_integration) { create(:marketing_integration, account: account) }
+  let!(:pixel) { create(:marketing_pixel, marketing_integration: meta_integration, status: :test_mode) }
 
   describe '#perform' do
     context 'when the funnel_stage_reached trigger matches a configured event' do
@@ -23,7 +22,7 @@ RSpec.describe Marketing::TriggerConversionEventsService do
             trigger_config: { 'funnel_stage_id' => 42 }
           ).perform
         end.to have_enqueued_job(MarketingConversionDispatchJob).with(
-          conversion_event_id: event.id, conversation_id: conversation.id, provider: 'meta_capi'
+          conversion_event_id: event.id, conversation_id: conversation.id, provider: 'meta_capi', marketing_pixel_id: pixel.id
         )
       end
 
@@ -57,7 +56,7 @@ RSpec.describe Marketing::TriggerConversionEventsService do
             trigger_config: { 'label' => 'converteu' }
           ).perform
         end.to have_enqueued_job(MarketingConversionDispatchJob).with(
-          conversion_event_id: event.id, conversation_id: conversation.id, provider: 'meta_capi'
+          conversion_event_id: event.id, conversation_id: conversation.id, provider: 'meta_capi', marketing_pixel_id: pixel.id
         )
       end
     end
@@ -83,7 +82,7 @@ RSpec.describe Marketing::TriggerConversionEventsService do
         ).perform
 
         expect(MarketingConversionDispatchJob).to have_been_enqueued.once.with(
-          conversion_event_id: event.id, conversation_id: conversation.id, provider: 'meta_capi'
+          conversion_event_id: event.id, conversation_id: conversation.id, provider: 'meta_capi', marketing_pixel_id: pixel.id
         )
       end
 
@@ -115,8 +114,27 @@ RSpec.describe Marketing::TriggerConversionEventsService do
         ).perform
 
         expect(MarketingConversionDispatchJob).to have_been_enqueued.once.with(
-          conversion_event_id: event.id, conversation_id: conversation.id, provider: 'meta_capi'
+          conversion_event_id: event.id, conversation_id: conversation.id, provider: 'meta_capi', marketing_pixel_id: pixel.id
         )
+      end
+
+      it 'fires once per pixel in test_mode or active, each with its own pixel' do
+        agency = create(:marketing_pixel, marketing_integration: meta_integration, status: :active)
+        create(:marketing_pixel, marketing_integration: meta_integration, status: :disabled)
+        event.update!(google_event_name: nil)
+
+        described_class.new(
+          conversation: conversation,
+          trigger_type: 'funnel_stage_reached',
+          trigger_config: { 'funnel_stage_id' => 42 }
+        ).perform
+
+        [pixel, agency].each do |sending|
+          expect(MarketingConversionDispatchJob).to have_been_enqueued.with(
+            conversion_event_id: event.id, conversation_id: conversation.id, provider: 'meta_capi', marketing_pixel_id: sending.id
+          )
+        end
+        expect(MarketingConversionDispatchJob).to have_been_enqueued.twice
       end
 
       it 'fires both providers when both integrations are active' do
@@ -142,14 +160,14 @@ RSpec.describe Marketing::TriggerConversionEventsService do
         ).perform
 
         expect(MarketingConversionDispatchJob).to have_been_enqueued.once.with(
-          conversion_event_id: event.id, conversation_id: conversation.id, provider: 'meta_capi'
+          conversion_event_id: event.id, conversation_id: conversation.id, provider: 'meta_capi', marketing_pixel_id: pixel.id
         )
       end
 
-      # Disabled integrations must not fire — the operator turned them off on
+      # Disabled pixels must not fire — the operator turned them off on
       # purpose, and firing anyway would be surprising when they re-enable.
-      it 'skips a disabled integration' do
-        meta_integration.update!(status: :disabled)
+      it 'skips a disabled pixel' do
+        pixel.update!(status: :disabled)
 
         described_class.new(
           conversation: conversation,

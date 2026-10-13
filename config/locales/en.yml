@@ -126,6 +126,11 @@ en:
       file_too_large: 'File exceeds the maximum allowed size'
       unsupported_content_type: 'File type not supported (only images and videos are allowed)'
       unexpected: 'An unexpected error occurred'
+    marketing_pixel:
+      name_blank: 'Give the pixel a name.'
+      invalid_id: 'Enter the pixel ID as digits, as shown in Events Manager.'
+      already_added: 'This pixel is already on the list.'
+      token_blank: 'Enter the pixel access token.'
     marketing_ad_account:
       invalid_id: 'Enter the ad account id as digits, e.g. act_1234567890.'
       already_added: 'This ad account is already on the list.'

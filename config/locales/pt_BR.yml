@@ -103,6 +103,11 @@ pt_BR:
       file_too_large: 'O arquivo excede o tamanho máximo permitido'
       unsupported_content_type: 'Tipo de arquivo não suportado (apenas imagens e vídeos são permitidos)'
       unexpected: 'Ocorreu um erro inesperado'
+    marketing_pixel:
+      name_blank: 'Dê um nome ao pixel.'
+      invalid_id: 'Informe o ID do pixel com números, como aparece no Gerenciador de Eventos.'
+      already_added: 'Este pixel já está na lista.'
+      token_blank: 'Informe o token de acesso do pixel.'
     marketing_ad_account:
       invalid_id: 'Informe o ID da conta de anúncios com números, por exemplo act_1234567890.'
       already_added: 'Esta conta de anúncios já está na lista.'
