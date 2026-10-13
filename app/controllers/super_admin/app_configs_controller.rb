@@ -3,9 +3,22 @@ class SuperAdmin::AppConfigsController < SuperAdmin::ApplicationController
   before_action :allowed_configs
   before_action :load_installation_configs, only: [:show, :create]
   before_action :validate_commercial_whatsapp, only: :create, if: -> { @config == 'commercial' }
-  before_action :validate_api_limits, only: :create, if: -> { @config == 'api_limits' }
+  before_action :validate_api_limits, only: :create, if: :api_limits_submitted?
   # Other processes pick the new values up within ApiRateLimits::REFRESH_INTERVAL.
-  after_action -> { ApiRateLimits.reset! }, only: :create, if: -> { @config == 'api_limits' }
+  after_action -> { ApiRateLimits.reset! }, only: :create, if: :api_limits_submitted?
+
+  API_LIMIT_KEYS = %w[API_INTERNAL_IPS API_RATE_LIMIT_PER_IP API_RATE_LIMIT_PER_TOKEN API_RATE_LIMIT_MESSAGES_PER_INBOX].freeze
+  # Settings screens that show some of their settings together in a bordered
+  # block, by title. Settings outside every group render one per row above.
+  CONFIG_GROUPS = {
+    'general' => {
+      'Follow-up' => %w[FOLLOW_UP_END_WAIT_MINUTES],
+      'Indicador de preço do WhatsApp' => %w[WHATSAPP_MESSAGING_WINDOW_INDICATOR_ENABLED],
+      'Limites da API' => API_LIMIT_KEYS
+    }
+  }.freeze
+
+  helper_method :config_groups, :ungrouped_config_keys
   def show
     # Read the model so `SerializedValueCoder` is applied — a `.pluck` on
     # `serialized_value` returns the raw column (YAML string for rows
@@ -45,6 +58,18 @@ class SuperAdmin::AppConfigsController < SuperAdmin::ApplicationController
 
   def set_config
     @config = params[:config] || 'general'
+  end
+
+  def config_groups
+    CONFIG_GROUPS.fetch(@config, {})
+  end
+
+  def ungrouped_config_keys
+    @allowed_configs - config_groups.values.flatten
+  end
+
+  def api_limits_submitted?
+    params.fetch('app_config', {}).key?('API_INTERNAL_IPS')
   end
 
   # Loaded once for both the `show` (form render) and `create` (submit
@@ -117,25 +142,18 @@ class SuperAdmin::AppConfigsController < SuperAdmin::ApplicationController
       # The page a prospect opens. It is not the console and not the product:
       # it carries the sales logo and the PIX code the company is paid to.
       # Also where the proposal messages to leads go out from on WhatsApp (an
-      # account and one of its inboxes — the main seller's number) and when
-      # the reservation's last-day reminder is sent.
+      # account and one of its inboxes — the main seller's number), when the
+      # reservation's last-day reminder is sent, and the webhook called once a
+      # sale becomes an account (Sales::AccountCreatedWebhookJob).
       'commercial' => %w[SALES_PROPOSAL_LOGO SALES_PIX_PAYLOAD SALES_TERMS_URL
                          COMMERCIAL_WHATSAPP_ACCOUNT_ID COMMERCIAL_WHATSAPP_INBOX_ID COMMERCIAL_RESERVATION_REMINDER_TIME
-                         COMMERCIAL_ACCOUNT_ADMIN_USER_ID],
-      # Toggle that gates the messaging-window chip on WhatsApp Cloud
-      # conversations. The backend always computes `Conversation#messaging_window`
-      # so downstream consumers (n8n, webhooks) see the state; this flag only
-      # decides whether the dashboard renders the chip. Turn on globally on
-      # 01/10/2026 when Meta's per-message service pricing kicks in.
-      'whatsapp_pricing' => %w[WHATSAPP_MESSAGING_WINDOW_INDICATOR_ENABLED],
+                         COMMERCIAL_ACCOUNT_ADMIN_USER_ID COMMERCIAL_ACCOUNT_WEBHOOK_URL COMMERCIAL_ACCOUNT_WEBHOOK_SECRET],
       # The AI secretary's user ("IA | Auris"): assigning a conversation to it
       # turns the AI status on, unassigning it turns it off.
       'secretary' => %w[SECRETARY_AI_USER_ID],
       # E-signature of the semiannual/annual contracts in the hiring area. The
       # token's Autentique user is who signs for Auris, automatically.
-      'autentique' => %w[AUTENTIQUE_API_TOKEN AUTENTIQUE_WEBHOOK_SECRET AUTENTIQUE_SANDBOX],
-      # Rack::Attack reads these on every request (see ApiRateLimits).
-      'api_limits' => %w[API_INTERNAL_IPS API_RATE_LIMIT_PER_IP API_RATE_LIMIT_PER_TOKEN API_RATE_LIMIT_MESSAGES_PER_INBOX]
+      'autentique' => %w[AUTENTIQUE_API_TOKEN AUTENTIQUE_WEBHOOK_SECRET AUTENTIQUE_SANDBOX]
     }
   end
 
@@ -159,8 +177,18 @@ class SuperAdmin::AppConfigsController < SuperAdmin::ApplicationController
 
     @allowed_configs = mapping.fetch(
       @config,
-      %w[ENABLE_ACCOUNT_SIGNUP FIREBASE_PROJECT_ID FIREBASE_CREDENTIALS WEBHOOK_TIMEOUT MAXIMUM_FILE_UPLOAD_SIZE WIDGET_TOKEN_EXPIRY]
+      %w[ENABLE_ACCOUNT_SIGNUP FIREBASE_PROJECT_ID FIREBASE_CREDENTIALS WEBHOOK_TIMEOUT MAXIMUM_FILE_UPLOAD_SIZE WIDGET_TOKEN_EXPIRY] +
+        general_auris_configs
     )
+  end
+
+  # Auris settings on the General screen. The default wait after the last FUP
+  # (AccountFollowUp) for accounts without their own. The messaging-window chip on WhatsApp
+  # Cloud conversations: the backend always computes it for n8n and webhooks,
+  # this only decides whether the dashboard shows it. Rack::Attack reads the
+  # API limits on every request (see ApiRateLimits).
+  def general_auris_configs
+    %w[FOLLOW_UP_END_WAIT_MINUTES WHATSAPP_MESSAGING_WINDOW_INDICATOR_ENABLED] + API_LIMIT_KEYS
   end
 
   def success_notice

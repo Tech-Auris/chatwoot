@@ -15,13 +15,15 @@
   </div>
   <div class="flex flex-col gap-3 pt-4 border-t border-slate-200">
     <div class="flex items-center justify-between">
-      <span class="text-sm text-slate-700">Encerramento por falta de resposta</span>
+      <span class="text-sm text-slate-700">Escalar para o time ao encerrar</span>
       <%= hidden_field_tag 'follow_up[end_flow][enabled]', '0', id: nil %>
       <%= check_box_tag 'follow_up[end_flow][enabled]', '1', field.end_flow['enabled'], class: 'h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-600' %>
     </div>
     <label class="flex flex-col gap-1 text-sm text-slate-700">
       Tempo de espera após o último FUP (minutos)
-      <%= number_field_tag 'follow_up[end_flow][wait_minutes]', field.end_flow['wait_minutes'], min: 1, step: 1 %>
+      <%= number_field_tag 'follow_up[end_flow][wait_minutes]', field.end_flow['wait_minutes'], min: 1, step: 1,
+                           placeholder: Account.default_follow_up_end_wait_minutes %>
+      <span class="text-xs text-slate-500">Sem resposta nesse tempo, a conversa vai para Perdido. Em branco, usa o padrão de Settings → General (<%= Account.default_follow_up_end_wait_minutes %> min).</span>
     </label>
     <label class="flex flex-col gap-1 text-sm text-slate-700">
       Nota de resumo para o time (use @resumo@ para o resumo da IA)

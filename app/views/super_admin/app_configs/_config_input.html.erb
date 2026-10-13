@@ -1,0 +1,73 @@
+<%# One setting's input, by its type in installation_config.yml, and its description. %>
+<% if @installation_configs[key]&.dig('type') == 'boolean' %>
+  <%= form.select "app_config[#{key}]",
+    [["True", true], ["False", false]],
+    { selected: ActiveModel::Type::Boolean.new.cast(@app_config[key]) },
+    class: "mt-2 border border-slate-100 p-1 rounded-md"
+  %>
+<% elsif @installation_configs[key]&.dig('type') == 'toggle' %>
+  <%# An on/off switch; the hidden field posts "false" when it is off. %>
+  <label class="relative mt-2 inline-flex cursor-pointer items-center">
+    <%= hidden_field_tag "app_config[#{key}]", 'false', id: nil %>
+    <%= check_box_tag "app_config[#{key}]", 'true', ActiveModel::Type::Boolean.new.cast(@app_config[key]), class: 'peer sr-only', id: "app_config_#{key}" %>
+    <span class="h-6 w-11 rounded-full bg-slate-300 transition-colors peer-checked:bg-woot-500 peer-focus-visible:ring-2 peer-focus-visible:ring-woot-300"></span>
+    <span class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5"></span>
+  </label>
+<% elsif @installation_configs[key]&.dig('type') == 'code' %>
+  <%= form.text_area "app_config[#{key}]",
+      value: @app_config[key],
+      rows: 12,
+      wrap: 'off',
+      class: "mt-2 border font-mono text-xs border-slate-100 p-1 rounded-md overflow-scroll"
+  %>
+<% elsif @installation_configs[key]&.dig('type') == 'secret' %>
+  <div class="relative">
+    <%= form.password_field "app_config[#{key}]",
+        id: "app_config_#{key}",
+        value: @app_config[key],
+        class: "mt-2 border border-slate-100 p-1.5 pr-8 rounded-md w-full"
+    %>
+    <button
+      type="button"
+      class="absolute reset-base !bg-white top-1/2 !outline-0 !text-n-slate-11 -translate-y-1/2 right-2 p-1 hover:!bg-n-slate-5 rounded-sm toggle-password"
+      data-target="app_config_<%= key %>"
+    >
+      <svg class="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 5C5.63636 5 2 12 2 12C2 12 5.63636 19 12 19C18.3636 19 22 12 22 12C22 12 18.3636 5 12 5Z"/>
+        <path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z"/>
+      </svg>
+    </button>
+  </div>
+<% elsif @installation_configs[key]&.dig('type') == 'account_select' %>
+  <%= form.select "app_config[#{key}]",
+    @account_options.map { |id, name| ["#{id} · #{name}", id] },
+    { selected: @app_config[key].to_i },
+    id: 'commercial_account_select',
+    class: "mt-2 border border-slate-100 p-1 rounded-md"
+  %>
+<% elsif @installation_configs[key]&.dig('type') == 'inbox_select' %>
+  <%= form.select "app_config[#{key}]",
+    options_for_select(
+      @inbox_options.map { |id, name, account_id| ["#{id} · #{name}", id, { 'data-account-id' => account_id }] },
+      @app_config[key].to_i
+    ),
+    {},
+    id: 'commercial_inbox_select',
+    class: "mt-2 border border-slate-100 p-1 rounded-md"
+  %>
+<% elsif @installation_configs[key]&.dig('type') == 'time' %>
+  <%= form.text_field "app_config[#{key}]", value: @app_config[key], type: 'time', class: "mt-2 border border-slate-100 p-1 rounded-md w-32" %>
+<% elsif @installation_configs[key]&.dig('type') == 'select' && @installation_configs[key]&.dig('options').present? %>
+  <%= form.select "app_config[#{key}]",
+    @installation_configs[key]['options'].map { |val, label| [label, val] },
+    { selected: @app_config[key] },
+    class: "mt-2 border border-slate-100 p-1 rounded-md"
+  %>
+<% else %>
+  <%= form.text_field "app_config[#{key}]", value: @app_config[key] %>
+<% end %>
+<% if @installation_configs[key]&.dig('description').present? %>
+  <p class="pt-2 text-xs italic text-slate-400">
+    <%= @installation_configs[key]&.dig('description') %>
+  </p>
+<% end %>

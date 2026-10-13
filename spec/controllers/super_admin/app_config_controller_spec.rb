@@ -198,20 +198,30 @@ RSpec.describe 'Super Admin Application Config API', type: :request do
     end
   end
 
-  describe 'the Limites da API section' do
+  describe 'the Limites da API group on General' do
     before { sign_in(super_admin, scope: :super_admin) }
 
     after { ApiRateLimits.reset! }
 
-    it 'shows the internal IPs and the three limits' do
-      get '/super_admin/app_config?config=api_limits'
+    it 'shows the WhatsApp switch and the API limits in their own blocks' do
+      get '/super_admin/app_config?config=general'
 
       expect(response).to have_http_status(:success)
-      expect(response.body).to include('IPs internos', 'Limite por IP', 'Limite por token', 'Envio de mensagens por caixa')
+      expect(response.body).to include('Indicador de preço do WhatsApp', 'Limites da API', 'IPs internos', 'Limite por IP',
+                                       'Limite por token', 'Envio de mensagens por caixa')
+      expect(response.body).to include('id="app_config_WHATSAPP_MESSAGING_WINDOW_INDICATOR_ENABLED" value="true" class="peer sr-only"')
+    end
+
+    it 'turns the WhatsApp window indicator on and off with the switch' do
+      post '/super_admin/app_config?config=general', params: { app_config: { WHATSAPP_MESSAGING_WINDOW_INDICATOR_ENABLED: 'true' } }
+      expect(GlobalConfigService.load('WHATSAPP_MESSAGING_WINDOW_INDICATOR_ENABLED', 'false').to_s).to eq('true')
+
+      post '/super_admin/app_config?config=general', params: { app_config: { WHATSAPP_MESSAGING_WINDOW_INDICATOR_ENABLED: 'false' } }
+      expect(GlobalConfigService.load('WHATSAPP_MESSAGING_WINDOW_INDICATOR_ENABLED', 'false').to_s).to eq('false')
     end
 
     it 'saves the internal IPs and the limits, applied without a restart' do
-      post '/super_admin/app_config?config=api_limits', params: {
+      post '/super_admin/app_config?config=general', params: {
         app_config: { API_INTERNAL_IPS: "100.62.125.0/24\n2804:14c::/32", API_RATE_LIMIT_PER_IP: '900',
                       API_RATE_LIMIT_PER_TOKEN: '600', API_RATE_LIMIT_MESSAGES_PER_INBOX: '30' }
       }
@@ -222,7 +232,7 @@ RSpec.describe 'Super Admin Application Config API', type: :request do
     end
 
     it 'refuses a line that is not an IP or a range' do
-      post '/super_admin/app_config?config=api_limits', params: { app_config: { API_INTERNAL_IPS: "10.0.0.1\nservidor-n8n" } }
+      post '/super_admin/app_config?config=general', params: { app_config: { API_INTERNAL_IPS: "10.0.0.1\nservidor-n8n" } }
 
       expect(flash[:alert]).to include('servidor-n8n')
       expect(InstallationConfig.find_by(name: 'API_INTERNAL_IPS')&.value.to_s).not_to include('servidor-n8n')

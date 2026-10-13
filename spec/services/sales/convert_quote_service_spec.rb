@@ -6,6 +6,11 @@ RSpec.describe Sales::ConvertQuoteService do
                          prospect_email: 'contato@clinicacinco.com.br', stripe_customer_id: 'cus_1', status: :paid)
   end
 
+  it 'calls the account webhook once, not again when the payment is confirmed twice' do
+    expect { described_class.new(quote: quote).perform }.to have_enqueued_job(Sales::AccountCreatedWebhookJob).with(quote.id)
+    expect { described_class.new(quote: quote.reload).perform }.not_to have_enqueued_job(Sales::AccountCreatedWebhookJob)
+  end
+
   it 'creates the account named after the clinic' do
     result = described_class.new(quote: quote).perform
 
