@@ -20,6 +20,24 @@ RSpec.describe Campaigns::AudienceCsvImportService do
       expect(result).to include(created_count: 1, reused_count: 0)
     end
 
+    # Excel in Portuguese saves with `;`; the client's file failed with
+    # "Colunas obrigatórias ausentes" until it went through Google Sheets.
+    it 'reads a spreadsheet saved by Excel with semicolons and its own header names' do
+      result = import("ID Paciente;Name;phone_number\n1715009;APARECIDA DAS GRACAS CAVALLARI;+55 (43) 99141-0024\n")
+
+      expect(account.contacts.find(result[:contact_ids].first))
+        .to have_attributes(name: 'APARECIDA DAS GRACAS CAVALLARI', phone_number: '+5543991410024')
+    end
+
+    it 'reads a Windows-1252 file and one starting with a BOM' do
+      latin = "name;phone_number\nJoão Conceição;+5543991410025\n".encode('Windows-1252').force_encoding('BINARY')
+      with_bom = "\uFEFFname,phone_number\nMaria,+5543991410026\n"
+
+      names = [latin, with_bom].map { |content| account.contacts.find(import(content)[:contact_ids].first).name }
+
+      expect(names).to eq(['João Conceição', 'Maria'])
+    end
+
     # The operator only ever sees this reason in the UI, so it has to name the
     # actual reason a row was dropped — a bare count leaves them guessing which
     # line to fix. Seen with a spreadsheet whose e-mail already belonged to a

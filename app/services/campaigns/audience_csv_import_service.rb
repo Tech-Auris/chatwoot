@@ -28,14 +28,32 @@ class Campaigns::AudienceCsvImportService
 
   private
 
+  # Excel in Portuguese saves with `;` and often in Windows-1252 (with a BOM
+  # when it is UTF-8); Google Sheets saves with `,` in UTF-8. Both are read the
+  # same: the separator comes from the header line, the encoding from whether
+  # the bytes are valid UTF-8.
+  SEPARATORS = [',', ';', "\t"].freeze
+
   def parse_rows
-    table = CSV.parse(file.read.force_encoding('UTF-8'), headers: true, header_converters: :downcase)
+    text = decoded_text
+    table = CSV.parse(text, headers: true, col_sep: separator_for(text), header_converters: ->(header) { header.to_s.strip.downcase })
     missing = REQUIRED_HEADERS - table.headers.compact.map(&:to_s)
     raise InvalidFile, "Colunas obrigatórias ausentes: #{missing.join(', ')}" if missing.any?
 
     table
   rescue CSV::MalformedCSVError => e
     raise InvalidFile, "Arquivo CSV inválido: #{e.message}"
+  end
+
+  def decoded_text
+    text = file.read.dup.force_encoding('UTF-8')
+    text = text.force_encoding('Windows-1252').encode('UTF-8') unless text.valid_encoding?
+    text.delete_prefix("\uFEFF")
+  end
+
+  def separator_for(text)
+    header = text.each_line.first.to_s
+    SEPARATORS.max_by { |separator| header.count(separator) }
   end
 
   def process_row(row, line, result)
