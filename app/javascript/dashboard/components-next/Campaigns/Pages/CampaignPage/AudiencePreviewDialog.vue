@@ -55,12 +55,13 @@ defineExpose({ open });
   <Dialog
     ref="dialogRef"
     :title="t('CAMPAIGN.WHATSAPP.CREATE.FORM.AUDIENCE_PREVIEW.TITLE')"
-    :show-confirm-button="false"
-    :cancel-button-label="
+    :show-cancel-button="false"
+    :confirm-button-label="
       t('CAMPAIGN.WHATSAPP.CREATE.FORM.AUDIENCE_PREVIEW.CLOSE')
     "
     width="2xl"
     overflow-y-auto
+    @confirm="dialogRef?.close()"
   >
     <div class="flex flex-col gap-3">
       <p v-if="error" class="text-sm text-n-ruby-11">{{ error }}</p>
