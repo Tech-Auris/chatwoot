@@ -6,6 +6,7 @@ RSpec.describe Secretary::WebhookMigration do
   let!(:reception) { create(:inbox, account: account) }
   let!(:sales) { create(:inbox, account: account) }
   let!(:webhook) { create(:webhook, account: account, inbox: nil, url: v32_url, subscriptions: ['message_created']) }
+  let!(:default_model) { create(:ai_model, key: 'openai_advanced') }
 
   it 'only reports the plan in a dry run' do
     rows = described_class.new.perform
@@ -14,6 +15,12 @@ RSpec.describe Secretary::WebhookMigration do
     expect(rows.first.inbox_ids).to contain_exactly(reception.id, sales.id)
     expect(Webhook.exists?(webhook.id)).to be(true)
     expect(SecretaryVersion.count).to eq(0)
+  end
+
+  it 'starts the secretary on the n8n default LLM until the import' do
+    described_class.new(apply: true).perform
+
+    expect(account.reload.account_secretary.ai_model).to eq(default_model)
   end
 
   it 'moves the webhook into the account secretary config, keeping its secret' do

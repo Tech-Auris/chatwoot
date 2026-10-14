@@ -32,5 +32,17 @@ RSpec.describe 'Super Admin account secretary', type: :request do
       expect(names).to contain_exactly('Recepção', 'Comercial')
       expect(response.parsed_body['simulator_inbox']).to be_present
     end
+
+    it 'lists the providers with their LLMs and the one the account runs on' do
+      model = create(:ai_model, name: 'gpt-5.1', ai_provider: create(:ai_provider, name: 'OpenAI'))
+      create(:account_secretary, account: account, ai_model: model)
+
+      get "/super_admin/accounts/#{account.id}/secretary", as: :json
+
+      expect(response.parsed_body['providers']).to contain_exactly(
+        include('name' => 'OpenAI', 'models' => [{ 'id' => model.id, 'name' => 'gpt-5.1', 'status' => 'active' }])
+      )
+      expect(response.parsed_body['ai_model_id']).to eq(model.id)
+    end
   end
 end

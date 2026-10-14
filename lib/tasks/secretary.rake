@@ -16,4 +16,15 @@ namespace :secretary do
     webhooks.each { |webhook| puts [webhook.account_id, webhook.name, "caixa: #{webhook.inbox_id || 'todas'}"].join(' | ') }
     puts "#{webhooks.size} webhooks recriados"
   end
+
+  desc 'Import each account LLM from a CSV export of the Supabase cliente table (chatwoot_account_id, llm_index). Dry run unless APPLY=true'
+  task import_llm: :environment do
+    apply = ENV['APPLY'] == 'true'
+    rows = Secretary::LlmSupabaseImport.new(csv_path: ENV.fetch('CSV'), apply: apply).perform
+    rows.each do |row|
+      puts [row.account_id, row.account&.name, "llm_index #{row.llm_index}", row.ai_model&.name, row.error ? "ERRO: #{row.error}" : 'ok'].join(' | ')
+    end
+    failed = rows.count(&:error)
+    puts "#{rows.size - failed} contas #{apply ? 'importadas' : 'prontas (simulação, nada foi gravado; rode com APPLY=true)'}, #{failed} com erro"
+  end
 end

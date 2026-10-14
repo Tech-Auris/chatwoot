@@ -12,6 +12,9 @@ const STATUS_LABELS = {
 };
 
 const versions = ref([]);
+const providers = ref([]);
+const providerId = ref('');
+const aiModelId = ref('');
 const inboxes = ref([]);
 const simulatorInbox = ref(null);
 const versionId = ref('');
@@ -31,6 +34,11 @@ const applyPayload = body => {
   inboxes.value = body.inboxes || [];
   simulatorInbox.value = body.simulator_inbox;
   versionId.value = body.secretary_version_id || '';
+  providers.value = body.providers || [];
+  aiModelId.value = body.ai_model_id || '';
+  providerId.value =
+    providers.value.find(p => p.models.some(m => m.id === aiModelId.value))
+      ?.id || '';
   simulatorVersionId.value = body.simulator_version_id || '';
   selectedInboxIds.value = inboxes.value.filter(i => i.enabled).map(i => i.id);
   secret.value = body.secret;
@@ -59,6 +67,22 @@ const simulatorVersionOptions = computed(() =>
     v => v.status !== 'retired' || v.id === Number(simulatorVersionId.value)
   )
 );
+
+// Same rule as the versions: a retired LLM stays on the account that runs it
+// but is not offered for a new pick.
+const modelOptions = computed(() => {
+  const provider = providers.value.find(p => p.id === Number(providerId.value));
+  return (provider?.models || []).filter(
+    m => m.status === 'active' || m.id === Number(aiModelId.value)
+  );
+});
+
+const modelLabel = model =>
+  model.status === 'active' ? model.name : `${model.name} · descontinuado`;
+
+const changeProvider = () => {
+  aiModelId.value = '';
+};
 
 const versionLabel = version =>
   version.status === 'active'
@@ -165,6 +189,52 @@ onMounted(load);
             {{ versionLabel(version) }}
           </option>
         </select>
+
+        <label for="secretary-provider" class="text-sm text-n-slate-11 pt-2">
+          Empresa de IA
+        </label>
+        <select
+          id="secretary-provider"
+          v-model="providerId"
+          class="w-80 border border-slate-200 rounded px-2 py-1.5 text-sm"
+          :disabled="!versionId"
+          @change="changeProvider"
+        >
+          <option value="">Selecione</option>
+          <option
+            v-for="provider in providers"
+            :key="provider.id"
+            :value="provider.id"
+          >
+            {{ provider.name }}
+          </option>
+        </select>
+
+        <label for="secretary-llm" class="text-sm text-n-slate-11 pt-2">
+          LLM
+        </label>
+        <div class="flex flex-col gap-2">
+          <select
+            id="secretary-llm"
+            v-model="aiModelId"
+            name="secretary[ai_model_id]"
+            class="w-80 border border-slate-200 rounded px-2 py-1.5 text-sm"
+            :disabled="!versionId || !providerId"
+            :required="!!versionId"
+          >
+            <option value="">Selecione</option>
+            <option
+              v-for="model in modelOptions"
+              :key="model.id"
+              :value="model.id"
+            >
+              {{ modelLabel(model) }}
+            </option>
+          </select>
+          <p class="text-xs text-n-slate-11">
+            Obrigatório quando a conta tem secretária.
+          </p>
+        </div>
 
         <span class="text-sm text-n-slate-11 pt-2">Caixas de entrada</span>
         <div class="flex flex-col gap-2">
