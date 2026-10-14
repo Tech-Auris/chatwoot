@@ -28,8 +28,9 @@ class Whatsapp::Providers::WhatsappCloudService < Whatsapp::Providers::BaseServi
     # once before falling into the standard retry pipeline — a clean
     # in-process recovery from what would otherwise be a delivery gap
     # the operator only notices later.
-    if header_media_upload_failure?(response, template_info) && refresh_template_header_media(template_info[:name], template_info[:language])
-      response = post_template_message(phone_number, template_info, message)
+    if header_media_upload_failure?(response, template_info)
+      media_id = refresh_template_header_media(template_info[:name], template_info[:language])
+      response = post_template_message(phone_number, with_header_media_id(template_info, media_id), message) if media_id
     end
 
     process_response(response, message)
@@ -65,6 +66,9 @@ class Whatsapp::Providers::WhatsappCloudService < Whatsapp::Providers::BaseServi
     downloaded = Down.download(url, max_size: 100 * 1024 * 1024)
     mime_type = downloaded.content_type.presence || Marcel::MimeType.for(downloaded.path) || 'application/octet-stream'
 
+    # Built up front: HTTParty's streamed multipart leaves out the blank
+    # line after the text fields, and Meta answers "(#100) The parameter
+    # file is required".
     response = HTTParty.post(
       "#{phone_id_path('v22.0')}/media",
       headers: { 'Authorization' => "Bearer #{whatsapp_channel.provider_config['api_key']}" },
@@ -72,7 +76,8 @@ class Whatsapp::Providers::WhatsappCloudService < Whatsapp::Providers::BaseServi
         'messaging_product' => 'whatsapp',
         'type' => mime_type,
         'file' => File.new(downloaded.path)
-      }
+      },
+      stream_body: false
     )
 
     return format_meta_upload_error('messaging_media', response) unless response.success?
@@ -494,7 +499,19 @@ class Whatsapp::Providers::WhatsappCloudService < Whatsapp::Providers::BaseServi
     return false if response.success?
 
     error_code = response.parsed_response.is_a?(Hash) ? response.parsed_response.dig('error', 'code') : nil
-    error_code.to_s == '131053' && template_info[:name].present?
+    error_code.to_s == '131053' && template_info[:name].present? && header_media_links(template_info).none? do |link|
+      !link.match?(Whatsapp::TemplateProcessorService::META_PREVIEW_URL)
+    end
+  end
+
+  # A link the operator typed is theirs to fix; only the template's own
+  # image is recovered by refreshing its id.
+  def header_media_links(template_info)
+    header = Array(template_info[:parameters]).find { |component| component[:type] == 'header' }
+    Array(header&.dig(:parameters)).filter_map do |param|
+      media = param[param[:type]&.to_sym]
+      media[:link] if media.is_a?(Hash)
+    end
   end
 
   # Walks the cached template list and fills in `header_media_id` for
@@ -538,28 +555,42 @@ class Whatsapp::Providers::WhatsappCloudService < Whatsapp::Providers::BaseServi
   end
 
   # Force-refresh the cached header media_id for a template, then persist
-  # the refreshed list. Returns true when a new id landed, false when the
-  # template was not found or the upload failed — the caller then falls
-  # back to the standard error pipeline.
+  # the refreshed list. Returns the new id, or nil when the template was
+  # not found or the upload failed — the caller then falls back to the
+  # standard error pipeline.
   # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
   def refresh_template_header_media(template_name, template_language)
     templates = Array(whatsapp_channel.message_templates).map(&:deep_dup)
     template = templates.find do |t|
       t['name'] == template_name && t['language']&.downcase == template_language&.downcase
     end
-    return false if template.blank?
+    return if template.blank?
 
-    header = template_header_component(template)
-    source_url = Array(header&.dig('example', 'header_handle')).first
-    return false if source_url.blank?
+    source_url = Whatsapp::TemplateProcessorService.template_header_url(template)
+    return if source_url.blank?
 
     result = upload_media_from_url(source_url)
-    return false unless result[:success]
+    return unless result[:success]
 
     template['header_media_id'] = result[:id]
     template['header_media_source_url'] = source_url
     whatsapp_channel.update!(message_templates: templates)
-    true
+    result[:id]
+  end
+
+  # The parameters were built before the refresh, so the retry swaps the
+  # template's image in the header for the id that just landed.
+  def with_header_media_id(template_info, media_id)
+    components = Array(template_info[:parameters]).map do |component|
+      next component unless component[:type] == 'header'
+
+      parameters = component[:parameters].map do |param|
+        media = param[param[:type]&.to_sym]
+        media.is_a?(Hash) ? param.merge(param[:type].to_sym => media.except(:link).merge(id: media_id)) : param
+      end
+      component.merge(parameters: parameters)
+    end
+    template_info.merge(parameters: components)
   end
   # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 

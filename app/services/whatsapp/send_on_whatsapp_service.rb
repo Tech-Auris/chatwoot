@@ -37,7 +37,19 @@ class Whatsapp::SendOnWhatsappService < Base::SendOnChannelService
                                          name: name, namespace: namespace,
                                          lang_code: lang_code, parameters: processed_parameters
                                        }, message)
-    message.update!(source_id: message_id) if message_id.present?
+    return if message_id.blank?
+
+    # Attached before the update so the update event already carries the image.
+    attach_template_header_media
+    message.update!(source_id: message_id)
+  end
+
+  def attach_template_header_media
+    header_data = template_params.dig('processed_params', 'header')
+    return if header_data.blank? || message.attachments.exists?
+
+    template = channel.message_templates.find { |t| template_match?(t) }
+    Whatsapp::TemplateHeaderAttachmentService.new(message: message, template: template, header_data: header_data).perform if template
   end
 
   def fail_template_send(error)

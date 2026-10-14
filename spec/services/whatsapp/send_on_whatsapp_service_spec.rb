@@ -203,9 +203,29 @@ describe Whatsapp::SendOnWhatsappService do
           { type: 'body', parameters: [{ type: 'text', text: '3' }] }
         ]
         stub_sample_template_request(components)
+        stub_request(:get, 'https://example.com/image.jpg')
+          .to_return(status: 200, body: 'jpg-bytes', headers: { 'Content-Type' => 'image/jpeg' })
 
         described_class.new(message: message).perform
         expect(message.reload.source_id).to eq('123456789')
+        expect(message.attachments.map(&:file_type)).to eq(['image'])
+      end
+
+      it 'keeps the sent template when its header image cannot be shown' do
+        processed_params = {
+          'body' => { '1' => '3' },
+          'header' => { 'media_url' => 'https://example.com/image.jpg', 'media_type' => 'image' }
+        }
+        message = create_message_with_template('', build_sample_template_params(processed_params))
+        stub_sample_template_request([
+                                       { type: 'header', parameters: [{ type: 'image', image: { link: 'https://example.com/image.jpg' } }] },
+                                       { type: 'body', parameters: [{ type: 'text', text: '3' }] }
+                                     ])
+        stub_request(:get, 'https://example.com/image.jpg').to_return(status: 404)
+
+        described_class.new(message: message).perform
+        expect(message.reload.source_id).to eq('123456789')
+        expect(message.attachments).to be_empty
       end
 
       it 'handles empty processed_params gracefully' do
