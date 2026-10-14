@@ -46,7 +46,7 @@ class SuperAdmin::TermsAcceptanceRequestsController < SuperAdmin::ApplicationCon
     managers_by_account = AccountUser.where(role: :manager)
                                      .includes(:user)
                                      .group_by(&:account_id)
-    grouped = Account.active.order(:name).map do |account|
+    grouped = Account.accessible.order(:name).map do |account|
       managers = (managers_by_account[account.id] || [])
                  .reject { |au| internal_email?(au.user.email) }
                  .map do |au|

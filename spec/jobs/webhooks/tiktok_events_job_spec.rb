@@ -70,9 +70,9 @@ RSpec.describe Webhooks::TiktokEventsJob do
       expect(Tiktok::MessageService).not_to have_received(:new)
     end
 
-    it 'does nothing when account is inactive' do
+    it 'does nothing when account is suspended' do
       allow(Channel::Tiktok).to receive(:find_by).and_return(channel)
-      allow(channel.account).to receive(:active?).and_return(false)
+      allow(channel.account).to receive(:accessible?).and_return(false)
 
       message_service = instance_double(Tiktok::MessageService, perform: true)
       allow(Tiktok::MessageService).to receive(:new).and_return(message_service)

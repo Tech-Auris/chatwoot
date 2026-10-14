@@ -40,7 +40,12 @@ class AccountDashboard < Administrate::BaseDashboard
     users: CountField,
     conversations: CountField,
     locale: Field::Select.with_options(collection: LANGUAGES_CONFIG.map { |_x, y| y[:iso_639_1_code] }),
-    status: Field::Select.with_options(collection: [%w[Active active], %w[Suspended suspended]]),
+    # Labels come from AccountStatus, where Super Admin also edits what each
+    # status tells the n8n secretary.
+    status: Field::Select.with_options(collection: lambda { |_field|
+      labels = AccountStatus.pluck(:status, :label).to_h
+      Account.statuses.keys.map { |key| [labels[key] || key.humanize, key] }
+    }),
     environment: EnvironmentField.with_options(collection: [%w[Test test], %w[Production production]]),
     average_ticket: Field::Number.with_options(decimals: 2, step: 0.01),
     # `searchable: false` is required: `reporting_timezone` is a
@@ -152,6 +157,8 @@ class AccountDashboard < Administrate::BaseDashboard
   COLLECTION_FILTERS = {
     active: ->(resources) { resources.where(status: :active) },
     suspended: ->(resources) { resources.where(status: :suspended) },
+    payment_pending: ->(resources) { resources.where(status: :payment_pending) },
+    ai_disabled: ->(resources) { resources.where(status: %i[ai_disabled ai_disabled_with_message]) },
     recent: ->(resources) { resources.where('created_at > ?', 30.days.ago) },
     marked_for_deletion: ->(resources) { resources.where("custom_attributes->>'marked_for_deletion_at' IS NOT NULL") },
     # `secretaria:<version id>` or `secretaria:nenhuma`; set by the

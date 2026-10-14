@@ -94,6 +94,19 @@ RSpec.describe 'API Base', type: :request do
       end
     end
 
+    context 'when the account has the AI off for missing payment' do
+      it 'keeps the team working' do
+        account.update!(status: :payment_pending)
+
+        post "/api/v1/accounts/#{account.id}/canned_responses",
+             headers: { api_access_token: user.access_token.token },
+             params: { short_code: 'oi', content: 'Olá' },
+             as: :json
+
+        expect(response).not_to have_http_status(:unauthorized)
+      end
+    end
+
     context 'when the account is suspended' do
       it 'returns 401 unauthorized' do
         account.update!(status: :suspended)

@@ -12,7 +12,7 @@ module IncomingEmailValidityHelper
   end
 
   def valid_external_email_for_active_account?
-    return false unless @account.active?
+    return false unless @account.accessible?
     return false if @processed_mail.notification_email_from_chatwoot?
 
     true

@@ -50,6 +50,9 @@ en:
     # button label (singular / `one`). Choose forms that read naturally in
     # each context: menu = "Notification Center", button = "New notification".
     models:
+      account_status:
+        one: 'account status'
+        other: 'Account statuses'
       operations_notification:
         one: 'notification'
         other: 'Notification Center'

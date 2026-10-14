@@ -111,6 +111,15 @@ RSpec.describe Webhooks::WhatsappEventsJob do
       job.perform_now(phone_number: 'random_phone_number')
     end
 
+    it 'still takes in the messages of an account with the AI off for missing payment' do
+      channel.account.update!(status: :payment_pending)
+      allow(Whatsapp::IncomingMessageWhatsappCloudService).to receive(:new).and_return(process_service)
+
+      job.perform_now(params)
+
+      expect(Whatsapp::IncomingMessageWhatsappCloudService).to have_received(:new)
+    end
+
     it 'will not enqueue Whatsapp::IncomingMessageWhatsappCloudService if account is suspended' do
       account = channel.account
       account.update!(status: :suspended)

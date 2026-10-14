@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_10_120000) do
+ActiveRecord::Schema[7.1].define(version: 2026_10_14_130000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -70,6 +70,18 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_10_120000) do
     t.index ["account_id"], name: "index_account_secretaries_on_account_id", unique: true
     t.index ["secretary_version_id"], name: "index_account_secretaries_on_secretary_version_id"
     t.index ["simulator_version_id"], name: "index_account_secretaries_on_simulator_version_id"
+  end
+
+  create_table "account_statuses", force: :cascade do |t|
+    t.integer "status", null: false
+    t.string "label", null: false
+    t.string "name", null: false
+    t.boolean "send_private_message", default: false, null: false
+    t.text "private_message"
+    t.integer "message_cooldown_minutes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["status"], name: "index_account_statuses_on_status", unique: true
   end
 
   create_table "account_users", force: :cascade do |t|

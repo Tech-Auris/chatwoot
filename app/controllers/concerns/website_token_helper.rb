@@ -11,7 +11,7 @@ module WebsiteTokenHelper
 
     @current_account = @web_widget.inbox.account
 
-    render json: { error: 'Account is suspended' }, status: :unauthorized unless @current_account.active?
+    render json: { error: 'Account is suspended' }, status: :unauthorized unless @current_account.accessible?
   end
 
   def set_contact
