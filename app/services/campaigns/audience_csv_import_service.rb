@@ -57,6 +57,8 @@ class Campaigns::AudienceCsvImportService
   end
 
   def process_row(row, line, result)
+    return result[:invalid_rows] << { line: line, reason: MISSING_COUNTRY_CODE } if missing_country_code?(row['phone_number'])
+
     phone = normalize_phone(row['phone_number'])
     return result[:invalid_rows] << { line: line, reason: 'telefone ausente ou inválido' } if phone.blank?
 
@@ -118,8 +120,16 @@ class Campaigns::AudienceCsvImportService
     )
   end
 
+  # Without the plus sign there is no telling the country code apart:
+  # `11999998888` would be stored as +1 and duplicate the Brazilian contact.
+  MISSING_COUNTRY_CODE = 'telefone sem o código do país; comece com + (ex.: +5511987654321)'.freeze
+
+  def missing_country_code?(value)
+    value.present? && !value.strip.start_with?('+')
+  end
+
   # Contacts are stored in E.164. Spreadsheets hand us numbers with spaces,
-  # dashes and parentheses, and often without the plus sign.
+  # dashes and parentheses.
   def normalize_phone(value)
     digits = value.to_s.gsub(/\D/, '')
     return nil if digits.length < 8
