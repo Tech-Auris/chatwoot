@@ -231,8 +231,9 @@
           },
           "SCHEDULED_AT": {
             "LABEL": "Scheduled time",
-            "PLACEHOLDER": "Please select the time",
-            "ERROR": "Scheduled time is required"
+            "PLACEHOLDER": "Choose the date and time to send",
+            "ERROR": "Scheduled time is required",
+            "CONFIRM": "Confirm"
           },
           "CADENCE": {
             "LABEL": "Sending cadence",

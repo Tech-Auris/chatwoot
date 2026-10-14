@@ -4,6 +4,9 @@ import { useI18n } from 'vue-i18n';
 import { useVuelidate } from '@vuelidate/core';
 import { required, requiredIf, minLength } from '@vuelidate/validators';
 import { useMapGetter } from 'dashboard/composables/store';
+import addDays from 'date-fns/addDays';
+import DatePicker from 'vue-datepicker-next';
+import { formatFullDateTime } from 'dashboard/helper/scheduleDateShortcutHelpers';
 import CampaignsAPI from 'dashboard/api/campaigns';
 
 import Input from 'dashboard/components-next/input/Input.vue';
@@ -23,7 +26,7 @@ import { campaignWarnings } from 'dashboard/helper/whatsappHealth';
 
 const emit = defineEmits(['submit', 'cancel']);
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 const formState = {
   uiFlags: useMapGetter('campaigns/getUIFlags'),
@@ -100,12 +103,18 @@ const v$ = useVuelidate(rules, state);
 
 const isCreating = computed(() => formState.uiFlags.value.isCreating);
 
-const currentDateTime = computed(() => {
-  // Added to disable the scheduled at field from being set to the current time
-  const now = new Date();
-  const localTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
-  return localTime.toISOString().slice(0, 16);
-});
+// A calendar of our own instead of the browser's datetime field: Safari
+// draws today's date in an empty one, so the field looked filled while
+// Criar stayed disabled. This one stays empty until a date and time are picked.
+const isSchedulePickerOpen = ref(false);
+
+const scheduledAtText = computed(() =>
+  state.scheduledAt ? formatFullDateTime(state.scheduledAt, locale.value) : ''
+);
+
+const disableBeforeToday = date => date < addDays(new Date(), -1);
+
+const disablePastTimes = date => date < new Date();
 
 const mapToOptions = (items, valueKey, labelKey) =>
   items?.map(item => ({
@@ -607,15 +616,46 @@ watch(
       </p>
     </div>
 
-    <Input
-      v-model="state.scheduledAt"
-      :label="t('CAMPAIGN.WHATSAPP.CREATE.FORM.SCHEDULED_AT.LABEL')"
-      type="datetime-local"
-      :min="currentDateTime"
-      :placeholder="t('CAMPAIGN.WHATSAPP.CREATE.FORM.SCHEDULED_AT.PLACEHOLDER')"
-      :message="formErrors.scheduledAt"
-      :message-type="formErrors.scheduledAt ? 'error' : 'info'"
-    />
+    <!-- Label and error sit outside the picker, which centers its calendar
+         icon on everything inside it. -->
+    <div class="flex flex-col gap-1">
+      <span class="mb-0.5 text-heading-3 text-n-slate-12">
+        {{ t('CAMPAIGN.WHATSAPP.CREATE.FORM.SCHEDULED_AT.LABEL') }}
+      </span>
+      <DatePicker
+        v-model:value="state.scheduledAt"
+        v-model:open="isSchedulePickerOpen"
+        type="datetime"
+        confirm
+        :clearable="false"
+        :editable="false"
+        :show-second="false"
+        :disabled-date="disableBeforeToday"
+        :disabled-time="disablePastTimes"
+        :confirm-text="t('CAMPAIGN.WHATSAPP.CREATE.FORM.SCHEDULED_AT.CONFIRM')"
+        append-to-body
+        class="!w-full"
+      >
+        <template #input>
+          <Input
+            :model-value="scheduledAtText"
+            :placeholder="
+              t('CAMPAIGN.WHATSAPP.CREATE.FORM.SCHEDULED_AT.PLACEHOLDER')
+            "
+            :message-type="formErrors.scheduledAt ? 'error' : 'info'"
+            readonly
+            class="cursor-pointer"
+            @click="isSchedulePickerOpen = true"
+          />
+        </template>
+      </DatePicker>
+      <p
+        v-if="formErrors.scheduledAt"
+        class="mt-1 mb-0 text-label-small text-n-ruby-9"
+      >
+        {{ formErrors.scheduledAt }}
+      </p>
+    </div>
 
     <ul
       v-if="numberWarnings.length"
