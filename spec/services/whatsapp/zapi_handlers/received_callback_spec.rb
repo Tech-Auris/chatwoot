@@ -487,6 +487,28 @@ describe Whatsapp::ZapiHandlers::ReceivedCallback do
       end
     end
 
+    context 'when the reply comes without the Brazilian ninth digit' do
+      let!(:existing_contact) do
+        create(:contact,
+               account: inbox.account,
+               identifier: '5591998002288@s.whatsapp.net',
+               phone_number: '+5591998002288',
+               name: 'Lead do formulário')
+      end
+      let!(:existing_contact_inbox) do
+        create(:contact_inbox, inbox: inbox, contact: existing_contact, source_id: "5591998002288-#{inbox.id}")
+      end
+      let(:params) { base_params.merge(phone: '559198002288', chatLid: '171137401151635@lid') }
+
+      it 'keeps the conversation on the existing contact' do
+        expect { service.perform }.not_to change(Contact, :count)
+
+        expect(existing_contact_inbox.reload.source_id).to eq('171137401151635')
+        expect(existing_contact.reload.phone_number).to eq('+5591998002288')
+        expect(existing_contact.messages.last.content).to eq('Hello')
+      end
+    end
+
     context 'when contact_inbox exists with phone as source_id (manual creation)' do
       let!(:existing_contact) do
         create(:contact,

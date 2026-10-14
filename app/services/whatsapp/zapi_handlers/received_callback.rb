@@ -95,11 +95,11 @@ module Whatsapp::ZapiHandlers::ReceivedCallback # rubocop:disable Metrics/Module
 
     contact_attributes = { name: push_name, identifier: identifier }
 
-    unless @raw_message[:phone].ends_with?('@lid')
-      contact_attributes[:phone_number] = "+#{@raw_message[:phone]}"
+    if contact_phone
+      contact_attributes[:phone_number] = "+#{contact_phone}"
       Whatsapp::ContactInboxConsolidationService.new(
         inbox: inbox,
-        phone: @raw_message[:phone],
+        phone: contact_phone,
         lid: source_id,
         identifier: identifier
       ).perform
@@ -138,9 +138,19 @@ module Whatsapp::ZapiHandlers::ReceivedCallback # rubocop:disable Metrics/Module
 
   def update_contact_phone_number
     return if @contact.phone_number.present?
+    return unless contact_phone
+
+    @contact.update!(phone_number: "+#{contact_phone}")
+  end
+
+  # Z-API may deliver a Brazilian number without the ninth digit (12 digits)
+  # while the contact was created with it (13 digits), e.g. by a website-form
+  # lead. Normalizing here, as the Baileys handler does, lets the existing
+  # contact be found instead of a duplicate being created.
+  def contact_phone
     return if @raw_message[:phone].ends_with?('@lid')
 
-    @contact.update!(phone_number: "+#{@raw_message[:phone]}")
+    Whatsapp::PhoneNormalizers::BrazilPhoneNormalizer.new.normalize(@raw_message[:phone])
   end
 
   def try_update_contact_avatar
