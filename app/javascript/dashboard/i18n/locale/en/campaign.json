@@ -232,7 +232,8 @@
           "SCHEDULED_AT": {
             "LABEL": "Scheduled time",
             "PLACEHOLDER": "Please select the time",
-            "ERROR": "Scheduled time is required"
+            "ERROR": "Scheduled time is required",
+            "CONFIRM": "Confirm"
           },
           "CADENCE": {
             "LABEL": "Sending cadence",
