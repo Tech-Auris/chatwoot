@@ -762,6 +762,18 @@
       "DESCRIPTION": "Revise o status da sua conta do WhatsApp, os limites de mensagens e a qualidade. Atualize as configurações ou resolva problemas, se necessário",
       "GO_TO_SETTINGS": "Ir para o Meta Business Manager",
       "NO_DATA": "Dados de saúde não estão disponíveis",
+      "HEALTH_ERRORS": {
+        "BUSINESS_VERIFICATION": "A verificação da empresa está pendente na Meta.",
+        "PAYMENT": "Há um problema com a forma de pagamento na Meta.",
+        "ACCOUNT_LOCKED": "A Meta bloqueou esta conta do WhatsApp.",
+        "DISPLAY_NAME": "O nome de exibição ainda aguarda aprovação da Meta.",
+        "CALLING": "Chamadas de voz não configuradas (não afeta o envio de mensagens).",
+        "OTHER": "A Meta apontou uma pendência nesta conta.",
+        "VIEW_META_ERROR": "Ver erro da Meta",
+        "DIALOG_TITLE": "Detalhes da Meta",
+        "CLOSE": "Fechar",
+        "CODE": "Código"
+      },
       "FIELDS": {
         "DISPLAY_PHONE_NUMBER": {
           "LABEL": "Número de telefone exibido",
