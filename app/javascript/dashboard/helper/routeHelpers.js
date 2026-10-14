@@ -61,7 +61,7 @@ export const validateLoggedInRoutes = (to, user) => {
     return `app/login`;
   }
 
-  const isCurrentAccountActive = currentAccount.status === 'active';
+  const isCurrentAccountActive = currentAccount.status !== 'suspended';
 
   if (isCurrentAccountActive) {
     return validateActiveAccountRoutes(to, user);

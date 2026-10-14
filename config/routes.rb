@@ -1041,6 +1041,7 @@ Rails.application.routes.draw do
       resources :funnel_stages, only: [:index, :new, :create, :show, :edit, :update, :destroy]
       resources :loss_reasons, only: [:index, :new, :create, :show, :edit, :update, :destroy]
       resources :secretary_versions, only: [:index, :new, :create, :show, :edit, :update]
+      resources :account_statuses, only: [:index, :show, :edit, :update]
       resources :operations_notifications, only: [:index, :new, :create, :show, :destroy] do
         get :acks, on: :member
       end

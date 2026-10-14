@@ -37,6 +37,9 @@ pt_BR:
     # button label (singular / `one`). Choose forms that read naturally
     # in each context: menu = "Central de Notificações", button = "Nova notificação".
     models:
+      account_status:
+        one: 'status da conta'
+        other: 'Status da conta'
       operations_notification:
         one: 'notificação'
         other: 'Central de Notificações'

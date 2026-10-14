@@ -89,6 +89,20 @@ describe('#validateLoggedInRoutes', () => {
         ).toEqual(`accounts/1/suspended`);
       });
     });
+    describe('when account has the AI off for missing payment', () => {
+      it('keeps the user on the account', () => {
+        expect(
+          validateLoggedInRoutes(
+            {
+              name: 'conversations',
+              params: { accountId: 1 },
+              meta: { permissions: ['agent'] },
+            },
+            { accounts: [{ id: 1, role: 'agent', status: 'payment_pending' }] }
+          )
+        ).not.toEqual(`accounts/1/suspended`);
+      });
+    });
     describe('when account is active', () => {
       describe('when route is accessible', () => {
         it('returns null (no action required)', () => {

@@ -29,13 +29,13 @@ class SuperAdmin::Reports::HealthScoreController < SuperAdmin::ApplicationContro
     AccountHealthScore
       .where(id: AccountHealthScore.select('DISTINCT ON (account_id) id').order(:account_id, captured_on: :desc))
       .joins(:account)
-      .merge(Account.active)
+      .merge(Account.accessible)
       .includes(:account)
   end
 
   def accounts_without_score
     scored_ids = AccountHealthScore.distinct.pluck(:account_id)
-    Account.active.where.not(id: scored_ids)
+    Account.accessible.where.not(id: scored_ids)
   end
 
   def serialize(snapshot)
