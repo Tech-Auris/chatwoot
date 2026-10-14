@@ -129,6 +129,27 @@ RSpec.describe Whatsapp::TemplateProcessorService do
       expect(header[:parameters]).to eq([{ type: 'image', image: { id: 'CACHED_MEDIA_ID' } }])
     end
 
+    def header_for(header_data)
+      _name, _namespace, _lang, components = described_class.new(
+        channel: channel, template_params: template_params.merge(
+          'processed_params' => { 'header' => header_data, 'body' => { '1' => 'Fabio' } }
+        ), message: message
+      ).call
+      components.find { |c| c[:type] == 'header' }
+    end
+
+    it 'sends the template image when the operator leaves the URL blank' do
+      header = header_for('media_url' => '', 'media_type' => 'image')
+
+      expect(header[:parameters]).to eq([{ type: 'image', image: { id: 'CACHED_MEDIA_ID' } }])
+    end
+
+    it 'sends the URL the operator typed instead of the template image' do
+      header = header_for('media_url' => 'https://example.com/promo.jpg', 'media_type' => 'image')
+
+      expect(header[:parameters]).to eq([{ type: 'image', image: { link: 'https://example.com/promo.jpg' } }])
+    end
+
     context 'when the template has no cached media_id yet' do
       let(:templates_cache) do
         [
@@ -137,11 +158,20 @@ RSpec.describe Whatsapp::TemplateProcessorService do
             'language' => 'pt_BR',
             'status' => 'approved',
             'components' => [
-              { 'type' => 'HEADER', 'format' => 'IMAGE' },
+              { 'type' => 'HEADER', 'format' => 'IMAGE',
+                'example' => { 'header_handle' => ['https://scontent.whatsapp.net/preview.png'] } },
               { 'type' => 'BODY', 'text' => 'Olá {{1}}' }
             ]
           }
         ]
+      end
+
+      # Meta answers 131053 to its preview URL; the send flow then caches
+      # an id for it and retries.
+      it 'sends the preview URL when the operator leaves the URL blank' do
+        header = header_for('media_url' => '', 'media_type' => 'image')
+
+        expect(header[:parameters]).to eq([{ type: 'image', image: { link: 'https://scontent.whatsapp.net/preview.png' } }])
       end
 
       # Degraded path: no cached id, so we still send the URL (which

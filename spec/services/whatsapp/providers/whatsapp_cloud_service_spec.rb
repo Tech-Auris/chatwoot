@@ -375,6 +375,21 @@ describe Whatsapp::Providers::WhatsappCloudService do
     end
   end
 
+  describe '#upload_media_from_url' do
+    # HTTParty's streamed multipart dropped the blank line after the text
+    # fields and Meta answered "(#100) The parameter file is required".
+    it 'sends a well-formed multipart body to Meta' do
+      stub_request(:get, 'https://scontent.whatsapp.net/preview.png')
+        .to_return(status: 200, body: 'png-bytes', headers: { 'Content-Type' => 'image/png' })
+      upload = stub_request(:post, 'https://graph.facebook.com/v22.0/123456789/media')
+               .with { |req| req.body.include?("name=\"messaging_product\"\r\n\r\nwhatsapp") && req.body.include?('png-bytes') }
+               .to_return(status: 200, body: { id: 'MEDIA_ID' }.to_json, headers: response_headers)
+
+      expect(subject.upload_media_from_url('https://scontent.whatsapp.net/preview.png')).to eq(success: true, id: 'MEDIA_ID')
+      expect(upload).to have_been_requested
+    end
+  end
+
   describe '#send_template regenerating header media on 131053' do
     let(:template_info) do
       {
@@ -414,6 +429,18 @@ describe Whatsapp::Providers::WhatsappCloudService do
 
       expect(subject.send_template('+123456789', template_info, message)).to eq('message_id')
       expect(whatsapp_channel.reload.message_templates.first['header_media_id']).to eq('FRESH_ID')
+      expect(WebMock).to(have_requested(:post, 'https://graph.facebook.com/v13.0/123456789/messages')
+        .with { |req| req.body.include?('"image":{"id":"FRESH_ID"}') })
+    end
+
+    it 'does not swap a link the operator typed for the template image' do
+      failure = { error: { code: 131_053, message: 'Media upload error' } }.to_json
+      stub_request(:post, 'https://graph.facebook.com/v13.0/123456789/messages')
+        .to_return(status: 400, body: failure, headers: response_headers)
+      custom = template_info.merge(parameters: [{ type: 'header', parameters: [{ type: 'image', image: { link: 'https://example.com/a.jpg' } }] }])
+
+      expect(subject).not_to receive(:upload_media_from_url) # rubocop:disable RSpec/SubjectStub -- the guard is exactly "no refresh happens"
+      expect { subject.send_template('+123456789', custom, message) }.to raise_error(Whatsapp::Providers::TransientError)
     end
 
     it 'lets the error propagate when the refresh itself fails' do

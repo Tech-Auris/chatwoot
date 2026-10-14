@@ -1,6 +1,21 @@
 class Whatsapp::TemplateProcessorService
   pattr_initialize [:channel!, :template_params, :message]
 
+  MEDIA_KEYS = %w[media_url media_type media_name].freeze
+  # Meta's own preview of the template image (`example.header_handle`);
+  # Meta refuses it back on send with 131053, so it counts as no URL.
+  META_PREVIEW_URL = %r{\Ahttps://scontent\.whatsapp\.net/}
+
+  def self.custom_header_url(header_data)
+    url = header_data&.dig('media_url')
+    url if url.present? && !url.match?(META_PREVIEW_URL)
+  end
+
+  def self.template_header_url(template)
+    header = Array(template['components']).find { |c| c['type']&.upcase == 'HEADER' }
+    Array(header&.dig('example', 'header_handle')).first
+  end
+
   def call
     return [nil, nil, nil, nil] if template_params.blank?
 
@@ -62,35 +77,27 @@ class Whatsapp::TemplateProcessorService
   # params" even when the count matches, because it can't map the value
   # back to the named placeholder). Media parameters are always shaped
   # by their media type, so parameter_format doesn't apply there.
-  # rubocop:disable Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
   def build_header_params(header_data, template)
-    parameter_format = template['parameter_format']
-    cached_media_id = template['header_media_id']
-    cached_media_type = cached_media_type_for(template)
-    header_params = []
-    header_data.each do |key, value|
-      next if value.blank?
-
-      if media_url_with_type?(key, header_data)
-        # Prefer the cached media_id when we have one — it survives the
-        # preview-URL expiry that causes Meta's 131053 on send. Falls
-        # back to the URL only when the sync has not resolved an id yet
-        # (fresh template, or upload failed and we're mid-recovery).
-        media_name = header_data['media_name']
-        media_param = if cached_media_id.present?
-                        parameter_builder.build_media_id_parameter(cached_media_type || header_data['media_type'],
-                                                                   cached_media_id, media_name)
-                      else
-                        parameter_builder.build_media_parameter(value, header_data['media_type'], media_name)
-                      end
-        header_params << media_param if media_param
-      elsif key != 'media_type' && key != 'media_name'
-        header_params << text_header_param(key, value, parameter_format)
-      end
+    text_params = header_data.except(*MEDIA_KEYS).filter_map do |key, value|
+      text_header_param(key, value, template['parameter_format']) if value.present?
     end
-    header_params
+    [header_media_param(header_data, template), *text_params].compact
   end
-  # rubocop:enable Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+
+  # The operator's own URL wins. Left blank, the header carries the
+  # template's own image: the media_id the sync cached, or else Meta's
+  # preview URL, whose 131053 the send flow recovers from by caching an id.
+  def header_media_param(header_data, template)
+    return if header_data['media_type'].blank?
+
+    media_type = cached_media_type_for(template) || header_data['media_type']
+    media_name = header_data['media_name']
+    custom_url = self.class.custom_header_url(header_data)
+    return parameter_builder.build_media_parameter(custom_url, media_type, media_name) if custom_url
+    return parameter_builder.build_media_id_parameter(media_type, template['header_media_id'], media_name) if template['header_media_id'].present?
+
+    parameter_builder.build_media_parameter(self.class.template_header_url(template), media_type, media_name)
+  end
 
   def cached_media_type_for(template)
     header = Array(template['components']).find { |c| c['type']&.upcase == 'HEADER' }
@@ -103,10 +110,6 @@ class Whatsapp::TemplateProcessorService
     else
       parameter_builder.build_parameter(value)
     end
-  end
-
-  def media_url_with_type?(key, header_data)
-    key == 'media_url' && header_data['media_type'].present?
   end
 
   def process_body_components(processed_params, template)
