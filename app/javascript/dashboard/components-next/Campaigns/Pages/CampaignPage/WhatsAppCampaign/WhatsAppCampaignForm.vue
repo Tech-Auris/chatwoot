@@ -616,35 +616,46 @@ watch(
       </p>
     </div>
 
-    <DatePicker
-      v-model:value="state.scheduledAt"
-      v-model:open="isSchedulePickerOpen"
-      type="datetime"
-      confirm
-      :clearable="false"
-      :editable="false"
-      :show-second="false"
-      :disabled-date="disableBeforeToday"
-      :disabled-time="disablePastTimes"
-      :confirm-text="t('CAMPAIGN.WHATSAPP.CREATE.FORM.SCHEDULED_AT.CONFIRM')"
-      append-to-body
-      class="!w-full"
-    >
-      <template #input>
-        <Input
-          :model-value="scheduledAtText"
-          :label="t('CAMPAIGN.WHATSAPP.CREATE.FORM.SCHEDULED_AT.LABEL')"
-          :placeholder="
-            t('CAMPAIGN.WHATSAPP.CREATE.FORM.SCHEDULED_AT.PLACEHOLDER')
-          "
-          :message="formErrors.scheduledAt"
-          :message-type="formErrors.scheduledAt ? 'error' : 'info'"
-          readonly
-          class="cursor-pointer"
-          @click="isSchedulePickerOpen = true"
-        />
-      </template>
-    </DatePicker>
+    <!-- Label and error sit outside the picker, which centers its calendar
+         icon on everything inside it. -->
+    <div class="flex flex-col gap-1">
+      <span class="mb-0.5 text-heading-3 text-n-slate-12">
+        {{ t('CAMPAIGN.WHATSAPP.CREATE.FORM.SCHEDULED_AT.LABEL') }}
+      </span>
+      <DatePicker
+        v-model:value="state.scheduledAt"
+        v-model:open="isSchedulePickerOpen"
+        type="datetime"
+        confirm
+        :clearable="false"
+        :editable="false"
+        :show-second="false"
+        :disabled-date="disableBeforeToday"
+        :disabled-time="disablePastTimes"
+        :confirm-text="t('CAMPAIGN.WHATSAPP.CREATE.FORM.SCHEDULED_AT.CONFIRM')"
+        append-to-body
+        class="!w-full"
+      >
+        <template #input>
+          <Input
+            :model-value="scheduledAtText"
+            :placeholder="
+              t('CAMPAIGN.WHATSAPP.CREATE.FORM.SCHEDULED_AT.PLACEHOLDER')
+            "
+            :message-type="formErrors.scheduledAt ? 'error' : 'info'"
+            readonly
+            class="cursor-pointer"
+            @click="isSchedulePickerOpen = true"
+          />
+        </template>
+      </DatePicker>
+      <p
+        v-if="formErrors.scheduledAt"
+        class="mt-1 mb-0 text-label-small text-n-ruby-9"
+      >
+        {{ formErrors.scheduledAt }}
+      </p>
+    </div>
 
     <ul
       v-if="numberWarnings.length"

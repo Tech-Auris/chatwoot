@@ -231,7 +231,7 @@
           },
           "SCHEDULED_AT": {
             "LABEL": "Scheduled time",
-            "PLACEHOLDER": "Please select the time",
+            "PLACEHOLDER": "Choose the date and time to send",
             "ERROR": "Scheduled time is required",
             "CONFIRM": "Confirm"
           },

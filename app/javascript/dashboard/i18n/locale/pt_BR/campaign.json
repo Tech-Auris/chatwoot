@@ -231,7 +231,7 @@
           },
           "SCHEDULED_AT": {
             "LABEL": "Horário agendado",
-            "PLACEHOLDER": "Por favor insira a hora",
+            "PLACEHOLDER": "Escolher a data e hora para o envio",
             "ERROR": "Horário agendado é necessário",
             "CONFIRM": "Confirmar"
           },
