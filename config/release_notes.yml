@@ -1,4 +1,20 @@
 ---
+- tag: v4.15.1-auris.1.70
+  published_at: '2026-10-14T20:00:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.70
+  notes:
+    en: |-
+      ### 🐛 Fixes
+
+      - **Template images.** Templates with an image now go out with the right image, and the conversation shows the image the patient received.
+      - **No repeated contacts.** When a patient replies from a number saved without the extra 9, the conversation stays on the same contact.
+      - **Campaigns.** The campaign time is now picked on a calendar, and the contact list needs phone numbers starting with +55.
+    pt_BR: |-
+      ### 🐛 Correções
+
+      - **Imagem dos templates.** Os templates com imagem agora vão com a imagem certa, e você vê na conversa a imagem que o paciente recebeu.
+      - **Sem contato repetido.** Quando o paciente responde de um número salvo sem o 9 a mais, a conversa continua no mesmo contato.
+      - **Campanhas.** O horário da campanha agora é escolhido em um calendário, e a lista de contatos precisa ter o telefone com +55 na frente.
 - tag: v4.15.1-auris.1.69
   published_at: '2026-10-09T20:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.69
@@ -405,11 +421,3 @@
       ### 🐛 Correções
 
       - **Pagamento mensal no cartão vira assinatura mesmo.** Estava caindo em uma tela de parcelamento em vez de virar cobrança recorrente. Agora o mensal segue para a assinatura; o semestral e o anual continuam indo para o link de parcelamento.
-- tag: v4.15.1-auris.1.51.5
-  published_at: '2026-09-01T02:00:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.51.5
-  notes:
-    en: |-
-      Bug fixes and internal improvements.
-    pt_BR: |-
-      Correções de bugs e melhorias internas.
