@@ -4,6 +4,7 @@ import {
   templateQualityWarns,
   templateQualityBlocksCampaign,
   templateQualityDate,
+  templateQualityStyle,
 } from '../templateQuality';
 
 describe('templateQuality', () => {
@@ -15,6 +16,10 @@ describe('templateQuality', () => {
   it('reads the score, with no rating yet as UNKNOWN', () => {
     expect(templateScore(template('YELLOW'))).toBe('YELLOW');
     expect(templateScore(template(undefined))).toBe('UNKNOWN');
+  });
+
+  it('gives a template not rated yet a green dot, not the grey of a problem', () => {
+    expect(templateQualityStyle('UNKNOWN').dot).toBe('bg-n-teal-9');
   });
 
   it('lets a paused or disabled template win over its score', () => {

@@ -5,7 +5,10 @@ import { useMapGetter } from 'dashboard/composables/store';
 import StatusBadge from './StatusBadge.vue';
 import TemplateQualityBadge from 'dashboard/components-next/whatsapp/TemplateQualityBadge.vue';
 import TemplateQualityWarning from 'dashboard/components-next/whatsapp/TemplateQualityWarning.vue';
-import { templateQualityDate } from 'dashboard/helper/templateQuality';
+import {
+  templateQualityDate,
+  templateScore,
+} from 'dashboard/helper/templateQuality';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Spinner from 'shared/components/Spinner.vue';
 import MetaTemplatesAPI from 'dashboard/api/metaTemplates';
@@ -74,7 +77,11 @@ const headerFormat = computed(() =>
 );
 const headerText = computed(() => header.value?.text || '');
 
-const rejectedReason = computed(() => props.template?.rejected_reason);
+// Meta answers NONE for every template it did not reject.
+const rejectedReason = computed(() => {
+  const reason = props.template?.rejected_reason;
+  return reason && reason !== 'NONE' ? reason : null;
+});
 
 // Usage funnel: fetched from the backend when the drawer opens on a
 // template. Keeps its own state so switching the period doesn't clobber
@@ -151,7 +158,10 @@ watch(
   { immediate: true }
 );
 
+// Meta dates its UNKNOWN too (every sync), so "Avaliada em" only goes with
+// a real rating.
 const qualityDate = computed(() => {
+  if (templateScore(props.template) === 'UNKNOWN') return '';
   const date = templateQualityDate(props.template);
   return date ? date.toLocaleDateString() : '';
 });

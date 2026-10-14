@@ -2,9 +2,12 @@ import { QUALITY_STYLES } from 'dashboard/helper/whatsappHealth';
 
 // Meta rates each template by how patients react to it (blocks, reports,
 // reads). A paused or disabled template is refused by Meta whatever its
-// rating, so that state wins over the score.
+// rating, so that state wins over the score. A template Meta has not rated
+// yet is the normal state of a new or lightly used one, so its dot is green
+// instead of the grey that reads as a problem.
 export const TEMPLATE_QUALITY_STYLES = {
   ...QUALITY_STYLES,
+  UNKNOWN: { badge: 'bg-n-alpha-2 text-n-slate-11', dot: 'bg-n-teal-9' },
   PAUSED: { badge: 'bg-n-ruby-3 text-n-ruby-11', dot: 'bg-n-ruby-9' },
   DISABLED: { badge: 'bg-n-ruby-9 text-white', dot: 'bg-white' },
 };
