@@ -1,14 +1,16 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import ButtonV4 from 'next/button/Button.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
+import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
 import {
   qualityKey,
   qualityStyle,
   accountStatusDot,
   SEND_STATUS_DOTS,
+  healthErrorKey,
 } from 'dashboard/helper/whatsappHealth';
 
 const props = defineProps({
@@ -225,6 +227,17 @@ const webhookUrlMismatch = computed(
 const handleRegisterWebhook = () => {
   emit('registerWebhook');
 };
+
+const metaErrorsDialog = ref(null);
+const metaErrors = ref([]);
+
+const openMetaErrors = errors => {
+  metaErrors.value = errors;
+  metaErrorsDialog.value.open();
+};
+
+const healthErrorText = error =>
+  t(`INBOX_MGMT.ACCOUNT_HEALTH.HEALTH_ERRORS.${healthErrorKey(error)}`);
 </script>
 
 <template>
@@ -325,21 +338,27 @@ const handleRegisterWebhook = () => {
                 />
                 {{ translateValue('SEND_STATUSES', item.value) }}
               </span>
-              <div
-                v-for="error in item.errors"
-                :key="error.error_code"
-                class="flex flex-col gap-1 text-body-main text-n-slate-11"
+              <ul
+                v-if="item.errors.length"
+                class="flex flex-col gap-1 text-body-main text-n-slate-12 list-disc ps-4"
               >
-                <span class="text-n-slate-12">{{
-                  error.error_description
-                }}</span>
-                <span v-if="error.possible_solution">
-                  {{
-                    t('INBOX_MGMT.ACCOUNT_HEALTH.FIELDS.SEND_STATUS.SOLUTION')
-                  }}:
-                  {{ error.possible_solution }}
-                </span>
-              </div>
+                <li
+                  v-for="(error, index) in item.errors"
+                  :key="`${error.error_code}-${index}`"
+                >
+                  {{ healthErrorText(error) }}
+                </li>
+              </ul>
+              <button
+                v-if="item.errors.length"
+                type="button"
+                class="self-start text-body-main text-n-blue-11 hover:underline"
+                @click="openMetaErrors(item.errors)"
+              >
+                {{
+                  t('INBOX_MGMT.ACCOUNT_HEALTH.HEALTH_ERRORS.VIEW_META_ERROR')
+                }}
+              </button>
             </div>
             <span
               v-else-if="item.type === 'verification'"
@@ -417,5 +436,37 @@ const handleRegisterWebhook = () => {
         </div>
       </div>
     </div>
+
+    <Dialog
+      ref="metaErrorsDialog"
+      :title="t('INBOX_MGMT.ACCOUNT_HEALTH.HEALTH_ERRORS.DIALOG_TITLE')"
+      :show-cancel-button="false"
+      :confirm-button-label="t('INBOX_MGMT.ACCOUNT_HEALTH.HEALTH_ERRORS.CLOSE')"
+      @confirm="metaErrorsDialog?.close()"
+    >
+      <div class="flex flex-col gap-4">
+        <div
+          v-for="(error, index) in metaErrors"
+          :key="`${error.error_code}-${index}`"
+          class="flex flex-col gap-1 text-body-main"
+        >
+          <span class="font-medium text-n-slate-12">
+            {{ healthErrorText(error) }}
+          </span>
+          <span class="text-n-slate-11">{{ error.error_description }}</span>
+          <span v-if="error.possible_solution" class="text-n-slate-11">
+            {{ t('INBOX_MGMT.ACCOUNT_HEALTH.FIELDS.SEND_STATUS.SOLUTION') }}:
+            {{ error.possible_solution }}
+          </span>
+          <span
+            v-if="error.error_code"
+            class="text-label-small text-n-slate-10"
+          >
+            {{ t('INBOX_MGMT.ACCOUNT_HEALTH.HEALTH_ERRORS.CODE') }}
+            {{ error.error_code }}
+          </span>
+        </div>
+      </div>
+    </Dialog>
   </div>
 </template>

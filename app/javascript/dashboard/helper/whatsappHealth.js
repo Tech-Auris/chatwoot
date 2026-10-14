@@ -81,3 +81,24 @@ export const campaignWarnings = (inbox, audienceCount = 0) => {
   }
   return warnings;
 };
+
+// Meta writes each reason in English and in its own jargon. The page shows a
+// short line in the agent's language and keeps Meta's text for "Ver erro da
+// Meta". Notes Meta adds without a code are matched by their text.
+const HEALTH_ERROR_CODES = {
+  141010: 'BUSINESS_VERIFICATION',
+  131042: 'PAYMENT',
+  131031: 'ACCOUNT_LOCKED',
+};
+
+export const healthErrorKey = ({
+  error_code: code,
+  error_description: text = '',
+}) => {
+  if (HEALTH_ERROR_CODES[code]) return HEALTH_ERROR_CODES[code];
+  if (String(code).startsWith('138') || /\bSIP\b|calling/i.test(text)) {
+    return 'CALLING';
+  }
+  if (/display name/i.test(text)) return 'DISPLAY_NAME';
+  return 'OTHER';
+};

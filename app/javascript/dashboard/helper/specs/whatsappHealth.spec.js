@@ -4,6 +4,7 @@ import {
   accountStatusDot,
   sendBlockReason,
   campaignWarnings,
+  healthErrorKey,
 } from '../whatsappHealth';
 
 describe('whatsappHealth', () => {
@@ -84,6 +85,41 @@ describe('whatsappHealth', () => {
       expect(
         campaignWarnings(inbox({ messaging_limit_tier: 'TIER_UNLIMITED' }), 1e6)
       ).toEqual([]);
+    });
+  });
+
+  describe('healthErrorKey', () => {
+    it('names the reasons Meta gives by code', () => {
+      expect(
+        healthErrorKey({
+          error_code: 141010,
+          error_description:
+            'The Business has not passed business verification.',
+        })
+      ).toBe('BUSINESS_VERIFICATION');
+    });
+
+    it('recognises the calling (SIP) reasons and the display-name note', () => {
+      expect(
+        healthErrorKey({
+          error_code: 138024,
+          error_description: 'WhatsApp Business calling cannot use SIP',
+        })
+      ).toBe('CALLING');
+      expect(
+        healthErrorKey({
+          error_description: 'Your display name has not been approved yet.',
+        })
+      ).toBe('DISPLAY_NAME');
+    });
+
+    it('falls back to a generic reason for anything else', () => {
+      expect(
+        healthErrorKey({
+          error_code: 999999,
+          error_description: 'Something new',
+        })
+      ).toBe('OTHER');
     });
   });
 });

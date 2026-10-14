@@ -766,6 +766,18 @@
       "DESCRIPTION": "Review your WhatsApp account status, messaging limits, and quality. Update settings or resolve issues if needed",
       "GO_TO_SETTINGS": "Go to Meta Business Manager",
       "NO_DATA": "Health data is not available",
+      "HEALTH_ERRORS": {
+        "BUSINESS_VERIFICATION": "Business verification is pending at Meta.",
+        "PAYMENT": "There is a problem with the payment method on Meta.",
+        "ACCOUNT_LOCKED": "Meta locked this WhatsApp account.",
+        "DISPLAY_NAME": "The display name is still waiting for Meta's approval.",
+        "CALLING": "Voice calling is not set up (does not affect messages).",
+        "OTHER": "Meta reported a pending issue on this account.",
+        "VIEW_META_ERROR": "View Meta error",
+        "DIALOG_TITLE": "Meta's details",
+        "CLOSE": "Close",
+        "CODE": "Code"
+      },
       "FIELDS": {
         "DISPLAY_PHONE_NUMBER": {
           "LABEL": "Display phone number",
