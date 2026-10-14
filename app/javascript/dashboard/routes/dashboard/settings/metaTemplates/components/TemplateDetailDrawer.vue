@@ -74,7 +74,11 @@ const headerFormat = computed(() =>
 );
 const headerText = computed(() => header.value?.text || '');
 
-const rejectedReason = computed(() => props.template?.rejected_reason);
+// Meta answers NONE for every template it did not reject.
+const rejectedReason = computed(() => {
+  const reason = props.template?.rejected_reason;
+  return reason && reason !== 'NONE' ? reason : null;
+});
 
 // Usage funnel: fetched from the backend when the drawer opens on a
 // template. Keeps its own state so switching the period doesn't clobber
