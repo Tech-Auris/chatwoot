@@ -200,7 +200,7 @@
           },
           "AUDIENCE_FILE": {
             "LABEL": "CSV file",
-            "INFO": "Columns: id, name, email, phone_number. New contacts are created; existing ones are matched by phone number.",
+            "INFO": "Columns: id, name, email, phone_number. The phone number must start with + and the country code (e.g. +5511987654321). New contacts are created; existing ones are matched by phone number.",
             "SAMPLE": "Download a sample csv.",
             "IMPORTING": "Reading the file…",
             "SUMMARY": "{total} contact(s) ready — {created} created, {reused} already existed.",

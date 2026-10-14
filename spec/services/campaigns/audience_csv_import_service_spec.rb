@@ -123,12 +123,23 @@ RSpec.describe Campaigns::AudienceCsvImportService do
       expect(existing.reload).to have_attributes(name: 'Fábio Rocha', email: 'fabio@empresa.com')
     end
 
-    # Spreadsheets hand over numbers with punctuation and no country prefix
-    # marker; contacts are stored in E.164.
+    # Spreadsheets hand over numbers with punctuation; contacts are stored in E.164.
     it 'normalizes numbers written with punctuation' do
-      result = import("id,name,email,phone_number\n1,Maria,,55 (11) 98765-4321\n")
+      result = import("id,name,email,phone_number\n1,Maria,,+55 (11) 98765-4321\n")
 
       expect(account.contacts.find(result[:contact_ids].first).phone_number).to eq('+5511987654321')
+    end
+
+    # `11987654321` was stored as +11987654321 and duplicated the Brazilian contact.
+    it 'refuses a number without the plus sign of the country code' do
+      existing = create(:contact, account: account, phone_number: '+5511987654321')
+
+      result = import("id,name,email,phone_number\n1,Maria,,11987654321\n2,Ana,,5511987654321\n")
+
+      expect(result[:contact_ids]).to be_empty
+      expect(result[:invalid_rows]).to eq([{ line: 2, reason: described_class::MISSING_COUNTRY_CODE },
+                                           { line: 3, reason: described_class::MISSING_COUNTRY_CODE }])
+      expect(account.contacts).to eq([existing])
     end
 
     it 'reports the rows it could not use instead of failing the whole file' do

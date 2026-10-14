@@ -200,7 +200,7 @@
           },
           "AUDIENCE_FILE": {
             "LABEL": "Arquivo CSV",
-            "INFO": "Colunas: id, name, email, phone_number. Contatos novos são criados; os que já existem são reaproveitados pelo telefone.",
+            "INFO": "Colunas: id, name, email, phone_number. O telefone precisa começar com + e o código do país (ex.: +5511987654321). Contatos novos são criados; os que já existem são reaproveitados pelo telefone.",
             "SAMPLE": "Baixar um exemplo de csv.",
             "IMPORTING": "Lendo o arquivo…",
             "SUMMARY": "{total} contato(s) prontos — {created} criados, {reused} já existentes.",
