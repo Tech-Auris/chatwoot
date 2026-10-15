@@ -64,9 +64,9 @@ info:
     | `422 Unprocessable Entity` | Os dados enviados não passaram na validação. | Leia a mensagem de erro no corpo da resposta. |
     | `429 Too Many Requests` | Muitas requisições em pouco tempo. | Aguarde alguns segundos e tente de novo; espalhe as chamadas ao longo do tempo em vez de enviar tudo de uma vez. |
   version: 1.1.0
-  termsOfService: https://www.chatwoot.com/terms-of-service/
+  termsOfService: https://agenteauris.com.br/termos-de-uso/
   contact:
-    email: hello@chatwoot.com
+    email: tech@agenteauris.com.br
   license:
     name: MIT License
     url: https://opensource.org/licenses/MIT
