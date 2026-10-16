@@ -35,9 +35,9 @@ class SuperAdmin::AccountsController < SuperAdmin::ApplicationController
   # Override this if you have certain roles that require a subset
   # this will be used to set the records shown on the `index` action.
   #
-  # Preloads the secretary version shown in the grid column.
+  # Preloads the secretary version and LLM shown in the grid columns.
   def scoped_resource
-    super.includes(account_secretary: :secretary_version)
+    super.includes(account_secretary: [:secretary_version, { ai_model: :ai_provider }])
   end
 
   # Override `resource_params` if you want to transform the submitted

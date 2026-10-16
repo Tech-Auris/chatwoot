@@ -191,7 +191,7 @@ onMounted(load);
         </select>
 
         <label for="secretary-provider" class="text-sm text-n-slate-11 pt-2">
-          Empresa de IA
+          AI Provider
         </label>
         <select
           id="secretary-provider"
