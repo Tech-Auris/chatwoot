@@ -495,8 +495,16 @@ RSpec.describe Account do
           ai_status_uses_attribute: true,
           multi_language_ai: false
         },
-        follow_up: { 'end_flow' => { 'wait_minutes' => 60 } }
+        follow_up: { 'end_flow' => { 'wait_minutes' => 60 } },
+        llm: nil
       )
+    end
+
+    it 'carries the secretary LLM for the n8n LLM selector' do
+      model = create(:ai_model, key: 'openai_advanced', model_id: 'gpt-5.1', ai_provider: create(:ai_provider, key: 'openai'))
+      create(:account_secretary, account: account, ai_model: model)
+
+      expect(account.reload.webhook_data[:llm]).to eq(provider: 'openai', key: 'openai_advanced', model: 'gpt-5.1')
     end
 
     it 'carries the follow-up setup for the n8n FUP workflow' do

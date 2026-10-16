@@ -61,6 +61,8 @@ class Secretary::WebhookMigration
     secretary = account.account_secretary || account.build_account_secretary
     secretary.secret = row.webhook.secret if row.webhook.secret.present?
     secretary.secretary_version = row.suspended ? nil : version
+    # A secretary needs an LLM; the n8n default holds until `secretary:import_llm`.
+    secretary.ai_model ||= AiModel.find_by(key: Secretary::LlmSupabaseImport::LEGACY_INDEX_KEYS[Secretary::LlmSupabaseImport::DEFAULT_INDEX])
     secretary.save!
     account.inboxes.where(id: row.inbox_ids).update_all(secretary_enabled: true) # rubocop:disable Rails/SkipsModelValidations
     row.webhook.destroy!

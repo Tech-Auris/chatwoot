@@ -163,18 +163,19 @@ RSpec.describe 'Super Admin accounts API', type: :request do
     let!(:sales) { create(:inbox, account: account) }
     let(:version) { create(:secretary_version) }
     let(:testing) { create(:secretary_version, status: :testing) }
+    let(:ai_model) { create(:ai_model) }
 
     before { sign_in(super_admin, scope: :super_admin) }
 
     it 'saves the secretary with the account, in the same submit' do
       put "/super_admin/accounts/#{account.id}", params: {
         account: { name: 'Clinica Nova' },
-        secretary: { secretary_version_id: version.id, simulator_version_id: testing.id, inbox_ids: ['', reception.id] }
+        secretary: { secretary_version_id: version.id, simulator_version_id: testing.id, ai_model_id: ai_model.id, inbox_ids: ['', reception.id] }
       }
 
       expect(response).to have_http_status(:redirect)
       expect(account.reload.name).to eq('Clinica Nova')
-      expect(account.account_secretary).to have_attributes(secretary_version: version, simulator_version: testing)
+      expect(account.account_secretary).to have_attributes(secretary_version: version, simulator_version: testing, ai_model: ai_model)
       expect(account.account_secretary.secret).to be_present
       expect(reception.reload.secretary_enabled).to be(true)
       expect(sales.reload.secretary_enabled).to be(false)
@@ -184,7 +185,7 @@ RSpec.describe 'Super Admin accounts API', type: :request do
       reception.update!(secretary_enabled: true)
 
       put "/super_admin/accounts/#{account.id}",
-          params: { account: { name: account.name }, secretary: { secretary_version_id: version.id, inbox_ids: [''] } }
+          params: { account: { name: account.name }, secretary: { secretary_version_id: version.id, ai_model_id: ai_model.id, inbox_ids: [''] } }
 
       expect(reception.reload.secretary_enabled).to be(false)
     end
@@ -195,6 +196,14 @@ RSpec.describe 'Super Admin accounts API', type: :request do
       put "/super_admin/accounts/#{account.id}", params: { account: { name: account.name } }
 
       expect(reception.reload.secretary_enabled).to be(true)
+    end
+
+    it 'refuses a secretary without an LLM' do
+      put "/super_admin/accounts/#{account.id}",
+          params: { account: { name: account.name }, secretary: { secretary_version_id: version.id, inbox_ids: [''] } }
+
+      expect(flash[:alert]).to be_present
+      expect(account.reload.account_secretary&.secretary_version).to be_nil
     end
 
     it 'refuses a testing version for the account' do

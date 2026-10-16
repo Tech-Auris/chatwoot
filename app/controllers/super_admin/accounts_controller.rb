@@ -112,9 +112,10 @@ class SuperAdmin::AccountsController < SuperAdmin::ApplicationController
   # writer so menu access stays an isolated concern: it doesn't ride along on
   # webhooks and a future Super Admin reshuffle can move it independently.
   def save_secretary
-    attrs = params.require(:secretary).permit(:secretary_version_id, :simulator_version_id, inbox_ids: [])
+    attrs = params.require(:secretary).permit(:secretary_version_id, :simulator_version_id, :ai_model_id, inbox_ids: [])
     Secretary::AccountSetup.new(requested_resource).update!(
-      secretary_version_id: attrs[:secretary_version_id], simulator_version_id: attrs[:simulator_version_id], inbox_ids: attrs[:inbox_ids]
+      secretary_version_id: attrs[:secretary_version_id], simulator_version_id: attrs[:simulator_version_id],
+      ai_model_id: attrs[:ai_model_id], inbox_ids: attrs[:inbox_ids]
     )
   end
 
