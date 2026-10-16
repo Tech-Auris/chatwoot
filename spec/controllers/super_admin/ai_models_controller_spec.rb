@@ -6,6 +6,15 @@ RSpec.describe 'Super Admin AI providers and models', type: :request do
 
   before { sign_in(super_admin, scope: :super_admin) }
 
+  it 'groups Secretary Versions, Providers and LLMs under the AI menu' do
+    get '/super_admin/ai_models'
+
+    menu = Nokogiri::HTML(response.body).css('#super-admin-sidebar details').find { |d| d.at('summary').text.strip == 'AI' }
+    expect(menu).to be_present
+    expect(menu['open']).not_to be_nil
+    expect(menu.css('ul a').map { |a| a.text.strip }).to eq(['Secretary Versions', 'Providers', 'LLMs'])
+  end
+
   it 'lists the providers with their models' do
     create(:ai_model, ai_provider: provider, name: 'gpt-5.1')
 
