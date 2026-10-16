@@ -3,10 +3,12 @@ import { computed, ref } from 'vue';
 import BaseBubble from 'next/message/bubbles/Base.vue';
 import FormattedContent from './FormattedContent.vue';
 import AttachmentChips from 'next/message/chips/AttachmentChips.vue';
+import ImageChip from 'next/message/chips/Image.vue';
 import TranslationToggle from 'dashboard/components-next/message/TranslationToggle.vue';
 import { MESSAGE_TYPES } from '../../constants';
 import { useMessageContext } from '../../provider.js';
 import { useTranslations } from 'dashboard/composables/useTranslations';
+import { findCaptionImage } from './captionImage';
 
 const { content, attachments, contentAttributes, messageType } =
   useMessageContext();
@@ -32,6 +34,10 @@ const isTemplate = computed(() => {
   return messageType.value === MESSAGE_TYPES.TEMPLATE;
 });
 
+const captionImage = computed(() =>
+  findCaptionImage(attachments.value, content.value)
+);
+
 const isEmpty = computed(() => {
   return !content.value && !attachments.value?.length;
 });
@@ -42,8 +48,16 @@ const handleSeeOriginal = () => {
 </script>
 
 <template>
-  <BaseBubble class="px-4 py-3" data-bubble-name="text">
-    <div class="gap-3 flex flex-col">
+  <BaseBubble
+    :class="
+      captionImage
+        ? 'p-1 pb-3 w-80 max-w-full [&>*:last-child]:px-3'
+        : 'px-4 py-3'
+    "
+    data-bubble-name="text"
+  >
+    <ImageChip v-if="captionImage" :attachment="captionImage" full-width />
+    <div class="gap-3 flex flex-col" :class="{ 'px-3 pt-2': captionImage }">
       <span v-if="isEmpty" class="text-n-slate-11">
         {{ $t('CONVERSATION.NO_CONTENT') }}
       </span>
@@ -54,7 +68,11 @@ const handleSeeOriginal = () => {
         :showing-original="renderOriginal"
         @toggle="handleSeeOriginal"
       />
-      <AttachmentChips :attachments="attachments" class="gap-2" />
+      <AttachmentChips
+        v-if="!captionImage"
+        :attachments="attachments"
+        class="gap-2"
+      />
       <template v-if="isTemplate">
         <div
           v-if="contentAttributes.submittedEmail"
