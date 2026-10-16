@@ -1,12 +1,16 @@
 ---
 - tag: v4.15.1-auris.1.71
-  published_at: '2026-10-15T20:00:00Z'
+  published_at: '2026-10-16T20:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.71
   notes:
     en: |-
-      Bug fixes and internal improvements.
+      ### ✨ What's new
+
+      - **Images with text, just like WhatsApp.** When a message has a photo and text, the photo shows large on top with the text below, the way the patient sees it on WhatsApp.
     pt_BR: |-
-      Correções de bugs e melhorias internas.
+      ### ✨ Novidades
+
+      - **Imagem com texto igual ao WhatsApp.** Quando uma mensagem tem foto e texto, a foto aparece grande em cima e o texto embaixo, do jeito que o paciente vê no WhatsApp.
 - tag: v4.15.1-auris.1.70
   published_at: '2026-10-14T20:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.70
