@@ -97,6 +97,31 @@ RSpec.describe V2::Reports::FunnelConversionDrilldownBuilder do
     end
   end
 
+  describe 'the leads of a campaign sent from AurisChat' do
+    let(:campaign) { create(:campaign, account: account, title: 'Black Friday') }
+
+    def campaign_conversation(replied:)
+      conv = create(:conversation, account: account, inbox: inbox, contact: contact, campaign: campaign, origem: 'Disparo interno')
+      create(:message, account: account, inbox: inbox, conversation: conv, message_type: :outgoing,
+                       additional_attributes: { campaign_id: campaign.id }, created_at: 5.days.ago)
+      create(:message, account: account, inbox: inbox, conversation: conv, message_type: :incoming, created_at: 4.days.ago) if replied
+      stage_change(conv, stages[:lead].name, created_at: 3.days.ago)
+      conv
+    end
+
+    it 'lists the same leads the campaign row counts, with the campaign as where they came from' do
+      lead = campaign_conversation(replied: true)
+      campaign_conversation(replied: false)
+
+      result = drilldown(kind: 'internal_campaign', source_id: campaign.id.to_s)
+      grid = V2::Reports::FunnelConversionBuilder.new(account: account, params: params).build[:campaign_breakdown]
+
+      expect(result[:rows].pluck(:conversation_id)).to eq([lead.display_id])
+      expect(result[:meta][:total_count]).to eq(grid.find { |row| row[:kind] == 'internal_campaign' }[:leads])
+      expect(result[:rows].first).to include(origem: 'Disparo interno', ad_title: 'Black Friday')
+    end
+  end
+
   describe 'the losses' do
     let(:price) { create(:loss_reason, name: "price_#{SecureRandom.hex(4)}") }
     let(:no_answer) { create(:loss_reason, name: "no_answer_#{SecureRandom.hex(4)}") }

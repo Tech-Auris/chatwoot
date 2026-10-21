@@ -132,6 +132,9 @@ class Whatsapp::OneoffCampaignService
   #   snoozed   -> reuse, stays snoozed (agent snoozed on purpose; respect it)
   #   resolved  -> reuse, reopen as pending (back on the radar, doesn't pollute open)
   #   none      -> create a new conversation as pending
+  #
+  # Either way the conversation ends up tied to this campaign and, when it has
+  # no origin yet, takes "Disparo interno" (an origin already set wins).
   def build_campaign_conversation(contact_inbox)
     existing = inbox.conversations
                     .where(contact_id: contact_inbox.contact_id)
@@ -139,7 +142,7 @@ class Whatsapp::OneoffCampaignService
                     .first
 
     if existing
-      existing.update!(status: :pending) if existing.resolved?
+      existing.update!(campaign_link_attributes(existing))
       return existing
     end
 
@@ -149,8 +152,16 @@ class Whatsapp::OneoffCampaignService
       contact_id: contact_inbox.contact_id,
       contact_inbox_id: contact_inbox.id,
       campaign_id: campaign.id,
+      origem: Contacts::OriginAttributionService::INTERNAL_CAMPAIGN,
       status: :pending
     )
+  end
+
+  def campaign_link_attributes(conversation)
+    attributes = { campaign_id: campaign.id }
+    attributes[:status] = :pending if conversation.resolved?
+    attributes[:origem] = Contacts::OriginAttributionService::INTERNAL_CAMPAIGN if conversation.origem.blank?
+    attributes
   end
 
   # Optional tag chosen when the campaign was created, so the team can find

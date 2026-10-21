@@ -44,6 +44,12 @@ const title = computed(() => {
       count,
     });
   }
+  if (target.value.kind === 'internal_campaign') {
+    return t('FUNNEL_CONVERSION_REPORTS.DRILLDOWN.TITLE_INTERNAL_CAMPAIGN', {
+      campaign: target.value.name,
+      count,
+    });
+  }
   if (target.value.kind === 'ad') {
     return t('FUNNEL_CONVERSION_REPORTS.DRILLDOWN.TITLE_AD', {
       ad: target.value.name,
@@ -89,7 +95,8 @@ const fetchPage = async page => {
 
 // `next` is { stageKey, name, count } for a chart stage,
 // { kind: 'loss', lossReasonId?, name?, count } for the losses, or
-// { kind: 'ad', sourceId, name, count } for one ad's leads — plus
+// { kind: 'ad' | 'internal_campaign', sourceId, name, count } for the leads
+// of one ad or one AurisChat campaign — plus
 // `metric` / `metricLabel` for one column of Marketing → Analytics.
 const open = next => {
   target.value = next;

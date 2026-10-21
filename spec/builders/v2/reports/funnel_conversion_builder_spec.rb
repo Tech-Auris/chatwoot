@@ -513,5 +513,76 @@ RSpec.describe V2::Reports::FunnelConversionBuilder do
         expect(row[:roas]).to be_nil
       end
     end
+
+    context 'with campaigns sent from AurisChat' do
+      let!(:qualifying) { create(:funnel_stage, name: 'Em Qualificação', position: 10) }
+      let!(:agendado) { create(:funnel_stage, name: 'Agendado', position: 20, chart_group: 'Agendamento') }
+      let!(:comparecimento) { create(:funnel_stage, name: 'Comparecimento (ganho)', position: 40, closed: true) }
+      let(:campaign) { create(:campaign, account: account, title: 'Black Friday') }
+
+      def campaign_conversation(sent_at:, replied_at: nil, origem: 'Disparo interno')
+        conversation = create(:conversation, account: account, inbox: inbox, contact: contact, campaign: campaign, origem: origem)
+        create(:message, account: account, inbox: inbox, conversation: conversation, message_type: :outgoing,
+                         additional_attributes: { campaign_id: campaign.id }, created_at: sent_at)
+        create(:message, account: account, inbox: inbox, conversation: conversation, message_type: :incoming, created_at: replied_at) if replied_at
+        conversation
+      end
+
+      it 'adds one row per campaign, counting only the contacts who replied' do
+        replied = campaign_conversation(sent_at: 5.days.ago, replied_at: 4.days.ago)
+        stage_change(conv_id: replied.id, new_stage: qualifying.name, created_at: 4.days.ago)
+        stage_change(conv_id: replied.id, previous_stage: qualifying.name, new_stage: agendado.name, created_at: 3.days.ago)
+        silent = campaign_conversation(sent_at: 5.days.ago)
+        stage_change(conv_id: silent.id, new_stage: qualifying.name, created_at: 4.days.ago)
+
+        row = builder.build[:campaign_breakdown].find { |r| r[:kind] == 'internal_campaign' }
+
+        expect(row).to include(source_id: campaign.id.to_s, display_id: campaign.display_id, title: 'Black Friday', leads: 1,
+                               spend_cents: nil, cpl_cents: nil, cpa_cents: nil, roas: nil)
+        expect(row[:qualifying]).to eq(count: 1, rate: 100.0)
+        expect(row[:scheduling]).to eq(count: 1, rate: 100.0)
+      end
+
+      it 'counts a conversation that kept its earlier origin' do
+        conversation = campaign_conversation(sent_at: 5.days.ago, replied_at: 4.days.ago, origem: 'Instagram')
+        stage_change(conv_id: conversation.id, new_stage: qualifying.name, created_at: 4.days.ago)
+
+        expect(builder.build[:campaign_breakdown].find { |r| r[:kind] == 'internal_campaign' }[:leads]).to eq(1)
+      end
+
+      it 'keeps every lead of the campaign when filtering by Disparo interno, and hides the Meta ads' do
+        own = campaign_conversation(sent_at: 5.days.ago, replied_at: 4.days.ago)
+        stage_change(conv_id: own.id, new_stage: qualifying.name, created_at: 4.days.ago)
+        kept_origin = campaign_conversation(sent_at: 5.days.ago, replied_at: 4.days.ago, origem: 'Instagram')
+        stage_change(conv_id: kept_origin.id, new_stage: qualifying.name, created_at: 4.days.ago)
+        ad = create(:conversation, account: account, inbox: inbox, contact: contact, origem: 'Facebook',
+                                   additional_attributes: { 'campaign_referral' => { 'source_id' => 'FB-9' } })
+        stage_change(conv_id: ad.id, new_stage: qualifying.name)
+
+        rows = described_class.new(account: account, params: params.merge(origem: 'Disparo interno')).build[:campaign_breakdown]
+
+        expect(rows.map { |r| [r[:kind], r[:leads]] }).to eq([['internal_campaign', 2]])
+      end
+
+      it 'ignores what happens more than 30 days after the send' do
+        late_move = campaign_conversation(sent_at: 40.days.ago, replied_at: 35.days.ago)
+        stage_change(conv_id: late_move.id, new_stage: comparecimento.name, created_at: 2.days.ago)
+        late_reply = campaign_conversation(sent_at: 40.days.ago, replied_at: 3.days.ago)
+        stage_change(conv_id: late_reply.id, new_stage: qualifying.name, created_at: 2.days.ago)
+
+        expect(builder.build[:campaign_breakdown]).to eq([])
+      end
+
+      it 'tells the Meta ad rows apart from the campaign rows' do
+        conversation = campaign_conversation(sent_at: 5.days.ago, replied_at: 4.days.ago)
+        stage_change(conv_id: conversation.id, new_stage: qualifying.name, created_at: 4.days.ago)
+        ad = create(:conversation, account: account, inbox: inbox, contact: contact,
+                                   additional_attributes: { 'campaign_referral' => { 'source_id' => 'FB-9', 'title' => 'Anúncio' } })
+        stage_change(conv_id: ad.id, new_stage: qualifying.name)
+
+        expect(builder.build[:campaign_breakdown].map { |r| [r[:kind], r[:source_id]] })
+          .to contain_exactly(%w[ad FB-9], ['internal_campaign', campaign.id.to_s])
+      end
+    end
   end
 end

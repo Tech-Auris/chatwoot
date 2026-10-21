@@ -1,10 +1,12 @@
 <script setup>
 import { useI18n } from 'vue-i18n';
+import { useRoute } from 'vue-router';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 
-// Per-ad table sitting below the funnel chart. Each row is one Meta ad
-// (grouped by the Cloud referral's `source_id`), with the same funnel buckets
-// the KPI strip above uses so a value in the grid always reconciles with the
+// Table sitting below the funnel chart. Each row is one Meta ad (grouped by
+// the Cloud referral's `source_id`, `kind: 'ad'`) or one campaign sent from
+// AurisChat (`kind: 'internal_campaign'`), with the same funnel buckets the
+// KPI strip above uses so a value in the grid always reconciles with the
 // aggregate. The bucket "Em qualificação" is the first funnel stage past the
 // entry point — the other three follow the KPI columns 1:1.
 defineProps({
@@ -18,6 +20,14 @@ defineProps({
 const emit = defineEmits(['drill']);
 
 const { t } = useI18n();
+const route = useRoute();
+
+const isInternalCampaign = row => row.kind === 'internal_campaign';
+
+const campaignReportRoute = row => ({
+  name: 'campaigns_whatsapp_report',
+  params: { accountId: route.params.accountId, campaignId: row.displayId },
+});
 
 // Restrict the ad link to http(s) so a rogue webhook (unlikely, since these
 // come from Meta, but this table also renders anything an operator seeded
@@ -131,17 +141,37 @@ const formatRoas = roas =>
         <tbody>
           <tr
             v-for="row in rows"
-            :key="row.sourceId"
+            :key="`${row.kind}-${row.sourceId}`"
             class="border-b border-n-weak/50 last:border-b-0"
           >
             <td
               class="py-3 pr-3 whitespace-nowrap font-mono text-xs text-n-slate-11"
             >
-              {{ row.sourceId }}
+              {{ isInternalCampaign(row) ? row.displayId : row.sourceId }}
             </td>
             <td class="py-3 pr-3">
+              <div
+                v-if="isInternalCampaign(row)"
+                class="flex flex-wrap items-center gap-2"
+              >
+                <router-link
+                  :to="campaignReportRoute(row)"
+                  class="text-n-blue-9 hover:underline"
+                >
+                  {{ row.title }}
+                </router-link>
+                <span
+                  class="px-1.5 py-0.5 text-xs rounded-md bg-n-alpha-2 text-n-slate-11 whitespace-nowrap"
+                >
+                  {{
+                    t(
+                      'FUNNEL_CONVERSION_REPORTS.CAMPAIGN_BREAKDOWN.INTERNAL_CAMPAIGN'
+                    )
+                  }}
+                </span>
+              </div>
               <a
-                v-if="toHttpUrl(row.sourceUrl)"
+                v-else-if="toHttpUrl(row.sourceUrl)"
                 :href="toHttpUrl(row.sourceUrl)"
                 target="_blank"
                 rel="noopener noreferrer"

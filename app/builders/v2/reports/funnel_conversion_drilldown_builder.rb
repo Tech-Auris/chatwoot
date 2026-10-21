@@ -1,7 +1,8 @@
 # The conversations behind a number of the funnel conversion report: one of
 # the chart stages (Agendamento, Confirmado, Comparecimentos), the lost
-# conversations of the loss-reasons donut, or the leads of one ad on the
-# "Anúncios do período" grid (its latest stage in the period).
+# conversations of the loss-reasons donut, or the leads of one ad or one
+# AurisChat campaign on the "Campanhas e anúncios do período" grid (its latest
+# stage in the period).
 #
 # Inherits the report's own scoping (period, inbox / label / origem filters,
 # conversations that still exist) so the list always has exactly as many rows
@@ -17,7 +18,7 @@ class V2::Reports::FunnelConversionDrilldownBuilder < V2::Reports::FunnelConvers
     entries = latest_entry_per_conversation
     total = entries.count
     page = entries.order(created_at: :desc, id: :desc).page(current_page).per(PER_PAGE).includes(:user, :loss_reason).to_a
-    conversations = Conversation.where(id: page.map(&:conversation_id)).includes(:contact, :inbox).index_by(&:id)
+    conversations = Conversation.where(id: page.map(&:conversation_id)).includes(:contact, :inbox, :campaign).index_by(&:id)
 
     {
       rows: page.map { |entry| row_for(entry, conversations[entry.conversation_id]) },
@@ -28,7 +29,7 @@ class V2::Reports::FunnelConversionDrilldownBuilder < V2::Reports::FunnelConvers
   private
 
   def latest_entry_per_conversation
-    scope = funnel_stage_changes_scope
+    scope = params[:kind] == 'internal_campaign' ? internal_campaign_scope : funnel_stage_changes_scope
     scope = scope.where(created_at: range) if range.present?
     scope = narrow(scope)
     per = loss? ? 'funnel_stage_changes.conversation_id, funnel_stage_changes.loss_reason_id' : 'funnel_stage_changes.conversation_id'
@@ -44,6 +45,7 @@ class V2::Reports::FunnelConversionDrilldownBuilder < V2::Reports::FunnelConvers
     case params[:kind]
     when 'loss' then loss_scope(scope)
     when 'ad' then ad_scope(scope)
+    when 'internal_campaign' then internal_campaign_stage_changes(scope, params[:source_id])
     else scope.where(new_stage: stage_names)
     end
   end
@@ -87,7 +89,7 @@ class V2::Reports::FunnelConversionDrilldownBuilder < V2::Reports::FunnelConvers
       moved_by: entry.user&.name,
       inbox_name: conversation.inbox.name,
       origem: conversation.origem,
-      ad_title: conversation.additional_attributes&.dig('campaign_referral', 'title'),
+      ad_title: conversation.additional_attributes&.dig('campaign_referral', 'title') || conversation.campaign&.title,
       loss_reason: entry.loss_reason&.name
     }
   end
