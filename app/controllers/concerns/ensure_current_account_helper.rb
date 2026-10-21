@@ -8,7 +8,7 @@ module EnsureCurrentAccountHelper
 
   def ensure_current_account
     account = Account.find(params[:account_id])
-    render_unauthorized('Account is suspended') and return unless account.active?
+    render_unauthorized('Account is suspended') and return unless account.accessible?
 
     if current_user
       account_accessible_for_user?(account)

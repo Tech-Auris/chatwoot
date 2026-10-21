@@ -61,7 +61,7 @@ class SimulatorsController < ActionController::Base
   end
 
   def ensure_account_is_active
-    render json: { error: 'Account is suspended' }, status: :unauthorized unless @web_widget.inbox.account.active?
+    render json: { error: 'Account is suspended' }, status: :unauthorized unless @web_widget.inbox.account.accessible?
   end
 
   def additional_attributes

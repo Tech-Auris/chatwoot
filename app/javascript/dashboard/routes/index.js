@@ -32,7 +32,7 @@ export const validateAuthenticateRoutePermission = async (to, next) => {
   const routeAccountId = Number(to.params?.accountId || accountId);
   const userAccount = accounts.find(a => a.id === routeAccountId);
   const isAdmin = userAccount?.role === 'administrator';
-  const isActive = userAccount?.status === 'active';
+  const isActive = userAccount?.status !== 'suspended';
   const needsOnboarding =
     ONBOARDING_STEPS.includes(userAccount?.onboarding_step) &&
     isAdmin &&

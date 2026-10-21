@@ -478,6 +478,15 @@ RSpec.describe Account do
     end
   end
 
+  describe '#accessible?' do
+    it 'keeps the account open on the statuses that only switch the AI off' do
+      %i[active payment_pending ai_disabled ai_disabled_with_message].each do |status|
+        expect(build(:account, status: status)).to be_accessible
+      end
+      expect(build(:account, status: :suspended)).not_to be_accessible
+    end
+  end
+
   describe '#webhook_data' do
     let(:account) do
       create(:account,
@@ -496,6 +505,17 @@ RSpec.describe Account do
           multi_language_ai: false
         },
         follow_up: { 'end_flow' => { 'wait_minutes' => 60 } },
+        status: nil
+      )
+    end
+
+    it 'carries what the account status tells the n8n secretary' do
+      create(:account_status)
+      account.update!(status: :payment_pending)
+
+      expect(account.webhook_data[:status]).to eq(
+        name: 'SEM_PAGAMENTO', send_private_message: true,
+        private_message: 'Ainda não identificamos o seu pagamento.', message_cooldown_minutes: 60
         llm: nil
       )
     end

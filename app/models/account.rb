@@ -132,7 +132,10 @@ class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
   has_one_attached :contacts_export
 
   enum :locale, LANGUAGES_CONFIG.map { |key, val| [val[:iso_639_1_code], key] }.to_h, prefix: true
-  enum :status, { active: 0, suspended: 1 }
+  # Only `suspended` blocks the account. The others keep the team working and
+  # only change what the n8n secretary does (see AccountStatus).
+  enum :status, { active: 0, suspended: 1, payment_pending: 2, ai_disabled: 3, ai_disabled_with_message: 4 }
+  scope :accessible, -> { where.not(status: :suspended) }
   # `test` is the default for freshly created accounts; migrations backfill
   # existing accounts to `production` so the simulator banner/badge never
   # surfaces on live customer accounts without an explicit Super Admin flip.
@@ -181,12 +184,17 @@ class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
                              .map { |tagging| tagging.tag.name }
   end
 
+  def accessible?
+    !suspended?
+  end
+
   def webhook_data
     {
       id: id,
       name: name,
       settings: auris_settings,
       follow_up: follow_up_payload,
+      status: AccountStatus.find_by(status: status)&.webhook_data
       llm: account_secretary&.ai_model&.webhook_data
     }
   end
