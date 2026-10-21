@@ -1042,6 +1042,8 @@ Rails.application.routes.draw do
       resources :loss_reasons, only: [:index, :new, :create, :show, :edit, :update, :destroy]
       resources :secretary_versions, only: [:index, :new, :create, :show, :edit, :update]
       resources :account_statuses, only: [:index, :show, :edit, :update]
+      resources :ai_providers, only: [:index, :new, :create, :show, :edit, :update]
+      resources :ai_models, only: [:index, :new, :create, :show, :edit, :update]
       resources :operations_notifications, only: [:index, :new, :create, :show, :destroy] do
         get :acks, on: :member
       end

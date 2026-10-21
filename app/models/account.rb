@@ -156,6 +156,12 @@ class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
     account_secretary&.secretary_version&.name
   end
 
+  # "<AI provider> - <LLM>" for the Super Admin accounts grid.
+  def ai_model_label
+    model = account_secretary&.ai_model
+    "#{model.ai_provider.name} - #{model.name}" if model
+  end
+
   def agents
     users.where(account_users: { role: :agent })
   end
@@ -189,6 +195,7 @@ class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
       settings: auris_settings,
       follow_up: follow_up_payload,
       status: AccountStatus.find_by(status: status)&.webhook_data
+      llm: account_secretary&.ai_model&.webhook_data
     }
   end
 

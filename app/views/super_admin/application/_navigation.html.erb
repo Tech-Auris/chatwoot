@@ -67,7 +67,7 @@ as defined by the routes in the `admin/` namespace
       <%= render partial: "nav_item", locals: { icon: 'icon-grid-line', url: super_admin_root_url, label: 'Dashboard' } unless restricted %>
       <% Administrate::Namespace.new(namespace).resources.each do |resource| %>
         <% next if restricted %>
-        <% next if ["account_users", "access_tokens", "installation_configs", "dashboard", "devise/sessions", "app_configs", "instance_statuses", "settings", "profile/mfa", "sessions/mfa_challenge", "reports/inbox_status", "reports/health_score", "reports/follow_up_audit", "inboxes/baileys_connections", "push_diagnostics", "integrations/clickup", "integrations/stripe", "integrations/autentique", "financial/products", "financial/customer_links", "financial/subscriptions", "financial/invoices", "financial/token_billings", "financial/coupons", "financial/pix_renewals", "commercial/quotes", "commercial/reservations", "commercial/contracts", "terms_acceptances", "terms_acceptance_requests", "login_events", "account_secretaries"].include?  resource.resource %>
+        <% next if ["account_users", "access_tokens", "installation_configs", "dashboard", "devise/sessions", "app_configs", "instance_statuses", "settings", "profile/mfa", "sessions/mfa_challenge", "reports/inbox_status", "reports/health_score", "reports/follow_up_audit", "inboxes/baileys_connections", "push_diagnostics", "integrations/clickup", "integrations/stripe", "integrations/autentique", "financial/products", "financial/customer_links", "financial/subscriptions", "financial/invoices", "financial/token_billings", "financial/coupons", "financial/pix_renewals", "commercial/quotes", "commercial/reservations", "commercial/contracts", "terms_acceptances", "terms_acceptance_requests", "login_events", "account_secretaries", "secretary_versions", "ai_providers", "ai_models"].include?  resource.resource %>
         <% next if resource.resource == "platform_banners" && !ChatwootApp.chatwoot_cloud? %>
         <%= render partial: "nav_item", locals: {
             icon: sidebar_icons[resource.resource.to_sym],
@@ -77,6 +77,7 @@ as defined by the routes in the `admin/` namespace
         %>
 
       <% end %>
+      <%= render 'section_menu', title: 'AI', icon: 'icon-robot-line', pages: ai_pages, open: ai_open? unless restricted %>
       <%= render 'section_menu', title: 'Commercial', icon: 'icon-briefcase-line', pages: commercial_pages, open: commercial_open? unless financial_only %>
       <%= render 'section_menu', title: 'Financial', icon: 'icon-money-dollar-circle-line', pages: financial_pages, open: financial_open? unless commercial_only %>
       <%= render 'section_menu', title: 'Operations', icon: 'icon-health-book-line', pages: operations_pages, open: operations_open? unless restricted %>

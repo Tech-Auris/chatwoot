@@ -67,7 +67,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_14_130000) do
     t.string "secret"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "ai_model_id"
     t.index ["account_id"], name: "index_account_secretaries_on_account_id", unique: true
+    t.index ["ai_model_id"], name: "index_account_secretaries_on_ai_model_id"
     t.index ["secretary_version_id"], name: "index_account_secretaries_on_secretary_version_id"
     t.index ["simulator_version_id"], name: "index_account_secretaries_on_simulator_version_id"
   end
@@ -216,6 +218,26 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_14_130000) do
     t.index ["conversation_id"], name: "index_ai_assignment_attempts_on_conversation_id"
     t.index ["online_user_ids"], name: "index_ai_assignment_attempts_on_online_user_ids", using: :gin
     t.index ["team_id"], name: "index_ai_assignment_attempts_on_team_id"
+  end
+
+  create_table "ai_models", force: :cascade do |t|
+    t.bigint "ai_provider_id", null: false
+    t.string "name", null: false
+    t.string "key", null: false
+    t.string "model_id", null: false
+    t.integer "status", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["ai_provider_id"], name: "index_ai_models_on_ai_provider_id"
+    t.index ["key"], name: "index_ai_models_on_key", unique: true
+  end
+
+  create_table "ai_providers", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "key", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["key"], name: "index_ai_providers_on_key", unique: true
   end
 
   create_table "applied_slas", force: :cascade do |t|
@@ -2178,11 +2200,13 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_14_130000) do
 
   add_foreign_key "account_health_scores", "accounts", on_delete: :cascade
   add_foreign_key "account_secretaries", "accounts", on_delete: :cascade
+  add_foreign_key "account_secretaries", "ai_models"
   add_foreign_key "account_secretaries", "secretary_versions"
   add_foreign_key "account_secretaries", "secretary_versions", column: "simulator_version_id"
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "ai_assignment_attempts", "conversations", on_delete: :cascade
+  add_foreign_key "ai_models", "ai_providers"
   add_foreign_key "campaign_spends", "accounts"
   add_foreign_key "canned_responses", "inboxes"
   add_foreign_key "contacts", "languages"

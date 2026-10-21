@@ -65,6 +65,7 @@ class AccountDashboard < Administrate::BaseDashboard
     # Read through `account_secretary`, not a column: `searchable: false`
     # keeps it out of the search SQL (same reason as reporting_timezone).
     secretary_version_name: Field::String.with_options(searchable: false),
+    ai_model_label: Field::String.with_options(searchable: false),
     inbox_view_menu_enabled: Field::Boolean,
     help_center_menu_enabled: Field::Boolean,
     campaigns_live_chat_menu_enabled: Field::Boolean,
@@ -87,10 +88,10 @@ class AccountDashboard < Administrate::BaseDashboard
     conversations
     status
     environment
-    average_ticket
     funnel_enabled
     ai_status_uses_attribute
     secretary_version_name
+    ai_model_label
   ].freeze
 
   # SHOW_PAGE_ATTRIBUTES
@@ -169,6 +170,17 @@ class AccountDashboard < Administrate::BaseDashboard
 
       with_version = with_version.where(secretary_version_id: version_id) if version_id.present?
       resources.where(id: with_version.select(:account_id))
+    },
+    # `provedor:<ai provider id>` and `llm:<ai model id>` (or `llm:nenhum`);
+    # set by the provider and LLM pickers above the grid.
+    provedor: lambda { |resources, provider_id|
+      resources.where(id: AccountSecretary.joins(:ai_model).where(ai_models: { ai_provider_id: provider_id }).select(:account_id))
+    },
+    llm: lambda { |resources, model_id|
+      with_model = AccountSecretary.where.not(ai_model_id: nil)
+      next resources.where.not(id: with_model.select(:account_id)) if model_id == 'nenhum'
+
+      resources.where(id: with_model.where(ai_model_id: model_id).select(:account_id))
     }
   }.freeze
 

@@ -1,16 +1,16 @@
 openapi: '3.1.0'
 info:
-  title: Chatwoot - Other APIs
-  description: Other API endpoints for Chatwoot
+  title: AurisChat - Other APIs
+  description: Other API endpoints for AurisChat
   version: 1.1.0
-  termsOfService: https://www.chatwoot.com/terms-of-service/
+  termsOfService: https://agenteauris.com.br/termos-de-uso/
   contact:
-    email: hello@chatwoot.com
+    email: tech@agenteauris.com.br
   license:
     name: MIT License
     url: https://opensource.org/licenses/MIT
 servers:
-  - url: https://app.chatwoot.com/
+  - url: https://chat.auris.ia.br/
 tags:
   - name: CSAT Survey Page
     description: APIs for CSAT survey functionality

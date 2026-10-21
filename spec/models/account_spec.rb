@@ -516,7 +516,15 @@ RSpec.describe Account do
       expect(account.webhook_data[:status]).to eq(
         name: 'SEM_PAGAMENTO', send_private_message: true,
         private_message: 'Ainda não identificamos o seu pagamento.', message_cooldown_minutes: 60
+        llm: nil
       )
+    end
+
+    it 'carries the secretary LLM for the n8n LLM selector' do
+      model = create(:ai_model, key: 'openai_advanced', model_id: 'gpt-5.1', ai_provider: create(:ai_provider, key: 'openai'))
+      create(:account_secretary, account: account, ai_model: model)
+
+      expect(account.reload.webhook_data[:llm]).to eq(provider: 'openai', key: 'openai_advanced', model: 'gpt-5.1')
     end
 
     it 'carries the follow-up setup for the n8n FUP workflow' do

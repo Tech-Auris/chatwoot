@@ -45,6 +45,7 @@ en:
         funnel_enabled: 'Funnel menu enabled'
         ai_status_uses_attribute: 'AI status from attribute (off = legacy agente-off label)'
         secretary_version_name: 'Secretary version'
+        ai_model_label: 'AI model'
     # Administrate uses `model.model_name.human(count: …)` to render both
     # the super-admin sidebar label (plural / `other`) and the "New …"
     # button label (singular / `one`). Choose forms that read naturally in
@@ -53,6 +54,12 @@ en:
       account_status:
         one: 'account status'
         other: 'Account statuses'
+      ai_provider:
+        one: 'AI provider'
+        other: 'AI providers'
+      ai_model:
+        one: 'LLM'
+        other: 'LLMs'
       operations_notification:
         one: 'notification'
         other: 'Notification Center'
@@ -69,6 +76,7 @@ en:
         created_by_display: 'Created by'
       account:
         secretary_version_name: 'Secretary Version'
+        ai_model_label: 'Model AI'
   internal_chat:
     default_category_name: 'Channels'
     default_channel_name: 'General'

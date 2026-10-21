@@ -35,6 +35,26 @@ RSpec.describe AccountSecretary do
   end
 
   describe 'validations' do
+    it 'needs an LLM when the account gets a secretary' do
+      secretary = described_class.new(account: account, secretary_version: version)
+
+      expect(secretary).not_to be_valid
+      expect(secretary.errors[:ai_model]).to be_present
+    end
+
+    it 'does not let the account pick a retired LLM' do
+      secretary = described_class.new(account: account, secretary_version: version, ai_model: create(:ai_model, status: :retired))
+
+      expect(secretary).not_to be_valid
+    end
+
+    it 'keeps saving an account picked before LLMs existed until its model is filled in' do
+      secretary = create(:account_secretary, account: account, ai_model: create(:ai_model))
+      secretary.update_columns(secretary_version_id: version.id, ai_model_id: nil) # rubocop:disable Rails/SkipsModelValidations
+
+      expect(secretary.reload.update(simulator_version: nil)).to be(true)
+    end
+
     it 'does not let the account pick a testing version' do
       secretary = described_class.new(account: account, secretary_version: create(:secretary_version, status: :testing))
 

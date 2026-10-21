@@ -32,6 +32,7 @@ pt_BR:
         funnel_enabled: 'Menu Funil ativo'
         ai_status_uses_attribute: 'Status da IA por atributo (desligado = etiqueta agente-off legada)'
         secretary_version_name: 'Versão da secretária'
+        ai_model_label: 'Modelo de IA'
     # Administrate uses `model.model_name.human(count: …)` to render both
     # the super-admin sidebar label (plural / `other`) and the "New …"
     # button label (singular / `one`). Choose forms that read naturally
@@ -40,6 +41,12 @@ pt_BR:
       account_status:
         one: 'status da conta'
         other: 'Status da conta'
+      ai_provider:
+        one: 'empresa de IA'
+        other: 'Empresas de IA'
+      ai_model:
+        one: 'LLM'
+        other: 'LLMs'
       operations_notification:
         one: 'notificação'
         other: 'Central de Notificações'
@@ -53,6 +60,7 @@ pt_BR:
         created_by_display: 'Criado por'
       account:
         secretary_version_name: 'Secretary Version'
+        ai_model_label: 'Model AI'
   internal_chat:
     default_category_name: 'Canais'
     default_channel_name: 'Geral'
