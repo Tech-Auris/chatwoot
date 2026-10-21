@@ -1,4 +1,12 @@
 ---
+- tag: v4.15.1-auris.1.72
+  published_at: '2026-10-21T20:00:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.72
+  notes:
+    en: |-
+      Bug fixes and internal improvements.
+    pt_BR: |-
+      Correções de bugs e melhorias internas.
 - tag: v4.15.1-auris.1.71
   published_at: '2026-10-16T20:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.71
@@ -391,23 +399,3 @@
       Bug fixes and internal improvements.
     pt_BR: |-
       Correções de bugs e melhorias internas.
-- tag: v4.15.1-auris.1.53
-  published_at: '2026-09-03T21:00:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.53
-  notes:
-    en: |-
-      ### ⚡ Improvements
-
-      - **Bigger logo on the proposal page.** The header logo on every step of the proposal is now larger, so the brand reads clearly on the page the prospect opens.
-
-      ### 🐛 Fixes
-
-      - **WhatsApp templates with an image header now go through.** Templates that carried a logo or banner on top were being rejected by Meta on every send, and the customer never received them. They now go out normally, and AurisChat recovers on its own when the image reference expires.
-    pt_BR: |-
-      ### ⚡ Melhorias
-
-      - **Logo maior na página da proposta.** O logo do cabeçalho em cada etapa da proposta ficou maior, para a marca aparecer com destaque na tela que o cliente abre.
-
-      ### 🐛 Correções
-
-      - **Templates do WhatsApp com imagem no cabeçalho voltam a ser enviados.** Templates que carregavam um logo ou banner em cima estavam sendo recusados pela Meta a cada envio, e o cliente nunca recebia. Agora vão normalmente, e o sistema se recupera sozinho quando a referência da imagem expira.
