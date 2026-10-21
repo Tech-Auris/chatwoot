@@ -153,6 +153,12 @@ class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
     account_secretary&.secretary_version&.name
   end
 
+  # "<AI provider> - <LLM>" for the Super Admin accounts grid.
+  def ai_model_label
+    model = account_secretary&.ai_model
+    "#{model.ai_provider.name} - #{model.name}" if model
+  end
+
   def agents
     users.where(account_users: { role: :agent })
   end

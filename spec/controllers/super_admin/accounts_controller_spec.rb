@@ -66,6 +66,40 @@ RSpec.describe 'Super Admin accounts API', type: :request do
         expect(response.body).not_to include('Clinica Na Versao')
       end
 
+      it 'shows the provider and LLM instead of the average ticket' do
+        model = create(:ai_model, ai_provider: create(:ai_provider, name: 'OpenAI'), name: 'gpt-5.1')
+        create(:account_secretary, account: account, ai_model: model)
+        sign_in(super_admin, scope: :super_admin)
+
+        get '/super_admin/accounts'
+        expect(response.body).to include('Model AI', 'OpenAI - gpt-5.1')
+        expect(response.body).not_to include('Average Ticket')
+      end
+
+      it 'filters by provider and LLM' do
+        openai = create(:ai_provider, name: 'OpenAI')
+        anthropic = create(:ai_provider, name: 'Anthropic')
+        gpt = create(:ai_model, ai_provider: openai, name: 'gpt-5.1')
+        claude = create(:ai_model, ai_provider: anthropic, name: 'Claude Sonnet 4.5')
+        on_gpt = create(:account, name: 'Clinica No GPT')
+        on_claude = create(:account, name: 'Clinica No Claude')
+        create(:account_secretary, account: on_gpt, ai_model: gpt)
+        create(:account_secretary, account: on_claude, ai_model: claude)
+        sign_in(super_admin, scope: :super_admin)
+
+        get '/super_admin/accounts', params: { search: "provedor:#{openai.id}" }
+        expect(response.body).to include('Clinica No GPT')
+        expect(response.body).not_to include('Clinica No Claude')
+
+        get '/super_admin/accounts', params: { search: "provedor:#{anthropic.id} llm:#{claude.id}" }
+        expect(response.body).to include('Clinica No Claude')
+        expect(response.body).not_to include('Clinica No GPT')
+
+        get '/super_admin/accounts', params: { search: 'llm:nenhum' }
+        expect(response.body).to include(account.name)
+        expect(response.body).not_to include('Clinica No GPT', 'Clinica No Claude')
+      end
+
       # Real prod incident: typing any text in the Super Admin accounts
       # search box returned 500 ("column accounts.reporting_timezone does
       # not exist"). `reporting_timezone` is a `store_accessor` on the
