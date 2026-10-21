@@ -194,7 +194,7 @@ class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
       name: name,
       settings: auris_settings,
       follow_up: follow_up_payload,
-      status: AccountStatus.find_by(status: status)&.webhook_data
+      status: AccountStatus.find_by(status: status)&.webhook_data,
       llm: account_secretary&.ai_model&.webhook_data
     }
   end
