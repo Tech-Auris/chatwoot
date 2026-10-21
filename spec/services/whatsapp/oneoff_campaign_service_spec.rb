@@ -134,6 +134,28 @@ describe Whatsapp::OneoffCampaignService do
         expect(conversation.messages.outgoing.count).to eq(1)
       end
 
+      it 'gives a new conversation the Disparo interno origin' do
+        contact = create(:contact, :with_phone_number, account: account)
+        campaign.update!(audience: [{ 'type' => 'Contact', 'id' => contact.id }])
+
+        perform_enqueued_jobs(only: Campaigns::DispatchContactJob) { described_class.new(campaign: campaign).perform }
+
+        expect(Conversation.find_by(campaign_id: campaign.id).origem).to eq('Disparo interno')
+      end
+
+      it 'ties a conversation the contact already had to the campaign, keeping an origin it already had' do
+        with_origin = create(:contact, :with_phone_number, account: account)
+        without_origin = create(:contact, :with_phone_number, account: account)
+        kept = create(:conversation, account: account, inbox: whatsapp_inbox, contact: with_origin, origem: 'Instagram')
+        filled = create(:conversation, account: account, inbox: whatsapp_inbox, contact: without_origin, status: :resolved)
+        campaign.update!(audience: [{ 'type' => 'Contact', 'id' => with_origin.id }, { 'type' => 'Contact', 'id' => without_origin.id }])
+
+        perform_enqueued_jobs(only: Campaigns::DispatchContactJob) { described_class.new(campaign: campaign).perform }
+
+        expect(kept.reload).to have_attributes(campaign_id: campaign.id, origem: 'Instagram')
+        expect(filled.reload).to have_attributes(campaign_id: campaign.id, origem: 'Disparo interno', status: 'pending')
+      end
+
       it 'marks campaign as completed' do
         described_class.new(campaign: campaign).perform
 

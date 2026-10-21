@@ -10,16 +10,7 @@
 class V2::Reports::OrigemSummaryBuilder
   include DateRangeHelper
 
-  OPTIONS = [
-    'Evento',
-    'Facebook',
-    'Google',
-    'Indicação de cliente',
-    'Indicação de colega',
-    'Influenciador',
-    'Instagram',
-    'Orgânico'
-  ].freeze
+  OPTIONS = ::Contacts::OriginAttributionService::OPTIONS
 
   # Sent back on the "Sem origem" row so the frontend can special-case its
   # label. Matches ORIGEM_NONE_TOKEN on the JS side and the filter/report

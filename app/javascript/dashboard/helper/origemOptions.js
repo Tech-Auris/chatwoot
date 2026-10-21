@@ -5,6 +5,7 @@
 // the Origem overview report all render the same choices. Mirrors
 // Contacts::OriginAttributionService::OPTIONS on the backend.
 export const ORIGEM_OPTIONS = [
+  'Disparo interno',
   'Evento',
   'Facebook',
   'Google',

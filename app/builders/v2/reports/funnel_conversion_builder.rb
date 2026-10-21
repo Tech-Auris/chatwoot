@@ -28,6 +28,10 @@ class V2::Reports::FunnelConversionBuilder
   # "none".
   ORIGEM_NONE_TOKEN = '__none__'.freeze
 
+  # How long after a campaign send its contact's funnel moves still count for
+  # that campaign.
+  INTERNAL_CAMPAIGN_WINDOW = 30.days
+
   attr_reader :account, :params
 
   def initialize(account:, params:)
@@ -339,12 +343,93 @@ class V2::Reports::FunnelConversionBuilder
   # "top ads by leads" view. Buckets mirror the KPI strip, so a value in the
   # grid always reconciles with the aggregate above it.
   def build_campaign_breakdown(all_stages)
+    (meta_ad_rows(all_stages) + internal_campaign_rows(all_stages)).sort_by { |row| -row[:leads] }
+  end
+
+  def meta_ad_rows(all_stages)
     rows = fetch_campaign_breakdown_rows
     return [] if rows.blank?
 
     spend_by_ad = meta_spend_by_ad
-    by_ad = accumulate_campaign_rows(rows, all_stages)
-    by_ad.values.map { |entry| campaign_row_from(entry, spend_by_ad) }.sort_by { |row| -row[:leads] }
+    accumulate_campaign_rows(rows, all_stages).values.map { |entry| campaign_row_from(entry, spend_by_ad) }
+  end
+
+  # Campaigns sent from AurisChat (Marketing → Campanhas), one row each next to
+  # the Meta ads. A conversation counts for a campaign when the contact replied
+  # to it, and only its stage changes within the attribution window after the
+  # send. Whatever origin the conversation has, it counts for the campaign.
+  def internal_campaign_rows(all_stages)
+    rows = internal_campaign_stage_changes(funnel_stage_changes_scope)
+           .distinct.pluck(:new_stage, :conversation_id, Arel.sql('dispatches.campaign_id'))
+    return [] if rows.blank?
+
+    campaigns = account.campaigns.where(id: rows.map(&:third).uniq).index_by(&:id)
+    entries = accumulate_campaign_rows(rows.map { |stage, conv_id, campaign_id| [stage, conv_id, campaign_id, nil, nil] }, all_stages)
+    entries.values.filter_map do |entry|
+      campaign = campaigns[entry[:source_id]]
+      internal_campaign_row_from(entry, campaign) if campaign
+    end
+  end
+
+  # Stage changes of the period that fall inside the window of a campaign send
+  # the contact replied to. `campaign_id` narrows it to one campaign (drill-down).
+  def internal_campaign_stage_changes(scope, campaign_id = nil)
+    scope = scope.where(created_at: range) if range.present?
+    scope.joins("INNER JOIN (#{campaign_dispatches_sql(campaign_id)}) dispatches " \
+                'ON dispatches.conversation_id = funnel_stage_changes.conversation_id')
+         .where("funnel_stage_changes.created_at BETWEEN dispatches.dispatched_at AND dispatches.dispatched_at + #{attribution_window_sql}")
+         .where(campaign_reply_exists_sql)
+  end
+
+  # One send per conversation and campaign: its campaign template message.
+  # Only sends that can still attribute a stage change in the period are read.
+  def campaign_dispatches_sql(campaign_id)
+    conditions = ['messages.account_id = :account_id', 'messages.message_type = :outgoing',
+                  "messages.additional_attributes ->> 'campaign_id' IS NOT NULL"]
+    conditions << "messages.additional_attributes ->> 'campaign_id' = :campaign_id" if campaign_id
+    conditions << 'messages.created_at BETWEEN :sent_from AND :sent_until' if range.present?
+    sql = <<~SQL.squish
+      SELECT messages.conversation_id, (messages.additional_attributes ->> 'campaign_id')::bigint AS campaign_id,
+             MIN(messages.created_at) AS dispatched_at
+      FROM messages WHERE #{conditions.join(' AND ')} GROUP BY 1, 2
+    SQL
+    ActiveRecord::Base.sanitize_sql([sql, { account_id: account.id, outgoing: Message.message_types[:outgoing],
+                                            campaign_id: campaign_id.to_s, sent_from: range&.first&.-(INTERNAL_CAMPAIGN_WINDOW),
+                                            sent_until: range&.last }])
+  end
+
+  # A contact who only received the campaign is not a lead: it has to reply
+  # inside the window.
+  def campaign_reply_exists_sql
+    ActiveRecord::Base.sanitize_sql([<<~SQL.squish, { account_id: account.id, incoming: Message.message_types[:incoming] }])
+      EXISTS (SELECT 1 FROM messages replies
+              WHERE replies.conversation_id = dispatches.conversation_id AND replies.account_id = :account_id
+                AND replies.message_type = :incoming AND replies.created_at > dispatches.dispatched_at
+                AND replies.created_at <= dispatches.dispatched_at + #{attribution_window_sql})
+    SQL
+  end
+
+  def attribution_window_sql
+    "interval '#{INTERNAL_CAMPAIGN_WINDOW.in_days.to_i} days'"
+  end
+
+  # No media spend sits behind a campaign sent from AurisChat, so the cost
+  # columns stay empty.
+  def internal_campaign_row_from(entry, campaign)
+    leads = entry[:lead_ids].size
+    {
+      kind: 'internal_campaign',
+      source_id: campaign.id.to_s,
+      display_id: campaign.display_id,
+      title: campaign.title,
+      source_url: nil,
+      leads: leads,
+      qualifying: bucket_metric(entry[:bucket_ids][:qualifying].size, leads),
+      scheduling: bucket_metric(entry[:bucket_ids][:scheduling].size, leads),
+      confirmation: bucket_metric(entry[:bucket_ids][:confirmation].size, leads),
+      attendance: bucket_metric(entry[:bucket_ids][:attendance].size, leads),
+      spend_cents: nil, cpl_cents: nil, cpa_cents: nil, roas: nil
+    }
   end
 
   # Meta ad spend per source_id in the current range. Mirrors the same
@@ -420,6 +505,7 @@ class V2::Reports::FunnelConversionBuilder
     spend_cents = spend_by_ad[entry[:source_id]] || 0
     revenue_cents = attendance_count * average_ticket_cents
     {
+      kind: 'ad',
       source_id: entry[:source_id],
       title: entry[:title],
       source_url: entry[:source_url],

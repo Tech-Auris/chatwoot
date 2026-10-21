@@ -91,7 +91,7 @@ const onLossDrill = reason =>
 
 const onAdDrill = ad =>
   drilldownRef.value?.open({
-    kind: 'ad',
+    kind: ad.kind,
     sourceId: ad.sourceId,
     name:
       ad.title || t('FUNNEL_CONVERSION_REPORTS.CAMPAIGN_BREAKDOWN.UNTITLED_AD'),

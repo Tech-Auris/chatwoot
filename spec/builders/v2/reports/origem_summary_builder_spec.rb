@@ -29,6 +29,12 @@ RSpec.describe V2::Reports::OrigemSummaryBuilder do
       expect(report.find { |r| r[:name] == 'Google' }[:conversations_count]).to eq(0)
     end
 
+    it 'has a Disparo interno row for conversations reached by a campaign sent from AurisChat' do
+      conversation_with_origem('Disparo interno')
+
+      expect(builder.build.find { |r| r[:name] == 'Disparo interno' }[:conversations_count]).to eq(1)
+    end
+
     # Conversations without an origem (nil column) fall into the "Sem origem"
     # bucket — the operator sees unattributed leads without them silently
     # disappearing from totals. Empty strings are impossible today (validation

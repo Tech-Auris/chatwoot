@@ -28,6 +28,7 @@ class Contacts::OriginAttributionService
   # with the frontend selector and both i18n files. Any edit here needs a
   # matching frontend + locale edit or the dropdown will orphan a value.
   OPTIONS = [
+    'Disparo interno',
     'Evento',
     'Facebook',
     'Google',
@@ -37,6 +38,10 @@ class Contacts::OriginAttributionService
     'Instagram',
     'Orgânico'
   ].freeze
+
+  # Set when a campaign sent from AurisChat reaches a conversation that has no
+  # origin yet (Whatsapp::OneoffCampaignService), never inferred from a message.
+  INTERNAL_CAMPAIGN = 'Disparo interno'.freeze
 
   pattr_initialize [:inbox!, :conversation!, :message_body, :referral]
 
