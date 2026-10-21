@@ -505,7 +505,8 @@ RSpec.describe Account do
           multi_language_ai: false
         },
         follow_up: { 'end_flow' => { 'wait_minutes' => 60 } },
-        status: nil
+        status: nil,
+        llm: nil
       )
     end
 
@@ -516,7 +517,6 @@ RSpec.describe Account do
       expect(account.webhook_data[:status]).to eq(
         name: 'SEM_PAGAMENTO', send_private_message: true,
         private_message: 'Ainda não identificamos o seu pagamento.', message_cooldown_minutes: 60
-        llm: nil
       )
     end
 
