@@ -39,6 +39,31 @@ RSpec.describe '/api/v1/accounts/{account.id}/contacts/:id/conversations', type:
         end
       end
 
+      context 'with the order and the pages' do
+        it 'lists the newest created first, even when an older one had the latest activity' do
+          oldest = create(:conversation, account: account, inbox: inbox_1, contact: contact, contact_inbox: contact_inbox_1,
+                                         created_at: 1.year.ago, last_activity_at: 1.minute.ago)
+
+          get "/api/v1/accounts/#{account.id}/contacts/#{contact.id}/conversations", headers: admin.create_new_auth_token
+
+          ids = response.parsed_body['payload'].pluck('id')
+          expect(ids.last).to eq(oldest.display_id)
+          expect(ids).to eq(contact.conversations.order(created_at: :desc, id: :desc).map(&:display_id))
+        end
+
+        it 'pages the list, telling when there are more' do
+          stub_const('Api::V1::Accounts::Contacts::ConversationsController::PER_PAGE', 3)
+
+          get "/api/v1/accounts/#{account.id}/contacts/#{contact.id}/conversations", headers: admin.create_new_auth_token
+          expect(response.parsed_body['payload'].length).to eq 3
+          expect(response.parsed_body['meta']['has_more']).to be true
+
+          get "/api/v1/accounts/#{account.id}/contacts/#{contact.id}/conversations", params: { page: 2 }, headers: admin.create_new_auth_token
+          expect(response.parsed_body['payload'].length).to eq 1
+          expect(response.parsed_body['meta']['has_more']).to be false
+        end
+      end
+
       context 'with user as agent' do
         it 'returns conversations from the inboxes which agent has access to' do
           get "/api/v1/accounts/#{account.id}/contacts/#{contact.id}/conversations", headers: agent.create_new_auth_token

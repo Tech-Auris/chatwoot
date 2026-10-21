@@ -45,6 +45,13 @@ const previousConversations = computed(() =>
   conversations.value.filter(c => c.id !== Number(props.conversationId))
 );
 
+const metaGetter = useMapGetter(
+  'contactConversations/getContactConversationMeta'
+);
+const hasMore = computed(() => metaGetter.value(props.contactId).hasMore);
+const loadMore = () =>
+  store.dispatch('contactConversations/fetchMore', props.contactId);
+
 const activeContextChat = ref(null);
 const showContextMenu = ref(false);
 const contextMenu = ref({ x: null, y: null });
@@ -153,6 +160,20 @@ onMounted(() => {
         @click="onCardClick(conversation, $event)"
         @contextmenu="openContextMenu(conversation, $event)"
       />
+    </div>
+    <div v-if="hasMore" class="px-4 pt-2 pb-3">
+      <button
+        type="button"
+        class="w-full py-1.5 text-xs border rounded-md text-n-slate-11 hover:text-n-slate-12 border-n-weak disabled:opacity-50"
+        :disabled="uiFlags.isFetchingMore"
+        @click="loadMore"
+      >
+        {{
+          uiFlags.isFetchingMore
+            ? $t('CONTACT_PANEL.CONVERSATIONS.LOADING_MORE')
+            : $t('CONTACT_PANEL.CONVERSATIONS.LOAD_MORE')
+        }}
+      </button>
     </div>
     <ContextMenu
       v-if="showContextMenu && activeContextChat"

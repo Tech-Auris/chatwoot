@@ -65,8 +65,11 @@ const setNewConversationPayload = ({
 
 const state = {
   records: {},
+  // Per contact: the last page fetched and whether the API has more after it.
+  meta: {},
   uiFlags: {
     isFetching: false,
+    isFetchingMore: false,
   },
 };
 
@@ -76,6 +79,9 @@ export const getters = {
   },
   getContactConversation: $state => id => {
     return $state.records[Number(id)] || [];
+  },
+  getContactConversationMeta: $state => id => {
+    return $state.meta[Number(id)] || { page: 1, hasMore: false };
   },
   getAllConversationsByContactId: $state => id => {
     const records = $state.records[Number(id)] || [];
@@ -122,12 +128,38 @@ export const actions = {
         id: contactId,
         data: response.data.payload,
       });
+      commit(types.default.SET_CONTACT_CONVERSATIONS_META, {
+        id: contactId,
+        meta: { page: 1, hasMore: !!response.data.meta?.has_more },
+      });
       commit(types.default.SET_CONTACT_CONVERSATIONS_UI_FLAG, {
         isFetching: false,
       });
     } catch (error) {
       commit(types.default.SET_CONTACT_CONVERSATIONS_UI_FLAG, {
         isFetching: false,
+      });
+    }
+  },
+  // The next page of the contact's conversations, appended to the list.
+  fetchMore: async ({ commit, state: $state }, contactId) => {
+    const page = ($state.meta[Number(contactId)]?.page || 1) + 1;
+    commit(types.default.SET_CONTACT_CONVERSATIONS_UI_FLAG, {
+      isFetchingMore: true,
+    });
+    try {
+      const response = await ContactAPI.getConversations(contactId, page);
+      commit(types.default.APPEND_CONTACT_CONVERSATIONS, {
+        id: contactId,
+        data: response.data.payload,
+      });
+      commit(types.default.SET_CONTACT_CONVERSATIONS_META, {
+        id: contactId,
+        meta: { page, hasMore: !!response.data.meta?.has_more },
+      });
+    } finally {
+      commit(types.default.SET_CONTACT_CONVERSATIONS_UI_FLAG, {
+        isFetchingMore: false,
       });
     }
   },
@@ -157,13 +189,30 @@ export const mutations = {
     if (index !== -1) {
       updatedConversations[index] = { ...conversations[index], ...data };
     } else {
-      updatedConversations.push(data);
+      // Newest created first, so a conversation just created goes on top.
+      updatedConversations.unshift(data);
     }
 
     $state.records = {
       ...$state.records,
       [id]: updatedConversations,
     };
+  },
+  // A later page lands after what is already listed, skipping any
+  // conversation the list already has (one created meanwhile, for instance).
+  [types.default.APPEND_CONTACT_CONVERSATIONS]: ($state, { id, data }) => {
+    const conversations = $state.records[id] || [];
+    const known = new Set(conversations.map(conversation => conversation.id));
+    $state.records = {
+      ...$state.records,
+      [id]: [
+        ...conversations,
+        ...data.filter(conversation => !known.has(conversation.id)),
+      ],
+    };
+  },
+  [types.default.SET_CONTACT_CONVERSATIONS_META]: ($state, { id, meta }) => {
+    $state.meta = { ...$state.meta, [id]: meta };
   },
   [types.default.DELETE_CONTACT_CONVERSATION]: ($state, id) => {
     const { [id]: deletedRecord, ...remainingRecords } = $state.records;

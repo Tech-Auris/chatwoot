@@ -15,7 +15,9 @@ vi.mock('axios');
 describe('#actions', () => {
   describe('#get', () => {
     it('sends correct actions if API is success', async () => {
-      axios.get.mockResolvedValue({ data: { payload: conversationList } });
+      axios.get.mockResolvedValue({
+        data: { payload: conversationList, meta: { has_more: true } },
+      });
       await actions.get({ commit }, 1);
       expect(commit.mock.calls).toEqual([
         [types.default.SET_CONTACT_CONVERSATIONS_UI_FLAG, { isFetching: true }],
@@ -23,6 +25,10 @@ describe('#actions', () => {
         [
           types.default.SET_CONTACT_CONVERSATIONS,
           { id: 1, data: conversationList },
+        ],
+        [
+          types.default.SET_CONTACT_CONVERSATIONS_META,
+          { id: 1, meta: { page: 1, hasMore: true } },
         ],
         [
           types.default.SET_CONTACT_CONVERSATIONS_UI_FLAG,
@@ -38,6 +44,41 @@ describe('#actions', () => {
         [
           types.default.SET_CONTACT_CONVERSATIONS_UI_FLAG,
           { isFetching: false },
+        ],
+      ]);
+    });
+  });
+
+  describe('#fetchMore', () => {
+    it('fetches the next page and appends it', async () => {
+      commit.mockClear();
+      axios.get.mockResolvedValue({
+        data: { payload: conversationList, meta: { has_more: false } },
+      });
+      const state = { meta: { 1: { page: 1, hasMore: true } } };
+
+      await actions.fetchMore({ commit, state }, 1);
+
+      expect(axios.get).toHaveBeenLastCalledWith(
+        '/api/v1/contacts/1/conversations',
+        { params: { page: 2 } }
+      );
+      expect(commit.mock.calls).toEqual([
+        [
+          types.default.SET_CONTACT_CONVERSATIONS_UI_FLAG,
+          { isFetchingMore: true },
+        ],
+        [
+          types.default.APPEND_CONTACT_CONVERSATIONS,
+          { id: 1, data: conversationList },
+        ],
+        [
+          types.default.SET_CONTACT_CONVERSATIONS_META,
+          { id: 1, meta: { page: 2, hasMore: false } },
+        ],
+        [
+          types.default.SET_CONTACT_CONVERSATIONS_UI_FLAG,
+          { isFetchingMore: false },
         ],
       ]);
     });

@@ -40,8 +40,10 @@ class ContactAPI extends ApiClient {
     return axios.patch(`${this.url}/${id}?include_contact_inboxes=false`, data);
   }
 
-  getConversations(contactId) {
-    return axios.get(`${this.url}/${contactId}/conversations`);
+  getConversations(contactId, page = 1) {
+    return axios.get(`${this.url}/${contactId}/conversations`, {
+      params: { page },
+    });
   }
 
   getAttachments(contactId, page = 1) {
