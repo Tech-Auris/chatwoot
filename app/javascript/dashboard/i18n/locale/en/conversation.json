@@ -1,5 +1,21 @@
 {
   "CONVERSATION": {
+    "PREVIOUS_CONVERSATION": {
+      "OPEN": "Open previous conversation · #{id}",
+      "TITLE": "Previous conversation · #{id}",
+      "DETAILS": "Created on {date} · {inbox} · {status}",
+      "DETAILS_WITH_MESSAGES": "{details} · {count} message | {details} · {count} messages",
+      "OPEN_LINK": "Open #{id}",
+      "CLOSE": "Close",
+      "END_DIVIDER": "End of conversation #{id} · start of conversation #{nextId}",
+      "HISTORY_START": "Start of {name}'s history",
+      "STATUS": {
+        "OPEN": "Open",
+        "RESOLVED": "Resolved",
+        "PENDING": "Pending",
+        "SNOOZED": "Snoozed"
+      }
+    },
     "FOLLOW_UP": {
       "LABEL": "Follow-up {step} of {total}",
       "SENT_AT": "sent {time}, after {delay} without a reply",

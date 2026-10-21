@@ -146,6 +146,9 @@ const props = defineProps({
   reactions: { type: Array, default: () => [] },
   inboxSupportsReactions: { type: Boolean, default: false },
   inboxReactionRequiresSourceId: { type: Boolean, default: true },
+  // Shown inside another conversation (a previous one): no context menu,
+  // reactions or feedback, nothing that acts on the message.
+  readOnly: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['retry', 'toggleReaction']);
@@ -388,7 +391,7 @@ const componentToRender = computed(() => {
 const isAudioBubble = computed(() => componentToRender.value === AudioBubble);
 
 const shouldShowContextMenu = computed(() => {
-  return !props.contentAttributes?.isUnsupported;
+  return !props.readOnly && !props.contentAttributes?.isUnsupported;
 });
 
 const isBubble = computed(() => {
@@ -455,6 +458,7 @@ const contextMenuEnabledOptions = computed(() => {
 });
 
 const canShowReactionToolbar = computed(() => {
+  if (props.readOnly) return false;
   if (!props.inboxSupportsReactions) return false;
   if (!isBubble.value) return false;
   if (isMessageDeleted.value) return false;
@@ -476,6 +480,7 @@ const canShowReactionToolbar = computed(() => {
 // or bot variants) — the operator flags what OUR side said, not incoming
 // user messages. Reuses the reaction toolbar's hover reveal.
 const canShowFeedbackButton = computed(() => {
+  if (props.readOnly) return false;
   if (!isClickupIntegrationEnabled.value) return false;
   if (!isBubble.value) return false;
   if (props.private) return false;
@@ -853,7 +858,7 @@ provideMessageContext({
             :current-user-id="currentUserId"
             :pending-emojis="pendingEmojis"
             :alignment="orientation === ORIENTATION.RIGHT ? 'right' : 'left'"
-            :read-only="!inboxSupportsReactions"
+            :read-only="readOnly || !inboxSupportsReactions"
             :overlap="!isAudioBubble"
             @toggle="handleToggleReaction"
           />

@@ -1260,6 +1260,49 @@ RSpec.describe 'Conversations API', type: :request do
     end
   end
 
+  describe 'GET /api/v1/accounts/{account.id}/conversations/:id/previous' do
+    let(:administrator) { create(:user, account: account, role: :administrator) }
+    let(:inbox) { create(:inbox, account: account) }
+    let(:contact) { create(:contact, account: account) }
+
+    def conversation_at(created_at, in_inbox: inbox)
+      create(:conversation, account: account, inbox: in_inbox, contact: contact, created_at: created_at)
+    end
+
+    def previous_of(conversation, user: administrator)
+      get "/api/v1/accounts/#{account.id}/conversations/#{conversation.display_id}/previous", headers: user.create_new_auth_token, as: :json
+      response.parsed_body['payload']
+    end
+
+    it 'returns the conversation of the same contact and inbox created right before' do
+      oldest = conversation_at(3.months.ago)
+      previous = conversation_at(1.month.ago)
+      create(:message, account: account, inbox: inbox, conversation: previous, message_type: :incoming)
+      current = conversation_at(1.day.ago)
+
+      expect(previous_of(current)).to include('id' => previous.display_id, 'status' => 'open', 'inbox_name' => inbox.name,
+                                              'messages_count' => 1, 'has_previous' => true)
+      expect(previous_of(oldest)).to be_nil
+      expect(previous_of(previous)).to include('id' => oldest.display_id, 'has_previous' => false)
+    end
+
+    it 'ignores a conversation of the same contact in another inbox' do
+      conversation_at(1.month.ago, in_inbox: create(:inbox, account: account))
+      current = conversation_at(1.day.ago)
+
+      expect(previous_of(current)).to be_nil
+    end
+
+    it 'does not let an agent without access to the inbox reach it' do
+      current = conversation_at(1.day.ago)
+      agent = create(:user, account: account, role: :agent)
+
+      get "/api/v1/accounts/#{account.id}/conversations/#{current.display_id}/previous", headers: agent.create_new_auth_token, as: :json
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+  end
+
   describe 'GET /api/v1/accounts/{account.id}/conversations/:id/attachments' do
     let(:conversation) { create(:conversation, account: account) }
 

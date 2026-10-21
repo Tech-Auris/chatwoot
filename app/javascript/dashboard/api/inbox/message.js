@@ -109,6 +109,14 @@ class MessageApi extends ApiClient {
     );
   }
 
+  // Up to 100 messages after `after`, oldest first: walking it from 0 reads a
+  // whole conversation from its start.
+  getMessagesAfter({ conversationId, after }) {
+    return axios.get(`${this.url}/${conversationId}/messages`, {
+      params: { after },
+    });
+  }
+
   getPreviousMessages({ conversationId, after, before }) {
     const params = { before };
     if (after && Number(after) !== Number(before)) {
