@@ -550,6 +550,20 @@ RSpec.describe V2::Reports::FunnelConversionBuilder do
         expect(builder.build[:campaign_breakdown].find { |r| r[:kind] == 'internal_campaign' }[:leads]).to eq(1)
       end
 
+      it 'keeps every lead of the campaign when filtering by Disparo interno, and hides the Meta ads' do
+        own = campaign_conversation(sent_at: 5.days.ago, replied_at: 4.days.ago)
+        stage_change(conv_id: own.id, new_stage: qualifying.name, created_at: 4.days.ago)
+        kept_origin = campaign_conversation(sent_at: 5.days.ago, replied_at: 4.days.ago, origem: 'Instagram')
+        stage_change(conv_id: kept_origin.id, new_stage: qualifying.name, created_at: 4.days.ago)
+        ad = create(:conversation, account: account, inbox: inbox, contact: contact, origem: 'Facebook',
+                                   additional_attributes: { 'campaign_referral' => { 'source_id' => 'FB-9' } })
+        stage_change(conv_id: ad.id, new_stage: qualifying.name)
+
+        rows = described_class.new(account: account, params: params.merge(origem: 'Disparo interno')).build[:campaign_breakdown]
+
+        expect(rows.map { |r| [r[:kind], r[:leads]] }).to eq([['internal_campaign', 2]])
+      end
+
       it 'ignores what happens more than 30 days after the send' do
         late_move = campaign_conversation(sent_at: 40.days.ago, replied_at: 35.days.ago)
         stage_change(conv_id: late_move.id, new_stage: comparecimento.name, created_at: 2.days.ago)

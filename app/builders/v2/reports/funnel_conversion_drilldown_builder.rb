@@ -29,7 +29,7 @@ class V2::Reports::FunnelConversionDrilldownBuilder < V2::Reports::FunnelConvers
   private
 
   def latest_entry_per_conversation
-    scope = funnel_stage_changes_scope
+    scope = params[:kind] == 'internal_campaign' ? internal_campaign_scope : funnel_stage_changes_scope
     scope = scope.where(created_at: range) if range.present?
     scope = narrow(scope)
     per = loss? ? 'funnel_stage_changes.conversation_id, funnel_stage_changes.loss_reason_id' : 'funnel_stage_changes.conversation_id'

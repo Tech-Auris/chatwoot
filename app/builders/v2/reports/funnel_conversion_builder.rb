@@ -163,12 +163,18 @@ class V2::Reports::FunnelConversionBuilder
   # by both `Visão geral` and `Conversão`. Returns an ActiveRecord scope so
   # callers can chain `.where(...)` / `.group(...)` like they did before.
   # Filters default to OFF when the param is blank.
-  def funnel_stage_changes_scope
+  def funnel_stage_changes_scope(with_origem: true)
     scope = live_funnel_stage_changes
     scope = scope.where(inbox_id: params[:inbox_id]) if params[:inbox_id].present?
     scope = scope.where(conversation_id: account.conversations.tagged_with(params[:label], on: :labels).select(:id)) if params[:label].present?
-    scope = scope.where(conversation_id: conversations_for_origem_scope) if params[:origem].present?
+    scope = scope.where(conversation_id: conversations_for_origem_scope) if with_origem && params[:origem].present?
     scope
+  end
+
+  # A campaign's leads keep whatever origin they already had, so filtering by
+  # "Disparo interno" still shows every lead of each campaign row.
+  def internal_campaign_scope
+    funnel_stage_changes_scope(with_origem: params[:origem] != ::Contacts::OriginAttributionService::INTERNAL_CAMPAIGN)
   end
 
   # Stage changes outlive their conversation (nothing deletes them with it).
@@ -359,7 +365,7 @@ class V2::Reports::FunnelConversionBuilder
   # to it, and only its stage changes within the attribution window after the
   # send. Whatever origin the conversation has, it counts for the campaign.
   def internal_campaign_rows(all_stages)
-    rows = internal_campaign_stage_changes(funnel_stage_changes_scope)
+    rows = internal_campaign_stage_changes(internal_campaign_scope)
            .distinct.pluck(:new_stage, :conversation_id, Arel.sql('dispatches.campaign_id'))
     return [] if rows.blank?
 
