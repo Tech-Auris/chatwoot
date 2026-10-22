@@ -25,6 +25,16 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
     @conversations_count = result[:count]
   end
 
+  # The contact's conversation in the same inbox created right before this one,
+  # shown inside it as "Conversa anterior". Nil when there is none. Also tells
+  # this conversation's first message, so the panel offers the previous one
+  # only once it has read this conversation back to its start.
+  def previous
+    @first_message_id = @conversation.messages.minimum(:id)
+    @previous_conversation = earlier_in_inbox(@conversation).first
+    @has_previous = @previous_conversation.present? && earlier_in_inbox(@previous_conversation).exists?
+  end
+
   def attachments
     @attachments_count = @conversation.attachments.count
     @attachments = @conversation.attachments
@@ -256,6 +266,13 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
   def conversation
     @conversation ||= Current.account.conversations.find_by!(display_id: params[:id])
     authorize @conversation, :show?
+  end
+
+  def earlier_in_inbox(conversation)
+    scope = Current.account.conversations.where(contact_id: conversation.contact_id, inbox_id: conversation.inbox_id)
+                   .where('(conversations.created_at, conversations.id) < (?, ?)', conversation.created_at, conversation.id)
+    Conversations::PermissionFilterService.new(scope, Current.user, Current.account).perform
+                                          .reorder(created_at: :desc, id: :desc)
   end
 
   def inbox

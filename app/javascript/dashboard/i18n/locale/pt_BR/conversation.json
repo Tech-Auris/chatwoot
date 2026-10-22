@@ -1,5 +1,21 @@
 {
   "CONVERSATION": {
+    "PREVIOUS_CONVERSATION": {
+      "OPEN": "Abrir conversa anterior · #{id}",
+      "TITLE": "Conversa anterior · #{id}",
+      "DETAILS": "Criada em {date} · {inbox} · {status}",
+      "DETAILS_WITH_MESSAGES": "{details} · {count} mensagem | {details} · {count} mensagens",
+      "OPEN_LINK": "Abrir #{id}",
+      "CLOSE": "Fechar",
+      "END_DIVIDER": "Fim da conversa #{id} · início da conversa #{nextId}",
+      "HISTORY_START": "Início do histórico de {name}",
+      "STATUS": {
+        "OPEN": "Aberta",
+        "RESOLVED": "Resolvida",
+        "PENDING": "Pendente",
+        "SNOOZED": "Adiada"
+      }
+    },
     "FOLLOW_UP": {
       "LABEL": "Follow-up {step} de {total}",
       "SENT_AT": "enviado em {time}, após {delay} sem resposta",

@@ -12,6 +12,7 @@ import { useAlert, usePendingAlert } from 'dashboard/composables';
 import ReplyBox from './ReplyBox.vue';
 import MessageList from 'next/message/MessageList.vue';
 import ConversationWindowChip from 'dashboard/components-next/Conversation/ConversationWindowChip.vue';
+import PreviousConversations from 'dashboard/components-next/Conversation/PreviousConversations.vue';
 import ConversationLabelSuggestion from './conversation/LabelSuggestion.vue';
 import Banner from 'dashboard/components/ui/Banner.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
@@ -54,6 +55,7 @@ export default {
   components: {
     ConversationWindowChip,
     MessageList,
+    PreviousConversations,
     ReplyBox,
     Banner,
     ConversationLabelSuggestion,
@@ -931,6 +933,17 @@ export default {
               <Spinner v-if="shouldShowSpinner" class="text-n-brand" />
             </li>
           </transition>
+          <!-- Shows once the current conversation is read back to its first
+               message, so the previous one never lands in the middle of its
+               history. -->
+          <PreviousConversations
+            :key="currentChat.id"
+            :conversation-id="currentChat.id"
+            :contact-name="currentChat.meta?.sender?.name"
+            :current-user-id="currentUserId"
+            :is-an-email-channel="isAnEmailChannel"
+            :oldest-loaded-message-id="currentChat.messages?.[0]?.id ?? null"
+          />
         </template>
         <template #unreadBadge>
           <li

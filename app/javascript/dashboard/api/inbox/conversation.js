@@ -162,6 +162,11 @@ class ConversationApi extends ApiClient {
     return axios.get(`${this.url}/${conversationId}/attachments`);
   }
 
+  // The contact's conversation in the same inbox created right before this one.
+  getPrevious(conversationId) {
+    return axios.get(`${this.url}/${conversationId}/previous`);
+  }
+
   getInboxAssistant(conversationId) {
     return axios.get(`${this.url}/${conversationId}/inbox_assistant`);
   }

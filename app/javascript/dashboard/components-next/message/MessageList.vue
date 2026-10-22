@@ -50,6 +50,13 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  // Another conversation's messages shown inside the current one (a previous
+  // conversation): read-only bubbles, no background of their own, and replies
+  // looked up only among these messages.
+  readOnly: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(['retry', 'toggleReaction']);
@@ -263,7 +270,7 @@ const getInReplyToMessage = parentMessage => {
   let replyMessage = props.messages?.find(msg => msg.id === inReplyToMessageId);
 
   // Then try store messages
-  if (!replyMessage && currentChat.value?.messages) {
+  if (!replyMessage && !props.readOnly && currentChat.value?.messages) {
     replyMessage = currentChat.value.messages.find(
       msg => msg.id === inReplyToMessageId
     );
@@ -275,7 +282,7 @@ const getInReplyToMessage = parentMessage => {
   }
 
   // If still not found and we have conversation context, fetch it
-  if (!replyMessage && currentChat.value?.id) {
+  if (!replyMessage && !props.readOnly && currentChat.value?.id) {
     fetchReplyMessage(inReplyToMessageId, currentChat.value.id);
     return null; // Let UI handle loading state
   }
@@ -285,7 +292,7 @@ const getInReplyToMessage = parentMessage => {
 </script>
 
 <template>
-  <ul class="px-4 bg-n-surface-1">
+  <ul class="px-4" :class="readOnly ? 'bg-transparent' : 'bg-n-surface-1'">
     <slot name="beforeAll" />
     <template v-for="(message, index) in visibleMessages" :key="message.id">
       <slot
@@ -307,6 +314,7 @@ const getInReplyToMessage = parentMessage => {
         :inbox-reaction-requires-source-id="inboxReactionRequiresSourceId"
         :reactions="reactionsByMessageId.get(message.id) || []"
         :current-user-id="currentUserId"
+        :read-only="readOnly"
         data-clarity-mask="True"
         @retry="emit('retry', message)"
         @toggle-reaction="emit('toggleReaction', $event)"
