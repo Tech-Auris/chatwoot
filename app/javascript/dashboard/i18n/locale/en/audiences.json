@@ -181,7 +181,8 @@
       "CONFIRM": "Import",
       "SUCCESS": "Audience created with {count} contacts",
       "INVALID_ROWS": "{count} rows were skipped for invalid data.",
-      "ERROR": "Could not import the file."
+      "ERROR": "Could not import the file.",
+      "SAMPLE": "Download a sample CSV."
     }
   }
 }

@@ -3,7 +3,6 @@ import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import format from 'date-fns/format';
-import { dynamicTime } from 'shared/helpers/timeHelper';
 import { useAlert } from 'dashboard/composables';
 import AudiencesAPI from 'dashboard/api/audiences';
 import Button from 'dashboard/components-next/button/Button.vue';
@@ -19,7 +18,7 @@ import { useAudienceFields } from './useAudienceFields';
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
-const { describe, describeWindow } = useAudienceFields();
+const { describe, describeWindow, labelColor, timeAgo } = useAudienceFields();
 
 const audienceId = computed(() => route.params.audienceId);
 const audience = ref(null);
@@ -157,7 +156,7 @@ onMounted(fetchAudience);
             <p class="mb-0 text-sm text-n-slate-11">
               {{
                 t('AUDIENCES.SHOW.UPDATED', {
-                  time: dynamicTime(audience.counted_at || audience.created_at),
+                  time: timeAgo(audience.counted_at || audience.created_at),
                 })
               }}
               {{
@@ -291,15 +290,32 @@ onMounted(fetchAudience);
                       {{ contact.phone_number || '—' }}
                     </td>
                     <td class="px-3 py-2 text-n-slate-11">
-                      {{ contact.funnel_stage || '—' }}
+                      <span
+                        v-if="contact.funnel_stage"
+                        class="inline-flex items-center gap-1.5 whitespace-nowrap"
+                      >
+                        <span
+                          class="rounded-full size-2 shrink-0"
+                          :style="{
+                            backgroundColor:
+                              contact.funnel_stage_color || 'var(--s-300)',
+                          }"
+                        />
+                        {{ contact.funnel_stage }}
+                      </span>
+                      <template v-else>{{ '—' }}</template>
                     </td>
                     <td class="px-3 py-2">
                       <div class="flex flex-wrap gap-1">
                         <span
                           v-for="label in contact.labels"
                           :key="label"
-                          class="px-1.5 py-0.5 text-xs rounded bg-n-alpha-2 text-n-slate-11"
+                          class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs rounded-md bg-n-alpha-2 text-n-slate-12"
                         >
+                          <span
+                            class="rounded-sm size-2 shrink-0"
+                            :style="{ backgroundColor: labelColor(label) }"
+                          />
                           {{ label }}
                         </span>
                       </div>
@@ -309,9 +325,9 @@ onMounted(fetchAudience);
                     </td>
                     <td v-if="!isDynamic" class="px-3 py-2 text-right">
                       <Button
-                        icon="i-lucide-user-minus"
+                        icon="i-lucide-trash-2"
                         variant="ghost"
-                        color="slate"
+                        color="ruby"
                         size="sm"
                         :aria-label="t('AUDIENCES.SHOW.REMOVE')"
                         @click="removeContact(contact)"

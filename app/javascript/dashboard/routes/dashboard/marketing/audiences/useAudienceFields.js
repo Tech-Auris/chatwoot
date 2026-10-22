@@ -1,6 +1,9 @@
 import { computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import format from 'date-fns/format';
+import formatDistanceToNow from 'date-fns/formatDistanceToNow';
+import fromUnixTime from 'date-fns/fromUnixTime';
+import { resolveDateFnsLocale } from 'dashboard/helper/dateFnsLocale';
 import { useStore, useMapGetter } from 'dashboard/composables/store';
 import { ORIGEM_OPTIONS } from 'dashboard/helper/origemOptions';
 
@@ -21,7 +24,7 @@ export const FIELD_KEYS = [
 const STATUSES = ['open', 'resolved', 'pending', 'snoozed'];
 
 export function useAudienceFields() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const store = useStore();
 
   const labels = useMapGetter('labels/getLabels');
@@ -128,5 +131,23 @@ export function useAudienceFields() {
     return t('AUDIENCES.WINDOW.ALL');
   };
 
-  return { fields, optionsFor, operatorsFor, describe, describeWindow };
+  const labelColor = title =>
+    (labels.value || []).find(label => label.title === title)?.color;
+
+  // "há 2 minutos", in the account's language.
+  const timeAgo = timestamp =>
+    formatDistanceToNow(fromUnixTime(timestamp), {
+      addSuffix: true,
+      locale: resolveDateFnsLocale(locale.value),
+    });
+
+  return {
+    fields,
+    optionsFor,
+    operatorsFor,
+    describe,
+    describeWindow,
+    labelColor,
+    timeAgo,
+  };
 }

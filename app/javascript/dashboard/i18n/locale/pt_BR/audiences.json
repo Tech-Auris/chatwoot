@@ -181,7 +181,8 @@
       "CONFIRM": "Importar",
       "SUCCESS": "Público criado com {count} contatos",
       "INVALID_ROWS": "{count} linhas foram ignoradas por dados inválidos.",
-      "ERROR": "Não foi possível importar o arquivo."
+      "ERROR": "Não foi possível importar o arquivo.",
+      "SAMPLE": "Baixar um exemplo de CSV."
     }
   }
 }

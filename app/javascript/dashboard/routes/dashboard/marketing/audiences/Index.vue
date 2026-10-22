@@ -3,7 +3,6 @@ import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import format from 'date-fns/format';
-import { dynamicTime } from 'shared/helpers/timeHelper';
 import AudiencesAPI from 'dashboard/api/audiences';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
@@ -14,7 +13,7 @@ import { useAudienceFields } from './useAudienceFields';
 // feeds each one, its window and its size now.
 const { t } = useI18n();
 const router = useRouter();
-const { describe, describeWindow } = useAudienceFields();
+const { describe, describeWindow, timeAgo } = useAudienceFields();
 
 const audiences = ref([]);
 const meta = ref({});
@@ -55,7 +54,7 @@ const createdBy = audience =>
     date: format(new Date(audience.created_at * 1000), 'dd/MM'),
   });
 const updatedAt = audience =>
-  dynamicTime(audience.counted_at || audience.created_at);
+  timeAgo(audience.counted_at || audience.created_at);
 const lastDownload = computed(() =>
   meta.value.last_download_at
     ? t('AUDIENCES.STATS.LAST_DOWNLOAD', {

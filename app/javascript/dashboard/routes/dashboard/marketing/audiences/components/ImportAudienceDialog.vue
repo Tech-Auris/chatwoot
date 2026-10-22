@@ -7,7 +7,10 @@ import AudiencesAPI from 'dashboard/api/audiences';
 import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
 import Input from 'dashboard/components-next/input/Input.vue';
 
-// A spreadsheet turned into a fixed audience, read like a campaign's CSV.
+// A spreadsheet turned into a fixed audience, read like a campaign's CSV —
+// so the campaign's sample file shows the format.
+const AUDIENCE_SAMPLE_CSV = '/downloads/campaign-audience-sample.csv';
+
 const { t } = useI18n();
 const router = useRouter();
 
@@ -80,6 +83,13 @@ defineExpose({ open });
       <Input v-model="name" :label="t('AUDIENCES.IMPORT_DIALOG.NAME')" />
       <label class="flex flex-col gap-1 text-sm text-n-slate-12">
         {{ t('AUDIENCES.IMPORT_DIALOG.FILE') }}
+        <a
+          :href="AUDIENCE_SAMPLE_CSV"
+          download="publico-exemplo.csv"
+          class="text-xs text-n-blue-text"
+        >
+          {{ t('AUDIENCES.IMPORT_DIALOG.SAMPLE') }}
+        </a>
         <input
           type="file"
           accept=".csv,text/csv"
