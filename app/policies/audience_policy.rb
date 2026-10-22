@@ -52,4 +52,8 @@ class AudiencePolicy < ApplicationPolicy
   def use_in_campaign?
     export?
   end
+
+  def campaign_preview?
+    use_in_campaign?
+  end
 end

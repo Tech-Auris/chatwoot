@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import format from 'date-fns/format';
 import { useAlert } from 'dashboard/composables';
+import { useAdmin } from 'dashboard/composables/useAdmin';
 import AudiencesAPI from 'dashboard/api/audiences';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
@@ -21,6 +22,9 @@ const router = useRouter();
 const { describe, describeWindow, labelColor, timeAgo } = useAudienceFields();
 
 const audienceId = computed(() => route.params.audienceId);
+// Downloading and sending a campaign are for administrators and managers.
+const { isAdmin, isManager } = useAdmin();
+const canUseInCampaign = computed(() => isAdmin.value || isManager.value);
 const audience = ref(null);
 const contacts = ref([]);
 const contactsMeta = ref({ current_page: 1, total_count: 0 });
@@ -111,6 +115,12 @@ const destroy = async () => {
   }
 };
 
+const useInCampaign = () =>
+  router.push({
+    name: 'campaigns_whatsapp_index',
+    query: { audience_id: audienceId.value },
+  });
+
 const edit = () =>
   router.push({
     name: 'marketing_audiences_edit',
@@ -196,6 +206,14 @@ onMounted(fetchAudience);
               color="slate"
               size="sm"
               @click="addContactsDialogRef?.open()"
+            />
+            <Button
+              v-if="canUseInCampaign"
+              :label="t('AUDIENCES.SHOW.USE_IN_CAMPAIGN')"
+              icon="i-lucide-send"
+              size="sm"
+              :disabled="audience.over_limit || !audience.contacts_count"
+              @click="useInCampaign"
             />
             <Button
               :label="t('AUDIENCES.SHOW.DELETE')"

@@ -206,4 +206,28 @@ RSpec.describe Campaign do
       expect(campaign_with_template).to be_valid
     end
   end
+
+  describe 'with a saved audience' do
+    let(:account) { create(:account) }
+    let(:inbox) { create(:inbox, account: account) }
+
+    it 'is not created when the audience is over the limit' do
+      stub_const('Audience::MAX_CONTACTS', 0)
+      saved = create(:audience, account: account)
+      create(:conversation, account: account)
+
+      campaign = build(:campaign, account: account, inbox: inbox, audience: [{ 'type' => 'Audience', 'id' => saved.id }])
+
+      expect(campaign).not_to be_valid
+      expect(campaign.errors[:audience].first).to include('more than')
+    end
+
+    it 'is not created with an audience of another account' do
+      saved = create(:audience)
+
+      campaign = build(:campaign, account: account, inbox: inbox, audience: [{ 'type' => 'Audience', 'id' => saved.id }])
+
+      expect(campaign).not_to be_valid
+    end
+  end
 end

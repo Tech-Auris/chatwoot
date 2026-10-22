@@ -196,7 +196,8 @@
           "AUDIENCE_SOURCE": {
             "LABEL": "Audience",
             "LABELS": "Customer labels",
-            "FILE": "From a file"
+            "FILE": "From a file",
+            "SAVED": "Saved audience"
           },
           "AUDIENCE_FILE": {
             "LABEL": "CSV file",
@@ -258,6 +259,17 @@
             "QUALITY_LOW": "This number's quality is Low. A campaign now can lead to restrictions or a ban. Prefer patients who talked to you recently, split the audience into batches and review the template.",
             "QUALITY_MEDIUM": "This number's quality is Medium. Prefer patients who talked to you recently and split the audience into batches.",
             "OVER_DAILY_LIMIT": "The audience ({count} contacts) is over this number's daily limit ({limit} new conversations in 24h). Split the campaign over several days: Meta refuses whatever goes over the limit."
+          },
+          "SAVED_AUDIENCE": {
+            "LABEL": "Saved audience",
+            "PLACEHOLDER": "Choose an audience",
+            "OPTION": "{name} · {count} contacts",
+            "FROZEN_NOTE": "This audience has {count} contacts now. Whoever enters after the start does not get this campaign.",
+            "WILL_RECEIVE": "Will receive: {count}",
+            "OPTED_OUT": "Left out by the marketing opt-out: {count}",
+            "WITHOUT_PHONE": "Left out for a missing phone: {count}",
+            "ALREADY_RECEIVED": "Left out for having already received this campaign: {count}",
+            "OVER_LIMIT": "This audience has more than {limit} contacts and cannot be used in a campaign. Split it, for example with a smaller window."
           }
         }
       },
@@ -297,7 +309,8 @@
           "DELIVERED": "Delivered",
           "READ": "Read",
           "FAILED": "Failed"
-        }
+        },
+        "AUDIENCE_SOURCE": "Sent to the saved audience"
       }
     },
     "CONFIRM_DELETE": {

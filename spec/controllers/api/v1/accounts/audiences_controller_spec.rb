@@ -154,4 +154,28 @@ RSpec.describe 'Audiences API', type: :request do
 
     expect(Audience.exists?(audience.id)).to be false
   end
+
+  describe 'GET /audiences/:id/campaign_preview' do
+    let(:administrator) { create(:user, account: account, role: :administrator) }
+    let(:audience) { create(:audience, account: account, rule: abc_rule.map(&:stringify_keys)) }
+
+    it 'tells who the campaign reaches and who stays out' do
+      contact_with_label('abc').update!(phone_number: '+5511987654001')
+      contact_with_label('abc', name: 'Sem telefone')
+      opted_out = contact_with_label('abc', name: 'Opt-out')
+      opted_out.update!(phone_number: '+5511987654002')
+      opted_out.opt_out!(source: 'meta')
+
+      get "#{base}/#{audience.id}/campaign_preview", headers: administrator.create_new_auth_token
+
+      expect(response.parsed_body).to include('total_count' => 3, 'without_phone_count' => 1, 'opted_out_count' => 1,
+                                              'already_received_count' => 0, 'will_receive_count' => 1, 'over_limit' => false)
+    end
+
+    it 'is only for administrators and managers' do
+      get "#{base}/#{audience.id}/campaign_preview", headers: agent.create_new_auth_token
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+  end
 end

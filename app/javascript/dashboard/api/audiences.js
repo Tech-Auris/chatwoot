@@ -21,6 +21,13 @@ class AudiencesAPI extends ApiClient {
     return axios.get(`${this.url}/${id}/contacts`, { params: { page } });
   }
 
+  // Before a campaign is sent to it: who it reaches and who stays out.
+  campaignPreview(id, campaignId) {
+    return axios.get(`${this.url}/${id}/campaign_preview`, {
+      params: { campaign_id: campaignId },
+    });
+  }
+
   snapshot(id, name) {
     return axios.post(`${this.url}/${id}/snapshot`, { name });
   }

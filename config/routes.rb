@@ -176,6 +176,7 @@ Rails.application.routes.draw do
             end
             member do
               get :contacts
+              get :campaign_preview
               post :snapshot
               post :add_contacts
               post :remove_contacts

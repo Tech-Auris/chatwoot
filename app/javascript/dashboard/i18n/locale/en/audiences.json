@@ -156,7 +156,8 @@
       "DELETE_TITLE": "Delete audience",
       "DELETE_DESCRIPTION": "The audience \"{name}\" will be deleted. The contacts stay in the account.",
       "DELETED": "Audience deleted",
-      "REMOVED": "Contact removed from the audience"
+      "REMOVED": "Contact removed from the audience",
+      "USE_IN_CAMPAIGN": "Use in campaign"
     },
     "SNAPSHOT_DIALOG": {
       "TITLE": "Freeze as a fixed audience",
