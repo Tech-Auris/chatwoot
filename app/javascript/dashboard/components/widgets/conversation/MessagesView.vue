@@ -933,15 +933,16 @@ export default {
               <Spinner v-if="shouldShowSpinner" class="text-n-brand" />
             </li>
           </transition>
-          <!-- Only once the current conversation is read back to its start,
-               so the previous one never lands in the middle of its history. -->
+          <!-- Shows once the current conversation is read back to its first
+               message, so the previous one never lands in the middle of its
+               history. -->
           <PreviousConversations
-            v-if="listLoadingStatus"
             :key="currentChat.id"
             :conversation-id="currentChat.id"
             :contact-name="currentChat.meta?.sender?.name"
             :current-user-id="currentUserId"
             :is-an-email-channel="isAnEmailChannel"
+            :oldest-loaded-message-id="currentChat.messages?.[0]?.id ?? null"
           />
         </template>
         <template #unreadBadge>

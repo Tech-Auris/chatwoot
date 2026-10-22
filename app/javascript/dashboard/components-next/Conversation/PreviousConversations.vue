@@ -19,6 +19,8 @@ const props = defineProps({
   contactName: { type: String, default: '' },
   currentUserId: { type: Number, required: true },
   isAnEmailChannel: { type: Boolean, default: false },
+  // Oldest message of the current conversation loaded on screen.
+  oldestLoadedMessageId: { type: Number, default: null },
 });
 
 const { t } = useI18n();
@@ -29,12 +31,21 @@ const rootRef = ref(null);
 // one right before the current conversation first).
 const next = ref(null);
 const chain = ref([]);
+// The current conversation's first message: until it is on screen, the
+// previous conversation would land in the middle of its history.
+const firstMessageId = ref(null);
+const startReached = computed(
+  () =>
+    firstMessageId.value === null ||
+    (props.oldestLoadedMessageId !== null &&
+      props.oldestLoadedMessageId <= firstMessageId.value)
+);
 
 const MESSAGES_PER_REQUEST = 100;
 
 const fetchPrevious = async conversationId => {
   const { data } = await ConversationAPI.getPrevious(conversationId);
-  return data.payload;
+  return data;
 };
 
 const fetchAllMessages = async conversationId => {
@@ -73,7 +84,7 @@ const openNext = async () => {
   });
   const [messages, before] = await Promise.all([
     fetchAllMessages(conversation.id),
-    conversation.has_previous ? fetchPrevious(conversation.id) : null,
+    conversation.has_previous ? fetchPrevious(conversation.id) : {},
   ]);
   await keepScrollPosition(() => {
     chain.value = chain.value.map(item =>
@@ -81,7 +92,7 @@ const openNext = async () => {
         ? { ...item, messages, loading: false }
         : item
     );
-    next.value = before;
+    next.value = before.payload ?? null;
   });
 };
 
@@ -130,12 +141,18 @@ const conversationPath = id =>
   frontendURL(conversationUrl({ accountId: route.params.accountId, id }));
 
 onMounted(async () => {
-  next.value = await fetchPrevious(props.conversationId);
+  const data = await fetchPrevious(props.conversationId);
+  firstMessageId.value = data.first_message_id ?? null;
+  next.value = data.payload;
 });
 </script>
 
 <template>
-  <li ref="rootRef" class="flex flex-col gap-3 py-3 list-none">
+  <li
+    v-show="startReached"
+    ref="rootRef"
+    class="flex flex-col gap-3 py-3 list-none"
+  >
     <div
       v-if="showHistoryStart"
       class="self-center flex items-center gap-1.5 px-3 py-1 text-xs rounded-full bg-n-alpha-2 text-n-slate-11"

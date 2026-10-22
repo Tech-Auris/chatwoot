@@ -1,3 +1,4 @@
+json.first_message_id @first_message_id
 if @previous_conversation
   json.payload do
     json.id @previous_conversation.display_id

@@ -1280,8 +1280,12 @@ RSpec.describe 'Conversations API', type: :request do
       create(:message, account: account, inbox: inbox, conversation: previous, message_type: :incoming)
       current = conversation_at(1.day.ago)
 
+      first = create(:message, account: account, inbox: inbox, conversation: current, message_type: :incoming)
+      create(:message, account: account, inbox: inbox, conversation: current, message_type: :outgoing)
+
       expect(previous_of(current)).to include('id' => previous.display_id, 'status' => 'open', 'inbox_name' => inbox.name,
                                               'messages_count' => 1, 'has_previous' => true)
+      expect(response.parsed_body['first_message_id']).to eq(first.id)
       expect(previous_of(oldest)).to be_nil
       expect(previous_of(previous)).to include('id' => oldest.display_id, 'has_previous' => false)
     end

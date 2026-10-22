@@ -31,9 +31,14 @@ const previousOf = {
   279: conversation(175, false),
 };
 
-const mountChain = () =>
+const mountChain = (oldestLoadedMessageId = 10) =>
   mount(PreviousConversations, {
-    props: { conversationId: 371, contactName: 'Maria', currentUserId: 1 },
+    props: {
+      conversationId: 371,
+      contactName: 'Maria',
+      currentUserId: 1,
+      oldestLoadedMessageId,
+    },
     global: {
       stubs: {
         MessageList: {
@@ -55,7 +60,7 @@ const openBanner = async wrapper => {
 describe('PreviousConversations', () => {
   beforeEach(() => {
     ConversationAPI.getPrevious.mockImplementation(async id => ({
-      data: { payload: previousOf[id] ?? null },
+      data: { payload: previousOf[id] ?? null, first_message_id: 10 },
     }));
     MessageAPI.getMessagesAfter.mockResolvedValue({
       data: { payload: [{ id: 1 }, { id: 2 }] },
@@ -70,8 +75,22 @@ describe('PreviousConversations', () => {
     expect(wrapper.findAll('section')).toHaveLength(0);
   });
 
+  it('waits until the current conversation is loaded back to its first message', async () => {
+    const wrapper = mountChain(50);
+    await flushPromises();
+    expect(wrapper.find('li').attributes('style')).toContain('display: none');
+
+    await wrapper.setProps({ oldestLoadedMessageId: 10 });
+    expect(wrapper.find('li').attributes('style') ?? '').not.toContain(
+      'display: none'
+    );
+    expect(wrapper.find('button').text()).toContain('"id":279');
+  });
+
   it('shows nothing when there is no previous conversation', async () => {
-    ConversationAPI.getPrevious.mockResolvedValue({ data: { payload: null } });
+    ConversationAPI.getPrevious.mockResolvedValue({
+      data: { payload: null, first_message_id: 10 },
+    });
     const wrapper = mountChain();
     await flushPromises();
 

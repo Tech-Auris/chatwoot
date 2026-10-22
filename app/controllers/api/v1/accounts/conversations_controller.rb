@@ -26,8 +26,11 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
   end
 
   # The contact's conversation in the same inbox created right before this one,
-  # shown inside it as "Conversa anterior". Nil when there is none.
+  # shown inside it as "Conversa anterior". Nil when there is none. Also tells
+  # this conversation's first message, so the panel offers the previous one
+  # only once it has read this conversation back to its start.
   def previous
+    @first_message_id = @conversation.messages.minimum(:id)
     @previous_conversation = earlier_in_inbox(@conversation).first
     @has_previous = @previous_conversation.present? && earlier_in_inbox(@previous_conversation).exists?
   end
