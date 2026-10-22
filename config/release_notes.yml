@@ -1,12 +1,34 @@
 ---
 - tag: v4.15.1-auris.1.72
-  published_at: '2026-10-21T20:00:00Z'
+  published_at: '2026-10-22T20:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.72
   notes:
     en: |-
-      Bug fixes and internal improvements.
+      ### ✨ What's new
+
+      - **Previous conversations inside the conversation.** At the top of a conversation, "Open previous conversation" shows the patient's earlier conversation in the same inbox, whole, without leaving the current one. You can keep opening them one by one, back to the first.
+      - **Campaign results in the funnel.** Campaigns sent from AurisChat now show in the Conversions report, with how many patients replied, booked and attended. The conversations they start get the "Disparo interno" origin.
+
+      ### ⚡ Improvements
+
+      - **Previous conversations in a fixed order.** The side list shows conversations from newest to oldest and no longer reshuffles when a message arrives. After 20, a "See more" button loads the rest.
+
+      ### 🐛 Fixes
+
+      - **"Load more" in the funnel.** The button now sits at the end of the column, after the last card.
     pt_BR: |-
-      Correções de bugs e melhorias internas.
+      ### ✨ Novidades
+
+      - **Conversas anteriores dentro da conversa.** No topo da conversa, "Abrir conversa anterior" mostra a conversa anterior do paciente na mesma caixa, inteira, sem sair da conversa atual. Dá para ir abrindo uma por uma, até a primeira.
+      - **Resultado das campanhas no funil.** As campanhas enviadas pelo AurisChat aparecem no relatório de Conversões, com quantos pacientes responderam, agendaram e compareceram. As conversas que elas iniciam ganham a origem "Disparo interno".
+
+      ### ⚡ Melhorias
+
+      - **Conversas anteriores em ordem fixa.** A lista lateral mostra as conversas da mais nova para a mais antiga e não muda mais de ordem quando chega mensagem. Depois de 20, o botão "Ver mais" carrega as demais.
+
+      ### 🐛 Correções
+
+      - **"Carregar mais" do funil.** O botão agora fica no fim da coluna, depois do último card.
 - tag: v4.15.1-auris.1.71
   published_at: '2026-10-16T20:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.71
