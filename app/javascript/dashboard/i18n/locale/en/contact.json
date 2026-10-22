@@ -25,6 +25,8 @@
       "TITLE": "Choose a voice inbox"
     },
     "CONVERSATIONS": {
+      "LOAD_MORE": "See more",
+      "LOADING_MORE": "Loading...",
       "NO_RECORDS_FOUND": "There are no previous conversations associated to this contact.",
       "TITLE": "Previous Conversations"
     },

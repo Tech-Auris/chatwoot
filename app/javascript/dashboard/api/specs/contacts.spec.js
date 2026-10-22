@@ -39,9 +39,10 @@ describe('#ContactsAPI', () => {
     });
 
     it('#getConversations', () => {
-      contactAPI.getConversations(1);
+      contactAPI.getConversations(1, 2);
       expect(axiosMock.get).toHaveBeenCalledWith(
-        '/api/v1/contacts/1/conversations'
+        '/api/v1/contacts/1/conversations',
+        { params: { page: 2 } }
       );
     });
 

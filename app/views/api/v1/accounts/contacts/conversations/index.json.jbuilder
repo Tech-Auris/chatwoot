@@ -3,3 +3,6 @@ json.payload do
     json.partial! 'api/v1/conversations/partials/conversation', formats: [:json], conversation: conversation
   end
 end
+json.meta do
+  json.has_more @has_more
+end

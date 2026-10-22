@@ -25,6 +25,8 @@
       "TITLE": "Escolha uma caixa de entrada de voz"
     },
     "CONVERSATIONS": {
+      "LOAD_MORE": "Ver mais",
+      "LOADING_MORE": "Carregando...",
       "NO_RECORDS_FOUND": "Não há conversas anteriores associadas a este contato.",
       "TITLE": "Conversas anteriores"
     },
