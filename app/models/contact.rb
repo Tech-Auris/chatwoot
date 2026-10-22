@@ -71,6 +71,7 @@ class Contact < ApplicationRecord # rubocop:disable Metrics/ClassLength
   has_many :inboxes, through: :contact_inboxes
   has_many :messages, as: :sender, dependent: :destroy_async
   has_many :notes, dependent: :destroy_async
+  has_many :audience_contacts, dependent: :delete_all
   has_many :group_memberships, class_name: 'GroupMember', foreign_key: :group_contact_id, dependent: :destroy,
                                inverse_of: :group_contact
   has_many :group_member_contacts, through: :group_memberships, source: :contact

@@ -169,6 +169,18 @@ Rails.application.routes.draw do
               get :report
             end
           end
+          resources :audiences, only: [:index, :show, :create, :update, :destroy] do
+            collection do
+              post :preview
+              post :import
+            end
+            member do
+              get :contacts
+              post :snapshot
+              post :add_contacts
+              post :remove_contacts
+            end
+          end
           resources :funnel_stages, only: [:index, :show]
           resources :loss_reasons, only: [:index, :show]
           resource :funnel, only: [:show], controller: 'funnel' do
