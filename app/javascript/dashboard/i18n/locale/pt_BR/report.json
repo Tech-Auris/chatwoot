@@ -855,7 +855,8 @@
       "WAITING": "Aguardando",
       "REENGAGED": "Retomou",
       "CLOSED": "Encerrado pelo paciente",
-      "NO_RESPONSE": "Sem resposta"
+      "NO_RESPONSE": "Sem resposta",
+      "OPTED_OUT": "Parado por opt-out"
     },
     "STEPS": {
       "TITLE": "Reengajamento por número do FUP",

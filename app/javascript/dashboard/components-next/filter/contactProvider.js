@@ -196,6 +196,26 @@ export function useContactFilterContext() {
       attributeModel: 'standard',
     },
     {
+      attributeKey: CONTACT_ATTRIBUTES.MARKETING_OPT_OUT,
+      value: CONTACT_ATTRIBUTES.MARKETING_OPT_OUT,
+      attributeName: t('CONTACTS_LAYOUT.FILTER.MARKETING_OPT_OUT'),
+      label: t('CONTACTS_LAYOUT.FILTER.MARKETING_OPT_OUT'),
+      inputType: 'searchSelect',
+      options: [
+        {
+          id: 'true',
+          name: t('CONTACTS_LAYOUT.FILTER.MARKETING_OPT_OUT_TRUE'),
+        },
+        {
+          id: 'false',
+          name: t('CONTACTS_LAYOUT.FILTER.MARKETING_OPT_OUT_FALSE'),
+        },
+      ],
+      dataType: 'text',
+      filterOperators: equalityOperators.value,
+      attributeModel: 'standard',
+    },
+    {
       attributeKey: CONTACT_ATTRIBUTES.LABELS,
       value: CONTACT_ATTRIBUTES.LABELS,
       attributeName: t('CONTACTS_FILTER.ATTRIBUTES.LABELS'),

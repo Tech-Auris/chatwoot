@@ -4,26 +4,29 @@
 #
 # Table name: contacts
 #
-#  id                    :integer          not null, primary key
-#  additional_attributes :jsonb
-#  blocked               :boolean          default(FALSE), not null
-#  contact_type          :integer          default("visitor")
-#  country_code          :string           default("")
-#  custom_attributes     :jsonb
-#  email                 :string
-#  group_type            :integer          default("individual"), not null
-#  identifier            :string
-#  last_activity_at      :datetime
-#  last_name             :string           default("")
-#  location              :string           default("")
-#  middle_name           :string           default("")
-#  name                  :string           default("")
-#  phone_number          :string
-#  created_at            :datetime         not null
-#  updated_at            :datetime         not null
-#  account_id            :integer          not null
-#  company_id            :bigint
-#  language_id           :bigint
+#  id                       :integer          not null, primary key
+#  additional_attributes    :jsonb
+#  blocked                  :boolean          default(FALSE), not null
+#  contact_type             :integer          default("visitor")
+#  country_code             :string           default("")
+#  custom_attributes        :jsonb
+#  email                    :string
+#  group_type               :integer          default("individual"), not null
+#  identifier               :string
+#  last_activity_at         :datetime
+#  last_name                :string           default("")
+#  location                 :string           default("")
+#  marketing_opt_out        :boolean          default(FALSE), not null
+#  marketing_opt_out_at     :datetime
+#  marketing_opt_out_source :string
+#  middle_name              :string           default("")
+#  name                     :string           default("")
+#  phone_number             :string
+#  created_at               :datetime         not null
+#  updated_at               :datetime         not null
+#  account_id               :integer          not null
+#  company_id               :bigint
+#  language_id              :bigint
 #
 # Indexes
 #
@@ -31,6 +34,7 @@
 #  index_contacts_on_account_id_and_contact_type         (account_id,contact_type)
 #  index_contacts_on_account_id_and_group_type           (account_id,group_type)
 #  index_contacts_on_account_id_and_last_activity_at     (account_id,last_activity_at DESC NULLS LAST)
+#  index_contacts_on_account_id_and_marketing_opt_out    (account_id,marketing_opt_out)
 #  index_contacts_on_blocked                             (blocked)
 #  index_contacts_on_company_id                          (company_id)
 #  index_contacts_on_language_id                         (language_id)
@@ -54,6 +58,7 @@ class Contact < ApplicationRecord # rubocop:disable Metrics/ClassLength
   include AvailabilityStatusable
   include Labelable
   include LlmFormattable
+  include MarketingOptOutable
 
   validates :account_id, presence: true
   validates :email, allow_blank: true, uniqueness: { scope: [:account_id], case_sensitive: false },
@@ -197,7 +202,10 @@ class Contact < ApplicationRecord # rubocop:disable Metrics/ClassLength
       thumbnail: avatar_url,
       blocked: blocked,
       language_id: language_id,
-      language_code: language&.code
+      language_code: language&.code,
+      marketing_opt_out: marketing_opt_out,
+      marketing_opt_out_at: marketing_opt_out_at&.to_i,
+      marketing_opt_out_source: marketing_opt_out_source
     }
   end
 

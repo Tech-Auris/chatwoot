@@ -618,6 +618,35 @@ describe Conversations::FilterService do
     end
   end
 
+  describe '#perform on the contact marketing opt-out filter' do
+    let!(:account) { create(:account) }
+    let!(:admin) { create(:user, account: account, role: :administrator) }
+    let!(:inbox) { create(:inbox, account: account, enable_auto_assignment: false) }
+    let!(:opted_out_conversation) { create(:conversation, account: account, inbox: inbox) }
+    let!(:other_conversation) { create(:conversation, account: account, inbox: inbox) }
+    let(:params) do
+      {
+        payload: [
+          ActionController::Parameters.new(
+            attribute_key: 'marketing_opt_out', filter_operator: 'equal_to', values: [true], query_operator: nil
+          )
+        ],
+        page: 1
+      }
+    end
+
+    before do
+      account.conversations.where.not(id: [opted_out_conversation.id, other_conversation.id]).destroy_all
+      opted_out_conversation.contact.opt_out!(source: 'meta')
+    end
+
+    it 'returns the conversations whose contact has the opt-out on' do
+      result = filter_service.new(params, admin, account).perform
+
+      expect(result[:conversations].map(&:id)).to contain_exactly(opted_out_conversation.id)
+    end
+  end
+
   describe '#perform on ai_enabled filter' do
     let!(:account) { create(:account) }
     let!(:admin) { create(:user, account: account, role: :administrator) }

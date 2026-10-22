@@ -221,6 +221,7 @@
             "ERROR": "Could not load the audience.",
             "SUMMARY": "{count} contact(s) in the audience.",
             "WITHOUT_PHONE": " {count} without a phone number — they won't receive it.",
+            "OPTED_OUT": " {count} with the marketing opt-out on, left out.",
             "NAME": "Name",
             "PHONE": "Phone",
             "EMAIL": "Email",
@@ -229,6 +230,7 @@
             "NEXT": "Next",
             "PAGE": "Page {current} of {total}"
           },
+          "OPTED_OUT_WARNING": "1 contact will be left out because of the marketing opt-out | {count} contacts will be left out because of the marketing opt-out",
           "SCHEDULED_AT": {
             "LABEL": "Scheduled time",
             "PLACEHOLDER": "Choose the date and time to send",
@@ -289,6 +291,7 @@
           "FAILED": "Failed",
           "SUCCESS_RATE": "Success rate"
         },
+        "SKIPPED_OPT_OUT": "Not sent (opt-out): {count} contact | Not sent (opt-out): {count} contacts",
         "STATUS": {
           "SENT": "Sent",
           "DELIVERED": "Delivered",
