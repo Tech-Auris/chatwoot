@@ -94,6 +94,14 @@ const filterTypes = [
     attributeModel: 'standard',
   },
   {
+    attributeKey: 'marketing_opt_out',
+    attributeI18nKey: 'MARKETING_OPT_OUT',
+    inputType: 'search_select',
+    dataType: 'text',
+    filterOperators: OPERATOR_TYPES_1,
+    attributeModel: 'standard',
+  },
+  {
     attributeKey: 'labels',
     attributeI18nKey: 'LABELS',
     inputType: 'multi_select',
@@ -147,6 +155,10 @@ export const filterAttributeGroups = [
       {
         key: 'blocked',
         i18nKey: 'BLOCKED',
+      },
+      {
+        key: 'marketing_opt_out',
+        i18nKey: 'MARKETING_OPT_OUT',
       },
       {
         key: 'labels',

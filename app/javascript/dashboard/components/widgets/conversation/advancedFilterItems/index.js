@@ -39,6 +39,14 @@ const filterTypes = [
     attributeModel: 'standard',
   },
   {
+    attributeKey: 'marketing_opt_out',
+    attributeI18nKey: 'MARKETING_OPT_OUT',
+    inputType: 'search_select',
+    dataType: 'text',
+    filterOperators: OPERATOR_TYPES_1,
+    attributeModel: 'standard',
+  },
+  {
     attributeKey: 'inbox_id',
     attributeI18nKey: 'INBOX_NAME',
     inputType: 'search_select',
@@ -144,6 +152,10 @@ export const filterAttributeGroups = [
       {
         key: 'ai_enabled',
         i18nKey: 'AI_ENABLED',
+      },
+      {
+        key: 'marketing_opt_out',
+        i18nKey: 'MARKETING_OPT_OUT',
       },
       {
         key: 'inbox_id',

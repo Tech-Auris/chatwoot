@@ -122,6 +122,19 @@ describe Contacts::FilterService do
       end
     end
 
+    context 'with the marketing opt-out' do
+      it 'filters the contacts with the opt-out on' do
+        opted_out = create(:contact, account: account, email: Faker::Internet.unique.email)
+        opted_out.opt_out!(source: 'meta')
+        params = { payload: [{ attribute_key: 'marketing_opt_out', filter_operator: 'equal_to', values: ['true'],
+                               query_operator: nil }.with_indifferent_access] }
+
+        result = filter_service.new(account, first_user, params).perform
+
+        expect(result[:contacts].map(&:id)).to eq([opted_out.id])
+      end
+    end
+
     context 'with standard attributes - blocked' do
       it 'filter contacts by blocked' do
         blocked_contact = create(

@@ -1,5 +1,19 @@
 {
   "CONTACT_PANEL": {
+    "MARKETING_OPT_OUT": {
+      "TITLE": "Opt-out de marketing",
+      "OFF_HELP": "Ligado, este contato não recebe mais campanhas nem follow-ups. Respostas, lembretes e confirmações continuam saindo.",
+      "ON_SINCE": "Ligado em {date}, {source}",
+      "SOURCE": {
+        "MANUAL": "por um atendente",
+        "META": "pela Meta (paciente parou de receber marketing)",
+        "TEMPLATE_BUTTON": "pelo botão do template",
+        "AI": "pela IA, a pedido do paciente"
+      },
+      "TURNED_ON": "Opt-out ligado: este contato não recebe mais campanhas nem follow-ups",
+      "TURNED_OFF": "Opt-out desligado: campanhas e follow-ups voltam a chegar a este contato",
+      "ERROR": "Não foi possível alterar o opt-out. Tente novamente."
+    },
     "NOT_AVAILABLE": "Indisponível",
     "EMAIL_ADDRESS": "Endereço de e-mail",
     "PHONE_NUMBER": "Número de telefone",
@@ -418,6 +432,9 @@
       "LAST_ACTIVITY": "Última atividade",
       "REFERER_LINK": "Link de origem",
       "BLOCKED": "Bloqueado",
+      "MARKETING_OPT_OUT": "Opt-out de marketing",
+      "MARKETING_OPT_OUT_TRUE": "Com opt-out",
+      "MARKETING_OPT_OUT_FALSE": "Sem opt-out",
       "BLOCKED_TRUE": "Verdadeiro",
       "BLOCKED_FALSE": "Falso",
       "BUTTONS": {

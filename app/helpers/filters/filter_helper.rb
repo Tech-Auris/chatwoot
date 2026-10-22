@@ -37,6 +37,8 @@ module Filters::FilterHelper
       handle_additional_attributes(query_hash, filter_operator_value, current_filter['data_type'])
     when 'contact_additional_attributes'
       handle_contact_additional_attributes(query_hash, filter_operator_value)
+    when 'contact_standard'
+      "contacts.#{query_hash[:attribute_key]} #{filter_operator_value} #{query_hash[:query_operator]}"
     else
       handle_standard_attributes(current_filter, query_hash, current_index, filter_operator_value)
     end

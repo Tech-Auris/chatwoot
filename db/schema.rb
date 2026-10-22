@@ -455,6 +455,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_22_150000) do
     t.integer "cadence_seconds", default: 10, null: false
     t.string "conversation_label"
     t.string "audience_file_name"
+    t.integer "skipped_opt_out_count", default: 0, null: false
     t.index ["account_id"], name: "index_campaigns_on_account_id"
     t.index ["campaign_status"], name: "index_campaigns_on_campaign_status"
     t.index ["campaign_type"], name: "index_campaigns_on_campaign_type"
@@ -827,11 +828,15 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_22_150000) do
     t.bigint "company_id"
     t.integer "group_type", default: 0, null: false
     t.bigint "language_id"
+    t.boolean "marketing_opt_out", default: false, null: false
+    t.datetime "marketing_opt_out_at"
+    t.string "marketing_opt_out_source"
     t.index "lower((email)::text), account_id", name: "index_contacts_on_lower_email_account_id"
     t.index ["account_id", "contact_type"], name: "index_contacts_on_account_id_and_contact_type"
     t.index ["account_id", "email", "phone_number", "identifier"], name: "index_contacts_on_nonempty_fields", where: "(((email)::text <> ''::text) OR ((phone_number)::text <> ''::text) OR ((identifier)::text <> ''::text))"
     t.index ["account_id", "group_type"], name: "index_contacts_on_account_id_and_group_type"
     t.index ["account_id", "last_activity_at"], name: "index_contacts_on_account_id_and_last_activity_at", order: { last_activity_at: "DESC NULLS LAST" }
+    t.index ["account_id", "marketing_opt_out"], name: "index_contacts_on_account_id_and_marketing_opt_out"
     t.index ["account_id"], name: "index_contacts_on_account_id"
     t.index ["account_id"], name: "index_resolved_contact_account_id", where: "(((email)::text <> ''::text) OR ((phone_number)::text <> ''::text) OR ((identifier)::text <> ''::text))"
     t.index ["blocked"], name: "index_contacts_on_blocked"

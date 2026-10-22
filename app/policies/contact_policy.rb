@@ -43,6 +43,10 @@ class ContactPolicy < ApplicationPolicy
     true
   end
 
+  def marketing_opt_out?
+    true
+  end
+
   def show?
     true
   end

@@ -99,6 +99,7 @@ class Whatsapp::Providers::BaseService
     message.external_error = error_message
     message.status = :failed
     message.save!
+    Whatsapp::MarketingOptOut.refused_by_meta!(message, error_code)
   end
 
   def create_buttons(items)

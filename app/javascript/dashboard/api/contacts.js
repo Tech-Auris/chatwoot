@@ -40,6 +40,13 @@ class ContactAPI extends ApiClient {
     return axios.patch(`${this.url}/${id}?include_contact_inboxes=false`, data);
   }
 
+  // On from anyone; off only from a person (the API refuses the AI and bots).
+  setMarketingOptOut(contactId, enabled) {
+    return axios.post(`${this.url}/${contactId}/marketing_opt_out`, {
+      enabled,
+    });
+  }
+
   getConversations(contactId, page = 1) {
     return axios.get(`${this.url}/${contactId}/conversations`, {
       params: { page },

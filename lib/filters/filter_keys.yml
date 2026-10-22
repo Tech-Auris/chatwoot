@@ -56,6 +56,13 @@ conversations:
     filter_operators:
       - "equal_to"
       - "not_equal_to"
+  # A column on the conversation's contact, joined in by Conversations::FilterService.
+  marketing_opt_out:
+    attribute_type: "contact_standard"
+    data_type: "boolean"
+    filter_operators:
+      - "equal_to"
+      - "not_equal_to"
   funnel_stage_id:
     attribute_type: "standard"
     data_type: "Number"
@@ -245,6 +252,12 @@ contacts:
       - "is_less_than"
       - "days_before"
   blocked:
+    attribute_type: "standard"
+    data_type: "boolean"
+    filter_operators:
+      - "equal_to"
+      - "not_equal_to"
+  marketing_opt_out:
     attribute_type: "standard"
     data_type: "boolean"
     filter_operators:

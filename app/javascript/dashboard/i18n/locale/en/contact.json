@@ -1,5 +1,19 @@
 {
   "CONTACT_PANEL": {
+    "MARKETING_OPT_OUT": {
+      "TITLE": "Marketing opt-out",
+      "OFF_HELP": "Turned on, this contact no longer gets campaigns or follow-ups. Replies, reminders and confirmations keep going out.",
+      "ON_SINCE": "On since {date}, {source}",
+      "SOURCE": {
+        "MANUAL": "by an agent",
+        "META": "by Meta (the patient stopped marketing messages)",
+        "TEMPLATE_BUTTON": "by the template button",
+        "AI": "by the AI, at the patient's request"
+      },
+      "TURNED_ON": "Opt-out turned on: no more campaigns or follow-ups for this contact",
+      "TURNED_OFF": "Opt-out turned off: campaigns and follow-ups reach this contact again",
+      "ERROR": "Could not change the opt-out. Please try again."
+    },
     "NOT_AVAILABLE": "Not Available",
     "EMAIL_ADDRESS": "Email Address",
     "PHONE_NUMBER": "Phone number",
@@ -419,6 +433,9 @@
       "LAST_ACTIVITY": "Last activity",
       "REFERER_LINK": "Referer link",
       "BLOCKED": "Blocked",
+      "MARKETING_OPT_OUT": "Marketing opt-out",
+      "MARKETING_OPT_OUT_TRUE": "With opt-out",
+      "MARKETING_OPT_OUT_FALSE": "Without opt-out",
       "BLOCKED_TRUE": "True",
       "BLOCKED_FALSE": "False",
       "BUTTONS": {
