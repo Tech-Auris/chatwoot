@@ -11,6 +11,8 @@ class Api::V1::Accounts::AudiencesController < Api::V1::Accounts::BaseController
   def index
     @audiences = Current.account.audiences.includes(:created_by).order(created_at: :desc)
     @audiences = @audiences.where(kind: params[:kind]) if Audience.kinds.key?(params[:kind])
+    recent = AudienceEvent.joins(:audience).where(audiences: { account_id: Current.account.id }).where(created_at: 30.days.ago..)
+    @stats = { downloads: recent.download.count, campaigns: recent.campaign.count, last_download_at: recent.download.maximum(:created_at)&.to_i }
   end
 
   # Opening an audience brings its size up to date.
@@ -51,8 +53,11 @@ class Api::V1::Accounts::AudiencesController < Api::V1::Accounts::BaseController
     render json: { contacts_count: resolver.count, ignored_conditions: resolver.ignored_conditions }
   end
 
+  # Each member with its latest conversation's stage, labels and inbox, for
+  # the table of an open audience.
   def contacts
     @contacts = @audience.contacts.order(:name).page(params[:page] || 1).per(CONTACTS_PER_PAGE)
+    @latest_conversations = latest_conversations(@contacts.map(&:id))
   end
 
   # "Congelar como público fixo": a static copy of the members right now.
@@ -83,6 +88,13 @@ class Api::V1::Accounts::AudiencesController < Api::V1::Accounts::BaseController
   end
 
   private
+
+  def latest_conversations(contact_ids)
+    Current.account.conversations.where(contact_id: contact_ids)
+           .select('DISTINCT ON (conversations.contact_id) conversations.*')
+           .reorder(Arel.sql('conversations.contact_id, conversations.created_at DESC'))
+           .includes(:inbox, :funnel_stage).index_by(&:contact_id)
+  end
 
   def fetch_audience
     @audience = Current.account.audiences.find(params[:id])

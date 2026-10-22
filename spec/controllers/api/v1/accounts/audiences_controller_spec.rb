@@ -123,6 +123,7 @@ RSpec.describe 'Audiences API', type: :request do
     get "#{base}/#{audience.id}/contacts", headers: agent.create_new_auth_token
 
     expect(body.pluck('name')).to eq(['Maria'])
+    expect(body.first).to include('labels' => ['abc'], 'inbox_name' => inbox.name)
     expect(response.parsed_body['meta']['total_count']).to eq(1)
   end
 
@@ -134,6 +135,7 @@ RSpec.describe 'Audiences API', type: :request do
     get base, params: { kind: 'static' }, headers: agent.create_new_auth_token
 
     expect(body.pluck('name')).to eq(['Fixo'])
+    expect(response.parsed_body['meta']).to include('downloads_last_30_days' => 0, 'campaigns_last_30_days' => 0)
   end
 
   it 'shows what was done with an audience' do
