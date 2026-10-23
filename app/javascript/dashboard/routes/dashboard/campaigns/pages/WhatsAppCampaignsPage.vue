@@ -19,7 +19,18 @@ const router = useRouter();
 const route = useRoute();
 
 const selectedCampaign = ref(null);
-const [showWhatsAppCampaignDialog, toggleWhatsAppCampaignDialog] = useToggle();
+// "Usar em disparo" on an audience lands here with ?audience_id=: the form
+// opens with that audience picked.
+const initialAudienceId = ref(route.query.audience_id || null);
+const [showWhatsAppCampaignDialog, toggleWhatsAppCampaignDialog] = useToggle(
+  !!initialAudienceId.value
+);
+
+const closeCampaignDialog = () => {
+  toggleWhatsAppCampaignDialog(false);
+  initialAudienceId.value = null;
+  if (route.query.audience_id) router.replace({ query: {} });
+};
 
 const uiFlags = useMapGetter('campaigns/getUIFlags');
 const isFetchingCampaigns = computed(() => uiFlags.value.isFetching);
@@ -70,7 +81,8 @@ const handleDelete = campaign => {
     <template #action>
       <WhatsAppCampaignDialog
         v-if="showWhatsAppCampaignDialog"
-        @close="toggleWhatsAppCampaignDialog(false)"
+        :initial-audience-id="initialAudienceId"
+        @close="closeCampaignDialog"
       />
     </template>
     <div

@@ -21,17 +21,19 @@
 #  created_at                         :datetime         not null
 #  updated_at                         :datetime         not null
 #  account_id                         :bigint           not null
+#  audience_source_id                 :bigint
 #  display_id                         :integer          not null
 #  inbox_id                           :bigint           not null
 #  sender_id                          :integer
 #
 # Indexes
 #
-#  index_campaigns_on_account_id       (account_id)
-#  index_campaigns_on_campaign_status  (campaign_status)
-#  index_campaigns_on_campaign_type    (campaign_type)
-#  index_campaigns_on_inbox_id         (inbox_id)
-#  index_campaigns_on_scheduled_at     (scheduled_at)
+#  index_campaigns_on_account_id          (account_id)
+#  index_campaigns_on_audience_source_id  (audience_source_id)
+#  index_campaigns_on_campaign_status     (campaign_status)
+#  index_campaigns_on_campaign_type       (campaign_type)
+#  index_campaigns_on_inbox_id            (inbox_id)
+#  index_campaigns_on_scheduled_at        (scheduled_at)
 #
 class Campaign < ApplicationRecord
   include UrlHelper
@@ -56,11 +58,14 @@ class Campaign < ApplicationRecord
   validate :prevent_completed_campaign_from_update, on: :update
   validate :sender_must_belong_to_account
   validate :inbox_must_belong_to_account
+  validate :saved_audience_within_limit, on: :create
   validate :template_quality_must_allow_sending, on: :create
 
   belongs_to :account
   belongs_to :inbox
   belongs_to :sender, class_name: 'User', optional: true
+  # The saved audience (Marketing → Públicos) the campaign was sent to.
+  belongs_to :audience_source, class_name: 'Audience', optional: true
 
   enum campaign_type: { ongoing: 0, one_off: 1 }
   # TODO : enabled attribute is unneccessary . lets move that to the campaign status with additional statuses like draft, disabled etc.
@@ -166,5 +171,21 @@ class Campaign < ApplicationRecord
   # creating db triggers
   trigger.before(:insert).for_each(:row) do
     "NEW.display_id := nextval('camp_dpid_seq_' || NEW.account_id);"
+  end
+
+  # A saved audience must exist in the account and fit the 10 thousand limit
+  # (the campaign reads it again, and checks again, when it starts).
+  def saved_audience_within_limit
+    saved_id = saved_audience_id
+    return if saved_id.blank?
+
+    saved = account&.audiences&.find_by(id: saved_id)
+    return errors.add(:audience, 'was not found') if saved.nil?
+
+    errors.add(:audience, "has more than #{Audience::MAX_CONTACTS} contacts") if saved.contacts.count > Audience::MAX_CONTACTS
+  end
+
+  def saved_audience_id
+    Array(audience).map(&:with_indifferent_access).find { |entry| entry[:type] == 'Audience' }&.dig(:id)
   end
 end

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
 import { useStoreGetters } from 'dashboard/composables/store';
@@ -8,6 +8,7 @@ import FunnelAPI from 'dashboard/api/funnel';
 import LossReasonAPI from 'dashboard/api/lossReason';
 
 import FunnelBoard from './components/FunnelBoard.vue';
+import SaveAsAudienceDialog from 'dashboard/routes/dashboard/marketing/audiences/components/SaveAsAudienceDialog.vue';
 import FunnelList from './components/FunnelList.vue';
 import FunnelOverview from './components/FunnelOverview.vue';
 import FunnelConversion from './components/FunnelConversion.vue';
@@ -259,6 +260,35 @@ const isEmpty = computed(() => !isLoading.value && stages.value.length === 0);
 
 watch(filters, debouncedFetch, { deep: true });
 
+// "Salvar como público" on a column: its stage plus the inbox and origin in
+// use; the period becomes the audience's window.
+const saveAsAudienceDialogRef = ref(null);
+const audienceStage = ref(null);
+const condition = (key, value) => ({
+  attribute_key: key,
+  filter_operator: 'equal_to',
+  values: [value],
+});
+const audienceRule = computed(() => {
+  const { inboxId, origem } = filters.value;
+  return [
+    condition('funnel_stage_id', audienceStage.value.id),
+    inboxId && condition('inbox_id', Number(inboxId)),
+    origem && condition('origem', origem),
+  ].filter(Boolean);
+});
+const audienceWindow = computed(() => {
+  const { fromDate, toDate } = filters.value;
+  return fromDate && toDate
+    ? { type: 'range', from: fromDate, to: toDate }
+    : { type: 'all' };
+});
+const openSaveAsAudience = async stage => {
+  audienceStage.value = stage;
+  await nextTick();
+  saveAsAudienceDialogRef.value?.open();
+};
+
 onMounted(fetchFunnel);
 </script>
 
@@ -331,6 +361,7 @@ onMounted(fetchFunnel);
         :loading-more-stage-ids="loadingMoreStageIds"
         @move="moveConversation"
         @load-more="loadMoreForStage"
+        @save-as-audience="openSaveAsAudience"
       />
 
       <FunnelList
@@ -341,6 +372,13 @@ onMounted(fetchFunnel);
         :locale="accountLocale"
       />
     </template>
+
+    <SaveAsAudienceDialog
+      ref="saveAsAudienceDialogRef"
+      :rule="audienceStage ? audienceRule : []"
+      :window="audienceWindow"
+      :pick-loss-reason="!!audienceStage?.requires_loss_reason"
+    />
 
     <LossReasonDialog
       ref="lossReasonDialogRef"
