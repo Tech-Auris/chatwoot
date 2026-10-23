@@ -723,6 +723,11 @@ const menuItems = computed(() => {
           to: accountScopedRoute('marketing_analytics_index'),
           tag: 'BETA',
         },
+        {
+          name: 'Audiences',
+          label: t('SIDEBAR.AUDIENCES'),
+          to: accountScopedRoute('marketing_audiences_index'),
+        },
       ],
     },
     // Mídia — hub central com todas as imagens, documentos e links que a

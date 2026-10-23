@@ -1,0 +1,221 @@
+{
+  "AUDIENCES": {
+    "HEADER": "Audiences",
+    "DESCRIPTION": "Contact lists that keep themselves up to date from a rule and a time window, or fixed lists.",
+    "NEW": "New audience",
+    "IMPORT": "Import CSV",
+    "LOADING": "Loading...",
+    "LOAD_ERROR": "Could not load the audiences. Please try again.",
+    "STATS": {
+      "ACTIVE": "Audiences",
+      "DOWNLOADS": "Downloads · 30 days",
+      "CAMPAIGNS": "Campaigns · 30 days",
+      "CAMPAIGNS_HINT": "used an audience as the target",
+      "LAST_DOWNLOAD": "last: {date}",
+      "NO_DOWNLOAD": "none yet"
+    },
+    "FILTER": {
+      "ALL": "All",
+      "DYNAMIC": "Dynamic",
+      "STATIC": "Fixed"
+    },
+    "KIND": {
+      "DYNAMIC": "Dynamic",
+      "STATIC": "Fixed"
+    },
+    "TABLE": {
+      "NAME": "Audience",
+      "KIND": "Type",
+      "RULE": "Rule that feeds it",
+      "WINDOW": "Window",
+      "CONTACTS": "Contacts",
+      "UPDATED": "Updated",
+      "CREATED_BY": "Created by {name} · {date}"
+    },
+    "EMPTY": {
+      "TITLE": "No audiences yet",
+      "SUBTITLE": "Create an audience from a rule, such as stage and label, or import a CSV list."
+    },
+    "FOOTNOTE": "The number of contacts is always the current one: it goes up and down as contacts enter and leave the rule. The window looks at the date the conversation started.",
+    "WINDOW": {
+      "ALL": "All time",
+      "LAST_DAYS": "Last {days} days",
+      "RANGE": "{from} to {to}"
+    },
+    "RULE": {
+      "EVERYONE": "Every contact with a conversation",
+      "EXCEPT": "Except",
+      "FIXED_LIST": "Fixed list"
+    },
+    "FIELDS": {
+      "LABELS": "Label",
+      "FUNNEL_STAGE_ID": "Funnel stage",
+      "LOSS_REASON_ID": "Loss reason",
+      "ORIGEM": "Lead origin",
+      "INBOX_ID": "Inbox",
+      "ASSIGNEE_ID": "Assigned agent",
+      "STATUS": "Conversation status"
+    },
+    "OPERATORS": {
+      "IS": "is",
+      "IS_NOT": "is not",
+      "INCLUDES": "includes",
+      "EXCLUDES": "does not include"
+    },
+    "STATUS": {
+      "OPEN": "Open",
+      "RESOLVED": "Resolved",
+      "PENDING": "Pending",
+      "SNOOZED": "Snoozed"
+    },
+    "FORM": {
+      "NEW_TITLE": "New audience",
+      "EDIT_TITLE": "Edit audience",
+      "DESCRIPTION": "Say who should be in it, in which period and who stays out. The rest is automatic.",
+      "REQUIRED_NOTE": "Required: name and window. The exclusion is optional.",
+      "STEP_NAME": "Identification",
+      "NAME_LABEL": "Audience name",
+      "NAME_PLACEHOLDER": "E.g. Qualifying · ABC",
+      "NAME_HELP": "Just for you to recognize it in the list.",
+      "STEP_KIND": "Type",
+      "KIND_DYNAMIC_HELP": "A rule: whoever starts meeting it enters, whoever stops meeting it leaves.",
+      "KIND_STATIC_HELP": "A photo: keeps today's contacts, and the list only changes by hand.",
+      "STEP_RULE": "Who enters",
+      "RULE_HELP": "A contact enters when one of its conversations meets every condition below.",
+      "ADD_CONDITION": "Condition",
+      "AND": "and",
+      "STEP_WINDOW": "Window",
+      "WINDOW_HELP": "Only conversations started within this period count.",
+      "WINDOW_ALL": "All time",
+      "WINDOW_LAST_DAYS": "Last days",
+      "WINDOW_RANGE": "Date range",
+      "DAYS_LABEL": "Number of days",
+      "FROM": "From",
+      "TO": "To",
+      "WINDOW_NOTE": "\"Last days\" moves along with time. \"Date range\" is fixed, good for a report on a closed month.",
+      "STEP_EXCLUSION": "Exclusion",
+      "OPTIONAL": "optional",
+      "EXCLUSION_HELP": "Remove from the audience whoever meets any of these conditions, even if they meet the entry rule.",
+      "ADD_EXCLUSION": "Exclusion condition",
+      "OR": "or",
+      "FIELD_PLACEHOLDER": "Field",
+      "VALUE_PLACEHOLDER": "Choose",
+      "REMOVE_CONDITION": "Remove condition",
+      "CANCEL": "Cancel",
+      "CREATE": "Create audience",
+      "SAVE": "Save changes",
+      "SIZE_TITLE": "Size now",
+      "SIZE_HINT": "contacts match today",
+      "SIZE_UPDATING": "Calculating...",
+      "SUMMARY": "Summary",
+      "AUTO_UPDATE_NOTE": "Updates by itself, with nobody adding contacts.",
+      "STATIC_NOTE": "Keeps today's contacts. Afterwards the list only changes by hand.",
+      "LIVE_NOTE": "The size changes as soon as you touch the rule, the window or the exclusion.",
+      "IGNORED": "Conditions the audience does not accept were left out: {fields}",
+      "SAVED": "Audience saved",
+      "ERROR": "Could not save the audience. Check the fields and try again."
+    },
+    "SHOW": {
+      "BACK": "Audiences",
+      "UPDATED": "Updated {time}",
+      "FED_BY_RULE": "Fed by the rule below.",
+      "STATIC_LIST": "Fixed list: only changes by hand.",
+      "EDIT": "Edit rule",
+      "RENAME": "Edit",
+      "SNAPSHOT": "Freeze as a fixed audience",
+      "ADD_CONTACTS": "Add contacts",
+      "DELETE": "Delete",
+      "CONTACTS_COUNT": "Contacts in the audience",
+      "DOWNLOADS": "Downloads · 30 days",
+      "OVER_LIMIT": "This audience has more than 10 thousand contacts: it cannot be downloaded or used in a campaign. Split it, for example with a smaller window.",
+      "CONTACTS_TITLE": "Contacts",
+      "CONTACTS_SHOWING": "showing {shown} of {total}",
+      "TABLE": {
+        "NAME": "Name",
+        "PHONE": "Phone",
+        "STAGE": "Current stage",
+        "LABELS": "Labels",
+        "INBOX": "Inbox"
+      },
+      "REMOVE": "Remove from the audience",
+      "NO_CONTACTS": "No contacts in this audience right now.",
+      "RULE_TITLE": "Rule",
+      "WINDOW_TITLE": "Window",
+      "EXCLUSION_TITLE": "Exclusion",
+      "NO_EXCLUSION": "None",
+      "RULE_NOTE": "Meets the rule, enters. Stops meeting it, or falls in the exclusion, leaves. A contact enters through any of its conversations that meets everything.",
+      "ACTIONS_TITLE": "Actions on this audience",
+      "ACTIONS_EMPTY": "No actions yet.",
+      "ACTIONS_NOTE": "Record of who downloaded the list, which campaigns used this audience and when it was frozen.",
+      "EVENT": {
+        "DOWNLOAD": "Download · {user}",
+        "CAMPAIGN": "Campaign · {campaign}",
+        "SNAPSHOT": "Frozen as a fixed audience · {user}"
+      },
+      "EVENT_DETAIL": "{date} · {count} contacts",
+      "DELETE_TITLE": "Delete audience",
+      "DELETE_DESCRIPTION": "The audience \"{name}\" will be deleted. The contacts stay in the account.",
+      "DELETED": "Audience deleted",
+      "REMOVED": "Contact removed from the audience",
+      "USE_IN_CAMPAIGN": "Use in campaign"
+    },
+    "SNAPSHOT_DIALOG": {
+      "TITLE": "Freeze as a fixed audience",
+      "DESCRIPTION": "Creates a fixed audience with today's {count} contacts. It no longer changes by itself.",
+      "NAME": "Name of the new audience",
+      "CONFIRM": "Freeze",
+      "SUCCESS": "Fixed audience created"
+    },
+    "ADD_DIALOG": {
+      "TITLE": "Add contacts",
+      "DESCRIPTION": "Search by name, phone or e-mail and choose the contacts.",
+      "SEARCH": "Search contacts",
+      "CONFIRM": "Add",
+      "SUCCESS": "Contacts added",
+      "EMPTY": "No contacts found"
+    },
+    "IMPORT_DIALOG": {
+      "TITLE": "Import CSV",
+      "DESCRIPTION": "Creates a fixed audience with the spreadsheet's contacts. Required columns: name and phone_number, with the phone starting with +55.",
+      "NAME": "Audience name",
+      "FILE": "CSV file",
+      "CONFIRM": "Import",
+      "SUCCESS": "Audience created with {count} contacts",
+      "INVALID_ROWS": "{count} rows were skipped for invalid data.",
+      "ERROR": "Could not import the file.",
+      "SAMPLE": "Download a sample CSV."
+    },
+    "DOWNLOAD": {
+      "BUTTON": "Download list",
+      "TITLE": "Download list · {name}",
+      "DESCRIPTION": "Take the contacts to a spreadsheet and cross them with whatever you need.",
+      "COLUMNS": "Columns",
+      "NOTE": "Stage, loss reason, labels, inbox, origin, origin date, agent and conversation number come from the contact's latest conversation. The list follows the audience's rule and window; for another period, create or edit an audience with that window.",
+      "FORMAT_NOTE": "CSV format, which opens directly in Excel and Google Sheets.",
+      "CONFIRM": "Download",
+      "SUCCESS": "Download started. The file will be saved to your computer.",
+      "ERROR": "Could not download the list.",
+      "COLUMN": {
+        "NAME": "Name",
+        "PHONE_NUMBER": "Phone",
+        "EMAIL": "E-mail",
+        "FUNNEL_STAGE": "Current stage",
+        "LOSS_REASON": "Loss reason",
+        "LABELS": "Labels",
+        "INBOX": "Inbox",
+        "ORIGEM": "Lead origin",
+        "ORIGIN_DATE": "Origin date",
+        "ASSIGNEE": "Assigned agent",
+        "CONVERSATION_ID": "Conversation number"
+      }
+    },
+    "SAVE_AS": {
+      "BUTTON": "Save as audience",
+      "TITLE": "Save as audience",
+      "DESCRIPTION": "The audience starts with what you see here. Name it and choose whether it keeps updating or stays as it is now.",
+      "LOSS_REASON": "Loss reason",
+      "ANY_LOSS_REASON": "Any reason",
+      "SIZE": "{count} contacts fit today"
+    }
+  }
+}

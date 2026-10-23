@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Draggable from 'vuedraggable';
 
+import NextButton from 'dashboard/components-next/button/Button.vue';
 import FunnelCard from './FunnelCard.vue';
 import { formatCurrency } from '../funnelFormatters';
 
@@ -17,7 +18,7 @@ const props = defineProps({
   loadingMoreStageIds: { type: Array, default: () => [] },
 });
 
-const emit = defineEmits(['move', 'loadMore']);
+const emit = defineEmits(['move', 'loadMore', 'saveAsAudience']);
 
 const { t } = useI18n();
 
@@ -77,6 +78,15 @@ const requestMore = stage => emit('loadMore', stage);
             >
               {{ stage.name }}
             </span>
+            <NextButton
+              v-tooltip.top="t('AUDIENCES.SAVE_AS.BUTTON')"
+              icon="i-lucide-users-round"
+              slate
+              ghost
+              xs
+              class="ltr:ml-auto rtl:mr-auto"
+              @click="emit('saveAsAudience', stage)"
+            />
           </div>
           <span class="text-xs text-n-slate-11">
             {{ stageSummary(stage) }}

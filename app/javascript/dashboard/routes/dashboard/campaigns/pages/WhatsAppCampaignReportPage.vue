@@ -175,6 +175,19 @@ const goBack = () =>
         hide-actions
       />
 
+      <p v-if="campaign.audience_source" class="mb-0 text-sm text-n-slate-11">
+        {{ t('CAMPAIGN.WHATSAPP.REPORT.AUDIENCE_SOURCE') }}
+        <router-link
+          :to="{
+            name: 'marketing_audiences_show',
+            params: { audienceId: campaign.audience_source.id },
+          }"
+          class="text-n-blue-text hover:underline"
+        >
+          {{ campaign.audience_source.name }}
+        </router-link>
+      </p>
+
       <p
         v-if="summary.skipped_opt_out"
         class="mb-0 px-3 py-2 text-sm rounded-lg bg-n-amber-3 text-n-amber-11"

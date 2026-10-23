@@ -319,6 +319,21 @@ pt_BR:
       internal_chat_new_message: 'Nova mensagem de %{name}'
     attachment: 'Anexo'
     no_content: 'Sem conteúdo'
+  audiences:
+    export:
+      over_limit: 'Este público passa de %{limit} contatos. Divida o público, por exemplo com uma janela menor, para baixar.'
+      columns:
+        name: 'Nome'
+        phone_number: 'Telefone'
+        email: 'E-mail'
+        funnel_stage: 'Fase atual'
+        loss_reason: 'Motivo de perda'
+        labels: 'Etiquetas'
+        inbox: 'Caixa'
+        origem: 'Origem do lead'
+        origin_date: 'Data de origem'
+        assignee: 'Agente atribuído'
+        conversation_id: 'Número da conversa'
   conversations:
     captain:
       handoff: 'Transferindo para que outro agente dê assistência.'

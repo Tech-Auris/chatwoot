@@ -8,6 +8,7 @@ import addDays from 'date-fns/addDays';
 import DatePicker from 'vue-datepicker-next';
 import { formatFullDateTime } from 'dashboard/helper/scheduleDateShortcutHelpers';
 import CampaignsAPI from 'dashboard/api/campaigns';
+import AudiencesAPI from 'dashboard/api/audiences';
 
 import Input from 'dashboard/components-next/input/Input.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
@@ -23,6 +24,11 @@ import {
 } from 'dashboard/helper/templateQuality';
 import InboxStatusBadge from 'dashboard/components-next/Inbox/InboxStatusBadge.vue';
 import { campaignWarnings } from 'dashboard/helper/whatsappHealth';
+
+// "Usar em disparo" on an audience opens the form with it already picked.
+const props = defineProps({
+  initialAudienceId: { type: [Number, String], default: null },
+});
 
 const emit = defineEmits(['submit', 'cancel']);
 
@@ -47,6 +53,7 @@ const initialState = {
   cadenceValue: 10,
   audienceSource: 'labels',
   audienceContactIds: [],
+  savedAudienceId: null,
   shouldLabelConversations: false,
   conversationLabel: null,
 };
@@ -95,6 +102,9 @@ const rules = {
   },
   audienceContactIds: {
     required: requiredIf(() => state.audienceSource === 'file'),
+  },
+  savedAudienceId: {
+    required: requiredIf(() => state.audienceSource === 'audience'),
   },
   cadenceValue: { required },
 };
@@ -196,7 +206,62 @@ const audienceSourceOptions = computed(() => [
     value: 'file',
     label: t('CAMPAIGN.WHATSAPP.CREATE.FORM.AUDIENCE_SOURCE.FILE'),
   },
+  {
+    value: 'audience',
+    label: t('CAMPAIGN.WHATSAPP.CREATE.FORM.AUDIENCE_SOURCE.SAVED'),
+  },
 ]);
+
+// Saved audiences (Marketing → Públicos), with their size now.
+const savedAudiences = ref([]);
+const savedAudienceOptions = computed(() =>
+  savedAudiences.value.map(audience => ({
+    value: audience.id,
+    label: t('CAMPAIGN.WHATSAPP.CREATE.FORM.SAVED_AUDIENCE.OPTION', {
+      name: audience.name,
+      count: audience.contacts_count,
+    }),
+  }))
+);
+const savedAudiencePreview = ref(null);
+
+// Contacts the campaign would reach, to compare with the number's daily limit,
+// and those it leaves out because their marketing opt-out is on.
+const audienceCount = ref(0);
+const optedOutCount = ref(0);
+
+const loadSavedAudiences = async () => {
+  if (savedAudiences.value.length) return;
+  const { data } = await AudiencesAPI.list();
+  savedAudiences.value = data.payload;
+};
+
+watch(
+  () => state.audienceSource,
+  source => {
+    if (source === 'audience') loadSavedAudiences();
+  }
+);
+
+// Who the campaign reaches and who stays out, read again whenever the
+// audience changes.
+watch(
+  () => state.savedAudienceId,
+  async id => {
+    savedAudiencePreview.value = null;
+    optedOutCount.value = 0;
+    if (!id) return;
+    const { data } = await AudiencesAPI.campaignPreview(id);
+    savedAudiencePreview.value = data;
+    audienceCount.value = data.will_receive_count;
+  }
+);
+
+if (props.initialAudienceId) {
+  state.audienceSource = 'audience';
+  state.savedAudienceId = Number(props.initialAudienceId);
+  loadSavedAudiences();
+}
 
 const labelOptions = computed(() =>
   (formState.labels?.value ?? []).map(label => ({
@@ -235,18 +300,23 @@ const audiencePreviewRef = ref(null);
 
 // Enabled only once there is an audience to look at, which is also the moment
 // the list stops being empty.
-const canPreviewAudience = computed(() =>
-  state.audienceSource === 'file'
+const canPreviewAudience = computed(() => {
+  if (state.audienceSource === 'audience') return false;
+  return state.audienceSource === 'file'
     ? state.audienceContactIds.length > 0
-    : (state.selectedAudience?.length ?? 0) > 0
-);
+    : (state.selectedAudience?.length ?? 0) > 0;
+});
 
 const openAudiencePreview = () => audiencePreviewRef.value?.open();
 
-const audiencePayload = () =>
-  state.audienceSource === 'file'
+const audiencePayload = () => {
+  if (state.audienceSource === 'audience') {
+    return [{ id: state.savedAudienceId, type: 'Audience' }];
+  }
+  return state.audienceSource === 'file'
     ? state.audienceContactIds.map(id => ({ id, type: 'Contact' }))
     : state.selectedAudience?.map(id => ({ id, type: 'Label' }));
+};
 
 const cadenceUnitOptions = computed(() => [
   {
@@ -293,10 +363,6 @@ const selectedInbox = computed(() =>
   formState.inboxes.value?.find(inbox => inbox.id === state.inboxId)
 );
 
-// Contacts the campaign would reach, to compare with the number's daily limit,
-// and those it leaves out because their marketing opt-out is on.
-const audienceCount = ref(0);
-const optedOutCount = ref(0);
 watch(
   () => [
     state.audienceSource,
@@ -304,6 +370,8 @@ watch(
     state.audienceContactIds,
   ],
   async () => {
+    // A saved audience brings its own count (see savedAudiencePreview).
+    if (state.audienceSource === 'audience') return;
     const fromFile = state.audienceSource === 'file';
     const hasAudience = fromFile
       ? state.audienceContactIds.length
@@ -340,7 +408,9 @@ const isSubmitDisabled = computed(
   () =>
     v$.value.$invalid ||
     !hasRequiredTemplateParams.value ||
-    isTemplateBlocked.value
+    isTemplateBlocked.value ||
+    (state.audienceSource === 'audience' &&
+      !!savedAudiencePreview.value?.over_limit)
 );
 
 const formatToUTCString = localDateTime =>
@@ -494,6 +564,74 @@ watch(
         :message="formErrors.audience"
         class="[&>div>button]:bg-n-alpha-black2"
       />
+    </div>
+
+    <div
+      v-else-if="state.audienceSource === 'audience'"
+      class="flex flex-col gap-2"
+    >
+      <label
+        for="saved-audience"
+        class="mb-0.5 text-sm font-medium text-n-slate-12"
+      >
+        {{ t('CAMPAIGN.WHATSAPP.CREATE.FORM.SAVED_AUDIENCE.LABEL') }}
+      </label>
+      <ComboBox
+        id="saved-audience"
+        v-model="state.savedAudienceId"
+        :options="savedAudienceOptions"
+        :placeholder="
+          t('CAMPAIGN.WHATSAPP.CREATE.FORM.SAVED_AUDIENCE.PLACEHOLDER')
+        "
+        class="[&>div>button]:bg-n-alpha-black2"
+      />
+      <div
+        v-if="savedAudiencePreview"
+        class="flex flex-col gap-1 px-3 py-2 text-xs rounded-lg bg-n-alpha-2 text-n-slate-11"
+      >
+        <p class="mb-0 text-n-slate-12">
+          {{
+            t('CAMPAIGN.WHATSAPP.CREATE.FORM.SAVED_AUDIENCE.FROZEN_NOTE', {
+              count: savedAudiencePreview.total_count,
+            })
+          }}
+        </p>
+        <p class="mb-0">
+          {{
+            t('CAMPAIGN.WHATSAPP.CREATE.FORM.SAVED_AUDIENCE.WILL_RECEIVE', {
+              count: savedAudiencePreview.will_receive_count,
+            })
+          }}
+        </p>
+        <p v-if="savedAudiencePreview.opted_out_count" class="mb-0">
+          {{
+            t('CAMPAIGN.WHATSAPP.CREATE.FORM.SAVED_AUDIENCE.OPTED_OUT', {
+              count: savedAudiencePreview.opted_out_count,
+            })
+          }}
+        </p>
+        <p v-if="savedAudiencePreview.without_phone_count" class="mb-0">
+          {{
+            t('CAMPAIGN.WHATSAPP.CREATE.FORM.SAVED_AUDIENCE.WITHOUT_PHONE', {
+              count: savedAudiencePreview.without_phone_count,
+            })
+          }}
+        </p>
+        <p v-if="savedAudiencePreview.already_received_count" class="mb-0">
+          {{
+            t('CAMPAIGN.WHATSAPP.CREATE.FORM.SAVED_AUDIENCE.ALREADY_RECEIVED', {
+              count: savedAudiencePreview.already_received_count,
+            })
+          }}
+        </p>
+        <p v-if="savedAudiencePreview.over_limit" class="mb-0 text-n-ruby-11">
+          {{
+            t('CAMPAIGN.WHATSAPP.CREATE.FORM.SAVED_AUDIENCE.OVER_LIMIT', {
+              limit: savedAudiencePreview.limit,
+            })
+          }}
+        </p>
+      </div>
     </div>
 
     <div v-else class="flex flex-col gap-1">

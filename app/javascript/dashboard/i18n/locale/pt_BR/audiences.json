@@ -1,0 +1,221 @@
+{
+  "AUDIENCES": {
+    "HEADER": "Públicos",
+    "DESCRIPTION": "Listas de contatos que se atualizam sozinhas, a partir de uma regra e de uma janela de tempo, ou listas fixas.",
+    "NEW": "Novo público",
+    "IMPORT": "Importar CSV",
+    "LOADING": "Carregando...",
+    "LOAD_ERROR": "Não foi possível carregar os públicos. Tente novamente.",
+    "STATS": {
+      "ACTIVE": "Públicos",
+      "DOWNLOADS": "Downloads · 30 dias",
+      "CAMPAIGNS": "Campanhas · 30 dias",
+      "CAMPAIGNS_HINT": "usaram algum público como destino",
+      "LAST_DOWNLOAD": "último: {date}",
+      "NO_DOWNLOAD": "nenhum ainda"
+    },
+    "FILTER": {
+      "ALL": "Todos",
+      "DYNAMIC": "Dinâmicos",
+      "STATIC": "Fixos"
+    },
+    "KIND": {
+      "DYNAMIC": "Dinâmico",
+      "STATIC": "Fixo"
+    },
+    "TABLE": {
+      "NAME": "Público",
+      "KIND": "Tipo",
+      "RULE": "Regra que alimenta",
+      "WINDOW": "Janela",
+      "CONTACTS": "Contatos",
+      "UPDATED": "Atualizado",
+      "CREATED_BY": "Criado por {name} · {date}"
+    },
+    "EMPTY": {
+      "TITLE": "Nenhum público ainda",
+      "SUBTITLE": "Crie um público com uma regra, como fase e etiqueta, ou importe uma lista em CSV."
+    },
+    "FOOTNOTE": "O número de contatos é sempre o de agora: sobe e desce conforme os contatos entram e saem da regra. A janela olha a data em que a conversa nasceu.",
+    "WINDOW": {
+      "ALL": "Todo o período",
+      "LAST_DAYS": "Últimos {days} dias",
+      "RANGE": "{from} a {to}"
+    },
+    "RULE": {
+      "EVERYONE": "Todos os contatos com conversa",
+      "EXCEPT": "Exceto",
+      "FIXED_LIST": "Lista fixa"
+    },
+    "FIELDS": {
+      "LABELS": "Etiqueta",
+      "FUNNEL_STAGE_ID": "Fase do funil",
+      "LOSS_REASON_ID": "Motivo de perda",
+      "ORIGEM": "Origem do lead",
+      "INBOX_ID": "Caixa de entrada",
+      "ASSIGNEE_ID": "Agente atribuído",
+      "STATUS": "Status da conversa"
+    },
+    "OPERATORS": {
+      "IS": "é",
+      "IS_NOT": "não é",
+      "INCLUDES": "inclui",
+      "EXCLUDES": "não inclui"
+    },
+    "STATUS": {
+      "OPEN": "Aberta",
+      "RESOLVED": "Resolvida",
+      "PENDING": "Pendente",
+      "SNOOZED": "Adiada"
+    },
+    "FORM": {
+      "NEW_TITLE": "Novo público",
+      "EDIT_TITLE": "Editar público",
+      "DESCRIPTION": "Diga quem deve estar nele, em que período e quem fica de fora. O resto é automático.",
+      "REQUIRED_NOTE": "Obrigatórios: nome e a janela. A exclusão é opcional.",
+      "STEP_NAME": "Identificação",
+      "NAME_LABEL": "Nome do público",
+      "NAME_PLACEHOLDER": "Ex.: Qualificação · ABC",
+      "NAME_HELP": "Só para você reconhecer na lista.",
+      "STEP_KIND": "Tipo",
+      "KIND_DYNAMIC_HELP": "Uma regra: quem passa a cumprir entra, quem deixa de cumprir sai.",
+      "KIND_STATIC_HELP": "Uma foto: guarda os contatos de agora, e a lista só muda à mão.",
+      "STEP_RULE": "Quem entra",
+      "RULE_HELP": "O contato entra quando uma conversa dele cumprir todas as condições abaixo.",
+      "ADD_CONDITION": "Condição",
+      "AND": "e",
+      "STEP_WINDOW": "Janela",
+      "WINDOW_HELP": "Só entram conversas que nasceram dentro deste período.",
+      "WINDOW_ALL": "Todo o período",
+      "WINDOW_LAST_DAYS": "Últimos dias",
+      "WINDOW_RANGE": "Intervalo de datas",
+      "DAYS_LABEL": "Quantidade de dias",
+      "FROM": "De",
+      "TO": "Até",
+      "WINDOW_NOTE": "\"Últimos dias\" anda junto com o tempo. \"Intervalo de datas\" é fixo, bom para relatório de um mês fechado.",
+      "STEP_EXCLUSION": "Exclusão",
+      "OPTIONAL": "opcional",
+      "EXCLUSION_HELP": "Tirar do público quem cumprir qualquer uma destas condições, mesmo que cumpra a regra de entrada.",
+      "ADD_EXCLUSION": "Condição de exclusão",
+      "OR": "ou",
+      "FIELD_PLACEHOLDER": "Campo",
+      "VALUE_PLACEHOLDER": "Escolha",
+      "REMOVE_CONDITION": "Remover condição",
+      "CANCEL": "Cancelar",
+      "CREATE": "Criar público",
+      "SAVE": "Salvar alterações",
+      "SIZE_TITLE": "Tamanho agora",
+      "SIZE_HINT": "contatos se encaixam hoje",
+      "SIZE_UPDATING": "Calculando...",
+      "SUMMARY": "Resumo",
+      "AUTO_UPDATE_NOTE": "Atualiza sozinho, sem ninguém lançar contato.",
+      "STATIC_NOTE": "Guarda os contatos de agora. Depois, a lista só muda à mão.",
+      "LIVE_NOTE": "O tamanho muda na hora em que você mexe na regra, na janela ou na exclusão.",
+      "IGNORED": "Ficaram de fora condições que o público não aceita: {fields}",
+      "SAVED": "Público salvo",
+      "ERROR": "Não foi possível salvar o público. Confira os campos e tente novamente."
+    },
+    "SHOW": {
+      "BACK": "Públicos",
+      "UPDATED": "Atualizado {time}",
+      "FED_BY_RULE": "Alimentado pela regra abaixo.",
+      "STATIC_LIST": "Lista fixa: só muda à mão.",
+      "EDIT": "Editar regra",
+      "RENAME": "Editar",
+      "SNAPSHOT": "Congelar como público fixo",
+      "ADD_CONTACTS": "Adicionar contatos",
+      "DELETE": "Excluir",
+      "CONTACTS_COUNT": "Contatos no público",
+      "DOWNLOADS": "Downloads · 30 dias",
+      "OVER_LIMIT": "Este público passa de 10 mil contatos: ele não pode ser baixado nem usado em disparo. Divida o público, por exemplo com uma janela menor.",
+      "CONTACTS_TITLE": "Contatos",
+      "CONTACTS_SHOWING": "mostrando {shown} de {total}",
+      "TABLE": {
+        "NAME": "Nome",
+        "PHONE": "Telefone",
+        "STAGE": "Fase atual",
+        "LABELS": "Etiquetas",
+        "INBOX": "Caixa"
+      },
+      "REMOVE": "Remover do público",
+      "NO_CONTACTS": "Nenhum contato neste público agora.",
+      "RULE_TITLE": "Regra",
+      "WINDOW_TITLE": "Janela",
+      "EXCLUSION_TITLE": "Exclusão",
+      "NO_EXCLUSION": "Nenhuma",
+      "RULE_NOTE": "Cumpriu a regra, entra. Deixou de cumprir, ou caiu na exclusão, sai. O contato entra por qualquer conversa dele que cumpra tudo.",
+      "ACTIONS_TITLE": "Ações neste público",
+      "ACTIONS_EMPTY": "Nenhuma ação ainda.",
+      "ACTIONS_NOTE": "Registro de quem baixou a lista, de quais campanhas usaram este público e de quando ele foi congelado.",
+      "EVENT": {
+        "DOWNLOAD": "Download · {user}",
+        "CAMPAIGN": "Disparo · {campaign}",
+        "SNAPSHOT": "Congelado como público fixo · {user}"
+      },
+      "EVENT_DETAIL": "{date} · {count} contatos",
+      "DELETE_TITLE": "Excluir público",
+      "DELETE_DESCRIPTION": "O público \"{name}\" será excluído. Os contatos continuam na conta.",
+      "DELETED": "Público excluído",
+      "REMOVED": "Contato removido do público",
+      "USE_IN_CAMPAIGN": "Usar em disparo"
+    },
+    "SNAPSHOT_DIALOG": {
+      "TITLE": "Congelar como público fixo",
+      "DESCRIPTION": "Cria um público fixo com os {count} contatos de agora. Ele não muda mais sozinho.",
+      "NAME": "Nome do novo público",
+      "CONFIRM": "Congelar",
+      "SUCCESS": "Público fixo criado"
+    },
+    "ADD_DIALOG": {
+      "TITLE": "Adicionar contatos",
+      "DESCRIPTION": "Busque pelo nome, telefone ou e-mail e escolha os contatos.",
+      "SEARCH": "Buscar contatos",
+      "CONFIRM": "Adicionar",
+      "SUCCESS": "Contatos adicionados",
+      "EMPTY": "Nenhum contato encontrado"
+    },
+    "IMPORT_DIALOG": {
+      "TITLE": "Importar CSV",
+      "DESCRIPTION": "Cria um público fixo com os contatos da planilha. Colunas obrigatórias: name e phone_number, com o telefone começando por +55.",
+      "NAME": "Nome do público",
+      "FILE": "Arquivo CSV",
+      "CONFIRM": "Importar",
+      "SUCCESS": "Público criado com {count} contatos",
+      "INVALID_ROWS": "{count} linhas foram ignoradas por dados inválidos.",
+      "ERROR": "Não foi possível importar o arquivo.",
+      "SAMPLE": "Baixar um exemplo de CSV."
+    },
+    "DOWNLOAD": {
+      "BUTTON": "Baixar lista",
+      "TITLE": "Baixar lista · {name}",
+      "DESCRIPTION": "Leve os contatos para uma planilha e cruze com o que quiser.",
+      "COLUMNS": "Colunas",
+      "NOTE": "Fase, motivo de perda, etiquetas, caixa, origem, data de origem, agente e número da conversa vêm da conversa mais recente do contato. A lista segue a regra e a janela do público; para outro período, crie ou edite um público com a janela desejada.",
+      "FORMAT_NOTE": "Formato CSV, que abre direto no Excel e no Google Sheets.",
+      "CONFIRM": "Baixar",
+      "SUCCESS": "Download iniciado. O arquivo será salvo no seu computador.",
+      "ERROR": "Não foi possível baixar a lista.",
+      "COLUMN": {
+        "NAME": "Nome",
+        "PHONE_NUMBER": "Telefone",
+        "EMAIL": "E-mail",
+        "FUNNEL_STAGE": "Fase atual",
+        "LOSS_REASON": "Motivo de perda",
+        "LABELS": "Etiquetas",
+        "INBOX": "Caixa",
+        "ORIGEM": "Origem do lead",
+        "ORIGIN_DATE": "Data de origem",
+        "ASSIGNEE": "Agente atribuído",
+        "CONVERSATION_ID": "Número da conversa"
+      }
+    },
+    "SAVE_AS": {
+      "BUTTON": "Salvar como público",
+      "TITLE": "Salvar como público",
+      "DESCRIPTION": "O público nasce com o que você está vendo aqui. Dê um nome e escolha se ele segue atualizando ou fica como está agora.",
+      "LOSS_REASON": "Motivo de perda",
+      "ANY_LOSS_REASON": "Qualquer motivo",
+      "SIZE": "{count} contatos se encaixam hoje"
+    }
+  }
+}

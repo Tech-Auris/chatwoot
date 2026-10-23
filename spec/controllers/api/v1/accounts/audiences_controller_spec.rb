@@ -123,6 +123,7 @@ RSpec.describe 'Audiences API', type: :request do
     get "#{base}/#{audience.id}/contacts", headers: agent.create_new_auth_token
 
     expect(body.pluck('name')).to eq(['Maria'])
+    expect(body.first).to include('labels' => ['abc'], 'inbox_name' => inbox.name)
     expect(response.parsed_body['meta']['total_count']).to eq(1)
   end
 
@@ -134,6 +135,7 @@ RSpec.describe 'Audiences API', type: :request do
     get base, params: { kind: 'static' }, headers: agent.create_new_auth_token
 
     expect(body.pluck('name')).to eq(['Fixo'])
+    expect(response.parsed_body['meta']).to include('downloads_last_30_days' => 0, 'campaigns_last_30_days' => 0)
   end
 
   it 'shows what was done with an audience' do
@@ -151,5 +153,62 @@ RSpec.describe 'Audiences API', type: :request do
     delete "#{base}/#{audience.id}", headers: agent.create_new_auth_token
 
     expect(Audience.exists?(audience.id)).to be false
+  end
+
+  describe 'GET /audiences/:id/campaign_preview' do
+    let(:administrator) { create(:user, account: account, role: :administrator) }
+    let(:audience) { create(:audience, account: account, rule: abc_rule.map(&:stringify_keys)) }
+
+    it 'tells who the campaign reaches and who stays out' do
+      contact_with_label('abc').update!(phone_number: '+5511987654001')
+      contact_with_label('abc', name: 'Sem telefone')
+      opted_out = contact_with_label('abc', name: 'Opt-out')
+      opted_out.update!(phone_number: '+5511987654002')
+      opted_out.opt_out!(source: 'meta')
+
+      get "#{base}/#{audience.id}/campaign_preview", headers: administrator.create_new_auth_token
+
+      expect(response.parsed_body).to include('total_count' => 3, 'without_phone_count' => 1, 'opted_out_count' => 1,
+                                              'already_received_count' => 0, 'will_receive_count' => 1, 'over_limit' => false)
+    end
+
+    it 'is only for administrators and managers' do
+      get "#{base}/#{audience.id}/campaign_preview", headers: agent.create_new_auth_token
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+  end
+
+  describe 'POST /audiences/:id/export' do
+    let(:administrator) { create(:user, account: account, role: :administrator) }
+    let(:audience) { create(:audience, account: account, rule: abc_rule.map(&:stringify_keys)) }
+
+    it 'downloads the chosen columns and records who downloaded' do
+      contact_with_label('abc', name: 'Maria')
+
+      post "#{base}/#{audience.id}/export", params: { columns: %w[name labels inbox] }, headers: administrator.create_new_auth_token, as: :json
+
+      expect(response.headers['Content-Type']).to include('text/csv')
+      rows = CSV.parse(response.body.delete_prefix(Audiences::ExportService::BOM))
+      expect(rows.first.size).to eq(3)
+      expect(rows.second).to eq(['Maria', 'abc', inbox.name])
+      expect(audience.events.last).to have_attributes(kind: 'download', user_id: administrator.id, contacts_count: 1, format: 'csv')
+    end
+
+    it 'refuses an audience over the limit' do
+      stub_const('Audience::MAX_CONTACTS', 0)
+      contact_with_label('abc')
+
+      post "#{base}/#{audience.id}/export", headers: administrator.create_new_auth_token, as: :json
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(audience.events).to be_empty
+    end
+
+    it 'is only for administrators and managers' do
+      post "#{base}/#{audience.id}/export", headers: agent.create_new_auth_token, as: :json
+
+      expect(response).to have_http_status(:unauthorized)
+    end
   end
 end
