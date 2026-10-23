@@ -117,3 +117,11 @@ whatsapp_health_summary_refresh_job:
   cron: '*/15 * * * *'
   class: 'Channels::Whatsapp::HealthSummaryRefreshJob'
   queue: scheduled_jobs
+
+# every 15 minutes
+# recounts the dynamic audiences (Marketing → Públicos), whose members change
+# with their conversations
+audiences_refresh_counts_job:
+  cron: '*/15 * * * *'
+  class: 'Audiences::RefreshCountsJob'
+  queue: scheduled_jobs

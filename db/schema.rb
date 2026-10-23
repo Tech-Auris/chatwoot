@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_22_120000) do
+ActiveRecord::Schema[7.1].define(version: 2026_10_22_150000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -319,6 +319,43 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_22_120000) do
     t.jsonb "meta", default: {}
     t.index ["account_id"], name: "index_attachments_on_account_id"
     t.index ["message_id"], name: "index_attachments_on_message_id"
+  end
+
+  create_table "audience_contacts", force: :cascade do |t|
+    t.bigint "audience_id", null: false
+    t.bigint "contact_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["audience_id", "contact_id"], name: "index_audience_contacts_on_audience_id_and_contact_id", unique: true
+    t.index ["contact_id"], name: "index_audience_contacts_on_contact_id"
+  end
+
+  create_table "audience_events", force: :cascade do |t|
+    t.bigint "audience_id", null: false
+    t.integer "kind", null: false
+    t.bigint "user_id"
+    t.bigint "campaign_id"
+    t.integer "contacts_count", default: 0, null: false
+    t.string "format"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["audience_id"], name: "index_audience_events_on_audience_id"
+  end
+
+  create_table "audiences", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "name", null: false
+    t.integer "kind", default: 0, null: false
+    t.string "source", default: "manual", null: false
+    t.jsonb "rule", default: [], null: false
+    t.jsonb "exclusion", default: [], null: false
+    t.jsonb "window", default: {"type" => "all"}, null: false
+    t.integer "contacts_count", default: 0, null: false
+    t.datetime "counted_at"
+    t.bigint "created_by_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_audiences_on_account_id"
   end
 
   create_table "audits", force: :cascade do |t|
