@@ -184,6 +184,38 @@
       "INVALID_ROWS": "{count} rows were skipped for invalid data.",
       "ERROR": "Could not import the file.",
       "SAMPLE": "Download a sample CSV."
+    },
+    "DOWNLOAD": {
+      "BUTTON": "Download list",
+      "TITLE": "Download list · {name}",
+      "DESCRIPTION": "Take the contacts to a spreadsheet and cross them with whatever you need.",
+      "COLUMNS": "Columns",
+      "NOTE": "Stage, loss reason, labels, inbox, origin, origin date, agent and conversation number come from the contact's latest conversation. The list follows the audience's rule and window; for another period, create or edit an audience with that window.",
+      "FORMAT_NOTE": "CSV format, which opens directly in Excel and Google Sheets.",
+      "CONFIRM": "Download",
+      "SUCCESS": "Download started. The file will be saved to your computer.",
+      "ERROR": "Could not download the list.",
+      "COLUMN": {
+        "NAME": "Name",
+        "PHONE_NUMBER": "Phone",
+        "EMAIL": "E-mail",
+        "FUNNEL_STAGE": "Current stage",
+        "LOSS_REASON": "Loss reason",
+        "LABELS": "Labels",
+        "INBOX": "Inbox",
+        "ORIGEM": "Lead origin",
+        "ORIGIN_DATE": "Origin date",
+        "ASSIGNEE": "Assigned agent",
+        "CONVERSATION_ID": "Conversation number"
+      }
+    },
+    "SAVE_AS": {
+      "BUTTON": "Save as audience",
+      "TITLE": "Save as audience",
+      "DESCRIPTION": "The audience starts with what you see here. Name it and choose whether it keeps updating or stays as it is now.",
+      "LOSS_REASON": "Loss reason",
+      "ANY_LOSS_REASON": "Any reason",
+      "SIZE": "{count} contacts fit today"
     }
   }
 }

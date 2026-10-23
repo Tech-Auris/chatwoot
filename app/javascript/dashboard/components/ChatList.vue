@@ -19,6 +19,7 @@ import {
 } from 'dashboard/composables/store.js';
 
 import ChatListHeader from './ChatListHeader.vue';
+import SaveAsAudienceDialog from 'dashboard/routes/dashboard/marketing/audiences/components/SaveAsAudienceDialog.vue';
 import ConversationList from './ConversationList.vue';
 import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
 import ConversationFilter from 'next/filter/ConversationFilter.vue';
@@ -94,6 +95,7 @@ const showAdvancedFilters = ref(false);
 const chatsOnView = ref([]);
 const foldersQuery = ref({});
 const showAddFoldersModal = ref(false);
+const saveAsAudienceDialogRef = ref(null);
 const showDeleteFoldersModal = ref(false);
 const appliedFilter = ref([]);
 const advancedFilterTypes = ref(
@@ -976,10 +978,17 @@ watch(conversationFilters, (newVal, oldVal) => {
       :conversation-stats="conversationStats"
       :is-list-loading="chatListLoading && !conversationList.length"
       @add-folders="onClickOpenAddFoldersModal"
+      @save-as-audience="saveAsAudienceDialogRef?.open()"
       @delete-folders="onClickOpenDeleteFoldersModal"
       @filters-modal="onToggleAdvanceFiltersModal"
       @reset-filters="resetAndFetchData"
       @basic-filter-change="onBasicFilterChange"
+    />
+
+    <SaveAsAudienceDialog
+      v-if="hasAppliedFilters"
+      ref="saveAsAudienceDialogRef"
+      :rule="foldersQuery.payload || []"
     />
 
     <TeleportWithDirection

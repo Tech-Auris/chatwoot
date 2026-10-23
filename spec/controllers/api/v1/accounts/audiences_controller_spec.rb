@@ -178,4 +178,37 @@ RSpec.describe 'Audiences API', type: :request do
       expect(response).to have_http_status(:unauthorized)
     end
   end
+
+  describe 'POST /audiences/:id/export' do
+    let(:administrator) { create(:user, account: account, role: :administrator) }
+    let(:audience) { create(:audience, account: account, rule: abc_rule.map(&:stringify_keys)) }
+
+    it 'downloads the chosen columns and records who downloaded' do
+      contact_with_label('abc', name: 'Maria')
+
+      post "#{base}/#{audience.id}/export", params: { columns: %w[name labels inbox] }, headers: administrator.create_new_auth_token, as: :json
+
+      expect(response.headers['Content-Type']).to include('text/csv')
+      rows = CSV.parse(response.body.delete_prefix(Audiences::ExportService::BOM))
+      expect(rows.first.size).to eq(3)
+      expect(rows.second).to eq(['Maria', 'abc', inbox.name])
+      expect(audience.events.last).to have_attributes(kind: 'download', user_id: administrator.id, contacts_count: 1, format: 'csv')
+    end
+
+    it 'refuses an audience over the limit' do
+      stub_const('Audience::MAX_CONTACTS', 0)
+      contact_with_label('abc')
+
+      post "#{base}/#{audience.id}/export", headers: administrator.create_new_auth_token, as: :json
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(audience.events).to be_empty
+    end
+
+    it 'is only for administrators and managers' do
+      post "#{base}/#{audience.id}/export", headers: agent.create_new_auth_token, as: :json
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+  end
 end

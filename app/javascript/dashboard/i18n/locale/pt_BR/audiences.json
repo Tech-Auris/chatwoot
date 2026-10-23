@@ -184,6 +184,38 @@
       "INVALID_ROWS": "{count} linhas foram ignoradas por dados inválidos.",
       "ERROR": "Não foi possível importar o arquivo.",
       "SAMPLE": "Baixar um exemplo de CSV."
+    },
+    "DOWNLOAD": {
+      "BUTTON": "Baixar lista",
+      "TITLE": "Baixar lista · {name}",
+      "DESCRIPTION": "Leve os contatos para uma planilha e cruze com o que quiser.",
+      "COLUMNS": "Colunas",
+      "NOTE": "Fase, motivo de perda, etiquetas, caixa, origem, data de origem, agente e número da conversa vêm da conversa mais recente do contato. A lista segue a regra e a janela do público; para outro período, crie ou edite um público com a janela desejada.",
+      "FORMAT_NOTE": "Formato CSV, que abre direto no Excel e no Google Sheets.",
+      "CONFIRM": "Baixar",
+      "SUCCESS": "Download iniciado. O arquivo será salvo no seu computador.",
+      "ERROR": "Não foi possível baixar a lista.",
+      "COLUMN": {
+        "NAME": "Nome",
+        "PHONE_NUMBER": "Telefone",
+        "EMAIL": "E-mail",
+        "FUNNEL_STAGE": "Fase atual",
+        "LOSS_REASON": "Motivo de perda",
+        "LABELS": "Etiquetas",
+        "INBOX": "Caixa",
+        "ORIGEM": "Origem do lead",
+        "ORIGIN_DATE": "Data de origem",
+        "ASSIGNEE": "Agente atribuído",
+        "CONVERSATION_ID": "Número da conversa"
+      }
+    },
+    "SAVE_AS": {
+      "BUTTON": "Salvar como público",
+      "TITLE": "Salvar como público",
+      "DESCRIPTION": "O público nasce com o que você está vendo aqui. Dê um nome e escolha se ele segue atualizando ou fica como está agora.",
+      "LOSS_REASON": "Motivo de perda",
+      "ANY_LOSS_REASON": "Qualquer motivo",
+      "SIZE": "{count} contatos se encaixam hoje"
     }
   }
 }

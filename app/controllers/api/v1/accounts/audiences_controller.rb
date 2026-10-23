@@ -68,6 +68,20 @@ class Api::V1::Accounts::AudiencesController < Api::V1::Accounts::BaseController
                    over_limit: total > Audience::MAX_CONTACTS, limit: Audience::MAX_CONTACTS }
   end
 
+  # "Baixar lista": the CSV with the chosen columns, straight to the browser,
+  # recorded under the audience's "Ações". Not over the 10 thousand limit.
+  def export
+    total = @audience.refresh_count!
+    if total > Audience::MAX_CONTACTS
+      return render json: { error: I18n.t('audiences.export.over_limit', limit: Audience::MAX_CONTACTS) }, status: :unprocessable_entity
+    end
+
+    service = Audiences::ExportService.new(audience: @audience, columns: params[:columns])
+    csv = service.perform
+    @audience.events.create!(kind: :download, user: Current.user, contacts_count: total, format: 'csv')
+    send_data csv, filename: service.filename, type: 'text/csv', disposition: 'attachment'
+  end
+
   def contacts
     @contacts = @audience.contacts.order(:name).page(params[:page] || 1).per(CONTACTS_PER_PAGE)
     @latest_conversations = latest_conversations(@contacts.map(&:id))
