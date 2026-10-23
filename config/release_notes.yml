@@ -6,6 +6,9 @@
     en: |-
       ### ✨ What's new
 
+      - **"Doesn't want marketing" on the contact.** On the contact page you can turn on the opt-out for a patient who asked not to get offers. Campaigns and follow-ups stop going to them, and replies and reminders keep working normally.
+      - **Audiences.** In Marketing → Audiences you save contact lists to reuse, for example "everyone in Qualifying this month". From a Conversations filter or a funnel column, "Save as audience" creates the list in one click.
+      - **Campaign to an audience, and download.** A WhatsApp campaign can go straight to a saved audience, and admins and managers can download the list as a spreadsheet.
       - **Previous conversations inside the conversation.** At the top of a conversation, "Open previous conversation" shows the patient's earlier conversation in the same inbox, whole, without leaving the current one. You can keep opening them one by one, back to the first.
       - **Campaign results in the funnel.** Campaigns sent from AurisChat now show in the Conversions report, with how many patients replied, booked and attended. The conversations they start get the "Disparo interno" origin.
 
@@ -19,6 +22,9 @@
     pt_BR: |-
       ### ✨ Novidades
 
+      - **"Não quer receber marketing" no contato.** Na página do contato dá para ligar o opt-out do paciente que pediu para não receber ofertas. Campanhas e follow-ups param de chegar para ele, e as respostas e os lembretes continuam normais.
+      - **Públicos.** Em Marketing → Públicos você guarda listas de contatos para usar de novo, por exemplo "todos em Qualificação este mês". Num filtro de Conversas ou numa coluna do funil, o "Salvar como público" cria a lista com um clique.
+      - **Disparo para um público e download.** A campanha de WhatsApp pode ir direto para um público salvo, e administradores e gerentes podem baixar a lista em planilha.
       - **Conversas anteriores dentro da conversa.** No topo da conversa, "Abrir conversa anterior" mostra a conversa anterior do paciente na mesma caixa, inteira, sem sair da conversa atual. Dá para ir abrindo uma por uma, até a primeira.
       - **Resultado das campanhas no funil.** As campanhas enviadas pelo AurisChat aparecem no relatório de Conversões, com quantos pacientes responderam, agendaram e compareceram. As conversas que elas iniciam ganham a origem "Disparo interno".
 
