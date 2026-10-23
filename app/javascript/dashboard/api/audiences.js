@@ -28,6 +28,15 @@ class AudiencesAPI extends ApiClient {
     });
   }
 
+  // "Baixar lista": the CSV with the chosen columns.
+  exportList(id, columns) {
+    return axios.post(
+      `${this.url}/${id}/export`,
+      { columns },
+      { responseType: 'blob' }
+    );
+  }
+
   snapshot(id, name) {
     return axios.post(`${this.url}/${id}/snapshot`, { name });
   }

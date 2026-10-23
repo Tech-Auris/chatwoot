@@ -12,6 +12,7 @@ import Input from 'dashboard/components-next/input/Input.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import PaginationFooter from 'dashboard/components-next/pagination/PaginationFooter.vue';
 import AddContactsDialog from './components/AddContactsDialog.vue';
+import DownloadAudienceDialog from './components/DownloadAudienceDialog.vue';
 import { useAudienceFields } from './useAudienceFields';
 
 // An audience opened: who is in it now, the rule that feeds it (dynamic) or
@@ -32,6 +33,7 @@ const isLoading = ref(true);
 const snapshotDialogRef = ref(null);
 const deleteDialogRef = ref(null);
 const addContactsDialogRef = ref(null);
+const downloadDialogRef = ref(null);
 const snapshotName = ref('');
 const isWorking = ref(false);
 
@@ -206,6 +208,16 @@ onMounted(fetchAudience);
               color="slate"
               size="sm"
               @click="addContactsDialogRef?.open()"
+            />
+            <Button
+              v-if="canUseInCampaign"
+              :label="t('AUDIENCES.DOWNLOAD.BUTTON')"
+              icon="i-lucide-download"
+              variant="faded"
+              color="slate"
+              size="sm"
+              :disabled="!audience.contacts_count"
+              @click="downloadDialogRef?.open()"
             />
             <Button
               v-if="canUseInCampaign"
@@ -473,6 +485,13 @@ onMounted(fetchAudience);
       :confirm-button-label="t('AUDIENCES.SHOW.DELETE')"
       :is-loading="isWorking"
       @confirm="destroy"
+    />
+
+    <DownloadAudienceDialog
+      v-if="audience && canUseInCampaign"
+      ref="downloadDialogRef"
+      :audience="audience"
+      @downloaded="fetchAudience"
     />
 
     <AddContactsDialog

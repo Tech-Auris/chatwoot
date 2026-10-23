@@ -21,6 +21,7 @@ const props = defineProps({
 
 const emit = defineEmits([
   'addFolders',
+  'saveAsAudience',
   'deleteFolders',
   'resetFilters',
   'basicFilterChange',
@@ -103,6 +104,14 @@ const toggleConversationLayout = () => {
             :class="{ 'ltr:right-0 rtl:left-0': isOnExpandedLayout }"
           />
         </div>
+        <NextButton
+          v-tooltip.top-end="$t('AUDIENCES.SAVE_AS.BUTTON')"
+          icon="i-lucide-users-round"
+          slate
+          xs
+          faded
+          @click="emit('saveAsAudience')"
+        />
         <NextButton
           v-tooltip.top-end="$t('FILTER.CLEAR_BUTTON_LABEL')"
           icon="i-lucide-circle-x"
