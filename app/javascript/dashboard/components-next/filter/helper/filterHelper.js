@@ -18,6 +18,7 @@ export const CONVERSATION_ATTRIBUTES = {
   AI_ENABLED: 'ai_enabled',
   FUNNEL_STAGE_ID: 'funnel_stage_id',
   ORIGEM: 'origem',
+  MARKETING_OPT_OUT: 'marketing_opt_out',
 };
 
 export const CONTACT_ATTRIBUTES = {
@@ -32,6 +33,7 @@ export const CONTACT_ATTRIBUTES = {
   LAST_ACTIVITY_AT: 'last_activity_at',
   REFERER: 'referer',
   BLOCKED: 'blocked',
+  MARKETING_OPT_OUT: 'marketing_opt_out',
   LABELS: 'labels',
 };
 

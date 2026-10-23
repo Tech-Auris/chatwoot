@@ -23,6 +23,7 @@ const summary = ref({
   delivered: 0,
   read: 0,
   success_rate: 0,
+  skipped_opt_out: 0,
 });
 const campaign = ref(null);
 const messages = ref([]);
@@ -96,6 +97,7 @@ watch(campaignId, () => {
     delivered: 0,
     read: 0,
     success_rate: 0,
+    skipped_opt_out: 0,
   };
   campaign.value = null;
   messages.value = [];
@@ -172,6 +174,32 @@ const goBack = () =>
         :conversation-label="campaign.conversation_label"
         hide-actions
       />
+
+      <p v-if="campaign.audience_source" class="mb-0 text-sm text-n-slate-11">
+        {{ t('CAMPAIGN.WHATSAPP.REPORT.AUDIENCE_SOURCE') }}
+        <router-link
+          :to="{
+            name: 'marketing_audiences_show',
+            params: { audienceId: campaign.audience_source.id },
+          }"
+          class="text-n-blue-text hover:underline"
+        >
+          {{ campaign.audience_source.name }}
+        </router-link>
+      </p>
+
+      <p
+        v-if="summary.skipped_opt_out"
+        class="mb-0 px-3 py-2 text-sm rounded-lg bg-n-amber-3 text-n-amber-11"
+      >
+        {{
+          t(
+            'CAMPAIGN.WHATSAPP.REPORT.SKIPPED_OPT_OUT',
+            summary.skipped_opt_out,
+            { count: summary.skipped_opt_out }
+          )
+        }}
+      </p>
 
       <div class="grid grid-cols-2 gap-3 md:grid-cols-6">
         <div

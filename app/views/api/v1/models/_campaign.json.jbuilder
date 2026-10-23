@@ -24,3 +24,9 @@ json.trigger_rules resource.trigger_rules
 json.trigger_only_during_business_hours resource.trigger_only_during_business_hours
 json.created_at resource.created_at
 json.updated_at resource.updated_at
+if resource.audience_source
+  json.audience_source do
+    json.id resource.audience_source.id
+    json.name resource.audience_source.name
+  end
+end

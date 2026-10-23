@@ -72,6 +72,45 @@ class Whatsapp::OneoffCampaignService
   # The audience is either a set of contact labels or an explicit list of
   # contacts, the latter coming from the CSV the operator uploaded when
   # creating the campaign.
+  def record_opted_out_count
+    opted_out = audience_contacts.where(marketing_opt_out: true).where.not(phone_number: [nil, ''])
+    campaign.update_column(:skipped_opt_out_count, opted_out.count) # rubocop:disable Rails/SkipsModelValidations
+  end
+
+  def recipient_ids
+    audience_contacts.where(marketing_opt_out: false).where.not(id: already_reached_contact_ids).pluck(:id)
+  end
+
+  def saved_audience?
+    audience_ids_for('Audience').any?
+  end
+
+  # A saved audience is read once, when the campaign starts: its contacts
+  # right now become the campaign's own list, so pausing and resuming never
+  # changes who receives it, and whoever enters the audience later is not
+  # reached. Nothing goes out when the audience is gone, empty or over the
+  # limit.
+  def freeze_saved_audience
+    source = campaign.account.audiences.find_by(id: audience_ids_for('Audience').first)
+    contact_ids = source ? source.contacts.pluck(:id) : []
+    if contact_ids.empty? || contact_ids.size > Audience::MAX_CONTACTS
+      Rails.logger.warn "Campaign #{campaign.id}: saved audience #{source&.id} has #{contact_ids.size} contacts, nothing sent"
+      return false
+    end
+
+    campaign.update_columns(audience: contact_ids.map { |id| { 'type' => 'Contact', 'id' => id } }, # rubocop:disable Rails/SkipsModelValidations
+                            audience_source_id: source.id)
+    source.events.create!(kind: :campaign, campaign: campaign, contacts_count: contact_ids.size)
+  end
+
+  # Contacts that already got this campaign's message never get it twice.
+  def already_reached_contact_ids
+    Conversation.where(account_id: campaign.account_id)
+                .joins(:messages)
+                .where("messages.additional_attributes ->> 'campaign_id' = ?", campaign.id.to_s)
+                .select(:contact_id)
+  end
+
   def audience_contacts
     contact_ids = audience_ids_for('Contact')
     return campaign.account.contacts.where(id: contact_ids) if contact_ids.any?
@@ -88,8 +127,16 @@ class Whatsapp::OneoffCampaignService
   def eligible_contact?(contact)
     return log_skip(contact, 'no phone number') && false if contact.phone_number.blank?
     return log_skip(contact, 'no template_params found for WhatsApp campaign') && false if campaign.template_params.blank?
+    return skip_opted_out(contact) if contact.marketing_opt_out?
 
     true
+  end
+
+  # Opted out after the campaign was scheduled, before its turn came.
+  def skip_opted_out(contact)
+    Campaign.update_counters(campaign.id, skipped_opt_out_count: 1) # rubocop:disable Rails/SkipsModelValidations
+    log_skip(contact, 'marketing opt-out')
+    false
   end
 
   def log_skip(contact, reason)
@@ -101,8 +148,13 @@ class Whatsapp::OneoffCampaignService
   # an interval later. Each job then sends its message half an interval after
   # creating it (Campaigns::PacedDispatchService), so creating and sending
   # alternate instead of piling up.
+  # Contacts with the marketing opt-out on are left out, and counted for the
+  # campaign report ("Não enviados (opt-out)").
   def process_audience
-    contact_ids = audience_contacts.pluck(:id)
+    return if saved_audience? && !freeze_saved_audience
+
+    record_opted_out_count
+    contact_ids = recipient_ids
     Rails.logger.info "Scheduling #{contact_ids.size} contacts for campaign #{campaign.id}"
 
     cadence = campaign.cadence_seconds.to_i

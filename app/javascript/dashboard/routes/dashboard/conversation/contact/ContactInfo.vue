@@ -20,6 +20,7 @@ import InlineInput from 'dashboard/components-next/inline-input/InlineInput.vue'
 import OrigemSelector from '../origin/OrigemSelector.vue';
 import ContactOrigensSummary from '../origin/ContactOrigensSummary.vue';
 import CampaignReferralCard from '../origin/CampaignReferralCard.vue';
+import MarketingOptOutToggle from 'dashboard/components-next/Contacts/MarketingOptOutToggle.vue';
 
 export default {
   components: {
@@ -36,6 +37,7 @@ export default {
     OrigemSelector,
     ContactOrigensSummary,
     CampaignReferralCard,
+    MarketingOptOutToggle,
   },
   props: {
     contact: {
@@ -309,6 +311,7 @@ export default {
           v-if="campaignReferral"
           :referral="campaignReferral"
         />
+        <MarketingOptOutToggle :contact-id="contact.id" />
       </div>
       <div class="flex items-center w-full mt-0.5 gap-2">
         <ComposeConversation :contact-id="String(contact.id)">

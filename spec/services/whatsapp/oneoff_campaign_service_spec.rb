@@ -156,6 +156,82 @@ describe Whatsapp::OneoffCampaignService do
         expect(filled.reload).to have_attributes(campaign_id: campaign.id, origem: 'Disparo interno', status: 'pending')
       end
 
+      it 'leaves out the contacts with the marketing opt-out, counting them' do
+        reached = create(:contact, :with_phone_number, account: account)
+        opted_out = create(:contact, :with_phone_number, account: account)
+        opted_out.opt_out!(source: 'meta')
+        campaign.update!(audience: [{ 'type' => 'Contact', 'id' => reached.id }, { 'type' => 'Contact', 'id' => opted_out.id }])
+
+        perform_enqueued_jobs(only: Campaigns::DispatchContactJob) { described_class.new(campaign: campaign).perform }
+
+        expect(Conversation.where(campaign_id: campaign.id).pluck(:contact_id)).to eq([reached.id])
+        expect(campaign.reload.skipped_opt_out_count).to eq(1)
+      end
+
+      it 'skips a contact that opted out after the campaign was scheduled' do
+        contact = create(:contact, :with_phone_number, account: account)
+        campaign.update!(audience: [{ 'type' => 'Contact', 'id' => contact.id }])
+        described_class.new(campaign: campaign).perform
+        contact.opt_out!(source: 'ai')
+
+        perform_enqueued_jobs(only: Campaigns::DispatchContactJob)
+
+        expect(Conversation.where(campaign_id: campaign.id)).to be_empty
+        expect(campaign.reload.skipped_opt_out_count).to eq(1)
+      end
+
+      context 'with a saved audience' do
+        let(:abc) { create(:label, account: account, title: 'abc') }
+        let(:saved) do
+          rule = [{ 'attribute_key' => 'labels', 'filter_operator' => 'equal_to', 'values' => [abc.title], 'query_operator' => nil }]
+          create(:audience, account: account, rule: rule)
+        end
+
+        def member(name)
+          contact = create(:contact, :with_phone_number, account: account, name: name)
+          create(:conversation, account: account, inbox: whatsapp_inbox, contact: contact).update_labels([abc.title])
+          contact
+        end
+
+        it 'sends to the members of the moment it starts, and keeps that list' do
+          first = member('Primeiro')
+          campaign.update!(audience: [{ 'type' => 'Audience', 'id' => saved.id }])
+
+          described_class.new(campaign: campaign).perform
+          member('Depois do início')
+          perform_enqueued_jobs(only: Campaigns::DispatchContactJob)
+
+          expect(campaign.reload.audience).to eq([{ 'type' => 'Contact', 'id' => first.id }])
+          expect(campaign.audience_source).to eq(saved)
+          expect(Conversation.where(campaign_id: campaign.id).pluck(:contact_id)).to eq([first.id])
+          expect(saved.events.last).to have_attributes(kind: 'campaign', campaign_id: campaign.id, contacts_count: 1)
+        end
+
+        it 'sends nothing when the audience is over the limit' do
+          stub_const('Audience::MAX_CONTACTS', 1)
+          2.times { |index| member("Contato #{index}") }
+          campaign.update!(audience: [{ 'type' => 'Audience', 'id' => saved.id }])
+
+          described_class.new(campaign: campaign).perform
+
+          expect(enqueued_jobs.count { |job| job['job_class'] == 'Campaigns::DispatchContactJob' }).to eq(0)
+        end
+      end
+
+      it 'never sends the campaign twice to the same contact' do
+        reached = create(:contact, :with_phone_number, account: account)
+        fresh = create(:contact, :with_phone_number, account: account)
+        conversation = create(:conversation, account: account, inbox: whatsapp_inbox, contact: reached)
+        create(:message, account: account, inbox: whatsapp_inbox, conversation: conversation, message_type: :outgoing,
+                         additional_attributes: { campaign_id: campaign.id })
+        campaign.update!(audience: [{ 'type' => 'Contact', 'id' => reached.id }, { 'type' => 'Contact', 'id' => fresh.id }])
+
+        described_class.new(campaign: campaign).perform
+
+        expect(enqueued_jobs.select { |job| job['job_class'] == 'Campaigns::DispatchContactJob' }.map { |job| job['arguments'].last })
+          .to eq([fresh.id])
+      end
+
       it 'marks campaign as completed' do
         described_class.new(campaign: campaign).perform
 

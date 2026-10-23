@@ -196,7 +196,8 @@
           "AUDIENCE_SOURCE": {
             "LABEL": "Público",
             "LABELS": "Etiquetas dos clientes",
-            "FILE": "Via arquivo"
+            "FILE": "Via arquivo",
+            "SAVED": "Público salvo"
           },
           "AUDIENCE_FILE": {
             "LABEL": "Arquivo CSV",
@@ -221,6 +222,7 @@
             "ERROR": "Não foi possível carregar o público.",
             "SUMMARY": "{count} contato(s) no público.",
             "WITHOUT_PHONE": " {count} sem telefone — não vão receber.",
+            "OPTED_OUT": " {count} com opt-out de marketing, ficam de fora.",
             "NAME": "Nome",
             "PHONE": "Telefone",
             "EMAIL": "E-mail",
@@ -229,6 +231,7 @@
             "NEXT": "Próxima",
             "PAGE": "Página {current} de {total}"
           },
+          "OPTED_OUT_WARNING": "1 contato ficará de fora por opt-out | {count} contatos ficarão de fora por opt-out",
           "SCHEDULED_AT": {
             "LABEL": "Horário agendado",
             "PLACEHOLDER": "Escolher a data e hora para o envio",
@@ -256,6 +259,17 @@
             "QUALITY_LOW": "A qualidade deste número está Baixa. Uma campanha agora pode levar a restrições ou ao banimento. Prefira os pacientes que conversaram recentemente, divida o público em lotes e revise o modelo.",
             "QUALITY_MEDIUM": "A qualidade deste número está Média. Prefira os pacientes que conversaram recentemente e divida o público em lotes.",
             "OVER_DAILY_LIMIT": "O público ({count} contatos) passa do limite diário deste número ({limit} novas conversas em 24h). Divida a campanha em dias: o que passar do limite é recusado pelo Meta."
+          },
+          "SAVED_AUDIENCE": {
+            "LABEL": "Público salvo",
+            "PLACEHOLDER": "Escolha um público",
+            "OPTION": "{name} · {count} contatos",
+            "FROZEN_NOTE": "Este público tem {count} contatos agora. Quem entrar depois do início não recebe esta campanha.",
+            "WILL_RECEIVE": "Vão receber: {count}",
+            "OPTED_OUT": "Ficam de fora por opt-out: {count}",
+            "WITHOUT_PHONE": "Ficam de fora por telefone faltando: {count}",
+            "ALREADY_RECEIVED": "Ficam de fora por já terem recebido esta campanha: {count}",
+            "OVER_LIMIT": "Este público passa de {limit} contatos e não pode ser usado em disparo. Divida o público, por exemplo com uma janela menor."
           }
         }
       },
@@ -289,12 +303,14 @@
           "FAILED": "Falhas",
           "SUCCESS_RATE": "% de sucesso"
         },
+        "SKIPPED_OPT_OUT": "Não enviados (opt-out): {count} contato | Não enviados (opt-out): {count} contatos",
         "STATUS": {
           "SENT": "Enviada",
           "DELIVERED": "Entregue",
           "READ": "Lida",
           "FAILED": "Falhou"
-        }
+        },
+        "AUDIENCE_SOURCE": "Enviada para o público"
       }
     },
     "CONFIRM_DELETE": {

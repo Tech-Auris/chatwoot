@@ -527,6 +527,10 @@ function setParamsForEditFolderModal() {
       { id: true, name: t('AUTOMATION.AI_STATUS_TYPES.ENABLED') },
       { id: false, name: t('AUTOMATION.AI_STATUS_TYPES.DISABLED') },
     ],
+    marketing_opt_out: [
+      { id: true, name: t('FILTER.MARKETING_OPT_OUT_TYPES.ON') },
+      { id: false, name: t('FILTER.MARKETING_OPT_OUT_TYPES.OFF') },
+    ],
     filterTypes: advancedFilterTypes.value,
     allCustomAttributes: conversationCustomAttributes.value,
   };

@@ -330,6 +330,28 @@ describe Whatsapp::IncomingMessageService do
         expect(message.external_error).to eq('123: abc')
       end
 
+      it 'turns the marketing opt-out on when Meta refuses with #131050' do
+        status_params = {
+          'statuses' => [{ 'recipient_id' => from, 'id' => from, 'status' => 'failed',
+                           'errors' => [{ 'code' => 131_050, 'title' => 'Unable to deliver the message' }] }]
+        }.with_indifferent_access
+
+        described_class.new(inbox: whatsapp_channel.inbox, params: status_params).perform
+
+        expect(contact_inbox.contact.reload).to have_attributes(marketing_opt_out: true, marketing_opt_out_source: 'meta')
+      end
+
+      it 'leaves the opt-out off for any other failure' do
+        status_params = {
+          'statuses' => [{ 'recipient_id' => from, 'id' => from, 'status' => 'failed',
+                           'errors' => [{ 'code' => 131_026, 'title' => 'Message undeliverable' }] }]
+        }.with_indifferent_access
+
+        described_class.new(inbox: whatsapp_channel.inbox, params: status_params).perform
+
+        expect(contact_inbox.contact.reload.marketing_opt_out).to be false
+      end
+
       it 'will not throw error if unsupported status' do
         status_params = {
           'statuses' => [{ 'recipient_id' => from, 'id' => from, 'status' => 'deleted',
@@ -378,6 +400,30 @@ describe Whatsapp::IncomingMessageService do
         expect(whatsapp_channel.inbox.conversations.count).not_to eq(0)
         expect(Contact.all.first.name).to eq('Sojan Jose')
         expect(whatsapp_channel.inbox.messages.first.content).to eq('Yes this is a button')
+      end
+
+      it 'turns the marketing opt-out on when the patient clicks the opt-out button' do
+        params = {
+          'contacts' => [{ 'profile' => { 'name' => 'Sojan Jose' }, 'wa_id' => '2423423243' }],
+          'messages' => [{ 'from' => '2423423243', 'id' => 'SDFADSf23sfasdafasdfa', 'button' => { 'text' => 'não quero receber' },
+                           'timestamp' => '1633034394', 'type' => 'button' }]
+        }.with_indifferent_access
+
+        described_class.new(inbox: whatsapp_channel.inbox, params: params).perform
+
+        expect(Contact.last).to have_attributes(marketing_opt_out: true, marketing_opt_out_source: 'template_button')
+      end
+
+      it 'leaves the opt-out off for any other button' do
+        params = {
+          'contacts' => [{ 'profile' => { 'name' => 'Sojan Jose' }, 'wa_id' => '2423423243' }],
+          'messages' => [{ 'from' => '2423423243', 'id' => 'SDFADSf23sfasdafasdfa', 'button' => { 'text' => 'Sair da fila' },
+                           'timestamp' => '1633034394', 'type' => 'button' }]
+        }.with_indifferent_access
+
+        described_class.new(inbox: whatsapp_channel.inbox, params: params).perform
+
+        expect(Contact.last.marketing_opt_out).to be false
       end
     end
 

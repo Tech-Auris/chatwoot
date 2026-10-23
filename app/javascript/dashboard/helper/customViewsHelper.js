@@ -96,6 +96,7 @@ export const getValuesForFilter = (filter, params) => {
     priority,
     group_type: groupType = [],
     ai_enabled: aiStatus = [],
+    marketing_opt_out: marketingOptOut = [],
   } = params;
   switch (attribute_key) {
     case 'status':
@@ -120,6 +121,8 @@ export const getValuesForFilter = (filter, params) => {
       return getValuesForGroupType(values, groupType);
     case 'ai_enabled':
       return getValuesForAiStatus(values, aiStatus);
+    case 'marketing_opt_out':
+      return getValuesForAiStatus(values, marketingOptOut);
     default:
       return { id: values[0], name: values[0] };
   }

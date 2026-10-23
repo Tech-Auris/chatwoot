@@ -74,9 +74,11 @@ class Conversations::FilterService < FilterService
 
   private
 
-  # Any payload entry that maps to a filter of type `contact_additional_attributes`
-  # in filter_keys.yml — right now only `origem`, but new contact-backed
-  # conversation filters can register themselves without touching this method.
+  CONTACT_ATTRIBUTE_TYPES = %w[contact_additional_attributes contact_standard].freeze
+
+  # Any payload entry that maps to a contact-backed filter in filter_keys.yml
+  # (`contact_additional_attributes`, or `contact_standard` for a column on
+  # `contacts` such as `marketing_opt_out`).
   def references_contact_attributes?
     # Payload entries can arrive as plain Hash (tests, background jobs) or as
     # ActionController::Parameters (real controller path). The latter is NOT a
@@ -88,7 +90,7 @@ class Conversations::FilterService < FilterService
       q['attribute_key'] || q[:attribute_key]
     end
     conversations_filters = @filters['conversations'] || {}
-    keys.any? { |k| conversations_filters.dig(k, 'attribute_type') == 'contact_additional_attributes' }
+    keys.any? { |k| CONTACT_ATTRIBUTE_TYPES.include?(conversations_filters.dig(k, 'attribute_type')) }
   end
 
   def legacy_ai_status_filter?(query_hash)

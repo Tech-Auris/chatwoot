@@ -18,7 +18,8 @@ class Api::V1::Accounts::ContactsController < Api::V1::Accounts::BaseController 
 
   before_action :check_authorization
   before_action :set_pagination_params, only: [:index, :active, :search, :filter]
-  before_action :fetch_contact, only: [:show, :update, :destroy, :avatar, :contactable_inboxes, :destroy_custom_attributes, :sync_group]
+  before_action :fetch_contact, only: [:show, :update, :destroy, :avatar, :contactable_inboxes, :destroy_custom_attributes, :sync_group,
+                                       :marketing_opt_out]
   before_action :set_include_contact_inboxes, only: [:index, :active, :search, :filter, :show, :update]
 
   def index
@@ -95,6 +96,19 @@ class Api::V1::Accounts::ContactsController < Api::V1::Accounts::BaseController 
     @contactable_inboxes = @all_contactable_inboxes.select { |contactable_inbox| policy(contactable_inbox[:inbox]).show? }
   end
 
+  # Turns the marketing opt-out on, from any caller, or off, only by a human:
+  # the AI user and bots get 403 when they try to turn it off.
+  def marketing_opt_out
+    if ActiveModel::Type::Boolean.new.cast(params[:enabled])
+      @contact.opt_out!(source: opt_out_source, user: human_user)
+    else
+      return head :forbidden unless human_user
+
+      @contact.clear_opt_out!(user: human_user)
+    end
+    render :show
+  end
+
   # TODO : refactor this method into dedicated contacts/custom_attributes controller class and routes
   def destroy_custom_attributes
     @contact.custom_attributes = @contact.custom_attributes.excluding(params[:custom_attributes])
@@ -159,6 +173,21 @@ class Api::V1::Accounts::ContactsController < Api::V1::Accounts::BaseController 
     @current_page = params[:page] || 1
     requested_per_page = params[:per_page].to_i
     @per_page = ALLOWED_PER_PAGE.include?(requested_per_page) ? requested_per_page : DEFAULT_PER_PAGE
+  end
+
+  def human_user
+    user = Current.user
+    return unless user.is_a?(User)
+    return if user.id == Conversation.ai_user_id || AiAssignmentAttempt.ia_driven_user?(user)
+
+    user
+  end
+
+  # An agent's switch is a manual opt-out; any other caller says where it came from.
+  def opt_out_source
+    return 'manual' if human_user
+
+    MarketingOptOutable::SOURCES.include?(params[:source]) ? params[:source] : 'ai'
   end
 
   def fetch_contacts(contacts)

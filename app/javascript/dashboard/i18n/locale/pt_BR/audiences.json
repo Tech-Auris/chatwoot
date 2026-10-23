@@ -156,7 +156,8 @@
       "DELETE_TITLE": "Excluir público",
       "DELETE_DESCRIPTION": "O público \"{name}\" será excluído. Os contatos continuam na conta.",
       "DELETED": "Público excluído",
-      "REMOVED": "Contato removido do público"
+      "REMOVED": "Contato removido do público",
+      "USE_IN_CAMPAIGN": "Usar em disparo"
     },
     "SNAPSHOT_DIALOG": {
       "TITLE": "Congelar como público fixo",

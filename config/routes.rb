@@ -176,6 +176,7 @@ Rails.application.routes.draw do
             end
             member do
               get :contacts
+              get :campaign_preview
               post :snapshot
               post :add_contacts
               post :remove_contacts
@@ -319,6 +320,7 @@ Rails.application.routes.draw do
             member do
               get :contactable_inboxes
               post :destroy_custom_attributes
+              post :marketing_opt_out
               post :sync_group
               delete :avatar
             end

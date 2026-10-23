@@ -7,6 +7,28 @@
 #   so a contact enters and leaves as its conversations change.
 # * static: a photo. Its members are stored in audience_contacts and only
 #   change by hand (CSV, freezing a dynamic audience, adding or removing).
+# == Schema Information
+#
+# Table name: audiences
+#
+#  id             :bigint           not null, primary key
+#  contacts_count :integer          default(0), not null
+#  counted_at     :datetime
+#  exclusion      :jsonb            not null
+#  kind           :integer          default("dynamic"), not null
+#  name           :string           not null
+#  rule           :jsonb            not null
+#  source         :string           default("manual"), not null
+#  window         :jsonb            not null
+#  created_at     :datetime         not null
+#  updated_at     :datetime         not null
+#  account_id     :bigint           not null
+#  created_by_id  :bigint
+#
+# Indexes
+#
+#  index_audiences_on_account_id  (account_id)
+#
 class Audience < ApplicationRecord
   # Above this a list is neither downloaded nor sent in phase 1.
   MAX_CONTACTS = 10_000

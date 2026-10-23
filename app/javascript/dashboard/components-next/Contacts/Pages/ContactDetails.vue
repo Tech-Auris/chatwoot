@@ -10,6 +10,7 @@ import Button from 'dashboard/components-next/button/Button.vue';
 import ContactLabels from 'dashboard/components-next/Contacts/ContactLabels/ContactLabels.vue';
 import ContactsForm from 'dashboard/components-next/Contacts/ContactsForm/ContactsForm.vue';
 import ConfirmContactDeleteDialog from 'dashboard/components-next/Contacts/ContactsForm/ConfirmContactDeleteDialog.vue';
+import MarketingOptOutToggle from 'dashboard/components-next/Contacts/MarketingOptOutToggle.vue';
 import Policy from 'dashboard/components/policy.vue';
 
 const props = defineProps({
@@ -175,6 +176,10 @@ const handleAvatarDelete = async () => {
         @click="updateContact"
       />
     </div>
+    <MarketingOptOutToggle
+      v-if="selectedContact?.id"
+      :contact-id="selectedContact.id"
+    />
     <Policy :permissions="['administrator', 'manager']">
       <div
         class="flex flex-col items-start w-full gap-4 pt-6 border-t border-n-strong"
