@@ -156,6 +156,30 @@ describe Whatsapp::OneoffCampaignService do
         expect(filled.reload).to have_attributes(campaign_id: campaign.id, origem: 'Disparo interno', status: 'pending')
       end
 
+      it 'leaves out the contacts with the marketing opt-out, counting them' do
+        reached = create(:contact, :with_phone_number, account: account)
+        opted_out = create(:contact, :with_phone_number, account: account)
+        opted_out.opt_out!(source: 'meta')
+        campaign.update!(audience: [{ 'type' => 'Contact', 'id' => reached.id }, { 'type' => 'Contact', 'id' => opted_out.id }])
+
+        perform_enqueued_jobs(only: Campaigns::DispatchContactJob) { described_class.new(campaign: campaign).perform }
+
+        expect(Conversation.where(campaign_id: campaign.id).pluck(:contact_id)).to eq([reached.id])
+        expect(campaign.reload.skipped_opt_out_count).to eq(1)
+      end
+
+      it 'skips a contact that opted out after the campaign was scheduled' do
+        contact = create(:contact, :with_phone_number, account: account)
+        campaign.update!(audience: [{ 'type' => 'Contact', 'id' => contact.id }])
+        described_class.new(campaign: campaign).perform
+        contact.opt_out!(source: 'ai')
+
+        perform_enqueued_jobs(only: Campaigns::DispatchContactJob)
+
+        expect(Conversation.where(campaign_id: campaign.id)).to be_empty
+        expect(campaign.reload.skipped_opt_out_count).to eq(1)
+      end
+
       it 'marks campaign as completed' do
         described_class.new(campaign: campaign).perform
 

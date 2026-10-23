@@ -421,6 +421,12 @@ pt_BR:
         not_sent_due_to_messaging_window: 'Pesquisa CSAT não foi enviada devido a restrições de envio de mensagens'
       auto_resolve:
         not_sent_due_to_messaging_window: 'Auto-resolver mensagem não enviada devido a restrições de envio de mensagens'
+      marketing_opt_out:
+        manual: '%{user_name} ligou o opt-out: este contato não recebe mais campanhas nem follow-ups'
+        meta: 'Opt-out ligado pela Meta (paciente parou de receber marketing)'
+        template_button: 'Opt-out ligado pelo botão do template (paciente pediu para não receber mensagens)'
+        ai: 'Opt-out ligado pela IA (paciente pediu para não receber mensagens)'
+        cleared: '%{user_name} desligou o opt-out: campanhas e follow-ups voltam a chegar a este contato'
       muted: '%{user_name} silenciou a conversa'
       unmuted: '%{user_name} reativou a conversa'
       recurring_message_failed: 'Mensagem agendada recorrente falhou ao enviar. Próxima ocorrência agendada para %{next_date}.'

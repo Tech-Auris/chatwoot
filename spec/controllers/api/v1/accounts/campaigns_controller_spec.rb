@@ -96,6 +96,15 @@ RSpec.describe 'Campaigns API', type: :request do
       expect(response).to have_http_status(:unauthorized)
     end
 
+    it 'tells how many contacts were not sent because of the marketing opt-out' do
+      campaign.update_column(:skipped_opt_out_count, 3) # rubocop:disable Rails/SkipsModelValidations
+
+      get "/api/v1/accounts/#{account.id}/campaigns/#{campaign.display_id}/report",
+          headers: administrator.create_new_auth_token
+
+      expect(response.parsed_body['summary']['skipped_opt_out']).to eq(3)
+    end
+
     # The report page renders the campaign with the same card as the list, so
     # it needs the campaign served the same way the list serves it.
     it 'carries the campaign itself, serialized as the list does' do
@@ -282,6 +291,18 @@ RSpec.describe 'Campaigns API', type: :request do
 
       expect(response.parsed_body['contacts'].first['will_receive']).to be false
       expect(response.parsed_body['meta']['without_phone_count']).to eq(1)
+    end
+
+    it 'counts the contacts left out by the marketing opt-out' do
+      opted_out = create(:contact, :with_phone_number, account: account, name: 'Opt-out')
+      opted_out.update_labels([label.title])
+      opted_out.opt_out!(source: 'meta')
+
+      get "/api/v1/accounts/#{account.id}/campaigns/audience_preview",
+          params: { label_ids: [label.id] }, headers: administrator.create_new_auth_token
+
+      expect(response.parsed_body['contacts'].first).to include('will_receive' => false, 'opted_out' => true)
+      expect(response.parsed_body['meta']['opted_out_count']).to eq(1)
     end
 
     it 'paginates the list' do

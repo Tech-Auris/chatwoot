@@ -154,6 +154,11 @@ export const actions = {
     }
   },
 
+  setMarketingOptOut: async ({ commit }, { id, enabled }) => {
+    const response = await ContactAPI.setMarketingOptOut(id, enabled);
+    commit(types.EDIT_CONTACT, response.data.payload);
+  },
+
   create: async ({ commit }, { isFormData = false, ...contactParams }) => {
     const decamelizedContactParams = snakecaseKeys(contactParams, {
       deep: true,

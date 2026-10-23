@@ -221,6 +221,7 @@
             "ERROR": "Não foi possível carregar o público.",
             "SUMMARY": "{count} contato(s) no público.",
             "WITHOUT_PHONE": " {count} sem telefone — não vão receber.",
+            "OPTED_OUT": " {count} com opt-out de marketing, ficam de fora.",
             "NAME": "Nome",
             "PHONE": "Telefone",
             "EMAIL": "E-mail",
@@ -229,6 +230,7 @@
             "NEXT": "Próxima",
             "PAGE": "Página {current} de {total}"
           },
+          "OPTED_OUT_WARNING": "1 contato ficará de fora por opt-out | {count} contatos ficarão de fora por opt-out",
           "SCHEDULED_AT": {
             "LABEL": "Horário agendado",
             "PLACEHOLDER": "Escolher a data e hora para o envio",
@@ -289,6 +291,7 @@
           "FAILED": "Falhas",
           "SUCCESS_RATE": "% de sucesso"
         },
+        "SKIPPED_OPT_OUT": "Não enviados (opt-out): {count} contato | Não enviados (opt-out): {count} contatos",
         "STATUS": {
           "SENT": "Enviada",
           "DELIVERED": "Entregue",

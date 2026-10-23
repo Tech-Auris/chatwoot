@@ -38,7 +38,9 @@ class FollowUp < ApplicationRecord
   belongs_to :message, optional: true
 
   enum :delivery_status, { pending: 0, sent: 1, failed: 2 }, prefix: :delivery, validate: true
-  enum :outcome, { waiting: 0, reengaged: 1, closed: 2, no_response: 3 }, prefix: true, validate: true
+  # `opted_out`: the sequence stopped because the contact turned on the
+  # marketing opt-out (the n8n FUP checks it before each send).
+  enum :outcome, { waiting: 0, reengaged: 1, closed: 2, no_response: 3, opted_out: 4 }, prefix: true, validate: true
 
   validates :run_id, presence: true
   validates :step, inclusion: { in: 1..MAX_STEP }, uniqueness: { scope: [:conversation_id, :run_id] }

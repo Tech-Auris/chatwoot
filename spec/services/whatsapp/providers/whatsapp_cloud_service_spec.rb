@@ -539,6 +539,19 @@ describe Whatsapp::Providers::WhatsappCloudService do
       end
     end
 
+    context 'when Meta refuses because the patient stopped marketing messages (#131050)' do
+      let(:error_response) do
+        { 'error' => { 'message' => 'Unable to deliver the message', 'code' => 131_050 } }
+      end
+
+      it 'marks the message failed and turns the contact marketing opt-out on' do
+        service.send(:handle_error, error_response_object, message)
+
+        expect(message.reload.status).to eq('failed')
+        expect(message.conversation.contact.reload).to have_attributes(marketing_opt_out: true, marketing_opt_out_source: 'meta')
+      end
+    end
+
     # Meta emits `(#131000) Something went wrong` and a few sibling codes
     # on transient issues (their brief downtime, quick rate blips). We
     # raise a specific exception so `SendReplyJob` can retry via Sidekiq,

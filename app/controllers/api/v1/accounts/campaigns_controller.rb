@@ -68,7 +68,8 @@ class Api::V1::Accounts::CampaignsController < Api::V1::Accounts::BaseController
         current_page: contacts.current_page,
         total_pages: contacts.total_pages,
         total_count: contacts.total_count,
-        without_phone_count: preview_contacts.where(phone_number: [nil, '']).count
+        without_phone_count: preview_contacts.where(phone_number: [nil, '']).count,
+        opted_out_count: preview_contacts.where(marketing_opt_out: true).where.not(phone_number: [nil, '']).count
       }
     }
   end
@@ -137,7 +138,9 @@ class Api::V1::Accounts::CampaignsController < Api::V1::Accounts::BaseController
       read: counts['read'].to_i,
       # Accepted by Meta over everything we tried to send. Delivery to the
       # handset is reported separately, since it depends on the recipient.
-      success_rate: total.zero? ? 0 : ((total - failed).to_f / total * 100).round(1)
+      success_rate: total.zero? ? 0 : ((total - failed).to_f / total * 100).round(1),
+      # Never sent: the contact has the marketing opt-out on.
+      skipped_opt_out: campaign.skipped_opt_out_count
     }
   end
 
@@ -179,9 +182,11 @@ class Api::V1::Accounts::CampaignsController < Api::V1::Accounts::BaseController
       name: contact.name,
       email: contact.email,
       phone_number: contact.phone_number,
-      # The campaign skips contacts without a number, so the preview says so
-      # up front rather than letting them silently drop at send time.
-      will_receive: contact.phone_number.present?
+      # The campaign skips contacts without a number or with the marketing
+      # opt-out on, so the preview says so up front rather than letting them
+      # silently drop at send time.
+      will_receive: contact.phone_number.present? && !contact.marketing_opt_out?,
+      opted_out: contact.marketing_opt_out?
     }
   end
 
