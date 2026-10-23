@@ -5,6 +5,9 @@ json.id resource.id
 json.name resource.name
 json.phone_number resource.phone_number
 json.blocked resource.blocked
+json.marketing_opt_out resource.marketing_opt_out
+json.marketing_opt_out_at resource.marketing_opt_out_at&.to_i
+json.marketing_opt_out_source resource.marketing_opt_out_source
 json.identifier resource.identifier
 json.company_id resource.company_id if Current.account&.feature_enabled?('companies')
 json.thumbnail resource.avatar_url

@@ -30,7 +30,8 @@
         "WAITING": "Aguardando",
         "REENGAGED": "Paciente respondeu",
         "CLOSED": "Encerrado",
-        "NO_RESPONSE": "Sem resposta"
+        "NO_RESPONSE": "Sem resposta",
+        "OPTED_OUT": "Parado por opt-out"
       },
       "HISTORY": {
         "TITLE": "Follow-ups desta conversa",

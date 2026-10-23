@@ -79,6 +79,7 @@ class Whatsapp::IncomingMessageBaseService # rubocop:disable Metrics/ClassLength
         create_messages
         apply_origin_attribution
       end
+      apply_marketing_opt_out_button
     end
   ensure
     # Clear lock AFTER transaction commits to prevent race conditions where another request
@@ -108,6 +109,14 @@ class Whatsapp::IncomingMessageBaseService # rubocop:disable Metrics/ClassLength
       'captured_at' => message[:timestamp].to_i.positive? ? message[:timestamp].to_i : Time.current.to_i
     )
     @conversation.save!
+  end
+
+  # The patient clicked the template's opt-out quick reply ("Não quero receber").
+  def apply_marketing_opt_out_button
+    return if outgoing_echo || message_type != 'button'
+
+    button = messages_data.first[:button] || {}
+    @contact.opt_out!(source: 'template_button') if ::Whatsapp::MarketingOptOut.button?(button[:text], button[:payload])
   end
 
   def apply_origin_attribution
@@ -156,6 +165,7 @@ class Whatsapp::IncomingMessageBaseService # rubocop:disable Metrics/ClassLength
       message.external_error = "#{error[:code]}: #{error[:title]}"
     end
     message.save!
+    ::Whatsapp::MarketingOptOut.refused_by_meta!(message, error[:code]) if error
   end
 
   # Meta retries each status (sent / delivered / read) independently, so

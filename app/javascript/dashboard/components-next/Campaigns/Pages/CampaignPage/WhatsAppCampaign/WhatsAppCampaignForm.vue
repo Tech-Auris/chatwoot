@@ -293,8 +293,10 @@ const selectedInbox = computed(() =>
   formState.inboxes.value?.find(inbox => inbox.id === state.inboxId)
 );
 
-// Contacts the campaign would reach, to compare with the number's daily limit.
+// Contacts the campaign would reach, to compare with the number's daily limit,
+// and those it leaves out because their marketing opt-out is on.
 const audienceCount = ref(0);
+const optedOutCount = ref(0);
 watch(
   () => [
     state.audienceSource,
@@ -302,18 +304,30 @@ watch(
     state.audienceContactIds,
   ],
   async () => {
-    if (state.audienceSource === 'file') {
-      audienceCount.value = state.audienceContactIds.length;
-      return;
-    }
-    if (!state.selectedAudience?.length) {
+    const fromFile = state.audienceSource === 'file';
+    const hasAudience = fromFile
+      ? state.audienceContactIds.length
+      : state.selectedAudience?.length;
+    optedOutCount.value = 0;
+    if (!hasAudience) {
       audienceCount.value = 0;
       return;
     }
-    const { data } = await CampaignsAPI.audiencePreview({
-      labelIds: state.selectedAudience,
-    });
-    audienceCount.value = data.meta.total_count - data.meta.without_phone_count;
+    if (fromFile) audienceCount.value = state.audienceContactIds.length;
+    try {
+      const { data } = await CampaignsAPI.audiencePreview(
+        fromFile
+          ? { contactIds: state.audienceContactIds }
+          : { labelIds: state.selectedAudience }
+      );
+      optedOutCount.value = data.meta.opted_out_count ?? 0;
+      audienceCount.value =
+        data.meta.total_count -
+        data.meta.without_phone_count -
+        optedOutCount.value;
+    } catch {
+      // A count the preview could not bring keeps the file's own size.
+    }
   },
   { deep: true }
 );
@@ -656,6 +670,17 @@ watch(
         {{ formErrors.scheduledAt }}
       </p>
     </div>
+
+    <p
+      v-if="optedOutCount"
+      class="mb-0 px-3 py-2 rounded-lg bg-n-amber-3 text-xs text-n-amber-11"
+    >
+      {{
+        t('CAMPAIGN.WHATSAPP.CREATE.FORM.OPTED_OUT_WARNING', optedOutCount, {
+          count: optedOutCount,
+        })
+      }}
+    </p>
 
     <ul
       v-if="numberWarnings.length"

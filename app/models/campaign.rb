@@ -13,6 +13,7 @@
 #  enabled                            :boolean          default(TRUE)
 #  message                            :text             not null
 #  scheduled_at                       :datetime
+#  skipped_opt_out_count              :integer          default(0), not null
 #  template_params                    :jsonb            not null
 #  title                              :string           not null
 #  trigger_only_during_business_hours :boolean          default(FALSE)

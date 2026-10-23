@@ -118,6 +118,20 @@ export function useConversationFilterContext() {
       attributeModel: 'standard',
     },
     {
+      attributeKey: CONVERSATION_ATTRIBUTES.MARKETING_OPT_OUT,
+      value: CONVERSATION_ATTRIBUTES.MARKETING_OPT_OUT,
+      attributeName: t('FILTER.ATTRIBUTES.MARKETING_OPT_OUT'),
+      label: t('FILTER.ATTRIBUTES.MARKETING_OPT_OUT'),
+      inputType: 'searchSelect',
+      options: [
+        { id: true, name: t('FILTER.MARKETING_OPT_OUT_TYPES.ON') },
+        { id: false, name: t('FILTER.MARKETING_OPT_OUT_TYPES.OFF') },
+      ],
+      dataType: 'text',
+      filterOperators: equalityOperators.value,
+      attributeModel: 'standard',
+    },
+    {
       attributeKey: CONVERSATION_ATTRIBUTES.AI_ENABLED,
       value: CONVERSATION_ATTRIBUTES.AI_ENABLED,
       attributeName: t('FILTER.ATTRIBUTES.AI_ENABLED'),

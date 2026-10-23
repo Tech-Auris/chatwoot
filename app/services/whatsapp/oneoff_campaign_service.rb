@@ -88,8 +88,16 @@ class Whatsapp::OneoffCampaignService
   def eligible_contact?(contact)
     return log_skip(contact, 'no phone number') && false if contact.phone_number.blank?
     return log_skip(contact, 'no template_params found for WhatsApp campaign') && false if campaign.template_params.blank?
+    return skip_opted_out(contact) if contact.marketing_opt_out?
 
     true
+  end
+
+  # Opted out after the campaign was scheduled, before its turn came.
+  def skip_opted_out(contact)
+    Campaign.update_counters(campaign.id, skipped_opt_out_count: 1) # rubocop:disable Rails/SkipsModelValidations
+    log_skip(contact, 'marketing opt-out')
+    false
   end
 
   def log_skip(contact, reason)
@@ -101,8 +109,12 @@ class Whatsapp::OneoffCampaignService
   # an interval later. Each job then sends its message half an interval after
   # creating it (Campaigns::PacedDispatchService), so creating and sending
   # alternate instead of piling up.
+  # Contacts with the marketing opt-out on are left out, and counted for the
+  # campaign report ("Não enviados (opt-out)").
   def process_audience
-    contact_ids = audience_contacts.pluck(:id)
+    opted_out = audience_contacts.where(marketing_opt_out: true).where.not(phone_number: [nil, ''])
+    campaign.update_column(:skipped_opt_out_count, opted_out.count) # rubocop:disable Rails/SkipsModelValidations
+    contact_ids = audience_contacts.where(marketing_opt_out: false).pluck(:id)
     Rails.logger.info "Scheduling #{contact_ids.size} contacts for campaign #{campaign.id}"
 
     cadence = campaign.cadence_seconds.to_i

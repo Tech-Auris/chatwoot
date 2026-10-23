@@ -24,6 +24,7 @@ const isLoading = ref(false);
 const error = ref('');
 
 const withoutPhoneCount = computed(() => meta.value.without_phone_count ?? 0);
+const optedOutCount = computed(() => meta.value.opted_out_count ?? 0);
 
 const fetchPage = async (page = 1) => {
   isLoading.value = true;
@@ -84,6 +85,13 @@ defineExpose({ open });
                   count: withoutPhoneCount,
                 }
               )
+            }}
+          </span>
+          <span v-if="optedOutCount" class="text-n-amber-11">
+            {{
+              t('CAMPAIGN.WHATSAPP.CREATE.FORM.AUDIENCE_PREVIEW.OPTED_OUT', {
+                count: optedOutCount,
+              })
             }}
           </span>
         </p>
