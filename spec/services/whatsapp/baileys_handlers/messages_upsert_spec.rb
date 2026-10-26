@@ -18,6 +18,8 @@ describe Whatsapp::BaileysHandlers::MessagesUpsert do
         status: 200,
         body: { data: { profilePictureUrl: nil } }.to_json
       )
+    # Sender lookups ask the provider whether the number is on WhatsApp.
+    stub_request(:post, %r{/on-whatsapp}).to_return(status: 200, body: { data: [] }.to_json, headers: { 'Content-Type' => 'application/json' })
   end
 
   describe '#update_existing_contact_inbox' do
@@ -596,10 +598,6 @@ describe Whatsapp::BaileysHandlers::MessagesUpsert do
   end
 
   describe 'group message handling' do
-    before do
-      allow(Whatsapp::Providers::WhatsappBaileysService).to receive(:groups_enabled?).and_return(true)
-    end
-
     let(:group_jid) { '123456789123456789@g.us' }
     let(:group_source_id) { '123456789123456789' }
     let(:sender_phone) { '5511912345678' }
@@ -636,6 +634,15 @@ describe Whatsapp::BaileysHandlers::MessagesUpsert do
       expect(message.content).to eq('Hello group')
       expect(message.sender).not_to eq(group_contact)
       expect(GroupMember.where(group_contact: group_contact).active.pluck(:contact_id)).to include(message.sender_id)
+    end
+
+    it 'ignores the group message when the account has WhatsApp groups off' do
+      inbox.channel.account.update!(whatsapp_groups_enabled: false)
+      params = build_params(build_group_raw_message(id: 'grp_msg_off', text: 'Hello group'))
+
+      expect do
+        Whatsapp::IncomingMessageBaileysService.new(inbox: inbox, params: params).perform
+      end.not_to change(Conversation, :count)
     end
 
     it 'adds only the message sender as a group member' do

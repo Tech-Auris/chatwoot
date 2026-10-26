@@ -15,10 +15,6 @@ class Whatsapp::Providers::WhatsappBaileysService < Whatsapp::Providers::BaseSer
   # session, not a transient blip.
   RECONNECT_LOOP_RESET_STRIKES = 3
 
-  def self.groups_enabled?
-    ENV.fetch('BAILEYS_WHATSAPP_GROUPS_ENABLED', 'false') == 'true'
-  end
-
   def self.status
     if DEFAULT_URL.blank? || DEFAULT_API_KEY.blank?
       raise ProviderUnavailableError, 'Missing BAILEYS_PROVIDER_DEFAULT_URL or BAILEYS_PROVIDER_DEFAULT_API_KEY setup'
@@ -61,7 +57,7 @@ class Whatsapp::Providers::WhatsappBaileysService < Whatsapp::Providers::BaseSer
         webhookVerifyToken: whatsapp_channel.provider_config['webhook_verify_token'],
         # TODO: Remove on Baileys v2, default will be false
         includeMedia: false,
-        groupsEnabled: self.class.groups_enabled?,
+        groupsEnabled: whatsapp_channel.groups_enabled?,
         # Baileys node uses this to filter `messaging-history.set` events
         # before relaying them as a sequence of `importMode: true` webhooks.
         # 0 / nil disables the import; compact drops the key in that case.
@@ -92,7 +88,7 @@ class Whatsapp::Providers::WhatsappBaileysService < Whatsapp::Providers::BaseSer
         webhookUrl: whatsapp_channel.inbox.callback_webhook_url,
         webhookVerifyToken: whatsapp_channel.provider_config['webhook_verify_token'],
         includeMedia: false,
-        groupsEnabled: self.class.groups_enabled?
+        groupsEnabled: whatsapp_channel.groups_enabled?
       }.compact.to_json,
       timeout: 10
     )
@@ -157,7 +153,7 @@ class Whatsapp::Providers::WhatsappBaileysService < Whatsapp::Providers::BaseSer
   def sync_templates; end
 
   def allow_group_creation?
-    true
+    whatsapp_channel.groups_enabled?
   end
 
   def create_group(subject, participants)

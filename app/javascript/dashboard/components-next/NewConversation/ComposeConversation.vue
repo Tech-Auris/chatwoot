@@ -6,6 +6,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { useUISettings } from 'dashboard/composables/useUISettings';
 import { useInboxSignatures } from 'dashboard/composables/useInboxSignatures';
 import { useAlert } from 'dashboard/composables';
+import { useAccount } from 'dashboard/composables/useAccount';
 import { ExceptionWithMessage } from 'shared/helpers/CustomErrors';
 import { sendBlockReason } from 'dashboard/helper/whatsappHealth';
 import { debounce } from '@chatwoot/utils';
@@ -77,6 +78,7 @@ const contactById = useMapGetter('contacts/getContactById');
 const contactsUiFlags = useMapGetter('contacts/getUIFlags');
 const currentUser = useMapGetter('getCurrentUser');
 const globalConfig = useMapGetter('globalConfig/get');
+const { currentAccount } = useAccount();
 const uiFlags = useMapGetter('contactConversations/getUIFlags');
 const messageSignature = useMapGetter('getMessageSignature');
 const inboxesList = useMapGetter('inboxes/getInboxes');
@@ -89,7 +91,7 @@ const groupCreationInboxes = computed(() =>
 const isGroupMode = computed(() => composeMode.value === 'group');
 const hasGroupInboxes = computed(() => groupCreationInboxes.value.length > 0);
 const isGroupsDisabled = computed(
-  () => !globalConfig.value.baileysWhatsappGroupsEnabled
+  () => !currentAccount.value?.whatsapp_groups_enabled
 );
 const isSuperAdmin = computed(() => currentUser.value.type === 'SuperAdmin');
 

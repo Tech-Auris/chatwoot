@@ -41,7 +41,7 @@ module ReportHelper
   end
 
   def conversations
-    scope.conversations.where(account_id: account.id, created_at: range)
+    scope.conversations.group_type_individual.where(account_id: account.id, created_at: range)
   end
 
   def incoming_messages

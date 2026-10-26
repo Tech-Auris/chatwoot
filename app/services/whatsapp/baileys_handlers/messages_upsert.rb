@@ -33,7 +33,7 @@ module Whatsapp::BaileysHandlers::MessagesUpsert
     return if find_message_by_source_id(raw_message_id)
 
     return handle_individual_contact_message if %w[lid user].include?(jid_type)
-    return handle_group_contact_message if jid_type == 'group' && Whatsapp::Providers::WhatsappBaileysService.groups_enabled?
+    return handle_group_contact_message if jid_type == 'group' && inbox.channel.groups_enabled?
   end
 
   def message_stub?

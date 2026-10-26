@@ -30,7 +30,7 @@ class WebhookListener < BaseListener # rubocop:disable Metrics/ClassLength
 
     payload = message.webhook_data.merge(event: __method__.to_s)
     deliver_webhook_payloads(payload, inbox)
-    deliver_secretary_payload(payload, inbox)
+    deliver_secretary_payload(payload, inbox) unless message.conversation.group_type_group?
 
     message_incoming(event)
     message_outgoing(event)

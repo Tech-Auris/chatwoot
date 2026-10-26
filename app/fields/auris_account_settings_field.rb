@@ -1,9 +1,9 @@
 require 'administrate/field/base'
 
-# Three Auris-flavor account toggles rendered as a single Administrate field
+# Auris-flavor account toggles rendered as a single Administrate field
 # in the Super Admin → Accounts edit page. The grid visual mirrors the
 # Enterprise "All features" widget so operators get the same look-and-feel
-# regardless of edition. All three are plain boolean columns on `accounts`
+# regardless of edition. All of them are plain boolean columns on `accounts`
 # so persistence stays trivial.
 class AurisAccountSettingsField < Administrate::Field::Base
   def to_s
@@ -20,7 +20,10 @@ class AurisAccountSettingsField < Administrate::Field::Base
         checked: resource.ai_status_uses_attribute },
       { key: :multi_language_ai,
         label: 'Multi-language AI',
-        checked: resource.multi_language_ai }
+        checked: resource.multi_language_ai },
+      { key: :whatsapp_groups_enabled,
+        label: 'WhatsApp groups (QR Code)',
+        checked: resource.whatsapp_groups_enabled }
     ]
   end
 end

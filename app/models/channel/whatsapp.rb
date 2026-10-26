@@ -406,6 +406,12 @@ class Channel::Whatsapp < ApplicationRecord # rubocop:disable Metrics/ClassLengt
     provider_service.respond_to?(:allow_group_creation?) && provider_service.allow_group_creation?
   end
 
+  # WhatsApp groups only reach QR Code (Baileys) inboxes, and only while the
+  # account has them on (Super Admin → Auris settings).
+  def groups_enabled?
+    provider == 'baileys' && account.whatsapp_groups_enabled?
+  end
+
   delegate :setup_channel_provider, to: :provider_service
   delegate :import_session, to: :provider_service
   delegate :presence_subscribe, to: :provider_service

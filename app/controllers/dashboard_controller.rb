@@ -80,7 +80,6 @@ class DashboardController < ActionController::Base
       WHATSAPP_APP_ID: GlobalConfigService.load('WHATSAPP_APP_ID', ''),
       WHATSAPP_CONFIGURATION_ID: GlobalConfigService.load('WHATSAPP_CONFIGURATION_ID', ''),
       IS_ENTERPRISE: ChatwootApp.enterprise?,
-      BAILEYS_WHATSAPP_GROUPS_ENABLED: Whatsapp::Providers::WhatsappBaileysService.groups_enabled?,
       WHATSAPP_MESSAGING_WINDOW_INDICATOR_ENABLED: GlobalConfigService.load('WHATSAPP_MESSAGING_WINDOW_INDICATOR_ENABLED', 'false').to_s == 'true',
       AZURE_APP_ID: GlobalConfigService.load('AZURE_APP_ID', ''),
       GIT_SHA: GIT_HASH,
