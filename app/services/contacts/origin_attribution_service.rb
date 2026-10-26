@@ -36,7 +36,8 @@ class Contacts::OriginAttributionService
     'Indicação de colega',
     'Influenciador',
     'Instagram',
-    'Orgânico'
+    'Orgânico',
+    'Site'
   ].freeze
 
   # Set when a campaign sent from AurisChat reaches a conversation that has no

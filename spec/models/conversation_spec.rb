@@ -32,6 +32,7 @@ RSpec.describe Conversation do
     it { is_expected.to allow_value(nil).for(:origem) }
     it { is_expected.to allow_value('Google').for(:origem) }
     it { is_expected.to allow_value('Instagram').for(:origem) }
+    it { is_expected.to allow_value('Site').for(:origem) }
     it { is_expected.not_to allow_value('anything-not-in-options').for(:origem) }
   end
 
