@@ -14,6 +14,7 @@
 
       ### ⚡ Improvements
 
+      - **"Site" origin.** You can now mark that a patient came from the clinic's website in the conversation's "Lead origin" field, and find them in the filters and in the origin report.
       - **Previous conversations in a fixed order.** The side list shows conversations from newest to oldest and no longer reshuffles when a message arrives. After 20, a "See more" button loads the rest.
 
       ### 🐛 Fixes
@@ -30,6 +31,7 @@
 
       ### ⚡ Melhorias
 
+      - **Origem "Site".** Agora dá para marcar que o paciente chegou pelo site da clínica, no campo "Origem do lead" da conversa, e encontrar esses pacientes nos filtros e no relatório por origem.
       - **Conversas anteriores em ordem fixa.** A lista lateral mostra as conversas da mais nova para a mais antiga e não muda mais de ordem quando chega mensagem. Depois de 20, o botão "Ver mais" carrega as demais.
 
       ### 🐛 Correções
