@@ -733,7 +733,35 @@
         "ERROR_MESSAGE": "Could not convert inbox. Please check the credentials and try again."
       }
     },
+    "AI_SCHEDULE": {
+      "TOGGLE": "Hours with the AI off",
+      "TOGGLE_HELP": "In these hours, when a patient writes, the conversation goes to the team below and the AI stops replying. The AI keeps the messages so it knows the context when the team hands the conversation back.",
+      "TEAM_LABEL": "Team that takes the conversations",
+      "TEAM_HELP": "Conversations are distributed among this team's agents. Without a team, the AI is turned off and the conversation stays unassigned in the inbox.",
+      "NO_TEAM": "No team",
+      "HOURS_TITLE": "Hours with the AI off",
+      "HOURS_HELP": "Several ranges per day are allowed. Inbox timezone: {timezone}.",
+      "AI_ON_ALL_DAY": "AI on all day",
+      "FROM": "From",
+      "TO": "to",
+      "ADD_RANGE": "Add range",
+      "REMOVE_RANGE": "Remove range",
+      "INVALID_RANGE": "The end must be after the start",
+      "SAVE": "Save",
+      "SAVED": "AI schedule saved",
+      "ERROR": "Could not save the AI schedule. Please try again.",
+      "DAYS": {
+        "SUNDAY": "Sunday",
+        "MONDAY": "Monday",
+        "TUESDAY": "Tuesday",
+        "WEDNESDAY": "Wednesday",
+        "THURSDAY": "Thursday",
+        "FRIDAY": "Friday",
+        "SATURDAY": "Saturday"
+      }
+    },
     "TABS": {
+      "AI_SCHEDULE": "AI schedule",
       "SETTINGS": "Settings",
       "COLLABORATORS": "Collaborators",
       "CONFIGURATION": "Configuration",

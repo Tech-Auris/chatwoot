@@ -5,6 +5,7 @@
 # Table name: inboxes
 #
 #  id                            :integer          not null, primary key
+#  ai_schedule_enabled           :boolean          default(FALSE), not null
 #  allow_messages_after_resolved :boolean          default(TRUE)
 #  auto_assignment_config        :jsonb
 #  business_name                 :string
@@ -27,26 +28,30 @@
 #  created_at                    :datetime         not null
 #  updated_at                    :datetime         not null
 #  account_id                    :integer          not null
+#  ai_schedule_team_id           :bigint
 #  channel_id                    :integer          not null
 #  portal_id                     :bigint
 #
 # Indexes
 #
 #  index_inboxes_on_account_id                   (account_id)
+#  index_inboxes_on_ai_schedule_team_id          (ai_schedule_team_id)
 #  index_inboxes_on_channel_id_and_channel_type  (channel_id,channel_type)
 #  index_inboxes_on_portal_id                    (portal_id)
 #
 # Foreign Keys
 #
+#  fk_rails_...  (ai_schedule_team_id => teams.id) ON DELETE => nullify
 #  fk_rails_...  (portal_id => portals.id)
 #
 
-class Inbox < ApplicationRecord
+class Inbox < ApplicationRecord # rubocop:disable Metrics/ClassLength
   include Reportable
   include Avatarable
   include OutOfOffisable
   include AccountCacheRevalidator
   include InboxAgentAvailability
+  include AiOffSchedulable
 
   # Not allowing characters:
   validates :name, presence: true

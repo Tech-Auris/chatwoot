@@ -7,6 +7,19 @@ module AssignmentHandler
     after_commit :notify_assignment_change, :process_assignment_changes
   end
 
+  # Re-runs the team's round-robin when the team stays the same but the
+  # assignee is not one of its members (e.g. the AI user). Assigns the picked
+  # agent, or clears the stale assignee when no one has capacity — the same
+  # outcome as the natural flow below (validate clears, find returns nil).
+  def reassign_within_team!
+    team_members_with_capacity = inbox.member_ids_with_assignment_capacity & team.members.ids
+    agent = ::AutoAssignment::AgentAssignmentService.new(
+      conversation: self,
+      allowed_agent_ids: team_members_with_capacity
+    ).find_assignee
+    update!(assignee: agent)
+  end
+
   private
 
   def ensure_assignee_is_from_team

@@ -406,6 +406,7 @@ Rails.application.routes.draw do
               post :set_inbound_calls, on: :member
             end
 
+            resource :ai_schedule, only: [:show, :update], controller: 'inbox_ai_schedules'
             resource :csat_template, only: [:show, :create], controller: 'inbox_csat_templates' do
               post :analyze, on: :collection
               post :link, on: :member

@@ -462,6 +462,9 @@ en:
         not_sent_due_to_messaging_window: 'CSAT survey not sent due to outgoing message restrictions'
       auto_resolve:
         not_sent_due_to_messaging_window: 'Auto-resolve message not sent due to outgoing message restrictions'
+      ai_schedule:
+        handed_to_team: 'AI off by the schedule: conversation handed to the %{team_name} team'
+        ai_off: 'AI off by the schedule: the team takes over this conversation'
       marketing_opt_out:
         manual: '%{user_name} turned on the marketing opt-out: this contact no longer gets campaigns or follow-ups'
         meta: 'Marketing opt-out turned on by Meta (the patient stopped marketing messages)'

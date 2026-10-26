@@ -4,6 +4,7 @@
 #
 #  id                :bigint           not null, primary key
 #  online_user_ids   :bigint           default([]), not null, is an Array
+#  reason            :integer          default(0), not null
 #  created_at        :datetime         not null
 #  account_id        :bigint           not null
 #  agent_assigned_id :bigint
@@ -38,6 +39,10 @@ class AiAssignmentAttempt < ApplicationRecord
   belongs_to :agent_assigned, class_name: 'User', optional: true
   belongs_to :triggered_by, class_name: 'User'
 
+  # `ai`: the AI handed the conversation to the team. `schedule`: a patient
+  # wrote in the inbox's "Horário da IA desligada" (Conversations::AiScheduleHandoffService).
+  enum :reason, { ai: 0, schedule: 1 }, prefix: true
+
   scope :for_account, ->(account_id) { where(account_id: account_id) }
   scope :for_inbox, lambda { |inbox_id|
     joins(:conversation).where(conversations: { inbox_id: inbox_id })
@@ -57,11 +62,12 @@ class AiAssignmentAttempt < ApplicationRecord
   #
   # `triggered_by` defaults to `Current.user`; callers running outside a
   # request (specs, jobs) should pass it explicitly.
-  def self.record_for(conversation, triggered_by: Current.user)
+  def self.record_for(conversation, triggered_by: Current.user, reason: :ai)
     return if conversation.nil? || conversation.team_id.blank?
     return unless ia_driven_user?(triggered_by)
 
     create!(
+      reason: reason,
       conversation: conversation,
       account_id: conversation.account_id,
       team: conversation.team,

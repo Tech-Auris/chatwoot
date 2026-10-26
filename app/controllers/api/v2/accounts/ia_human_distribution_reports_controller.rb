@@ -46,6 +46,7 @@ class Api::V2::Accounts::IaHumanDistributionReportsController < Api::V1::Account
     range = report_range
     inbox_id = params[:inbox_id].presence&.to_i
     scope = attempts_scope(range, inbox_id, params[:date_basis])
+    scope = scope.where(reason: params[:reason]) if AiAssignmentAttempt.reasons.key?(params[:reason])
     totals = status_counts(scope)
     totals[:leads_created] = leads_created_count(range, inbox_id) if params[:date_basis] == 'lead_created'
 
@@ -115,7 +116,8 @@ class Api::V2::Accounts::IaHumanDistributionReportsController < Api::V1::Account
       agent_name: attempt.agent_assigned&.name,
       online_team_members: online_member_names(attempt.online_user_ids),
       status_tag: status_tag,
-      status_text: status_text_for(status_tag)
+      status_text: status_text_for(status_tag),
+      reason: attempt.reason
     }.merge(first_reply_fields(attempt, repliers))
   end
 

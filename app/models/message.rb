@@ -383,6 +383,7 @@ class Message < ApplicationRecord
     reopen_conversation
     mark_pending_conversation_as_open_for_human_response
     set_conversation_activity
+    hand_off_by_ai_schedule
     dispatch_create_events
     send_reply
     execute_message_template_hooks
@@ -391,6 +392,14 @@ class Message < ApplicationRecord
 
   def update_contact_activity
     sender.update!(last_activity_at: DateTime.now) if sender.is_a?(Contact)
+  end
+
+  # Runs before the create events so the webhooks already see the AI off.
+  # A failure here must never keep the message from reaching them.
+  def hand_off_by_ai_schedule
+    Conversations::AiScheduleHandoffService.new(message: self).perform
+  rescue StandardError => e
+    ChatwootExceptionTracker.new(e, account: account).capture_exception
   end
 
   def update_waiting_since

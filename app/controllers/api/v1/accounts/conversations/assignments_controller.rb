@@ -65,16 +65,7 @@ class Api::V1::Accounts::Conversations::AssignmentsController < Api::V1::Account
   def force_reassignment_on_unchanged_team
     return unless @team.allow_auto_assign
 
-    team_members_with_capacity = @conversation.inbox.member_ids_with_assignment_capacity & @team.members.ids
-    agent = ::AutoAssignment::AgentAssignmentService.new(
-      conversation: @conversation,
-      allowed_agent_ids: team_members_with_capacity
-    ).find_assignee
-
-    # Assign the picked agent, or clear the stale non-team-member assignee
-    # when the round-robin finds no one online — same outcome as the
-    # natural AssignmentHandler flow (validate clears, find returns nil).
-    @conversation.update!(assignee: agent)
+    @conversation.reassign_within_team!
 
     # `team.changed` won't dispatch because team_id didn't actually
     # change — record the audit row here so the report shows the retry.
