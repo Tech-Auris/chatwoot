@@ -14,6 +14,7 @@ export const ORIGEM_OPTIONS = [
   'Influenciador',
   'Instagram',
   'Orgânico',
+  'Site',
 ];
 
 // Sent to the backend to select conversations/contacts with no origem
