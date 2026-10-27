@@ -4,12 +4,8 @@ import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
 import InboxReconnectionRequired from '../../components/InboxReconnectionRequired.vue';
 import whatsappChannel from 'dashboard/api/channel/whatsappChannel';
-import {
-  setupFacebookSdk,
-  initWhatsAppEmbeddedSignup,
-  createMessageHandler,
-  isValidBusinessData,
-} from './utils';
+import { useWhatsappEmbeddedSignup } from 'dashboard/composables/useWhatsappEmbeddedSignup';
+import { setupFacebookSdk } from './utils';
 
 const props = defineProps({
   inbox: {
@@ -23,6 +19,7 @@ const props = defineProps({
 });
 
 const { t } = useI18n();
+const { runEmbeddedSignup } = useWhatsappEmbeddedSignup();
 
 const isRequestingAuthorization = ref(false);
 const isLoadingFacebook = ref(true);
@@ -67,44 +64,18 @@ const reauthorizeWhatsApp = async params => {
   }
 };
 
-const handleEmbeddedSignupEvents = async (data, authCode) => {
-  if (!data || typeof data !== 'object') {
-    return;
-  }
-
-  // Handle different event types
-  if (data.event === 'FINISH') {
-    const businessData = data.data;
-
-    if (isValidBusinessData(businessData) && businessData.phone_number_id) {
-      await reauthorizeWhatsApp({
-        code: authCode,
-        business_id: businessData.business_id,
-        waba_id: businessData.waba_id,
-        phone_number_id: businessData.phone_number_id,
-      });
-    } else {
-      useAlert(
-        t('INBOX_MGMT.ADD.WHATSAPP.EMBEDDED_SIGNUP.INVALID_BUSINESS_DATA')
-      );
-    }
-  } else if (data.event === 'CANCEL') {
-    isRequestingAuthorization.value = false;
-    useAlert(t('INBOX_MGMT.ADD.WHATSAPP.EMBEDDED_SIGNUP.CANCELLED'));
-  } else if (data.event === 'error') {
-    isRequestingAuthorization.value = false;
-    useAlert(
-      data.error_message ||
-        t('INBOX_MGMT.ADD.WHATSAPP.EMBEDDED_SIGNUP.SIGNUP_ERROR')
-    );
-  }
-};
-
-const startEmbeddedSignup = authCode => {
-  const messageHandler = createMessageHandler(data =>
-    handleEmbeddedSignupEvents(data, authCode)
-  );
-  window.addEventListener('message', messageHandler);
+// What the user picked in Meta's popup wins: a number moved to another WABA
+// (e.g. a new phone) comes back with new IDs, and resending the stored ones
+// would point the inbox at a WABA that no longer exists. The stored number ID
+// only fills in when the popup leaves it out for the same WABA.
+const reauthorizationParams = signup => {
+  const stored = props.inbox.provider_config || {};
+  const sameWaba = signup.waba_id === stored.business_account_id;
+  return {
+    ...signup,
+    phone_number_id:
+      signup.phone_number_id || (sameWaba && stored.phone_number_id) || '',
+  };
 };
 
 const handleLoginAndReauthorize = async () => {
@@ -116,38 +87,13 @@ const handleLoginAndReauthorize = async () => {
     throw new Error('WhatsApp Configuration ID is required');
   }
 
-  try {
-    const authCode = await initWhatsAppEmbeddedSignup(
-      whatsappConfigurationId.value
-    );
-
-    // Check if this is a reauthorization scenario where we already have the business data
-    const existingConfig = props.inbox.provider_config;
-    if (
-      existingConfig &&
-      existingConfig.business_account_id &&
-      existingConfig.phone_number_id
-    ) {
-      await reauthorizeWhatsApp({
-        code: authCode,
-        business_id: existingConfig.business_account_id,
-        waba_id: existingConfig.business_account_id,
-        phone_number_id: existingConfig.phone_number_id,
-      });
-    } else {
-      startEmbeddedSignup(authCode);
-    }
-  } catch (error) {
-    if (error.message === 'Login cancelled') {
-      useAlert(t('INBOX_MGMT.ADD.WHATSAPP.EMBEDDED_SIGNUP.CANCELLED'));
-    } else {
-      useAlert(
-        error.message ||
-          t('INBOX_MGMT.ADD.WHATSAPP.EMBEDDED_SIGNUP.AUTH_NOT_COMPLETED')
-      );
-    }
-    throw error;
+  const signup = await runEmbeddedSignup();
+  if (!signup) {
+    useAlert(t('INBOX_MGMT.ADD.WHATSAPP.EMBEDDED_SIGNUP.CANCELLED'));
+    return;
   }
+
+  await reauthorizeWhatsApp(reauthorizationParams(signup));
 };
 
 const requestAuthorization = async () => {
@@ -162,10 +108,7 @@ const requestAuthorization = async () => {
   } catch (error) {
     useAlert(error.message || t('INBOX.REAUTHORIZE.CONFIGURATION_ERROR'));
   } finally {
-    // Reset only if not already processing through embedded signup
-    if (!window.FB || !window.FB.getLoginStatus) {
-      isRequestingAuthorization.value = false;
-    }
+    isRequestingAuthorization.value = false;
   }
 };
 
