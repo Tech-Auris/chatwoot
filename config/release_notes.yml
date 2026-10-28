@@ -1,4 +1,28 @@
 ---
+- tag: v4.15.1-auris.1.73
+  published_at: '2026-10-28T20:00:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.73
+  notes:
+    en: |-
+      ### ✨ What's new
+
+      - **Hours with the AI off.** In the inbox settings you can choose the hours when the AI doesn't reply. In those hours, when a patient writes, the conversation goes straight to the team, and the AI keeps the context for when you hand it back.
+      - **WhatsApp groups in AurisChat.** Groups your number is part of now show up in the conversation list, and you can reply to them right there. The AI never replies in groups.
+      - **See who receives a campaign.** When a campaign goes to a saved audience, "See audience" shows the list of contacts and who is left out.
+
+      ### 🐛 Fixes
+
+      - **Campaigns in a new conversation.** In inboxes set to create new conversations, a campaign sent to a patient whose last conversation was resolved now starts a new conversation, instead of writing in the resolved one.
+    pt_BR: |-
+      ### ✨ Novidades
+
+      - **Horário da IA desligada.** Nas configurações da caixa dá para escolher os horários em que a IA não responde. Nesses horários, quando o paciente escreve, a conversa vai direto para a equipe, e a IA guarda o contexto para quando vocês devolverem a conversa a ela.
+      - **Grupos do WhatsApp no AurisChat.** Os grupos de que o número participa passam a aparecer na lista de conversas, e dá para responder neles por ali. A IA nunca responde nos grupos.
+      - **Ver quem recebe a campanha.** Quando a campanha vai para um público salvo, o "Ver público" mostra a lista de contatos e quem fica de fora.
+
+      ### 🐛 Correções
+
+      - **Campanha em conversa nova.** Nas caixas configuradas para criar novas conversas, a campanha enviada a um paciente cuja última conversa estava resolvida agora abre uma conversa nova, em vez de escrever na conversa resolvida.
 - tag: v4.15.1-auris.1.72
   published_at: '2026-10-22T20:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.72
@@ -421,11 +445,3 @@
 
       - **Novos termos de uso — a gerente precisa aceitar.** Quando a equipe Auris publica uma versão atualizada dos termos de uso, a gerente da clínica vê uma tela com o novo texto no próximo login. Ela precisa rolar até o fim e confirmar o aceite — mesma ideia do aceite de um novo contrato.
       - **Prazo para o aceite.** Cada pedido tem uma data de vencimento (normalmente alguns dias). Se a gerente não aceitar dentro do prazo, o painel do AurisChat fica pausado para todos da clínica até ela entrar e confirmar. Antes do prazo, a equipe vê um aviso com a data para ninguém ser pego de surpresa.
-- tag: v4.15.1-auris.1.53.1
-  published_at: '2026-09-03T22:15:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.53.1
-  notes:
-    en: |-
-      Bug fixes and internal improvements.
-    pt_BR: |-
-      Correções de bugs e melhorias internas.
