@@ -164,16 +164,21 @@ class Api::V1::Accounts::CampaignsController < Api::V1::Accounts::BaseController
 
   # Mirrors Whatsapp::OneoffCampaignService: an explicit contact list wins,
   # otherwise the labels select the audience.
+  # Who the audience is, by source: a saved audience, a contact list (an
+  # imported file) or labels.
   def preview_contacts
-    @preview_contacts ||= begin
-      contact_ids = Array(params[:contact_ids]).compact_blank
-      if contact_ids.any?
-        Current.account.contacts.where(id: contact_ids).order(:name)
-      else
-        labels = Current.account.labels.where(id: Array(params[:label_ids]).compact_blank).pluck(:title)
-        Current.account.contacts.tagged_with(labels, any: true).order(:name)
-      end
-    end
+    @preview_contacts ||= if params[:audience_id].present?
+                            Current.account.audiences.find(params[:audience_id]).contacts.reorder(:name)
+                          elsif Array(params[:contact_ids]).compact_blank.any?
+                            Current.account.contacts.where(id: Array(params[:contact_ids]).compact_blank).order(:name)
+                          else
+                            labeled_preview_contacts
+                          end
+  end
+
+  def labeled_preview_contacts
+    labels = Current.account.labels.where(id: Array(params[:label_ids]).compact_blank).pluck(:title)
+    Current.account.contacts.tagged_with(labels, any: true).order(:name)
   end
 
   def serialize_preview_contact(contact)
