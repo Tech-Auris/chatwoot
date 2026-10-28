@@ -256,7 +256,8 @@ RSpec.describe 'Super Admin accounts API', type: :request do
         auris_settings: {
           funnel_enabled: '1',
           ai_status_uses_attribute: '1',
-          multi_language_ai: '1'
+          multi_language_ai: '1',
+          whatsapp_groups_enabled: '1'
         }
       }
     end
@@ -290,13 +291,26 @@ RSpec.describe 'Super Admin accounts API', type: :request do
           params: params.merge(auris_settings: {
                                  funnel_enabled: '0',
                                  ai_status_uses_attribute: '0',
-                                 multi_language_ai: '0'
+                                 multi_language_ai: '0',
+                                 whatsapp_groups_enabled: '0'
                                })
 
       account.reload
       expect(account.funnel_enabled).to be(false)
       expect(account.ai_status_uses_attribute).to be(false)
       expect(account.multi_language_ai).to be(false)
+      expect(account.whatsapp_groups_enabled).to be(false)
+    end
+
+    it 'turns WhatsApp groups off and re-sends the setup of the open QR Code connections' do
+      channel = create(:channel_whatsapp, account: account, provider: 'baileys', validate_provider_config: false,
+                                          sync_templates: false, provider_connection: { 'connection' => 'open' })
+
+      expect do
+        put "/super_admin/accounts/#{account.id}", params: params.deep_merge(auris_settings: { whatsapp_groups_enabled: '0' })
+      end.to have_enqueued_job(Channels::Whatsapp::BaileysConnectionCheckJob).with(channel)
+
+      expect(account.reload.whatsapp_groups_enabled).to be(false)
     end
   end
 

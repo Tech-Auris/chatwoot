@@ -93,7 +93,7 @@ class Whatsapp::IncomingMessageBaileysService < Whatsapp::IncomingMessageBaseSer
     messages = processed_params.dig(:data, :messages) || []
     return { imported: 0, dropped_groups: 0 } if messages.empty?
 
-    groups_enabled = Whatsapp::Providers::WhatsappBaileysService.groups_enabled?
+    groups_enabled = inbox.channel.groups_enabled?
     imported = 0
     dropped_groups = 0
 

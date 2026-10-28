@@ -18,6 +18,14 @@ describe ReportingEventListener do
       expect(account.reporting_events.where(name: 'conversation_resolved').count).to be 1
     end
 
+    it 'does not create reporting events for a group conversation' do
+      conversation.update!(group_type: :group)
+      listener.conversation_resolved(Events::Base.new('conversation.resolved', Time.zone.now, conversation: conversation))
+      listener.first_reply_created(Events::Base.new('first.reply.created', Time.zone.now, message: message))
+
+      expect(account.reporting_events.count).to be 0
+    end
+
     context 'when rollup creation fails' do
       let(:event) { Events::Base.new('conversation.resolved', Time.zone.now, conversation: conversation) }
       let(:error) { StandardError.new('rollup failed') }

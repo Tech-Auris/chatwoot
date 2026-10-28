@@ -481,4 +481,18 @@ describe V2::ReportBuilder do
       end
     end
   end
+
+  describe 'group conversations' do
+    let(:group_account) { create(:account) }
+    let(:group_inbox) { create(:inbox, account: group_account) }
+    let(:params) { { type: :account, since: 1.day.ago.to_i.to_s, until: 1.day.from_now.to_i.to_s } }
+
+    it 'leaves group conversations out of the conversation counts' do
+      create(:conversation, account: group_account, inbox: group_inbox)
+      create(:conversation, account: group_account, inbox: group_inbox, group_type: :group)
+
+      expect(described_class.new(group_account, params).summary[:conversations_count]).to eq(1)
+      expect(described_class.new(group_account, params.merge(metric: 'conversations_count')).timeseries.values.sum).to eq(1)
+    end
+  end
 end

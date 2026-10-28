@@ -29,6 +29,7 @@ json.average_ticket @account.average_ticket
 json.funnel_enabled @account.funnel_enabled
 json.ai_status_uses_attribute @account.ai_status_uses_attribute
 json.multi_language_ai @account.multi_language_ai
+json.whatsapp_groups_enabled @account.whatsapp_groups_enabled
 json.inbox_view_menu_enabled @account.inbox_view_menu_enabled
 json.help_center_menu_enabled @account.help_center_menu_enabled
 json.campaigns_live_chat_menu_enabled @account.campaigns_live_chat_menu_enabled

@@ -3,6 +3,8 @@ class ReportingEventListener < BaseListener
 
   def conversation_resolved(event)
     conversation = extract_conversation_and_account(event)[0]
+    return if conversation.group_type_group?
+
     event_end_time = event.timestamp
     time_to_resolve = event_end_time.to_i - conversation.created_at.to_i
 
@@ -27,6 +29,8 @@ class ReportingEventListener < BaseListener
   def first_reply_created(event)
     message = extract_message_and_account(event)[0]
     conversation = message.conversation
+    return if conversation.group_type_group?
+
     first_response_time = message.created_at.to_i - last_non_human_activity(conversation).to_i
 
     reporting_event = ReportingEvent.new(
@@ -49,6 +53,8 @@ class ReportingEventListener < BaseListener
   def reply_created(event)
     message = extract_message_and_account(event)[0]
     conversation = message.conversation
+    return if conversation.group_type_group?
+
     waiting_since = event.data[:waiting_since]
 
     return if waiting_since.blank?
@@ -73,6 +79,8 @@ class ReportingEventListener < BaseListener
 
   def conversation_bot_handoff(event)
     conversation = extract_conversation_and_account(event)[0]
+    return if conversation.group_type_group?
+
     event_end_time = event.timestamp
 
     # Best-effort guard: raw report reads count bot handoffs with DISTINCT conversation_id,
@@ -108,6 +116,8 @@ class ReportingEventListener < BaseListener
 
   def conversation_opened(event)
     conversation = extract_conversation_and_account(event)[0]
+    return if conversation.group_type_group?
+
     event_end_time = event.timestamp
 
     # Find the most recent resolved event for this conversation

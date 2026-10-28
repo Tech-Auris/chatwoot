@@ -25,6 +25,7 @@
 #  status                           :integer          default("active")
 #  support_email                    :string(100)
 #  token_billing_enabled            :boolean          default(TRUE), not null
+#  whatsapp_groups_enabled          :boolean          default(TRUE), not null
 #  created_at                       :datetime         not null
 #  updated_at                       :datetime         not null
 #  simulator_inbox_id               :bigint
@@ -151,6 +152,7 @@ class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
   after_create_commit :setup_internal_chat
   after_destroy :remove_account_sequences
   after_update_commit :clear_unread_conversation_counts_cache, if: :saved_change_to_feature_conversation_unread_counts?
+  after_update_commit :push_whatsapp_groups_to_baileys, if: :saved_change_to_whatsapp_groups_enabled?
   after_commit :ensure_simulator_inbox!, on: %i[create update], if: :env_test?
 
   def secretary_version_name
@@ -209,7 +211,8 @@ class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
     {
       funnel_enabled: funnel_enabled,
       ai_status_uses_attribute: ai_status_uses_attribute,
-      multi_language_ai: multi_language_ai
+      multi_language_ai: multi_language_ai,
+      whatsapp_groups_enabled: whatsapp_groups_enabled
     }
   end
 
@@ -297,6 +300,14 @@ class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
 
   def clear_unread_conversation_counts_cache
     ::Conversations::UnreadCounts::Store.clear_account!(id)
+  end
+
+  # The QR Code connections learn the switch on their next setup; re-send it
+  # now so turning groups on or off in Super Admin takes effect right away.
+  def push_whatsapp_groups_to_baileys
+    whatsapp_channels.where(provider: 'baileys').where("provider_connection->>'connection' = ?", 'open').find_each do |channel|
+      Channels::Whatsapp::BaileysConnectionCheckJob.perform_later(channel)
+    end
   end
 
   trigger.after(:insert).for_each(:row) do

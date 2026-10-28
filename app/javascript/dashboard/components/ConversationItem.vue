@@ -58,7 +58,7 @@ const currentChat = useMapGetter('getSelectedChat');
 const inboxesList = useMapGetter('inboxes/getInboxes');
 const activeInbox = useMapGetter('getSelectedInbox');
 const accountId = useMapGetter('getCurrentAccountId');
-const globalConfig = useMapGetter('globalConfig/get');
+const getAccount = useMapGetter('accounts/getAccount');
 
 const chatMetadata = computed(() => props.source.meta || {});
 const assignee = computed(() => chatMetadata.value.assignee || {});
@@ -99,7 +99,7 @@ const typingPreviewText = computed(() => {
 const isGroupsDisabled = computed(
   () =>
     props.source.group_type === 'group' &&
-    !globalConfig.value.baileysWhatsappGroupsEnabled
+    !getAccount.value(accountId.value)?.whatsapp_groups_enabled
 );
 
 const hasGroupActivity = computed(() => {
