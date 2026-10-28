@@ -20,6 +20,7 @@ const customDateRange = ref([today, today]);
 const selectedDateRange = ref(DATE_RANGE_TYPES.CUSTOM_RANGE);
 const inboxId = ref('');
 const dateBasis = ref('transfer');
+const reason = ref('');
 
 const rows = ref([]);
 const totals = ref({
@@ -57,6 +58,7 @@ const fetchData = async (page = 1) => {
       to: toUnix.value,
       inboxId: inboxId.value,
       dateBasis: dateBasis.value,
+      reason: reason.value,
       page,
     });
     rows.value = data.rows || [];
@@ -218,6 +220,22 @@ const closeOnlineModal = () => {
       </option>
       <option v-for="inbox in inboxes" :key="inbox.id" :value="inbox.id">
         {{ inbox.name }}
+      </option>
+    </select>
+
+    <select
+      v-model="reason"
+      class="!mb-0 h-10 bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg pl-3 pr-9 text-sm text-n-slate-12 focus:outline-n-brand lg:w-56"
+      @change="onInboxChange"
+    >
+      <option value="">
+        {{ $t('IA_HUMAN_DISTRIBUTION_REPORT.REASON.ALL') }}
+      </option>
+      <option value="ai">
+        {{ $t('IA_HUMAN_DISTRIBUTION_REPORT.REASON.AI') }}
+      </option>
+      <option value="schedule">
+        {{ $t('IA_HUMAN_DISTRIBUTION_REPORT.REASON.SCHEDULE') }}
       </option>
     </select>
   </div>
@@ -405,6 +423,12 @@ const closeOnlineModal = () => {
           <td class="px-5 py-3 whitespace-nowrap">
             <span v-if="row.team_name" class="text-n-slate-12">
               {{ row.team_name }}
+            </span>
+            <span
+              v-if="row.reason === 'schedule'"
+              class="ltr:ml-2 rtl:mr-2 px-1.5 py-0.5 rounded text-xs bg-n-amber-3 text-n-amber-11"
+            >
+              {{ $t('IA_HUMAN_DISTRIBUTION_REPORT.REASON.SCHEDULE') }}
             </span>
             <span v-else class="text-n-slate-10">
               {{ $t('IA_HUMAN_DISTRIBUTION_REPORT.DASH') }}

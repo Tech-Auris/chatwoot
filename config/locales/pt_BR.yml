@@ -436,6 +436,9 @@ pt_BR:
         not_sent_due_to_messaging_window: 'Pesquisa CSAT não foi enviada devido a restrições de envio de mensagens'
       auto_resolve:
         not_sent_due_to_messaging_window: 'Auto-resolver mensagem não enviada devido a restrições de envio de mensagens'
+      ai_schedule:
+        handed_to_team: 'IA desligada pelo horário: conversa passada para o time %{team_name}'
+        ai_off: 'IA desligada pelo horário: a equipe assume esta conversa'
       marketing_opt_out:
         manual: '%{user_name} ligou o opt-out: este contato não recebe mais campanhas nem follow-ups'
         meta: 'Opt-out ligado pela Meta (paciente parou de receber marketing)'

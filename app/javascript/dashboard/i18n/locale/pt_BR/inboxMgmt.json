@@ -733,7 +733,35 @@
         "ERROR_MESSAGE": "Não foi possível converter a caixa de entrada. Verifique as credenciais e tente novamente."
       }
     },
+    "AI_SCHEDULE": {
+      "TOGGLE": "Horário da IA desligada",
+      "TOGGLE_HELP": "Nesses horários, quando o paciente escreve, a conversa vai para o time abaixo e a IA para de responder. A IA guarda as mensagens para saber o contexto quando a equipe devolver a conversa a ela.",
+      "TEAM_LABEL": "Time que assume as conversas",
+      "TEAM_HELP": "As conversas são distribuídas entre os agentes desse time. Sem time, a IA é desligada e a conversa fica sem atribuição na caixa.",
+      "NO_TEAM": "Nenhum time",
+      "HOURS_TITLE": "Horários com a IA desligada",
+      "HOURS_HELP": "Dá para cadastrar várias faixas por dia. Fuso da caixa: {timezone}.",
+      "AI_ON_ALL_DAY": "IA ligada o dia todo",
+      "FROM": "De",
+      "TO": "até",
+      "ADD_RANGE": "Adicionar faixa",
+      "REMOVE_RANGE": "Remover faixa",
+      "INVALID_RANGE": "O fim precisa ser depois do início",
+      "SAVE": "Salvar",
+      "SAVED": "Horário da IA salvo",
+      "ERROR": "Não foi possível salvar o horário da IA. Tente novamente.",
+      "DAYS": {
+        "SUNDAY": "Domingo",
+        "MONDAY": "Segunda-feira",
+        "TUESDAY": "Terça-feira",
+        "WEDNESDAY": "Quarta-feira",
+        "THURSDAY": "Quinta-feira",
+        "FRIDAY": "Sexta-feira",
+        "SATURDAY": "Sábado"
+      }
+    },
     "TABS": {
+      "AI_SCHEDULE": "Horário da IA",
       "SETTINGS": "Configurações",
       "COLLABORATORS": "Agentes",
       "CONFIGURATION": "Configuração",

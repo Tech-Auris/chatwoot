@@ -810,7 +810,12 @@
     "ONLINE_LIST_HEADER": "{count} agents online at the time",
     "REPLIED_BY": "by {name}",
     "NO_HUMAN_REPLY": "No reply",
-    "WAITING_FOR": "{time} ago"
+    "WAITING_FOR": "{time} ago",
+    "REASON": {
+      "ALL": "All reasons",
+      "AI": "By the AI",
+      "SCHEDULE": "Schedule"
+    }
   },
   "FOLLOW_UP_REPORT": {
     "HEADER": "Follow-up",

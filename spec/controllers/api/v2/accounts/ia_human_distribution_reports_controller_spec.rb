@@ -127,6 +127,22 @@ RSpec.describe 'IA Human Distribution Reports API', type: :request do
         expect(actual).to eq(expected)
       end
 
+      it 'filters by reason and returns it on each row' do
+        schedule_conv = create(:conversation, account: account, inbox: inbox)
+        create(:ai_assignment_attempt,
+               conversation: schedule_conv, account: account, team: team,
+               agent_assigned: agent_user, triggered_by: ia_user, reason: :schedule,
+               online_user_ids: [agent_user.id], created_at: reference_time + 3.minutes)
+
+        get "/api/v2/accounts/#{account.id}/ia_human_distribution_reports",
+            params: { from: range_from, to: range_to, reason: 'schedule' },
+            headers: admin.create_new_auth_token
+
+        rows = response.parsed_body['rows']
+        expect(rows.length).to eq(1)
+        expect(rows.first).to include('conversation_id' => schedule_conv.display_id, 'reason' => 'schedule')
+      end
+
       it 'filters by inbox_id' do
         other_inbox = create(:inbox, account: account, name: 'Outra inbox')
         other_conv = create(:conversation, account: account, inbox: other_inbox)

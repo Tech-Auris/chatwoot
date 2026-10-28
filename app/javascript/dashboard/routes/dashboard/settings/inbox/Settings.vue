@@ -19,6 +19,7 @@ import WhatsappReauthorize from './channels/whatsapp/Reauthorize.vue';
 import InboxHealthAPI from 'dashboard/api/inboxHealth';
 import PreChatFormSettings from './PreChatForm/Settings.vue';
 import WeeklyAvailability from './components/WeeklyAvailability.vue';
+import AiOffSchedule from './components/AiOffSchedule.vue';
 import GreetingsEditor from 'shared/components/GreetingsEditor.vue';
 import ConfigurationPage from './settingsPage/ConfigurationPage.vue';
 import VoiceConfigurationPage from './settingsPage/VoiceConfigurationPage.vue';
@@ -56,6 +57,7 @@ export default {
     SettingsFieldSection,
     SettingsAccordion,
     WeeklyAvailability,
+    AiOffSchedule,
     SenderNameExamplePreview,
     LockToSingleConversationPreview,
     MicrosoftReauthorize,
@@ -205,6 +207,16 @@ export default {
           name: this.$t('INBOX_MGMT.TABS.CSAT'),
         },
       ];
+
+      if (this.inbox.secretary_enabled) {
+        visibleToAllChannelTabs = [
+          ...visibleToAllChannelTabs,
+          {
+            key: 'ai-schedule',
+            name: this.$t('INBOX_MGMT.TABS.AI_SCHEDULE'),
+          },
+        ];
+      }
 
       if (this.isAWebWidgetInbox) {
         visibleToAllChannelTabs = [
@@ -1323,6 +1335,9 @@ export default {
         </div>
         <div v-if="selectedTabKey === 'business-hours'">
           <WeeklyAvailability :inbox="inbox" />
+        </div>
+        <div v-if="selectedTabKey === 'ai-schedule'">
+          <AiOffSchedule :inbox="inbox" />
         </div>
         <div v-if="selectedTabKey === 'whatsapp-health'">
           <AccountHealth

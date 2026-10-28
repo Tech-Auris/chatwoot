@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_26_120000) do
+ActiveRecord::Schema[7.1].define(version: 2026_10_26_150000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -214,6 +214,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_26_120000) do
     t.bigint "triggered_by_id", null: false
     t.bigint "online_user_ids", default: [], null: false, array: true
     t.datetime "created_at", null: false
+    t.integer "reason", default: 0, null: false
     t.index ["account_id", "created_at"], name: "index_ai_assignment_attempts_on_account_id_and_created_at"
     t.index ["agent_assigned_id"], name: "index_ai_assignment_attempts_on_agent_assigned_id"
     t.index ["conversation_id"], name: "index_ai_assignment_attempts_on_conversation_id"
@@ -1155,6 +1156,16 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_26_120000) do
     t.index ["group_contact_id"], name: "index_group_members_on_group_contact_id"
   end
 
+  create_table "inbox_ai_off_hours", force: :cascade do |t|
+    t.bigint "inbox_id", null: false
+    t.integer "day_of_week", null: false
+    t.integer "from_minutes", null: false
+    t.integer "to_minutes", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["inbox_id"], name: "index_inbox_ai_off_hours_on_inbox_id"
+  end
+
   create_table "inbox_assignment_policies", force: :cascade do |t|
     t.bigint "inbox_id", null: false
     t.bigint "assignment_policy_id", null: false
@@ -1221,7 +1232,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_26_120000) do
     t.jsonb "csat_config", default: {}, null: false
     t.boolean "split_messages"
     t.boolean "secretary_enabled", default: false, null: false
+    t.boolean "ai_schedule_enabled", default: false, null: false
+    t.bigint "ai_schedule_team_id"
     t.index ["account_id"], name: "index_inboxes_on_account_id"
+    t.index ["ai_schedule_team_id"], name: "index_inboxes_on_ai_schedule_team_id"
     t.index ["channel_id", "channel_type"], name: "index_inboxes_on_channel_id_and_channel_type"
     t.index ["portal_id"], name: "index_inboxes_on_portal_id"
   end
@@ -2267,7 +2281,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_26_120000) do
   add_foreign_key "funnel_stage_changes", "users", on_delete: :nullify
   add_foreign_key "group_members", "contacts"
   add_foreign_key "group_members", "contacts", column: "group_contact_id"
+  add_foreign_key "inbox_ai_off_hours", "inboxes", on_delete: :cascade
   add_foreign_key "inboxes", "portals"
+  add_foreign_key "inboxes", "teams", column: "ai_schedule_team_id", on_delete: :nullify
   add_foreign_key "internal_chat_channel_members", "internal_chat_channels"
   add_foreign_key "internal_chat_channel_members", "users", on_delete: :cascade
   add_foreign_key "internal_chat_channel_teams", "internal_chat_channels"
