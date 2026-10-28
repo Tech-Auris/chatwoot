@@ -40,7 +40,7 @@ class Api::V1::Accounts::CampaignsController < Api::V1::Accounts::BaseController
   # The totals and the failure breakdown cover the whole campaign; the search
   # (contact name or phone) and the status filter only narrow the rows.
   def report
-    messages = campaign_messages
+    messages = @campaign.sent_messages
     page = filtered_report_messages(messages).reorder(created_at: :desc).page(params[:page] || 1).per(REPORT_PER_PAGE)
 
     render json: {
@@ -83,15 +83,6 @@ class Api::V1::Accounts::CampaignsController < Api::V1::Accounts::BaseController
     JSON.parse(
       render_to_string(partial: 'api/v1/models/campaign', formats: [:json], locals: { resource: @campaign })
     )
-  end
-
-  # Messages carry the campaign id inside `additional_attributes`. The window
-  # on `created_at` keeps the lookup off a full scan of a very large table —
-  # nothing from this campaign can predate its own schedule.
-  def campaign_messages
-    Current.account.messages
-           .where('messages.created_at >= ?', (@campaign.scheduled_at || @campaign.created_at) - 1.hour)
-           .where("messages.additional_attributes ->> 'campaign_id' = ?", @campaign.id.to_s)
   end
 
   REPORT_STATUSES = %w[sent delivered read failed].freeze

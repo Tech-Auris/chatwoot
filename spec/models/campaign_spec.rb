@@ -28,6 +28,22 @@ RSpec.describe Campaign do
     end
   end
 
+  # The window on created_at is what keeps this off a full scan of a large
+  # account's messages, which hit the statement timeout without it.
+  describe '#sent_messages' do
+    let(:campaign) { create(:campaign, scheduled_at: 1.day.ago) }
+    let(:conversation) { create(:conversation, account: campaign.account, inbox: campaign.inbox) }
+
+    it 'returns the account messages tagged with the campaign, from an hour before its schedule' do
+      sent = create(:message, account: campaign.account, conversation: conversation, additional_attributes: { campaign_id: campaign.id })
+      create(:message, account: campaign.account, conversation: conversation, additional_attributes: { campaign_id: campaign.id + 1 })
+      create(:message, account: campaign.account, conversation: conversation, additional_attributes: { campaign_id: campaign.id },
+                       created_at: 2.days.ago)
+
+      expect(campaign.sent_messages).to contain_exactly(sent)
+    end
+  end
+
   describe '.before_create' do
     let(:account) { create(:account) }
     let(:website_channel) { create(:channel_widget, account: account) }

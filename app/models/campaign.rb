@@ -83,6 +83,17 @@ class Campaign < ApplicationRecord
     execute_campaign
   end
 
+  # Messages carry the campaign id inside `additional_attributes`, which no
+  # index serves for an equality match. The window on `created_at` keeps the
+  # lookup off a full scan of the account's messages — nothing from this
+  # campaign can predate its own schedule. Without it, a large account hits
+  # the statement timeout.
+  def sent_messages
+    account.messages
+           .where('messages.created_at >= ?', (scheduled_at || created_at) - 1.hour)
+           .where("messages.additional_attributes ->> 'campaign_id' = ?", id.to_s)
+  end
+
   private
 
   def execute_campaign

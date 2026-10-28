@@ -105,10 +105,7 @@ class Whatsapp::OneoffCampaignService
 
   # Contacts that already got this campaign's message never get it twice.
   def already_reached_contact_ids
-    Conversation.where(account_id: campaign.account_id)
-                .joins(:messages)
-                .where("messages.additional_attributes ->> 'campaign_id' = ?", campaign.id.to_s)
-                .select(:contact_id)
+    Conversation.where(id: campaign.sent_messages.select(:conversation_id)).select(:contact_id)
   end
 
   def audience_contacts
