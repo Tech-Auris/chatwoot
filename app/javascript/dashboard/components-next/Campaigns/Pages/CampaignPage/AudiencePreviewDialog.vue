@@ -13,6 +13,11 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  // A saved audience ("Público salvo"), listed as it stands right now.
+  audienceId: {
+    type: Number,
+    default: null,
+  },
 });
 
 const { t } = useI18n();
@@ -33,6 +38,7 @@ const fetchPage = async (page = 1) => {
     const { data } = await CampaignsAPI.audiencePreview({
       labelIds: props.labelIds,
       contactIds: props.contactIds,
+      audienceId: props.audienceId || undefined,
       page,
     });
     contacts.value = data.contacts ?? [];

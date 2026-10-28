@@ -29,9 +29,14 @@ class CampaignsAPI extends ApiClient {
 
   // Lists who a campaign would reach, for either audience source, before the
   // campaign exists.
-  audiencePreview({ labelIds = [], contactIds = [], page = 1 }) {
+  audiencePreview({ labelIds = [], contactIds = [], audienceId, page = 1 }) {
     return axios.get(`${this.url}/audience_preview`, {
-      params: { label_ids: labelIds, contact_ids: contactIds, page },
+      params: {
+        label_ids: labelIds,
+        contact_ids: contactIds,
+        audience_id: audienceId,
+        page,
+      },
     });
   }
 }

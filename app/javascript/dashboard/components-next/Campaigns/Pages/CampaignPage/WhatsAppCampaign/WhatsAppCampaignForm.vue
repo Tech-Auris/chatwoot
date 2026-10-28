@@ -301,7 +301,7 @@ const audiencePreviewRef = ref(null);
 // Enabled only once there is an audience to look at, which is also the moment
 // the list stops being empty.
 const canPreviewAudience = computed(() => {
-  if (state.audienceSource === 'audience') return false;
+  if (state.audienceSource === 'audience') return !!state.savedAudienceId;
   return state.audienceSource === 'file'
     ? state.audienceContactIds.length > 0
     : (state.selectedAudience?.length ?? 0) > 0;
@@ -722,6 +722,9 @@ watch(
         "
         :contact-ids="
           state.audienceSource === 'file' ? state.audienceContactIds : []
+        "
+        :audience-id="
+          state.audienceSource === 'audience' ? state.savedAudienceId : null
         "
       />
     </div>

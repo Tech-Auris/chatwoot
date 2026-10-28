@@ -280,6 +280,39 @@ RSpec.describe 'Campaigns API', type: :request do
       expect(response.parsed_body['contacts'].pluck('name')).to eq(['Do arquivo'])
     end
 
+    it 'lists the contacts of a saved audience, static or dynamic' do
+      member = create(:contact, :with_phone_number, account: account, name: 'Do publico')
+      no_phone = create(:contact, account: account, name: 'Sem telefone')
+      create(:contact, :with_phone_number, account: account, name: 'Fora do publico')
+      static = create(:audience, account: account, kind: :static)
+      static.add_contacts([member.id, no_phone.id])
+
+      get "/api/v1/accounts/#{account.id}/campaigns/audience_preview",
+          params: { audience_id: static.id }, headers: administrator.create_new_auth_token
+
+      expect(response.parsed_body['contacts'].pluck('name')).to eq(['Do publico', 'Sem telefone'])
+      expect(response.parsed_body['meta']).to include('total_count' => 2, 'without_phone_count' => 1)
+
+      tagged = create(:contact, :with_phone_number, account: account, name: 'Na etapa')
+      create(:conversation, account: account, contact: tagged).update_labels([label.title])
+      dynamic = create(:audience, account: account,
+                                  rule: [{ attribute_key: 'labels', filter_operator: 'equal_to', values: [label.title], query_operator: nil }])
+
+      get "/api/v1/accounts/#{account.id}/campaigns/audience_preview",
+          params: { audience_id: dynamic.id }, headers: administrator.create_new_auth_token
+
+      expect(response.parsed_body['contacts'].pluck('name')).to eq(['Na etapa'])
+    end
+
+    it 'does not show an audience of another account' do
+      other = create(:audience, account: create(:account), kind: :static)
+
+      get "/api/v1/accounts/#{account.id}/campaigns/audience_preview",
+          params: { audience_id: other.id }, headers: administrator.create_new_auth_token
+
+      expect(response).to have_http_status(:not_found)
+    end
+
     # The campaign skips contacts with no number, so the preview has to say so
     # rather than promising a delivery that never happens.
     it 'flags contacts that will not receive the campaign' do
