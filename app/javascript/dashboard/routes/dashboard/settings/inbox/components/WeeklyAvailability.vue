@@ -3,31 +3,23 @@ import { mapGetters } from 'vuex';
 import { useAlert } from 'dashboard/composables';
 import inboxMixin from 'shared/mixins/inboxMixin';
 import SettingsToggleSection from 'dashboard/components-next/Settings/SettingsToggleSection.vue';
-import SettingsFieldSection from 'dashboard/components-next/Settings/SettingsFieldSection.vue';
 import WootMessageEditor from 'dashboard/components/widgets/WootWriter/Editor.vue';
 import BusinessDay from './BusinessDay.vue';
 import {
   timeSlotParse,
   timeSlotTransform,
   defaultTimeSlot,
-  timeZoneOptions,
 } from '../helpers/businessHour';
 import NextButton from 'dashboard/components-next/button/Button.vue';
-import ComboBox from 'dashboard/components-next/combobox/ComboBox.vue';
-
-const DEFAULT_TIMEZONE = {
-  label: 'Pacific Time (US & Canada) (GMT-07:00)',
-  value: 'America/Los_Angeles',
-};
+import InboxTimezoneHint from './InboxTimezoneHint.vue';
 
 export default {
   components: {
     SettingsToggleSection,
-    SettingsFieldSection,
     BusinessDay,
     NextButton,
     WootMessageEditor,
-    ComboBox,
+    InboxTimezoneHint,
   },
   mixins: [inboxMixin],
   props: {
@@ -36,11 +28,11 @@ export default {
       default: () => ({}),
     },
   },
+  emits: ['changeTimezone'],
   data() {
     return {
       isBusinessHoursEnabled: false,
       unavailableMessage: '',
-      timeZone: DEFAULT_TIMEZONE,
       dayNames: {
         0: 'Sunday',
         1: 'Monday',
@@ -58,18 +50,6 @@ export default {
     hasError() {
       if (!this.isBusinessHoursEnabled) return false;
       return this.timeSlots.filter(slot => slot.from && !slot.valid).length > 0;
-    },
-    timeZones() {
-      return [...timeZoneOptions()];
-    },
-    timeZoneValue: {
-      get() {
-        return this.timeZone.value;
-      },
-      set(value) {
-        const match = this.timeZones.find(tz => tz.value === value);
-        if (match) this.timeZone = match;
-      },
     },
     isRichEditorEnabled() {
       if (
@@ -95,7 +75,6 @@ export default {
         working_hours_enabled: isEnabled = false,
         out_of_office_message: unavailableMessage,
         working_hours: timeSlots = [],
-        timezone: timeZone,
       } = this.inbox;
       const slots = timeSlotParse(timeSlots).length
         ? timeSlotParse(timeSlots)
@@ -103,9 +82,6 @@ export default {
       this.isBusinessHoursEnabled = isEnabled;
       this.unavailableMessage = unavailableMessage || '';
       this.timeSlots = slots;
-      this.timeZone =
-        this.timeZones.find(item => timeZone === item.value) ||
-        DEFAULT_TIMEZONE;
     },
     onSlotUpdate(slotIndex, slotData) {
       this.timeSlots = this.timeSlots.map(item =>
@@ -120,7 +96,6 @@ export default {
           working_hours_enabled: this.isBusinessHoursEnabled,
           out_of_office_message: this.unavailableMessage,
           working_hours: timeSlotTransform(this.timeSlots),
-          timezone: this.timeZone.value,
           channel: {},
         };
         await this.$store.dispatch('inboxes/updateInbox', payload);
@@ -165,17 +140,12 @@ export default {
       <div class="flex-1 h-px bg-n-weak" />
     </div>
 
-    <SettingsFieldSection
+    <InboxTimezoneHint
       v-if="isBusinessHoursEnabled"
-      :label="$t('INBOX_MGMT.BUSINESS_HOURS.TIMEZONE_LABEL')"
-    >
-      <ComboBox
-        v-model="timeZoneValue"
-        :options="timeZones"
-        :placeholder="$t('INBOX_MGMT.BUSINESS_HOURS.DAY.CHOOSE')"
-        class="[&>div>button]:!bg-n-alpha-black2"
-      />
-    </SettingsFieldSection>
+      :timezone="inbox.timezone"
+      class="mb-4"
+      @change="$emit('changeTimezone')"
+    />
 
     <form class="flex flex-col" @submit.prevent="updateInbox">
       <div v-if="isBusinessHoursEnabled" class="mt-2">
