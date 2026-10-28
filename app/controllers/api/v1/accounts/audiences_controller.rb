@@ -120,8 +120,7 @@ class Api::V1::Accounts::AudiencesController < Api::V1::Accounts::BaseController
     campaign = Current.account.campaigns.find_by(display_id: params[:campaign_id]) if params[:campaign_id].present?
     return 0 unless campaign
 
-    reached = Current.account.conversations.joins(:messages)
-                     .where("messages.additional_attributes ->> 'campaign_id' = ?", campaign.id.to_s).select(:contact_id)
+    reached = Current.account.conversations.where(id: campaign.sent_messages.select(:conversation_id)).select(:contact_id)
     contacts.where(id: reached).where(marketing_opt_out: false).where.not(phone_number: [nil, '']).count
   end
 
