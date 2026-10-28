@@ -156,6 +156,32 @@ describe Whatsapp::OneoffCampaignService do
         expect(filled.reload).to have_attributes(campaign_id: campaign.id, origem: 'Disparo interno', status: 'pending')
       end
 
+      it 'starts a new conversation instead of reopening a resolved one when the inbox creates new conversations' do
+        whatsapp_inbox.update!(lock_to_single_conversation: false)
+        contact = create(:contact, :with_phone_number, account: account)
+        resolved = create(:conversation, account: account, inbox: whatsapp_inbox, contact: contact, status: :resolved)
+        campaign.update!(audience: [{ 'type' => 'Contact', 'id' => contact.id }])
+
+        perform_enqueued_jobs(only: Campaigns::DispatchContactJob) { described_class.new(campaign: campaign).perform }
+
+        expect(resolved.reload).to have_attributes(status: 'resolved', campaign_id: nil)
+        expect(resolved.messages.where(message_type: :template)).to be_empty
+        new_conversation = whatsapp_inbox.conversations.where(contact: contact).where.not(id: resolved.id).sole
+        expect(new_conversation).to have_attributes(status: 'pending', campaign_id: campaign.id)
+      end
+
+      it 'still reuses an open conversation when the inbox creates new conversations' do
+        whatsapp_inbox.update!(lock_to_single_conversation: false)
+        contact = create(:contact, :with_phone_number, account: account)
+        open_conversation = create(:conversation, account: account, inbox: whatsapp_inbox, contact: contact, status: :open)
+        campaign.update!(audience: [{ 'type' => 'Contact', 'id' => contact.id }])
+
+        expect do
+          perform_enqueued_jobs(only: Campaigns::DispatchContactJob) { described_class.new(campaign: campaign).perform }
+        end.not_to change(Conversation, :count)
+        expect(open_conversation.reload).to have_attributes(status: 'open', campaign_id: campaign.id)
+      end
+
       it 'leaves out the contacts with the marketing opt-out, counting them' do
         reached = create(:contact, :with_phone_number, account: account)
         opted_out = create(:contact, :with_phone_number, account: account)

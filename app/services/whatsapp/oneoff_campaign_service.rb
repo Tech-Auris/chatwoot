@@ -182,7 +182,9 @@ class Whatsapp::OneoffCampaignService
   #   open      -> reuse, stays open (message joins the live thread)
   #   pending   -> reuse, stays pending (campaign is colder traffic, no agent change)
   #   snoozed   -> reuse, stays snoozed (agent snoozed on purpose; respect it)
-  #   resolved  -> reuse, reopen as pending (back on the radar, doesn't pollute open)
+  #   resolved  -> follows the inbox's "Roteamento de Conversa", like an
+  #                incoming message: "Reabrir a mesma conversa" reopens it as
+  #                pending; "Criar novas conversas" starts a new one
   #   none      -> create a new conversation as pending
   #
   # Either way the conversation ends up tied to this campaign and, when it has
@@ -190,6 +192,7 @@ class Whatsapp::OneoffCampaignService
   def build_campaign_conversation(contact_inbox)
     existing = inbox.conversations
                     .where(contact_id: contact_inbox.contact_id)
+                    .then { |scope| inbox.lock_to_single_conversation? ? scope : scope.where.not(status: :resolved) }
                     .order(last_activity_at: :desc)
                     .first
 
