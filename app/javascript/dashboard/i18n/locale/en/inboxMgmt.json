@@ -740,7 +740,7 @@
       "TEAM_HELP": "Conversations are distributed among this team's agents. Without a team, the AI is turned off and the conversation stays unassigned in the inbox.",
       "NO_TEAM": "No team",
       "HOURS_TITLE": "Hours with the AI off",
-      "HOURS_HELP": "Several ranges per day are allowed. Inbox timezone: {timezone}.",
+      "HOURS_HELP": "Several ranges per day are allowed.",
       "AI_ON_ALL_DAY": "AI on all day",
       "FROM": "From",
       "TO": "to",
@@ -1042,6 +1042,13 @@
       "WHATSAPP_CLIENT_TOKEN_SUBHEADER": "Your Z-API Client Token (see Security tab on Z-API dashboard).",
       "WHATSAPP_CLIENT_TOKEN_UPDATE_TITLE": "Update Security Token",
       "WHATSAPP_CLIENT_TOKEN_UPDATE_SUBHEADER": "Enter the new Security Token here"
+    },
+    "TIMEZONE": {
+      "LABEL": "Timezone",
+      "SUB_TEXT": "Business hours and AI off hours follow this timezone",
+      "PLACEHOLDER": "Choose a timezone",
+      "CURRENT": "Inbox timezone: {timezone}.",
+      "CHANGE": "Change timezone"
     },
     "HELP_CENTER": {
       "LABEL": "Help Center",

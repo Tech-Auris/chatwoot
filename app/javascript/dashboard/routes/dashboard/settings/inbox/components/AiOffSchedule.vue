@@ -8,12 +8,15 @@ import SettingsToggleSection from 'dashboard/components-next/Settings/SettingsTo
 import SettingsFieldSection from 'dashboard/components-next/Settings/SettingsFieldSection.vue';
 import Select from 'dashboard/components-next/select/Select.vue';
 import NextButton from 'dashboard/components-next/button/Button.vue';
+import InboxTimezoneHint from './InboxTimezoneHint.vue';
 
 // The hours in which the AI is off in this inbox: a patient message then
 // goes to the chosen team, and the AI keeps the conversation as context.
 const props = defineProps({
   inbox: { type: Object, required: true },
 });
+
+defineEmits(['changeTimezone']);
 
 const { t } = useI18n();
 const store = useStore();
@@ -110,9 +113,11 @@ onMounted(() => {
         <span class="text-heading-3 text-n-slate-12">
           {{ t('INBOX_MGMT.AI_SCHEDULE.HOURS_TITLE') }}
         </span>
-        <span class="text-body-main text-n-slate-11">
-          {{ t('INBOX_MGMT.AI_SCHEDULE.HOURS_HELP', { timezone }) }}
-        </span>
+        <InboxTimezoneHint
+          :timezone="timezone"
+          :text="t('INBOX_MGMT.AI_SCHEDULE.HOURS_HELP')"
+          @change="$emit('changeTimezone')"
+        />
       </div>
 
       <div

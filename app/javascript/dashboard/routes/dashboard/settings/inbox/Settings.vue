@@ -39,12 +39,15 @@ import { LocalStorage } from 'shared/helpers/localStorage';
 import Editor from 'dashboard/components-next/Editor/Editor.vue';
 import ColorPicker from 'dashboard/components-next/colorpicker/ColorPicker.vue';
 import SelectInput from 'dashboard/components-next/select/Select.vue';
+import ComboBox from 'dashboard/components-next/combobox/ComboBox.vue';
+import { timeZoneOptions } from './helpers/businessHour';
 import Widget from 'dashboard/modules/widget-preview/components/Widget.vue';
 import AccessToken from 'dashboard/routes/dashboard/settings/profile/AccessToken.vue';
 import { copyTextToClipboard } from 'shared/helpers/clipboard';
 
 export default {
   components: {
+    ComboBox,
     CollaboratorsPage,
     ConfigurationPage,
     VoiceConfigurationPage,
@@ -103,6 +106,8 @@ export default {
       replyTime: '',
       selectedTabIndex: 0,
       selectedPortalSlug: '',
+      selectedTimezone: '',
+      timeZones: timeZoneOptions(),
       showBusinessNameInput: false,
       healthData: null,
       isLoadingHealth: false,
@@ -489,6 +494,7 @@ export default {
       this.selectedPortalSlug = this.inbox.help_center
         ? this.inbox.help_center.slug
         : '';
+      this.selectedTimezone = this.inbox.timezone;
 
       const savedBubbleSettings = LocalStorage.get(
         this.widgetBuilderStorageKey
@@ -552,6 +558,11 @@ export default {
       }
       return [...selected, current];
     },
+    openTimezoneSettings() {
+      this.onTabChange(
+        this.tabs.findIndex(tab => tab.key === 'inbox-settings')
+      );
+    },
     onTabChange(selectedTabIndex) {
       this.selectedTabIndex = selectedTabIndex;
       this.updateRouteWithoutRefresh(selectedTabIndex);
@@ -601,6 +612,7 @@ export default {
               )?.id || null
             : null,
           lock_to_single_conversation: this.locktoSingleConversation,
+          timezone: this.selectedTimezone,
           sender_name_type: this.senderNameType,
           business_name: this.businessName || null,
           channel: {
@@ -892,6 +904,18 @@ export default {
                   { value: '', label: $t('INBOX_MGMT.HELP_CENTER.NONE') },
                   ...portals.map(p => ({ value: p.slug, label: p.name })),
                 ]"
+              />
+            </SettingsFieldSection>
+
+            <SettingsFieldSection
+              :label="$t('INBOX_MGMT.TIMEZONE.LABEL')"
+              :help-text="$t('INBOX_MGMT.TIMEZONE.SUB_TEXT')"
+            >
+              <ComboBox
+                v-model="selectedTimezone"
+                :options="timeZones"
+                :placeholder="$t('INBOX_MGMT.TIMEZONE.PLACEHOLDER')"
+                class="[&>div>button]:!bg-n-alpha-black2"
               />
             </SettingsFieldSection>
 
@@ -1334,10 +1358,16 @@ export default {
           <PreChatFormSettings :inbox="inbox" />
         </div>
         <div v-if="selectedTabKey === 'business-hours'">
-          <WeeklyAvailability :inbox="inbox" />
+          <WeeklyAvailability
+            :inbox="inbox"
+            @change-timezone="openTimezoneSettings"
+          />
         </div>
         <div v-if="selectedTabKey === 'ai-schedule'">
-          <AiOffSchedule :inbox="inbox" />
+          <AiOffSchedule
+            :inbox="inbox"
+            @change-timezone="openTimezoneSettings"
+          />
         </div>
         <div v-if="selectedTabKey === 'whatsapp-health'">
           <AccountHealth

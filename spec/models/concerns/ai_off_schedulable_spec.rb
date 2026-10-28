@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe AiOffSchedulable do
-  let(:inbox) { create(:inbox, ai_schedule_enabled: true, working_hours_enabled: true, timezone: 'America/Sao_Paulo') }
+  let(:inbox) { create(:inbox, ai_schedule_enabled: true, timezone: 'America/Sao_Paulo') }
 
   before do
     inbox.ai_off_hours.create!(day_of_week: 2, from_minutes: 8 * 60, to_minutes: 12 * 60)
@@ -23,6 +23,13 @@ RSpec.describe AiOffSchedulable do
     expect(inbox.ai_off_now?(at('12:30'))).to be(false)
     expect(inbox.ai_off_now?(at('18:00'))).to be(false)
     expect(inbox.ai_off_now?(at('09:00') + 1.day)).to be(false)
+  end
+
+  it 'uses the inbox timezone even without business hours or with another account timezone' do
+    inbox.account.update!(reporting_timezone: 'UTC')
+
+    expect(inbox.ai_off_now?(at('09:00'))).to be(true)
+    expect(inbox.ai_off_now?(Time.utc(2026, 10, 27, 9))).to be(false)
   end
 
   it 'is on when the schedule is turned off' do
