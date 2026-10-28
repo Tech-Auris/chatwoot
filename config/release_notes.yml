@@ -10,9 +10,14 @@
       - **WhatsApp groups in AurisChat.** Groups your number is part of now show up in the conversation list, and you can reply to them right there. The AI never replies in groups.
       - **See who receives a campaign.** When a campaign goes to a saved audience, "See audience" shows the list of contacts and who is left out.
 
+      ### ⚡ Improvements
+
+      - **Inbox timezone.** In the inbox settings you choose the timezone, and the business hours and the hours with the AI off follow it. New inboxes already start on Brasília time.
+
       ### 🐛 Fixes
 
       - **Campaigns in a new conversation.** In inboxes set to create new conversations, a campaign sent to a patient whose last conversation was resolved now starts a new conversation, instead of writing in the resolved one.
+      - **Campaigns that didn't go out.** On some accounts, a WhatsApp campaign showed as completed without sending the messages. It now goes out to the whole list.
     pt_BR: |-
       ### ✨ Novidades
 
@@ -20,9 +25,14 @@
       - **Grupos do WhatsApp no AurisChat.** Os grupos de que o número participa passam a aparecer na lista de conversas, e dá para responder neles por ali. A IA nunca responde nos grupos.
       - **Ver quem recebe a campanha.** Quando a campanha vai para um público salvo, o "Ver público" mostra a lista de contatos e quem fica de fora.
 
+      ### ⚡ Melhorias
+
+      - **Fuso horário da caixa.** Nas configurações da caixa você escolhe o fuso horário, e o horário de funcionamento e o horário da IA desligada seguem esse fuso. As caixas novas já começam no horário de Brasília.
+
       ### 🐛 Correções
 
       - **Campanha em conversa nova.** Nas caixas configuradas para criar novas conversas, a campanha enviada a um paciente cuja última conversa estava resolvida agora abre uma conversa nova, em vez de escrever na conversa resolvida.
+      - **Campanhas que não saíam.** Em algumas contas, a campanha de WhatsApp aparecia como concluída sem enviar as mensagens. Agora ela sai para toda a lista.
 - tag: v4.15.1-auris.1.72
   published_at: '2026-10-22T20:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.72
