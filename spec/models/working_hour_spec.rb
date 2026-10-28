@@ -7,6 +7,8 @@ RSpec.describe WorkingHour do
     before do
       Time.zone = 'UTC'
       create(:working_hour)
+      # The account's simulator inbox is created outside the factory, in the America/Sao_Paulo default.
+      Inbox.update_all(timezone: 'UTC') # rubocop:disable Rails/SkipsModelValidations
       travel_to '26.10.2020 10:00'.to_datetime
     end
 
@@ -43,6 +45,8 @@ RSpec.describe WorkingHour do
     before do
       Time.zone = 'UTC'
       create(:working_hour)
+      # The account's simulator inbox is created outside the factory, in the America/Sao_Paulo default.
+      Inbox.update_all(timezone: 'UTC') # rubocop:disable Rails/SkipsModelValidations
       travel_to '10.09.2021 17:30'.to_datetime
     end
 

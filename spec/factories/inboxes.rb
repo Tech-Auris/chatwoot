@@ -5,6 +5,8 @@ FactoryBot.define do
     account
     channel { FactoryBot.build(:channel_widget, account: account) }
     name { 'Inbox' }
+    # Upstream specs expect UTC hours; new inboxes default to America/Sao_Paulo.
+    timezone { 'UTC' }
 
     after(:create) do |inbox|
       inbox.channel.save!

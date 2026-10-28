@@ -23,7 +23,7 @@
 #  secretary_enabled             :boolean          default(FALSE), not null
 #  sender_name_type              :integer          default("friendly"), not null
 #  split_messages                :boolean
-#  timezone                      :string           default("UTC")
+#  timezone                      :string           default("America/Sao_Paulo")
 #  working_hours_enabled         :boolean          default(FALSE)
 #  created_at                    :datetime         not null
 #  updated_at                    :datetime         not null
@@ -214,7 +214,7 @@ class Inbox < ApplicationRecord # rubocop:disable Metrics/ClassLength
   end
 
   # Timezone the downstream consumer should treat as authoritative.
-  # `inboxes.timezone` defaults to "UTC" and stays there for accounts that
+  # `inboxes.timezone` defaults to "America/Sao_Paulo" and stays there for accounts that
   # never open Business Hours. Use `working_hours_enabled?` as the signal
   # of intent: if the operator turned Business Hours on, they went through
   # the timezone dropdown deliberately (even if they kept UTC). Otherwise

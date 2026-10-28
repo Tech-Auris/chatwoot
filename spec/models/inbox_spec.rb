@@ -449,6 +449,10 @@ RSpec.describe Inbox do
   # inbox, so we use `working_hours_enabled?` as the signal of intent —
   # if it's on, the operator went through the timezone dropdown; otherwise
   # fall back to the account-level reporting_timezone.
+  it 'starts new inboxes in the Brasilia timezone' do
+    expect(described_class.new.timezone).to eq('America/Sao_Paulo')
+  end
+
   describe '#webhook_data' do
     let(:account) { create(:account) }
 
