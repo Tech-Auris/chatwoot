@@ -159,6 +159,8 @@ export default {
       currentUser: 'getCurrentUser',
       lastEmail: 'getLastEmailInSelectedChat',
       globalConfig: 'globalConfig/get',
+      currentAccountId: 'getCurrentAccountId',
+      getAccount: 'accounts/getAccount',
     }),
     currentContact() {
       const senderId = this.currentChat?.meta?.sender?.id;
@@ -220,7 +222,7 @@ export default {
       return (
         this.isAWhatsAppBaileysChannel &&
         this.isGroupConversation &&
-        !this.globalConfig.baileysWhatsappGroupsEnabled
+        !this.getAccount(this.currentAccountId)?.whatsapp_groups_enabled
       );
     },
     shouldShowReplyToMessage() {

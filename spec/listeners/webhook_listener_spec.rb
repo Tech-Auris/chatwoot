@@ -61,6 +61,14 @@ describe WebhookListener do
       listener.message_created(message_created_event)
     end
 
+    it 'does not post messages of a group conversation' do
+      inbox.update!(secretary_enabled: true)
+      conversation.update!(group_type: :group)
+      expect(WebhookJob).not_to receive(:perform_later).with(version.webhook_url, anything, anything, anything)
+
+      listener.message_created(message_created_event)
+    end
+
     it 'does not post when the account has no version' do
       inbox.update!(secretary_enabled: true)
       secretary.update!(secretary_version: nil)

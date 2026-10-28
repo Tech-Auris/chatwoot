@@ -132,6 +132,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_26_150000) do
     t.boolean "settings_macros_menu_enabled", default: false, null: false
     t.string "stripe_customer_id"
     t.boolean "token_billing_enabled", default: true, null: false
+    t.boolean "whatsapp_groups_enabled", default: true, null: false
     t.index ["status"], name: "index_accounts_on_status"
     t.index ["stripe_customer_id"], name: "index_accounts_on_stripe_customer_id", unique: true, where: "(stripe_customer_id IS NOT NULL)"
   end

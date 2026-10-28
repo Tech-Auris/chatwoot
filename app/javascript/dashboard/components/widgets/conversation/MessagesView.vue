@@ -126,6 +126,7 @@ export default {
       listLoadingStatus: 'getAllMessagesLoaded',
       currentAccountId: 'getCurrentAccountId',
       globalConfig: 'globalConfig/get',
+      getAccount: 'accounts/getAccount',
     }),
     currentInbox() {
       return this.$store.getters['inboxes/getInbox'](this.currentChat.inbox_id);
@@ -370,7 +371,7 @@ export default {
       return (
         this.isAWhatsAppBaileysChannel &&
         this.isGroupConversation &&
-        !this.globalConfig.baileysWhatsappGroupsEnabled
+        !this.getAccount(this.currentAccountId)?.whatsapp_groups_enabled
       );
     },
     isSuperAdmin() {

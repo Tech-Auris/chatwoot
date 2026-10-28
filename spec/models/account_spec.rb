@@ -140,6 +140,27 @@ RSpec.describe Account do
     end
   end
 
+  describe 'whatsapp groups' do
+    let(:account) { create(:account) }
+    let!(:open_channel) do
+      create(:channel_whatsapp, account: account, provider: 'baileys', validate_provider_config: false,
+                                sync_templates: false, provider_connection: { 'connection' => 'open' })
+    end
+
+    it 'starts on for a new account' do
+      expect(account.whatsapp_groups_enabled).to be(true)
+    end
+
+    it 're-sends the setup of the open QR Code connections when the switch changes' do
+      create(:channel_whatsapp, account: account, provider: 'baileys', validate_provider_config: false,
+                                sync_templates: false, provider_connection: { 'connection' => 'close' })
+
+      expect { account.update!(whatsapp_groups_enabled: false) }
+        .to have_enqueued_job(Channels::Whatsapp::BaileysConnectionCheckJob).with(open_channel).exactly(:once)
+      expect(open_channel.reload.groups_enabled?).to be(false)
+    end
+  end
+
   describe 'conversation unread counts feature flag' do
     let(:account) { create(:account) }
     let(:inbox) { create(:inbox, account: account) }
@@ -502,7 +523,8 @@ RSpec.describe Account do
         settings: {
           funnel_enabled: true,
           ai_status_uses_attribute: true,
-          multi_language_ai: false
+          multi_language_ai: false,
+          whatsapp_groups_enabled: true
         },
         follow_up: { 'end_flow' => { 'wait_minutes' => 60 } },
         status: nil,
