@@ -11,7 +11,7 @@ RSpec.describe Marketing::TriggerConversionEventsService do
       let!(:event) do
         create(:conversion_event, :funnel_stage_reached, account: account,
                                                          trigger_config: { 'funnel_stage_id' => 42 },
-                                                         meta_event_name: 'Schedule')
+                                                         meta_event_name: 'QualifiedLead')
       end
 
       it 'enqueues a MarketingConversionDispatchJob per matched event/provider pair' do
@@ -45,7 +45,7 @@ RSpec.describe Marketing::TriggerConversionEventsService do
       let!(:event) do
         create(:conversion_event, :label_added, account: account,
                                                 trigger_config: { 'label' => 'converteu' },
-                                                meta_event_name: 'Lead')
+                                                meta_event_name: 'LeadSubmitted')
       end
 
       it 'enqueues a dispatch job for the matching label' do
@@ -64,14 +64,14 @@ RSpec.describe Marketing::TriggerConversionEventsService do
     context 'when the automation_action trigger passes explicit event ids' do
       let!(:event) do
         create(:conversion_event, account: account, trigger_type: :automation_action,
-                                  trigger_config: {}, meta_event_name: 'CompleteRegistration')
+                                  trigger_config: {}, meta_event_name: 'ViewContent')
       end
 
       before do
         # Second event exists to prove explicit_event_ids is a filter, not a
         # fan-out; reading through it in the assertion is enough — no let!.
         create(:conversion_event, account: account, trigger_type: :automation_action,
-                                  trigger_config: {}, meta_event_name: 'SubmitApplication')
+                                  trigger_config: {}, meta_event_name: 'InitiateCheckout')
       end
 
       it 'enqueues only the events referenced by id' do
@@ -100,7 +100,7 @@ RSpec.describe Marketing::TriggerConversionEventsService do
       let!(:event) do
         create(:conversion_event, :funnel_stage_reached, account: account,
                                                          trigger_config: { 'funnel_stage_id' => 42 },
-                                                         meta_event_name: 'Schedule',
+                                                         meta_event_name: 'QualifiedLead',
                                                          google_event_name: 'book_appointment')
       end
 
@@ -183,7 +183,7 @@ RSpec.describe Marketing::TriggerConversionEventsService do
       it 'is skipped even if the trigger config matches' do
         create(:conversion_event, :funnel_stage_reached, account: account,
                                                          trigger_config: { 'funnel_stage_id' => 42 },
-                                                         meta_event_name: 'Schedule',
+                                                         meta_event_name: 'QualifiedLead',
                                                          enabled: false)
 
         described_class.new(

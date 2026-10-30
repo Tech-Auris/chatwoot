@@ -6,7 +6,7 @@ FactoryBot.define do
     sequence(:name) { |n| "Conversao_#{n}" }
     trigger_type { :automation_action }
     trigger_config { {} }
-    meta_event_name { 'Lead' }
+    meta_event_name { 'LeadSubmitted' }
     google_event_name { nil }
     enabled { true }
 

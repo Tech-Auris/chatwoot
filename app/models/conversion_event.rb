@@ -1,7 +1,7 @@
 # A single mapping of a Chatwoot trigger to a Meta CAPI event name and/or a
 # Google Ads Enhanced Conversions event. One row per event the clinic wants
 # to track — e.g., "Agendamento" firing on entry to the `Agendado` funnel
-# stage, mapped to Meta `Schedule` + Google `book_appointment` label.
+# stage, mapped to Meta `QualifiedLead` + Google `book_appointment` label.
 #
 # Trigger types (Fase 2):
 #   * funnel_stage_reached — `trigger_config: { "funnel_stage_id" => 42 }`
@@ -39,6 +39,14 @@
 #
 class ConversionEvent < ApplicationRecord
   TRIGGER_TYPES = { funnel_stage_reached: 0, label_added: 1, automation_action: 2 }.freeze
+  # The only event names Meta accepts for events from a conversation
+  # (action_source business_messaging); web names like Lead or Schedule are
+  # rejected there. https://developers.facebook.com/docs/marketing-api/conversions-api/business-messaging
+  META_EVENT_NAMES = %w[
+    LeadSubmitted QualifiedLead Purchase InitiateCheckout AddToCart ViewContent
+    OrderCreated OrderShipped OrderDelivered OrderCanceled OrderReturned
+    CartAbandoned RatingProvided ReviewProvided
+  ].freeze
 
   enum trigger_type: TRIGGER_TYPES
 
@@ -49,6 +57,7 @@ class ConversionEvent < ApplicationRecord
   validates :name, uniqueness: { scope: :account_id }
   validate :trigger_config_matches_type
   validate :at_least_one_provider_event
+  validates :meta_event_name, inclusion: { in: META_EVENT_NAMES }, allow_blank: true
 
   scope :enabled, -> { where(enabled: true) }
   scope :for_funnel_stage, ->(stage_id) { funnel_stage_reached.where("trigger_config ->> 'funnel_stage_id' = ?", stage_id.to_s) }

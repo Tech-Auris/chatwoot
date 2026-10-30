@@ -31,14 +31,14 @@ RSpec.describe 'Conversion Events API', type: :request do
            params: {
              name: 'Agendou', trigger_type: 'funnel_stage_reached',
              trigger_config: { funnel_stage_id: 42 },
-             meta_event_name: 'Schedule', google_event_name: 'book_appointment'
+             meta_event_name: 'QualifiedLead', google_event_name: 'book_appointment'
            },
            as: :json
 
       expect(response).to have_http_status(:success)
       event = account.conversion_events.last
       expect(event).to have_attributes(name: 'Agendou', trigger_type: 'funnel_stage_reached',
-                                       meta_event_name: 'Schedule', google_event_name: 'book_appointment')
+                                       meta_event_name: 'QualifiedLead', google_event_name: 'book_appointment')
       expect(event.trigger_config).to eq('funnel_stage_id' => 42)
     end
 
@@ -47,7 +47,7 @@ RSpec.describe 'Conversion Events API', type: :request do
            headers: admin.create_new_auth_token,
            params: {
              name: 'Broken', trigger_type: 'funnel_stage_reached', trigger_config: {},
-             meta_event_name: 'Schedule'
+             meta_event_name: 'QualifiedLead'
            },
            as: :json
 
