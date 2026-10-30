@@ -45,8 +45,15 @@ RSpec.describe ConversionEvent do
       expect(event.errors[:base].first).to include('meta_event_name', 'google_event_name')
     end
 
+    it 'refuses a Meta web event name, which Meta rejects for events from a conversation' do
+      event = build(:conversion_event, meta_event_name: 'Lead')
+
+      expect(event).not_to be_valid
+      expect(event.errors[:meta_event_name]).to be_present
+    end
+
     it 'accepts an event with only meta_event_name' do
-      event = build(:conversion_event, meta_event_name: 'Lead', google_event_name: nil)
+      event = build(:conversion_event, meta_event_name: 'LeadSubmitted', google_event_name: nil)
       expect(event).to be_valid
     end
 

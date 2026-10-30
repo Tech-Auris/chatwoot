@@ -12,6 +12,10 @@
 #     to the ad. Falls back to nil for organic contacts.
 #   * user_data.em / ph — SHA256 of lowercased-trimmed email / normalized
 #     phone. Only ever in memory; never persisted in the raw form.
+#   * user_data.whatsapp_business_account_id (WhatsApp) or page_id
+#     (Messenger) — the account Meta ties the event to.
+#   * event_name — only the names Meta accepts for business messaging
+#     (ConversionEvent::META_EVENT_NAMES); `Lead` or `Schedule` are rejected.
 #
 # Leads that came through a website form (campaign_referral with an `fbclid`
 # and no `ctwa_clid`, recorded by n8n) are not messaging conversions for Meta:
@@ -43,6 +47,9 @@ class Marketing::MetaCapiDispatcher
 
     pixel = dispatch.marketing_pixel
     return mark_permanently_failed!(reason: 'no active meta pixel') unless pixel&.test_mode? || pixel&.active?
+
+    reason = unsendable_reason
+    return mark_permanently_failed!(reason: reason) if reason
 
     payload = build_payload(pixel)
     dispatch.update!(payload: payload, attempts: dispatch.attempts + 1, last_attempted_at: Time.current)
@@ -97,7 +104,28 @@ class Marketing::MetaCapiDispatcher
   end
 
   def messaging_channel
-    MESSAGING_CHANNEL_BY_TYPE[dispatch.conversation.inbox.channel_type]
+    MESSAGING_CHANNEL_BY_TYPE[channel.class.name]
+  end
+
+  def channel
+    dispatch.conversation.inbox.channel
+  end
+
+  # Messaging events Meta is certain to reject, so they are not sent at all.
+  # WhatsApp needs the number's WhatsApp Business Account — which a Baileys
+  # (WhatsApp Web) number does not have — plus either the ctwa_clid or the
+  # page_id, and we only ever have the former.
+  def unsendable_reason
+    return if form_lead?
+    return 'inbox channel not supported by business messaging' if messaging_channel.nil?
+    return if messaging_channel != 'whatsapp'
+    return 'whatsapp number without a WhatsApp Business Account' if whatsapp_business_account_id.blank?
+
+    'whatsapp conversation without ctwa_clid' if referral['ctwa_clid'].blank?
+  end
+
+  def whatsapp_business_account_id
+    channel.provider_config['business_account_id'] if channel.provider == 'whatsapp_cloud'
   end
 
   def user_data
@@ -108,7 +136,17 @@ class Marketing::MetaCapiDispatcher
       ph: hashed_phones(contact),
       ctwa_clid: referral['ctwa_clid'],
       fbc: fbc
-    }.compact
+    }.merge(messaging_ids).compact
+  end
+
+  # The account Meta ties a messaging event to: the WhatsApp Business Account
+  # or the Facebook page. Form leads are not messaging events and skip it.
+  def messaging_ids
+    return {} if form_lead?
+    return { whatsapp_business_account_id: whatsapp_business_account_id } if messaging_channel == 'whatsapp'
+    return { page_id: channel.page_id } if messaging_channel == 'messenger'
+
+    {}
   end
 
   def hashed_emails(contact)
