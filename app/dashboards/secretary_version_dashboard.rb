@@ -5,7 +5,7 @@ class SecretaryVersionDashboard < Administrate::BaseDashboard
     id: Field::Number,
     name: Field::String,
     released_at: Field::DateTime,
-    webhook_url: Field::String,
+    webhook_url: Field::String.with_options(truncate: 2048),
     workflow_id: Field::String,
     status: Field::Select.with_options(searchable: false, collection: ->(_field) { SecretaryVersion.statuses.keys }),
     account_secretaries: Field::HasMany,
