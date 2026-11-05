@@ -1,8 +1,13 @@
 class Api::V2::Accounts::SummaryReportsController < Api::V1::Accounts::BaseController
   before_action :check_authorization
   before_action :prepare_builder_params,
-                only: [:agent, :team, :inbox, :label, :origem, :channel, :funnel, :funnel_conversion, :funnel_conversion_drilldown,
-                       :campaign_analytics]
+                only: [:agent, :team, :inbox, :label, :origem, :channel, :funnel, :funnel_conversion, :funnel_conversion_campaigns,
+                       :funnel_conversion_drilldown, :campaign_analytics]
+
+  # A report that outgrows the statement timeout on a large account answers
+  # with a clear error (tagged with the account) instead of a bare 500.
+  # Around action (not rescue_from) so the account and its locale are still set.
+  around_action :handle_report_timeout
 
   def agent
     render_report_with(V2::Reports::AgentSummaryBuilder, type: :agent)
@@ -38,6 +43,10 @@ class Api::V2::Accounts::SummaryReportsController < Api::V1::Accounts::BaseContr
     render_report_with(V2::Reports::FunnelConversionBuilder)
   end
 
+  def funnel_conversion_campaigns
+    render json: V2::Reports::FunnelConversionBuilder.new(account: Current.account, params: @builder_params).campaign_breakdown
+  end
+
   # Also serves Marketing → Analytics, whose columns (`metric`) count one ad's
   # conversations the way that report does.
   def funnel_conversion_drilldown
@@ -53,6 +62,13 @@ class Api::V2::Accounts::SummaryReportsController < Api::V1::Accounts::BaseContr
   end
 
   private
+
+  def handle_report_timeout
+    yield
+  rescue ActiveRecord::QueryCanceled => e
+    ChatwootExceptionTracker.new(e, account: Current.account).capture_exception
+    render json: { error: I18n.t('errors.reports.timeout') }, status: :service_unavailable
+  end
 
   def check_authorization
     authorize :report, :view?

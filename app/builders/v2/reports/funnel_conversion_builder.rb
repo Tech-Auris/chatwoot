@@ -41,7 +41,7 @@ class V2::Reports::FunnelConversionBuilder
 
   def build
     all_stages = FunnelStage.active.ordered.to_a
-    return { stages: [], kpis: empty_kpis, loss_reasons: [], campaign_breakdown: [] } if all_stages.empty?
+    return { stages: [], kpis: empty_kpis, loss_reasons: [] } if all_stages.empty?
 
     # KPIs always look at the FULL set of active stages — visibility/merge
     # rules are presentation-only and shouldn't change "completed" or "won"
@@ -63,9 +63,17 @@ class V2::Reports::FunnelConversionBuilder
     {
       stages: stage_rows,
       kpis: build_kpis(all_stages, universe[:count]),
-      loss_reasons: build_loss_reasons_breakdown,
-      campaign_breakdown: build_campaign_breakdown(all_stages)
+      loss_reasons: build_loss_reasons_breakdown
     }
+  end
+
+  # Served on its own request: the internal campaign lookup is the slowest
+  # part of the report on large accounts, and the funnel shouldn't wait on it.
+  def campaign_breakdown
+    all_stages = FunnelStage.active.ordered.to_a
+    return [] if all_stages.empty?
+
+    build_campaign_breakdown(all_stages)
   end
 
   private

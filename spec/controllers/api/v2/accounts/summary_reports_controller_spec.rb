@@ -338,6 +338,49 @@ RSpec.describe 'Summary Reports API', type: :request do
         expect(json_response['stages'].first['name']).to eq('Lead')
         expect(json_response['kpis']['attendance_rate']).to eq(40.0)
       end
+
+      it 'answers 503 with a readable error when the report hits the statement timeout' do
+        builder = instance_double(V2::Reports::FunnelConversionBuilder)
+        allow(V2::Reports::FunnelConversionBuilder).to receive(:new).and_return(builder)
+        allow(builder).to receive(:build).and_raise(ActiveRecord::QueryCanceled)
+        tracker = instance_double(ChatwootExceptionTracker, capture_exception: nil)
+        allow(ChatwootExceptionTracker).to receive(:new).and_return(tracker)
+
+        get "/api/v2/accounts/#{account.id}/summary_reports/funnel_conversion",
+            params: params,
+            headers: admin.create_new_auth_token,
+            as: :json
+
+        expect(response).to have_http_status(:service_unavailable)
+        expect(response.parsed_body['error']).to eq(I18n.t('errors.reports.timeout', locale: account.locale))
+        expect(ChatwootExceptionTracker).to have_received(:new).with(an_instance_of(ActiveRecord::QueryCanceled), account: account)
+      end
+    end
+  end
+
+  describe 'GET /api/v2/accounts/:account_id/summary_reports/funnel_conversion_campaigns' do
+    let(:url) { "/api/v2/accounts/#{account.id}/summary_reports/funnel_conversion_campaigns" }
+    let(:params) { { since: start_of_today.to_s, until: end_of_today.to_s } }
+
+    it 'returns unauthorized for agents' do
+      get url, params: params, headers: agent.create_new_auth_token, as: :json
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it 'renders the per-campaign rows with the same filters as the funnel' do
+      builder = instance_double(V2::Reports::FunnelConversionBuilder)
+      allow(V2::Reports::FunnelConversionBuilder).to receive(:new).and_return(builder)
+      allow(builder).to receive(:campaign_breakdown).and_return([{ kind: 'ad', source_id: 'FB-1', leads: 3 }])
+
+      get url, params: params.merge(inbox_id: '7', origem: 'Facebook'), headers: admin.create_new_auth_token, as: :json
+
+      expect(response).to have_http_status(:success)
+      expect(V2::Reports::FunnelConversionBuilder).to have_received(:new).with(
+        account: account,
+        params: hash_including(since: start_of_today.to_s, until: end_of_today.to_s, inbox_id: '7', origem: 'Facebook')
+      )
+      expect(response.parsed_body.first).to include('kind' => 'ad', 'source_id' => 'FB-1', 'leads' => 3)
     end
   end
 

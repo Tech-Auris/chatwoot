@@ -6,6 +6,8 @@
     "DOWNLOAD_CONVERSATION_REPORTS": "Download conversation reports",
     "DATA_FETCHING_FAILED": "Failed to fetch data, please try again later.",
     "SUMMARY_FETCHING_FAILED": "Failed to fetch summary, please try again later.",
+    "LOAD_FAILED": "Could not load this data.",
+    "RETRY": "Try again",
     "P95_SUFFIX": "(P95)",
     "P95_HINT": "95th percentile: 95% of conversations took this long or less. Unlike the average, it is not skewed by a few very slow cases. Median: {median}.",
     "TIME_UNITS": {

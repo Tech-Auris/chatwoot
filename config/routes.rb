@@ -675,6 +675,7 @@ Rails.application.routes.draw do
               get :channel
               get :funnel
               get :funnel_conversion
+              get :funnel_conversion_campaigns
               get :funnel_conversion_drilldown
               get :campaign_analytics
             end

@@ -255,6 +255,7 @@ en:
       no_payment_method: No payment methods found. Please add a payment method before making a purchase.
     reports:
       date_range_too_long: Date range cannot exceed 6 months
+      timeout: The report took too long to load. Try a shorter period or try again in a moment.
   profile:
     mfa:
       enabled: MFA enabled successfully

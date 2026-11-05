@@ -8,6 +8,7 @@ vi.mock('dashboard/api/summaryReports', () => ({
     getAgentReports: vi.fn(),
     getTeamReports: vi.fn(),
     getLabelReports: vi.fn(),
+    getFunnelConversionCampaigns: vi.fn(),
   },
 }));
 
@@ -27,15 +28,19 @@ describe('Summary Reports Store', () => {
         agentSummaryReports: [],
         teamSummaryReports: [],
         labelSummaryReports: [],
+        origemSummaryReports: [],
         funnelSummaryReports: [],
         funnelConversionReport: { stages: [], kpis: {} },
+        funnelConversionCampaigns: [],
         uiFlags: {
           isFetchingInboxSummaryReports: false,
           isFetchingAgentSummaryReports: false,
           isFetchingTeamSummaryReports: false,
           isFetchingLabelSummaryReports: false,
+          isFetchingOrigemSummaryReports: false,
           isFetchingFunnelSummaryReports: false,
           isFetchingFunnelConversionReports: false,
+          isFetchingFunnelConversionCampaigns: false,
         },
       });
     });
@@ -228,6 +233,41 @@ describe('Summary Reports Store', () => {
         ]);
         expect(commit).toHaveBeenCalledWith('setUIFlags', {
           isFetchingLabelSummaryReports: false,
+        });
+      });
+    });
+
+    describe('fetchFunnelConversionCampaigns', () => {
+      it('should fetch the campaign rows on their own flag', async () => {
+        const params = { since: 1, until: 2 };
+        SummaryReportsAPI.getFunnelConversionCampaigns.mockResolvedValue({
+          data: [{ kind: 'ad', source_id: 'FB-1', spend_cents: 100 }],
+        });
+
+        await store.actions.fetchFunnelConversionCampaigns({ commit }, params);
+
+        expect(
+          SummaryReportsAPI.getFunnelConversionCampaigns
+        ).toHaveBeenCalledWith(params);
+        expect(commit).toHaveBeenCalledWith('setFunnelConversionCampaigns', [
+          { kind: 'ad', sourceId: 'FB-1', spendCents: 100 },
+        ]);
+        expect(commit).toHaveBeenLastCalledWith('setUIFlags', {
+          isFetchingFunnelConversionCampaigns: false,
+        });
+      });
+
+      it('should reset its flag and rethrow on failure', async () => {
+        SummaryReportsAPI.getFunnelConversionCampaigns.mockRejectedValue(
+          new Error('timeout')
+        );
+
+        await expect(
+          store.actions.fetchFunnelConversionCampaigns({ commit }, {})
+        ).rejects.toThrow('timeout');
+
+        expect(commit).toHaveBeenLastCalledWith('setUIFlags', {
+          isFetchingFunnelConversionCampaigns: false,
         });
       });
     });
