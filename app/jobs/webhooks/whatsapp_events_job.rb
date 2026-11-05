@@ -12,6 +12,12 @@ class Webhooks::WhatsappEventsJob < MutexApplicationJob
     'message_template_quality_update' => 'Whatsapp::TemplateQualityUpdateService'
   }.freeze
 
+  # Coexistence contacts and chat history, and the service that imports each.
+  COEXISTENCE_SYNC_SERVICES = {
+    'history' => 'Whatsapp::CloudHistoryImportService',
+    'smb_app_state_sync' => 'Whatsapp::CloudContactsSyncService'
+  }.freeze
+
   # Retry budget (19 × 2s = 38s) must exceed the 30s lock TTL set in `perform`, otherwise
   # a webhook that arrives just after the lock is acquired can exhaust retries before the
   # holder finishes and silently drop its message.
@@ -48,6 +54,8 @@ class Webhooks::WhatsappEventsJob < MutexApplicationJob
       Rails.logger.warn("Inactive WhatsApp channel: #{channel&.phone_number || "unknown - #{params[:phone_number]}"}")
       return
     end
+
+    return handle_coexistence_sync(channel, params) if coexistence_sync_event?(params)
 
     sender_id = contact_sender_id(params)
     return process_events(channel, params) if sender_id.blank?
@@ -132,6 +140,18 @@ class Webhooks::WhatsappEventsJob < MutexApplicationJob
   end
 
   private
+
+  def coexistence_sync_event?(params)
+    COEXISTENCE_SYNC_SERVICES.key?(params.dig(:entry, 0, :changes, 0, :field).to_s)
+  end
+
+  # Signed by Meta, so only an official (Cloud) number can receive them.
+  def handle_coexistence_sync(channel, params)
+    return unless channel.provider == 'whatsapp_cloud'
+
+    value = params.dig(:entry, 0, :changes, 0, :value) || {}
+    COEXISTENCE_SYNC_SERVICES[params.dig(:entry, 0, :changes, 0, :field).to_s].constantize.new(inbox: channel.inbox, value: value).perform
+  end
 
   # Echo payloads reverse the fields — `from` is the business number and `to` is the contact.
   # Returns nil for status-only webhooks so they bypass the lock.

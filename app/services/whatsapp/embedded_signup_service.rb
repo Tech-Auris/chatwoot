@@ -5,6 +5,7 @@ class Whatsapp::EmbeddedSignupService
     @business_id = params[:business_id]
     @waba_id = params[:waba_id]
     @phone_number_id = params[:phone_number_id]
+    @coexistence = ActiveModel::Type::Boolean.new.cast(params[:coexistence])
     @inbox_id = inbox_id
   end
 
@@ -25,6 +26,7 @@ class Whatsapp::EmbeddedSignupService
     # (platform_type: NOT_APPLICABLE) would incorrectly trigger a disconnect email right after
     # a successful reauth. Only run health check for new channel creation.
     check_channel_health_and_prompt_reauth(channel) if @inbox_id.blank?
+    request_coexistence_sync(channel)
     channel
 
   rescue StandardError => e
@@ -76,6 +78,16 @@ class Whatsapp::EmbeddedSignupService
       }
     )
     channel
+  end
+
+  # A number brought over from the WhatsApp Business app (coexistence) can share
+  # its contacts and chat history. Only on a new inbox: a converted Baileys or
+  # Z-API inbox already holds that history under other message ids, so a second
+  # import would duplicate every message.
+  def request_coexistence_sync(channel)
+    return unless @coexistence && @inbox_id.blank?
+
+    Channels::Whatsapp::CoexistenceSyncRequestJob.perform_later(channel.id)
   end
 
   def check_channel_health_and_prompt_reauth(channel)

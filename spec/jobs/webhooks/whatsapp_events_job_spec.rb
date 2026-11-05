@@ -407,4 +407,44 @@ RSpec.describe Webhooks::WhatsappEventsJob do
       expect(Whatsapp::IncomingMessageWhatsappCloudService).not_to have_received(:new)
     end
   end
+
+  describe 'coexistence history and contacts (WhatsApp Business app)' do
+    def coexistence_params(field, value, number: channel)
+      {
+        object: 'whatsapp_business_account',
+        phone_number: number.phone_number,
+        entry: [{ changes: [{ field: field,
+                              value: value.merge(metadata: { phone_number_id: number.provider_config['phone_number_id'],
+                                                             display_phone_number: number.phone_number.delete('+') }) }] }]
+      }.with_indifferent_access
+    end
+
+    it 'hands the history to Whatsapp::CloudHistoryImportService' do
+      service = instance_double(Whatsapp::CloudHistoryImportService, perform: true)
+      allow(Whatsapp::CloudHistoryImportService).to receive(:new).and_return(service)
+
+      job.perform_now(coexistence_params('history', { history: [] }))
+
+      expect(Whatsapp::CloudHistoryImportService).to have_received(:new).with(inbox: channel.inbox, value: hash_including('history' => []))
+      expect(service).to have_received(:perform)
+    end
+
+    it 'hands the address book to Whatsapp::CloudContactsSyncService' do
+      service = instance_double(Whatsapp::CloudContactsSyncService, perform: true)
+      allow(Whatsapp::CloudContactsSyncService).to receive(:new).and_return(service)
+
+      job.perform_now(coexistence_params('smb_app_state_sync', { state_sync: [] }))
+
+      expect(service).to have_received(:perform)
+    end
+
+    it 'ignores a history payload on a non-Cloud number, where it can only be forged' do
+      baileys = create(:channel_whatsapp, provider: 'baileys', sync_templates: false, validate_provider_config: false)
+      allow(Whatsapp::CloudHistoryImportService).to receive(:new)
+
+      job.perform_now(coexistence_params('history', { history: [] }, number: baileys))
+
+      expect(Whatsapp::CloudHistoryImportService).not_to have_received(:new)
+    end
+  end
 end

@@ -65,9 +65,11 @@ class Whatsapp::WebhookSetupService
     raise "Webhook setup failed: #{e.message}"
   end
 
-  # Subscribe to `calls` only when voice calling is enabled on the inbox
+  # Subscribe to `calls` only when voice calling is enabled on the inbox.
+  # `history` and `smb_app_state_sync` only ever fire after a coexistence
+  # onboarding asks for them (Whatsapp::CoexistenceSyncRequestJob).
   def subscribed_fields
-    fields = %w[messages smb_message_echoes]
+    fields = %w[messages smb_message_echoes history smb_app_state_sync]
     fields << 'calls' if @channel.provider_config['calling_enabled']
     fields
   end

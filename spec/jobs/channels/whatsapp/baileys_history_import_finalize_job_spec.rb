@@ -70,4 +70,24 @@ describe Channels::Whatsapp::BaileysHistoryImportFinalizeJob do
       expect(state['messages_imported']).to eq(1_559)
     end
   end
+
+  context 'with the longer idle window of a coexistence (Cloud) import' do
+    it 'waits for that window before completing' do
+      channel.update_history_import_state!(status: 'in_progress', last_batch_at: 2.minutes.ago.iso8601)
+
+      described_class.perform_now(channel.id, 10.minutes.to_i)
+
+      expect(channel.reload.history_import_state['status']).to eq('in_progress')
+    end
+  end
+
+  context 'when the business declined to share its history' do
+    it 'keeps the declined status' do
+      channel.update_history_import_state!(status: 'declined', last_batch_at: 1.hour.ago.iso8601)
+
+      described_class.perform_now(channel.id)
+
+      expect(channel.reload.history_import_state['status']).to eq('declined')
+    end
+  end
 end

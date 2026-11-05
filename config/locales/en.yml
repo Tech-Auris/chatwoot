@@ -372,6 +372,7 @@ en:
       whatsapp:
         list_button_label: 'Choose an item'
         unsupported_message: 'This message is unavailable.'
+        history_media_unavailable: 'Media from the WhatsApp Business app history (not available)'
         call_permission_request_body: 'We would like to call you regarding your conversation.'
       voice_call:
         twilio: 'Voice Call'

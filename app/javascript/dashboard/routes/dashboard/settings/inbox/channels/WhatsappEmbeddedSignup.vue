@@ -144,6 +144,7 @@ const completeSignupFlow = async businessDataParam => {
       business_id: businessDataParam.business_id,
       waba_id: businessDataParam.waba_id,
       phone_number_id: businessDataParam?.phone_number_id || '',
+      coexistence: businessDataParam.coexistence,
     };
 
     const action = isConvertMode.value
@@ -171,7 +172,12 @@ const handleEmbeddedSignupData = async data => {
     data.event === 'FINISH' ||
     data.event === 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING'
   ) {
-    const businessDataLocal = data.data;
+    // A number brought over from the WhatsApp Business app (coexistence) can
+    // share its contacts and chat history with the new inbox.
+    const businessDataLocal = {
+      ...data.data,
+      coexistence: data.event === 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING',
+    };
 
     if (isValidBusinessData(businessDataLocal)) {
       businessData.value = businessDataLocal;
