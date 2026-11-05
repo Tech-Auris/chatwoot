@@ -18,6 +18,13 @@ export class DataManager {
         db.createObjectStore('label', { keyPath: 'id' });
         db.createObjectStore('team', { keyPath: 'id' });
       },
+      // Another tab is deleting this cache (logout) or upgrading it. Holding
+      // it open would stall that tab: its next open waits behind the deletion
+      // and the inbox list never loads. The next read here reopens it.
+      blocking: () => {
+        this.db?.close();
+        this.db = null;
+      },
     });
 
     // Store the database name in LocalStorage
