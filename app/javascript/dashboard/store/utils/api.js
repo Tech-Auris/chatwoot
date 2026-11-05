@@ -76,7 +76,7 @@ export const deleteIndexedDBOnLogout = async () => {
   localStorage.removeItem('cw-idb-names');
 };
 
-export const clearCookiesOnLogout = () => {
+export const clearCookiesOnLogout = ({ redirectTo } = {}) => {
   emitter.emit(CHATWOOT_RESET);
   emitter.emit(ANALYTICS_RESET);
   clearBrowserSessionCookies();
@@ -84,7 +84,7 @@ export const clearCookiesOnLogout = () => {
   clearSessionStorageOnLogout();
   const globalConfig = window.globalConfig || {};
   const logoutRedirectLink = globalConfig.LOGOUT_REDIRECT_LINK || '/';
-  window.location = logoutRedirectLink;
+  window.location = redirectTo || logoutRedirectLink;
 };
 
 export const parseAPIErrorResponse = error => {
