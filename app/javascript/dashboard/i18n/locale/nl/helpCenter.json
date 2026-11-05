@@ -763,7 +763,7 @@
       "CONFIRM_BUTTON_LABEL": "Aanmaken",
       "NAME": {
         "LABEL": "Naam",
-        "PLACEHOLDER": "User Guide | Chatwoot",
+        "PLACEHOLDER": "User Guide | AurisChat",
         "MESSAGE": "Choose an name for your portal.",
         "ERROR": "Naam is vereist"
       },

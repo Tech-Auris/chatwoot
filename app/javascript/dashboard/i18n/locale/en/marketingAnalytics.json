@@ -82,7 +82,7 @@
     },
     "EVENTS": {
       "TITLE": "Conversion events",
-      "DESCRIPTION": "Map a Chatwoot trigger to a Meta event name and/or a Google conversion action.",
+      "DESCRIPTION": "Map a AurisChat trigger to a Meta event name and/or a Google conversion action.",
       "NEW": "New event",
       "EMPTY": "No conversion events configured yet.",
       "NAME": "Name",

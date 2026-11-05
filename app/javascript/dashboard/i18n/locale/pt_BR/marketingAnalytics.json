@@ -82,7 +82,7 @@
     },
     "EVENTS": {
       "TITLE": "Eventos de conversão",
-      "DESCRIPTION": "Mapeie um gatilho do Chatwoot para um evento do Meta e/ou uma ação de conversão do Google.",
+      "DESCRIPTION": "Mapeie um gatilho do AurisChat para um evento do Meta e/ou uma ação de conversão do Google.",
       "NEW": "Novo evento",
       "EMPTY": "Nenhum evento de conversão configurado ainda.",
       "NAME": "Nome",
