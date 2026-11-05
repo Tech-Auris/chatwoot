@@ -357,6 +357,42 @@ RSpec.describe 'Webhooks::WhatsappController', type: :request do
       end
     end
 
+    context 'when the payload is coexistence history or contacts (WhatsApp Business app)' do
+      def coexistence_payload(field, value)
+        { object: 'whatsapp_business_account', entry: [{ changes: [{ field: field, value: value }] }] }
+      end
+
+      def history_chunk(phase)
+        coexistence_payload('history', { history: [{ metadata: { phase: phase, chunk_order: 1, progress: 10 }, threads: [] }] })
+      end
+
+      it 'routes the history of the first 90 days (phases 0 and 1) to the :whatsapp_history queue' do
+        post '/webhooks/whatsapp/123221321', params: history_chunk(1), as: :json
+
+        expect(queues_seen).to eq([:whatsapp_history])
+      end
+
+      it 'acknowledges and drops the history older than 90 days (phase 2) without enqueuing it' do
+        post '/webhooks/whatsapp/123221321', params: history_chunk(2), as: :json
+
+        expect(response).to have_http_status(:ok)
+        expect(queues_seen).to be_empty
+      end
+
+      it 'routes the media of an imported message to the :whatsapp_history queue' do
+        post '/webhooks/whatsapp/123221321', params: coexistence_payload('history', { messages: [{ id: 'wamid.1', type: 'image' }] }),
+                                             as: :json
+
+        expect(queues_seen).to eq([:whatsapp_history])
+      end
+
+      it 'routes the address book to the :whatsapp_history queue' do
+        post '/webhooks/whatsapp/123221321', params: coexistence_payload('smb_app_state_sync', { state_sync: [] }), as: :json
+
+        expect(queues_seen).to eq([:whatsapp_history])
+      end
+    end
+
     context 'when awaitResponse param is present' do
       # baileys channels skip signature verification (meta_signature_verification_required? short-circuits
       # for non whatsapp_cloud providers), so an unsigned POST is valid here.

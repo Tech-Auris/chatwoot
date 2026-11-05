@@ -102,6 +102,20 @@ describe Whatsapp::EmbeddedSignupService do
       end
     end
 
+    context 'when the number comes from the WhatsApp Business app (coexistence)' do
+      let(:params) { super().merge(coexistence: 'true') }
+
+      it 'asks Meta for the contacts and chat history of the app' do
+        allow(channel).to receive(:id).and_return(42)
+
+        expect { service.perform }.to have_enqueued_job(Channels::Whatsapp::CoexistenceSyncRequestJob).with(42)
+      end
+    end
+
+    it 'does not ask Meta for an app history when the number is not a coexistence onboarding' do
+      expect { service.perform }.not_to have_enqueued_job(Channels::Whatsapp::CoexistenceSyncRequestJob)
+    end
+
     context 'when channel is healthy' do
       it 'does not prompt reauthorization for healthy channel' do
         expect(channel).not_to receive(:prompt_reauthorization!)
@@ -212,6 +226,12 @@ describe Whatsapp::EmbeddedSignupService do
       it 'does not run channel health check on conversion' do
         expect(Whatsapp::HealthService).not_to receive(:new)
         service_with_inbox.perform
+      end
+
+      it 'does not import the app history again into the converted inbox, which already holds it' do
+        coexistence_service = described_class.new(account: account, params: params.merge(coexistence: 'true'), inbox_id: baileys_inbox.id)
+
+        expect { coexistence_service.perform }.not_to have_enqueued_job(Channels::Whatsapp::CoexistenceSyncRequestJob)
       end
     end
 

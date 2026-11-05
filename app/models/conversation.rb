@@ -454,6 +454,9 @@ class Conversation < ApplicationRecord
   end
 
   def determine_conversation_status
+    # A WhatsApp history import creates the conversation already resolved.
+    return if Current.history_import
+
     self.status = :resolved and return if contact.blocked?
 
     return handle_campaign_status if campaign.present?
@@ -468,6 +471,10 @@ class Conversation < ApplicationRecord
   end
 
   def notify_conversation_creation
+    # An imported (WhatsApp history) conversation is old news: no webhooks, AI
+    # secretary, automations or notifications.
+    return if Current.history_import
+
     dispatcher_dispatch(CONVERSATION_CREATED)
   end
 

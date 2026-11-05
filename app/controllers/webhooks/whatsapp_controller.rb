@@ -25,9 +25,25 @@ class Webhooks::WhatsappController < ActionController::API
   def perform_whatsapp_events_job
     perform_sync if params[:awaitResponse].present?
     return if performed?
+    return head(:ok) if history_beyond_import_window?
 
     Webhooks::WhatsappEventsJob.set(queue: target_queue).perform_later(params.to_unsafe_hash)
     head :ok
+  end
+
+  # Coexistence history comes in three phases: days 0-1, 1-90 and 90-180. We
+  # import up to 90 days, so phase 2 is acknowledged and dropped here, before
+  # it costs a job.
+  def history_beyond_import_window?
+    coexistence_sync_payload? &&
+      params.dig(:entry, 0, :changes, 0, :value, :history, 0, :metadata, :phase).to_i >= 2
+  end
+
+  # Contacts and chat history of a WhatsApp Business app number onboarded by
+  # coexistence. Months of messages per number, so they share the backfill queue.
+  def coexistence_sync_payload?
+    params[:object].to_s == 'whatsapp_business_account' &&
+      %w[history smb_app_state_sync].include?(params.dig(:entry, 0, :changes, 0, :field).to_s)
   end
 
   # Webhook payloads share a single job, but their priority depends on what
@@ -42,7 +58,7 @@ class Webhooks::WhatsappController < ActionController::API
   # — critically — they are NOT allowed to wait behind `presence.update`
   # backlog on `:low`. A backed-up `:low` was making QR pairings time out.
   def target_queue
-    return :whatsapp_history if params[:importMode]
+    return :whatsapp_history if params[:importMode] || coexistence_sync_payload?
     return :high if interactive_baileys_event?
     return :whatsapp_messages if live_message_payload?
     return :whatsapp_statuses if status_only_payload?

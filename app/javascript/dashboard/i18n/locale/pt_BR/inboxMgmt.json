@@ -1010,6 +1010,8 @@
         "TITLE": "Importação de histórico",
         "STATUS_IN_PROGRESS": "Importando",
         "STATUS_COMPLETED": "Concluída",
+        "STATUS_DECLINED": "Não compartilhado",
+        "DECLINED": "O cliente escolheu não compartilhar o histórico de conversas no WhatsApp Business, então nada foi importado.",
         "MESSAGES": "{count} mensagens importadas",
         "DROPPED_GROUPS": "{count} descartadas (mensagens de grupo)",
         "FINISHED_AT": "Concluída às {time}",

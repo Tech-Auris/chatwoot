@@ -345,6 +345,8 @@ pt_BR:
       deleted: Esta mensagem foi excluída
       whatsapp:
         list_button_label: 'Escolha um item'
+        unsupported_message: 'Esta mensagem não está disponível.'
+        history_media_unavailable: 'Mídia do histórico do WhatsApp Business (não disponível)'
         call_permission_request_body: 'Gostaríamos de ligar para você em relação à sua conversa.'
       voice_call:
         twilio: 'Chamada de Voz'

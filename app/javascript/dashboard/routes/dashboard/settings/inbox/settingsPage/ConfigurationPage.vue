@@ -611,6 +611,8 @@ export default {
             </NextButton>
           </div>
         </SettingsFieldSection>
+        <!-- Coexistence: chat history shared by the WhatsApp Business app -->
+        <BaileysHistoryImportStatus :inbox="inbox" class="mb-6" />
       </template>
 
       <!-- Manual Setup Section -->

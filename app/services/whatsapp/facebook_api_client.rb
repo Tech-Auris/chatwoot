@@ -95,6 +95,19 @@ class Whatsapp::FacebookApiClient
     handle_response(response, 'Webhook callback override failed')
   end
 
+  # Coexistence: asks Meta to push the WhatsApp Business app's contacts
+  # (`smb_app_state_sync`) or chat history (`history`) through webhooks.
+  # One-shot per onboarding, and only within 24h of it.
+  def request_smb_app_data(phone_number_id, sync_type)
+    response = HTTParty.post(
+      "#{BASE_URI}/#{@api_version}/#{phone_number_id}/smb_app_data",
+      headers: request_headers,
+      body: { messaging_product: 'whatsapp', sync_type: sync_type }.to_json
+    )
+
+    handle_response(response, "SMB app data #{sync_type} request failed")
+  end
+
   def unsubscribe_waba_webhook(waba_id)
     response = HTTParty.delete(
       "#{BASE_URI}/#{@api_version}/#{waba_id}/subscribed_apps",

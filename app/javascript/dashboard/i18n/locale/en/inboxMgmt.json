@@ -1013,6 +1013,8 @@
         "TITLE": "History import",
         "STATUS_IN_PROGRESS": "Importing",
         "STATUS_COMPLETED": "Completed",
+        "STATUS_DECLINED": "Not shared",
+        "DECLINED": "The business chose not to share its chat history in the WhatsApp Business app, so nothing was imported.",
         "MESSAGES": "{count} messages imported",
         "DROPPED_GROUPS": "{count} skipped (group messages)",
         "FINISHED_AT": "Completed at {time}",

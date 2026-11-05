@@ -14,15 +14,19 @@ const props = defineProps({
 const store = useStore();
 const { t } = useI18n();
 
-// `history_import` is written by Whatsapp::IncomingMessageBaileysService on
-// each `importMode: true` webhook batch the Baileys node service pushes back.
-// Until the node service starts publishing those events, the snapshot stays
-// nil and the whole section just hides itself.
+// `history_import` is written on each history batch: by
+// Whatsapp::IncomingMessageBaileysService for QR Code (Baileys) inboxes, and by
+// Whatsapp::CloudHistoryImportService for official numbers onboarded by
+// coexistence, where it can also end up `declined` (the business chose not to
+// share its history). Until the first batch, the snapshot stays nil and the
+// whole section just hides itself.
 const historyImport = computed(
   () => props.inbox?.provider_connection?.history_import
 );
 
 const status = computed(() => historyImport.value?.status);
+const isCompleted = computed(() => status.value === 'completed');
+const isDeclined = computed(() => status.value === 'declined');
 const messages = computed(() => historyImport.value?.messages_imported || 0);
 const droppedGroups = computed(
   () => historyImport.value?.messages_dropped_groups || 0
@@ -126,27 +130,44 @@ onBeforeUnmount(() => {
       </span>
       <span
         class="text-xs px-2 py-0.5 rounded-md inline-flex items-center gap-1.5"
-        :class="
-          status === 'completed'
-            ? 'bg-n-teal-3 text-n-teal-11'
-            : 'bg-n-blue-3 text-n-blue-11'
-        "
+        :class="{
+          'bg-n-teal-3 text-n-teal-11': isCompleted,
+          'bg-n-amber-3 text-n-amber-11': isDeclined,
+          'bg-n-blue-3 text-n-blue-11': !isCompleted && !isDeclined,
+        }"
       >
-        <Spinner v-if="status !== 'completed'" :size="10" />
-        <i v-else class="i-lucide-check w-3 h-3" />
-        {{
-          status === 'completed'
-            ? t(
-                'INBOX_MGMT.SETTINGS_POPUP.BAILEYS_HISTORY_IMPORT.STATUS_COMPLETED'
-              )
-            : t(
-                'INBOX_MGMT.SETTINGS_POPUP.BAILEYS_HISTORY_IMPORT.STATUS_IN_PROGRESS'
-              )
-        }}
+        <i v-if="isCompleted" class="i-lucide-check w-3 h-3" />
+        <i v-else-if="isDeclined" class="i-lucide-ban w-3 h-3" />
+        <Spinner v-else :size="10" />
+        <template v-if="isCompleted">
+          {{
+            t(
+              'INBOX_MGMT.SETTINGS_POPUP.BAILEYS_HISTORY_IMPORT.STATUS_COMPLETED'
+            )
+          }}
+        </template>
+        <template v-else-if="isDeclined">
+          {{
+            t(
+              'INBOX_MGMT.SETTINGS_POPUP.BAILEYS_HISTORY_IMPORT.STATUS_DECLINED'
+            )
+          }}
+        </template>
+        <template v-else>
+          {{
+            t(
+              'INBOX_MGMT.SETTINGS_POPUP.BAILEYS_HISTORY_IMPORT.STATUS_IN_PROGRESS'
+            )
+          }}
+        </template>
       </span>
     </div>
 
-    <p class="text-sm text-n-slate-12 m-0">
+    <p v-if="isDeclined" class="text-sm text-n-slate-12 m-0">
+      {{ t('INBOX_MGMT.SETTINGS_POPUP.BAILEYS_HISTORY_IMPORT.DECLINED') }}
+    </p>
+
+    <p v-else class="text-sm text-n-slate-12 m-0">
       {{
         t('INBOX_MGMT.SETTINGS_POPUP.BAILEYS_HISTORY_IMPORT.MESSAGES', {
           count: messages.toLocaleString(),
@@ -161,10 +182,7 @@ onBeforeUnmount(() => {
       }}
     </p>
 
-    <p
-      v-if="status === 'completed' && formattedTime"
-      class="text-xs text-n-slate-11 m-0"
-    >
+    <p v-if="isCompleted && formattedTime" class="text-xs text-n-slate-11 m-0">
       {{
         t('INBOX_MGMT.SETTINGS_POPUP.BAILEYS_HISTORY_IMPORT.FINISHED_AT', {
           time: formattedTime,

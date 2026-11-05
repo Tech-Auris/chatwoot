@@ -7,18 +7,19 @@ class Channels::Whatsapp::BaileysHistoryImportFinalizeJob < ApplicationJob
   # `importMode: true` batches have landed for HISTORY_IMPORT_IDLE_WINDOW
   # seconds. Each batch enqueues a new instance; the last surviving job
   # finalises the import. Earlier jobs see a fresher `last_batch_at`
-  # timestamp and no-op.
-  def perform(channel_id)
+  # timestamp and no-op. Coexistence (Cloud) imports pass a longer idle
+  # window, since Meta spreads the history chunks further apart.
+  def perform(channel_id, idle_window_seconds = Whatsapp::IncomingMessageBaileysService::HISTORY_IMPORT_IDLE_WINDOW.to_i)
     channel = Channel::Whatsapp.find_by(id: channel_id)
     return unless channel
 
     state = channel.history_import_state
     return if state.blank?
-    return if state['status'] == 'completed'
+    return unless state['status'] == 'in_progress'
 
     last_batch_at = parse_iso(state['last_batch_at'])
     return if last_batch_at.blank?
-    return if Time.current - last_batch_at < Whatsapp::IncomingMessageBaileysService::HISTORY_IMPORT_IDLE_WINDOW
+    return if Time.current - last_batch_at < idle_window_seconds
 
     channel.update_history_import_state!(
       status: 'completed',
