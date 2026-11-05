@@ -36,6 +36,7 @@ describe Whatsapp::IncomingMessageBaileysService, type: :service do
   before do
     stub_request(:get, /profile-picture-url/)
       .to_return(status: 200, body: { data: { profilePictureUrl: nil } }.to_json)
+    stub_request(:post, %r{/on-whatsapp}).to_return(status: 200, body: { data: [] }.to_json, headers: { 'Content-Type' => 'application/json' })
     Current.reset
   end
 

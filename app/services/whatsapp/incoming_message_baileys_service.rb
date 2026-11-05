@@ -2,6 +2,7 @@ class Whatsapp::IncomingMessageBaileysService < Whatsapp::IncomingMessageBaseSer
   include Events::Types
   include Whatsapp::BaileysHandlers::ConnectionUpdate
   include Whatsapp::BaileysHandlers::MessagesUpsert
+  include Whatsapp::BaileysHandlers::MessagingHistorySet
   include Whatsapp::BaileysHandlers::MessagesUpdate
   include Whatsapp::BaileysHandlers::MessageReceiptUpdate
   include Whatsapp::BaileysHandlers::GroupParticipantsUpdate
