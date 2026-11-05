@@ -10,6 +10,7 @@
       "LABEL": "Senha",
       "PLACEHOLDER": "Senha"
     },
+    "SESSION_ENDED": "Sua sessão foi encerrada. Entre novamente para continuar.",
     "API": {
       "SUCCESS_MESSAGE": "Acesso bem-sucedido",
       "ERROR_MESSAGE": "Não foi possível desconectar o agente robô. Por favor, tente novamente mais tarde.",
