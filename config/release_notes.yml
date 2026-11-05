@@ -15,6 +15,8 @@
       ### 🐛 Fixes
 
       - **Funnel conversion report.** On accounts with many conversations, the Funnel → Conversion tab showed up empty with an error. It now loads normally, and if something fails you get a "Tentar novamente" button.
+      - **Inboxes after signing in again.** If you signed out and back in to AurisChat with another tab open, your inboxes could disappear and stay on "Carregando caixas de entrada". They now show up normally.
+      - **A notice when your session ends.** If you sign out of AurisChat in one tab, the other open tabs now show "Sua sessão foi encerrada" and go back to the login screen, instead of staying on empty screens.
     pt_BR: |-
       ### ✨ Novidades
 
@@ -27,6 +29,8 @@
       ### 🐛 Correções
 
       - **Relatório de conversão do funil.** Em contas com muitas conversas, a aba Funil → Conversão aparecia vazia, com uma mensagem de erro. Agora ela carrega normalmente, e se algo falhar aparece o botão "Tentar novamente".
+      - **Caixas de entrada ao entrar de novo.** Se você saía e entrava de novo no AurisChat com outra aba aberta, as caixas de entrada podiam sumir e ficar em "Carregando caixas de entrada". Agora elas aparecem normalmente.
+      - **Aviso quando a sessão termina.** Se você sair do AurisChat em uma aba, as outras abas abertas agora mostram "Sua sessão foi encerrada" e voltam para a tela de login, em vez de ficarem com as telas vazias.
 - tag: v4.15.1-auris.1.73
   published_at: '2026-10-28T20:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.73
