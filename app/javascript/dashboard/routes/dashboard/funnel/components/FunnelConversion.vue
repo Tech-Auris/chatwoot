@@ -4,7 +4,6 @@ import { useI18n } from 'vue-i18n';
 import subDays from 'date-fns/subDays';
 
 import { useStore, useMapGetter } from 'dashboard/composables/store';
-import { useAlert } from 'dashboard/composables';
 
 import WootDatePicker from 'dashboard/components/ui/DatePicker/DatePicker.vue';
 import { DATE_RANGE_TYPES } from 'dashboard/components/ui/DatePicker/helpers/DatePickerHelper';
@@ -15,6 +14,7 @@ import FunnelChart from './FunnelChart.vue';
 import LossReasonsDonut from './LossReasonsDonut.vue';
 import CampaignBreakdownTable from './CampaignBreakdownTable.vue';
 import FunnelDrilldownDialog from './FunnelDrilldownDialog.vue';
+import ReportLoadError from './ReportLoadError.vue';
 import {
   ORIGEM_OPTIONS,
   ORIGEM_NONE_TOKEN,
@@ -33,16 +33,33 @@ const origem = ref('');
 
 const uiFlags = useMapGetter('summaryReports/getUIFlags');
 const report = useMapGetter('summaryReports/getFunnelConversionReport');
+const campaignRows = useMapGetter(
+  'summaryReports/getFunnelConversionCampaigns'
+);
 const inboxes = useMapGetter('inboxes/getInboxes');
 const labels = useMapGetter('labels/getLabels');
 const isLoading = computed(
   () => uiFlags.value.isFetchingFunnelConversionReports ?? false
 );
+const isLoadingCampaigns = computed(
+  () => uiFlags.value.isFetchingFunnelConversionCampaigns ?? false
+);
 
-const stages = computed(() => report.value?.stages || []);
-const kpis = computed(() => report.value?.kpis || {});
-const lossReasons = computed(() => report.value?.lossReasons || []);
-const campaignBreakdown = computed(() => report.value?.campaignBreakdown || []);
+// Funnel and campaigns load on separate requests, so each one fails on its
+// own. A failed load never shows the previous filter's numbers.
+const loadError = ref('');
+const campaignsError = ref('');
+
+const stages = computed(() =>
+  loadError.value ? [] : report.value?.stages || []
+);
+const kpis = computed(() => (loadError.value ? {} : report.value?.kpis || {}));
+const lossReasons = computed(() =>
+  loadError.value ? [] : report.value?.lossReasons || []
+);
+const campaignBreakdown = computed(() =>
+  campaignsError.value ? [] : campaignRows.value || []
+);
 
 const inboxOptions = computed(() =>
   [...inboxes.value].sort((a, b) => a.name.localeCompare(b.name))
@@ -98,15 +115,37 @@ const onAdDrill = ad =>
     count: ad.leads,
   });
 
-const fetchReports = async () => {
+// The backend answers a report timeout with a readable message.
+const errorMessage = error =>
+  error?.response?.data?.error || t('REPORT.LOAD_FAILED');
+
+const fetchFunnel = async () => {
+  loadError.value = '';
   try {
     await store.dispatch(
       'summaryReports/fetchFunnelConversionReports',
       filters.value
     );
-  } catch {
-    useAlert(t('REPORT.SUMMARY_FETCHING_FAILED'));
+  } catch (error) {
+    loadError.value = errorMessage(error);
   }
+};
+
+const fetchCampaigns = async () => {
+  campaignsError.value = '';
+  try {
+    await store.dispatch(
+      'summaryReports/fetchFunnelConversionCampaigns',
+      filters.value
+    );
+  } catch (error) {
+    campaignsError.value = errorMessage(error);
+  }
+};
+
+const fetchReports = () => {
+  fetchFunnel();
+  fetchCampaigns();
 };
 
 const onOrigemChange = event => {
@@ -269,6 +308,13 @@ onMounted(fetchReports);
          breakdown sits on the remaining third. Stacks vertically below md. -->
     <div class="relative mt-2 grid grid-cols-1 gap-3 md:grid-cols-3">
       <div
+        v-if="loadError"
+        class="md:col-span-3 px-6 py-5 shadow outline-1 outline outline-n-container rounded-xl bg-n-solid-2"
+      >
+        <ReportLoadError :message="loadError" @retry="fetchFunnel" />
+      </div>
+      <div
+        v-else
         class="md:col-span-2 px-6 py-5 shadow outline-1 outline outline-n-container rounded-xl bg-n-solid-2"
       >
         <div
@@ -282,6 +328,7 @@ onMounted(fetchReports);
       </div>
 
       <div
+        v-if="!loadError"
         class="md:col-span-1 px-6 py-5 shadow outline-1 outline outline-n-container rounded-xl bg-n-solid-2"
       >
         <div class="text-sm font-medium text-n-slate-12 mb-4">
@@ -314,13 +361,28 @@ onMounted(fetchReports);
     </div>
 
     <div
-      class="mt-2 px-6 py-5 shadow outline-1 outline outline-n-container rounded-xl bg-n-solid-2"
-      :class="{ 'pointer-events-none opacity-50': isLoading }"
+      class="relative mt-2 px-6 py-5 shadow outline-1 outline outline-n-container rounded-xl bg-n-solid-2"
     >
       <div class="text-sm font-medium text-n-slate-12 mb-4">
         {{ $t('FUNNEL_CONVERSION_REPORTS.CAMPAIGN_BREAKDOWN.HEADER') }}
       </div>
-      <CampaignBreakdownTable :rows="campaignBreakdown" @drill="onAdDrill" />
+      <ReportLoadError
+        v-if="campaignsError"
+        :message="campaignsError"
+        @retry="fetchCampaigns"
+      />
+      <CampaignBreakdownTable
+        v-else
+        :class="{ 'pointer-events-none opacity-50': isLoadingCampaigns }"
+        :rows="campaignBreakdown"
+        @drill="onAdDrill"
+      />
+      <div
+        v-if="isLoadingCampaigns"
+        class="absolute inset-0 flex justify-center pt-[4rem] pointer-events-none"
+      >
+        <Spinner :size="24" class="text-n-brand" />
+      </div>
     </div>
 
     <FunnelDrilldownDialog ref="drilldownRef" :filters="filters" />

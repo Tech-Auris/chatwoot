@@ -90,7 +90,7 @@ RSpec.describe V2::Reports::FunnelConversionDrilldownBuilder do
 
     it 'lists the same leads the ad grid counts, each on its latest stage' do
       result = drilldown(kind: 'ad', source_id: 'AD_1')
-      grid = V2::Reports::FunnelConversionBuilder.new(account: account, params: params).build[:campaign_breakdown]
+      grid = V2::Reports::FunnelConversionBuilder.new(account: account, params: params).campaign_breakdown
 
       expect(result[:meta][:total_count]).to eq(grid.find { |row| row[:source_id] == 'AD_1' }[:leads])
       expect(result[:rows].find { |row| row[:conversation_id] == qualified_lead.display_id }[:stage]).to eq(stages[:scheduled].name)
@@ -114,7 +114,7 @@ RSpec.describe V2::Reports::FunnelConversionDrilldownBuilder do
       campaign_conversation(replied: false)
 
       result = drilldown(kind: 'internal_campaign', source_id: campaign.id.to_s)
-      grid = V2::Reports::FunnelConversionBuilder.new(account: account, params: params).build[:campaign_breakdown]
+      grid = V2::Reports::FunnelConversionBuilder.new(account: account, params: params).campaign_breakdown
 
       expect(result[:rows].pluck(:conversation_id)).to eq([lead.display_id])
       expect(result[:meta][:total_count]).to eq(grid.find { |row| row[:kind] == 'internal_campaign' }[:leads])

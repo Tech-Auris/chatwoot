@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_30_180000) do
+ActiveRecord::Schema[7.1].define(version: 2026_11_05_120000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -898,6 +898,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_30_180000) do
     t.string "origem"
     t.bigint "loss_reason_id"
     t.index ["account_id", "display_id"], name: "index_conversations_on_account_id_and_display_id", unique: true
+    t.index ["account_id", "funnel_stage_id"], name: "index_conversations_on_account_id_and_funnel_stage_id"
     t.index ["account_id", "group_type"], name: "index_conversations_on_account_id_and_group_type"
     t.index ["account_id", "id"], name: "index_conversations_on_id_and_account_id"
     t.index ["account_id", "inbox_id", "status", "assignee_id"], name: "conv_acid_inbid_stat_asgnid_idx"
@@ -1574,6 +1575,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_30_180000) do
     t.index "((additional_attributes -> 'campaign_id'::text))", name: "index_messages_on_additional_attributes_campaign_id", using: :gin
     t.index ["account_id", "content_type", "created_at"], name: "idx_messages_account_content_created"
     t.index ["account_id", "created_at", "message_type"], name: "index_messages_on_account_created_type"
+    t.index ["account_id", "created_at"], name: "index_messages_on_account_created_campaign", where: "((message_type = 1) AND ((additional_attributes ->> 'campaign_id'::text) IS NOT NULL))"
     t.index ["account_id", "inbox_id"], name: "index_messages_on_account_id_and_inbox_id"
     t.index ["account_id"], name: "index_messages_on_account_id"
     t.index ["content"], name: "index_messages_on_content", opclass: :gin_trgm_ops, using: :gin

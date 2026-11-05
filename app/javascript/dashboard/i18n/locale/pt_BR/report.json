@@ -6,6 +6,8 @@
     "DOWNLOAD_CONVERSATION_REPORTS": "Baixar relatórios de conversas",
     "DATA_FETCHING_FAILED": "Falha ao buscar dados, tente novamente mais tarde.",
     "SUMMARY_FETCHING_FAILED": "Não foi possível obter o resumo. Tente novamente mais tarde.",
+    "LOAD_FAILED": "Não foi possível carregar estes dados.",
+    "RETRY": "Tentar novamente",
     "P95_SUFFIX": "(P95)",
     "P95_HINT": "Percentil 95: 95% das conversas tiveram este tempo ou menos. Diferente da média, não é distorcido por poucos casos muito demorados. Mediana: {median}.",
     "TIME_UNITS": {

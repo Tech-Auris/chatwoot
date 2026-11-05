@@ -95,6 +95,26 @@ class SummaryReportsAPI extends ApiClient {
     });
   }
 
+  // Per-ad / per-campaign rows of the conversion report, fetched apart from
+  // the funnel so a slow campaign lookup never holds the chart back.
+  getFunnelConversionCampaigns({
+    since,
+    until: untilTs,
+    inboxId,
+    label,
+    origem,
+  } = {}) {
+    return axios.get(`${this.url}/funnel_conversion_campaigns`, {
+      params: {
+        since,
+        until: untilTs,
+        inbox_id: inboxId,
+        label,
+        origem,
+      },
+    });
+  }
+
   // Conversations behind one number of the conversion report: a chart stage
   // (`stageKey`), the losses (`kind: 'loss'`, optionally one reason) or one
   // ad's leads (`kind: 'ad'` + `sourceId`).

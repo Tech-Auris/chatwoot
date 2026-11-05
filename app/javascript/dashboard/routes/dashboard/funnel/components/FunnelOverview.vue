@@ -5,7 +5,6 @@ import { formatTimeLocalized } from 'dashboard/helper/timeFormatter';
 import subDays from 'date-fns/subDays';
 
 import { useStore, useMapGetter } from 'dashboard/composables/store';
-import { useAlert } from 'dashboard/composables';
 import {
   useVueTable,
   createColumnHelper,
@@ -17,6 +16,7 @@ import { DATE_RANGE_TYPES } from 'dashboard/components/ui/DatePicker/helpers/Dat
 import { getUnixStartOfDay, getUnixEndOfDay } from 'helpers/DateHelper';
 import Table from 'dashboard/components/table/Table.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
+import ReportLoadError from './ReportLoadError.vue';
 import {
   ORIGEM_OPTIONS,
   ORIGEM_NONE_TOKEN,
@@ -40,6 +40,7 @@ const labels = useMapGetter('labels/getLabels');
 const isLoading = computed(
   () => uiFlags.value.isFetchingFunnelSummaryReports ?? false
 );
+const loadError = ref('');
 
 const inboxOptions = computed(() =>
   [...inboxes.value].sort((a, b) => a.name.localeCompare(b.name))
@@ -137,10 +138,12 @@ const fetchReports = async () => {
     label: labelName.value || undefined,
     origem: origem.value || undefined,
   };
+  loadError.value = '';
   try {
     await store.dispatch('summaryReports/fetchFunnelSummaryReports', params);
-  } catch {
-    useAlert(t('REPORT.SUMMARY_FETCHING_FAILED'));
+  } catch (error) {
+    // The backend answers a report timeout with a readable message.
+    loadError.value = error?.response?.data?.error || t('REPORT.LOAD_FAILED');
   }
 };
 
@@ -264,7 +267,12 @@ const table = useVueTable({
     <div
       class="relative flex-1 overflow-auto px-2 py-2 shadow outline-1 outline outline-n-container rounded-xl bg-n-solid-2"
     >
-      <Table :table="table" />
+      <ReportLoadError
+        v-if="loadError"
+        :message="loadError"
+        @retry="fetchReports"
+      />
+      <Table v-else :table="table" />
       <Transition
         enter-active-class="transition-opacity duration-300 ease-out"
         leave-active-class="transition-opacity duration-200 ease-in"
