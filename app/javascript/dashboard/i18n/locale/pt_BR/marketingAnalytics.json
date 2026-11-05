@@ -102,7 +102,7 @@
         "GOOGLE": "Google Ads"
       },
       "META_EVENT": "Nome do evento no Meta",
-      "META_EVENT_PLACEHOLDER": "Lead / Schedule / Purchase …",
+      "META_EVENT_PLACEHOLDER": "Selecione o evento no Meta",
       "GOOGLE_EVENT": "Nome do evento no Google",
       "GOOGLE_EVENT_PLACEHOLDER": "book_appointment / purchase …",
       "ENABLED": "Ativado",

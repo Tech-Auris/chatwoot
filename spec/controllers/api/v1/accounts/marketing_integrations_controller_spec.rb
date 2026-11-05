@@ -130,21 +130,12 @@ RSpec.describe 'Marketing Integrations API', type: :request do
   describe 'GET /api/v1/accounts/{id}/marketing_integrations/{id}/pixel_events' do
     let!(:integration) { create(:marketing_integration, account: account, status: :test_mode) }
 
-    before do
-      create(:marketing_pixel, marketing_integration: integration, pixel_id: '123456789')
-      stub_request(:get, %r{graph\.facebook\.com/v20\.0/123456789/stats})
-        .to_return(status: 200, body: { data: [{ 'data' => { 'AgendarConsulta' => 4 } }] }.to_json,
-                   headers: { 'Content-Type' => 'application/json' })
-    end
-
-    it 'returns the standard catalog plus the pixel-received custom events' do
+    it 'returns only the event names Meta accepts for business messaging' do
       get "/api/v1/accounts/#{account.id}/marketing_integrations/#{integration.id}/pixel_events",
           headers: admin.create_new_auth_token, as: :json
 
       expect(response).to have_http_status(:success)
-      body = response.parsed_body
-      expect(body['standard']).to include('Lead', 'Purchase')
-      expect(body['custom']).to contain_exactly('AgendarConsulta')
+      expect(response.parsed_body['standard']).to eq(ConversionEvent::META_EVENT_NAMES)
     end
 
     it 'refuses agents' do

@@ -193,14 +193,8 @@ const loadMetaEventSuggestions = async () => {
     const { data } = await MarketingIntegrationsAPI.fetchPixelEvents(
       metaIntegration.value.id
     );
-    metaEventSuggestions.value = [
-      ...(data.standard || []),
-      ...(data.custom || []),
-    ];
+    metaEventSuggestions.value = data.standard || [];
   } catch {
-    // A broken Meta call (missing credentials, expired token, network
-    // hiccup) must not lock the operator out — the datalist becomes
-    // empty and the field stays a free-text input.
     metaEventSuggestions.value = [];
   }
 };
@@ -366,31 +360,28 @@ watch(
           </select>
         </label>
 
-        <!-- Combobox (input + datalist) para o Meta: aceita valores
-             livres (o operador pode digitar um Custom Event novo) mas
-             sugere Standard Events + eventos que o pixel já recebeu
-             nos últimos 30 dias (via `pixel_events` endpoint). -->
+        <!-- Meta só aceita estes nomes para eventos vindos de conversa
+             (business messaging); Lead ou Schedule são recusados. -->
         <label v-if="draft.destination === 'meta'" class="flex flex-col gap-1">
           <span class="text-n-slate-11">
             {{ t('MARKETING_ANALYTICS.EVENTS.META_EVENT') }}
             <span class="text-n-ruby-10">*</span>
           </span>
-          <input
+          <select
             v-model="draft.meta_event_name"
-            list="meta-event-suggestions"
-            type="text"
-            :placeholder="
-              t('MARKETING_ANALYTICS.EVENTS.META_EVENT_PLACEHOLDER')
-            "
             class="rounded border border-n-strong bg-n-solid-2 px-2 py-1.5 text-n-slate-12"
-          />
-          <datalist id="meta-event-suggestions">
+          >
+            <option value="" disabled>
+              {{ t('MARKETING_ANALYTICS.EVENTS.META_EVENT_PLACEHOLDER') }}
+            </option>
             <option
               v-for="name in metaEventSuggestions"
               :key="name"
               :value="name"
-            />
-          </datalist>
+            >
+              {{ name }}
+            </option>
+          </select>
         </label>
 
         <label

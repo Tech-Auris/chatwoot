@@ -7,7 +7,10 @@ RSpec.describe Marketing::MetaCapiDispatcher do
     create(:marketing_pixel, marketing_integration: integration, pixel_id: '999888', access_token: 'EAAG_test',
                              test_event_code: 'TEST123', status: :test_mode)
   end
-  let(:wa_channel) { create(:channel_whatsapp, account: account, sync_templates: false, validate_provider_config: false) }
+  let(:wa_channel) do
+    create(:channel_whatsapp, account: account, provider: 'whatsapp_cloud', sync_templates: false, validate_provider_config: false,
+                              provider_config: { 'api_key' => 'k', 'phone_number_id' => 'p', 'business_account_id' => 'WABA_1' })
+  end
   let(:wa_inbox) { create(:inbox, account: account, channel: wa_channel) }
   let(:contact) do
     create(:contact, account: account, phone_number: '+5511999999999').tap do |c|
@@ -24,7 +27,7 @@ RSpec.describe Marketing::MetaCapiDispatcher do
                           })
   end
   let(:conversion_event) do
-    create(:conversion_event, account: account, name: 'Ag', meta_event_name: 'Schedule',
+    create(:conversion_event, account: account, name: 'Ag', meta_event_name: 'QualifiedLead',
                               trigger_type: :funnel_stage_reached, trigger_config: { 'funnel_stage_id' => 1 })
   end
   let(:dispatch) do
@@ -89,7 +92,7 @@ RSpec.describe Marketing::MetaCapiDispatcher do
       event = sent_body['data'].first
       expect(sent_body['data'].size).to eq(1)
       expect(event).to include(
-        'event_name' => 'Schedule',
+        'event_name' => 'QualifiedLead',
         'event_id' => dispatch.event_id,
         'action_source' => 'business_messaging',
         'messaging_channel' => 'whatsapp'
@@ -112,6 +115,12 @@ RSpec.describe Marketing::MetaCapiDispatcher do
     it 'forwards the ctwa_clid captured on the conversation' do
       event = sent_body['data'].first
       expect(event['user_data']['ctwa_clid']).to eq('CLID_ABC')
+    end
+
+    # Meta rejects WhatsApp messaging events that do not name the number's
+    # WhatsApp Business Account.
+    it 'sends the WhatsApp Business Account of the inbox' do
+      expect(sent_body['data'].first['user_data']['whatsapp_business_account_id']).to eq(wa_channel.provider_config['business_account_id'])
     end
 
     it 'appends the pixel test_event_code when the pixel is in test_mode' do
@@ -188,7 +197,55 @@ RSpec.describe Marketing::MetaCapiDispatcher do
       described_class.new(dispatch: dispatch).perform
 
       user_data = JSON.parse(captured[:body])['data'].first['user_data']
-      expect(user_data).to eq('ctwa_clid' => 'CLID_ABC')
+      expect(user_data).to eq('ctwa_clid' => 'CLID_ABC', 'whatsapp_business_account_id' => wa_channel.provider_config['business_account_id'])
+    end
+  end
+
+  # Events Meta is certain to reject are never sent; the reason is kept on the
+  # dispatch for whoever looks at why the pixel got nothing.
+  describe 'events Meta would reject' do
+    def expect_not_sent(reason)
+      described_class.new(dispatch: dispatch).perform
+
+      expect(a_request(:post, /graph\.facebook\.com/)).not_to have_been_made
+      expect(dispatch.reload.status).to eq('permanently_failed')
+      expect(dispatch.response['permanently_failed_reason']).to eq(reason)
+    end
+
+    it 'does not send a WhatsApp event from a Baileys number, which has no WhatsApp Business Account' do
+      wa_channel.update!(provider: 'baileys', provider_config: {})
+
+      expect_not_sent('whatsapp number without a WhatsApp Business Account')
+    end
+
+    it 'does not send a WhatsApp event from a conversation that did not come from an ad' do
+      conversation.update!(additional_attributes: {})
+
+      expect_not_sent('whatsapp conversation without ctwa_clid')
+    end
+
+    it 'does not send a messaging event from a channel Meta does not take' do
+      conversation.update!(inbox: create(:inbox, account: account, channel: create(:channel_api, account: account)))
+
+      expect_not_sent('inbox channel not supported by business messaging')
+    end
+  end
+
+  describe 'a Messenger conversation' do
+    let(:fb_channel) { create(:channel_facebook_page, account: account, page_id: 'PAGE_1') }
+
+    before do
+      allow(Facebook::Messenger::Subscriptions).to receive(:subscribe).and_return(true)
+      conversation.update!(inbox: create(:inbox, account: account, channel: fb_channel))
+      stub_meta_success
+    end
+
+    it 'sends the page the conversation came through' do
+      described_class.new(dispatch: dispatch).perform
+
+      event = JSON.parse(captured[:body])['data'].first
+      expect(event['messaging_channel']).to eq('messenger')
+      expect(event['user_data']['page_id']).to eq('PAGE_1')
     end
   end
 

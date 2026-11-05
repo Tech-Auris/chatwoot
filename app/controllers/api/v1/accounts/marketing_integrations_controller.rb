@@ -27,14 +27,12 @@ class Api::V1::Accounts::MarketingIntegrationsController < Api::V1::Accounts::Ba
     head :ok
   end
 
-  # Powers the "Nome do evento no Meta" combobox on the conversion-event
-  # form: the fixed catalog of Standard Events plus every extra event
-  # name the pixel actually received in the last 30 days.
+  # Powers the "Nome do evento no Meta" select on the conversion-event form:
+  # the only names Meta accepts for events from a conversation.
   def pixel_events
     return head :not_found unless @integration.meta_capi?
 
-    @pixel_events = Marketing::MetaPixelEventsService.new(integration: @integration).perform
-    render json: @pixel_events
+    render json: { standard: ConversionEvent::META_EVENT_NAMES }
   end
 
   private
