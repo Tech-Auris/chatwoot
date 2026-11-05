@@ -38,7 +38,14 @@ class CacheEnabledApiClient extends ApiClient {
   async getFromCache() {
     try {
       // IDB is not supported in Firefox private mode: https://bugzilla.mozilla.org/show_bug.cgi?id=781982
-      await this.dataManager.initDb();
+      // It can also wait forever, when another tab still holds the cache this
+      // tab's logout deleted; the network answers instead after a short wait.
+      await Promise.race([
+        this.dataManager.initDb(),
+        new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Cache unavailable')), 3000);
+        }),
+      ]);
     } catch {
       return this.getFromNetwork();
     }
