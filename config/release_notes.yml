@@ -1,4 +1,32 @@
 ---
+- tag: v4.15.1-auris.1.74
+  published_at: '2026-11-05T20:00:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.74
+  notes:
+    en: |-
+      ### ✨ What's new
+
+      - **Past conversations when moving from WhatsApp Business.** When the number you use in the WhatsApp Business app is connected to AurisChat and you choose to share its history, the last 90 days of conversations and the names saved on the phone show up in AurisChat. Past conversations come in resolved, and the AI doesn't reply to them.
+
+      ### ⚡ Improvements
+
+      - **The AurisChat name on every screen.** The panel and the website chat now show the AurisChat name everywhere.
+
+      ### 🐛 Fixes
+
+      - **Funnel conversion report.** On accounts with many conversations, the Funnel → Conversion tab showed up empty with an error. It now loads normally, and if something fails you get a "Tentar novamente" button.
+    pt_BR: |-
+      ### ✨ Novidades
+
+      - **Conversas antigas ao migrar do WhatsApp Business.** Quando o número que vocês usam no app WhatsApp Business é conectado ao AurisChat e vocês escolhem compartilhar o histórico, as conversas dos últimos 90 dias e os nomes salvos na agenda do celular aparecem no AurisChat. As conversas antigas entram como resolvidas, e a IA não responde a elas.
+
+      ### ⚡ Melhorias
+
+      - **O nome AurisChat em todas as telas.** O painel e o chat do site passam a mostrar o nome AurisChat em todo lugar.
+
+      ### 🐛 Correções
+
+      - **Relatório de conversão do funil.** Em contas com muitas conversas, a aba Funil → Conversão aparecia vazia, com uma mensagem de erro. Agora ela carrega normalmente, e se algo falhar aparece o botão "Tentar novamente".
 - tag: v4.15.1-auris.1.73
   published_at: '2026-10-28T20:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.73
@@ -441,17 +469,3 @@
       ### 🐛 Correções
 
       - **Botões do topo da conversa deixam de ficar cortados em painéis estreitos.** Com o menu lateral e o painel do contato abertos ao mesmo tempo, os botões do topo de uma conversa (Resolver, etapa do funil, indicador da IA) ficavam cortados. Agora eles quebram para uma segunda linha quando não há espaço horizontal.
-- tag: v4.15.1-auris.1.54
-  published_at: '2026-09-06T03:30:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.54
-  notes:
-    en: |-
-      ### ✨ What's new
-
-      - **New terms of use — the manager needs to accept.** When the AurisChat team publishes an updated terms of use, the manager of the clinic sees a screen with the new text on the next login. They have to scroll to the end and confirm acceptance — same idea as the acceptance on a new contract.
-      - **Deadline on the acceptance.** Each request carries a deadline (usually a few days). If the manager does not accept in time, the AurisChat panel pauses for everyone in the clinic until the manager comes in and confirms. Before the deadline, the team sees a notice with the date so nobody is surprised.
-    pt_BR: |-
-      ### ✨ Novidades
-
-      - **Novos termos de uso — a gerente precisa aceitar.** Quando a equipe Auris publica uma versão atualizada dos termos de uso, a gerente da clínica vê uma tela com o novo texto no próximo login. Ela precisa rolar até o fim e confirmar o aceite — mesma ideia do aceite de um novo contrato.
-      - **Prazo para o aceite.** Cada pedido tem uma data de vencimento (normalmente alguns dias). Se a gerente não aceitar dentro do prazo, o painel do AurisChat fica pausado para todos da clínica até ela entrar e confirmar. Antes do prazo, a equipe vê um aviso com a data para ninguém ser pego de surpresa.
