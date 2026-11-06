@@ -686,7 +686,7 @@
       "LOCK_TO_SINGLE_CONVERSATION": {
         "ENABLED": "Reabrir a mesma conversa",
         "DISABLED": "Criar novas conversas",
-        "ENABLED_DESCRIPTION": "Quando um contado enviar mensagem novamente, a conversa anterior será reaberta.",
+        "ENABLED_DESCRIPTION": "Quando um contato enviar mensagem novamente, a conversa anterior será reaberta.",
         "DISABLED_DESCRIPTION": "Uma nova conversa será criada toda vez que a anterior estiver resolvida."
       },
       "ENABLE_HMAC": {
