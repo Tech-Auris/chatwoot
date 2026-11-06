@@ -150,41 +150,43 @@ const onReset = () => emit('reset');
       </select>
     </label>
 
-    <div class="relative flex flex-col gap-1 w-48">
+    <div class="flex flex-col gap-1 w-48">
       <span class="text-xs text-n-slate-11">
         {{ t('FUNNEL.FILTERS.LABEL') }}
       </span>
-      <button
-        type="button"
-        class="flex items-center gap-2 h-10 text-sm rounded-md border border-n-weak bg-n-input-background px-2 text-n-slate-12 focus:outline-none focus:ring-1 focus:ring-n-blue-9"
-        @click="showLabelMenu = !showLabelMenu"
-      >
-        <span
-          v-if="selectedLabel"
-          class="rounded-sm size-2 flex-shrink-0"
-          :style="{ backgroundColor: selectedLabel.color }"
-        />
-        <span class="flex-1 min-w-0 truncate text-start">
-          {{ selectedLabel?.title || t('FUNNEL.FILTERS.LABEL_ANY') }}
-        </span>
-        <span class="i-lucide-chevron-down size-4 text-n-slate-11" />
-      </button>
-      <DropdownMenu
-        v-if="showLabelMenu"
-        v-on-clickaway="() => (showLabelMenu = false)"
-        :menu-items="labelMenuItems"
-        show-search
-        class="z-[100] w-56 mt-1 ltr:left-0 rtl:right-0 top-full max-h-72"
-        @action="onLabelSelect"
-      >
-        <template #thumbnail="{ item }">
+      <div class="relative">
+        <button
+          type="button"
+          class="flex items-center gap-2 w-full h-10 mb-4 px-3 rounded-lg text-sm bg-n-alpha-black2 text-n-slate-12 outline outline-1 outline-n-weak hover:outline-n-slate-6 focus:outline-n-brand"
+          @click="showLabelMenu = !showLabelMenu"
+        >
           <span
-            v-if="item.thumbnail"
+            v-if="selectedLabel"
             class="rounded-sm size-2 flex-shrink-0"
-            :style="{ backgroundColor: item.thumbnail.color }"
+            :style="{ backgroundColor: selectedLabel.color }"
           />
-        </template>
-      </DropdownMenu>
+          <span class="flex-1 min-w-0 truncate text-start">
+            {{ selectedLabel?.title || t('FUNNEL.FILTERS.LABEL_ANY') }}
+          </span>
+          <span class="i-lucide-chevron-down size-4 text-n-slate-11" />
+        </button>
+        <DropdownMenu
+          v-if="showLabelMenu"
+          v-on-clickaway="() => (showLabelMenu = false)"
+          :menu-items="labelMenuItems"
+          show-search
+          class="z-[100] w-56 ltr:left-0 rtl:right-0 top-11 max-h-72"
+          @action="onLabelSelect"
+        >
+          <template #thumbnail="{ item }">
+            <span
+              v-if="item.thumbnail"
+              class="rounded-sm size-2 flex-shrink-0"
+              :style="{ backgroundColor: item.thumbnail.color }"
+            />
+          </template>
+        </DropdownMenu>
+      </div>
     </div>
 
     <label class="flex flex-col w-48">
