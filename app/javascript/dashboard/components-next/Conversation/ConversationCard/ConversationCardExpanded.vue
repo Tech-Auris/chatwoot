@@ -23,6 +23,7 @@ const props = defineProps({
   showAssignee: { type: Boolean, default: false },
   showInboxName: { type: Boolean, default: false },
   isInboxView: { type: Boolean, default: false },
+  unseenMention: { type: Object, default: null },
 });
 
 const emit = defineEmits([
@@ -74,6 +75,8 @@ const selectedModel = computed({
         isActiveChat,
       'selected bg-n-slate-2 dark:bg-n-slate-3 !border-n-surface-1': selected,
       'hover:bg-n-alpha-1': !isActiveChat && !selected,
+      'bg-n-blue-2 dark:bg-n-blue-3':
+        unseenMention && !isActiveChat && !selected,
       'grid-cols-[minmax(0,2fr)_minmax(0,1fr)]': showLabelsSection,
       'grid-cols-[minmax(0,2fr)_max-content]': !showLabelsSection,
     }"
@@ -151,9 +154,15 @@ const selectedModel = computed({
       />
 
       <h4
-        class="text-heading-3 my-0 capitalize truncate text-n-slate-12 font-medium w-32 flex-shrink-0"
+        class="text-heading-3 my-0 capitalize truncate text-n-slate-12 w-32 flex-shrink-0 flex items-center gap-1"
+        :class="unseenMention ? 'font-semibold' : 'font-medium'"
       >
-        {{ currentContact.name }}
+        <Icon
+          v-if="unseenMention"
+          icon="i-lucide-at-sign"
+          class="size-3.5 flex-shrink-0 text-n-blue-11"
+        />
+        <span class="truncate">{{ currentContact.name }}</span>
       </h4>
 
       <CardContent

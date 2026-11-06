@@ -136,6 +136,8 @@
     "READ": "Lido com sucesso",
     "DELIVERED": "Entregue com sucesso",
     "NO_MESSAGES": "Nova Mensagem",
+    "MENTIONED_BY": "{name} mencionou você",
+    "MENTIONED_YOU": "Você foi mencionado",
     "TYPING": "digitando...",
     "RECORDING": "gravando...",
     "NO_CONTENT": "Nenhum conteúdo disponível",

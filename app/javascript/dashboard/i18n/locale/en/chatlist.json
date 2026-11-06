@@ -139,6 +139,8 @@
     "READ": "Read successfully",
     "DELIVERED": "Delivered successfully",
     "NO_MESSAGES": "No Messages",
+    "MENTIONED_BY": "{name} mentioned you",
+    "MENTIONED_YOU": "You were mentioned",
     "TYPING": "typing...",
     "RECORDING": "recording...",
     "NO_CONTENT": "No content available",

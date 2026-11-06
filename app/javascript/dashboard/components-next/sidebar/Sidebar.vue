@@ -241,6 +241,7 @@ const hasCloudWhatsappInbox = computed(() =>
 );
 const labels = useMapGetter('labels/getLabelsOnSidebar');
 const dashboardApps = useMapGetter('dashboardApps/getAppsOnSidebar');
+const unseenMentionsCount = useMapGetter('unseenMentions/getCount');
 const allUnreadCount = useMapGetter(
   'conversationUnreadCounts/getAllUnreadCount'
 );
@@ -266,6 +267,7 @@ onMounted(() => {
   store.dispatch('labels/get');
   store.dispatch('inboxes/get');
   store.dispatch('notifications/unReadCount');
+  store.dispatch('unseenMentions/get');
   store.dispatch('teams/get');
   store.dispatch('attributes/get');
   store.dispatch('customViews/get', 'conversation');
@@ -406,6 +408,8 @@ const menuItems = computed(() => {
           name: 'Mentions',
           label: t('SIDEBAR.MENTIONED_CONVERSATIONS'),
           icon: 'i-lucide-at-sign',
+          badgeCount: unseenMentionsCount.value,
+          badgeVariant: 'brand',
           activeOn: ['conversation_through_mentions'],
           to: accountScopedRoute('conversation_mentions'),
         },

@@ -109,6 +109,12 @@ const hasGroupActivity = computed(() => {
   return lastActivity > 0 && (!agentSeen || lastActivity > agentSeen);
 });
 
+const unseenMention = computed(() =>
+  props.conversationType === 'mention'
+    ? store.getters['unseenMentions/getByConversation'](props.source.id)
+    : null
+);
+
 const conversationPath = computed(() =>
   frontendURL(
     conversationUrl({
@@ -221,6 +227,7 @@ const onDeleteConversation = () => {
     :show-assignee="showAssigneeForExpandedCard"
     :show-inbox-name="showInboxName"
     :is-inbox-view="isInboxView"
+    :unseen-mention="unseenMention"
     @select-conversation="onExpandedSelect"
     @de-select-conversation="onExpandedSelect"
     @click="onCardClick"
@@ -240,6 +247,7 @@ const onDeleteConversation = () => {
     :show-inbox-name="showInboxName"
     :typing-preview="typingPreviewText"
     :has-group-activity="hasGroupActivity"
+    :unseen-mention="unseenMention"
     @click="onCardClick"
     @contextmenu="openContextMenu"
     @select-conversation="selectConversation"

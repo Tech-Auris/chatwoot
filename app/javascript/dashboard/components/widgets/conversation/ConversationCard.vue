@@ -12,6 +12,7 @@ import UnreadBadge from 'dashboard/components-next/Conversation/ConversationCard
 import SLACardLabel from './components/SLACardLabel.vue';
 import VoiceCallStatus from './VoiceCallStatus.vue';
 import Checkbox from 'dashboard/components-next/checkbox/Checkbox.vue';
+import Icon from 'dashboard/components-next/icon/Icon.vue';
 
 const props = defineProps({
   chat: { type: Object, required: true },
@@ -26,6 +27,7 @@ const props = defineProps({
   compact: { type: Boolean, default: false },
   typingPreview: { type: String, default: '' },
   hasGroupActivity: { type: Boolean, default: false },
+  unseenMention: { type: Object, default: null },
 });
 
 const emit = defineEmits([
@@ -39,8 +41,9 @@ const hovered = ref(false);
 
 const unreadCount = computed(() => props.chat.unread_count);
 const hasUnread = computed(
-  () => unreadCount.value > 0 || props.hasGroupActivity
+  () => unreadCount.value > 0 || props.hasGroupActivity || !!props.unseenMention
 );
+const mentionedByName = computed(() => props.unseenMention?.mentionedBy?.name);
 const isAnyoneTyping = computed(() => !!props.typingPreview);
 const lastMessageInChat = computed(() => getLastMessage(props.chat));
 
@@ -101,6 +104,8 @@ watch(
       'active animate-card-select bg-n-background !border-n-surface-1':
         isActiveChat,
       'selected bg-n-slate-2 !border-n-surface-1': selected,
+      'bg-n-blue-2 dark:bg-n-blue-3':
+        unseenMention && !isActiveChat && !selected,
       'px-0': compact,
       'px-3': !compact,
     }"
@@ -169,6 +174,19 @@ watch(
       >
         {{ currentContact.name }}
       </h4>
+      <p
+        v-if="unseenMention"
+        class="flex items-center gap-1 my-0 mx-2 pt-0.5 text-xs font-medium text-n-blue-11 min-w-0"
+      >
+        <Icon icon="i-lucide-at-sign" class="size-3.5 flex-shrink-0" />
+        <span class="truncate">
+          {{
+            mentionedByName
+              ? $t('CHAT_LIST.MENTIONED_BY', { name: mentionedByName })
+              : $t('CHAT_LIST.MENTIONED_YOU')
+          }}
+        </span>
+      </p>
       <VoiceCallStatus
         v-if="voiceCallData.status"
         key="voice-status-row"

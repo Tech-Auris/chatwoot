@@ -232,7 +232,10 @@ onMounted(async () => {
                 >
                   {{ child.tag }}
                 </span>
-                <SidebarUnreadBadge :count="child.badgeCount" />
+                <SidebarUnreadBadge
+                  :count="child.badgeCount"
+                  :variant="child.badgeVariant"
+                />
               </button>
             </li>
           </template>

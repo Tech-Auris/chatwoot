@@ -14,7 +14,7 @@ class Messages::MentionService
     validated_mentioned_ids = filter_mentioned_ids_by_inbox
     return if validated_mentioned_ids.blank?
 
-    Conversations::UserMentionJob.perform_later(validated_mentioned_ids, message.conversation.id, message.account.id)
+    Conversations::UserMentionJob.perform_later(validated_mentioned_ids, message.conversation.id, message.account.id, mentioner_id)
     add_mentioned_users_as_participants(validated_mentioned_ids)
     generate_notifications_for_mentions(validated_mentioned_ids)
   end
@@ -81,7 +81,11 @@ class Messages::MentionService
   end
 
   def self_mention?(user_id)
-    message.sender_type == 'User' && user_id.to_i == message.sender_id
+    user_id.to_i == mentioner_id
+  end
+
+  def mentioner_id
+    message.sender_id if message.sender_type == 'User'
   end
 
   def add_mentioned_users_as_participants(validated_mentioned_ids)

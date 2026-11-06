@@ -4,10 +4,12 @@
 #
 #  id              :bigint           not null, primary key
 #  mentioned_at    :datetime         not null
+#  seen_at         :datetime
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
 #  account_id      :bigint           not null
 #  conversation_id :bigint           not null
+#  mentioned_by_id :bigint
 #  user_id         :bigint           not null
 #
 # Indexes
@@ -16,6 +18,7 @@
 #  index_mentions_on_conversation_id              (conversation_id)
 #  index_mentions_on_user_id                      (user_id)
 #  index_mentions_on_user_id_and_conversation_id  (user_id,conversation_id) UNIQUE
+#  index_mentions_unseen_on_user_and_account      (user_id,account_id) WHERE (seen_at IS NULL)
 #
 class Mention < ApplicationRecord
   include SortHandler
@@ -30,10 +33,12 @@ class Mention < ApplicationRecord
   belongs_to :account
   belongs_to :conversation
   belongs_to :user
+  belongs_to :mentioned_by, class_name: 'User', optional: true
 
   after_commit :notify_mentioned_user
 
   scope :latest, -> { order(mentioned_at: :desc) }
+  scope :unseen, -> { where(seen_at: nil) }
 
   def self.last_user_message_at
     # INNER query finds the last message created in the conversation group
