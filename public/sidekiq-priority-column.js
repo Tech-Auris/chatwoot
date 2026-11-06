@@ -15,6 +15,7 @@
   const PRIORITY_ORDER = [
     'critical',
     'high',
+    'campaign',
     'medium',
     'default',
     'mailers',
