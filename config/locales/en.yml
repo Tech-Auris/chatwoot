@@ -46,6 +46,8 @@ en:
         ai_status_uses_attribute: 'AI status from attribute (off = legacy agente-off label)'
         secretary_version_name: 'Secretary version'
         ai_model_label: 'AI model'
+        erp_source: 'ERP'
+        erp_source_id: 'ERP'
     # Administrate uses `model.model_name.human(count: …)` to render both
     # the super-admin sidebar label (plural / `other`) and the "New …"
     # button label (singular / `one`). Choose forms that read naturally in
@@ -60,6 +62,9 @@ en:
       ai_model:
         one: 'LLM'
         other: 'LLMs'
+      erp_source:
+        one: 'ERP'
+        other: 'ERPs'
       operations_notification:
         one: 'notification'
         other: 'Notification Center'
@@ -77,6 +82,8 @@ en:
       account:
         secretary_version_name: 'Secretary Version'
         ai_model_label: 'Model AI'
+        erp_source: 'ERP'
+        erp_source_id: 'ERP'
   internal_chat:
     default_category_name: 'Channels'
     default_channel_name: 'General'

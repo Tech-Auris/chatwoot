@@ -48,6 +48,13 @@ class AccountDashboard < Administrate::BaseDashboard
     }),
     environment: EnvironmentField.with_options(collection: [%w[Test test], %w[Production production]]),
     average_ticket: Field::Number.with_options(decimals: 2, step: 0.01),
+    # The ERP the clinic schedules in. The select lists the active ones, plus the
+    # account's own when it was retired, so saving the form never drops it.
+    erp_source: Field::BelongsTo,
+    erp_source_id: Field::Select.with_options(searchable: false, include_blank: true, collection: lambda { |field|
+      current = field.resource&.erp_source_id
+      ErpSource.where(active: true).or(ErpSource.where(id: current)).ordered.map { |erp| [erp.name, erp.id] }
+    }),
     # `searchable: false` is required: `reporting_timezone` is a
     # `store_accessor :settings, :reporting_timezone` on the jsonb
     # `settings` column, NOT a real DB column. Administrate's Field::Select
@@ -113,6 +120,7 @@ class AccountDashboard < Administrate::BaseDashboard
     status
     environment
     average_ticket
+    erp_source
     reporting_timezone
     auris_settings
     auris_menus
@@ -138,6 +146,7 @@ class AccountDashboard < Administrate::BaseDashboard
     status
     environment
     average_ticket
+    erp_source_id
     reporting_timezone
     auris_settings
     auris_menus

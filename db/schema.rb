@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_11_05_120000) do
+ActiveRecord::Schema[7.1].define(version: 2026_11_06_120000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -133,6 +133,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_05_120000) do
     t.string "stripe_customer_id"
     t.boolean "token_billing_enabled", default: true, null: false
     t.boolean "whatsapp_groups_enabled", default: true, null: false
+    t.bigint "erp_source_id"
+    t.index ["erp_source_id"], name: "index_accounts_on_erp_source_id"
     t.index ["status"], name: "index_accounts_on_status"
     t.index ["stripe_customer_id"], name: "index_accounts_on_stripe_customer_id", unique: true, where: "(stripe_customer_id IS NOT NULL)"
   end
@@ -1077,6 +1079,14 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_05_120000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["name", "account_id"], name: "index_email_templates_on_name_and_account_id", unique: true
+  end
+
+  create_table "erp_sources", force: :cascade do |t|
+    t.string "name", null: false
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_erp_sources_on_name", unique: true
   end
 
   create_table "folders", force: :cascade do |t|
@@ -2264,6 +2274,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_05_120000) do
   add_foreign_key "account_secretaries", "ai_models"
   add_foreign_key "account_secretaries", "secretary_versions"
   add_foreign_key "account_secretaries", "secretary_versions", column: "simulator_version_id"
+  add_foreign_key "accounts", "erp_sources"
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "ai_assignment_attempts", "conversations", on_delete: :cascade
