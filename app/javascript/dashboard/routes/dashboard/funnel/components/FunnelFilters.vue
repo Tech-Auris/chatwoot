@@ -13,6 +13,7 @@ const props = defineProps({
   toDate: { type: String, default: '' },
   hideClosed: { type: Boolean, default: false },
   origem: { type: String, default: '' },
+  label: { type: String, default: '' },
 });
 
 const emit = defineEmits([
@@ -21,15 +22,21 @@ const emit = defineEmits([
   'update:toDate',
   'update:hideClosed',
   'update:origem',
+  'update:label',
   'reset',
 ]);
 
 const { t } = useI18n();
 
 const inboxes = useMapGetter('inboxes/getInboxes');
+const labels = useMapGetter('labels/getLabels');
 
 const inboxOptions = computed(() =>
   [...inboxes.value].sort((a, b) => a.name.localeCompare(b.name))
+);
+
+const labelOptions = computed(() =>
+  [...labels.value].sort((a, b) => a.title.localeCompare(b.title))
 );
 
 const origemOptions = ORIGEM_OPTIONS;
@@ -40,6 +47,7 @@ const hasActiveFilters = computed(
     Boolean(props.fromDate) ||
     Boolean(props.toDate) ||
     Boolean(props.origem) ||
+    Boolean(props.label) ||
     props.hideClosed
 );
 
@@ -49,6 +57,7 @@ const onToChange = event => emit('update:toDate', event.target.value);
 const onHideClosedChange = event =>
   emit('update:hideClosed', event.target.checked);
 const onOrigemChange = event => emit('update:origem', event.target.value);
+const onLabelChange = event => emit('update:label', event.target.value);
 const onReset = () => emit('reset');
 </script>
 
@@ -115,6 +124,24 @@ const onReset = () => emit('reset');
         </option>
         <option :value="ORIGEM_NONE_TOKEN">
           {{ t('FUNNEL.FILTERS.ORIGEM_NONE') }}
+        </option>
+      </select>
+    </label>
+
+    <label class="flex flex-col gap-1 w-48">
+      <span class="text-xs text-n-slate-11">
+        {{ t('FUNNEL.FILTERS.LABEL') }}
+      </span>
+      <select
+        :value="label"
+        class="h-10 text-sm rounded-md border border-n-weak bg-n-input-background px-2 text-n-slate-12 focus:outline-none focus:ring-1 focus:ring-n-blue-9"
+        @change="onLabelChange"
+      >
+        <option value="">
+          {{ t('FUNNEL.FILTERS.LABEL_ANY') }}
+        </option>
+        <option v-for="opt in labelOptions" :key="opt.id" :value="opt.title">
+          {{ opt.title }}
         </option>
       </select>
     </label>
