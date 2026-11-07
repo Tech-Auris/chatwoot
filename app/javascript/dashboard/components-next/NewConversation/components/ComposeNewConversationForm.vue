@@ -22,6 +22,7 @@ import EmailOptions from './EmailOptions.vue';
 import MessageEditor from './MessageEditor.vue';
 import ActionButtons from './ActionButtons.vue';
 import InboxEmptyState from './InboxEmptyState.vue';
+import ContactOptOutWarning from './ContactOptOutWarning.vue';
 import AttachmentPreviews from './AttachmentPreviews.vue';
 import CopilotReplyBottomPanel from 'dashboard/components/widgets/WootWriter/CopilotReplyBottomPanel.vue';
 
@@ -368,6 +369,7 @@ useKeyboardEvents({
         @toggle-dropdown="showInboxesDropdown = $event"
         @handle-inbox-action="handleInboxAction"
       />
+      <ContactOptOutWarning :contact="selectedContact" />
 
       <EmailOptions
         v-if="inboxTypes.isEmail"

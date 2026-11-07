@@ -11,7 +11,8 @@ module Whatsapp::BaileysHandlers::Concerns::MessageCreationHandler # rubocop:dis
       source_id: raw_message_id,
       sender: incoming? ? sender : nil,
       message_type: incoming? ? :incoming : :outgoing,
-      content_attributes: build_message_content_attributes
+      content_attributes: build_message_content_attributes,
+      **history_import_timestamps
     )
 
     # History import: never auto-download media for backfilled messages
@@ -57,24 +58,39 @@ module Whatsapp::BaileysHandlers::Concerns::MessageCreationHandler # rubocop:dis
     ).apply!
   end
 
+  # A backfilled message keeps the date it was sent on WhatsApp, so the history doesn't
+  # show up in the conversation list as if it had arrived today.
+  def history_import_timestamps
+    return {} unless Current.history_import
+
+    sent_at = baileys_extract_message_timestamp(@raw_message[:messageTimestamp])
+    return {} unless sent_at.positive?
+
+    { created_at: Time.zone.at(sent_at), updated_at: Time.zone.at(sent_at) }
+  end
+
   def finalize_after_save(conversation)
     if Current.history_import
-      mark_history_import_conversation_resolved(conversation)
+      file_history_import_conversation(conversation)
     elsif incoming?
       inbox.channel.received_messages([@message], conversation)
     end
   end
 
-  # Backfilled conversations open as `resolved` so historical chats don't
-  # flood the active inbox view with assignments and unread counters. Only
-  # the first message in a fresh conversation triggers this; subsequent
-  # messages keep whatever status the conversation already has.
-  def mark_history_import_conversation_resolved(conversation)
-    return unless conversation.previously_new_record? && conversation.open?
+  # Backfilled conversations open as `resolved` so historical chats don't flood the
+  # active inbox view with assignments and unread counters, and carry the dates of their
+  # messages: created when the first one was sent, last active at the newest. Only the
+  # message that created the conversation sets its status and creation date; a
+  # conversation that already existed keeps both, and its last activity only moves
+  # forward.
+  def file_history_import_conversation(conversation)
+    attributes = { last_activity_at: [conversation.last_activity_at, @message.created_at].compact.max, updated_at: Time.current }
+    if conversation.previously_new_record?
+      attributes.merge!(created_at: @message.created_at, last_activity_at: @message.created_at, waiting_since: nil)
+      attributes[:status] = Conversation.statuses[:resolved] if conversation.open?
+    end
 
-    # rubocop:disable Rails/SkipsModelValidations
-    conversation.update_columns(status: Conversation.statuses[:resolved], updated_at: Time.current)
-    # rubocop:enable Rails/SkipsModelValidations
+    conversation.update_columns(attributes) # rubocop:disable Rails/SkipsModelValidations
   end
 
   # WhatsApp delivers a reaction removal as a fresh message with empty text.

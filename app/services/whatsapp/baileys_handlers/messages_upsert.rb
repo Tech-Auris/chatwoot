@@ -8,13 +8,17 @@ module Whatsapp::BaileysHandlers::MessagesUpsert
 
   private
 
-  def process_messages_upsert
-    messages = processed_params[:data][:messages]
+  def process_messages_upsert(messages = processed_params[:data][:messages])
+    import_mode = processed_params[:importMode] == true
     messages.each do |message|
       @message = nil
       @contact_inbox = nil
       @contact = nil
       @raw_message = message
+      # A history batch also carries what arrived while the connection was down. Nobody
+      # has seen those yet, so they go through as live messages: AI secretary,
+      # notifications and an open conversation.
+      Current.history_import = import_mode && !missed_while_disconnected?(message)
 
       next handle_message if incoming?
 
@@ -34,6 +38,15 @@ module Whatsapp::BaileysHandlers::MessagesUpsert
 
     return handle_individual_contact_message if %w[lid user].include?(jid_type)
     return handle_group_contact_message if jid_type == 'group' && inbox.channel.groups_enabled?
+  end
+
+  # Newer than the last message the inbox held when the connection came back
+  # (ConnectionUpdate#coverage_until): it arrived while nobody was listening.
+  def missed_while_disconnected?(message)
+    covered_until = inbox.channel.provider_connection['coverage_until']
+    return false if covered_until.blank?
+
+    Time.zone.at(baileys_extract_message_timestamp(message[:messageTimestamp])) > Time.zone.parse(covered_until)
   end
 
   def message_stub?

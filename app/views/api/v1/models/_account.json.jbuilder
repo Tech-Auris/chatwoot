@@ -26,6 +26,7 @@ json.id @account.id
 json.locale @account.locale
 json.name @account.name
 json.average_ticket @account.average_ticket
+json.erp_source_id @account.erp_source_id
 json.funnel_enabled @account.funnel_enabled
 json.ai_status_uses_attribute @account.ai_status_uses_attribute
 json.multi_language_ai @account.multi_language_ai

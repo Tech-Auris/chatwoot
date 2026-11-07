@@ -28,13 +28,19 @@
 #  whatsapp_groups_enabled          :boolean          default(TRUE), not null
 #  created_at                       :datetime         not null
 #  updated_at                       :datetime         not null
+#  erp_source_id                    :bigint
 #  simulator_inbox_id               :bigint
 #  stripe_customer_id               :string
 #
 # Indexes
 #
+#  index_accounts_on_erp_source_id       (erp_source_id)
 #  index_accounts_on_status              (status)
 #  index_accounts_on_stripe_customer_id  (stripe_customer_id) UNIQUE WHERE (stripe_customer_id IS NOT NULL)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (erp_source_id => erp_sources.id)
 #
 
 class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
@@ -144,6 +150,8 @@ class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
   enum :environment, { test: 0, production: 1 }, prefix: :env, default: :test
 
   belongs_to :simulator_inbox, class_name: 'Inbox', optional: true
+  # The ERP (or calendar) the clinic schedules in.
+  belongs_to :erp_source, optional: true
 
   scope :with_auto_resolve, -> { where("(settings ->> 'auto_resolve_after')::int IS NOT NULL") }
 

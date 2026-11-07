@@ -9,4 +9,15 @@ namespace :accounts do
     failed = rows.count(&:error)
     puts "#{rows.size - failed} contas #{apply ? 'atualizadas' : 'prontas (simulação, nada foi gravado; rode com APPLY=true)'}, #{failed} com erro"
   end
+
+  desc 'Import each account ERP from a Supabase cliente CSV (chatwoot_account_id, integration_type). Dry run unless APPLY=true'
+  task import_erp: :environment do
+    apply = ENV['APPLY'] == 'true'
+    rows = Account::ErpSupabaseImport.new(csv_path: ENV.fetch('CSV'), apply: apply).perform
+    rows.each do |row|
+      puts [row.account_id, row.account&.name, row.erp_source&.name, row.error ? "ERRO: #{row.error}" : 'ok'].join(' | ')
+    end
+    failed = rows.count(&:error)
+    puts "#{rows.size - failed} contas #{apply ? 'atualizadas' : 'prontas (simulação, nada foi gravado; rode com APPLY=true)'}, #{failed} com erro"
+  end
 end

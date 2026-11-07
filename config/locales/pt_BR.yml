@@ -33,6 +33,8 @@ pt_BR:
         ai_status_uses_attribute: 'Status da IA por atributo (desligado = etiqueta agente-off legada)'
         secretary_version_name: 'Versão da secretária'
         ai_model_label: 'Modelo de IA'
+        erp_source: 'ERP'
+        erp_source_id: 'ERP'
     # Administrate uses `model.model_name.human(count: …)` to render both
     # the super-admin sidebar label (plural / `other`) and the "New …"
     # button label (singular / `one`). Choose forms that read naturally
@@ -47,6 +49,9 @@ pt_BR:
       ai_model:
         one: 'LLM'
         other: 'LLMs'
+      erp_source:
+        one: 'ERP'
+        other: 'ERPs'
       operations_notification:
         one: 'notificação'
         other: 'Central de Notificações'
@@ -61,6 +66,8 @@ pt_BR:
       account:
         secretary_version_name: 'Secretary Version'
         ai_model_label: 'Model AI'
+        erp_source: 'ERP'
+        erp_source_id: 'ERP'
   internal_chat:
     default_category_name: 'Canais'
     default_channel_name: 'Geral'
