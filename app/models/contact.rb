@@ -71,6 +71,7 @@ class Contact < ApplicationRecord # rubocop:disable Metrics/ClassLength
   belongs_to :account
   belongs_to :language, optional: true
   has_many :conversations, dependent: :destroy_async
+  has_many :appointments, dependent: :destroy_async
   has_many :contact_inboxes, dependent: :destroy_async
   has_many :csat_survey_responses, dependent: :destroy_async
   has_many :inboxes, through: :contact_inboxes

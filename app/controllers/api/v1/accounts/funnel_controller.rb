@@ -43,14 +43,8 @@ class Api::V1::Accounts::FunnelController < Api::V1::Accounts::BaseController
     service = Funnel::MoveConversationService.new(
       account: Current.account,
       conversation_display_id: conversation.display_id,
-      # `stage` (name) is what the kanban sends; `funnel_stage_id` is the stable
-      # handle the conversation header uses.
-      target_stage_name: params[:stage],
-      target_stage_id: params[:funnel_stage_id],
       user: Current.user,
-      reason: params[:reason],
-      source: params[:source] || 'web',
-      loss_reason_id: params[:loss_reason_id]
+      **move_params
     )
     @result = service.perform
     render :show_move
@@ -73,6 +67,19 @@ class Api::V1::Accounts::FunnelController < Api::V1::Accounts::BaseController
   end
 
   private
+
+  # `stage` (name) is what the kanban sends; `funnel_stage_id` is the stable
+  # handle the conversation header uses. n8n may add the `appointment` /
+  # `attendance` blocks (see Funnel::AppointmentUpsertService).
+  def move_params
+    blocks = params.permit(appointment: Api::V1::Accounts::Conversations::AppointmentsController::APPOINTMENT_KEYS,
+                           attendance: Api::V1::Accounts::Conversations::AppointmentsController::ATTENDANCE_KEYS)
+    {
+      target_stage_name: params[:stage], target_stage_id: params[:funnel_stage_id],
+      reason: params[:reason], source: params[:source] || 'web', loss_reason_id: params[:loss_reason_id],
+      appointment: blocks[:appointment], attendance: blocks[:attendance]
+    }
+  end
 
   def authorize_funnel
     authorize :funnel, :"#{action_name}?"

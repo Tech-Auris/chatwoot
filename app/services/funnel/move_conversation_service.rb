@@ -4,7 +4,8 @@ class Funnel::MoveConversationService
   Result = Struct.new(:conversation, :previous_stage, :new_stage, :change, keyword_init: true)
 
   pattr_initialize [:account!, :conversation_display_id!,
-                    { target_stage_name: nil, target_stage_id: nil, user: nil, reason: nil, source: 'web', loss_reason_id: nil }]
+                    { target_stage_name: nil, target_stage_id: nil, user: nil, reason: nil, source: 'web', loss_reason_id: nil,
+                      appointment: nil, attendance: nil }]
 
   def perform
     validate!
@@ -14,6 +15,7 @@ class Funnel::MoveConversationService
     ActiveRecord::Base.transaction do
       apply_stage_change!
       record_audit!(previous_stage&.name)
+      record_appointment!
     end
 
     dispatch_funnel_updated_event(previous_stage)
@@ -87,6 +89,20 @@ class Funnel::MoveConversationService
     ).perform
   rescue StandardError => e
     ChatwootExceptionTracker.new(e, account: account).capture_exception
+  end
+
+  # n8n may send what was booked (`appointment`) or what was closed at the
+  # visit (`attendance`) with the move; both land in the same transaction, so
+  # a rejected block keeps the lead where it was.
+  def record_appointment!
+    return if appointment.blank? && attendance.blank?
+
+    Funnel::AppointmentUpsertService.new(
+      conversation: conversation,
+      payload: attendance.presence || appointment,
+      attendance: attendance.present?,
+      stage_name: target_stage.name
+    ).perform
   end
 
   def record_audit!(previous_stage_name)
