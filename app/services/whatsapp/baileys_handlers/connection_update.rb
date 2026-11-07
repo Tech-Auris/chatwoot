@@ -50,8 +50,20 @@ module Whatsapp::BaileysHandlers::ConnectionUpdate
       # the next time Baileys re-emits a connection_update event (typing, QR
       # rotation, reconnect).
       history_import: current['history_import'].presence,
+      coverage_until: coverage_until(current, next_connection),
       epoch: data[:epoch]
     }.compact
+  end
+
+  # When the connection comes back, the newest message the inbox holds is the last moment
+  # it was listening. WhatsApp then replays what arrived while it was down, and whatever
+  # is newer than this was never seen by anyone (MessagesUpsert#missed_while_disconnected?).
+  # Read once, as the connection opens, so the live traffic that follows can't move it
+  # past the messages it is meant to catch. Nil on a first pairing: nothing is missed yet.
+  def coverage_until(current, next_connection)
+    return current['coverage_until'] if next_connection != 'open' || current['connection'] == 'open'
+
+    inbox.messages.where.not(source_id: nil).maximum(:created_at)&.iso8601
   end
 
   # Rides only the reconnect_loop_detected webhook (baileys-api quarantines a phone after a

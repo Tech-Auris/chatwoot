@@ -384,8 +384,10 @@ class Whatsapp::IncomingMessageBaseService # rubocop:disable Metrics/ClassLength
   # rubocop:enable Metrics/AbcSize
 
   def set_conversation
-    # if lock to single conversation is disabled, we will create a new conversation if previous conversation is resolved
-    @conversation = if @inbox.lock_to_single_conversation
+    # if lock to single conversation is disabled, we will create a new conversation if previous conversation is resolved.
+    # A history import keeps a contact's backfill in one conversation either way: it files each conversation resolved,
+    # so looking for an unresolved one would open a new conversation for every imported message.
+    @conversation = if @inbox.lock_to_single_conversation || Current.history_import
                       @inbox.conversations.where(contact_id: @contact_inbox.contact_id).last
                     else
                       @contact_inbox.conversations
