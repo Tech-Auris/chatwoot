@@ -37,6 +37,8 @@
       "ORIGEM": "Lead origin",
       "ORIGEM_ANY": "All origins",
       "ORIGEM_NONE": "No origin",
+      "LABEL": "Label",
+      "LABEL_ANY": "All labels",
       "RESET": "Clear filters"
     },
     "CARD": {

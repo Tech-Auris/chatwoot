@@ -1,7 +1,8 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useMapGetter } from 'dashboard/composables/store';
+import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu.vue';
 import {
   ORIGEM_OPTIONS,
   ORIGEM_NONE_TOKEN,
@@ -13,6 +14,7 @@ const props = defineProps({
   toDate: { type: String, default: '' },
   hideClosed: { type: Boolean, default: false },
   origem: { type: String, default: '' },
+  label: { type: String, default: '' },
 });
 
 const emit = defineEmits([
@@ -21,16 +23,40 @@ const emit = defineEmits([
   'update:toDate',
   'update:hideClosed',
   'update:origem',
+  'update:label',
   'reset',
 ]);
 
 const { t } = useI18n();
 
 const inboxes = useMapGetter('inboxes/getInboxes');
+const labels = useMapGetter('labels/getLabels');
 
 const inboxOptions = computed(() =>
   [...inboxes.value].sort((a, b) => a.name.localeCompare(b.name))
 );
+
+const showLabelMenu = ref(false);
+
+const selectedLabel = computed(() =>
+  labels.value.find(item => item.title === props.label)
+);
+
+const labelMenuItems = computed(() => [
+  {
+    label: t('FUNNEL.FILTERS.LABEL_ANY'),
+    value: '',
+    isSelected: !props.label,
+  },
+  ...[...labels.value]
+    .sort((a, b) => a.title.localeCompare(b.title))
+    .map(item => ({
+      label: item.title,
+      value: item.title,
+      thumbnail: { name: item.title, color: item.color },
+      isSelected: item.title === props.label,
+    })),
+]);
 
 const origemOptions = ORIGEM_OPTIONS;
 
@@ -40,6 +66,7 @@ const hasActiveFilters = computed(
     Boolean(props.fromDate) ||
     Boolean(props.toDate) ||
     Boolean(props.origem) ||
+    Boolean(props.label) ||
     props.hideClosed
 );
 
@@ -49,6 +76,10 @@ const onToChange = event => emit('update:toDate', event.target.value);
 const onHideClosedChange = event =>
   emit('update:hideClosed', event.target.checked);
 const onOrigemChange = event => emit('update:origem', event.target.value);
+const onLabelSelect = ({ value }) => {
+  emit('update:label', value);
+  showLabelMenu.value = false;
+};
 const onReset = () => emit('reset');
 </script>
 
@@ -118,6 +149,45 @@ const onReset = () => emit('reset');
         </option>
       </select>
     </label>
+
+    <div class="flex flex-col gap-1 w-48">
+      <span class="text-xs text-n-slate-11">
+        {{ t('FUNNEL.FILTERS.LABEL') }}
+      </span>
+      <div class="relative">
+        <button
+          type="button"
+          class="flex items-center gap-2 w-full h-10 mb-4 px-3 rounded-lg text-sm bg-n-alpha-black2 text-n-slate-12 outline outline-1 outline-n-weak hover:outline-n-slate-6 focus:outline-n-brand"
+          @click="showLabelMenu = !showLabelMenu"
+        >
+          <span
+            v-if="selectedLabel"
+            class="rounded-sm size-2 flex-shrink-0"
+            :style="{ backgroundColor: selectedLabel.color }"
+          />
+          <span class="flex-1 min-w-0 truncate text-start">
+            {{ selectedLabel?.title || t('FUNNEL.FILTERS.LABEL_ANY') }}
+          </span>
+          <span class="i-lucide-chevron-down size-4 text-n-slate-11" />
+        </button>
+        <DropdownMenu
+          v-if="showLabelMenu"
+          v-on-clickaway="() => (showLabelMenu = false)"
+          :menu-items="labelMenuItems"
+          show-search
+          class="z-[100] w-56 ltr:left-0 rtl:right-0 top-11 max-h-72"
+          @action="onLabelSelect"
+        >
+          <template #thumbnail="{ item }">
+            <span
+              v-if="item.thumbnail"
+              class="rounded-sm size-2 flex-shrink-0"
+              :style="{ backgroundColor: item.thumbnail.color }"
+            />
+          </template>
+        </DropdownMenu>
+      </div>
+    </div>
 
     <label class="flex flex-col w-48">
       <span class="inline-flex items-top gap-2 h-11 text-xs text-n-slate-12">

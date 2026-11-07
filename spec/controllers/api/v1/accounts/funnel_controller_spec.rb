@@ -79,6 +79,26 @@ RSpec.describe 'Funnel API', type: :request do
     end
   end
 
+  describe 'label filter' do
+    it 'keeps only the conversations carrying the selected label, in board and column paging' do
+      tagged = create(:conversation, account: account, inbox: inbox, funnel_stage: novo)
+      tagged.update!(label_list: ['implante'])
+      create(:conversation, account: account, inbox: inbox, funnel_stage: novo).update!(label_list: ['ortodontia'])
+      create(:conversation, account: account, inbox: inbox, funnel_stage: novo)
+
+      get "/api/v1/accounts/#{account.id}/funnel?label=implante", headers: admin.create_new_auth_token, as: :json
+
+      novo_stage = response.parsed_body.dig('payload', 'stages').find { |s| s['id'] == novo.id }
+      expect(novo_stage['count']).to eq(1)
+      expect(novo_stage['conversations'].pluck('id')).to eq([tagged.display_id])
+
+      get "/api/v1/accounts/#{account.id}/funnel/stages/#{novo.id}/conversations?label=implante",
+          headers: admin.create_new_auth_token, as: :json
+
+      expect(response.parsed_body.dig('payload', 'conversations').pluck('id')).to eq([tagged.display_id])
+    end
+  end
+
   describe 'inbox permissions' do
     let(:agent) { create(:user, account: account, role: :agent) }
     let(:other_inbox) { create(:inbox, account: account, enable_auto_assignment: false) }

@@ -81,12 +81,17 @@ class Api::V1::Accounts::FunnelController < Api::V1::Accounts::BaseController
   ORIGEM_NONE_TOKEN = '__none__'.freeze
 
   def filtered_conversations
-    relation = scoped_conversations
-    relation = relation.where('conversations.created_at >= ?', from_date) if from_date.present?
-    relation = relation.where('conversations.created_at <= ?', to_date) if to_date.present?
+    relation = apply_period_filter(scoped_conversations)
     relation = relation.where(inbox_id: params[:inbox_id]) if params[:inbox_id].present?
     relation = apply_origem_filter(relation) if params[:origem].present?
+    relation = relation.tagged_with(params[:label], any: true) if params[:label].present?
     relation = relation.where.not(funnel_stage_id: closed_stage_ids) if hide_closed?
+    relation
+  end
+
+  def apply_period_filter(relation)
+    relation = relation.where('conversations.created_at >= ?', from_date) if from_date.present?
+    relation = relation.where('conversations.created_at <= ?', to_date) if to_date.present?
     relation
   end
 

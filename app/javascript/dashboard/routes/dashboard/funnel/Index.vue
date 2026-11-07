@@ -56,6 +56,7 @@ const filters = ref({
   toDate: '',
   hideClosed: false,
   origem: '',
+  label: '',
 });
 
 const setViewMode = mode => {
@@ -71,6 +72,7 @@ const buildQueryParams = () => {
   if (filters.value.toDate) params.to = `${filters.value.toDate}T23:59:59`;
   if (filters.value.hideClosed) params.hide_closed = 'true';
   if (filters.value.origem) params.origem = filters.value.origem;
+  if (filters.value.label) params.label = filters.value.label;
   return params;
 };
 
@@ -253,6 +255,7 @@ const resetFilters = () => {
     toDate: '',
     hideClosed: false,
     origem: '',
+    label: '',
   };
 };
 
@@ -270,11 +273,12 @@ const condition = (key, value) => ({
   values: [value],
 });
 const audienceRule = computed(() => {
-  const { inboxId, origem } = filters.value;
+  const { inboxId, origem, label } = filters.value;
   return [
     condition('funnel_stage_id', audienceStage.value.id),
     inboxId && condition('inbox_id', Number(inboxId)),
     origem && condition('origem', origem),
+    label && condition('labels', label),
   ].filter(Boolean);
 });
 const audienceWindow = computed(() => {
@@ -335,6 +339,7 @@ onMounted(fetchFunnel);
         v-model:to-date="filters.toDate"
         v-model:hide-closed="filters.hideClosed"
         v-model:origem="filters.origem"
+        v-model:label="filters.label"
         @reset="resetFilters"
       />
 
