@@ -41,6 +41,10 @@ module AiStatusActivityMessageHandler
   end
 
   def ai_status_activity_content(new_state, user_name)
+    # The handoff runs while ingesting the patient's message in a background
+    # job, where the default locale is English, so it uses the account's.
+    return I18n.t('conversations.activity.ai_schedule.ai_off', locale: account.locale) if !new_state && Current.ai_off_by_schedule
+
     key = new_state ? 'enabled' : 'disabled'
     actor_name = user_name.presence || automation_actor_name
     return I18n.t("conversations.activity.ai_status.#{key}_system") if actor_name.blank?

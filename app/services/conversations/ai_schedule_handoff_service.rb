@@ -10,9 +10,13 @@ class Conversations::AiScheduleHandoffService
   def perform
     return unless applies?
 
+    # Handing to the team can already turn the AI off (the AI user leaves the
+    # assignee), so the flag covers the whole handoff.
+    Current.ai_off_by_schedule = true
     hand_to_team if team
     conversation.set_ai_status!(false)
-    note_handoff
+  ensure
+    Current.ai_off_by_schedule = nil
   end
 
   private
@@ -39,16 +43,5 @@ class Conversations::AiScheduleHandoffService
 
   def ai_user
     User.find_by(id: Conversation.ai_user_id)
-  end
-
-  def note_handoff
-    content = if team
-                I18n.t('conversations.activity.ai_schedule.handed_to_team', team_name: team.name)
-              else
-                I18n.t('conversations.activity.ai_schedule.ai_off')
-              end
-    Conversations::ActivityMessageJob.perform_later(
-      conversation, { account_id: conversation.account_id, inbox_id: inbox.id, message_type: :activity, content: content }
-    )
   end
 end

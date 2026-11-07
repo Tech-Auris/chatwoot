@@ -30,10 +30,16 @@ RSpec.describe Conversations::AiScheduleHandoffService do
     expect(AiAssignmentAttempt.last).to have_attributes(conversation_id: conversation.id, reason: 'schedule', team_id: team.id)
   end
 
-  it 'leaves a note about the handoff in the conversation' do
-    note = I18n.t('conversations.activity.ai_schedule.handed_to_team', team_name: team.name)
+  it 'leaves a single activity about the schedule, in the account locale' do
+    account.update!(locale: 'pt_BR')
 
-    expect { incoming }.to have_enqueued_job(Conversations::ActivityMessageJob).with(conversation, hash_including(content: note))
+    incoming
+    perform_enqueued_jobs(only: Conversations::ActivityMessageJob)
+
+    activities = conversation.messages.activity.pluck(:content)
+    expect(activities).to include('IA desligada pelo horário')
+    expect(activities).not_to include(I18n.t('conversations.activity.ai_status.disabled_system', locale: 'pt_BR'))
+    expect(activities.grep(/IA desligada|AI turned off/).size).to eq(1)
   end
 
   it 'runs the team round-robin again when the conversation already had the team' do
