@@ -99,6 +99,43 @@ RSpec.describe 'Funnel API', type: :request do
     end
   end
 
+  describe 'POST /api/v1/accounts/:account_id/funnel/move with appointment data' do
+    let!(:agendado) { create(:funnel_stage, name: 'Agendado', position: 4) }
+    let(:conversation) { create(:conversation, account: account, inbox: inbox, funnel_stage: novo) }
+
+    it 'moves the lead and records the appointment in one call' do
+      post "/api/v1/accounts/#{account.id}/funnel/move",
+           params: { conversation_id: conversation.display_id, stage: 'Agendado',
+                     appointment: { external_id: 'ag_789', scheduled_for: '2026-11-12T14:30:00-03:00',
+                                    professional: { id: 'prof_12', name: 'Dra. Ana' } } },
+           headers: admin.create_new_auth_token, as: :json
+
+      expect(response).to have_http_status(:success)
+      expect(conversation.reload.funnel_stage).to eq(agendado)
+      expect(conversation.appointments.sole).to have_attributes(external_id: 'ag_789', status: 'scheduled', professional_name: 'Dra. Ana')
+    end
+
+    it 'keeps the lead in place when the appointment block is rejected' do
+      2.times { |i| create(:appointment, account: account, conversation: conversation, external_id: "ag_#{i}") }
+
+      post "/api/v1/accounts/#{account.id}/funnel/move",
+           params: { conversation_id: conversation.display_id, stage: 'Agendado', appointment: { scheduled_for: '2026-11-12T14:30:00-03:00' } },
+           headers: admin.create_new_auth_token, as: :json
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(conversation.reload.funnel_stage).to eq(novo)
+    end
+
+    it 'moves without blocks exactly as before' do
+      post "/api/v1/accounts/#{account.id}/funnel/move",
+           params: { conversation_id: conversation.display_id, stage: 'Agendado' },
+           headers: admin.create_new_auth_token, as: :json
+
+      expect(response).to have_http_status(:success)
+      expect(conversation.appointments).to be_empty
+    end
+  end
+
   describe 'inbox permissions' do
     let(:agent) { create(:user, account: account, role: :agent) }
     let(:other_inbox) { create(:inbox, account: account, enable_auto_assignment: false) }

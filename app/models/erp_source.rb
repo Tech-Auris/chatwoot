@@ -18,6 +18,7 @@
 #
 class ErpSource < ApplicationRecord
   has_many :accounts, dependent: :restrict_with_error
+  has_many :appointments, dependent: :restrict_with_error
 
   validates :id, presence: true, uniqueness: true, on: :create
   validates :name, presence: true, uniqueness: true

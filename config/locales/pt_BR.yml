@@ -342,6 +342,11 @@ pt_BR:
         origin_date: 'Data de origem'
         assignee: 'Agente atribuído'
         conversation_id: 'Número da conversa'
+  funnel:
+    appointments:
+      external_id_required: "Este lead tem mais de um agendamento aberto: envie o external_id do agendamento"
+      invalid_source: "source_id %{source_id} não é um ERP cadastrado"
+      block_required: "Envie um bloco appointment ou attendance"
   conversations:
     captain:
       handoff: 'Transferindo para que outro agente dê assistência.'

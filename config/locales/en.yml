@@ -367,6 +367,11 @@ en:
         origin_date: 'Origin date'
         assignee: 'Assigned agent'
         conversation_id: 'Conversation number'
+  funnel:
+    appointments:
+      external_id_required: "This lead has more than one open appointment: send the appointment's external_id"
+      invalid_source: "source_id %{source_id} is not a registered ERP"
+      block_required: "Send an appointment or attendance block"
   conversations:
     captain:
       handoff: 'Transferring to another agent for further assistance.'
