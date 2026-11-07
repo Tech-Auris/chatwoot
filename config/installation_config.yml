@@ -741,6 +741,22 @@
   value: ''
   type: secret
   locked: false
+- name: COMMERCIAL_META_PIXEL_ID
+  display_title: 'ID do pixel da Meta'
+  description: 'Pixel da Auris que recebe o evento Purchase quando uma venda da área de contratação é paga.'
+  value: ''
+  locked: false
+- name: COMMERCIAL_META_CAPI_TOKEN
+  display_title: 'Token da API de Conversões da Meta'
+  description: 'Gerado no Gerenciador de Eventos → pixel → Configurações → API de Conversões. Em branco, nenhum evento é enviado.'
+  value: ''
+  type: secret
+  locked: false
+- name: COMMERCIAL_META_TEST_EVENT_CODE
+  display_title: 'Código de teste da Meta'
+  description: 'Opcional. Copiado de Gerenciador de Eventos → Testar eventos: preenchido, o Purchase só aparece lá e não conta para as campanhas. Apague depois do teste.'
+  value: ''
+  locked: false
 - name: COMMERCIAL_RESERVATION_REMINDER_TIME
   display_title: 'Horário do lembrete de último dia'
   description: 'Horário de Brasília. No último dia da reserva, quem ainda não contratou recebe o lembrete a partir desse horário.'

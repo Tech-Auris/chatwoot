@@ -18,6 +18,8 @@
 #  billing_cycle            :integer
 #  billing_name             :string
 #  boleto_enabled_at        :datetime
+#  client_ip                :string
+#  client_user_agent        :string
 #  clickup_status           :string
 #  clickup_status_synced_at :datetime
 #  company_document         :string
@@ -25,6 +27,8 @@
 #  currency                 :string           default("brl"), not null
 #  discount_amount          :integer          default(0), not null
 #  discount_summary         :string
+#  fbclid                   :string
+#  fbclid_captured_at       :datetime
 #  inter_pix_payload        :text
 #  inter_txid               :string
 #  meeting_discount         :boolean          default(FALSE), not null

@@ -20,6 +20,8 @@ class Sales::ClickupProspectSearchService
   # due_date so the story deadline and the reservation deadline can
   # move independently.
   RESERVATION_DUE_FIELD_ID = '709b1aad-9f10-4e5c-bfb5-3601b6200e91'.freeze
+  # Meta ad click id the lead form records; feeds the Purchase sent on payment.
+  FBCLID_FIELD_ID = '4b672263-1aa6-4f81-ba21-0220a84814fe'.freeze
   # The sales team, ClickUp instance and public proposal all speak São
   # Paulo local time — the reservation deadline is anchored to that day
   # regardless of where the Rails server is.
@@ -93,7 +95,9 @@ class Sales::ClickupProspectSearchService
       # this — moved so operators can edit the story deadline in ClickUp
       # without moving the reservation with it.
       due_date: custom_field(task, RESERVATION_DUE_FIELD_ID)&.to_i,
-      url: task['url']
+      url: task['url'],
+      fbclid: custom_field(task, FBCLID_FIELD_ID),
+      created_at: task['date_created']&.to_i
     }
   end
 
