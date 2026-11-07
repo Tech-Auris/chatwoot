@@ -12,6 +12,7 @@ const props = defineProps({
   active: { type: Boolean, default: false },
   component: { type: Function, default: null },
   badgeCount: { type: [Number, String], default: 0 },
+  badgeVariant: { type: String, default: 'default' },
   // Short static pill rendered after the label — used today for "BETA" on
   // menu items still shipping under a soft launch. Prefer the numeric
   // badgeCount for anything that changes at runtime.
@@ -69,7 +70,7 @@ const TREE_CONNECTOR =
         >
           {{ tag }}
         </span>
-        <SidebarUnreadBadge :count="badgeCount" />
+        <SidebarUnreadBadge :count="badgeCount" :variant="badgeVariant" />
       </template>
     </component>
   </Policy>

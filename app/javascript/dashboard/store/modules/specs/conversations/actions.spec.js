@@ -300,8 +300,11 @@ describe('#actions', () => {
       axios.post.mockResolvedValue({
         data: { id: 1, agent_last_seen_at: lastSeen },
       });
-      await actions.markMessagesRead({ commit }, { id: 1 });
+      await actions.markMessagesRead({ commit, dispatch }, { id: 1 });
       vi.runAllTimers();
+      expect(dispatch).toHaveBeenCalledWith('unseenMentions/markSeen', 1, {
+        root: true,
+      });
       expect(commit).toHaveBeenCalledTimes(1);
       expect(commit.mock.calls).toEqual([
         [types.UPDATE_MESSAGE_UNREAD_COUNT, { id: 1, lastSeen }],

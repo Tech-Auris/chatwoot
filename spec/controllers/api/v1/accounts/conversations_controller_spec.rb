@@ -845,6 +845,17 @@ RSpec.describe 'Conversations API', type: :request do
         expect(conversation.reload.assignee_last_seen_at).not_to be_nil
       end
 
+      it 'marks the unseen mention of the current user as seen' do
+        mention = create(:mention, user: agent, conversation: conversation, seen_at: nil)
+
+        post "/api/v1/accounts/#{account.id}/conversations/#{conversation.display_id}/update_last_seen",
+             headers: agent.create_new_auth_token,
+             as: :json
+
+        expect(response).to have_http_status(:success)
+        expect(mention.reload.seen_at).to be_present
+      end
+
       it 'marks unread notifications as read when updating last seen' do
         allow(Rails.configuration.dispatcher).to receive(:dispatch)
         notification = create(:notification, account: account, user: agent, primary_actor: conversation, read_at: nil)
