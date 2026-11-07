@@ -1,4 +1,38 @@
 ---
+- tag: v4.15.1-auris.1.75
+  published_at: '2026-11-07T20:00:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.75
+  notes:
+    en: |-
+      ### ✨ What's new
+
+      - **Mention alerts.** When someone on the team tags you in a note, the Mentions item shows how many conversations you haven't seen yet, and they stay highlighted until you open them.
+      - **Label filter in the funnel.** You can now show only the patients with a given label in the funnel, with each label's color.
+      - **A warning before writing to patients who opted out.** When you start a conversation with a patient who asked not to receive messages, a warning shows up before you send.
+
+      ### ⚡ Improvements
+
+      - **Easier template names.** When you create a template, the name adjusts itself to the format Meta accepts.
+      - **A clearer note when the AI turns off by the schedule.** The conversation now shows only "IA desligada pelo horário".
+
+      ### 🐛 Fixes
+
+      - **Messages while WhatsApp was disconnected.** Messages that arrived while WhatsApp was disconnected now show up in the conversations.
+    pt_BR: |-
+      ### ✨ Novidades
+
+      - **Aviso de menções.** Quando alguém da equipe te marca numa nota, o item Menções mostra quantas conversas você ainda não viu, e elas ficam destacadas até você abrir.
+      - **Filtro por etiqueta no funil.** Agora dá para ver no funil só os pacientes com uma etiqueta, com a cor de cada uma.
+      - **Aviso ao escrever para quem pediu para não receber mensagens.** Ao começar uma conversa com esse paciente, aparece um aviso antes de enviar.
+
+      ### ⚡ Melhorias
+
+      - **Nome do template mais fácil.** Ao criar um template, o nome se ajusta sozinho ao formato que a Meta aceita.
+      - **Aviso mais claro quando a IA desliga pelo horário.** A conversa mostra só "IA desligada pelo horário".
+
+      ### 🐛 Correções
+
+      - **Mensagens com o WhatsApp desconectado.** As mensagens que chegaram enquanto o WhatsApp estava desconectado agora aparecem nas conversas.
 - tag: v4.15.1-auris.1.74
   published_at: '2026-11-05T20:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.74
@@ -461,15 +495,3 @@
 
       - **Filtro de conversas por etapa do funil.** Escolher uma etapa no filtro de conversas (ou abrir uma pasta salva com esse filtro) volta a trazer as conversas que aparecem no quadro do funil — a lista estava vindo vazia por engano.
       - **Baixar o PDF da transcrição.** Algumas conversas específicas falhavam ao gerar o PDF com um aviso genérico de "não foi possível gerar o PDF da transcrição". Esses casos agora baixam normal.
-- tag: v4.15.1-auris.1.55
-  published_at: '2026-09-09T19:15:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.55
-  notes:
-    en: |-
-      ### 🐛 Fixes
-
-      - **Buttons at the top of the conversation stop getting cut off on narrow panels.** With the side menu and the contact panel both open, the buttons at the top of a conversation (Resolver, funnel stage, AI badge) were being clipped. They now wrap to a second row when there is no horizontal room.
-    pt_BR: |-
-      ### 🐛 Correções
-
-      - **Botões do topo da conversa deixam de ficar cortados em painéis estreitos.** Com o menu lateral e o painel do contato abertos ao mesmo tempo, os botões do topo de uma conversa (Resolver, etapa do funil, indicador da IA) ficavam cortados. Agora eles quebram para uma segunda linha quando não há espaço horizontal.
