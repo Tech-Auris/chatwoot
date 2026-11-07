@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Spinner from 'shared/components/Spinner.vue';
 import TemplatePreview from './TemplatePreview.vue';
+import { toTemplateName } from '../templateName';
 import MetaTemplatesAPI from 'dashboard/api/metaTemplates';
 import { useAlert } from 'dashboard/composables';
 
@@ -101,6 +102,11 @@ const resizeBodyTextarea = () => {
   el.style.height = `${el.scrollHeight}px`;
 };
 watch(bodyText, () => nextTick(resizeBodyTextarea));
+
+watch(name, value => {
+  const normalized = toTemplateName(value);
+  if (normalized !== value) name.value = normalized;
+});
 onMounted(() => nextTick(resizeBodyTextarea));
 
 const footerEnabled = ref(false);

@@ -101,7 +101,7 @@
         "INBOX": "Caixa de entrada",
         "NAME": "Nome do template",
         "NAME_PLACEHOLDER": "ex: confirmacao_agenda",
-        "NAME_HINT": "Só letras minúsculas, números e underline. Precisa ser único nesta caixa.",
+        "NAME_HINT": "Ajustado enquanto você digita: espaços viram underline e acentos, maiúsculas e símbolos são removidos. Precisa ser único nesta caixa.",
         "NAME_INVALID": "Só letras minúsculas, números e underline. Sem espaços, acentos, maiúsculas ou símbolos.",
         "NAME_IMMUTABLE": "Nome, idioma e caixa não podem ser alterados após a criação (regra do Meta).",
         "LANGUAGE": "Idioma",
