@@ -668,6 +668,7 @@
         "TAG_INPUT_PLACEHOLDER": "Digite pelo menos 2 caracteres para pesquisar por nome, e-mail ou número de telefone",
         "CONTACT_CREATING": "Criando contato..."
       },
+      "MARKETING_OPT_OUT_WARNING": "Este contato está com opt-out de marketing: ele pediu para não receber mensagens de marketing.",
       "INBOX_BLOCKED": {
         "DISCONNECTED": "Este número está desconectado. Reconecte o WhatsApp em Configurações → Caixas de Entrada para enviar por ele.",
         "CONNECTING": "Este número está reconectando. Aguarde a conexão terminar para enviar por ele."

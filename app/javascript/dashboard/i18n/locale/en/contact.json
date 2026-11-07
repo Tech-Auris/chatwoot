@@ -671,6 +671,7 @@
         "TAG_INPUT_PLACEHOLDER": "Enter at least 2 characters to search by name, email, or phone number",
         "CONTACT_CREATING": "Creating contact..."
       },
+      "MARKETING_OPT_OUT_WARNING": "This contact has a marketing opt-out: they asked not to receive marketing messages.",
       "INBOX_BLOCKED": {
         "DISCONNECTED": "This number is disconnected. Reconnect WhatsApp in Settings → Inboxes to send from it.",
         "CONNECTING": "This number is reconnecting. Wait for the connection to finish to send from it."
