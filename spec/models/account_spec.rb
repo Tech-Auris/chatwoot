@@ -528,8 +528,16 @@ RSpec.describe Account do
         },
         follow_up: { 'end_flow' => { 'wait_minutes' => 60 } },
         status: nil,
-        llm: nil
+        llm: nil,
+        erp_source: nil
       )
+    end
+
+    it 'carries the clinic ERP for the n8n agenda routing' do
+      erp = create(:erp_source, name: 'Feegow')
+      account.update!(erp_source: erp)
+
+      expect(account.webhook_data[:erp_source]).to eq(id: erp.id, name: 'Feegow')
     end
 
     it 'carries what the account status tells the n8n secretary' do
