@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_11_06_120000) do
+ActiveRecord::Schema[7.1].define(version: 2026_11_07_120000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -255,6 +255,40 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_06_120000) do
     t.index ["account_id"], name: "index_applied_slas_on_account_id"
     t.index ["conversation_id"], name: "index_applied_slas_on_conversation_id"
     t.index ["sla_policy_id"], name: "index_applied_slas_on_sla_policy_id"
+  end
+
+  create_table "appointment_procedures", force: :cascade do |t|
+    t.bigint "appointment_id", null: false
+    t.bigint "account_id", null: false
+    t.string "procedure_external_id"
+    t.string "procedure_name"
+    t.integer "amount_paid_cents"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_appointment_procedures_on_account_id"
+    t.index ["appointment_id"], name: "index_appointment_procedures_on_appointment_id"
+  end
+
+  create_table "appointments", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "conversation_id", null: false
+    t.bigint "contact_id", null: false
+    t.bigint "erp_source_id"
+    t.string "external_id"
+    t.datetime "scheduled_for"
+    t.string "professional_external_id"
+    t.string "professional_name"
+    t.string "procedure_external_id"
+    t.string "procedure_name"
+    t.integer "status", default: 0, null: false
+    t.datetime "attended_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "erp_source_id", "external_id"], name: "index_appointments_on_account_source_external", unique: true
+    t.index ["account_id", "scheduled_for"], name: "index_appointments_on_account_id_and_scheduled_for"
+    t.index ["contact_id"], name: "index_appointments_on_contact_id"
+    t.index ["conversation_id"], name: "index_appointments_on_conversation_id"
+    t.index ["erp_source_id"], name: "index_appointments_on_erp_source_id"
   end
 
   create_table "article_embeddings", force: :cascade do |t|
@@ -2279,6 +2313,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_06_120000) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "ai_assignment_attempts", "conversations", on_delete: :cascade
   add_foreign_key "ai_models", "ai_providers"
+  add_foreign_key "appointment_procedures", "accounts", on_delete: :cascade
+  add_foreign_key "appointment_procedures", "appointments", on_delete: :cascade
+  add_foreign_key "appointments", "accounts", on_delete: :cascade
+  add_foreign_key "appointments", "contacts", on_delete: :cascade
+  add_foreign_key "appointments", "conversations", on_delete: :cascade
+  add_foreign_key "appointments", "erp_sources"
   add_foreign_key "campaign_spends", "accounts"
   add_foreign_key "canned_responses", "inboxes"
   add_foreign_key "contacts", "languages"
