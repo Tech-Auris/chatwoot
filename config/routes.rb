@@ -623,6 +623,8 @@ Rails.application.routes.draw do
 
       resources :releases, only: [:index]
 
+      resources :erp_sources, only: [:index]
+
       resources :languages, only: [:index]
 
       namespace :widget do
@@ -1062,6 +1064,7 @@ Rails.application.routes.draw do
       resources :account_statuses, only: [:index, :show, :edit, :update]
       resources :ai_providers, only: [:index, :new, :create, :show, :edit, :update]
       resources :ai_models, only: [:index, :new, :create, :show, :edit, :update]
+      resources :erp_sources, only: [:index, :new, :create, :show, :edit, :update, :destroy]
       resources :operations_notifications, only: [:index, :new, :create, :show, :destroy] do
         get :acks, on: :member
       end
