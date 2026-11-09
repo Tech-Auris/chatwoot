@@ -1,0 +1,8 @@
+<% content_for(:title) do %>
+  Descontos
+<% end %>
+
+<%= render_vue_component('CommercialDiscounts', {
+  data_url: data_super_admin_commercial_discounts_url(format: :json),
+  discounts_url: super_admin_commercial_discounts_path
+}) %>

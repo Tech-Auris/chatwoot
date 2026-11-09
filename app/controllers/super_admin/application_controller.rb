@@ -31,6 +31,7 @@ class SuperAdmin::ApplicationController < Administrate::ApplicationController
     super_admin/commercial/quotes
     super_admin/commercial/reservations
     super_admin/commercial/contracts
+    super_admin/commercial/discounts
     super_admin/terms_acceptances
     super_admin/profile/mfa
     super_admin/sessions/mfa_challenge

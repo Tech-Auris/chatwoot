@@ -13,6 +13,7 @@
 #  id                       :bigint           not null, primary key
 #  access_code              :string           not null
 #  api_integration_waived   :boolean          default(FALSE), not null
+#  applied_discounts        :jsonb            not null
 #  asaas_invoice_url        :string
 #  asaas_payment_link_url   :string
 #  billing_cycle            :integer
@@ -72,6 +73,7 @@
 #
 class SalesQuote < ApplicationRecord
   ACCESS_CODE_LENGTH = 6
+  LEGACY_MEETING_DISCOUNT_LABEL = '10% reunião'.freeze
 
   belongs_to :seller, class_name: 'User'
   belongs_to :account, optional: true
@@ -173,9 +175,9 @@ class SalesQuote < ApplicationRecord
     boleto_enabled_at.present? && Sales::CheckoutService.offers?('boleto', billing_cycle)
   end
 
-  # The meeting discount is a courtesy from the sales conversation and only
-  # holds while the reservation does. Past the deadline the customer sees
-  # the same proposal without the 10% off; a renewal that puts the reserva-
+  # The meeting discount (any discount set to expire with the reservation) is
+  # a courtesy from the sales conversation and only holds while the reservation
+  # does. Past the deadline the customer sees the same proposal without it; a renewal that puts the reserva-
   # tion back in the future restores it automatically, because both totals
   # and summary are derived here rather than frozen with the courtesy in.
   def meeting_discount_active?
@@ -194,19 +196,23 @@ class SalesQuote < ApplicationRecord
     discount_amount - meeting_discount_amount
   end
 
-  # Strips the "10% reunião" fragment from the frozen summary when the
-  # discount is not currently active — leaves the rest of the parts (a
-  # scoped coupon, the API waiver) alone, so "cupom X + 10% reunião"
-  # becomes "cupom X" and a summary that was only the meeting collapses
-  # to nil.
+  # Strips the discounts that only hold while the reservation does from the
+  # frozen summary when they are not currently active — leaves the rest of the
+  # parts (a waiver, the referral, a coupon) alone, so "cupom X + 10% reunião"
+  # becomes "cupom X" and a summary that was only the meeting collapses to nil.
   def effective_discount_summary
     return discount_summary unless meeting_discount_must_be_removed?
     return nil if discount_summary.blank?
 
-    remaining = discount_summary
-                .split(' + ')
-                .reject { |part| part.include?("#{Sales::QuoteCalculatorService::MEETING_DISCOUNT_PERCENT}% reunião") }
+    remaining = discount_summary.split(' + ') - expiring_discount_labels
     remaining.any? ? remaining.join(' + ') : nil
+  end
+
+  # Summary parts of the discounts that end with the reservation. Proposals
+  # made before discounts were configurable only had the 10% meeting one.
+  def expiring_discount_labels
+    labels = applied_discounts.select { |discount| discount['expires_with_reservation'] }.pluck('label')
+    labels.presence || [LEGACY_MEETING_DISCOUNT_LABEL]
   end
 
   # True when the meeting discount was applied at creation, currently no

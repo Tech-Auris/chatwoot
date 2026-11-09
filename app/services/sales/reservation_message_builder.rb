@@ -18,7 +18,7 @@ class Sales::ReservationMessageBuilder
     <<~MSG
       Olá! 😊
 
-      Conforme alinhado em nossa reunião, você tem uma *condição especial de contratação da Auris com 10% de desconto*.
+      Conforme alinhado em nossa reunião, você tem uma *condição especial de contratação da Auris*#{discounts_clause(quote.effective_discount_summary)}.
 
       Para *reservar essa condição*, é necessário realizar a reserva pelo link abaixo, informar o *código de acesso* e preencher os dados solicitados:
 
@@ -44,14 +44,14 @@ class Sales::ReservationMessageBuilder
   end
 
   # Sent on the reservation's last day to a lead who hasn't closed yet.
-  # Two wordings: the special condition with the meeting discount (and how
-  # much it saves), or a plain follow-up on the quote.
+  # Two wordings: the special condition with the discounts that end with the
+  # reservation (and how much they save), or a plain follow-up on the quote.
   def self.last_day_reminder_for(quote)
     link = public_url_for(quote)
     return nil if link.blank?
 
     name = quote.prospect_name.to_s.split.first.presence || 'Olá'
-    return discount_reminder(name, link, quote.meeting_discount_amount) if quote.meeting_discount && quote.meeting_discount_amount.to_i.positive?
+    return discount_reminder(name, link, quote) if quote.meeting_discount && quote.meeting_discount_amount.to_i.positive?
 
     <<~MSG
       #{name}, tudo bem?
@@ -66,13 +66,13 @@ class Sales::ReservationMessageBuilder
     MSG
   end
 
-  def self.discount_reminder(name, link, discount_cents)
+  def self.discount_reminder(name, link, quote)
     <<~MSG
       #{name}, tudo bem?
 
-      Passando para te lembrar que hoje é o último dia da reserva da sua condição especial da Auris com 10% de desconto.
+      Passando para te lembrar que hoje é o último dia da reserva da sua condição especial da Auris#{discounts_clause(quote.expiring_discount_labels.join(' + '))}.
 
-      Você vai economizar R$ #{format_money(discount_cents)} na contratação.
+      Você vai economizar R$ #{format_money(quote.meeting_discount_amount)} na contratação.
 
       Para aproveitar o desconto, basta acessar o link abaixo e concluir a contratação:
 
@@ -80,6 +80,15 @@ class Sales::ReservationMessageBuilder
 
       A condição fica disponível somente até o final do dia de hoje.
     MSG
+  end
+
+  # " (10% reunião, 5% indicação e isenção implantação)" — the discounts the
+  # proposal carries, read from its summary; empty when there are none.
+  def self.discounts_clause(summary)
+    parts = summary.to_s.split(' + ').compact_blank
+    return '' if parts.empty?
+
+    " (#{parts.to_sentence(words_connector: ', ', two_words_connector: ' e ', last_word_connector: ' e ')})"
   end
 
   def self.format_money(cents)
