@@ -30,6 +30,7 @@ const COLUMNS = {
   follow_up_leads: { date: 'FOLLOW_UP_AT', detail: 'FOLLOW_UP_STEP' },
   no_shows: { date: 'NO_SHOW_AT', detail: 'MOVED_BY' },
   attendances: { date: 'ATTENDED_AT', detail: 'MOVED_BY' },
+  losses: { date: 'LOST_AT', detail: 'LOSS_REASON' },
 };
 
 const dialogRef = ref(null);
@@ -95,6 +96,7 @@ const formatDetail = row => {
   if (columns.value.detail === 'FOLLOW_UP_STEP') {
     return t('HOME_OVERVIEW.DRILLDOWN.STEP', { step: row.detail });
   }
+  if (columns.value.detail === 'LOSS_REASON') return dash(row.detail);
   return row.detail || t('HOME_OVERVIEW.FOLLOW_UP_DIALOG.AUTOMATION');
 };
 

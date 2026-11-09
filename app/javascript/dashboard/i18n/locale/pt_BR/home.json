@@ -9,7 +9,6 @@
       "BOOKED": "ninguém foi agendado ainda | 1 já foi agendado | {count} já foram agendados",
       "WAITING": "Nenhum lead esperando resposta. | 1 lead está sem resposta há mais de 10 minutos. | {count} leads estão sem resposta há mais de 10 minutos.",
       "DATA_FROM": "Dados de: {inboxes}",
-      "TOMORROW": "Amanhã: {scheduled} consultas agendadas, {confirmed} confirmadas",
       "LEADS_VERB": "não chegou | chegou | chegaram"
     },
     "TODAY": {
@@ -54,7 +53,8 @@
       "AI_CONVERSATIONS_SHARE": "{share}% dos leads do período",
       "HANDOFF": "Handoff IA → Humano",
       "HANDOFF_DETAIL": "{handed} das {total} conversas que a IA atuou",
-      "PERCENTAGE_POINTS": "p.p."
+      "PERCENTAGE_POINTS": "p.p.",
+      "TOTAL": "Total"
     },
     "LOAD_ERROR": "Não foi possível carregar a página inicial. Tente novamente em instantes.",
     "WAITING_DIALOG": {
@@ -106,7 +106,9 @@
         "FOLLOW_UP_STEP": "Follow-up",
         "NO_SHOW_AT": "No-show em",
         "ATTENDED_AT": "Compareceu em",
-        "MOVED_BY": "Movido por"
+        "MOVED_BY": "Movido por",
+        "LOST_AT": "Perdido em",
+        "LOSS_REASON": "Motivo"
       },
       "STATUSES": {
         "SCHEDULED": "Agendado",

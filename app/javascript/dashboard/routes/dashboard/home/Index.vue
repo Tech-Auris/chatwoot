@@ -208,6 +208,14 @@ const onTodayDrill = metric =>
     count: TODAY_COUNTS[metric](),
   });
 
+// Origem dos leads lists the period's leads; Motivos de perda, the lost ones.
+const onPieDrill = (metric, titleKey, slices) =>
+  cardDialog.value?.open({
+    metric,
+    title: t(titleKey),
+    count: slices.reduce((sum, slice) => sum + slice.count, 0),
+  });
+
 const drillFilters = computed(() => ({
   ...loadedRange.value,
   inboxIds: data.value.inboxes.map(inbox => inbox.id),
@@ -273,13 +281,6 @@ const lossSlices = computed(() =>
         </p>
         <p class="mb-0 text-sm text-n-slate-11">
           {{ t('HOME_OVERVIEW.GREETING.DATA_FROM', { inboxes: dataFrom }) }}
-          ·
-          {{
-            t('HOME_OVERVIEW.GREETING.TOMORROW', {
-              scheduled: today.tomorrow.scheduled,
-              confirmed: today.tomorrow.confirmed,
-            })
-          }}
         </p>
       </section>
 
@@ -335,10 +336,20 @@ const lossSlices = computed(() =>
         <PieCard
           :title="t('HOME_OVERVIEW.METRICS.ORIGINS')"
           :slices="originSlices"
+          @drill="
+            onPieDrill('leads', 'HOME_OVERVIEW.METRICS.ORIGINS', originSlices)
+          "
         />
         <PieCard
           :title="t('HOME_OVERVIEW.METRICS.LOSS_REASONS')"
           :slices="lossSlices"
+          @drill="
+            onPieDrill(
+              'losses',
+              'HOME_OVERVIEW.METRICS.LOSS_REASONS',
+              lossSlices
+            )
+          "
         />
       </div>
 

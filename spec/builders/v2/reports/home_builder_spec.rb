@@ -244,6 +244,14 @@ RSpec.describe V2::Reports::HomeBuilder do
       expect(drilldown('tomorrow')[:rows].pluck(:detail)).to eq(['confirmed'])
     end
 
+    it 'lists the lost leads with their loss reason' do
+      reason = create(:loss_reason, name: 'Achou caro')
+      create(:funnel_stage_change, account: account, conversation_id: lead.id, inbox: inbox, new_stage: 'Perdido',
+                                   loss_reason: reason, created_at: now - 1.day)
+
+      expect(drilldown('losses')[:rows].pluck(:detail)).to eq(['Achou caro'])
+    end
+
     it 'pages through long lists' do
       stub_const('V2::Reports::Home::Drilldown::PER_PAGE', 2)
       3.times { lead }

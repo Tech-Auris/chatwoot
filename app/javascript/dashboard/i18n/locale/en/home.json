@@ -9,7 +9,6 @@
       "BOOKED": "nobody booked yet | 1 already booked | {count} already booked",
       "WAITING": "No lead waiting for an answer. | 1 lead has been waiting for an answer for more than 10 minutes. | {count} leads have been waiting for an answer for more than 10 minutes.",
       "DATA_FROM": "Data from: {inboxes}",
-      "TOMORROW": "Tomorrow: {scheduled} scheduled, {confirmed} confirmed",
       "LEADS_VERB": "arrived | arrived | arrived"
     },
     "TODAY": {
@@ -54,7 +53,8 @@
       "AI_CONVERSATIONS_SHARE": "{share}% of the period's leads",
       "HANDOFF": "AI → Human handoff",
       "HANDOFF_DETAIL": "{handed} of the {total} conversations the AI acted in",
-      "PERCENTAGE_POINTS": "p.p."
+      "PERCENTAGE_POINTS": "p.p.",
+      "TOTAL": "Total"
     },
     "LOAD_ERROR": "Could not load the home page. Try again in a moment.",
     "WAITING_DIALOG": {
@@ -106,7 +106,9 @@
         "FOLLOW_UP_STEP": "Follow-up",
         "NO_SHOW_AT": "No-show at",
         "ATTENDED_AT": "Attended at",
-        "MOVED_BY": "Moved by"
+        "MOVED_BY": "Moved by",
+        "LOST_AT": "Lost at",
+        "LOSS_REASON": "Loss reason"
       },
       "STATUSES": {
         "SCHEDULED": "Scheduled",

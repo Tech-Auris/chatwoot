@@ -1,12 +1,17 @@
 <script setup>
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import HomeDrillButton from './HomeDrillButton.vue';
 
 const props = defineProps({
   title: { type: String, required: true },
   // [{ label, count }]
   slices: { type: Array, required: true },
 });
+
+// The total in the middle opens the conversations behind the chart, like the
+// Motivos de perda donut of Funil → Conversão.
+const emit = defineEmits(['drill']);
 
 const { t } = useI18n();
 
@@ -24,7 +29,7 @@ const PALETTE = [
 ];
 
 const RADIUS = 50;
-const INNER = 30;
+const INNER = 36;
 const CENTER = 60;
 
 const total = computed(() =>
@@ -72,14 +77,27 @@ const rows = computed(() => {
       {{ t('HOME_OVERVIEW.METRICS.EMPTY') }}
     </p>
     <div v-else class="flex items-center gap-4">
-      <svg viewBox="0 0 120 120" class="flex-shrink-0 size-28">
-        <path
-          v-for="row in rows"
-          :key="row.label"
-          :d="row.path"
-          :fill="row.color"
-        />
-      </svg>
+      <div class="relative flex-shrink-0 size-36">
+        <svg viewBox="0 0 120 120" class="size-full">
+          <path
+            v-for="row in rows"
+            :key="row.label"
+            :d="row.path"
+            :fill="row.color"
+          />
+        </svg>
+        <div class="absolute inset-0 flex flex-col items-center justify-center">
+          <div class="flex items-center gap-1">
+            <span class="text-xl font-semibold text-n-slate-12">
+              {{ total }}
+            </span>
+            <HomeDrillButton @click="emit('drill')" />
+          </div>
+          <span class="text-xs text-n-slate-11">
+            {{ t('HOME_OVERVIEW.METRICS.TOTAL') }}
+          </span>
+        </div>
+      </div>
       <ul class="flex flex-col flex-1 min-w-0 gap-1 text-xs">
         <li
           v-for="row in rows"

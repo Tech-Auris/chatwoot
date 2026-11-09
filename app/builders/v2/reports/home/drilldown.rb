@@ -48,12 +48,17 @@ class V2::Reports::Home::Drilldown
     }
   end
 
-  # Who booked or moved the lead comes as a user id; the follow-up step and the
-  # appointment status go as they are.
+  # Who booked or moved the lead comes as a user id and the loss reason as its
+  # id; the follow-up step and the appointment status go as they are.
   def readable(detail)
+    return loss_reason_names[detail] if metric == 'losses'
     return detail unless user_detail?
 
     user_names[detail]
+  end
+
+  def loss_reason_names
+    @loss_reason_names ||= LossReason.where(id: latest_entries.filter_map(&:third)).pluck(:id, :name).to_h
   end
 
   def user_detail?

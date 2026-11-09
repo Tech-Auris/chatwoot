@@ -14,7 +14,8 @@ class V2::Reports::Home::MetricsBuilder
   ENTRY_SOURCES = {
     'leads' => :lead_entries, 'off_hours_leads' => :off_hours_lead_entries,
     'appointments' => :booking_entries, 'off_hours_appointments' => :off_hours_booking_entries,
-    'follow_up_leads' => :follow_up_rows, 'no_shows' => :no_show_rows, 'attendances' => :attendance_rows
+    'follow_up_leads' => :follow_up_rows, 'no_shows' => :no_show_rows, 'attendances' => :attendance_rows,
+    'losses' => :loss_rows
   }.freeze
   DRILLABLE = ENTRY_SOURCES.keys.freeze
 
@@ -104,6 +105,13 @@ class V2::Reports::Home::MetricsBuilder
 
   def attendance_rows
     outcome_rows(ATTENDANCE_STAGE_NAME)
+  end
+
+  # Leads lost in the period, with the loss reason (the Motivos de perda chart).
+  def loss_rows
+    scope.account.funnel_stage_changes.where(conversation_id: scope.conversations.select(:id), created_at: period.window)
+         .where.not(loss_reason_id: nil)
+         .pluck(:conversation_id, :created_at, :loss_reason_id)
   end
 
   def off_hours_lead_rows
