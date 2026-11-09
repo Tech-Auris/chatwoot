@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useAlert } from 'dashboard/composables';
 import { useMapGetter, useStore } from 'dashboard/composables/store';
 
@@ -11,9 +11,11 @@ import TemplateForm from './components/TemplateForm.vue';
 
 import MetaTemplatesAPI from 'dashboard/api/metaTemplates';
 import { stashWriteSeed } from './writeSeed';
+import { SYSTEM_LOCKED_FIELDS } from './kit';
 import { ref } from 'vue';
 
 const { t } = useI18n();
+const route = useRoute();
 const router = useRouter();
 const store = useStore();
 
@@ -32,6 +34,26 @@ const cloudInboxes = computed(() =>
 );
 
 const submitting = ref(false);
+
+// "Usar modelo" on the Kit Auris tab lands here with ?kit=<name>&inbox_id=,
+// and the form opens filled from the kit. System templates keep everything
+// but the body locked and only take the engine variables.
+const kitName = route.query.kit;
+const kitInboxId = route.query.inbox_id ? Number(route.query.inbox_id) : null;
+const kitTemplate = ref(null);
+const systemVariables = ref(null);
+const isSystemTemplate = computed(() => kitTemplate.value?.group === 'system');
+
+const loadKitTemplate = async () => {
+  try {
+    const { data } = await MetaTemplatesAPI.kit({ inboxId: kitInboxId });
+    kitTemplate.value = data.templates.find(item => item.name === kitName);
+    systemVariables.value = data.system_variables;
+  } catch (err) {
+    useAlert(err?.response?.data?.error || t('META_TEMPLATES.KIT.LOAD_FAILED'));
+  }
+  if (!kitTemplate.value) router.push({ name: 'meta_templates_index' });
+};
 
 const handleSubmit = async ({ inboxId, template }) => {
   submitting.value = true;
@@ -63,11 +85,15 @@ const handleCancel = () => router.push({ name: 'meta_templates_index' });
 
 onMounted(() => {
   if (!inboxes.value.length) store.dispatch('inboxes/get');
+  if (kitName && kitInboxId) loadKitTemplate();
 });
 </script>
 
 <template>
-  <SettingsLayout>
+  <SettingsLayout
+    :is-loading="!!kitName && !kitTemplate"
+    :loading-message="t('META_TEMPLATES.LOADING')"
+  >
     <template #header>
       <BaseSettingsHeader
         :title="t('META_TEMPLATES.NEW.TITLE')"
@@ -79,6 +105,10 @@ onMounted(() => {
       <TemplateForm
         mode="create"
         :inboxes="cloudInboxes"
+        :initial-template="kitTemplate"
+        :initial-inbox-id="kitTemplate ? kitInboxId : null"
+        :locked-fields="isSystemTemplate ? SYSTEM_LOCKED_FIELDS : []"
+        :allowed-variables="isSystemTemplate ? systemVariables : null"
         :submitting="submitting"
         @submit="handleSubmit"
         @cancel="handleCancel"

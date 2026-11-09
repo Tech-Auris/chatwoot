@@ -67,9 +67,11 @@ class Whatsapp::WebhookSetupService
 
   # Subscribe to `calls` only when voice calling is enabled on the inbox.
   # `history` and `smb_app_state_sync` only ever fire after a coexistence
-  # onboarding asks for them (Whatsapp::CoexistenceSyncRequestJob).
+  # onboarding asks for them (Whatsapp::CoexistenceSyncRequestJob). The
+  # template fields keep the Meta Templates page and the kit alerts in step
+  # without depending on the app-level subscription.
   def subscribed_fields
-    fields = %w[messages smb_message_echoes history smb_app_state_sync]
+    fields = %w[messages smb_message_echoes history smb_app_state_sync message_template_status_update message_template_quality_update]
     fields << 'calls' if @channel.provider_config['calling_enabled']
     fields
   end

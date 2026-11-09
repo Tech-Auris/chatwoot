@@ -12,6 +12,7 @@ import {
 import Button from 'dashboard/components-next/button/Button.vue';
 import Spinner from 'shared/components/Spinner.vue';
 import MetaTemplatesAPI from 'dashboard/api/metaTemplates';
+import { isFollowUpTemplate } from '../kit';
 
 const props = defineProps({
   template: { type: Object, default: null },
@@ -27,8 +28,12 @@ const { t } = useI18n();
 // Delete surface follows the backend policy: manager + admin only.
 // Agents see the full detail but no destructive action.
 const currentRole = useMapGetter('getCurrentRole');
-const canDelete = computed(() =>
-  ['administrator', 'manager'].includes(currentRole.value)
+// The kit's follow-up templates are maintained by Auris: no edit or delete.
+const isKitFollowUp = computed(() => isFollowUpTemplate(props.template?.name));
+const canDelete = computed(
+  () =>
+    ['administrator', 'manager'].includes(currentRole.value) &&
+    !isKitFollowUp.value
 );
 
 // Meta only accepts template edits when the template is APPROVED. Any
@@ -362,8 +367,14 @@ const qualityDate = computed(() => {
         </section>
       </div>
 
+      <p
+        v-if="isKitFollowUp"
+        class="border-t border-n-weak p-4 text-xxs text-n-slate-11"
+      >
+        {{ t('META_TEMPLATES.DETAIL.KIT_FOLLOW_UP') }}
+      </p>
       <footer
-        v-if="canDelete"
+        v-else-if="canDelete"
         class="border-t border-n-weak p-4 flex flex-col items-end gap-2"
       >
         <span

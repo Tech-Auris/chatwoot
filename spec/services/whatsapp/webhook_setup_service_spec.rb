@@ -14,7 +14,7 @@ describe Whatsapp::WebhookSetupService do
            validate_provider_config: false)
   end
   let(:waba_id) { 'test_waba_id' }
-  let(:fields) { %w[messages smb_message_echoes history smb_app_state_sync] }
+  let(:fields) { %w[messages smb_message_echoes history smb_app_state_sync message_template_status_update message_template_quality_update] }
   let(:access_token) { 'test_access_token' }
   let(:service) { described_class.new(channel, waba_id, access_token) }
   let(:api_client) { instance_double(Whatsapp::FacebookApiClient) }

@@ -24,6 +24,11 @@ class MetaTemplatePolicy < ApplicationPolicy
     index?
   end
 
+  # The Auris kit catalog with this inbox's clinic data and template status.
+  def kit?
+    index?
+  end
+
   # Reserved for the follow-up slices (Fatia 3+). Managers and
   # administrators can create/edit/delete; agents cannot.
   def create?

@@ -51,6 +51,7 @@ class Channel::Whatsapp < ApplicationRecord # rubocop:disable Metrics/ClassLengt
   before_destroy :teardown_webhooks
   before_destroy :disconnect_channel_provider, if: -> { provider_service.respond_to?(:disconnect_channel_provider) }
   after_commit :setup_webhooks, on: :create, if: :should_auto_setup_webhooks?
+  after_commit :install_follow_up_templates, on: :create, if: :should_auto_setup_webhooks?
 
   def name
     'Whatsapp'
@@ -433,6 +434,12 @@ class Channel::Whatsapp < ApplicationRecord # rubocop:disable Metrics/ClassLengt
   delegate :group_setting_update, to: :provider_service
   delegate :group_join_approval_mode, to: :provider_service
   delegate :group_member_add_mode, to: :provider_service
+
+  # Embedded signup calls this explicitly for all its paths (new, reauthorization
+  # and conversion); manual Cloud channels get it on create.
+  def install_follow_up_templates
+    Whatsapp::InstallFollowUpTemplatesJob.perform_later(self)
+  end
 
   def setup_webhooks
     perform_webhook_setup

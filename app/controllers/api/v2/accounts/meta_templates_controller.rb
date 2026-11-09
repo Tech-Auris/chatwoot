@@ -13,6 +13,7 @@ class Api::V2::Accounts::MetaTemplatesController < Api::V1::Accounts::BaseContro
   before_action :check_authorization
   before_action :fetch_inbox
   before_action :ensure_cloud_provider
+  before_action :enforce_kit_rules, only: %i[create update destroy]
 
   def index
     templates = @inbox.channel.message_templates || []
@@ -97,6 +98,15 @@ class Api::V2::Accounts::MetaTemplatesController < Api::V1::Accounts::BaseContro
         code: result[:error_code]
       }, status: :unprocessable_entity
     end
+  end
+
+  # The Auris kit (follow-up, system and suggested templates) with this
+  # inbox's clinic data filled in and the status of what the WABA already has.
+  def kit
+    render json: {
+      templates: Whatsapp::TemplateKit.for_inbox(@inbox),
+      system_variables: Whatsapp::TemplateKit::SYSTEM_VARIABLES.index_with { |name| Whatsapp::TemplateKit.examples[name] }
+    }
   end
 
   # Per-template send funnel derived from our own outgoing messages: how
@@ -187,6 +197,15 @@ class Api::V2::Accounts::MetaTemplatesController < Api::V1::Accounts::BaseContro
     return if @inbox.whatsapp? && @inbox.channel.try(:provider) == 'whatsapp_cloud'
 
     render json: { error: I18n.t('errors.meta_templates.non_cloud_inbox') }, status: :unprocessable_entity
+  end
+
+  # The kit's follow-up templates are read-only and its system templates keep
+  # the engine's contract, whatever the screen sends.
+  def enforce_kit_rules
+    name = action_name == 'create' ? create_payload['name'] : template_name_for(params[:id])
+    payload = { 'create' => -> { create_payload }, 'update' => -> { update_payload } }[action_name]&.call
+    error = Whatsapp::TemplateKit.violation(name, payload)
+    render json: { error: error }, status: :unprocessable_entity if error
   end
 
   def inbox_payload(inbox)

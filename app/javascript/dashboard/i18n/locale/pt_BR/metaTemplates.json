@@ -56,7 +56,8 @@
       "REJECTED_REASON_LABEL": "Motivo do Meta:",
       "DELETE": "Excluir template",
       "EDIT": "Editar template",
-      "EDIT_DISABLED_REASON": "Só templates APROVADOS podem ser editados (status atual: {status}). Exclua e crie um novo para alterar."
+      "EDIT_DISABLED_REASON": "Só templates APROVADOS podem ser editados (status atual: {status}). Exclua e crie um novo para alterar.",
+      "KIT_FOLLOW_UP": "Template de follow-up do Kit Auris. Ele é mantido pela Auris e não pode ser editado nem excluído."
     },
     "NOTIFICATIONS": {
       "STATUS_CHANGED": "A Meta atualizou o status do template \"{name}\" para {status}."
@@ -155,7 +156,10 @@
           "QUICK_REPLY": "Resposta rápida",
           "URL": "Botão URL",
           "PHONE_NUMBER": "Botão telefone"
-        }
+        },
+        "ALLOWED_VARIABLES": "Variáveis:",
+        "VAR_NOT_ALLOWED": "Variáveis não permitidas: {variables}. A IA da Auris só preenche as listadas acima; qualquer outra chegaria crua ao paciente.",
+        "KIT_PLACEHOLDER": "Troque {placeholders} pelos dados da sua clínica antes de enviar."
       },
       "SUBMIT": "Enviar para aprovação",
       "CANCEL": "Cancelar",
@@ -205,6 +209,31 @@
           "FREQUENCY": "Reduzir a frequência de envios para o mesmo paciente.",
           "UTILITY": "Se o conteúdo for aviso de consulta, e não promoção, usar um modelo de Utilidade.",
           "NEW_VERSION": "Se continuar baixa, criar uma nova versão do modelo com outro texto."
+        }
+      }
+    },
+    "TABS": {
+      "TEMPLATES": "Templates",
+      "KIT": "Kit Auris"
+    },
+    "KIT": {
+      "LOAD_FAILED": "Não foi possível carregar o Kit Auris. Tente novamente.",
+      "USE": "Usar modelo",
+      "VIEW": "Ver template",
+      "ALREADY_CREATED": "Já criado",
+      "NOT_INSTALLED": "Ainda não instalado",
+      "GROUPS": {
+        "follow_up": {
+          "TITLE": "Follow-up",
+          "DESCRIPTION": "Instalados automaticamente quando o número conecta na API Oficial. Mantidos pela Auris, não podem ser editados nem excluídos."
+        },
+        "system": {
+          "TITLE": "Padrão do sistema",
+          "DESCRIPTION": "Templates que a IA da Auris envia pelo nome (lembretes e webhooks). Só o texto pode ser alterado, com as variáveis mostradas no editor."
+        },
+        "suggested": {
+          "TITLE": "Sugeridos",
+          "DESCRIPTION": "Modelos de uso comum. Tudo pode ser editado antes de enviar para a Meta."
         }
       }
     }
