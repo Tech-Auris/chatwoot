@@ -30,7 +30,6 @@ json.accounts do
     json.name account_user.account.name
     json.status account_user.account.status
     json.onboarding_step account_user.account.onboarding_step
-    json.home_enabled account_user.account.home_enabled
     json.active_at account_user.active_at
     json.role account_user.role
     json.permissions account_user.permissions

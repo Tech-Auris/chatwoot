@@ -14,7 +14,6 @@
 #  feature_flags                    :bigint           default(0), not null
 #  funnel_enabled                   :boolean          default(FALSE), not null
 #  help_center_menu_enabled         :boolean          default(FALSE), not null
-#  home_enabled                     :boolean          default(FALSE), not null
 #  inbox_view_menu_enabled          :boolean          default(FALSE), not null
 #  internal_attributes              :jsonb            not null
 #  limits                           :jsonb
@@ -224,8 +223,7 @@ class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
       funnel_enabled: funnel_enabled,
       ai_status_uses_attribute: ai_status_uses_attribute,
       multi_language_ai: multi_language_ai,
-      whatsapp_groups_enabled: whatsapp_groups_enabled,
-      home_enabled: home_enabled
+      whatsapp_groups_enabled: whatsapp_groups_enabled
     }
   end
 

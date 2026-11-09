@@ -10,7 +10,7 @@ describe('#URL Helpers', () => {
             accounts: [{ id: 7500, name: 'Test Account 7500' }],
           },
         })
-      ).toBe('/app/accounts/7500/dashboard');
+      ).toBe('/app/accounts/7500/home');
     });
 
     it('should return correct conversation URL if account id and conversationId is present', () => {
@@ -25,17 +25,6 @@ describe('#URL Helpers', () => {
       ).toBe('/app/accounts/7500/conversations/752');
     });
 
-    it('lands on the Início page when the account has it on', () => {
-      expect(
-        getLoginRedirectURL({
-          user: {
-            account_id: 7500,
-            accounts: [{ id: 7500, name: 'Clinic', home_enabled: true }],
-          },
-        })
-      ).toBe('/app/accounts/7500/home');
-    });
-
     it('should return default URL if account id is not present', () => {
       expect(getLoginRedirectURL({ ssoAccountId: '7500', user: {} })).toBe(
         '/app/'
@@ -47,7 +36,7 @@ describe('#URL Helpers', () => {
             accounts: [{ id: '7501', name: 'Test Account 7501' }],
           },
         })
-      ).toBe('/app/accounts/7501/dashboard');
+      ).toBe('/app/accounts/7501/home');
       expect(getLoginRedirectURL('7500', null)).toBe('/app/');
     });
   });

@@ -524,8 +524,7 @@ RSpec.describe Account do
           funnel_enabled: true,
           ai_status_uses_attribute: true,
           multi_language_ai: false,
-          whatsapp_groups_enabled: true,
-          home_enabled: false
+          whatsapp_groups_enabled: true
         },
         follow_up: { 'end_flow' => { 'wait_minutes' => 60 } },
         status: nil,

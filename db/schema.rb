@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_11_09_120000) do
+ActiveRecord::Schema[7.1].define(version: 2026_11_07_120000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -133,7 +133,6 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_09_120000) do
     t.string "stripe_customer_id"
     t.boolean "token_billing_enabled", default: true, null: false
     t.boolean "whatsapp_groups_enabled", default: true, null: false
-    t.boolean "home_enabled", default: false, null: false
     t.bigint "erp_source_id"
     t.index ["erp_source_id"], name: "index_accounts_on_erp_source_id"
     t.index ["status"], name: "index_accounts_on_status"

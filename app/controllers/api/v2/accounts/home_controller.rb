@@ -1,9 +1,6 @@
-# The Início page: the day summary and the indicator cards. Every user of an
-# account with the page switched on can open it; the builder narrows the
-# numbers to the caixas they can see.
+# The Início page: the day summary and the indicator cards. Every user of the
+# account can open it; the builder narrows the numbers to the caixas they see.
 class Api::V2::Accounts::HomeController < Api::V1::Accounts::BaseController
-  before_action :ensure_home_enabled
-
   def show
     render json: builder.build
   end
@@ -18,10 +15,6 @@ class Api::V2::Accounts::HomeController < Api::V1::Accounts::BaseController
 
   def builder
     V2::Reports::HomeBuilder.new(account: Current.account, account_user: Current.account_user, params: home_params)
-  end
-
-  def ensure_home_enabled
-    head :not_found unless Current.account.home_enabled?
   end
 
   def home_params

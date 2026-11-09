@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe 'Home API', type: :request do
-  let(:account) { create(:account, home_enabled: true) }
+  let(:account) { create(:account) }
   let(:agent) { create(:user, account: account, role: :agent) }
 
   describe 'GET /api/v2/accounts/:account_id/home' do
@@ -10,14 +10,6 @@ RSpec.describe 'Home API', type: :request do
 
       expect(response).to have_http_status(:success)
       expect(response.parsed_body.keys).to include('today', 'metrics', 'inboxes', 'available_inboxes')
-    end
-
-    it 'is not found while the page is off for the account' do
-      account.update!(home_enabled: false)
-
-      get "/api/v2/accounts/#{account.id}/home", headers: agent.create_new_auth_token, as: :json
-
-      expect(response).to have_http_status(:not_found)
     end
 
     it 'lists the conversations behind a card' do

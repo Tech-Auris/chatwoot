@@ -73,10 +73,6 @@ const isFunnelEnabled = computed(
   () => accountGetter.value(accountId.value)?.funnel_enabled !== false
 );
 
-const isHomeEnabled = computed(
-  () => accountGetter.value(accountId.value)?.home_enabled === true
-);
-
 // ClickUp integration is only "wired up" when both the API key AND the
 // webhook are configured. Falsey/missing hides the "Meus Tickets" item
 // so the operator does not open dead-end tickets that never sync back.
@@ -381,17 +377,13 @@ const reportRoutes = computed(() => newReportRoutes());
 
 const menuItems = computed(() => {
   const items = [
-    ...(isHomeEnabled.value
-      ? [
-          {
-            name: 'Home',
-            label: t('SIDEBAR.HOME_OVERVIEW'),
-            icon: 'i-lucide-house',
-            to: accountScopedRoute('home_overview'),
-            activeOn: ['home_overview'],
-          },
-        ]
-      : []),
+    {
+      name: 'Home',
+      label: t('SIDEBAR.HOME_OVERVIEW'),
+      icon: 'i-lucide-house',
+      to: accountScopedRoute('home_overview'),
+      activeOn: ['home_overview'],
+    },
     ...(isInboxMenuEnabled.value
       ? [
           {
