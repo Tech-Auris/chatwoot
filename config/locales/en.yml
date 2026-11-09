@@ -476,8 +476,12 @@ en:
         not_sent_due_to_messaging_window: 'CSAT survey not sent due to outgoing message restrictions'
       auto_resolve:
         not_sent_due_to_messaging_window: 'Auto-resolve message not sent due to outgoing message restrictions'
-      ai_schedule:
-        ai_off: 'AI turned off by the schedule'
+      ai_auto_off:
+        schedule: 'AI turned off by the schedule'
+        inbox: 'AI turned off: the AI is paused in this inbox'
+        contact: 'AI turned off for this contact'
+        contact_manual: '%{user_name} turned the AI off for this contact'
+        contact_enabled: '%{user_name} turned the AI back on for this contact: it applies to the next messages'
       marketing_opt_out:
         manual: '%{user_name} turned on the marketing opt-out: this contact no longer gets campaigns or follow-ups'
         meta: 'Marketing opt-out turned on by Meta (the patient stopped marketing messages)'

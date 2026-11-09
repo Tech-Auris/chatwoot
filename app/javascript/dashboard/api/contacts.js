@@ -41,6 +41,10 @@ class ContactAPI extends ApiClient {
   }
 
   // On from anyone; off only from a person (the API refuses the AI and bots).
+  setAiStatus(contactId, enabled) {
+    return axios.post(`${this.url}/${contactId}/ai_status`, { enabled });
+  }
+
   setMarketingOptOut(contactId, enabled) {
     return axios.post(`${this.url}/${contactId}/marketing_opt_out`, {
       enabled,

@@ -1,5 +1,13 @@
 {
   "CONTACT_PANEL": {
+    "AI_DISABLED": {
+      "TITLE": "AI replies to this contact",
+      "HELP": "Turned on, the AI replies to this contact in every inbox and conversation. Turn it off so their messages arrive with the AI off and stay with the team.",
+      "OFF_SINCE": "Off since {date}, by {user}",
+      "TURNED_ON": "AI back on for this contact: it applies to the next messages",
+      "TURNED_OFF": "AI off for this contact, in every inbox and conversation",
+      "ERROR": "Could not change the AI for this contact. Please try again."
+    },
     "MARKETING_OPT_OUT": {
       "TITLE": "Marketing opt-out",
       "OFF_HELP": "Turned on, this contact no longer gets campaigns or follow-ups. Replies, reminders and confirmations keep going out.",

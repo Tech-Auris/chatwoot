@@ -154,6 +154,11 @@ export const actions = {
     }
   },
 
+  setAiStatus: async ({ commit }, { id, enabled }) => {
+    const response = await ContactAPI.setAiStatus(id, enabled);
+    commit(types.EDIT_CONTACT, response.data.payload);
+  },
+
   setMarketingOptOut: async ({ commit }, { id, enabled }) => {
     const response = await ContactAPI.setMarketingOptOut(id, enabled);
     commit(types.EDIT_CONTACT, response.data.payload);

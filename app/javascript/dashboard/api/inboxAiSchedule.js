@@ -11,8 +11,9 @@ class InboxAiScheduleAPI extends ApiClient {
     return axios.get(`${this.url}/${inboxId}/ai_schedule`);
   }
 
-  update(inboxId, { enabled, teamId, hours }) {
+  update(inboxId, { paused, enabled, teamId, hours }) {
     return axios.patch(`${this.url}/${inboxId}/ai_schedule`, {
+      paused,
       enabled,
       team_id: teamId || null,
       hours,

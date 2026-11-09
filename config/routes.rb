@@ -328,6 +328,7 @@ Rails.application.routes.draw do
               get :contactable_inboxes
               post :destroy_custom_attributes
               post :marketing_opt_out
+              post :ai_status
               post :sync_group
               delete :avatar
             end

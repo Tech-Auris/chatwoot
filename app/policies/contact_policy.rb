@@ -47,6 +47,10 @@ class ContactPolicy < ApplicationPolicy
     true
   end
 
+  def ai_status?
+    true
+  end
+
   def show?
     true
   end

@@ -218,6 +218,7 @@ const copyConversationId = async () => {
         class="!p-0 me-1"
         :conversation-id="chat.id"
         :ai-enabled="chat.ai_enabled !== false"
+        :contact-ai-disabled="!!currentContact.ai_disabled"
       />
       <FollowUpBadge
         v-if="chat?.follow_up"

@@ -23,6 +23,17 @@ RSpec.describe 'Inbox AI schedule API', type: :request do
     expect(response.parsed_body['hours'].first).to eq('day_of_week' => 1, 'from' => '08:00', 'to' => '12:00')
   end
 
+  it 'pauses the AI in the inbox and turns it back on' do
+    patch url, params: params.merge(paused: true), headers: admin.create_new_auth_token, as: :json
+
+    expect(inbox.reload.ai_paused).to be(true)
+    expect(response.parsed_body['paused']).to be(true)
+
+    patch url, params: params, headers: admin.create_new_auth_token, as: :json
+
+    expect(inbox.reload.ai_paused).to be(false)
+  end
+
   it 'lets a manager read and change it' do
     manager = create(:user, account: account)
     manager.account_users.find_by(account: account).update!(role: :manager)

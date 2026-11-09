@@ -1,5 +1,13 @@
 {
   "CONTACT_PANEL": {
+    "AI_DISABLED": {
+      "TITLE": "IA responde este contato",
+      "HELP": "Ligado, a Auris responde este contato em todas as caixas e conversas. Desligue para que as mensagens dele cheguem com a IA desligada e fiquem só com a equipe.",
+      "OFF_SINCE": "Desligado em {date}, por {user}",
+      "TURNED_ON": "IA religada para este contato: vale para as próximas mensagens",
+      "TURNED_OFF": "IA desligada para este contato, em todas as caixas e conversas",
+      "ERROR": "Não foi possível alterar a IA deste contato. Tente novamente."
+    },
     "MARKETING_OPT_OUT": {
       "TITLE": "Opt-out de marketing",
       "OFF_HELP": "Ligado, este contato não recebe mais campanhas nem follow-ups. Respostas, lembretes e confirmações continuam saindo.",
