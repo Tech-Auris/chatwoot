@@ -6,20 +6,18 @@ export const hasAuthCookie = () => {
   return !!Cookies.get('cw_d_session_info');
 };
 
-const getSSOAccountPath = ({ ssoAccountId, user }) => {
+const getSSOAccount = ({ ssoAccountId, user }) => {
   const { accounts = [], account_id = null } = user || {};
   const ssoAccount = accounts.find(
     account => account.id === Number(ssoAccountId)
   );
-  let accountPath = '';
-  if (ssoAccount) {
-    accountPath = `accounts/${ssoAccountId}`;
-  } else if (accounts.length) {
-    // If the account id is not found, redirect to the first account
-    const accountId = account_id || accounts[0].id;
-    accountPath = `accounts/${accountId}`;
-  }
-  return accountPath;
+  if (ssoAccount) return ssoAccount;
+  if (!accounts.length) return null;
+  // If the account id is not found, redirect to the first account
+  const accountId = account_id || accounts[0].id;
+  return (
+    accounts.find(account => account.id === accountId) || { id: accountId }
+  );
 };
 
 const capitalize = str =>
@@ -42,12 +40,16 @@ export const getLoginRedirectURL = ({
   ssoConversationId,
   user,
 }) => {
-  const accountPath = getSSOAccountPath({ ssoAccountId, user });
-  if (accountPath) {
+  const account = getSSOAccount({ ssoAccountId, user });
+  if (account) {
+    const accountPath = `accounts/${account.id}`;
     if (ssoConversationId) {
       return frontendURL(`${accountPath}/conversations/${ssoConversationId}`);
     }
-    return frontendURL(`${accountPath}/dashboard`);
+    // Accounts with the Início page land on it after the login.
+    return frontendURL(
+      `${accountPath}/${account.home_enabled ? 'home' : 'dashboard'}`
+    );
   }
   return DEFAULT_REDIRECT_URL;
 };

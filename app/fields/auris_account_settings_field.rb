@@ -23,7 +23,10 @@ class AurisAccountSettingsField < Administrate::Field::Base
         checked: resource.multi_language_ai },
       { key: :whatsapp_groups_enabled,
         label: 'WhatsApp groups (QR Code)',
-        checked: resource.whatsapp_groups_enabled }
+        checked: resource.whatsapp_groups_enabled },
+      { key: :home_enabled,
+        label: 'Home page (Início)',
+        checked: resource.home_enabled }
     ]
   end
 end

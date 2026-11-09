@@ -101,11 +101,13 @@ class SuperAdmin::AccountsController < SuperAdmin::ApplicationController
   def merge_auris_settings(permitted_params)
     return if params[:auris_settings].blank?
 
-    auris = params.require(:auris_settings).permit(:funnel_enabled, :ai_status_uses_attribute, :multi_language_ai, :whatsapp_groups_enabled)
+    auris = params.require(:auris_settings).permit(:funnel_enabled, :ai_status_uses_attribute, :multi_language_ai,
+                                                   :whatsapp_groups_enabled, :home_enabled)
     permitted_params[:funnel_enabled] = auris[:funnel_enabled] == '1'
     permitted_params[:ai_status_uses_attribute] = auris[:ai_status_uses_attribute] == '1'
     permitted_params[:multi_language_ai] = auris[:multi_language_ai] == '1'
     permitted_params[:whatsapp_groups_enabled] = auris[:whatsapp_groups_enabled] == '1'
+    permitted_params[:home_enabled] = auris[:home_enabled] == '1'
   end
 
   # Maps the "Auris menus" grid checkboxes (rendered by AurisAccountMenusField)

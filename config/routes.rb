@@ -707,6 +707,9 @@ Rails.application.routes.draw do
             end
           end
           resource :year_in_review, only: [:show]
+          resource :home, only: [:show], controller: 'home' do
+            get :drilldown
+          end
           resources :live_reports, only: [] do
             collection do
               get :conversation_metrics

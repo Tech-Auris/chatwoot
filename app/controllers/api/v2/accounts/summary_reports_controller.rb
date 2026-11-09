@@ -81,6 +81,8 @@ class Api::V2::Accounts::SummaryReportsController < Api::V1::Accounts::BaseContr
       business_hours: ActiveModel::Type::Boolean.new.cast(permitted_params[:business_hours]),
       # Funnel reports honor these three; other builders quietly ignore them.
       inbox_id: permitted_params[:inbox_id],
+      # The Início page opens the funnel drill-down over several caixas.
+      inbox_ids: permitted_params[:inbox_ids].presence,
       label: permitted_params[:label],
       origem: permitted_params[:origem]
     }
@@ -93,7 +95,7 @@ class Api::V2::Accounts::SummaryReportsController < Api::V1::Accounts::BaseContr
   end
 
   def permitted_params
-    params.permit(:since, :until, :business_hours, :inbox_id, :label, :origem)
+    params.permit(:since, :until, :business_hours, :inbox_id, :label, :origem, inbox_ids: [])
   end
 
   def date_range_too_long?

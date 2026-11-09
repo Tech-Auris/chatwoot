@@ -25,6 +25,17 @@ describe('#URL Helpers', () => {
       ).toBe('/app/accounts/7500/conversations/752');
     });
 
+    it('lands on the Início page when the account has it on', () => {
+      expect(
+        getLoginRedirectURL({
+          user: {
+            account_id: 7500,
+            accounts: [{ id: 7500, name: 'Clinic', home_enabled: true }],
+          },
+        })
+      ).toBe('/app/accounts/7500/home');
+    });
+
     it('should return default URL if account id is not present', () => {
       expect(getLoginRedirectURL({ ssoAccountId: '7500', user: {} })).toBe(
         '/app/'
