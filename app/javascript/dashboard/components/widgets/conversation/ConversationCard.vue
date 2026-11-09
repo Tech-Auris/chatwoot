@@ -151,13 +151,17 @@ watch(
           class="flex items-center gap-2 flex-shrink-0"
           :class="{ 'flex-1 justify-end': !showInboxName }"
         >
-          <span
+          <Avatar
             v-if="showAssignee && assignee.name"
-            class="text-n-slate-11 text-xs font-medium leading-3 py-0.5 px-0 inline-flex items-center truncate"
-          >
-            <fluent-icon icon="person" size="12" class="text-n-slate-11" />
-            {{ assignee.name }}
-          </span>
+            v-tooltip.top="
+              $t('CHAT_LIST.ASSIGNEE_TOOLTIP', { name: assignee.name })
+            "
+            :name="assignee.name"
+            :src="assignee.thumbnail"
+            :size="16"
+            class="flex-shrink-0"
+            data-test-id="card-assignee"
+          />
           <CardPriorityIcon
             :priority="chat.priority"
             class="flex-shrink-0 !size-3.5"
