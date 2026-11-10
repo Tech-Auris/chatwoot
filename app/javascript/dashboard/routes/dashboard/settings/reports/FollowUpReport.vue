@@ -29,7 +29,14 @@ const contactQuery = ref('');
 const deliveryStatus = ref('');
 const outcomeFilter = ref('');
 const DELIVERY_STATUSES = ['sent', 'failed', 'pending'];
-const OUTCOMES = ['waiting', 'reengaged', 'closed', 'no_response', 'opted_out'];
+const OUTCOMES = [
+  'waiting',
+  'reengaged',
+  'closed',
+  'no_response',
+  'opted_out',
+  'interrupted',
+];
 
 const rows = ref([]);
 const steps = ref([]);
@@ -154,6 +161,7 @@ const OUTCOME_CLASS = {
   closed: 'bg-n-amber-3 text-n-amber-11',
   no_response: 'bg-n-alpha-2 text-n-slate-11',
   opted_out: 'bg-n-ruby-3 text-n-ruby-11',
+  interrupted: 'bg-n-slate-3 text-n-slate-11',
 };
 
 const deliveryLabel = status =>

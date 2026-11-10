@@ -383,6 +383,7 @@ class Message < ApplicationRecord
     reopen_conversation
     mark_pending_conversation_as_open_for_human_response
     set_conversation_activity
+    settle_follow_up_on_reply
     turn_ai_off_automatically
     dispatch_create_events
     send_reply
@@ -392,6 +393,17 @@ class Message < ApplicationRecord
 
   def update_contact_activity
     sender.update!(last_activity_at: DateTime.now) if sender.is_a?(Contact)
+  end
+
+  # A patient message (or reaction) answers the running FUP. Runs before the
+  # AI auto-off so a reply that also hands the chat to a human still counts
+  # as a reply, not an interruption.
+  def settle_follow_up_on_reply
+    return unless incoming? && !private? && sender.is_a?(Contact)
+
+    FollowUp.settle_latest!(conversation, :reengaged)
+  rescue StandardError => e
+    ChatwootExceptionTracker.new(e, account: account).capture_exception
   end
 
   # Runs before the create events so the webhooks already see the AI off.
