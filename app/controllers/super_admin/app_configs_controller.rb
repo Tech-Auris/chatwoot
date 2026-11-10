@@ -144,10 +144,12 @@ class SuperAdmin::AppConfigsController < SuperAdmin::ApplicationController
       # Also where the proposal messages to leads go out from on WhatsApp (an
       # account and one of its inboxes — the main seller's number), when the
       # reservation's last-day reminder is sent, and the webhook called once a
-      # sale becomes an account (Sales::AccountCreatedWebhookJob).
+      # sale becomes an account (Sales::AccountCreatedWebhookJob), plus the
+      # Meta pixel the paid sale is reported to (Sales::MetaPurchaseService).
       'commercial' => %w[SALES_PROPOSAL_LOGO SALES_PIX_PAYLOAD SALES_TERMS_URL
                          COMMERCIAL_WHATSAPP_ACCOUNT_ID COMMERCIAL_WHATSAPP_INBOX_ID COMMERCIAL_RESERVATION_REMINDER_TIME
-                         COMMERCIAL_ACCOUNT_ADMIN_USER_ID COMMERCIAL_ACCOUNT_WEBHOOK_URL COMMERCIAL_ACCOUNT_WEBHOOK_SECRET],
+                         COMMERCIAL_ACCOUNT_ADMIN_USER_ID COMMERCIAL_ACCOUNT_WEBHOOK_URL COMMERCIAL_ACCOUNT_WEBHOOK_SECRET
+                         COMMERCIAL_META_PIXEL_ID COMMERCIAL_META_CAPI_TOKEN COMMERCIAL_META_TEST_EVENT_CODE],
       # The AI secretary's user ("IA | Auris"): assigning a conversation to it
       # turns the AI status on, unassigning it turns it off.
       'secretary' => %w[SECRETARY_AI_USER_ID],

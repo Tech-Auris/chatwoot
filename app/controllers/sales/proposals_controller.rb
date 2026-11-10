@@ -14,6 +14,7 @@ class Sales::ProposalsController < ActionController::Base
 
   before_action :set_proposal
   before_action :require_unlock, only: [:show, :save_details, :checkout, :pay, :payment_return, :tokens, :save_token_card]
+  before_action :remember_buyer_browser!, only: :pay
 
   def show
     @items = @proposal.items
@@ -175,6 +176,12 @@ class Sales::ProposalsController < ActionController::Base
 
   def submitted_phone_last4
     params[:phone_last4].presence || Array(params[:phone_last4_digits]).join
+  end
+
+  # The browser behind the payment, so the Meta Purchase sent once it is
+  # confirmed can go as a website event.
+  def remember_buyer_browser!
+    @proposal.update_columns(client_ip: request.remote_ip, client_user_agent: request.user_agent) # rubocop:disable Rails/SkipsModelValidations
   end
 
   def sign_terms!(version_id)

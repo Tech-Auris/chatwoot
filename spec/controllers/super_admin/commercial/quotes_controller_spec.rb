@@ -7,7 +7,8 @@ RSpec.describe 'Super Admin Commercial Quotes', type: :request do
 
   let(:prospect) do
     { task_id: '86ak7rd8j', name: 'Felicia Macedo', clinic_name: 'Clínica Cinco',
-      email: 'contato@exemplo.com', phone: '+5561981402211', status: 'negociação' }
+      email: 'contato@exemplo.com', phone: '+5561981402211', status: 'negociação',
+      fbclid: 'IwAR123', created_at: 1_791_419_344_534 }
   end
 
   # `recurring: nil` stands for a one-off price; the count is what tells a
@@ -254,6 +255,12 @@ RSpec.describe 'Super Admin Commercial Quotes', type: :request do
         clickup_task_id: '86ak7rd8j', prospect_name: 'Felicia Macedo', company_name: 'Clínica Cinco',
         prospect_phone: '+5561981402211', clickup_status: 'negociação', status: 'draft'
       )
+    end
+
+    it 'keeps the ad click behind the lead for the Meta Purchase' do
+      post '/super_admin/commercial/quotes', params: payload, as: :json
+
+      expect(SalesQuote.last).to have_attributes(fbclid: 'IwAR123', fbclid_captured_at: Time.zone.at(1_791_419_344))
     end
 
     # The catalogue moves; what the prospect was shown must not move with it.
