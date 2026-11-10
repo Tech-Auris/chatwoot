@@ -666,4 +666,72 @@ RSpec.describe 'Meta Templates API', type: :request do
       expect(body['code']).to eq(100)
     end
   end
+
+  describe 'Auris kit' do
+    let(:provider) { instance_double(Whatsapp::Providers::WhatsappCloudService) }
+    let(:kit_templates) do
+      [{ 'id' => '501', 'name' => 'auris_fup_geral', 'status' => 'APPROVED', 'category' => 'MARKETING', 'language' => 'pt_BR' },
+       { 'id' => '502', 'name' => 'lembrete_24h', 'status' => 'REJECTED', 'category' => 'UTILITY', 'language' => 'pt_BR' }]
+    end
+
+    before do
+      cloud_channel.update!(message_templates: kit_templates)
+      # rubocop:disable RSpec/AnyInstance
+      allow_any_instance_of(Channel::Whatsapp).to receive(:provider_service).and_return(provider)
+      allow_any_instance_of(Channel::Whatsapp).to receive(:sync_templates)
+      # rubocop:enable RSpec/AnyInstance
+    end
+
+    def system_template(text)
+      payload = Whatsapp::TemplateKit.meta_payload(Whatsapp::TemplateKit.find('lembrete_48h'))
+      payload['components'].first['text'] = text
+      payload
+    end
+
+    it 'lists the kit with the clinic name and the WABA status' do
+      get "/api/v2/accounts/#{account.id}/meta_templates/kit", params: { inbox_id: cloud_inbox.id }, headers: agent.create_new_auth_token
+
+      expect(response).to have_http_status(:ok)
+      kit = response.parsed_body['templates'].index_by { |template| template['name'] }
+      expect(kit['lembrete_24h']).to include('group' => 'system', 'existing_id' => '502', 'existing_status' => 'REJECTED')
+      expect(kit['lembrete_48h']['components'].first['text']).to include("na #{account.name},")
+    end
+
+    it 'refuses to edit or delete a follow-up template' do
+      allow(provider).to receive(:update_template)
+      allow(provider).to receive(:delete_template)
+
+      patch "/api/v2/accounts/#{account.id}/meta_templates/501", params: { inbox_id: cloud_inbox.id, template: { category: 'MARKETING' } },
+                                                                 headers: admin.create_new_auth_token
+      expect(response).to have_http_status(:unprocessable_entity)
+
+      delete "/api/v2/accounts/#{account.id}/meta_templates/501", params: { inbox_id: cloud_inbox.id }, headers: admin.create_new_auth_token
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.parsed_body['error']).to include('follow-up')
+      expect(provider).not_to have_received(:update_template)
+      expect(provider).not_to have_received(:delete_template)
+    end
+
+    it 'refuses a system template with a variable the engine does not fill' do
+      allow(provider).to receive(:create_template)
+
+      post "/api/v2/accounts/#{account.id}/meta_templates",
+           params: { inbox_id: cloud_inbox.id, template: system_template('Oi {{nome}}, traga o {{documento}} no dia {{dia}}.') },
+           headers: admin.create_new_auth_token, as: :json
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.parsed_body['error']).to include('documento')
+      expect(provider).not_to have_received(:create_template)
+    end
+
+    it 'creates a system template whose body was edited within the rules' do
+      allow(provider).to receive(:create_template).and_return(success: true, template: { 'id' => '503', 'status' => 'PENDING' })
+
+      post "/api/v2/accounts/#{account.id}/meta_templates",
+           params: { inbox_id: cloud_inbox.id, template: system_template('Oi {{nome}}, nos vemos em {{dia}} às {{hora}}.') },
+           headers: admin.create_new_auth_token, as: :json
+
+      expect(response).to have_http_status(:created)
+    end
+  end
 end

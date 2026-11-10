@@ -15,6 +15,8 @@ import StatusBadge from './components/StatusBadge.vue';
 import TemplateQualityBadge from 'dashboard/components-next/whatsapp/TemplateQualityBadge.vue';
 import { templateScore } from 'dashboard/helper/templateQuality';
 import TemplateDetailDrawer from './components/TemplateDetailDrawer.vue';
+import TabBar from 'dashboard/components-next/tabbar/TabBar.vue';
+import KitTab from './components/KitTab.vue';
 
 import MetaTemplatesAPI from 'dashboard/api/metaTemplates';
 import { takeWriteSeed } from './writeSeed';
@@ -66,6 +68,18 @@ const categoryFilter = ref('ALL');
 const qualityFilter = ref('ALL');
 const selectedTemplate = ref(null);
 const drawerOpen = ref(false);
+
+// Tab 0 lists the WABA's templates; tab 1 is the Auris kit.
+const activeTab = ref(0);
+const isKitTab = computed(() => activeTab.value === 1);
+const tabs = computed(() => [
+  { label: t('META_TEMPLATES.TABS.TEMPLATES') },
+  { label: t('META_TEMPLATES.TABS.KIT') },
+]);
+const onTabChanged = tab => {
+  activeTab.value = tabs.value.findIndex(item => item.label === tab.label);
+};
+const kitReloadKey = ref(0);
 
 const STATUS_OPTIONS = [
   'ALL',
@@ -134,6 +148,7 @@ const runSync = async ({ silent = false } = {}) => {
     });
     templates.value = data.templates || [];
     lastSyncedAt.value = data.last_synced_at;
+    kitReloadKey.value += 1;
     if (!silent) useAlert(t('META_TEMPLATES.SYNC.SUCCESS'));
   } catch (err) {
     // Auto-sync stays quiet on failure too — the 5-min background scheduler
@@ -194,6 +209,13 @@ const fetchTemplates = async () => {
 const openDetail = template => {
   selectedTemplate.value = template;
   drawerOpen.value = true;
+};
+
+const openKitTemplate = templateId => {
+  const template = templates.value.find(
+    item => String(item.id) === String(templateId)
+  );
+  if (template) openDetail(template);
 };
 
 const closeDetail = () => {
@@ -325,6 +347,7 @@ onMounted(async () => {
 // page after time away picks up any background changes.
 onActivated(() => {
   if (selectedInboxId.value) fetchTemplates();
+  kitReloadKey.value += 1;
 });
 </script>
 
@@ -344,6 +367,13 @@ onActivated(() => {
 
     <template #body>
       <div class="grid gap-4">
+        <TabBar
+          :tabs="tabs"
+          :initial-active-tab="activeTab"
+          class="w-fit"
+          @tab-changed="onTabChanged"
+        />
+
         <!-- Filter row: match the styling used across settings/reports so
              every field (selects and search input) sits on the same
              baseline. Native selects get the same outline/rounded-lg/
@@ -365,53 +395,55 @@ onActivated(() => {
                 </option>
               </select>
             </label>
-            <label class="flex flex-col gap-1 text-xs text-n-slate-11">
-              {{ t('META_TEMPLATES.FILTERS.STATUS') }}
-              <select
-                v-model="statusFilter"
-                class="bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg pl-3 pr-9 h-10 text-sm text-n-slate-12 focus:outline-n-brand min-w-40"
-              >
-                <option v-for="s in STATUS_OPTIONS" :key="s" :value="s">
-                  {{ t(`META_TEMPLATES.STATUS.${s}`, s) }}
-                </option>
-              </select>
-            </label>
-            <label class="flex flex-col gap-1 text-xs text-n-slate-11">
-              {{ t('META_TEMPLATES.FILTERS.CATEGORY') }}
-              <select
-                v-model="categoryFilter"
-                class="bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg pl-3 pr-9 h-10 text-sm text-n-slate-12 focus:outline-n-brand min-w-44"
-              >
-                <option v-for="c in CATEGORY_OPTIONS" :key="c" :value="c">
-                  {{ t(`META_TEMPLATES.CATEGORY.${c}`, c) }}
-                </option>
-              </select>
-            </label>
-            <label class="flex flex-col gap-1 text-xs text-n-slate-11">
-              {{ t('META_TEMPLATES.FILTERS.QUALITY') }}
-              <select
-                v-model="qualityFilter"
-                class="bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg pl-3 pr-9 h-10 text-sm text-n-slate-12 focus:outline-n-brand min-w-44"
-              >
-                <option v-for="q in QUALITY_OPTIONS" :key="q" :value="q">
-                  {{ t(`META_TEMPLATES.QUALITY.${q}`) }}
-                </option>
-              </select>
-            </label>
-            <!-- Native input with the exact same class shape used on the
+            <template v-if="!isKitTab">
+              <label class="flex flex-col gap-1 text-xs text-n-slate-11">
+                {{ t('META_TEMPLATES.FILTERS.STATUS') }}
+                <select
+                  v-model="statusFilter"
+                  class="bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg pl-3 pr-9 h-10 text-sm text-n-slate-12 focus:outline-n-brand min-w-40"
+                >
+                  <option v-for="s in STATUS_OPTIONS" :key="s" :value="s">
+                    {{ t(`META_TEMPLATES.STATUS.${s}`, s) }}
+                  </option>
+                </select>
+              </label>
+              <label class="flex flex-col gap-1 text-xs text-n-slate-11">
+                {{ t('META_TEMPLATES.FILTERS.CATEGORY') }}
+                <select
+                  v-model="categoryFilter"
+                  class="bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg pl-3 pr-9 h-10 text-sm text-n-slate-12 focus:outline-n-brand min-w-44"
+                >
+                  <option v-for="c in CATEGORY_OPTIONS" :key="c" :value="c">
+                    {{ t(`META_TEMPLATES.CATEGORY.${c}`, c) }}
+                  </option>
+                </select>
+              </label>
+              <label class="flex flex-col gap-1 text-xs text-n-slate-11">
+                {{ t('META_TEMPLATES.FILTERS.QUALITY') }}
+                <select
+                  v-model="qualityFilter"
+                  class="bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg pl-3 pr-9 h-10 text-sm text-n-slate-12 focus:outline-n-brand min-w-44"
+                >
+                  <option v-for="q in QUALITY_OPTIONS" :key="q" :value="q">
+                    {{ t(`META_TEMPLATES.QUALITY.${q}`) }}
+                  </option>
+                </select>
+              </label>
+              <!-- Native input with the exact same class shape used on the
                  three selects. The Chatwoot `<Input>` component wraps
                  itself in an extra flex container that adds spacing and
                  pushes the field below the row baseline; the raw `<input>`
                  with identical classes lines up pixel-for-pixel. -->
-            <label class="flex flex-col gap-1 text-xs text-n-slate-11">
-              {{ t('META_TEMPLATES.FILTERS.SEARCH') }}
-              <input
-                v-model="search"
-                type="text"
-                class="bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg px-3 h-10 text-sm text-n-slate-12 focus:outline-n-brand placeholder:text-n-slate-10 min-w-64"
-                :placeholder="t('META_TEMPLATES.FILTERS.SEARCH_PLACEHOLDER')"
-              />
-            </label>
+              <label class="flex flex-col gap-1 text-xs text-n-slate-11">
+                {{ t('META_TEMPLATES.FILTERS.SEARCH') }}
+                <input
+                  v-model="search"
+                  type="text"
+                  class="bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg px-3 h-10 text-sm text-n-slate-12 focus:outline-n-brand placeholder:text-n-slate-10 min-w-64"
+                  :placeholder="t('META_TEMPLATES.FILTERS.SEARCH_PLACEHOLDER')"
+                />
+              </label>
+            </template>
           </div>
           <div class="flex items-center gap-2">
             <span v-if="lastSyncedAt" class="text-xs text-n-slate-11">
@@ -439,9 +471,17 @@ onActivated(() => {
           </div>
         </div>
 
+        <KitTab
+          v-if="isKitTab"
+          :inbox-id="selectedInboxId"
+          :can-create="canCreateTemplate"
+          :reload-key="kitReloadKey"
+          @open-template="openKitTemplate"
+        />
+
         <!-- Table -->
         <div
-          v-if="!loading && filteredTemplates.length === 0"
+          v-else-if="!loading && filteredTemplates.length === 0"
           class="py-12 text-center text-n-slate-11"
         >
           {{

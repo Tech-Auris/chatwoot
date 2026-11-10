@@ -717,6 +717,7 @@ Rails.application.routes.draw do
           resources :follow_up_reports, only: [:index]
           resources :meta_templates, only: %i[index create update destroy] do
             collection do
+              get :kit
               post :sync
               post :upload_header_media
             end

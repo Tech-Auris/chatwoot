@@ -7,6 +7,7 @@ import TemplatePreview from './TemplatePreview.vue';
 import { toTemplateName } from '../templateName';
 import MetaTemplatesAPI from 'dashboard/api/metaTemplates';
 import { useAlert } from 'dashboard/composables';
+import { pendingPlaceholders } from '../kit';
 
 // Shared form used by both the create (New.vue) and edit (Edit.vue)
 // pages. Owns all the state, validation, payload building and the live
@@ -42,6 +43,12 @@ const props = defineProps({
     default: null,
   },
   submitting: { type: Boolean, default: false },
+  // Kit templates: fields the clinic cannot change ('name', 'language',
+  // 'category', 'header', 'footer', 'buttons').
+  lockedFields: { type: Array, default: () => [] },
+  // Kit system templates: the only body variables the Auris engine fills,
+  // as { name: example }. Any other variable would reach the patient raw.
+  allowedVariables: { type: Object, default: null },
 });
 
 const emit = defineEmits(['submit', 'cancel']);
@@ -65,6 +72,7 @@ const PHONE_BUTTONS_MAX = 1;
 const BUTTON_TEXT_MAX = 25;
 
 const isEdit = computed(() => props.mode === 'edit');
+const isLocked = field => props.lockedFields.includes(field);
 
 const selectedInboxId = ref(props.initialInboxId ?? null);
 const name = ref('');
@@ -102,6 +110,22 @@ const resizeBodyTextarea = () => {
   el.style.height = `${el.scrollHeight}px`;
 };
 watch(bodyText, () => nextTick(resizeBodyTextarea));
+
+const variableToken = variable => `{{${variable}}}`;
+
+// Variable shortcuts: drop the token where the cursor is.
+const insertVariable = variable => {
+  const el = bodyTextarea.value;
+  const token = variableToken(variable);
+  const start = el?.selectionStart ?? bodyText.value.length;
+  const end = el?.selectionEnd ?? start;
+  bodyText.value =
+    bodyText.value.slice(0, start) + token + bodyText.value.slice(end);
+  nextTick(() => {
+    el?.focus();
+    el?.setSelectionRange(start + token.length, start + token.length);
+  });
+};
 
 watch(name, value => {
   const normalized = toTemplateName(value);
@@ -255,6 +279,26 @@ const bodyVariables = computed(() => bodyExtracted.value.vars);
 const headerVariables = computed(() => headerExtracted.value.vars);
 const headerHasVariable = computed(() => headerVariables.value.length > 0);
 
+const disallowedVariables = computed(() =>
+  props.allowedVariables
+    ? bodyVariables.value.filter(v => !(v in props.allowedVariables))
+    : []
+);
+const unfilledPlaceholders = computed(() =>
+  pendingPlaceholders(bodyText.value)
+);
+
+// A shortcut variable comes with the kit's sample, so the clinic does not
+// have to invent one for Meta's review.
+watch(bodyVariables, vars => {
+  if (!props.allowedVariables) return;
+  vars.forEach(v => {
+    if (!bodySamples.value[v] && props.allowedVariables[v]) {
+      bodySamples.value[v] = props.allowedVariables[v];
+    }
+  });
+});
+
 // Meta rejects a template that mixes {{1}} and {{name}}, and it also
 // rejects one where header and body use different styles. Compute the
 // single template-wide format (NAMED / POSITIONAL / NONE) and expose a
@@ -363,6 +407,8 @@ const isValid = computed(() => {
   if (!isNameValid.value) return false;
 
   if (templateFormatIssues.value.length > 0) return false;
+  if (disallowedVariables.value.length > 0) return false;
+  if (unfilledPlaceholders.value.length > 0) return false;
 
   if (!bodyText.value.trim()) return false;
   if (bodyText.value.length > BODY_MAX) return false;
@@ -533,7 +579,7 @@ const cancel = () => emit('cancel');
             v-model="name"
             type="text"
             maxlength="512"
-            :disabled="isEdit"
+            :disabled="isEdit || isLocked('name')"
             class="bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg px-3 h-10 text-sm text-n-slate-12 focus:outline-n-brand placeholder:text-n-slate-10 disabled:opacity-70 disabled:cursor-not-allowed"
             :placeholder="t('META_TEMPLATES.NEW.FIELDS.NAME_PLACEHOLDER')"
           />
@@ -556,7 +602,7 @@ const cancel = () => emit('cancel');
           {{ t('META_TEMPLATES.NEW.FIELDS.LANGUAGE') }}
           <select
             v-model="language"
-            :disabled="isEdit"
+            :disabled="isEdit || isLocked('language')"
             class="bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg pl-3 pr-9 h-10 text-sm text-n-slate-12 focus:outline-n-brand disabled:opacity-70 disabled:cursor-not-allowed"
           >
             <option v-for="opt in LANGUAGE_OPTIONS" :key="opt" :value="opt">
@@ -568,7 +614,8 @@ const cancel = () => emit('cancel');
           {{ t('META_TEMPLATES.NEW.FIELDS.CATEGORY') }}
           <select
             v-model="category"
-            class="bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg pl-3 pr-9 h-10 text-sm text-n-slate-12 focus:outline-n-brand"
+            :disabled="isLocked('category')"
+            class="bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg pl-3 pr-9 h-10 text-sm text-n-slate-12 focus:outline-n-brand disabled:opacity-70 disabled:cursor-not-allowed"
           >
             <option v-for="opt in CATEGORY_OPTIONS" :key="opt" :value="opt">
               {{ t(`META_TEMPLATES.CATEGORY.${opt}`, opt) }}
@@ -584,7 +631,10 @@ const cancel = () => emit('cancel');
       </div>
 
       <!-- Header (optional) -->
-      <section class="border border-n-weak rounded-lg p-4 grid gap-3">
+      <section
+        v-if="!isLocked('header')"
+        class="border border-n-weak rounded-lg p-4 grid gap-3"
+      >
         <label
           class="flex items-center gap-2 text-sm text-n-slate-12 cursor-pointer"
         >
@@ -708,6 +758,42 @@ const cancel = () => emit('cancel');
       </label>
 
       <div
+        v-if="allowedVariables"
+        class="flex flex-wrap items-center gap-2 -mt-4 text-xs text-n-slate-11"
+      >
+        {{ t('META_TEMPLATES.NEW.FIELDS.ALLOWED_VARIABLES') }}
+        <button
+          v-for="variable in Object.keys(allowedVariables)"
+          :key="variable"
+          type="button"
+          class="px-2 py-0.5 rounded-md bg-n-alpha-2 text-n-slate-12 font-mono hover:bg-n-alpha-3"
+          @click="insertVariable(variable)"
+        >
+          {{ variableToken(variable) }}
+        </button>
+      </div>
+
+      <div
+        v-if="disallowedVariables.length || unfilledPlaceholders.length"
+        class="border border-n-ruby-6 bg-n-ruby-2 text-n-ruby-11 rounded-lg px-3 py-2 text-xs leading-relaxed grid gap-1"
+      >
+        <p v-if="disallowedVariables.length">
+          {{
+            t('META_TEMPLATES.NEW.FIELDS.VAR_NOT_ALLOWED', {
+              variables: disallowedVariables.join(', '),
+            })
+          }}
+        </p>
+        <p v-if="unfilledPlaceholders.length">
+          {{
+            t('META_TEMPLATES.NEW.FIELDS.KIT_PLACEHOLDER', {
+              placeholders: unfilledPlaceholders.join(', '),
+            })
+          }}
+        </p>
+      </div>
+
+      <div
         v-if="templateFormatIssues.length > 0"
         class="border border-n-ruby-6 bg-n-ruby-2 text-n-ruby-11 rounded-lg px-3 py-2 text-xs leading-relaxed grid gap-1"
       >
@@ -744,7 +830,10 @@ const cancel = () => emit('cancel');
       </fieldset>
 
       <!-- Footer (optional) -->
-      <section class="border border-n-weak rounded-lg p-4 grid gap-3">
+      <section
+        v-if="!isLocked('footer')"
+        class="border border-n-weak rounded-lg p-4 grid gap-3"
+      >
         <label
           class="flex items-center gap-2 text-sm text-n-slate-12 cursor-pointer"
         >
@@ -777,7 +866,10 @@ const cancel = () => emit('cancel');
       </section>
 
       <!-- Buttons -->
-      <section class="border border-n-weak rounded-lg p-4 grid gap-3">
+      <section
+        v-if="!isLocked('buttons') || buttons.length > 0"
+        class="border border-n-weak rounded-lg p-4 grid gap-3"
+      >
         <div class="flex items-baseline justify-between gap-2 flex-wrap">
           <div class="text-sm text-n-slate-12 font-medium">
             {{ t('META_TEMPLATES.NEW.FIELDS.BUTTONS_TITLE') }}
@@ -785,7 +877,7 @@ const cancel = () => emit('cancel');
               {{ t('META_TEMPLATES.NEW.FIELDS.BUTTONS_HINT') }}
             </span>
           </div>
-          <div class="flex flex-wrap gap-2">
+          <div v-if="!isLocked('buttons')" class="flex flex-wrap gap-2">
             <Button
               sm
               faded
@@ -841,6 +933,7 @@ const cancel = () => emit('cancel');
                 {{ t(`META_TEMPLATES.NEW.FIELDS.BUTTON_TYPE.${button.type}`) }}
               </span>
               <button
+                v-if="!isLocked('buttons')"
                 type="button"
                 class="text-xxs text-n-ruby-11 hover:underline"
                 @click="removeButton(idx)"
@@ -854,7 +947,8 @@ const cancel = () => emit('cancel');
                 v-model="button.text"
                 type="text"
                 :maxlength="BUTTON_TEXT_MAX"
-                class="bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg px-3 h-10 text-sm text-n-slate-12 focus:outline-n-brand"
+                :disabled="isLocked('buttons')"
+                class="bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg px-3 h-10 text-sm text-n-slate-12 focus:outline-n-brand disabled:opacity-70 disabled:cursor-not-allowed"
               />
             </label>
             <label
