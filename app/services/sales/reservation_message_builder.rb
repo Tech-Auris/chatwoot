@@ -8,15 +8,20 @@ class Sales::ReservationMessageBuilder
   # Reads the same three slots the JS helper reads: link, code and
   # deadline. Returns nil when any of them is missing — the "reservada
   # até X" sentence only reads right with an X.
+  #
+  # Two wordings: the special condition when the meeting discount was given,
+  # or a plain "here is your quote" otherwise — the message goes out on its
+  # own, so it must not tell a lead without the discount that one exists.
   def self.for_quote(quote)
     return nil if quote.blank?
     return nil if quote.reserved_until.blank? || quote.access_code.blank?
 
     link = public_url_for(quote)
     return nil if link.blank?
+    return quote_message(quote, link) unless quote.meeting_discount_active?
 
     <<~MSG
-      Olá! 😊
+      #{greeting(quote)}
 
       Conforme alinhado em nossa reunião, você tem uma *condição especial de contratação da Auris*#{discounts_clause(quote.effective_discount_summary)}.
 
@@ -29,6 +34,27 @@ class Sales::ReservationMessageBuilder
 
       Se tiver qualquer dúvida durante o preenchimento, pode me chamar por aqui. 💙
     MSG
+  end
+
+  def self.quote_message(quote, link)
+    <<~MSG
+      #{greeting(quote)}
+
+      Segue seu orçamento. Para visualizar é necessário acessar a reserva pelo link abaixo, informar o *código de acesso* e preencher os dados solicitados:
+
+      *Link para reserva:* #{link}
+      *Código de acesso:* #{quote.access_code}
+
+      Se tiver qualquer dúvida durante o preenchimento, pode me chamar por aqui. 💙
+    MSG
+  end
+
+  # "Olá, Fernanda. Por aqui é o Gustavo da Auris." — first names of the lead
+  # and of the seller who made the proposal.
+  def self.greeting(quote)
+    lead = quote.prospect_name.to_s.split.first
+    hello = lead.present? ? "Olá, #{lead}." : 'Olá!'
+    "#{hello} Por aqui é o #{quote.seller.name.split.first} da Auris."
   end
 
   # The ClickUp comment wraps the same message with a short instruction
