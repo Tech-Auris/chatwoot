@@ -13,19 +13,20 @@ RSpec.describe Sales::ClickupProspectSearchService do
   end
 
   def task(overrides = {})
-    defaults = { email: nil, phone: nil, clinic: nil, status: 'negociação', reservation_due: nil }
+    defaults = { email: nil, phone: nil, clinic: nil, status: 'negociação', reservation_due: nil, fbclid: nil }
     merged = defaults.merge(overrides)
-    id, name, email, phone, clinic, status, reservation_due =
-      merged.values_at(:id, :name, :email, :phone, :clinic, :status, :reservation_due)
+    id, name, email, phone, clinic, status, reservation_due, fbclid =
+      merged.values_at(:id, :name, :email, :phone, :clinic, :status, :reservation_due, :fbclid)
 
     {
-      'id' => id, 'name' => name, 'url' => "https://app.clickup.com/t/#{id}",
+      'id' => id, 'name' => name, 'url' => "https://app.clickup.com/t/#{id}", 'date_created' => '1791419344534',
       'status' => { 'status' => status, 'color' => '#fff' },
       'custom_fields' => [
         { 'id' => described_class::EMAIL_FIELD_ID, 'value' => email },
         { 'id' => described_class::PHONE_FIELD_ID, 'value' => phone },
         { 'id' => described_class::CLINIC_FIELD_ID, 'value' => clinic },
-        { 'id' => described_class::RESERVATION_DUE_FIELD_ID, 'value' => reservation_due }
+        { 'id' => described_class::RESERVATION_DUE_FIELD_ID, 'value' => reservation_due },
+        { 'id' => described_class::FBCLID_FIELD_ID, 'value' => fbclid }
       ]
     }
   end
@@ -96,6 +97,12 @@ RSpec.describe Sales::ClickupProspectSearchService do
   describe '#find' do
     it 'returns the prospect behind a task id' do
       expect(service.find('86a2')).to include(name: 'João Pereira', email: 'joao@exemplo.com')
+    end
+
+    it 'carries the ad click id and when the lead was created' do
+      allow(client).to receive(:list_tasks).and_return({ 'tasks' => [task(id: '86a5', name: 'Ana', fbclid: 'IwAR9')], 'last_page' => true })
+
+      expect(service.find('86a5')).to include(fbclid: 'IwAR9', created_at: 1_791_419_344_534)
     end
 
     it 'returns nothing for a task outside the pipeline' do

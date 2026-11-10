@@ -23,6 +23,7 @@ class Sales::ConvertQuoteService
     # Once per account, after the transaction: n8n sets up what lives outside
     # AurisChat (Drive folders, Supabase client rows).
     Sales::AccountCreatedWebhookJob.perform_later(quote.id)
+    Sales::MetaPurchaseJob.perform_later(quote.id, Time.current.to_i)
     Result.new(quote: quote, account: account, created: true)
   end
 

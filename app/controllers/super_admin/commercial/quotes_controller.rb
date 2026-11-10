@@ -58,7 +58,7 @@ class SuperAdmin::Commercial::QuotesController < SuperAdmin::ApplicationControll
   def create
     return render_mixed_period_error if mixed_recurring_periods?
 
-    quote = SalesQuote.new(quote_attributes)
+    quote = SalesQuote.new(quote_attributes.merge(ad_click_attributes))
     quote.items = item_records
 
     apply_totals(quote)
@@ -131,9 +131,12 @@ class SuperAdmin::Commercial::QuotesController < SuperAdmin::ApplicationControll
     end
   end
 
-  def quote_attributes
-    prospect = Sales::ClickupProspectSearchService.new.find(params.require(:clickup_task_id)) || {}
+  def clickup_prospect
+    @clickup_prospect ||= Sales::ClickupProspectSearchService.new.find(params.require(:clickup_task_id)) || {}
+  end
 
+  def quote_attributes
+    prospect = clickup_prospect
     {
       seller: current_super_admin,
       clickup_task_id: params.require(:clickup_task_id),
@@ -150,6 +153,13 @@ class SuperAdmin::Commercial::QuotesController < SuperAdmin::ApplicationControll
       billing_cycle: billing_cycle_from_items,
       status: :draft
     }
+  end
+
+  # The ad click behind the lead, for the Meta Purchase sent once paid. The
+  # lead is created when the click happens, so its creation dates the click.
+  def ad_click_attributes
+    created_at = clickup_prospect[:created_at]
+    { fbclid: clickup_prospect[:fbclid], fbclid_captured_at: created_at && Time.zone.at(created_at / 1000) }
   end
 
   # The plan item carries the period the whole proposal is on. Checkout

@@ -11,6 +11,11 @@ RSpec.describe Sales::ConvertQuoteService do
     expect { described_class.new(quote: quote.reload).perform }.not_to have_enqueued_job(Sales::AccountCreatedWebhookJob)
   end
 
+  it 'reports the sale to Meta once, not again when the payment is confirmed twice' do
+    expect { described_class.new(quote: quote).perform }.to have_enqueued_job(Sales::MetaPurchaseJob)
+    expect { described_class.new(quote: quote.reload).perform }.not_to have_enqueued_job(Sales::MetaPurchaseJob)
+  end
+
   it 'creates the account named after the clinic' do
     result = described_class.new(quote: quote).perform
 
