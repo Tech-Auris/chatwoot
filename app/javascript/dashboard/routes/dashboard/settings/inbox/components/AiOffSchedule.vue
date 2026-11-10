@@ -26,9 +26,18 @@ const DAYS = [1, 2, 3, 4, 5, 6, 0];
 const isSaving = ref(false);
 const timezone = ref('');
 const state = reactive({
+  paused: false,
   enabled: false,
   teamId: '',
   days: Object.fromEntries(DAYS.map(day => [day, []])),
+});
+
+// "IA ativa nesta caixa" is the opposite of the inbox's `paused` flag.
+const aiActive = computed({
+  get: () => !state.paused,
+  set: value => {
+    state.paused = !value;
+  },
 });
 
 const dayNames = computed(() => ({
@@ -55,6 +64,7 @@ const hasError = computed(
 
 const load = async () => {
   const { data } = await InboxAiScheduleAPI.show(props.inbox.id);
+  state.paused = data.paused;
   state.enabled = data.enabled;
   state.teamId = data.team_id || '';
   timezone.value = data.timezone;
@@ -75,6 +85,7 @@ const save = async () => {
       state.days[day].map(range => ({ day_of_week: day, ...range }))
     );
     await InboxAiScheduleAPI.update(props.inbox.id, {
+      paused: state.paused,
       enabled: state.enabled,
       teamId: state.teamId,
       hours,
@@ -95,6 +106,12 @@ onMounted(() => {
 
 <template>
   <div class="mx-6 flex flex-col gap-6">
+    <SettingsToggleSection
+      v-model="aiActive"
+      :header="t('INBOX_MGMT.AI_SCHEDULE.ACTIVE_TOGGLE')"
+      :description="t('INBOX_MGMT.AI_SCHEDULE.ACTIVE_TOGGLE_HELP')"
+    />
+
     <SettingsToggleSection
       v-model="state.enabled"
       :header="t('INBOX_MGMT.AI_SCHEDULE.TOGGLE')"

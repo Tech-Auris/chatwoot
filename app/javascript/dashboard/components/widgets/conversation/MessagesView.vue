@@ -319,6 +319,12 @@ export default {
       if (!senderId) return {};
       return this.$store.getters['contacts/getContact'](senderId);
     },
+    isContactAiDisabled() {
+      return !!(
+        this.currentContact?.ai_disabled ??
+        this.currentChat?.meta?.sender?.ai_disabled
+      );
+    },
     isGroupConversation() {
       return this.currentChat?.group_type === 'group';
     },
@@ -888,6 +894,12 @@ export default {
         color-scheme="alert"
         class="mx-2 mt-2 overflow-hidden rounded-lg"
         :banner-message="$t('CONVERSATION.ANNOUNCEMENT_MODE_BANNER')"
+      />
+      <Banner
+        v-if="isContactAiDisabled && !isGroupConversation"
+        color-scheme="warning"
+        class="mx-2 mt-2 overflow-hidden rounded-lg"
+        :banner-message="$t('CONVERSATION.CONTACT_AI_DISABLED_BANNER')"
       />
       <Banner
         v-if="isGroupsDisabled && isSuperAdmin"

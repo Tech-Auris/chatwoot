@@ -11,6 +11,7 @@ import ContactLabels from 'dashboard/components-next/Contacts/ContactLabels/Cont
 import ContactsForm from 'dashboard/components-next/Contacts/ContactsForm/ContactsForm.vue';
 import ConfirmContactDeleteDialog from 'dashboard/components-next/Contacts/ContactsForm/ConfirmContactDeleteDialog.vue';
 import MarketingOptOutToggle from 'dashboard/components-next/Contacts/MarketingOptOutToggle.vue';
+import AiDisabledToggle from 'dashboard/components-next/Contacts/AiDisabledToggle.vue';
 import Policy from 'dashboard/components/policy.vue';
 
 const props = defineProps({
@@ -177,6 +178,10 @@ const handleAvatarDelete = async () => {
       />
     </div>
     <MarketingOptOutToggle
+      v-if="selectedContact?.id"
+      :contact-id="selectedContact.id"
+    />
+    <AiDisabledToggle
       v-if="selectedContact?.id"
       :contact-id="selectedContact.id"
     />

@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe Conversations::AiScheduleHandoffService do
+RSpec.describe Conversations::AiAutoOffService do
   let(:account) { create(:account, ai_status_uses_attribute: true) }
   let(:ai_user) { create(:user, account: account, name: 'IA | Auris') }
   let(:agent) { create(:user, account: account) }
@@ -87,5 +87,61 @@ RSpec.describe Conversations::AiScheduleHandoffService do
     perform_enqueued_jobs(only: EventDispatcherJob) { incoming }
 
     expect(payloads.find { |p| p[:event] == 'message_created' }.dig(:conversation, :ai_enabled)).to be(false)
+  end
+
+  context 'when the contact has the AI off' do
+    before { conversation.contact.update!(ai_disabled: true) }
+
+    it 'turns the AI off without handing the conversation to the team, ahead of the inbox rules' do
+      account.update!(locale: 'pt_BR')
+      inbox.update!(ai_paused: true)
+
+      incoming
+      perform_enqueued_jobs(only: Conversations::ActivityMessageJob)
+
+      expect(conversation.reload.ai_enabled).to be(false)
+      expect(conversation.team).to be_nil
+      expect(conversation.messages.activity.pluck(:content)).to include('IA desligada para este contato')
+    end
+
+    it 'turns it off in a new conversation of the contact too, in any inbox' do
+      other_inbox = create(:inbox, account: account)
+      other = create(:conversation, account: account, inbox: other_inbox, contact: conversation.contact)
+
+      create(:message, account: account, inbox: other_inbox, conversation: other, message_type: :incoming)
+
+      expect(other.reload.ai_enabled).to be(false)
+    end
+
+    it 'leaves group conversations alone' do
+      group = create(:conversation, account: account, inbox: inbox, contact: conversation.contact, group_type: :group)
+
+      incoming(group)
+
+      expect(group.reload.ai_enabled).to be(true)
+    end
+  end
+
+  context 'when the inbox has the AI paused' do
+    before { inbox.update!(ai_paused: true, ai_schedule_enabled: false) }
+
+    it 'turns the AI off at any time, without handing the conversation to the team' do
+      account.update!(locale: 'pt_BR')
+
+      incoming
+      perform_enqueued_jobs(only: Conversations::ActivityMessageJob)
+
+      expect(conversation.reload.ai_enabled).to be(false)
+      expect(conversation.team).to be_nil
+      expect(conversation.messages.activity.pluck(:content)).to include('IA desligada: a IA está pausada nesta caixa')
+    end
+
+    it 'turns the AI off in accounts on the legacy agente-off label' do
+      account.update!(ai_status_uses_attribute: false)
+
+      incoming
+
+      expect(conversation.reload.label_list).to include('agente-off')
+    end
   end
 end

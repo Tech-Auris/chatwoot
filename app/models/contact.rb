@@ -59,6 +59,7 @@ class Contact < ApplicationRecord # rubocop:disable Metrics/ClassLength
   include Labelable
   include LlmFormattable
   include MarketingOptOutable
+  include AiDisableable
 
   validates :account_id, presence: true
   validates :email, allow_blank: true, uniqueness: { scope: [:account_id], case_sensitive: false },
@@ -184,6 +185,7 @@ class Contact < ApplicationRecord # rubocop:disable Metrics/ClassLength
       phone_number: phone_number,
       thumbnail: avatar_url,
       blocked: blocked,
+      ai_disabled: ai_disabled,
       type: 'contact'
     }
     data[:company_id] = company_id if account.feature_enabled?('companies')
@@ -207,7 +209,8 @@ class Contact < ApplicationRecord # rubocop:disable Metrics/ClassLength
       language_code: language&.code,
       marketing_opt_out: marketing_opt_out,
       marketing_opt_out_at: marketing_opt_out_at&.to_i,
-      marketing_opt_out_source: marketing_opt_out_source
+      marketing_opt_out_source: marketing_opt_out_source,
+      ai_disabled: ai_disabled
     }
   end
 

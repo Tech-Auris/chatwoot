@@ -734,6 +734,8 @@
       }
     },
     "AI_SCHEDULE": {
+      "ACTIVE_TOGGLE": "IA ativa nesta caixa",
+      "ACTIVE_TOGGLE_HELP": "Desligado, as novas mensagens desta caixa chegam com a IA desligada, a qualquer hora. Use para pausar a Auris em uma unidade.",
       "TOGGLE": "Horário da IA desligada",
       "TOGGLE_HELP": "Nesses horários, quando o paciente escreve, a conversa vai para o time abaixo e a IA para de responder. A IA guarda as mensagens para saber o contexto quando a equipe devolver a conversa a ela.",
       "TEAM_LABEL": "Time que assume as conversas",

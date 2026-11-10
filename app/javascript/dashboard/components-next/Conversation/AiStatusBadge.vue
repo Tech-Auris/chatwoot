@@ -10,6 +10,9 @@ import AiStatusChip from './AiStatusChip.vue';
 const props = defineProps({
   conversationId: { type: Number, required: true },
   aiEnabled: { type: Boolean, default: true },
+  // The contact has "IA responde este contato" off: turning the AI on here
+  // only lasts until the contact's next message.
+  contactAiDisabled: { type: Boolean, default: false },
   // `sm` fits the dense rows (conversation list, funnel); `md` is the
   // conversation header.
   size: {
@@ -29,14 +32,18 @@ const stateLabel = computed(() =>
     : t('CONVERSATION.AI_STATUS.OFF_LABEL')
 );
 
-const tooltip = computed(
-  () =>
-    `${stateLabel.value} · ${
-      props.aiEnabled
-        ? t('CONVERSATION.AI_STATUS.TOGGLE_OFF_TOOLTIP')
-        : t('CONVERSATION.AI_STATUS.TOGGLE_ON_TOOLTIP')
-    }`
-);
+const tooltip = computed(() => {
+  const parts = [
+    stateLabel.value,
+    props.aiEnabled
+      ? t('CONVERSATION.AI_STATUS.TOGGLE_OFF_TOOLTIP')
+      : t('CONVERSATION.AI_STATUS.TOGGLE_ON_TOOLTIP'),
+  ];
+  if (props.contactAiDisabled) {
+    parts.push(t('CONVERSATION.AI_STATUS.CONTACT_AI_DISABLED_TOOLTIP'));
+  }
+  return parts.join(' · ');
+});
 
 const toggle = async () => {
   if (isToggling.value) return;

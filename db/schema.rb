@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_11_09_120100) do
+ActiveRecord::Schema[7.1].define(version: 2026_11_09_120000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -871,6 +871,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_09_120100) do
     t.boolean "marketing_opt_out", default: false, null: false
     t.datetime "marketing_opt_out_at"
     t.string "marketing_opt_out_source"
+    t.boolean "ai_disabled", default: false, null: false
+    t.datetime "ai_disabled_at"
+    t.bigint "ai_disabled_by_id"
     t.index "lower((email)::text), account_id", name: "index_contacts_on_lower_email_account_id"
     t.index ["account_id", "contact_type"], name: "index_contacts_on_account_id_and_contact_type"
     t.index ["account_id", "email", "phone_number", "identifier"], name: "index_contacts_on_nonempty_fields", where: "(((email)::text <> ''::text) OR ((phone_number)::text <> ''::text) OR ((identifier)::text <> ''::text))"
@@ -1279,6 +1282,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_09_120100) do
     t.boolean "secretary_enabled", default: false, null: false
     t.boolean "ai_schedule_enabled", default: false, null: false
     t.bigint "ai_schedule_team_id"
+    t.boolean "ai_paused", default: false, null: false
     t.index ["account_id"], name: "index_inboxes_on_account_id"
     t.index ["ai_schedule_team_id"], name: "index_inboxes_on_ai_schedule_team_id"
     t.index ["channel_id", "channel_type"], name: "index_inboxes_on_channel_id_and_channel_type"

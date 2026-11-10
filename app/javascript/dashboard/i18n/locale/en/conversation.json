@@ -53,7 +53,8 @@
       "OFF_LABEL": "AI off in this conversation",
       "TOGGLE_ON_TOOLTIP": "Click to enable AI on this conversation",
       "TOGGLE_OFF_TOOLTIP": "Click to disable AI on this conversation",
-      "TOGGLE_ERROR": "Could not toggle AI on this conversation. Please try again."
+      "TOGGLE_ERROR": "Could not toggle AI on this conversation. Please try again.",
+      "CONTACT_AI_DISABLED_TOOLTIP": "The AI is off for this contact: the next message turns it off again"
     },
     "MESSAGING_WINDOW": {
       "LABEL_CTWA_72H": "72h window - Ad",
@@ -124,6 +125,7 @@
     "GROUP_LEFT_BANNER": "You are no longer part of this group and cannot send messages in it",
     "GROUPS_DISABLED_BANNER": "Group messages are disabled. Enable full group support (free) to view and send messages.",
     "GROUPS_DISABLED_BANNER_NON_ADMIN": "Group messages are disabled. Contact your administrator to enable full group support.",
+    "CONTACT_AI_DISABLED_BANNER": "The AI is off for this contact: it does not reply in any conversation. Change it in the contact panel.",
     "GROUPS_DISABLED_CTA": "Learn how to enable (free)",
     "OLD_INSTAGRAM_INBOX_REPLY_BANNER": "This Instagram account was migrated to the new Instagram channel inbox. All new messages will show up there. You won’t be able to send messages from this conversation anymore.",
     "REPLYING_TO": "You are replying to:",

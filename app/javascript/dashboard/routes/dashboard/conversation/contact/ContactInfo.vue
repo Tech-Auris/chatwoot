@@ -21,6 +21,7 @@ import OrigemSelector from '../origin/OrigemSelector.vue';
 import ContactOrigensSummary from '../origin/ContactOrigensSummary.vue';
 import CampaignReferralCard from '../origin/CampaignReferralCard.vue';
 import MarketingOptOutToggle from 'dashboard/components-next/Contacts/MarketingOptOutToggle.vue';
+import AiDisabledToggle from 'dashboard/components-next/Contacts/AiDisabledToggle.vue';
 
 export default {
   components: {
@@ -38,6 +39,7 @@ export default {
     ContactOrigensSummary,
     CampaignReferralCard,
     MarketingOptOutToggle,
+    AiDisabledToggle,
   },
   props: {
     contact: {
@@ -312,6 +314,7 @@ export default {
           :referral="campaignReferral"
         />
         <MarketingOptOutToggle :contact-id="contact.id" />
+        <AiDisabledToggle :contact-id="contact.id" />
       </div>
       <div class="flex items-center w-full mt-0.5 gap-2">
         <ComposeConversation :contact-id="String(contact.id)">

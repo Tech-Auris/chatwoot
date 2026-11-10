@@ -40,7 +40,7 @@ class AiAssignmentAttempt < ApplicationRecord
   belongs_to :triggered_by, class_name: 'User'
 
   # `ai`: the AI handed the conversation to the team. `schedule`: a patient
-  # wrote in the inbox's "Horário da IA desligada" (Conversations::AiScheduleHandoffService).
+  # wrote in the inbox's "Horário da IA desligada" (Conversations::AiAutoOffService).
   enum :reason, { ai: 0, schedule: 1 }, prefix: true
 
   scope :for_account, ->(account_id) { where(account_id: account_id) }

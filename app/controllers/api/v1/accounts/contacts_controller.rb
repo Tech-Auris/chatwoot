@@ -19,7 +19,7 @@ class Api::V1::Accounts::ContactsController < Api::V1::Accounts::BaseController 
   before_action :check_authorization
   before_action :set_pagination_params, only: [:index, :active, :search, :filter]
   before_action :fetch_contact, only: [:show, :update, :destroy, :avatar, :contactable_inboxes, :destroy_custom_attributes, :sync_group,
-                                       :marketing_opt_out]
+                                       :marketing_opt_out, :ai_status]
   before_action :set_include_contact_inboxes, only: [:index, :active, :search, :filter, :show, :update]
 
   def index
@@ -105,6 +105,17 @@ class Api::V1::Accounts::ContactsController < Api::V1::Accounts::BaseController 
       return head :forbidden unless human_user
 
       @contact.clear_opt_out!(user: human_user)
+    end
+    render :show
+  end
+
+  # "IA responde este contato": `enabled: false` makes the AI skip the contact
+  # in every inbox and conversation; `true` lets it answer the next messages.
+  def ai_status
+    if ActiveModel::Type::Boolean.new.cast(params[:enabled])
+      @contact.enable_ai!(Current.user)
+    else
+      @contact.disable_ai!(Current.user)
     end
     render :show
   end

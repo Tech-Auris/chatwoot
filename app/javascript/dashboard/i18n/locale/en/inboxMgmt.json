@@ -734,6 +734,8 @@
       }
     },
     "AI_SCHEDULE": {
+      "ACTIVE_TOGGLE": "AI active in this inbox",
+      "ACTIVE_TOGGLE_HELP": "Turned off, new messages in this inbox arrive with the AI off, at any time. Use it to pause the AI in a unit.",
       "TOGGLE": "Hours with the AI off",
       "TOGGLE_HELP": "In these hours, when a patient writes, the conversation goes to the team below and the AI stops replying. The AI keeps the messages so it knows the context when the team hands the conversation back.",
       "TEAM_LABEL": "Team that takes the conversations",

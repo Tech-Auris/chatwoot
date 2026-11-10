@@ -1,4 +1,5 @@
 json.enabled @inbox.ai_schedule_enabled
+json.paused @inbox.ai_paused
 json.team_id @inbox.ai_schedule_team_id
 json.secretary_enabled @inbox.secretary_enabled
 json.timezone @inbox.timezone

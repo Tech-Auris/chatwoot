@@ -10,10 +10,11 @@ module Current
   # receipts) that would either spam users or fire incorrectly for messages
   # that are days/weeks old.
   thread_mattr_accessor :history_import
-  # Set by Conversations::AiScheduleHandoffService while it turns the AI off,
-  # so the activity names the inbox schedule instead of the generic
-  # "AI turned off".
-  thread_mattr_accessor :ai_off_by_schedule
+  # Why the AI is being turned off (:contact, :contact_manual, :inbox or
+  # :schedule), set by Conversations::AiAutoOffService and
+  # Contact#disable_ai!, so the activity names the reason instead of the
+  # generic "AI turned off".
+  thread_mattr_accessor :ai_off_reason
 
   def self.reset
     Current.user = nil
@@ -22,6 +23,6 @@ module Current
     Current.executed_by = nil
     Current.contact = nil
     Current.history_import = nil
-    Current.ai_off_by_schedule = nil
+    Current.ai_off_reason = nil
   end
 end

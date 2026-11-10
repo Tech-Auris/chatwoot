@@ -1,5 +1,6 @@
-# "Horário da IA desligada" of an inbox: whether it is on, the team that takes
-# the conversations and the weekday ranges. Administrators and managers.
+# The AI tab of an inbox: "IA ativa nesta caixa" (`paused`), and the
+# "Horário da IA desligada": whether it is on, the team that takes the
+# conversations and the weekday ranges. Administrators and managers.
 class Api::V1::Accounts::InboxAiSchedulesController < Api::V1::Accounts::BaseController
   before_action :fetch_inbox
 
@@ -7,7 +8,8 @@ class Api::V1::Accounts::InboxAiSchedulesController < Api::V1::Accounts::BaseCon
 
   def update
     ActiveRecord::Base.transaction do
-      @inbox.update!(ai_schedule_enabled: params[:enabled], ai_schedule_team: team)
+      @inbox.update!(ai_paused: ActiveModel::Type::Boolean.new.cast(params[:paused]) || false,
+                     ai_schedule_enabled: params[:enabled], ai_schedule_team: team)
       @inbox.ai_off_hours.destroy_all
       hours_params.each { |hour| @inbox.ai_off_hours.create!(hour) }
     end
