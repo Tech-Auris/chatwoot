@@ -1,4 +1,30 @@
 ---
+- tag: v4.15.1-auris.1.76
+  published_at: '2026-11-10T20:00:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.76
+  notes:
+    en: |-
+      ### ✨ What's new
+
+      - **New Home page.** After you log in, AurisChat opens on Home: the day's summary and the clinic's numbers (leads, appointments, follow-up, no-shows, attendance and the AI's work) in one place. Click any number to see the conversations behind it.
+      - **Turn the AI off for one contact.** On the contact's page or in the conversation's side panel, switch off "IA responde este contato" for people the AI shouldn't answer, like the clinic's own doctors or partners. Their messages keep arriving with the AI off, in any conversation.
+      - **Pause the AI in an inbox.** In the inbox's AI settings, switch off "IA ativa nesta caixa" to pause the AI there whenever you need.
+      - **Ready-made WhatsApp templates.** The Meta Templates page has a new "Kit Auris" tab with reminder and confirmation templates ready to use, already filled with the clinic's name and hours.
+
+      ### ⚡ Improvements
+
+      - **The AI icon always shows in the conversation list.** The agent now appears as a small avatar (hover to see the name), so long names no longer hide the AI on/off icon.
+    pt_BR: |-
+      ### ✨ Novidades
+
+      - **Nova página Início.** Ao entrar no AurisChat, você cai no Início: o resumo do dia e os números da clínica (leads, agendamentos, follow-up, faltas, comparecimentos e o trabalho da IA) num só lugar. Clique em qualquer número para ver as conversas por trás dele.
+      - **Desligar a IA para um contato.** Na página do contato ou no painel lateral da conversa, desligue "IA responde este contato" para quem a IA não deve responder, como os médicos da clínica ou parceiros. As mensagens dessa pessoa passam a chegar com a IA desligada, em qualquer conversa.
+      - **Pausar a IA numa caixa de entrada.** Nas configurações de IA da caixa, desligue "IA ativa nesta caixa" para pausar a IA ali quando precisar.
+      - **Templates de WhatsApp prontos.** A página de Templates da Meta ganhou a aba "Kit Auris", com modelos de lembrete e confirmação prontos para usar, já com o nome e o horário da clínica.
+
+      ### ⚡ Melhorias
+
+      - **O ícone da IA sempre aparece na lista de conversas.** O atendente agora aparece como uma bolinha com as iniciais (passe o mouse para ver o nome), e nomes longos não escondem mais o ícone de ligar/desligar a IA.
 - tag: v4.15.1-auris.1.75
   published_at: '2026-11-07T20:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.75
@@ -473,25 +499,3 @@
 
       - **Filtro por data na lista de conversas volta a trazer as certas.** Filtrar por "Criado em maior que X" e "Criado em menor que Y" podia devolver a lista vazia mesmo com o contador do topo mostrando várias conversas. A lista volta a bater com o contador.
       - **Assinar novos termos de uso depois do prazo.** Se o prazo para assinar novos termos de uso passasse e a gerente só entrasse depois, a janela de assinatura não abria — a conta ficava bloqueada sem como destravar. A janela agora abre para a gerente sempre que os termos ainda estão aguardando assinatura.
-- tag: v4.15.1-auris.1.56
-  published_at: '2026-09-11T22:30:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.56
-  notes:
-    en: |-
-      ### ⚡ Improvements
-
-      - **Fewer labels on the picker.** The internal "agente-off" label no longer clutters the label picker or the sidebar. Existing tags on old conversations stay where they are.
-
-      ### 🐛 Fixes
-
-      - **Filtering conversations by funnel stage.** Picking a stage on the conversation filter (or opening a saved folder built on it) now returns the conversations you see on the funnel board — the list was coming empty by mistake.
-      - **Downloading the PDF transcript.** Some conversations failed to generate the PDF with a generic "could not generate transcript" error. Those cases now download normally.
-    pt_BR: |-
-      ### ⚡ Melhorias
-
-      - **Menos etiquetas no seletor.** A etiqueta interna "agente-off" não aparece mais no seletor de etiquetas nem na barra lateral. As marcações antigas em conversas continuam onde estão.
-
-      ### 🐛 Correções
-
-      - **Filtro de conversas por etapa do funil.** Escolher uma etapa no filtro de conversas (ou abrir uma pasta salva com esse filtro) volta a trazer as conversas que aparecem no quadro do funil — a lista estava vindo vazia por engano.
-      - **Baixar o PDF da transcrição.** Algumas conversas específicas falhavam ao gerar o PDF com um aviso genérico de "não foi possível gerar o PDF da transcrição". Esses casos agora baixam normal.
