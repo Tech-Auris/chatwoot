@@ -48,6 +48,7 @@ describe Whatsapp::EmbeddedSignupService do
       allow(channel_creation).to receive(:perform).and_return(channel)
 
       allow(channel).to receive(:setup_webhooks)
+      allow(channel).to receive(:install_follow_up_templates)
       allow(channel).to receive(:phone_number).and_return('+1234567890')
 
       health_service = instance_double(Whatsapp::HealthService)
@@ -64,6 +65,12 @@ describe Whatsapp::EmbeddedSignupService do
 
       result = service.perform
       expect(result).to eq(channel)
+    end
+
+    it 'installs the follow-up templates of the Auris kit' do
+      expect(channel).to receive(:install_follow_up_templates)
+
+      service.perform
     end
 
     it 'checks health status after channel creation' do
@@ -203,6 +210,10 @@ describe Whatsapp::EmbeddedSignupService do
 
         result = service_with_inbox.perform
         expect(result).to eq(baileys_channel)
+      end
+
+      it 'installs the follow-up templates on the converted number' do
+        expect { service_with_inbox.perform }.to have_enqueued_job(Whatsapp::InstallFollowUpTemplatesJob).with(baileys_channel)
       end
 
       it 'stores the waba_id (not the meta business_id) in business_account_id' do

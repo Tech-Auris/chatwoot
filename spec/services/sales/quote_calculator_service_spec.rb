@@ -5,44 +5,65 @@ RSpec.describe Sales::QuoteCalculatorService do
     described_class.new(items: items, **).perform
   end
 
+  # `SalesDiscount#snapshot`, the shape the controller hands the calculator.
+  def discount(name, percent, products: [], expires: false)
+    { discount_id: name.hash, name: name, label: build(:sales_discount, name: name, percent: percent).label, percent: percent,
+      stripe_product_ids: products, expires_with_reservation: expires }
+  end
+
   let(:cart) { [{ unit_amount: 89_700, quantity: 1 }, { unit_amount: 9900, quantity: 2 }] }
+  let(:meeting) { discount('Reunião', 10, expires: true) }
+  let(:referral) { discount('Indicação', 5) }
 
   it 'adds up the cart' do
     expect(calculate(cart).subtotal).to eq(109_500)
   end
 
-  it 'applies the meeting discount' do
-    result = calculate(cart, meeting_discount: true)
+  it 'applies an order-wide discount' do
+    result = calculate(cart, discounts: [meeting])
 
     expect(result.discount).to eq(10_950)
     expect(result.total).to eq(98_550)
   end
 
-  # `meeting_discount_amount` isolates the courtesy portion of the total
-  # `discount` so callers can undo the 10% cleanly when the reservation
-  # expires without recomputing the whole result.
-  it 'exposes the meeting-discount portion separately from the total discount' do
-    result = calculate(cart, meeting_discount: true)
+  # 10% + 5% is 15% of the same base, not 5% of what the 10% left.
+  it 'adds up the order-wide percentages instead of compounding them' do
+    result = calculate(cart, discounts: [meeting, referral])
+
+    expect(result.discount).to eq(10_950 + 5475)
+    expect(result.summary).to eq('10% reunião + 5% indicação')
+  end
+
+  # `meeting_discount_amount` isolates what ends with the reservation so
+  # callers can undo it cleanly when it expires without recomputing the
+  # whole result.
+  it 'exposes the portion that expires with the reservation separately' do
+    result = calculate(cart, discounts: [meeting, referral])
 
     expect(result.meeting_discount_amount).to eq(10_950)
   end
 
-  it 'zeroes meeting_discount_amount when the seller did not opt in' do
-    result = calculate(cart, meeting_discount: false)
+  it 'zeroes meeting_discount_amount when nothing expires with the reservation' do
+    expect(calculate(cart, discounts: [referral]).meeting_discount_amount).to eq(0)
+  end
 
-    expect(result.meeting_discount_amount).to eq(0)
+  it 'returns each applied discount with its amount' do
+    result = calculate(cart, discounts: [meeting, referral])
+
+    expect(result.applied_discounts.map { |applied| [applied[:name], applied[:amount]] })
+      .to eq([['Reunião', 10_950], ['Indicação', 5475]])
   end
 
   # The seller and the customer both read this line; it is also what goes to the
   # Stripe invoice so the charge explains itself there.
   it 'says what each discount was' do
-    result = calculate(cart, meeting_discount: true, coupon: { id: 'c1', name: 'Parceiro', percent_off: 15 })
+    result = calculate(cart, discounts: [meeting], coupon: { id: 'c1', name: 'Parceiro', percent_off: 15 })
 
     expect(result.summary).to eq('10% reunião + cupom Parceiro (15%)')
   end
 
-  it 'stacks the meeting discount with a percentage coupon' do
-    result = calculate(cart, meeting_discount: true, coupon: { percent_off: 15 })
+  it 'stacks a discount with a percentage coupon' do
+    result = calculate(cart, discounts: [meeting], coupon: { percent_off: 15 })
 
     expect(result.discount).to eq(10_950 + 16_425)
   end
@@ -65,7 +86,7 @@ RSpec.describe Sales::QuoteCalculatorService do
 
   it 'combines the three without ever giving money away' do
     result = calculate([{ unit_amount: 10_000, quantity: 1 }],
-                       meeting_discount: true, coupon: { percent_off: 95 }, pix_discount_percent: 10)
+                       discounts: [meeting], coupon: { percent_off: 95 }, pix_discount_percent: 10)
 
     expect(result.discount).to eq(10_000)
     expect(result.total).to eq(0)
@@ -83,56 +104,48 @@ RSpec.describe Sales::QuoteCalculatorService do
     expect(calculate(cart).summary).to be_nil
   end
 
-  # The seller can waive the "Integração via API" line during the meeting;
-  # the whole line comes off the total and the summary names the reason.
-  # Matched by exact product name — that's the fragility the operator opts
-  # into.
-  describe 'api_integration waiver' do
-    let(:cart_with_api) do
-      [{ unit_amount: 89_700, quantity: 1, name: 'Plataforma Auris' },
-       { unit_amount: 50_000, quantity: 1, name: 'Integração via API' }]
+  # A discount tied to products (an "isenção") only touches the lines sold
+  # from them, and runs before the order-wide ones so those do not chew a
+  # line that was already zeroed.
+  describe 'discount on specific products' do
+    let(:config_api) { discount('Isenção config. integração API', 100, products: ['prod_config_api']) }
+    let(:setup) { discount('Isenção implantação', 100, products: ['prod_setup']) }
+    let(:full_cart) do
+      [{ unit_amount: 479_400, quantity: 1, name: 'Plataforma Auris', stripe_product_id: 'prod_platform' },
+       { unit_amount: 150_000, quantity: 1, name: 'Implantação', stripe_product_id: 'prod_setup' },
+       { unit_amount: 80_000, quantity: 1, name: 'Config. de Integração API', stripe_product_id: 'prod_config_api' },
+       { unit_amount: 60_000, quantity: 1, name: 'Desenv. de Integração API', stripe_product_id: 'prod_dev_api' },
+       { unit_amount: 40_000, quantity: 1, name: 'Configuração de API Meta', stripe_product_id: 'prod_meta' }]
     end
 
-    it 'subtracts the whole line for the waived item' do
-      result = calculate(cart_with_api, api_integration_waived: true)
+    it 'only takes the line of its product' do
+      result = calculate(full_cart, discounts: [config_api])
 
-      expect(result.subtotal).to eq(139_700)
-      expect(result.discount).to eq(50_000)
-      expect(result.total).to eq(89_700)
-      expect(result.summary).to include('isenção integração via API')
+      expect(result.discount).to eq(80_000)
+      expect(result.waivers_amount).to eq(80_000)
+      expect(result.summary).to eq('isenção config. integração API')
     end
 
-    # The waiver runs before the meeting %, so the 10% only chews the line
-    # that survived it. Otherwise the seller would double-discount the
-    # zeroed-out item.
-    it 'stacks with the meeting discount, calculating the % after the waiver' do
-      result = calculate(cart_with_api, meeting_discount: true, api_integration_waived: true)
+    it 'stacks the four discounts, with the percentages on what the waivers left' do
+      result = calculate(full_cart, discounts: [setup, config_api, meeting, referral])
 
-      # subtotal 139_700 → waiver 50_000 → eligible 89_700 → meeting 8_970.
-      expect(result.discount).to eq(8_970 + 50_000)
-      expect(result.summary).to eq('isenção integração via API + 10% reunião')
+      # subtotal 809_400 → waivers 230_000 → eligible 579_400 → 15% = 86_910.
+      expect(result.discount).to eq(230_000 + 57_940 + 28_970)
+      expect(result.summary).to eq('isenção implantação + isenção config. integração API + 10% reunião + 5% indicação')
     end
 
-    it 'is a no-op when the cart has no API integration item' do
-      result = calculate(cart, api_integration_waived: true)
+    it 'does not apply when its product is not in the cart' do
+      result = calculate(cart, discounts: [setup])
 
       expect(result.discount).to eq(0)
-      expect(result.summary).to be_nil
+      expect(result.applied_discounts).to be_empty
     end
 
-    # The same product ships under a second name in Stripe production
-    # ("Desenvolvimento de Integração API"). The waiver has to catch both,
-    # otherwise the checkbox appears but does nothing on the newer name.
-    it 'also waives the line named "Desenvolvimento de Integração API"' do
-      cart_with_alt_name = [
-        { unit_amount: 89_700, quantity: 1, name: 'Plataforma Auris' },
-        { unit_amount: 50_000, quantity: 1, name: 'Desenvolvimento de Integração API' }
-      ]
-      result = calculate(cart_with_alt_name, api_integration_waived: true)
+    it 'takes a partial percent of the line' do
+      result = calculate(full_cart, discounts: [discount('Implantação', 50, products: ['prod_setup'])])
 
-      expect(result.discount).to eq(50_000)
-      expect(result.total).to eq(89_700)
-      expect(result.summary).to include('isenção integração via API')
+      expect(result.discount).to eq(75_000)
+      expect(result.summary).to eq('50% implantação')
     end
   end
 
@@ -160,7 +173,7 @@ RSpec.describe Sales::QuoteCalculatorService do
     end
 
     it 'runs the meeting discount on what is left after the scoped waiver' do
-      result = calculate(cart_with_setup, meeting_discount: true, coupon: scoped_coupon)
+      result = calculate(cart_with_setup, discounts: [meeting], coupon: scoped_coupon)
 
       # subtotal 119_700 → waiver 30_000 → eligible 89_700 → meeting 8_970.
       expect(result.discount).to eq(30_000 + 8_970)

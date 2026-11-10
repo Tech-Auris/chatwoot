@@ -708,6 +708,9 @@ Rails.application.routes.draw do
             end
           end
           resource :year_in_review, only: [:show]
+          resource :home, only: [:show], controller: 'home' do
+            get :drilldown
+          end
           resources :live_reports, only: [] do
             collection do
               get :conversation_metrics
@@ -718,6 +721,7 @@ Rails.application.routes.draw do
           resources :follow_up_reports, only: [:index]
           resources :meta_templates, only: %i[index create update destroy] do
             collection do
+              get :kit
               post :sync
               post :upload_header_media
             end
@@ -950,6 +954,12 @@ Rails.application.routes.draw do
             post :register_payment
             # kept until every operator is on the new UI bundle
             post :register_asaas_payment
+          end
+        end
+
+        resources :discounts, only: [:index, :create, :update], controller: 'discounts' do
+          collection do
+            get :data
           end
         end
 

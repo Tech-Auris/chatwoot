@@ -44,6 +44,17 @@ class Whatsapp::TemplateStatusUpdateService
     templates[idx]['status'] = new_status
     @channel.update!(message_templates: templates, message_templates_last_updated: Time.now.utc)
     broadcast_status_change(templates[idx], previous_status)
+    alert_kit_rejection(templates[idx])
+  end
+
+  # A rejected kit template (follow-up or system) blocks the Auris engine for
+  # this clinic, so the Auris team hears about it on ClickUp. Meta sends the
+  # event once per channel on the same WABA; the lock keeps it to one comment.
+  def alert_kit_rejection(template)
+    return unless new_status.to_s == 'REJECTED' && Whatsapp::TemplateKit.alert?(template['name'])
+    return unless Redis::Alfred.set("meta_template_rejected_alert:#{template['id']}", 1, nx: true, ex: 1.hour.to_i)
+
+    Whatsapp::TemplateRejectedClickupJob.perform_later(@channel, template['id'].to_s, @event_value[:reason].to_s)
   end
 
   def trigger_full_sync

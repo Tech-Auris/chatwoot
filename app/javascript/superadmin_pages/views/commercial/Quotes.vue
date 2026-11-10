@@ -19,33 +19,21 @@ const searching = ref(false);
 
 const prices = ref([]);
 const coupons = ref([]);
-const meetingDiscountPercent = ref(10);
+// The discounts configured in Commercial → Descontos.
+const discounts = ref([]);
 
 const cart = ref([]);
-const meetingDiscount = ref(false);
-// When on, subtracts the whole API-integration line from the total — the
-// seller opts in when the deal was negotiated without that scope.
-const apiIntegrationWaived = ref(false);
-// Matched by product name (case-insensitive), mirrors the backend list.
-// The same product ships under different names in Stripe historically
-// ("Integração via API") and now ("Desenvolvimento de Integração API");
-// both are eligible for the waiver so the checkbox appears in either case.
-const API_INTEGRATION_ITEM_NAMES = [
-  'integração via api',
-  'desenvolvimento de integração api',
-];
-const cartHasApiIntegration = computed(() =>
-  cart.value.some(item =>
-    API_INTEGRATION_ITEM_NAMES.includes((item.name || '').toLowerCase())
-  )
-);
-// When the API line leaves the cart the checkbox no longer makes sense; drop
-// the flag too so a stale "on" state doesn't rebound if the item is re-added.
-watch(cartHasApiIntegration, hasIt => {
-  if (!hasIt) apiIntegrationWaived.value = false;
-});
+const selectedDiscountIds = ref([]);
+const discountSearch = ref('');
+const discountDropdownOpen = ref(false);
 const couponId = ref('');
-const totals = ref({ subtotal: 0, discount: 0, total: 0, summary: null });
+const totals = ref({
+  subtotal: 0,
+  discount: 0,
+  total: 0,
+  summary: null,
+  applied_discounts: [],
+});
 
 const loading = ref(false);
 const saving = ref(false);
@@ -105,7 +93,7 @@ const fetchCatalog = async () => {
     const body = await request(props.componentData.data_url);
     prices.value = body.prices || [];
     coupons.value = body.coupons || [];
-    meetingDiscountPercent.value = body.meeting_discount_percent ?? 10;
+    discounts.value = body.discounts || [];
   } catch (e) {
     error.value = e.message;
   } finally {
@@ -425,9 +413,74 @@ const removeFromCart = index => {
   cart.value.splice(index, 1);
 };
 
+// A discount on products only makes sense while one of them is in the cart.
+const cartProductIds = computed(
+  () => new Set(cart.value.map(item => item.stripe_product_id))
+);
+const discountFitsCart = discount =>
+  !discount.stripe_product_ids.length ||
+  discount.stripe_product_ids.some(id => cartProductIds.value.has(id));
+
+const selectedDiscounts = computed(() =>
+  selectedDiscountIds.value
+    .map(id => discounts.value.find(discount => discount.discount_id === id))
+    .filter(Boolean)
+);
+
+const availableDiscounts = computed(() => {
+  const term = discountSearch.value.trim().toLowerCase();
+  return discounts.value.filter(
+    discount =>
+      !selectedDiscountIds.value.includes(discount.discount_id) &&
+      discountFitsCart(discount) &&
+      (!term || discount.name.toLowerCase().includes(term))
+  );
+});
+
+// Removing the product takes its discount along, so a stale waiver doesn't
+// come back if the item is re-added.
+watch(cartProductIds, () => {
+  selectedDiscountIds.value = selectedDiscounts.value
+    .filter(discountFitsCart)
+    .map(discount => discount.discount_id);
+});
+
+const addDiscount = discount => {
+  selectedDiscountIds.value.push(discount.discount_id);
+  discountSearch.value = '';
+  discountDropdownOpen.value = false;
+};
+
+const removeDiscount = id => {
+  selectedDiscountIds.value = selectedDiscountIds.value.filter(
+    discountId => discountId !== id
+  );
+};
+
+// Same focus-out guard as the product picker: a click inside the list must
+// not close it before the selection lands.
+const onDiscountPickerFocusOut = event => {
+  if (!event.currentTarget.contains(event.relatedTarget)) {
+    discountDropdownOpen.value = false;
+  }
+};
+
+const discountAmount = id =>
+  (totals.value.applied_discounts || []).find(
+    discount => discount.discount_id === id
+  )?.amount || 0;
+
+const formatPercent = percent => `${Number(percent)}%`;
+
 const refreshTotals = async () => {
   if (!cart.value.length) {
-    totals.value = { subtotal: 0, discount: 0, total: 0, summary: null };
+    totals.value = {
+      subtotal: 0,
+      discount: 0,
+      total: 0,
+      summary: null,
+      applied_discounts: [],
+    };
     return;
   }
 
@@ -436,8 +489,7 @@ const refreshTotals = async () => {
       method: 'POST',
       body: {
         items: payloadItems(),
-        meeting_discount: meetingDiscount.value,
-        api_integration_waived: apiIntegrationWaived.value,
+        discount_ids: selectedDiscountIds.value,
         coupon_id: couponId.value,
       },
     });
@@ -446,7 +498,7 @@ const refreshTotals = async () => {
   }
 };
 
-watch([cart, meetingDiscount, apiIntegrationWaived, couponId], refreshTotals, {
+watch([cart, selectedDiscountIds, couponId], refreshTotals, {
   deep: true,
 });
 
@@ -463,8 +515,7 @@ const saveQuote = async () => {
       body: {
         clickup_task_id: selectedProspect.value.task_id,
         items: payloadItems(),
-        meeting_discount: meetingDiscount.value,
-        api_integration_waived: apiIntegrationWaived.value,
+        discount_ids: selectedDiscountIds.value,
         coupon_id: couponId.value,
       },
     });
@@ -537,8 +588,7 @@ const startOver = () => {
   reservation.value = null;
   reservedUntil.value = tomorrowIsoDate();
   cart.value = [];
-  meetingDiscount.value = false;
-  apiIntegrationWaived.value = false;
+  selectedDiscountIds.value = [];
   couponId.value = '';
   selectedProspect.value = null;
   prospectTerm.value = '';
@@ -891,18 +941,76 @@ const startOver = () => {
             </li>
           </ul>
 
-          <label class="flex items-center gap-2 mt-4 text-sm text-slate-700">
-            <input v-model="meetingDiscount" type="checkbox" />
-            Desconto da reunião ({{ meetingDiscountPercent }}%)
-          </label>
+          <div class="mt-4">
+            <h3 class="text-sm font-medium text-slate-800">Descontos</h3>
+            <ul class="mt-1">
+              <li
+                v-for="discount in selectedDiscounts"
+                :key="discount.discount_id"
+                class="flex items-start justify-between gap-2 mt-1 px-2 py-1.5 rounded bg-green-50 text-sm"
+              >
+                <span class="text-slate-800">
+                  {{ discount.name }}
+                  <span class="text-xs text-slate-500">
+                    {{ formatPercent(discount.percent) }}
+                    <template v-if="discount.expires_with_reservation">
+                      · vence com a reserva
+                    </template>
+                  </span>
+                </span>
+                <span class="flex items-center gap-2 whitespace-nowrap">
+                  <span class="text-green-700">
+                    − {{ formatAmount(discountAmount(discount.discount_id)) }}
+                  </span>
+                  <button
+                    type="button"
+                    class="text-xs text-red-600"
+                    @click="removeDiscount(discount.discount_id)"
+                  >
+                    Remover
+                  </button>
+                </span>
+              </li>
+            </ul>
 
-          <label
-            v-if="cartHasApiIntegration"
-            class="flex items-center gap-2 mt-2 text-sm text-slate-700"
-          >
-            <input v-model="apiIntegrationWaived" type="checkbox" />
-            Isentar Integração via API
-          </label>
+            <div class="relative mt-2" @focusout="onDiscountPickerFocusOut">
+              <input
+                v-model="discountSearch"
+                type="search"
+                autocomplete="off"
+                placeholder="Adicionar desconto…"
+                class="w-full border border-slate-200 rounded px-3 py-1.5 text-sm focus:border-woot-500 focus:outline-none"
+                @focus="discountDropdownOpen = true"
+                @input="discountDropdownOpen = true"
+              />
+              <ul
+                v-if="discountDropdownOpen"
+                class="absolute left-0 right-0 top-full mt-1 z-10 max-h-64 overflow-y-auto bg-white border border-slate-200 rounded-lg shadow-lg py-1"
+              >
+                <li
+                  v-if="!availableDiscounts.length"
+                  class="px-3 py-1.5 text-sm text-slate-500"
+                >
+                  Nenhum desconto disponível.
+                </li>
+                <li
+                  v-for="discount in availableDiscounts"
+                  :key="discount.discount_id"
+                >
+                  <button
+                    type="button"
+                    class="w-full flex items-center justify-between gap-3 px-3 py-1.5 text-left text-sm !text-slate-700 !bg-transparent hover:!bg-slate-100 hover:!text-slate-900"
+                    @click="addDiscount(discount)"
+                  >
+                    <span>{{ discount.name }}</span>
+                    <span class="text-xs text-slate-400">
+                      {{ formatPercent(discount.percent) }}
+                    </span>
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </div>
 
           <label class="block mt-3 text-sm text-slate-600">
             Cupom

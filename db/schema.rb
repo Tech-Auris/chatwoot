@@ -1923,6 +1923,17 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_09_120000) do
     t.index ["sales_quote_id"], name: "index_sales_contracts_on_sales_quote_id"
   end
 
+  create_table "sales_discounts", force: :cascade do |t|
+    t.string "name", null: false
+    t.decimal "percent", precision: 5, scale: 2, null: false
+    t.string "stripe_product_ids", default: [], null: false, array: true
+    t.boolean "expires_with_reservation", default: false, null: false
+    t.boolean "active", default: true, null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "sales_quote_events", force: :cascade do |t|
     t.bigint "sales_quote_id", null: false
     t.bigint "user_id"
@@ -1993,6 +2004,11 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_09_120000) do
     t.integer "meeting_discount_amount", default: 0, null: false
     t.datetime "boleto_enabled_at"
     t.integer "waivers_amount", default: 0, null: false
+    t.jsonb "applied_discounts", default: [], null: false
+    t.string "fbclid"
+    t.datetime "fbclid_captured_at"
+    t.string "client_ip"
+    t.string "client_user_agent"
     t.index ["account_id"], name: "index_sales_quotes_on_account_id"
     t.index ["clickup_task_id"], name: "index_sales_quotes_on_clickup_task_id"
     t.index ["inter_txid"], name: "index_sales_quotes_on_inter_txid", unique: true, where: "(inter_txid IS NOT NULL)"

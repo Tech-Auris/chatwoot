@@ -22,6 +22,18 @@ const formatReservedUntil = value => {
   }
 };
 
+// " (10% reunião, 5% indicação e isenção implantação)" — the discounts the
+// proposal carries, read from its summary; empty when there are none.
+const discountsClause = summary => {
+  const parts = (summary || '').split(' + ').filter(Boolean);
+  if (!parts.length) return '';
+  const sentence =
+    parts.length === 1
+      ? parts[0]
+      : `${parts.slice(0, -1).join(', ')} e ${parts[parts.length - 1]}`;
+  return ` (${sentence})`;
+};
+
 export const isReservationMessageAvailable = quote =>
   Boolean(quote?.public_url && quote?.access_code && quote?.reserved_until);
 
@@ -34,7 +46,7 @@ export const buildReservationMessage = quote => {
 
   return (
     'Olá! 😊\n\n' +
-    'Conforme alinhado em nossa reunião, você tem uma *condição especial de contratação da Auris com 10% de desconto*.\n\n' +
+    `Conforme alinhado em nossa reunião, você tem uma *condição especial de contratação da Auris*${discountsClause(quote.discount_summary)}.\n\n` +
     'Para *reservar essa condição*, é necessário realizar a reserva pelo link abaixo, informar o *código de acesso* e preencher os dados solicitados:\n\n' +
     `*Link para reserva:* ${link}\n` +
     `*Código de acesso:* ${code}\n\n` +

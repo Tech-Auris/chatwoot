@@ -56,7 +56,8 @@
       "REJECTED_REASON_LABEL": "Reason from Meta:",
       "DELETE": "Delete template",
       "EDIT": "Edit template",
-      "EDIT_DISABLED_REASON": "Only APPROVED templates can be edited (current status: {status}). Delete and create a new one to change it."
+      "EDIT_DISABLED_REASON": "Only APPROVED templates can be edited (current status: {status}). Delete and create a new one to change it.",
+      "KIT_FOLLOW_UP": "Follow-up template of the Auris Kit. It is maintained by Auris and cannot be edited or deleted."
     },
     "NOTIFICATIONS": {
       "STATUS_CHANGED": "Meta updated the status of template \"{name}\" to {status}."
@@ -155,7 +156,10 @@
           "QUICK_REPLY": "Quick reply",
           "URL": "URL button",
           "PHONE_NUMBER": "Phone button"
-        }
+        },
+        "ALLOWED_VARIABLES": "Variables:",
+        "VAR_NOT_ALLOWED": "Variables not allowed: {variables}. The Auris AI only fills the ones above; any other would reach the patient as raw text.",
+        "KIT_PLACEHOLDER": "Replace {placeholders} with your clinic data before sending."
       },
       "SUBMIT": "Submit for approval",
       "CANCEL": "Cancel",
@@ -205,6 +209,31 @@
           "FREQUENCY": "Send less often to the same patient.",
           "UTILITY": "If it is an appointment notice, not a promotion, use a Utility template.",
           "NEW_VERSION": "If it stays low, create a new version of the template with different text."
+        }
+      }
+    },
+    "TABS": {
+      "TEMPLATES": "Templates",
+      "KIT": "Auris Kit"
+    },
+    "KIT": {
+      "LOAD_FAILED": "Could not load the Auris Kit. Please try again.",
+      "USE": "Use template",
+      "VIEW": "View template",
+      "ALREADY_CREATED": "Already created",
+      "NOT_INSTALLED": "Not installed yet",
+      "GROUPS": {
+        "follow_up": {
+          "TITLE": "Follow-up",
+          "DESCRIPTION": "Installed automatically when the number connects to the Official API. Maintained by Auris, they cannot be edited or deleted."
+        },
+        "system": {
+          "TITLE": "System defaults",
+          "DESCRIPTION": "Templates the Auris AI sends by name (reminders and webhooks). Only the text can be changed, using the variables shown in the editor."
+        },
+        "suggested": {
+          "TITLE": "Suggested",
+          "DESCRIPTION": "Common starting points. Everything can be edited before sending to Meta."
         }
       }
     }

@@ -1,0 +1,120 @@
+{
+  "HOME_OVERVIEW": {
+    "GREETING": {
+      "MORNING": "Good morning, {name}!",
+      "AFTERNOON": "Good afternoon, {name}!",
+      "EVENING": "Good evening, {name}!",
+      "TODAY": "Today {leads} {verb} and {booked}.",
+      "LEADS": "no new leads | 1 new lead | {count} new leads",
+      "BOOKED": "nobody booked yet | 1 already booked | {count} already booked",
+      "WAITING": "No lead waiting for an answer. | 1 lead has been waiting for an answer for more than 10 minutes. | {count} leads have been waiting for an answer for more than 10 minutes.",
+      "DATA_FROM": "Data from: {inboxes}",
+      "LEADS_VERB": "arrived | arrived | arrived"
+    },
+    "TODAY": {
+      "NEW_LEADS": "New leads today",
+      "BOOKED": "Booked an appointment today",
+      "WAITING": "No answer for 10+ min",
+      "TOMORROW": "Tomorrow",
+      "TOMORROW_DETAIL": "scheduled · {confirmed} confirmed"
+    },
+    "FILTERS": {
+      "TODAY": "Today",
+      "LAST_7_DAYS": "7 days",
+      "MONTH": "Month",
+      "CUSTOM": "Custom",
+      "FROM": "From",
+      "TO": "To",
+      "ORIGEM_ALL": "Origin: All",
+      "ORIGEM_NONE": "No origin",
+      "INBOXES": "Inboxes: {names}",
+      "INBOXES_MORE": "{name} + {count}"
+    },
+    "METRICS": {
+      "VS_PREVIOUS": "vs. previous period: {value}",
+      "LEADS": "Leads",
+      "APPOINTMENTS": "Appointments",
+      "NO_SHOWS": "No-show",
+      "ATTENDANCES": "Attendances",
+      "FUNNEL": "Funnel conversion",
+      "ORIGINS": "Lead origin",
+      "LOSS_REASONS": "Loss reasons",
+      "RESPONSE_TIME": "First response time",
+      "RESPONSE_TIME_SPLIT": "AI {ai} · team {team}",
+      "EMPTY": "Nothing in this period",
+      "OFF_HOURS_LEADS": "Leads outside business hours",
+      "OFF_HOURS_APPOINTMENTS": "Appointments outside business hours",
+      "FOLLOW_UP_LEADS": "Leads in follow-up",
+      "AFTER_FOLLOW_UP": "Appointments after follow-up",
+      "COMING_SOON": "coming soon",
+      "OFF_HOURS_INFO": "Lead whose first message arrived outside the inbox business hours.\nInboxes without their own hours use the default: weekdays 8am–6pm and Saturday 8am–12pm.\nAdjust it in the inbox settings.",
+      "OFF_HOURS_APPOINTMENTS_INFO": "Appointment booked outside business hours, or of a lead who arrived outside them.\nInboxes without their own hours use the default: weekdays 8am–6pm and Saturday 8am–12pm.\nAdjust it in the inbox settings.",
+      "AI_CONVERSATIONS": "Conversations the AI acted in",
+      "AI_CONVERSATIONS_SHARE": "{share}% of the period's leads",
+      "HANDOFF": "AI → Human handoff",
+      "HANDOFF_DETAIL": "{handed} of the {total} conversations the AI acted in",
+      "PERCENTAGE_POINTS": "p.p.",
+      "TOTAL": "Total"
+    },
+    "LOAD_ERROR": "Could not load the home page. Try again in a moment.",
+    "WAITING_DIALOG": {
+      "TITLE": "No answer for 10+ min: {count} conversations",
+      "DESCRIPTION": "Last message from the lead, unanswered for over 10 minutes (up to 24 hours) and no follow-up on its way. Oldest first.",
+      "DESCRIPTION_OLDEST": "Showing the {shown} that have waited the longest. Last message from the lead, unanswered for over 10 minutes (up to 24 hours) and no follow-up on its way.",
+      "MINUTES": "0 min | 1 min | {count} min",
+      "HOURS": "{hours} h {minutes} min",
+      "DASH": "—",
+      "HASH_ID": "#{id}",
+      "CLOSE": "Close",
+      "COLUMNS": {
+        "CONVERSATION": "Conversation",
+        "CONTACT": "Contact",
+        "WAITING_SINCE": "Waiting since",
+        "WAITING_FOR": "Waiting for",
+        "ASSIGNEE": "Assignee",
+        "INBOX": "Inbox",
+        "SOURCE": "Origin"
+      }
+    },
+    "FOLLOW_UP_DIALOG": {
+      "TITLE": "Appointments after follow-up: {count} conversations",
+      "DESCRIPTION": "Leads who got a follow-up before booking, split by the last follow-up sent before the booking. Same period and filters as the page.",
+      "AFTER_FIRST": "After the 1st follow-up",
+      "AFTER_SECOND": "After the 2nd follow-up",
+      "AFTER_THIRD": "After the 3rd follow-up or later",
+      "COUNT": "no conversations | 1 conversation | {count} conversations",
+      "EMPTY": "No conversation in this block.",
+      "AUTOMATION": "Automation",
+      "COLUMNS": {
+        "BOOKED_AT": "Booked at",
+        "BOOKED_BY": "Booked by"
+      }
+    },
+    "OPEN_CONVERSATIONS": "See the conversations",
+    "DRILLDOWN": {
+      "TITLE": "{card}: {count} conversations",
+      "DESCRIPTION": "Same period and filters as the page. One row per conversation, at its latest entry in the period.",
+      "ERROR": "Could not load the conversations. Try again in a moment.",
+      "STEP": "Follow-up #{step}",
+      "COLUMNS": {
+        "ARRIVED_AT": "Arrived at",
+        "BOOKED_AT": "Booked at",
+        "BOOKED_BY": "Booked by",
+        "APPOINTMENT_AT": "Appointment at",
+        "STATUS": "Status",
+        "FOLLOW_UP_AT": "Last follow-up at",
+        "FOLLOW_UP_STEP": "Follow-up",
+        "NO_SHOW_AT": "No-show at",
+        "ATTENDED_AT": "Attended at",
+        "MOVED_BY": "Moved by",
+        "LOST_AT": "Lost at",
+        "LOSS_REASON": "Loss reason"
+      },
+      "STATUSES": {
+        "SCHEDULED": "Scheduled",
+        "RESCHEDULED": "Rescheduled",
+        "CONFIRMED": "Confirmed"
+      }
+    }
+  }
+}

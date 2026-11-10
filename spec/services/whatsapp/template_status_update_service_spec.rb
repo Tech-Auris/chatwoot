@@ -127,5 +127,31 @@ RSpec.describe Whatsapp::TemplateStatusUpdateService do
 
       described_class.new(channel, payload).perform
     end
+
+    context 'with a kit template' do
+      let(:cached_templates) do
+        [{ 'id' => '333', 'name' => 'auris_fup_geral', 'status' => 'PENDING', 'language' => 'pt_BR' },
+         { 'id' => '444', 'name' => 'minha_promo', 'status' => 'PENDING', 'language' => 'pt_BR' }]
+      end
+
+      def rejection(id) = { 'event' => 'REJECTED', 'message_template_id' => id, 'reason' => 'INVALID_FORMAT' }
+
+      before { Redis::Alfred.delete('meta_template_rejected_alert:333') }
+
+      it 'alerts the Auris team once when Meta rejects it' do
+        expect { described_class.new(channel, rejection(333)).perform }
+          .to have_enqueued_job(Whatsapp::TemplateRejectedClickupJob).with(channel, '333', 'INVALID_FORMAT')
+
+        other_channel = create(:channel_whatsapp, provider: 'whatsapp_cloud', validate_provider_config: false, sync_templates: false,
+                                                  message_templates: cached_templates)
+        expect { described_class.new(other_channel, rejection(333)).perform }.not_to have_enqueued_job(Whatsapp::TemplateRejectedClickupJob)
+      end
+
+      it 'does not alert for templates outside the kit or other statuses' do
+        expect { described_class.new(channel, rejection(444)).perform }.not_to have_enqueued_job(Whatsapp::TemplateRejectedClickupJob)
+        expect { described_class.new(channel, rejection(333).merge('event' => 'APPROVED')).perform }
+          .not_to have_enqueued_job(Whatsapp::TemplateRejectedClickupJob)
+      end
+    end
   end
 end

@@ -209,6 +209,9 @@ pt_BR:
       update_failed: Não foi possível atualizar o template no Meta. Revise o formulário e tente novamente.
       delete_failed: Não foi possível excluir o template no Meta. Tente novamente em instantes.
       template_not_found: Este template não está mais disponível nesta caixa.
+      kit_reserved: Este template de follow-up é instalado e mantido pela Auris e não pode ser criado, editado ou excluído por aqui.
+      kit_locked_fields: Este é um template padrão do sistema. Nome, idioma, categoria, formato das variáveis e botões precisam seguir o modelo do Kit Auris.
+      kit_invalid_variables: 'Variáveis não permitidas neste template: %{variables}. Use apenas %{allowed}, senão elas chegam cruas ao paciente.'
     custom_filters:
       number_of_records: Limite atingido. O número máximo de filtros personalizados permitidos para um usuário por conta é de 1000.
       invalid_attribute: Chave de atributo inválido - [%{key}]. A chave deve ser uma das [%{allowed_keys}] ou um atributo personalizado definido na conta.

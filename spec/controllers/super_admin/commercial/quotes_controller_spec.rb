@@ -4,10 +4,12 @@ RSpec.describe 'Super Admin Commercial Quotes', type: :request do
   let(:super_admin) { create(:super_admin) }
   let(:stripe_client) { instance_double(Integrations::Stripe::Client, configured?: true) }
   let(:search_service) { instance_double(Sales::ClickupProspectSearchService) }
+  let!(:meeting) { create(:sales_discount, name: 'Reunião', percent: 10, expires_with_reservation: true) }
 
   let(:prospect) do
     { task_id: '86ak7rd8j', name: 'Felicia Macedo', clinic_name: 'Clínica Cinco',
-      email: 'contato@exemplo.com', phone: '+5561981402211', status: 'negociação' }
+      email: 'contato@exemplo.com', phone: '+5561981402211', status: 'negociação',
+      fbclid: 'IwAR123', created_at: 1_791_419_344_534 }
   end
 
   # `recurring: nil` stands for a one-off price; the count is what tells a
@@ -156,7 +158,15 @@ RSpec.describe 'Super Admin Commercial Quotes', type: :request do
       body = response.parsed_body
       expect(body['prices'].first).to include('id' => 'price_plan', 'product_name' => 'Plano Pro')
       expect(body['coupons'].first).to include('id' => 'coupon_1')
-      expect(body['meeting_discount_percent']).to eq(10)
+      expect(body['discounts'].pluck('name')).to eq(['Reunião'])
+    end
+
+    it 'leaves out a discount that was turned off' do
+      create(:sales_discount, name: 'Antigo', active: false)
+
+      get '/super_admin/commercial/quotes/data'
+
+      expect(response.parsed_body['discounts'].pluck('name')).to eq(['Reunião'])
     end
 
     it 'leaves out a coupon Stripe no longer considers valid' do
@@ -222,13 +232,14 @@ RSpec.describe 'Super Admin Commercial Quotes', type: :request do
     it 'prices the cart without creating a proposal' do
       expect do
         post '/super_admin/commercial/quotes/preview',
-             params: { items: [{ unit_amount: 89_700, quantity: 1 }], meeting_discount: true, coupon_id: 'coupon_1' },
+             params: { items: [{ unit_amount: 89_700, quantity: 1 }], discount_ids: [meeting.id], coupon_id: 'coupon_1' },
              as: :json
       end.not_to change(SalesQuote, :count)
 
       body = response.parsed_body
       expect(body).to include('subtotal' => 89_700, 'discount' => 8970 + 13_455)
       expect(body['summary']).to eq('10% reunião + cupom Parceiro (15%)')
+      expect(body['applied_discounts'].first).to include('discount_id' => meeting.id, 'amount' => 8970)
     end
   end
 
@@ -236,7 +247,7 @@ RSpec.describe 'Super Admin Commercial Quotes', type: :request do
     let(:payload) do
       {
         clickup_task_id: '86ak7rd8j',
-        meeting_discount: true,
+        discount_ids: [meeting.id],
         items: [{ stripe_price_id: 'price_plan', stripe_product_id: 'prod_1', name: 'Plano Pro',
                   unit_amount: 89_700, quantity: 1, recurring_interval: 'month',
                   billing_period: 'annual', kind: 'plan' }]
@@ -254,6 +265,12 @@ RSpec.describe 'Super Admin Commercial Quotes', type: :request do
         clickup_task_id: '86ak7rd8j', prospect_name: 'Felicia Macedo', company_name: 'Clínica Cinco',
         prospect_phone: '+5561981402211', clickup_status: 'negociação', status: 'draft'
       )
+    end
+
+    it 'keeps the ad click behind the lead for the Meta Purchase' do
+      post '/super_admin/commercial/quotes', params: payload, as: :json
+
+      expect(SalesQuote.last).to have_attributes(fbclid: 'IwAR123', fbclid_captured_at: Time.zone.at(1_791_419_344))
     end
 
     # The catalogue moves; what the prospect was shown must not move with it.
@@ -344,30 +361,45 @@ RSpec.describe 'Super Admin Commercial Quotes', type: :request do
       expect(response).to have_http_status(:created)
     end
 
-    # The waiver flag persists on the quote (so the invoice-generation path
-    # keeps the frozen decision) and the calculator subtracts the "Integração
-    # via API" line from the total.
-    it 'persists the API waiver on the quote and subtracts the line from the total' do
-      waived = payload.merge(
-        api_integration_waived: true,
+    # Discounts on products run first, the order-wide ones on what is left,
+    # and the proposal keeps its own copy of what was applied.
+    it 'applies the selected discounts and keeps a copy of them on the proposal' do
+      config_api = create(:sales_discount, name: 'Isenção config. integração API', percent: 100,
+                                           stripe_product_ids: ['prod_config_api'])
+      referral = create(:sales_discount, name: 'Indicação', percent: 5)
+      discounted = payload.merge(
+        discount_ids: [meeting.id, config_api.id, referral.id],
         items: [
           payload[:items].first,
-          { stripe_price_id: 'price_api', name: 'Integração via API', unit_amount: 50_000, quantity: 1,
-            billing_period: 'one_off', kind: 'addon' }
+          { stripe_price_id: 'price_api', stripe_product_id: 'prod_config_api', name: 'Config. de Integração API',
+            unit_amount: 50_000, quantity: 1, billing_period: 'one_off', kind: 'addon' }
         ]
       )
 
-      post '/super_admin/commercial/quotes', params: waived, as: :json
+      post '/super_admin/commercial/quotes', params: discounted, as: :json
 
       quote = SalesQuote.last
-      # subtotal 139_700 → waiver 50_000 → eligible 89_700 → meeting 8_970.
-      # The waiver runs before the meeting %, so 10% only chews the line
-      # that survived — no double-discount on the zeroed integration.
-      expect(quote.api_integration_waived).to be(true)
-      expect(quote.subtotal_amount).to eq(139_700)
-      expect(quote.discount_amount).to eq(8_970 + 50_000)
-      expect(quote.total_amount).to eq(80_730)
-      expect(quote.discount_summary).to include('isenção integração via API')
+      # subtotal 139_700 → waiver 50_000 → eligible 89_700 → 10% 8_970 + 5% 4_485.
+      expect(quote).to have_attributes(subtotal_amount: 139_700, discount_amount: 50_000 + 8970 + 4485,
+                                       waivers_amount: 50_000, meeting_discount: true, meeting_discount_amount: 8970)
+      expect(quote.discount_summary).to eq('isenção config. integração API + 10% reunião + 5% indicação')
+      expect(quote.applied_discounts.pluck('name', 'amount'))
+        .to eq([['Isenção config. integração API', 50_000], ['Reunião', 8970], ['Indicação', 4485]])
+    end
+
+    it 'does not move a proposal when its discount is edited later' do
+      post '/super_admin/commercial/quotes', params: payload, as: :json
+      meeting.update!(percent: 50)
+
+      expect(SalesQuote.last).to have_attributes(discount_amount: 8970, discount_summary: '10% reunião')
+    end
+
+    it 'ignores a discount that was turned off' do
+      meeting.update!(active: false)
+
+      post '/super_admin/commercial/quotes', params: payload, as: :json
+
+      expect(SalesQuote.last).to have_attributes(discount_amount: 0, meeting_discount: false)
     end
   end
 

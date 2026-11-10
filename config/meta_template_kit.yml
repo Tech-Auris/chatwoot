@@ -1,0 +1,204 @@
+# Auris template kit, read by Whatsapp::TemplateKit.
+#
+# Groups:
+#   follow_up  installed on every Cloud WhatsApp number; read-only for the clinic
+#   system     templates the Auris engine (n8n) sends by name; the clinic fills
+#              them from the kit with name/language/category/buttons locked and
+#              only the engine variables allowed in the body
+#   suggested  free starting points, fully editable
+#
+# Bodies use Meta's NAMED parameters ({{nome}}). Bracketed tokens such as
+# [nome da clínica] are clinic data replaced when the kit is served.
+# Meta rejects a body that starts or ends with a variable.
+examples:
+  nome: Maria
+  dia: 15/09/2026
+  hora: '14:30'
+  profissional: Dra. Ana Paula
+  procedimento: consulta de avaliação
+  link: https://exemplo.com.br
+  mensagem: nosso atendimento estará suspenso no feriado de 12/10.
+
+templates:
+  # Follow-up
+  - name: auris_fup_geral
+    group: follow_up
+    category: MARKETING
+    body: |-
+      Está aí? {{mensagem}}
+      Ou se quiser que eu pare o follow-up, é só me avisar.
+  - name: auris_fup_geral2
+    group: follow_up
+    category: MARKETING
+    body: 'Olá... {{mensagem}} Aguardo você.'
+  - name: auris_fup_geral3
+    group: follow_up
+    category: MARKETING
+    body: '👀 {{mensagem}} Quando puder, me responde por aqui.'
+
+  # System: reminders
+  - name: lembrete_72h
+    group: system
+    category: UTILITY
+    body: |-
+      Olá {{nome}}! Lembrando do seu atendimento na [nome da clínica] no dia {{dia}}, às {{hora}}, com {{profissional}}.
+
+      Se precisar ajustar alguma coisa, é só falar por aqui.
+  - name: lembrete_48h
+    group: system
+    category: UTILITY
+    body: |-
+      Olá {{nome}}! Faltam dois dias para o seu atendimento na [nome da clínica], no dia {{dia}} às {{hora}}, com {{profissional}}.
+
+      Para confirmar sua presença ou ajustar o horário, é só responder por aqui.
+  - name: lembrete_24h
+    group: system
+    category: UTILITY
+    body: |-
+      Olá {{nome}}! Seu atendimento na [nome da clínica] é amanhã, dia {{dia}} às {{hora}}, com {{profissional}}.
+
+      Selecione uma das opções abaixo:
+    buttons: [Confirmar, Reagendar, Cancelar]
+  - name: lembrete_no_dia
+    group: system
+    category: UTILITY
+    body: |-
+      Bom dia, {{nome}}! Hoje é o dia do seu atendimento na [nome da clínica], às {{hora}}, com {{profissional}}.
+
+      Estamos esperando por você.
+  - name: lembrete_no_dia2
+    group: system
+    category: UTILITY
+    body: |-
+      Olá {{nome}}! Seu atendimento com {{profissional}} na [nome da clínica] é daqui a pouco, às {{hora}}.
+
+      Até já!
+  - name: lembrete_no_dia3
+    group: system
+    category: UTILITY
+    body: 'Olá {{nome}}, seu atendimento com {{profissional}} começa às {{hora}}. Já estamos te aguardando na [nome da clínica].'
+
+  # System: webhook activations
+  - name: webhook_formulario
+    group: system
+    category: MARKETING
+    body: |-
+      Olá {{nome}}! Recebemos seu contato pelo formulário da [nome da clínica].
+
+      Para começarmos, conte aqui como podemos ajudar.
+  - name: webhook_no_show
+    group: system
+    category: UTILITY
+    body: |-
+      Olá {{nome}}! Sentimos sua falta no seu atendimento na [nome da clínica].
+
+      Se quiser remarcar, é só nos dizer por aqui o melhor dia e período.
+  - name: webhook_comparecimento
+    group: system
+    category: UTILITY
+    body: |-
+      Olá {{nome}}! Obrigado por vir à [nome da clínica].
+
+      Se surgir alguma dúvida depois do seu atendimento, é só falar por aqui.
+
+  # Suggested
+  - name: boas_vindas
+    group: suggested
+    category: MARKETING
+    body: |-
+      Olá {{nome}}! Seja bem-vindo(a) à [nome da clínica].
+
+      É um prazer ter você com a gente. Estamos à disposição para cuidar da sua saúde. Qualquer dúvida, fale por aqui.
+  - name: inicio_atendimento
+    group: suggested
+    category: MARKETING
+    body: |-
+      Olá {{nome}}! Aqui é da [nome da clínica].
+
+      Como podemos te ajudar hoje?
+  - name: mensagem_fora_do_horario
+    group: suggested
+    category: UTILITY
+    body: |-
+      Olá {{nome}}! Você entrou em contato com a [nome da clínica].
+
+      Nosso horário de atendimento é [horário de funcionamento]. Assim que possível, retornaremos sua mensagem.
+
+      Em caso de urgência ou emergência, procure um serviço de pronto atendimento.
+  - name: aviso_importante
+    group: suggested
+    category: UTILITY
+    body: |-
+      Olá {{nome}}! Comunicado da [nome da clínica]:
+
+      {{mensagem}}
+
+      Em caso de dúvida, estamos à disposição.
+  - name: confirmacao_agendamento
+    group: suggested
+    category: UTILITY
+    body: |-
+      Olá {{nome}}! Seu atendimento na [nome da clínica] está agendado.
+
+      Data e horário: {{dia}} às {{hora}}
+      Profissional: {{profissional}}
+      Local: [endereço da clínica]
+
+      Se precisar alterar, avise-nos com antecedência.
+  - name: reagendamento
+    group: suggested
+    category: UTILITY
+    body: |-
+      Olá {{nome}}! Seu atendimento na [nome da clínica] foi reagendado para o dia {{dia}} às {{hora}}, com {{profissional}}.
+
+      Se o novo horário não funcionar, é só nos avisar.
+  - name: cancelamento
+    group: suggested
+    category: UTILITY
+    body: |-
+      Olá {{nome}}. Seu atendimento na [nome da clínica] do dia {{dia}} às {{hora}} foi cancelado.
+
+      Quando quiser remarcar, estamos à disposição.
+  - name: lista_espera_vaga
+    group: suggested
+    category: UTILITY
+    body: |-
+      Olá {{nome}}! Abriu uma vaga na [nome da clínica] para o dia {{dia}} às {{hora}}, com {{profissional}}.
+
+      Se tiver interesse, responda por aqui para seguirmos com o agendamento.
+  - name: paciente_sem_retorno
+    group: suggested
+    category: MARKETING
+    body: |-
+      Olá {{nome}}! Faz um tempo que não nos vemos na [nome da clínica].
+
+      Que tal colocar seu acompanhamento em dia? Estamos por aqui para ajudar.
+
+      Se não quiser receber novidades, responda SAIR.
+  - name: resultado_exame_disponivel
+    group: suggested
+    category: UTILITY
+    body: |-
+      Olá {{nome}}! Seu resultado já está disponível na [nome da clínica].
+
+      Para saber como acessar, é só falar por aqui.
+  - name: preparo_procedimento
+    group: suggested
+    category: UTILITY
+    body: |-
+      Olá {{nome}}! Aqui é da [nome da clínica], sobre seu atendimento do dia {{dia}} às {{hora}}.
+
+      Orientações de preparo:
+
+      {{mensagem}}
+
+      Em caso de dúvida, é só falar por aqui.
+  - name: retomada_orcamento
+    group: suggested
+    category: MARKETING
+    body: |-
+      Olá {{nome}}! Aqui é da [nome da clínica]. Você pediu informações sobre {{procedimento}} com a gente.
+
+      Se quiser retomar, é só responder por aqui.
+
+      Se não quiser receber novidades, responda SAIR.

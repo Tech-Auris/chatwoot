@@ -146,6 +146,23 @@ RSpec.describe SalesQuote do
       expect(quote.effective_discount_amount).to eq(5000)
       expect(quote.effective_discount_summary).to eq('cupom Parceiro (5%)')
     end
+
+    # Only what is set to expire with the reservation comes off: the referral
+    # and the waivers keep holding.
+    it 'keeps the discounts that do not expire with the reservation' do
+      quote = create(:sales_quote, meeting_discount: true, reserved_until: 1.day.ago,
+                                   subtotal_amount: 100_000, discount_amount: 45_000, total_amount: 55_000,
+                                   meeting_discount_amount: 7000,
+                                   discount_summary: 'isenção implantação + 10% reunião + 5% indicação',
+                                   applied_discounts: [
+                                     { label: 'isenção implantação', expires_with_reservation: false, amount: 30_000 },
+                                     { label: '10% reunião', expires_with_reservation: true, amount: 7000 },
+                                     { label: '5% indicação', expires_with_reservation: false, amount: 3500 }
+                                   ])
+
+      expect(quote.effective_total_amount).to eq(62_000)
+      expect(quote.effective_discount_summary).to eq('isenção implantação + 5% indicação')
+    end
   end
 
   describe '#effective_charge_amount' do

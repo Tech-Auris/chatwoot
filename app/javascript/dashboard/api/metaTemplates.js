@@ -12,6 +12,13 @@ class MetaTemplatesAPI extends ApiClient {
     return axios.get(this.url, { params: { inbox_id: inboxId } });
   }
 
+  // The Auris kit for the inbox: `{ templates }`, each one in Meta's shape
+  // plus `group` (follow_up | system | suggested), `existing_id` and
+  // `existing_status` when the WABA already has it.
+  kit({ inboxId }) {
+    return axios.get(`${this.url}/kit`, { params: { inbox_id: inboxId } });
+  }
+
   // Triggers an inline sync with Meta and returns the fresh payload.
   // Same shape as `fetch`.
   sync({ inboxId }) {

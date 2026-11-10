@@ -20,6 +20,7 @@ import dashboardAppsRoutes from './dashboardApps/dashboardApps.routes';
 import internalChatRoutes from './internalChat/internalChat.routes';
 import simulatorRoutes from './simulator/simulator.routes';
 import ticketsRoutes from './tickets/tickets.routes';
+import homeRoutes from './home/home.routes';
 import AppContainer from './Dashboard.vue';
 import Suspended from './suspended/Index.vue';
 import NoAccounts from './noAccounts/Index.vue';
@@ -52,6 +53,7 @@ export default {
         ...internalChatRoutes.routes,
         ...simulatorRoutes.routes,
         ...ticketsRoutes.routes,
+        ...homeRoutes.routes,
       ],
     },
     {

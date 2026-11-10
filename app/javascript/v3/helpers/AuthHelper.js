@@ -47,7 +47,8 @@ export const getLoginRedirectURL = ({
     if (ssoConversationId) {
       return frontendURL(`${accountPath}/conversations/${ssoConversationId}`);
     }
-    return frontendURL(`${accountPath}/dashboard`);
+    // Everyone lands on the Início page after the login.
+    return frontendURL(`${accountPath}/home`);
   }
   return DEFAULT_REDIRECT_URL;
 };

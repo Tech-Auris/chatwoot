@@ -234,6 +234,9 @@ en:
       update_failed: Could not update the template on Meta. Please review the form and try again.
       delete_failed: Could not delete the template on Meta. Please try again shortly.
       template_not_found: This template is no longer available on the inbox.
+      kit_reserved: This follow-up template is installed and maintained by Auris and cannot be created, edited or deleted here.
+      kit_locked_fields: This is a system template. Name, language, category, variable format and buttons must follow the Auris Kit model.
+      kit_invalid_variables: 'Variables not allowed in this template: %{variables}. Use only %{allowed}, otherwise they reach the patient as raw text.'
     custom_filters:
       number_of_records: Limit reached. The maximum number of allowed custom filters for a user per account is 1000.
       invalid_attribute: Invalid attribute key - [%{key}]. The key should be one of [%{allowed_keys}] or a custom attribute defined in the account.

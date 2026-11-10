@@ -1,0 +1,120 @@
+{
+  "HOME_OVERVIEW": {
+    "GREETING": {
+      "MORNING": "Bom dia, {name}!",
+      "AFTERNOON": "Boa tarde, {name}!",
+      "EVENING": "Boa noite, {name}!",
+      "TODAY": "Hoje {verb} {leads} e {booked}.",
+      "LEADS": "nenhum lead novo | 1 lead novo | {count} leads novos",
+      "BOOKED": "ninguém foi agendado ainda | 1 já foi agendado | {count} já foram agendados",
+      "WAITING": "Nenhum lead esperando resposta. | 1 lead está sem resposta há mais de 10 minutos. | {count} leads estão sem resposta há mais de 10 minutos.",
+      "DATA_FROM": "Dados de: {inboxes}",
+      "LEADS_VERB": "não chegou | chegou | chegaram"
+    },
+    "TODAY": {
+      "NEW_LEADS": "Leads novos hoje",
+      "BOOKED": "Marcaram agendamento hoje",
+      "WAITING": "Sem resposta há +10 min",
+      "TOMORROW": "Amanhã",
+      "TOMORROW_DETAIL": "agendados · {confirmed} confirmaram"
+    },
+    "FILTERS": {
+      "TODAY": "Hoje",
+      "LAST_7_DAYS": "7 dias",
+      "MONTH": "Mês",
+      "CUSTOM": "Personalizado",
+      "FROM": "De",
+      "TO": "Até",
+      "ORIGEM_ALL": "Origem: Todas",
+      "ORIGEM_NONE": "Sem origem",
+      "INBOXES": "Caixas: {names}",
+      "INBOXES_MORE": "{name} + {count}"
+    },
+    "METRICS": {
+      "VS_PREVIOUS": "vs. período anterior: {value}",
+      "LEADS": "Leads",
+      "APPOINTMENTS": "Agendamentos",
+      "NO_SHOWS": "No-Show",
+      "ATTENDANCES": "Comparecimentos",
+      "FUNNEL": "Conversão do funil",
+      "ORIGINS": "Origem dos leads",
+      "LOSS_REASONS": "Motivos de perda",
+      "RESPONSE_TIME": "Tempo de primeira resposta",
+      "RESPONSE_TIME_SPLIT": "IA {ai} · equipe {team}",
+      "EMPTY": "Nada neste período",
+      "OFF_HOURS_LEADS": "Leads fora do horário",
+      "OFF_HOURS_APPOINTMENTS": "Agendamentos fora do horário",
+      "FOLLOW_UP_LEADS": "Leads em follow-up",
+      "AFTER_FOLLOW_UP": "Agendamentos após follow-up",
+      "COMING_SOON": "em breve",
+      "OFF_HOURS_INFO": "Lead cuja primeira mensagem chegou fora do horário de atendimento da caixa.\nCaixas sem horário configurado usam o padrão: seg a sex das 8h às 18h e sáb das 8h às 12h.\nAjuste na configuração da caixa de entrada.",
+      "OFF_HOURS_APPOINTMENTS_INFO": "Agendamento feito fora do horário de atendimento, ou de um lead que chegou fora dele.\nCaixas sem horário configurado usam o padrão: seg a sex das 8h às 18h e sáb das 8h às 12h.\nAjuste na configuração da caixa de entrada.",
+      "AI_CONVERSATIONS": "Conversas que a IA atuou",
+      "AI_CONVERSATIONS_SHARE": "{share}% dos leads do período",
+      "HANDOFF": "Handoff IA → Humano",
+      "HANDOFF_DETAIL": "{handed} das {total} conversas que a IA atuou",
+      "PERCENTAGE_POINTS": "p.p.",
+      "TOTAL": "Total"
+    },
+    "LOAD_ERROR": "Não foi possível carregar a página inicial. Tente novamente em instantes.",
+    "WAITING_DIALOG": {
+      "TITLE": "Sem resposta há +10 min: {count} conversas",
+      "DESCRIPTION": "Última mensagem do lead sem resposta há mais de 10 minutos (até 24 horas) e sem follow-up a caminho. Quem espera há mais tempo aparece primeiro.",
+      "DESCRIPTION_OLDEST": "Mostrando as {shown} que esperam há mais tempo. Última mensagem do lead sem resposta há mais de 10 minutos (até 24 horas) e sem follow-up a caminho.",
+      "MINUTES": "0 min | 1 min | {count} min",
+      "HOURS": "{hours} h {minutes} min",
+      "DASH": "—",
+      "HASH_ID": "#{id}",
+      "CLOSE": "Fechar",
+      "COLUMNS": {
+        "CONVERSATION": "Conversa",
+        "CONTACT": "Contato",
+        "WAITING_SINCE": "Esperando desde",
+        "WAITING_FOR": "Esperando há",
+        "ASSIGNEE": "Responsável",
+        "INBOX": "Caixa",
+        "SOURCE": "Origem"
+      }
+    },
+    "FOLLOW_UP_DIALOG": {
+      "TITLE": "Agendamentos após follow-up: {count} conversas",
+      "DESCRIPTION": "Leads que receberam follow-up antes de agendar, separados pelo último follow-up enviado antes do agendamento. Mesmo período e filtros da página.",
+      "AFTER_FIRST": "Após o 1º follow-up",
+      "AFTER_SECOND": "Após o 2º follow-up",
+      "AFTER_THIRD": "Após o 3º follow-up ou mais",
+      "COUNT": "nenhuma conversa | 1 conversa | {count} conversas",
+      "EMPTY": "Nenhuma conversa neste bloco.",
+      "AUTOMATION": "Automação",
+      "COLUMNS": {
+        "BOOKED_AT": "Agendado em",
+        "BOOKED_BY": "Agendado por"
+      }
+    },
+    "OPEN_CONVERSATIONS": "Ver as conversas",
+    "DRILLDOWN": {
+      "TITLE": "{card}: {count} conversas",
+      "DESCRIPTION": "Mesmo período e filtros da página. Uma linha por conversa, com a entrada mais recente no período.",
+      "ERROR": "Não foi possível carregar as conversas. Tente novamente em instantes.",
+      "STEP": "{step}º follow-up",
+      "COLUMNS": {
+        "ARRIVED_AT": "Chegou em",
+        "BOOKED_AT": "Agendado em",
+        "BOOKED_BY": "Agendado por",
+        "APPOINTMENT_AT": "Consulta em",
+        "STATUS": "Status",
+        "FOLLOW_UP_AT": "Último follow-up em",
+        "FOLLOW_UP_STEP": "Follow-up",
+        "NO_SHOW_AT": "No-show em",
+        "ATTENDED_AT": "Compareceu em",
+        "MOVED_BY": "Movido por",
+        "LOST_AT": "Perdido em",
+        "LOSS_REASON": "Motivo"
+      },
+      "STATUSES": {
+        "SCHEDULED": "Agendado",
+        "RESCHEDULED": "Reagendado",
+        "CONFIRMED": "Confirmado"
+      }
+    }
+  }
+}
