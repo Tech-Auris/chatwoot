@@ -19,7 +19,7 @@ class Sales::ConvertQuoteService
       quote.update!(account: account, status: :converted)
     end
 
-    quote.events.create!(event: 'converted', metadata: { account_id: account.id })
+    record_conversion(account)
     # Once per account, after the transaction: n8n sets up what lives outside
     # AurisChat (Drive folders, Supabase client rows).
     Sales::AccountCreatedWebhookJob.perform_later(quote.id)
@@ -30,6 +30,19 @@ class Sales::ConvertQuoteService
   private
 
   attr_reader :quote
+
+  def record_conversion(account)
+    quote.events.create!(event: 'converted', metadata: { account_id: account.id })
+    cancel_sibling_quotes
+  end
+
+  # A deal can have more than one proposal (the first one needed changes). Once
+  # one is paid the others must stop reminding the customer and taking payment.
+  def cancel_sibling_quotes
+    SalesQuote.where(clickup_task_id: quote.clickup_task_id, status: SalesQuote::CANCELLABLE_STATUSES)
+              .where.not(id: quote.id)
+              .find_each { |sibling| sibling.cancel!(reason: 'sibling_converted', converted_quote_id: quote.id) }
+  end
 
   # Every clinic works in Portuguese, on Brasília time, with the funnel on.
   ACCOUNT_LOCALE = 'pt_BR'.freeze

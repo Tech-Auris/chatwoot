@@ -50,6 +50,15 @@ RSpec.describe Webhooks::Asaas::PaymentEventHandler do
       expect(quote.account).to be_present
     end
 
+    # The boleto was issued before the proposal was cancelled: money received wins.
+    it 'still converts a cancelled sale on the first received parcel' do
+      quote.update!(status: :cancelled)
+
+      described_class.new(event: 'PAYMENT_RECEIVED', payment: payment).perform
+
+      expect(quote.reload.status).to eq('converted')
+    end
+
     it 'does not double-convert when a second parcel lands' do
       described_class.new(event: 'PAYMENT_RECEIVED', payment: payment).perform
       accounts_before = Account.count

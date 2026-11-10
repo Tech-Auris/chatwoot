@@ -92,4 +92,17 @@ RSpec.describe Sales::ConvertQuoteService do
 
     expect(described_class.new(quote: quote).perform.account.name).to eq("Conta #{quote.id}")
   end
+
+  it 'cancels the other open proposals of the same deal, leaving other deals alone' do
+    sibling = create(:sales_quote, clickup_task_id: quote.clickup_task_id, status: :reserved, reserved_until: 3.days.from_now)
+    already_converted = create(:sales_quote, clickup_task_id: quote.clickup_task_id, status: :converted)
+    other_deal = create(:sales_quote, status: :reserved, reserved_until: 3.days.from_now)
+
+    described_class.new(quote: quote).perform
+
+    expect(sibling.reload).to be_cancelled
+    expect(sibling.cancel_reason).to eq('sibling_converted')
+    expect(already_converted.reload).to be_converted
+    expect(other_deal.reload).to be_reserved
+  end
 end

@@ -24,6 +24,7 @@ RSpec.describe Sales::ReservationReminderJob do
   it 'reminds the open reservations ending today, once' do
     due = quote_ending_today(meeting_discount: true, meeting_discount_amount: 139_500)
     quote_ending_today(status: :paid)
+    quote_ending_today(status: :cancelled)
     create(:sales_quote, status: :reserved, reserved_until: zone.now.end_of_day + 1.day)
 
     travel_to(zone.now.change(hour: 12, min: 40)) do

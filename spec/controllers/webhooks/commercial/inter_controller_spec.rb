@@ -50,6 +50,15 @@ RSpec.describe 'Commercial Inter webhook', type: :request do
     expect(quote.events.pluck(:event)).to include('inter_pix_received', 'pix_payment_registered')
   end
 
+  # The PIX was issued before the proposal was cancelled: money received wins.
+  it 'still converts a cancelled proposal whose PIX was paid' do
+    quote.update!(status: :cancelled)
+
+    post_event(body: { 'pix' => [{ 'endToEndId' => 'E12345', 'txid' => 'auris_txid_1', 'valor' => '1076.40' }] })
+
+    expect(quote.reload.status).to eq('converted')
+  end
+
   it 'processes multiple pix events in a single payload' do
     other_quote = create(:sales_quote, status: :signed, payment_method: :pix, billing_cycle: :semiannual,
                                        total_amount: 538_200, prospect_name: 'Outro',

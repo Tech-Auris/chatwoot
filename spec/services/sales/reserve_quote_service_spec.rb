@@ -23,6 +23,13 @@ RSpec.describe Sales::ReserveQuoteService do
     expect(result.quote.reload).to have_attributes(status: 'reserved', reserved_until: deadline)
   end
 
+  it 'refuses to bring a cancelled proposal back' do
+    quote.update!(status: :cancelled)
+
+    expect { reserve }.to raise_error(ArgumentError, 'Esta proposta foi cancelada')
+    expect(quote.reload).to be_cancelled
+  end
+
   it 'renews the signing deadline of a contract still waiting for the customer' do
     contract = create(:sales_contract, sales_quote: quote, status: :awaiting_signature)
 

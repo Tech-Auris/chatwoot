@@ -34,6 +34,7 @@ class Sales::ReserveQuoteService
   def perform
     raise ArgumentError, 'Informe a data de vencimento da reserva' if reserved_until.blank?
     raise ArgumentError, 'A data da reserva precisa estar no futuro' if reserved_until.past?
+    raise ArgumentError, 'Esta proposta foi cancelada' if quote.cancelled?
 
     renewal = quote.reserved?
     quote.update!(reserved_until: reserved_until, status: :reserved)
