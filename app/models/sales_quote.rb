@@ -266,14 +266,14 @@ class SalesQuote < ApplicationRecord
   end
 
   # By hand from the Reservations grid, or when another proposal of the same
-  # ClickUp deal is paid. A payment already issued before the cancellation is
+  # ClickUp deal is reserved. A payment already issued before the cancellation is
   # still honoured by the webhooks: money received wins over the cancellation.
   def cancel!(reason:, **metadata)
     update!(status: :cancelled)
     events.create!(event: 'cancelled', metadata: metadata.merge(reason: reason))
   end
 
-  # `manual` or `sibling_converted`, from the event `cancel!` recorded.
+  # `manual` or `replaced`, from the event `cancel!` recorded.
   def cancel_reason
     return unless cancelled?
 

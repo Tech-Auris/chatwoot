@@ -196,8 +196,8 @@ const isCancelled = reservation => reservation.status === 'cancelled';
 const isClosed = reservation => reservation.won || isCancelled(reservation);
 const CANCEL_REASONS = {
   manual: 'Cancelada manualmente',
-  sibling_converted:
-    'Cancelada automaticamente: outra proposta do negócio foi paga',
+  replaced:
+    'Cancelada automaticamente: substituída por uma nova reserva do negócio',
 };
 
 // "Perdido" is a ClickUp-side terminal state — the proposal itself doesn't

@@ -48,14 +48,14 @@ RSpec.describe 'Super Admin Commercial Reservations', type: :request do
 
     it 'hides a cancelled proposal until the finalized toggle is on, showing why it was cancelled' do
       cancelled = create(:sales_quote, status: :reserved, clickup_status: 'negociação', reserved_until: 5.days.from_now)
-      cancelled.cancel!(reason: 'sibling_converted', converted_quote_id: won.id)
+      cancelled.cancel!(reason: 'replaced', replaced_by_quote_id: negotiating.id)
 
       get '/super_admin/commercial/reservations/data'
       expect(response.parsed_body['reservations'].pluck('id')).not_to include(cancelled.id)
 
       get '/super_admin/commercial/reservations/data', params: { include_finalized: '1' }
       row = response.parsed_body['reservations'].find { |r| r['id'] == cancelled.id }
-      expect(row).to include('status' => 'cancelled', 'cancel_reason' => 'sibling_converted', 'cancellable' => false)
+      expect(row).to include('status' => 'cancelled', 'cancel_reason' => 'replaced', 'cancellable' => false)
     end
 
     it 'brings back the closed deals when both toggles are on' do

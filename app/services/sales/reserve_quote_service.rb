@@ -32,12 +32,11 @@ class Sales::ReserveQuoteService
   LOCAL_WRITE_WINDOW = 5.minutes
 
   def perform
-    raise ArgumentError, 'Informe a data de vencimento da reserva' if reserved_until.blank?
-    raise ArgumentError, 'A data da reserva precisa estar no futuro' if reserved_until.past?
-    raise ArgumentError, 'Esta proposta foi cancelada' if quote.cancelled?
+    validate!
 
     renewal = quote.reserved?
     quote.update!(reserved_until: reserved_until, status: :reserved)
+    cancel_replaced_quotes
     mark_local_write
     mirror_deadline_to_pending_terms
     renew_contract_deadline
@@ -54,6 +53,12 @@ class Sales::ReserveQuoteService
   private
 
   attr_reader :quote, :reserved_until, :user
+
+  def validate!
+    raise ArgumentError, 'Informe a data de vencimento da reserva' if reserved_until.blank?
+    raise ArgumentError, 'A data da reserva precisa estar no futuro' if reserved_until.past?
+    raise ArgumentError, 'Esta proposta foi cancelada' if quote.cancelled?
+  end
 
   def client
     @client ||= Integrations::Clickup::Client.new
@@ -135,6 +140,15 @@ class Sales::ReserveQuoteService
     client.add_comment(quote.clickup_task_id, comment)
   rescue Integrations::Clickup::Client::Error => e
     Rails.logger.warn("[sales] reservation comment not posted: #{e.message}")
+  end
+
+  # A deal can have more than one proposal (the first one needed changes). The
+  # one reserved now is the one that counts: the others stop reminding the
+  # customer and taking payment.
+  def cancel_replaced_quotes
+    SalesQuote.where(clickup_task_id: quote.clickup_task_id, status: SalesQuote::CANCELLABLE_STATUSES)
+              .where.not(id: quote.id)
+              .find_each { |other| other.cancel!(reason: 'replaced', replaced_by_quote_id: quote.id) }
   end
 
   def record_event(renewal, error)
