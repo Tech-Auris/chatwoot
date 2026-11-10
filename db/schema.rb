@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_11_08_120000) do
+ActiveRecord::Schema[7.1].define(version: 2026_11_09_120100) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -1919,6 +1919,17 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_08_120000) do
     t.index ["sales_quote_id"], name: "index_sales_contracts_on_sales_quote_id"
   end
 
+  create_table "sales_discounts", force: :cascade do |t|
+    t.string "name", null: false
+    t.decimal "percent", precision: 5, scale: 2, null: false
+    t.string "stripe_product_ids", default: [], null: false, array: true
+    t.boolean "expires_with_reservation", default: false, null: false
+    t.boolean "active", default: true, null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "sales_quote_events", force: :cascade do |t|
     t.bigint "sales_quote_id", null: false
     t.bigint "user_id"
@@ -1989,6 +2000,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_08_120000) do
     t.integer "meeting_discount_amount", default: 0, null: false
     t.datetime "boleto_enabled_at"
     t.integer "waivers_amount", default: 0, null: false
+    t.jsonb "applied_discounts", default: [], null: false
     t.string "fbclid"
     t.datetime "fbclid_captured_at"
     t.string "client_ip"

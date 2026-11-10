@@ -952,6 +952,12 @@ Rails.application.routes.draw do
           end
         end
 
+        resources :discounts, only: [:index, :create, :update], controller: 'discounts' do
+          collection do
+            get :data
+          end
+        end
+
         resources :quotes, only: [:index, :create], controller: 'quotes' do
           collection do
             get :data

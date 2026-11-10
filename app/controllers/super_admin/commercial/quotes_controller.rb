@@ -19,11 +19,10 @@ class SuperAdmin::Commercial::QuotesController < SuperAdmin::ApplicationControll
 
   def index; end
 
-  # Catalogue and coupons for the cart. Prospects are not sent here: the list is
-  # searched as the operator types.
+  # Catalogue, discounts and coupons for the cart. Prospects are not sent here:
+  # the list is searched as the operator types.
   def data
-    render json: { prices: catalog_prices, coupons: available_coupons,
-                   meeting_discount_percent: Sales::QuoteCalculatorService::MEETING_DISCOUNT_PERCENT }
+    render json: { prices: catalog_prices, coupons: available_coupons, discounts: SalesDiscount.active.ordered.map(&:snapshot) }
   end
 
   def prospects
@@ -35,7 +34,8 @@ class SuperAdmin::Commercial::QuotesController < SuperAdmin::ApplicationControll
   def preview
     result = calculator.perform
 
-    render json: { subtotal: result.subtotal, discount: result.discount, total: result.total, summary: result.summary }
+    render json: { subtotal: result.subtotal, discount: result.discount, total: result.total, summary: result.summary,
+                   applied_discounts: result.applied_discounts }
   end
 
   # Holds the proposal until a date and mirrors it onto the ClickUp task. The
@@ -97,10 +97,13 @@ class SuperAdmin::Commercial::QuotesController < SuperAdmin::ApplicationControll
   def calculator
     Sales::QuoteCalculatorService.new(
       items: submitted_items,
-      meeting_discount: ActiveModel::Type::Boolean.new.cast(params[:meeting_discount]),
-      coupon: selected_coupon,
-      api_integration_waived: ActiveModel::Type::Boolean.new.cast(params[:api_integration_waived])
+      discounts: selected_discounts,
+      coupon: selected_coupon
     )
+  end
+
+  def selected_discounts
+    SalesDiscount.active.ordered.where(id: Array(params[:discount_ids])).map(&:snapshot)
   end
 
   def submitted_items
@@ -146,10 +149,6 @@ class SuperAdmin::Commercial::QuotesController < SuperAdmin::ApplicationControll
       company_name: prospect[:clinic_name],
       prospect_email: prospect[:email],
       prospect_phone: prospect[:phone],
-      meeting_discount: ActiveModel::Type::Boolean.new.cast(params[:meeting_discount]),
-      # `cast(nil)` returns nil — a NOT NULL column needs an explicit false
-      # when the payload omits the flag.
-      api_integration_waived: ActiveModel::Type::Boolean.new.cast(params[:api_integration_waived]) || false,
       coupon_id: params[:coupon_id].presence,
       billing_cycle: billing_cycle_from_items,
       status: :draft
@@ -206,7 +205,11 @@ class SuperAdmin::Commercial::QuotesController < SuperAdmin::ApplicationControll
     quote.total_amount = result.total
     quote.discount_summary = result.summary
     quote.meeting_discount_amount = result.meeting_discount_amount
+    # Kept as the switch `SalesQuote#effective_*` reads to peel the expiring
+    # discounts back off once the reservation ends.
+    quote.meeting_discount = result.meeting_discount_amount.positive?
     quote.waivers_amount = result.waivers_amount
+    quote.applied_discounts = result.applied_discounts
   end
 
   def selected_coupon

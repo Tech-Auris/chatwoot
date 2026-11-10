@@ -7,63 +7,60 @@
 # so the charge explains itself there too.
 #
 # Order matters:
-#   1. Waivers (isenções) run first — full-price cuts on a specific item
-#      (API integration checkbox, a coupon scoped to a Stripe product like
-#      "Isenção da Implantação — 100%").
-#   2. Meeting discount runs on what is left, so the seller does not double-
-#      discount the line that was already zeroed by a waiver.
-#   3. Untargeted percentage coupons run alongside the meeting discount on
-#      the same "eligible" base.
+#   1. Waivers (isenções) run first — cuts on specific items: the product-scoped
+#      discounts from Commercial → Descontos, and a coupon scoped to a Stripe
+#      product like "Isenção da Implantação — 100%".
+#   2. Order-wide discounts (reunião, indicação…) run on what is left and add
+#      up — 10% + 5% is 15% of the same base, not one on top of the other — so
+#      the seller does not double-discount a line a waiver already zeroed.
+#   3. Untargeted percentage coupons run alongside them on the same base.
 #   4. PIX runs at the payment step on the sum still on the table.
 class Sales::QuoteCalculatorService
-  MEETING_DISCOUNT_PERCENT = 10
-  # Product names the "Isentar Integração via API" checkbox waives. The list
-  # exists because the same product ships under different names in Stripe —
-  # historically "Integração via API" and, more recently, "Desenvolvimento
-  # de Integração API". Any line whose name matches (case-insensitive, exact)
-  # is subtracted whole; renames or new variants land here as one more entry.
-  API_INTEGRATION_ITEM_NAMES = [
-    'Integração via API',
-    'Desenvolvimento de Integração API'
-  ].map(&:downcase).freeze
+  Result = Struct.new(:subtotal, :discount, :total, :summary, :meeting_discount_amount, :waivers_amount, :applied_discounts,
+                      keyword_init: true)
 
-  Result = Struct.new(:subtotal, :discount, :total, :summary, :meeting_discount_amount, :waivers_amount, keyword_init: true)
+  attr_reader :items, :discounts, :coupon, :pix_discount_percent
 
-  attr_reader :items, :meeting_discount, :coupon, :pix_discount_percent, :api_integration_waived
-
-  def initialize(items:, meeting_discount: false, coupon: nil, pix_discount_percent: 0, api_integration_waived: false)
+  # `discounts` are `SalesDiscount#snapshot` hashes — the copy the proposal
+  # keeps, so pricing a saved proposal never depends on the current catalogue.
+  def initialize(items:, discounts: [], coupon: nil, pix_discount_percent: 0)
     @items = items
-    @meeting_discount = meeting_discount
+    @discounts = discounts.map(&:symbolize_keys)
     @coupon = coupon&.symbolize_keys
     @pix_discount_percent = pix_discount_percent
-    @api_integration_waived = api_integration_waived
   end
 
   def perform
     subtotal = items.sum { |item| line_total(item) }
     parts = discount_parts(subtotal)
     discount = [parts.sum { |part| part[:amount] }, subtotal].min
-    meeting_amount = parts.find { |part| part[:key] == :meeting }&.dig(:amount).to_i
-    waivers_amount = parts.select { |part| part[:key] == :waiver }.sum { |part| part[:amount] }
+    applied = parts.filter_map { |part| part[:discount]&.merge(amount: part[:amount]) }
 
     Result.new(
       subtotal: subtotal,
       discount: discount,
       total: subtotal - discount,
       summary: parts.pluck(:label).join(' + ').presence,
-      meeting_discount_amount: meeting_amount,
-      waivers_amount: waivers_amount
+      meeting_discount_amount: expiring_amount(applied),
+      waivers_amount: parts.select { |part| part[:key] == :waiver }.sum { |part| part[:amount] },
+      applied_discounts: applied
     )
   end
 
   private
+
+  # Whatever only holds while the reservation does (the meeting discount) is
+  # peeled back off by `SalesQuote#effective_*` once it expires.
+  def expiring_amount(applied)
+    applied.select { |part| part[:expires_with_reservation] }.sum { |part| part[:amount] }
+  end
 
   def line_total(item)
     item[:unit_amount].to_i * (item[:quantity].presence || 1).to_i
   end
 
   def discount_parts(subtotal)
-    waivers = [api_integration_part, scoped_coupon_waiver_part].compact
+    waivers = [*product_discount_parts, scoped_coupon_waiver_part].compact
     waived_amount = waivers.sum { |part| part[:amount] }
     eligible = [subtotal - waived_amount, 0].max
 
@@ -74,24 +71,30 @@ class Sales::QuoteCalculatorService
 
     [
       *waivers,
-      meeting_part(eligible),
+      *order_discount_parts(eligible),
       unscoped_coupon,
       pix_part(eligible)
     ].compact
   end
 
-  # A full-price waiver on the API integration item: the entire line
-  # (unit × quantity) is subtracted, matched by the product name so the
-  # cart can still display the item as usual and the audit trail keeps
-  # the reason ("isenção integração via API") next to the other parts.
-  def api_integration_part
-    return nil unless api_integration_waived
+  # A discount tied to products only touches the lines sold from them; one
+  # whose products are not in the cart does not apply at all.
+  def product_discount_parts
+    discounts.select { |discount| discount[:stripe_product_ids].present? }.filter_map do |discount|
+      scoped = items.select { |item| discount[:stripe_product_ids].include?(item[:stripe_product_id].to_s) }
+                    .sum { |item| line_total(item) }
+      next if scoped.zero?
 
-    amount = items.select { |item| API_INTEGRATION_ITEM_NAMES.include?(item[:name].to_s.downcase) }
-                  .sum { |item| line_total(item) }
-    return nil if amount.zero?
+      { key: :waiver, amount: percent_of(scoped, discount[:percent]), label: discount[:label], discount: discount }
+    end
+  end
 
-    { key: :waiver, amount: amount, label: 'isenção integração via API' }
+  def order_discount_parts(base)
+    return [] if base.zero?
+
+    discounts.select { |discount| discount[:stripe_product_ids].blank? }.map do |discount|
+      { amount: percent_of(base, discount[:percent]), label: discount[:label], discount: discount }
+    end
   end
 
   # Stripe coupons scoped to a specific product are the way the operator
@@ -127,13 +130,6 @@ class Sales::QuoteCalculatorService
       { key: :waiver, amount: [coupon[:amount_off].to_i, scoped_subtotal].min,
         label: "cupom #{coupon_name}" }
     end
-  end
-
-  def meeting_part(base)
-    return nil unless meeting_discount
-    return nil if base.zero?
-
-    { key: :meeting, amount: percent_of(base, MEETING_DISCOUNT_PERCENT), label: "#{MEETING_DISCOUNT_PERCENT}% reunião" }
   end
 
   # Untargeted coupon: applies to whatever is still on the table after
