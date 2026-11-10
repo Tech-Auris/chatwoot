@@ -142,12 +142,17 @@ module Sales::ProposalsHelper
   end
 
   # The payment choices on the Contrato step, with what each one costs — the
-  # same rules as the payment page (PIX and boleto on long plans only, boleto
-  # once the seller enabled it).
+  # same rules as the payment page (PIX, boleto and the recurring card on long
+  # plans only, boleto and the recurring card once the seller enabled them).
   def proposal_contract_payment_options(proposal)
     count = Sales::CheckoutService.installments_for(proposal.billing_cycle)
     parcels = "#{count} parcelas de #{proposal_amount((proposal.effective_total_amount || 0) / count)}"
-    options = [{ value: 'card', title: "Cartão de crédito em #{count}x", detail: parcels }]
+    options = [{ value: 'card', title: "Cartão de crédito em #{count}x", detail: "cobrança do valor total dividido em #{parcels}" }]
+    if proposal.card_recurring_available?
+      charge = proposal_amount(Sales::CardRecurringPricing.charge_for(proposal))
+      options << { value: 'card_recurring', title: 'Cartão de crédito recorrente',
+                   detail: "#{count} cobranças mensais e recorrentes de #{charge}, sem cobrar o valor total" }
+    end
     if Sales::CheckoutService.offers?('pix', proposal.billing_cycle)
       cash = proposal_pix_cash_hint(proposal)
       detail = cash ? "#{cash[:percent]}% de desconto · #{proposal_amount(cash[:amount])}" : proposal_amount(proposal.effective_total_amount)

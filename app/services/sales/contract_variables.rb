@@ -50,11 +50,19 @@ module Sales::ContractVariables
   def payment_terms(quote, payment_method)
     total = quote.effective_total_amount
     return pix_terms(quote, total) if payment_method.to_s == 'pix'
+    return card_recurring_terms(quote) if payment_method.to_s == 'card_recurring'
 
     count = Sales::CheckoutService.installments_for(quote.billing_cycle)
     parcel = (total / count.to_f).round
     means = payment_method.to_s == 'boleto' ? 'por boleto bancário' : 'no cartão de crédito'
     "#{count} (#{Sales::MoneyInWords.number(count)}) parcelas de R$ #{money(parcel)} (#{Sales::MoneyInWords.call(parcel)}) #{means}"
+  end
+
+  def card_recurring_terms(quote)
+    count = Sales::CheckoutService.installments_for(quote.billing_cycle)
+    charge = Sales::CardRecurringPricing.charge_for(quote)
+    "#{count} (#{Sales::MoneyInWords.number(count)}) cobranças mensais e recorrentes de R$ #{money(charge)} " \
+      "(#{Sales::MoneyInWords.call(charge)}) no cartão de crédito"
   end
 
   def pix_terms(quote, total)

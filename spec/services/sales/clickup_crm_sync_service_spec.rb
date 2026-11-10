@@ -74,6 +74,15 @@ RSpec.describe Sales::ClickupCrmSyncService do
         .with('86akkgh7b', described_class::FIELDS[:payment_method], 'Boleto 12x')
     end
 
+    it 'writes the recurring card label with the charge count' do
+      quote.update!(payment_method: :card_recurring, billing_cycle: :annual)
+
+      sync
+
+      expect(client).to have_received(:set_custom_field)
+        .with('86akkgh7b', described_class::FIELDS[:payment_method], 'Cartão recorrente 12x')
+    end
+
     it 'writes the card label without an N on the monthly plan' do
       quote.update!(payment_method: :card, billing_cycle: :monthly)
 

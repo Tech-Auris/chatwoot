@@ -61,7 +61,9 @@ class Sales::GenerateContractService
 
   def ensure_payment_method!
     method = form.payment_method.to_s
-    offered = Sales::CheckoutService.offers?(method, quote.billing_cycle) && (method != 'boleto' || quote.boleto_available?)
+    offered = Sales::CheckoutService.offers?(method, quote.billing_cycle) &&
+              (method != 'boleto' || quote.boleto_available?) &&
+              (method != 'card_recurring' || quote.card_recurring_available?)
     raise Error, 'Forma de pagamento não disponível para esta proposta' unless offered
   end
 

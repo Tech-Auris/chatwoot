@@ -288,20 +288,23 @@ const cancelPixRegister = () => {
   pixModal.value = { open: false, reservation: null };
 };
 
-// Boleto ships off por default em toda proposta nova — o vendedor
-// libera aqui, mesmo padrão de "Dispensar cartão". Após liberado, o
-// cliente passa a ver a opção de boleto na página pública.
-const enableBoleto = async reservation => {
-  if (
-    !window.confirm('Liberar boleto como forma de pagamento para este cliente?')
-  )
-    return;
+// Boleto e cartão recorrente vêm desligados por default em toda proposta
+// nova — o vendedor libera aqui, mesmo padrão de "Dispensar cartão". Após
+// liberado, o cliente passa a ver a opção na página pública.
+const PAYMENT_OPTION_CONFIRMS = {
+  enable_boleto: 'Liberar boleto como forma de pagamento para este cliente?',
+  enable_card_recurring:
+    'Liberar cartão recorrente como forma de pagamento para este cliente?',
+};
+
+const enablePaymentOption = async (reservation, action) => {
+  if (!window.confirm(PAYMENT_OPTION_CONFIRMS[action])) return;
 
   busyId.value = reservation.id;
   error.value = null;
   try {
     const res = await fetch(
-      `${props.componentData.reservations_url}/${reservation.id}/enable_boleto`,
+      `${props.componentData.reservations_url}/${reservation.id}/${action}`,
       {
         method: 'POST',
         credentials: 'same-origin',
@@ -609,15 +612,18 @@ const submitRenew = async () => {
                   Registrar pagamento · {{ reservation.register_payment_label }}
                 </button>
               </div>
-              <!-- Boleto liberação pré-venda — só aparece quando o plano
-                   suporta boleto (semestral/anual), a reserva ainda vale
-                   e o vendedor ainda não liberou. Após liberar, o cliente
-                   passa a ver a opção na página pública. Some sozinho
-                   quando a venda entra em "awaiting confirmation" (aí o
-                   botão de Registrar pagamento acima já toma o espaço)
-                   ou depois que a venda vira Ganho — depois de fechar,
-                   nada aqui interessa mais e a coluna tem que ficar
-                   quieta. -->
+              <div
+                v-if="reservation.payment_label"
+                class="mt-1 text-xs text-slate-500 whitespace-nowrap"
+              >
+                {{ reservation.payment_label }}
+              </div>
+              <!-- Liberação pré-venda de boleto e cartão recorrente — só
+                   aparece quando o plano suporta (semestral/anual), a
+                   reserva ainda vale e a venda não está aguardando
+                   confirmação nem virou Ganho. Os dois são independentes;
+                   após liberar, o cliente passa a ver a opção na página
+                   pública. -->
               <div
                 v-if="
                   !reservation.won &&
@@ -625,7 +631,7 @@ const submitRenew = async () => {
                   reservation.reservation_active &&
                   !reservation.awaiting_manual_payment_confirmation
                 "
-                class="mt-1"
+                class="mt-1 flex flex-wrap items-center gap-1"
               >
                 <span
                   v-if="reservation.boleto_enabled"
@@ -639,9 +645,27 @@ const submitRenew = async () => {
                   class="reset-base px-2 py-1 rounded border border-woot-200 text-woot-600 text-xs leading-tight whitespace-nowrap bg-white hover:bg-woot-50 disabled:opacity-40"
                   :disabled="busyId === reservation.id"
                   title="Libera boleto como forma de pagamento para este cliente na página pública."
-                  @click="enableBoleto(reservation)"
+                  @click="enablePaymentOption(reservation, 'enable_boleto')"
                 >
                   Liberar boleto
+                </button>
+                <span
+                  v-if="reservation.card_recurring_enabled"
+                  class="text-xs text-slate-500"
+                >
+                  Cartão recorrente liberado
+                </span>
+                <button
+                  v-else
+                  type="button"
+                  class="reset-base px-2 py-1 rounded border border-woot-200 text-woot-600 text-xs leading-tight whitespace-nowrap bg-white hover:bg-woot-50 disabled:opacity-40"
+                  :disabled="busyId === reservation.id"
+                  title="Libera o cartão recorrente (uma cobrança por mês no Stripe) como forma de pagamento para este cliente na página pública."
+                  @click="
+                    enablePaymentOption(reservation, 'enable_card_recurring')
+                  "
+                >
+                  Liberar cartão recorrente
                 </button>
               </div>
             </td>

@@ -320,6 +320,56 @@ RSpec.describe Sales::CheckoutService do
     end
   end
 
+  # The middle ground on a long plan: one Stripe charge a month instead of the
+  # whole total on the card limit at once.
+  describe 'paying a long plan by recurring card' do
+    before do
+      quote.update!(card_recurring_enabled_at: Time.current, total_amount: 1_395_005)
+      sign_terms
+      allow(client).to receive(:create_customer).and_return(Struct.new(:id).new('cus_1'))
+      allow(client).to receive(:update_customer)
+      allow(client).to receive(:list_tax_ids).and_return(Struct.new(:data).new([]))
+      allow(client).to receive(:create_tax_id)
+      allow(client).to receive(:create_checkout_session).and_return(Struct.new(:id, :url).new('cs_1', 'https://checkout.stripe.com/r'))
+    end
+
+    it 'sends the customer to a Stripe subscription checkout' do
+      expect(checkout(method: 'card_recurring').checkout_url).to eq('https://checkout.stripe.com/r')
+      expect(received_session[:mode]).to eq('subscription')
+      expect(received_session[:subscription_data][:metadata]).to eq({ sales_quote_id: quote.id, installments: 12 })
+      expect(quote.reload).to have_attributes(status: 'signed', payment_method: 'card_recurring')
+    end
+
+    # 13.950,05 / 12 = 1.162,50 a month, and the 5 cents that do not divide go
+    # on the first invoice only.
+    it 'splits the total into one charge per month, leftover cents on the first invoice' do
+      checkout(method: 'card_recurring')
+
+      monthly, residue = received_session[:line_items]
+      expect(monthly[:price_data]).to include(unit_amount: 116_250, recurring: { interval: 'month' })
+      expect(residue[:price_data]).to include(unit_amount: 5)
+      expect(residue[:price_data]).not_to have_key(:recurring)
+    end
+
+    it 'offers no card instalments on top of the monthly charges' do
+      checkout(method: 'card_recurring')
+
+      expect(received_session[:max_installments]).to eq(1)
+    end
+
+    it 'refuses the recurring card when the seller has not enabled it' do
+      quote.update!(card_recurring_enabled_at: nil)
+
+      expect { checkout(method: 'card_recurring') }.to raise_error(described_class::UnsupportedPaymentMethod, /liberado/)
+    end
+
+    it 'refuses the recurring card on the monthly plan' do
+      quote.update!(billing_cycle: :monthly)
+
+      expect { checkout(method: 'card_recurring') }.to raise_error(described_class::UnsupportedPaymentMethod, /mensal/)
+    end
+  end
+
   # AsaaS customers are keyed by document, so a retried checkout must land on
   # the same customer id instead of spawning a new one for the same CPF.
   describe 'the AsaaS customer behind the sale' do

@@ -321,6 +321,20 @@ class Integrations::Stripe::Client
     with_error_handling { Stripe::Checkout::Session.retrieve(session_id, request_options) }
   end
 
+  def retrieve_subscription(subscription_id)
+    with_error_handling { Stripe::Subscription.retrieve(subscription_id, request_options) }
+  end
+
+  # Takes over an existing subscription so its future prices can be planned
+  # in phases.
+  def create_subscription_schedule_from(subscription_id)
+    with_error_handling { Stripe::SubscriptionSchedule.create({ from_subscription: subscription_id }, request_options) }
+  end
+
+  def update_subscription_schedule(schedule_id, attributes)
+    with_error_handling { Stripe::SubscriptionSchedule.update(schedule_id, attributes, request_options) }
+  end
+
   # Writes off an invoice paid outside Stripe (PIX at Banco Inter or AsaaS).
   #
   # The payment is registered first and the origin stamped after: if the stamp

@@ -102,6 +102,16 @@
           </span>
         </label>
 
+        <% if @card_recurring_available %>
+          <label class="flex items-center gap-2 mt-3 text-sm text-slate-700">
+            <%= f.radio_button :payment_method, 'card_recurring' %>
+            <span>
+              Cartão de crédito recorrente
+              <span class="text-slate-500">— <%= @installments %> cobranças mensais de <%= proposal_amount(Sales::CardRecurringPricing.charge_for(@proposal)) %></span>
+            </span>
+          </label>
+        <% end %>
+
         <% if @boleto_available %>
           <label class="flex items-center gap-2 mt-3 text-sm text-slate-700">
             <%= f.radio_button :payment_method, 'boleto' %>

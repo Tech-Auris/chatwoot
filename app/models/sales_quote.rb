@@ -10,56 +10,58 @@
 #
 # Table name: sales_quotes
 #
-#  id                       :bigint           not null, primary key
-#  access_code              :string           not null
-#  api_integration_waived   :boolean          default(FALSE), not null
-#  applied_discounts        :jsonb            not null
-#  asaas_invoice_url        :string
-#  asaas_payment_link_url   :string
-#  billing_cycle            :integer
-#  billing_name             :string
-#  boleto_enabled_at        :datetime
-#  client_ip                :string
-#  client_user_agent        :string
-#  clickup_status           :string
-#  clickup_status_synced_at :datetime
-#  company_document         :string
-#  company_name             :string
-#  currency                 :string           default("brl"), not null
-#  discount_amount          :integer          default(0), not null
-#  discount_summary         :string
-#  fbclid                   :string
-#  fbclid_captured_at       :datetime
-#  inter_pix_payload        :text
-#  inter_txid               :string
-#  meeting_discount         :boolean          default(FALSE), not null
-#  meeting_discount_amount  :integer          default(0), not null
-#  payment_method           :integer
-#  prospect_document        :string
-#  prospect_email           :string
-#  prospect_name            :string
-#  prospect_phone           :string
-#  public_token             :string           not null
-#  reserved_until           :datetime
-#  status                   :integer          default("draft"), not null
-#  subtotal_amount          :integer          default(0), not null
-#  token_card_waived_at     :datetime
-#  total_amount             :integer          default(0), not null
-#  verification_phone_last4 :string
-#  waivers_amount           :integer          default(0), not null
-#  created_at               :datetime         not null
-#  updated_at               :datetime         not null
-#  account_id               :bigint
-#  asaas_customer_id        :string
-#  asaas_installment_id     :string
-#  asaas_payment_link_id    :string
-#  clickup_task_id          :string           not null
-#  coupon_id                :string
-#  seller_id                :bigint           not null
-#  stripe_customer_id       :string
-#  stripe_invoice_id        :string
-#  stripe_subscription_id   :string
-#  token_payment_method_id  :string
+#  id                        :bigint           not null, primary key
+#  access_code               :string           not null
+#  api_integration_waived    :boolean          default(FALSE), not null
+#  applied_discounts         :jsonb            not null
+#  asaas_invoice_url         :string
+#  asaas_payment_link_url    :string
+#  billing_cycle             :integer
+#  billing_name              :string
+#  boleto_enabled_at         :datetime
+#  card_recurring_enabled_at :datetime
+#  clickup_status            :string
+#  clickup_status_synced_at  :datetime
+#  client_ip                 :string
+#  client_user_agent         :string
+#  company_document          :string
+#  company_name              :string
+#  currency                  :string           default("brl"), not null
+#  discount_amount           :integer          default(0), not null
+#  discount_summary          :string
+#  fbclid                    :string
+#  fbclid_captured_at        :datetime
+#  inter_pix_payload         :text
+#  inter_txid                :string
+#  meeting_discount          :boolean          default(FALSE), not null
+#  meeting_discount_amount   :integer          default(0), not null
+#  payment_method            :integer
+#  payment_overdue_since     :datetime
+#  prospect_document         :string
+#  prospect_email            :string
+#  prospect_name             :string
+#  prospect_phone            :string
+#  public_token              :string           not null
+#  reserved_until            :datetime
+#  status                    :integer          default("draft"), not null
+#  subtotal_amount           :integer          default(0), not null
+#  token_card_waived_at      :datetime
+#  total_amount              :integer          default(0), not null
+#  verification_phone_last4  :string
+#  waivers_amount            :integer          default(0), not null
+#  created_at                :datetime         not null
+#  updated_at                :datetime         not null
+#  account_id                :bigint
+#  asaas_customer_id         :string
+#  asaas_installment_id      :string
+#  asaas_payment_link_id     :string
+#  clickup_task_id           :string           not null
+#  coupon_id                 :string
+#  seller_id                 :bigint           not null
+#  stripe_customer_id        :string
+#  stripe_invoice_id         :string
+#  stripe_subscription_id    :string
+#  token_payment_method_id   :string
 #
 # Indexes
 #
@@ -103,7 +105,9 @@ class SalesQuote < ApplicationRecord
   # every month. Boleto sits at list price like the card — the PIX à-vista
   # discount is a courtesy for a customer paying us directly, not for one
   # whose bank compensates the boleto D+1.
-  enum :payment_method, { pix: 0, card: 1, boleto: 2 }, prefix: true
+  # The recurring card is the middle ground on the long plans: one Stripe
+  # charge a month instead of the whole total on the card limit at once.
+  enum :payment_method, { pix: 0, card: 1, boleto: 2, card_recurring: 3 }, prefix: true
   enum :billing_cycle, { monthly: 0, semiannual: 1, annual: 2 }, prefix: true
 
   validates :public_token, presence: true, uniqueness: true
@@ -124,12 +128,13 @@ class SalesQuote < ApplicationRecord
 
   scope :open_deals, -> { where.not(status: [:converted, :expired, :cancelled]) }
 
-  # Signed and not yet an account, minus the monthly card sale — that one is a
-  # Stripe subscription, and Stripe confirms it through the webhook.
+  # Signed and not yet an account, minus the Stripe subscriptions (the monthly
+  # card and the recurring card) — Stripe confirms those through the webhook.
   scope :awaiting_manual_payment, lambda {
     where(status: :signed, account_id: nil)
       .where.not('payment_method = :card AND billing_cycle = :monthly',
                  card: payment_methods[:card], monthly: billing_cycles[:monthly])
+      .where.not(payment_method: :card_recurring)
   }
 
   # The card for the token charges is not always possible: somebody who paid
@@ -177,6 +182,26 @@ class SalesQuote < ApplicationRecord
   # this on before the constraint existed.
   def boleto_available?
     boleto_enabled_at.present? && Sales::CheckoutService.offers?('boleto', billing_cycle)
+  end
+
+  # How the customer chose to pay, as the team reads it on the Reservations
+  # grid and on the CRM's `Forma de Pagamento`. The N is locked by the plan
+  # (see Sales::CheckoutService.installments_for); PIX is a single transfer.
+  def payment_method_label
+    return 'PIX' if payment_method_pix?
+    return 'Cartão' if payment_method_card? && billing_cycle_monthly?
+
+    n = Sales::CheckoutService.installments_for(billing_cycle)
+    return "Cartão #{n}x" if payment_method_card?
+    return "Cartão recorrente #{n}x" if payment_method_card_recurring?
+
+    "Boleto #{n}x" if payment_method_boleto?
+  end
+
+  # Same opt-in as the boleto, flipped on by the seller from the Reservations
+  # grid.
+  def card_recurring_available?
+    card_recurring_enabled_at.present? && Sales::CheckoutService.offers?('card_recurring', billing_cycle)
   end
 
   # The meeting discount (any discount set to expire with the reservation) is

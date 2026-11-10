@@ -40,6 +40,7 @@ class Sales::CheckoutService
 
     return await_manual_payment if payment_method == 'pix'
     return start_asaas_checkout(billing_type: 'BOLETO') if payment_method == 'boleto'
+    return start_card_checkout if payment_method == 'card_recurring'
 
     return start_asaas_checkout(billing_type: 'CREDIT_CARD') if self.class.card_provider_for(quote.billing_cycle) == :asaas
 
@@ -68,11 +69,13 @@ class Sales::CheckoutService
 
   # PIX and boleto are settled by hand against a period the customer already
   # paid for, so both are offered on the long plans only — a monthly one would
-  # mean chasing a transfer every month, or reissuing a boleto every month.
+  # mean chasing a transfer every month, or reissuing a boleto every month. The
+  # recurring card spreads a long plan over its months, which the monthly plan
+  # already does on its own.
   def self.offers?(payment_method, billing_cycle)
     return true if payment_method.to_s == 'card'
 
-    %w[pix boleto].include?(payment_method.to_s) && billing_cycle.to_s != 'monthly'
+    %w[pix boleto card_recurring].include?(payment_method.to_s) && billing_cycle.to_s != 'monthly'
   end
 
   # What the customer saves by paying with PIX on a longer plan.
@@ -94,14 +97,17 @@ class Sales::CheckoutService
 
   # Two guards, kept in one place so `perform` reads as the flow it is:
   #   * `offers?` is the static rule of the catalog (card / long-plan pix /
-  #     long-plan boleto).
-  #   * The boleto opt-in is per-proposal: off by default and flipped on by
-  #     the seller from the Reservations grid. This catches a customer that
-  #     hit `payment_method=boleto` from a stale form / URL before the
-  #     seller had opened it up.
+  #     long-plan boleto / long-plan recurring card).
+  #   * The boleto and recurring-card opt-ins are per-proposal: off by default
+  #     and flipped on by the seller from the Reservations grid. This catches
+  #     a customer that hit `payment_method=boleto` from a stale form / URL
+  #     before the seller had opened it up.
   def ensure_payment_method_available!
     raise UnsupportedPaymentMethod, 'O plano mensal é pago no cartão' unless self.class.offers?(payment_method, quote.billing_cycle)
     raise UnsupportedPaymentMethod, 'Boleto ainda não foi liberado para esta proposta' if payment_method == 'boleto' && !quote.boleto_available?
+    return unless payment_method == 'card_recurring' && !quote.card_recurring_available?
+
+    raise UnsupportedPaymentMethod, 'Cartão recorrente ainda não foi liberado para esta proposta'
   end
 
   def client
@@ -211,7 +217,8 @@ class Sales::CheckoutService
       customer_id: customer_id,
       line_items: line_items,
       urls: urls,
-      max_installments: self.class.installments_for(quote.billing_cycle),
+      # Card installments are a one-off charge thing; a subscription has none.
+      max_installments: payment_method == 'card_recurring' ? 1 : self.class.installments_for(quote.billing_cycle),
       metadata: { sales_quote_id: quote.id },
       **subscription_payload
     )
@@ -221,9 +228,10 @@ class Sales::CheckoutService
     Result.new(quote: quote, checkout_url: session.url, awaiting_manual_payment: false)
   end
 
-  # Only the monthly plan is a subscription; a long plan reaching Stripe is a
-  # single charge, and today it does not reach Stripe at all.
+  # The monthly plan and the recurring card are subscriptions; a long plan
+  # paid by card in one go goes to AsaaS instead.
   def subscription_payload
+    return Sales::CardRecurringPricing.subscription_payload(quote) if payment_method == 'card_recurring'
     return {} unless quote.billing_cycle_monthly?
 
     # No minimum term: the subscription renews month to month until the
@@ -242,6 +250,7 @@ class Sales::CheckoutService
   # ways: the subscription carries the plan, and the setup fee rides on the
   # first invoice only.
   def line_items
+    return Sales::CardRecurringPricing.line_items(quote) if payment_method == 'card_recurring'
     return single_line_items unless quote.billing_cycle_monthly?
     # A proposal with no lines of its own still has a total, and on a monthly
     # plan that total is what recurs.

@@ -389,4 +389,36 @@ RSpec.describe 'Super Admin Commercial Reservations', type: :request do
       end
     end
   end
+
+  describe 'POST /super_admin/commercial/reservations/:id/enable_card_recurring' do
+    let(:quote) { create(:sales_quote, status: :reserved, billing_cycle: :annual, reserved_until: 3.days.from_now) }
+
+    it 'stamps the enablement, records the audit event and leaves the boleto alone' do
+      post "/super_admin/commercial/reservations/#{quote.id}/enable_card_recurring"
+
+      expect(response).to have_http_status(:success)
+      expect(quote.reload.card_recurring_enabled_at).to be_present
+      expect(quote.boleto_enabled_at).to be_nil
+      expect(quote.events.pluck(:event)).to include('card_recurring_enabled')
+      expect(response.parsed_body['reservation']['card_recurring_enabled']).to be(true)
+    end
+
+    it 'refuses a monthly plan' do
+      quote.update!(billing_cycle: :monthly)
+
+      post "/super_admin/commercial/reservations/#{quote.id}/enable_card_recurring"
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(quote.reload.card_recurring_enabled_at).to be_nil
+    end
+
+    it 'shows how the customer chose to pay' do
+      quote.update!(payment_method: :card_recurring, status: :signed)
+
+      post "/super_admin/commercial/reservations/#{quote.id}/enable_card_recurring"
+
+      expect(response.parsed_body['reservation']['payment_label']).to eq('Cartão recorrente 12x')
+      expect(response.parsed_body['reservation']['awaiting_manual_payment_confirmation']).to be(false)
+    end
+  end
 end

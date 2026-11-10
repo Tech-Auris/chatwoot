@@ -123,4 +123,17 @@ RSpec.describe Sales::GenerateContractService do
 
     expect { perform }.to raise_error(described_class::Error, /não disponível/)
   end
+
+  it 'refuses the recurring card while the seller has not enabled it' do
+    form.payment_method = 'card_recurring'
+
+    expect { perform }.to raise_error(described_class::Error, /não disponível/)
+  end
+
+  it 'takes the recurring card once the seller enabled it' do
+    quote.update!(card_recurring_enabled_at: Time.current)
+    form.payment_method = 'card_recurring'
+
+    expect(perform).to have_attributes(payment_method: 'card_recurring', installments: 12)
+  end
 end

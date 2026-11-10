@@ -102,7 +102,7 @@ class Sales::ProposalsController < ActionController::Base
   def tokens
     return redirect_to sales_proposal_status_path(@proposal.public_token) if @proposal.token_card_settled?
 
-    @same_card_available = @proposal.payment_method_card?
+    @same_card_available = @proposal.payment_method_card? || @proposal.payment_method_card_recurring?
   end
 
   def save_token_card
@@ -115,7 +115,7 @@ class Sales::ProposalsController < ActionController::Base
 
     redirect_to session.url, allow_other_host: true
   rescue Integrations::Stripe::Client::Error => e
-    @same_card_available = @proposal.payment_method_card?
+    @same_card_available = @proposal.payment_method_card? || @proposal.payment_method_card_recurring?
     render :tokens, status: :unprocessable_entity, locals: { error: e.message }
   end
 
@@ -141,11 +141,16 @@ class Sales::ProposalsController < ActionController::Base
 
     # Only the Stripe checkout can be picked up where it was left; the PIX and
     # the AsaaS link are both waiting on somebody confirming the money.
-    if @proposal.payment_method_card? && Sales::CheckoutService.card_provider_for(@proposal.billing_cycle) == :stripe
+    if stripe_checkout?
       sales_proposal_checkout_path(@proposal.public_token)
     else
       sales_proposal_status_path(@proposal.public_token)
     end
+  end
+
+  def stripe_checkout?
+    @proposal.payment_method_card_recurring? ||
+      (@proposal.payment_method_card? && Sales::CheckoutService.card_provider_for(@proposal.billing_cycle) == :stripe)
   end
 
   # The money is in, or the account already exists.
@@ -217,6 +222,7 @@ class Sales::ProposalsController < ActionController::Base
     @pix_available = Sales::CheckoutService.offers?('pix', @proposal.billing_cycle)
     @pix_discount = Sales::CheckoutService.pix_discount_for(@proposal.billing_cycle)
     @boleto_available = @proposal.boleto_available?
+    @card_recurring_available = @proposal.card_recurring_available?
     @installments = Sales::CheckoutService.installments_for(@proposal.billing_cycle)
     @terms_version = Sales::TermsFetcherService.new.perform
   end
