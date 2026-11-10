@@ -377,6 +377,13 @@ const reportRoutes = computed(() => newReportRoutes());
 
 const menuItems = computed(() => {
   const items = [
+    {
+      name: 'Home',
+      label: t('SIDEBAR.HOME_OVERVIEW'),
+      icon: 'i-lucide-house',
+      to: accountScopedRoute('home_overview'),
+      activeOn: ['home_overview'],
+    },
     ...(isInboxMenuEnabled.value
       ? [
           {

@@ -172,11 +172,16 @@ class V2::Reports::FunnelConversionBuilder
   # callers can chain `.where(...)` / `.group(...)` like they did before.
   # Filters default to OFF when the param is blank.
   def funnel_stage_changes_scope(with_origem: true)
-    scope = live_funnel_stage_changes
+    scope = home_filters(live_funnel_stage_changes)
     scope = scope.where(inbox_id: params[:inbox_id]) if params[:inbox_id].present?
     scope = scope.where(conversation_id: account.conversations.tagged_with(params[:label], on: :labels).select(:id)) if params[:label].present?
     scope = scope.where(conversation_id: conversations_for_origem_scope) if with_origem && params[:origem].present?
     scope
+  end
+
+  # The Início page narrows the report to the caixas the user can see.
+  def home_filters(scope)
+    params[:inbox_ids] ? scope.where(inbox_id: params[:inbox_ids]) : scope
   end
 
   # A campaign's leads keep whatever origin they already had, so filtering by

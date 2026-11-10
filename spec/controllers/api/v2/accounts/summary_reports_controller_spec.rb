@@ -420,6 +420,16 @@ RSpec.describe 'Summary Reports API', type: :request do
         .with(account: account, params: hash_including(stage_key: 'Agendamento', inbox_id: '3', since: start_of_today.to_s))
     end
 
+    it 'passes the caixas picked on the Início page' do
+      builder = instance_double(V2::Reports::FunnelConversionDrilldownBuilder, build: { rows: [], meta: { total_count: 0 } })
+      allow(V2::Reports::FunnelConversionDrilldownBuilder).to receive(:new).and_return(builder)
+
+      get url, params: params.except(:inbox_id).merge(inbox_ids: %w[3 5]), headers: admin.create_new_auth_token
+
+      expect(V2::Reports::FunnelConversionDrilldownBuilder).to have_received(:new)
+        .with(account: account, params: hash_including(inbox_ids: %w[3 5]))
+    end
+
     it 'rejects a stage that is not drillable' do
       get url, params: params.merge(stage_key: 'Novo Contato'), headers: admin.create_new_auth_token, as: :json
 
