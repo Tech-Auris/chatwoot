@@ -16,10 +16,13 @@ class Sales::GenerateContractService
     Redis::Alfred.exists?(format(GENERATION_LOCK, quote_id: quote.id))
   end
 
-  def initialize(quote:, form:, client: Integrations::Autentique::Client.new)
+  # `replace` sends a new contract even when the data did not change — the
+  # renewal uses it when the values the PDF carries are the ones that moved.
+  def initialize(quote:, form:, client: Integrations::Autentique::Client.new, replace: false)
     @quote = quote
     @form = form
     @client = client
+    @replace = replace
   end
 
   # Returns nil when another generation for this quote is still running.
@@ -28,7 +31,7 @@ class Sales::GenerateContractService
     return unless acquire_lock
 
     begin
-      return quote.current_contract if same_contract_out?
+      return quote.current_contract if !replace && same_contract_out?
 
       cancel_current!
       contract = create_contract
@@ -41,7 +44,7 @@ class Sales::GenerateContractService
 
   private
 
-  attr_reader :quote, :form, :client
+  attr_reader :quote, :form, :client, :replace
 
   def lock_key
     format(GENERATION_LOCK, quote_id: quote.id)
