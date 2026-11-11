@@ -6,9 +6,19 @@ class HomeAPI extends ApiClient {
     super('home', { accountScoped: true, apiVersion: 'v2' });
   }
 
-  get({ since, until, origem, inboxIds }) {
-    return axios.get(this.url, {
-      params: HomeAPI.filterParams({ since, until, origem, inboxIds }),
+  // The top of the page: it ignores the filters.
+  get() {
+    return axios.get(this.url);
+  }
+
+  // One section of the indicator cards (leads, appointments, follow_up,
+  // outcomes, funnel, ai), for the picked period and filters.
+  section({ name, since, until, origem, inboxIds }) {
+    return axios.get(`${this.url}/section`, {
+      params: {
+        name,
+        ...HomeAPI.filterParams({ since, until, origem, inboxIds }),
+      },
     });
   }
 

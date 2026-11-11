@@ -710,6 +710,7 @@ Rails.application.routes.draw do
           resource :year_in_review, only: [:show]
           resource :home, only: [:show], controller: 'home' do
             get :drilldown
+            get :section
           end
           resources :live_reports, only: [] do
             collection do

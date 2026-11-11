@@ -21,6 +21,10 @@ RSpec.describe V2::Reports::HomeBuilder do
     described_class.new(account: account, account_user: account_user, params: params.merge(extra)).build
   end
 
+  def section(name, account_user: admin.account_users.first, extra: {})
+    described_class.new(account: account, account_user: account_user, params: params.merge(extra)).section(name)
+  end
+
   # Answered by default: a lead only waits when the spec says so.
   def lead(inbox: self.inbox, created_at: now - 1.day, waiting_since: nil, **attrs)
     create(:conversation, account: account, inbox: inbox, created_at: created_at, **attrs).tap do |conversation|
@@ -33,6 +37,18 @@ RSpec.describe V2::Reports::HomeBuilder do
                                  contact: conversation.contact, new_stage: stage, user: user, created_at: at)
   end
 
+  describe '#section' do
+    it 'answers the trend line points with every section' do
+      V2::Reports::Home::MetricsBuilder::SECTIONS.each do |name|
+        expect(section(name)).to include(granularity: :day, buckets: have_attributes(size: 7))
+      end
+    end
+
+    it 'refuses a section it does not know' do
+      expect { section('revenue') }.to raise_error(V2::Reports::Home::MetricsBuilder::UnknownSection)
+    end
+  end
+
   describe 'leads' do
     it 'counts new conversations of the period against the period before, without groups' do
       lead(created_at: now - 1.day)
@@ -40,7 +56,7 @@ RSpec.describe V2::Reports::HomeBuilder do
       lead(created_at: now - 10.days)
       lead(created_at: now - 1.day, group_type: :group)
 
-      leads = build[:metrics][:leads]
+      leads = section('leads')[:leads]
 
       expect(leads).to include(total: 2, previous: 1)
       expect(leads[:series].size).to eq(7)
@@ -51,7 +67,7 @@ RSpec.describe V2::Reports::HomeBuilder do
       lead(origem: 'Google')
       lead(origem: 'Instagram')
 
-      expect(build(extra: { origem: 'Google' })[:metrics][:leads][:total]).to eq(1)
+      expect(section('leads', extra: { origem: 'Google' })[:leads][:total]).to eq(1)
     end
   end
 
@@ -62,10 +78,8 @@ RSpec.describe V2::Reports::HomeBuilder do
       move(conversation, 'No-Show', at: now - 1.day, user: owner)
       move(lead, 'Agendado', at: now - 10.days)
 
-      metrics = build[:metrics]
-
-      expect(metrics[:appointments]).to include(total: 1, previous: 1)
-      expect(metrics[:no_shows][:total]).to eq(1)
+      expect(section('appointments')[:appointments]).to include(total: 1, previous: 1)
+      expect(section('outcomes')[:no_shows][:total]).to eq(1)
     end
 
     it 'counts attendances of the period' do
@@ -73,7 +87,7 @@ RSpec.describe V2::Reports::HomeBuilder do
       move(conversation, 'Agendado', at: now - 3.days)
       move(conversation, 'Comparecimento (ganho)', at: now - 1.day)
 
-      expect(build[:metrics][:attendances][:total]).to eq(1)
+      expect(section('outcomes')[:attendances][:total]).to eq(1)
     end
   end
 
@@ -87,7 +101,7 @@ RSpec.describe V2::Reports::HomeBuilder do
       lead(created_at: at('2026-11-07 13:00')) # Saturday afternoon
       lead(created_at: at('2026-11-08 10:00')) # Sunday
 
-      expect(build[:metrics][:off_hours_leads][:total]).to eq(3)
+      expect(section('leads')[:off_hours_leads][:total]).to eq(3)
     end
 
     it "follows the caixa's own schedule when it has one" do
@@ -96,7 +110,7 @@ RSpec.describe V2::Reports::HomeBuilder do
 
       lead(created_at: at('2026-11-10 19:00')) # Tuesday, open until 20h here
 
-      expect(build[:metrics][:off_hours_leads][:total]).to eq(0)
+      expect(section('leads')[:off_hours_leads][:total]).to eq(0)
     end
 
     it 'counts bookings made off hours or of leads who arrived off hours' do
@@ -107,7 +121,7 @@ RSpec.describe V2::Reports::HomeBuilder do
       move(booked_off, 'Agendado', at: at('2026-11-09 22:00'))
       move(in_hours, 'Agendado', at: at('2026-11-09 11:00'))
 
-      expect(build[:metrics][:off_hours_appointments][:total]).to eq(2)
+      expect(section('appointments')[:off_hours_appointments][:total]).to eq(2)
     end
   end
 
@@ -118,7 +132,7 @@ RSpec.describe V2::Reports::HomeBuilder do
       create(:follow_up, conversation: followed, step: 2, created_at: now - 1.day)
       create(:follow_up, conversation: lead, delivery_status: :failed, created_at: now - 1.day)
 
-      expect(build[:metrics][:follow_up_leads][:total]).to eq(1)
+      expect(section('follow_up')[:follow_up_leads][:total]).to eq(1)
     end
 
     it 'splits the bookings by the last follow-up sent before them' do
@@ -132,7 +146,7 @@ RSpec.describe V2::Reports::HomeBuilder do
       move(after_third, 'Agendado', at: now - 1.day)
       move(without, 'Agendado', at: now - 1.day)
 
-      result = build[:metrics][:after_follow_up]
+      result = section('appointments')[:after_follow_up]
 
       expect(result).to include(total: 2, steps: { first: 1, second: 0, third_or_more: 1 })
       expect(result[:conversations]).to contain_exactly(
@@ -160,7 +174,7 @@ RSpec.describe V2::Reports::HomeBuilder do
       create(:message, account: account, inbox: inbox, conversation: lead, message_type: :outgoing, sender: owner)
       AiAssignmentAttempt.create!(account: account, conversation: handed, team: create(:team, account: account), triggered_by: ai_user, reason: :ai)
 
-      metrics = build[:metrics]
+      metrics = section('ai')
 
       expect(metrics[:ai_conversations]).to include(total: 2, share: 50.0)
       expect(metrics[:handoff]).to include(rate: 50.0, handed_off: 1, ai_conversations: 2)
@@ -174,7 +188,7 @@ RSpec.describe V2::Reports::HomeBuilder do
       create(:reporting_event, account: account, inbox: inbox, conversation: lead, user: ai_user, value: 10, created_at: now - 1.day)
       create(:reporting_event, account: account, inbox: inbox, conversation: lead, user: owner, value: 300, created_at: now - 1.day)
 
-      expect(build[:metrics][:response_time]).to include(average: 155, ai_average: 10, team_average: 300)
+      expect(section('ai')[:response_time]).to include(average: 155, ai_average: 10, team_average: 300)
     end
   end
 
@@ -184,7 +198,7 @@ RSpec.describe V2::Reports::HomeBuilder do
       lead(origem: 'Google')
       lead(origem: nil)
 
-      expect(build[:metrics][:origins]).to eq([{ origem: 'Google', count: 2 }, { origem: '__none__', count: 1 }])
+      expect(section('leads')[:origins]).to eq([{ origem: 'Google', count: 2 }, { origem: '__none__', count: 1 }])
     end
   end
 
@@ -223,7 +237,7 @@ RSpec.describe V2::Reports::HomeBuilder do
 
       expect(result[:rows].pluck(:id)).to eq([newer.display_id, older.display_id])
       expect(result[:rows].last).to include(origem: 'Google', at: older.created_at.to_i)
-      expect(result[:meta]).to include(total_count: build[:metrics][:leads][:total])
+      expect(result[:meta]).to include(total_count: section('leads')[:leads][:total])
     end
 
     it 'names who booked, once per conversation' do
@@ -272,21 +286,18 @@ RSpec.describe V2::Reports::HomeBuilder do
       other_inbox
       lead(inbox: other_inbox)
 
-      result = build(account_user: agent.account_users.first)
-
-      expect(result[:available_inboxes]).to eq([{ id: inbox.id, name: 'Clínica Centro' }])
-      expect(result[:metrics][:leads][:total]).to eq(0)
+      expect(build(account_user: agent.account_users.first)[:available_inboxes]).to eq([{ id: inbox.id, name: 'Clínica Centro' }])
+      expect(section('leads', account_user: agent.account_users.first)[:leads][:total]).to eq(0)
     end
 
-    it 'narrows the cards to the picked caixas and ignores caixas out of reach' do
-      lead(inbox: inbox)
-      lead(inbox: other_inbox)
+    it 'narrows the cards to the picked caixas, ignoring caixas out of reach, but not the day summary' do
+      lead(inbox: inbox, created_at: now - 1.hour)
+      lead(inbox: other_inbox, created_at: now - 1.hour)
+      out_of_reach = create(:inbox)
+      extra = { inbox_ids: [other_inbox.id.to_s, out_of_reach.id.to_s] }
 
-      result = build(extra: { inbox_ids: [other_inbox.id.to_s] })
-
-      expect(result[:inboxes]).to eq([{ id: other_inbox.id, name: 'Clínica Sul' }])
-      expect(result[:metrics][:leads][:total]).to eq(1)
-      expect(result[:today][:new_leads]).to eq(0)
+      expect(section('leads', extra: extra)[:leads][:total]).to eq(1)
+      expect(build(extra: extra)[:today][:new_leads]).to eq(2)
     end
   end
 end

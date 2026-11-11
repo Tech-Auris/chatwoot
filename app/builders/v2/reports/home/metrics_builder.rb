@@ -1,7 +1,11 @@
 # The indicator cards of the Início page. Each counted card returns the total
 # of the period, the total of the period before it and one value per point of
-# the trend line, all as distinct conversations.
+# the trend line, all as distinct conversations. The page asks for them a
+# section at a time, so a slow section never holds back (or times out) the
+# others; cards that read the same rows share a section.
 class V2::Reports::Home::MetricsBuilder
+  class UnknownSection < StandardError; end
+
   NO_SHOW_STAGE_NAME = V2::Reports::FunnelConversionBuilder::NO_SHOW_STAGE_NAME
   ATTENDANCE_STAGE_NAME = V2::Reports::FunnelConversionBuilder::ATTENDANCE_STAGE_NAME
 
@@ -19,14 +23,15 @@ class V2::Reports::Home::MetricsBuilder
   }.freeze
   DRILLABLE = ENTRY_SOURCES.keys.freeze
 
-  def build
+  SECTIONS = %w[leads appointments follow_up outcomes funnel ai].freeze
+
+  def section(name)
+    raise UnknownSection, name unless SECTIONS.include?(name)
+
     {
       granularity: period.granularity,
       buckets: period.buckets.map { |bucket| bucket.first.to_i },
-      **counted_cards,
-      **ai_cards,
-      origins: origins,
-      **funnel
+      **send(:"#{name}_section")
     }
   end
 
@@ -41,17 +46,24 @@ class V2::Reports::Home::MetricsBuilder
 
   attr_reader :scope, :period
 
-  def counted_cards
+  def leads_section
+    { leads: counted(lead_rows.map { |id, time, _inbox| [id, time] }), off_hours_leads: counted(off_hours_lead_rows), origins: origins }
+  end
+
+  def appointments_section
     {
-      leads: leads_card,
       appointments: counted(booking_rows.map { |id, time| [id, time] }),
-      off_hours_leads: counted(off_hours_lead_rows),
       off_hours_appointments: counted(off_hours_booking_rows.map { |id, booked_at| [id, booked_at] }),
-      follow_up_leads: counted(follow_up_rows),
-      after_follow_up: after_follow_up,
-      no_shows: counted(no_show_rows),
-      attendances: counted(attendance_rows)
+      after_follow_up: after_follow_up
     }
+  end
+
+  def follow_up_section
+    { follow_up_leads: counted(follow_up_rows) }
+  end
+
+  def outcomes_section
+    { no_shows: counted(no_show_rows), attendances: counted(attendance_rows) }
   end
 
   # `rows` are `[conversation_id, time]` pairs over the whole window.
@@ -65,10 +77,6 @@ class V2::Reports::Home::MetricsBuilder
 
   def distinct_in(rows, range)
     rows.select { |_id, time| range.cover?(time) }.map(&:first).uniq.size
-  end
-
-  def leads_card
-    @leads_card ||= counted(lead_rows.map { |id, time, _inbox| [id, time] })
   end
 
   def lead_rows
@@ -150,16 +158,21 @@ class V2::Reports::Home::MetricsBuilder
     scope.stage_changes([stage_name]).where(created_at: period.window).pluck(:conversation_id, :created_at, :user_id)
   end
 
-  # Conversations the AI acted in also come as a share of the period's leads.
-  def ai_cards
+  # Conversations the AI acted in also come as a share of the period's leads,
+  # counted in the database: this section does not load the leads.
+  def ai_section
     ai = V2::Reports::Home::AiActivity.new(scope: scope, period: period)
     acted = counted(ai.acted_rows)
     {
       response_time: ai.response_time,
-      ai_conversations: acted.merge(share: share(acted[:total], leads_card[:total]),
-                                    previous_share: share(acted[:previous], leads_card[:previous])),
+      ai_conversations: acted.merge(share: share(acted[:total], lead_count(period.range)),
+                                    previous_share: share(acted[:previous], lead_count(period.previous))),
       handoff: ai.handoff
     }
+  end
+
+  def lead_count(range)
+    scope.conversations.where(created_at: range).count
   end
 
   def share(part, total)
@@ -177,7 +190,7 @@ class V2::Reports::Home::MetricsBuilder
     V2::Reports::FunnelConversionBuilder::ORIGEM_NONE_TOKEN
   end
 
-  def funnel
+  def funnel_section
     report = V2::Reports::FunnelConversionBuilder.new(account: scope.account, params: funnel_params).build
     { funnel: report[:stages], loss_reasons: report[:loss_reasons] }
   end

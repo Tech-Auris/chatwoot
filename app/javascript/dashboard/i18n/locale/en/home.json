@@ -57,6 +57,8 @@
       "TOTAL": "Total"
     },
     "LOAD_ERROR": "Could not load the home page. Try again in a moment.",
+    "SECTION_ERROR": "Could not load this number.",
+    "RETRY": "Try again",
     "WAITING_DIALOG": {
       "TITLE": "No answer for 10+ min: {count} conversations",
       "DESCRIPTION": "Last message from the lead, unanswered for over 10 minutes (up to 24 hours) and no follow-up on its way. Oldest first.",
