@@ -15,7 +15,9 @@ import StatCard from './components/StatCard.vue';
 import HomeDrilldownDialog from './components/HomeDrilldownDialog.vue';
 import HomeWaitingDialog from './components/HomeWaitingDialog.vue';
 import HomeFollowUpDialog from './components/HomeFollowUpDialog.vue';
+import HomeSection from './components/HomeSection.vue';
 import { formatDuration, variation } from './homeFormatters';
+import { useHomeSections } from './useHomeSections';
 
 const REFRESH_EVERY = 60 * 1000;
 
@@ -29,7 +31,10 @@ const customTo = ref('');
 const origem = ref('');
 const inboxIds = ref([]);
 
-const data = ref(null);
+// The top of the page (greeting, today cards, caixas): it ignores the filters.
+const summary = ref(null);
+const { sections, metrics, loadSection, loadSections, sectionStatus } =
+  useHomeSections(params => HomeAPI.section(params));
 const waitingDialog = ref(null);
 const followUpDialog = ref(null);
 const cardDialog = ref(null);
@@ -66,29 +71,40 @@ const currentRange = () => {
   return { since: unix(daysAgo(back)), until: unix(now) };
 };
 
-const fetchHome = async () => {
+const fetchSummary = async () => {
   try {
-    const range = currentRange();
-    const { data: payload } = await HomeAPI.get({
-      ...range,
-      origem: origem.value,
-      inboxIds: inboxIds.value,
-    });
-    data.value = payload;
-    loadedRange.value = range;
+    const { data: payload } = await HomeAPI.get();
+    summary.value = payload;
     loadError.value = false;
   } catch {
     loadError.value = true;
   }
 };
 
-watch([period, customFrom, customTo, origem, inboxIds], fetchHome);
+const currentFilters = () => ({
+  ...currentRange(),
+  origem: origem.value,
+  inboxIds: inboxIds.value,
+});
+
+const reloadSections = options => {
+  const filters = currentFilters();
+  loadedRange.value = { since: filters.since, until: filters.until };
+  loadSections(filters, options);
+};
+
+const retrySection = name => loadSection(name, currentFilters());
+
+watch([period, customFrom, customTo, origem, inboxIds], () => reloadSections());
 
 let refreshTimer;
 onMounted(() => {
-  fetchHome();
+  fetchSummary();
+  reloadSections();
   refreshTimer = setInterval(() => {
-    if (!document.hidden) fetchHome();
+    if (document.hidden) return;
+    fetchSummary();
+    reloadSections({ silent: true });
   }, REFRESH_EVERY);
 });
 onUnmounted(() => clearInterval(refreshTimer));
@@ -103,41 +119,52 @@ const greeting = computed(() => {
   return t(`HOME_OVERVIEW.GREETING.${key}`, { name: firstName.value });
 });
 
-const today = computed(() => data.value?.today);
-const metrics = computed(() => data.value?.metrics);
-
+const today = computed(() => summary.value?.today);
 const dataFrom = computed(() =>
-  (data.value?.available_inboxes || []).map(inbox => inbox.name).join(', ')
+  (summary.value?.available_inboxes || []).map(inbox => inbox.name).join(', ')
 );
 
 // Same order as the approved mockup.
 const counterCards = computed(() => [
-  { key: 'leads', title: t('HOME_OVERVIEW.METRICS.LEADS') },
-  { key: 'appointments', title: t('HOME_OVERVIEW.METRICS.APPOINTMENTS') },
+  { key: 'leads', section: 'leads', title: t('HOME_OVERVIEW.METRICS.LEADS') },
+  {
+    key: 'appointments',
+    section: 'appointments',
+    title: t('HOME_OVERVIEW.METRICS.APPOINTMENTS'),
+  },
   {
     key: 'off_hours_leads',
+    section: 'leads',
     title: t('HOME_OVERVIEW.METRICS.OFF_HOURS_LEADS'),
     info: t('HOME_OVERVIEW.METRICS.OFF_HOURS_INFO'),
   },
   {
     key: 'off_hours_appointments',
+    section: 'appointments',
     title: t('HOME_OVERVIEW.METRICS.OFF_HOURS_APPOINTMENTS'),
     info: t('HOME_OVERVIEW.METRICS.OFF_HOURS_APPOINTMENTS_INFO'),
   },
   {
     key: 'follow_up_leads',
+    section: 'follow_up',
     title: t('HOME_OVERVIEW.METRICS.FOLLOW_UP_LEADS'),
   },
   {
     key: 'after_follow_up',
+    section: 'appointments',
     title: t('HOME_OVERVIEW.METRICS.AFTER_FOLLOW_UP'),
   },
   {
     key: 'no_shows',
+    section: 'outcomes',
     title: t('HOME_OVERVIEW.METRICS.NO_SHOWS'),
     lowerIsBetter: true,
   },
-  { key: 'attendances', title: t('HOME_OVERVIEW.METRICS.ATTENDANCES') },
+  {
+    key: 'attendances',
+    section: 'outcomes',
+    title: t('HOME_OVERVIEW.METRICS.ATTENDANCES'),
+  },
 ]);
 
 const responseTime = computed(() => metrics.value.response_time);
@@ -218,7 +245,8 @@ const onPieDrill = (metric, titleKey, slices) =>
 
 const drillFilters = computed(() => ({
   ...loadedRange.value,
-  inboxIds: data.value.inboxes.map(inbox => inbox.id),
+  // None picked reads every caixa in view, like the cards.
+  inboxIds: inboxIds.value,
   origem: origem.value || undefined,
 }));
 
@@ -246,7 +274,7 @@ const lossSlices = computed(() =>
 
 <template>
   <div class="flex flex-col flex-1 gap-5 px-6 py-5 overflow-auto">
-    <p v-if="loadError && !data" class="text-sm text-n-ruby-11">
+    <p v-if="loadError && !summary" class="text-sm text-n-ruby-11">
       {{ t('HOME_OVERVIEW.LOAD_ERROR') }}
     </p>
     <template v-if="today">
@@ -293,6 +321,7 @@ const lossSlices = computed(() =>
       <FunnelDrilldownDialog ref="drilldownDialog" :filters="drillFilters" />
       <HomeDrilldownDialog ref="cardDialog" :filters="drillFilters" />
       <HomeFollowUpDialog
+        v-if="metrics.after_follow_up"
         ref="followUpDialog"
         :after-follow-up="metrics.after_follow_up"
       />
@@ -303,91 +332,140 @@ const lossSlices = computed(() =>
         v-model:custom-to="customTo"
         v-model:origem="origem"
         v-model:inbox-ids="inboxIds"
-        :inboxes="data.available_inboxes"
+        :inboxes="summary.available_inboxes"
       />
 
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricSparkCard
+        <HomeSection
           v-for="card in counterCards"
           :key="card.key"
           :title="card.title"
-          :metric="metrics[card.key]"
-          :lower-is-better="card.lowerIsBetter"
-          :info="card.info"
-          drillable
-          :buckets="metrics.buckets"
-          :granularity="metrics.granularity"
-          @drill="onCardDrill(card)"
-        />
-      </div>
-
-      <div class="grid grid-cols-1 gap-3 lg:grid-cols-3">
-        <div
-          class="flex flex-col gap-3 px-4 py-3 lg:col-span-2 lg:row-span-2 rounded-xl bg-n-solid-2 outline outline-1 outline-n-container"
+          v-bind="sectionStatus(card.section)"
+          @retry="retrySection(card.section)"
         >
-          <div class="text-sm font-medium text-n-slate-12">
-            {{ t('HOME_OVERVIEW.METRICS.FUNNEL') }}
-          </div>
-          <p v-if="!funnelStages.length" class="text-sm text-n-slate-10">
-            {{ t('HOME_OVERVIEW.METRICS.EMPTY') }}
-          </p>
-          <FunnelChart v-else :stages="funnelStages" @drill="onStageDrill" />
-        </div>
-        <PieCard
-          :title="t('HOME_OVERVIEW.METRICS.ORIGINS')"
-          :slices="originSlices"
-          @drill="
-            onPieDrill('leads', 'HOME_OVERVIEW.METRICS.ORIGINS', originSlices)
-          "
-        />
-        <PieCard
-          :title="t('HOME_OVERVIEW.METRICS.LOSS_REASONS')"
-          :slices="lossSlices"
-          @drill="
-            onPieDrill(
-              'losses',
-              'HOME_OVERVIEW.METRICS.LOSS_REASONS',
-              lossSlices
-            )
-          "
-        />
+          <MetricSparkCard
+            class="h-full"
+            :title="card.title"
+            :metric="metrics[card.key]"
+            :lower-is-better="card.lowerIsBetter"
+            :info="card.info"
+            drillable
+            :buckets="sections[card.section].data.buckets"
+            :granularity="sections[card.section].data.granularity"
+            @drill="onCardDrill(card)"
+          />
+        </HomeSection>
       </div>
 
       <div class="grid grid-cols-1 gap-3 lg:grid-cols-3">
-        <StatCard
+        <HomeSection
+          class="lg:col-span-2 lg:row-span-2"
+          :title="t('HOME_OVERVIEW.METRICS.FUNNEL')"
+          v-bind="sectionStatus('funnel')"
+          @retry="retrySection('funnel')"
+        >
+          <div
+            class="flex flex-col h-full gap-3 px-4 py-3 rounded-xl bg-n-solid-2 outline outline-1 outline-n-container"
+          >
+            <div class="text-sm font-medium text-n-slate-12">
+              {{ t('HOME_OVERVIEW.METRICS.FUNNEL') }}
+            </div>
+            <p v-if="!funnelStages.length" class="text-sm text-n-slate-10">
+              {{ t('HOME_OVERVIEW.METRICS.EMPTY') }}
+            </p>
+            <FunnelChart v-else :stages="funnelStages" @drill="onStageDrill" />
+          </div>
+        </HomeSection>
+        <HomeSection
+          :title="t('HOME_OVERVIEW.METRICS.ORIGINS')"
+          v-bind="sectionStatus('leads')"
+          @retry="retrySection('leads')"
+        >
+          <PieCard
+            class="h-full"
+            :title="t('HOME_OVERVIEW.METRICS.ORIGINS')"
+            :slices="originSlices"
+            @drill="
+              onPieDrill('leads', 'HOME_OVERVIEW.METRICS.ORIGINS', originSlices)
+            "
+          />
+        </HomeSection>
+        <HomeSection
+          :title="t('HOME_OVERVIEW.METRICS.LOSS_REASONS')"
+          v-bind="sectionStatus('funnel')"
+          @retry="retrySection('funnel')"
+        >
+          <PieCard
+            class="h-full"
+            :title="t('HOME_OVERVIEW.METRICS.LOSS_REASONS')"
+            :slices="lossSlices"
+            @drill="
+              onPieDrill(
+                'losses',
+                'HOME_OVERVIEW.METRICS.LOSS_REASONS',
+                lossSlices
+              )
+            "
+          />
+        </HomeSection>
+      </div>
+
+      <div class="grid grid-cols-1 gap-3 lg:grid-cols-3">
+        <HomeSection
           :title="t('HOME_OVERVIEW.METRICS.RESPONSE_TIME')"
-          :value="formatDuration(responseTime.average)"
-          :delta="responseDelta"
-          :previous-label="formatDuration(responseTime.previous)"
-          lower-is-better
-          :detail="
-            t('HOME_OVERVIEW.METRICS.RESPONSE_TIME_SPLIT', {
-              ai: formatDuration(responseTime.ai_average),
-              team: formatDuration(responseTime.team_average),
-            })
-          "
-        />
-        <MetricSparkCard
+          v-bind="sectionStatus('ai')"
+          @retry="retrySection('ai')"
+        >
+          <StatCard
+            class="h-full"
+            :title="t('HOME_OVERVIEW.METRICS.RESPONSE_TIME')"
+            :value="formatDuration(responseTime.average)"
+            :delta="responseDelta"
+            :previous-label="formatDuration(responseTime.previous)"
+            lower-is-better
+            :detail="
+              t('HOME_OVERVIEW.METRICS.RESPONSE_TIME_SPLIT', {
+                ai: formatDuration(responseTime.ai_average),
+                team: formatDuration(responseTime.team_average),
+              })
+            "
+          />
+        </HomeSection>
+        <HomeSection
           :title="t('HOME_OVERVIEW.METRICS.AI_CONVERSATIONS')"
-          :metric="metrics.ai_conversations"
-          :detail="aiShareDetail"
-          :buckets="metrics.buckets"
-          :granularity="metrics.granularity"
-        />
-        <StatCard
+          v-bind="sectionStatus('ai')"
+          @retry="retrySection('ai')"
+        >
+          <MetricSparkCard
+            class="h-full"
+            :title="t('HOME_OVERVIEW.METRICS.AI_CONVERSATIONS')"
+            :metric="metrics.ai_conversations"
+            :detail="aiShareDetail"
+            :buckets="sections.ai.data.buckets"
+            :granularity="sections.ai.data.granularity"
+          />
+        </HomeSection>
+        <HomeSection
           :title="t('HOME_OVERVIEW.METRICS.HANDOFF')"
-          :value="formatRate(handoff.rate)"
-          :delta="handoffDelta"
-          :previous-label="formatRate(handoff.previous_rate)"
-          :delta-unit="t('HOME_OVERVIEW.METRICS.PERCENTAGE_POINTS')"
-          lower-is-better
-          :detail="
-            t('HOME_OVERVIEW.METRICS.HANDOFF_DETAIL', {
-              handed: handoff.handed_off,
-              total: handoff.ai_conversations,
-            })
-          "
-        />
+          v-bind="sectionStatus('ai')"
+          @retry="retrySection('ai')"
+        >
+          <StatCard
+            class="h-full"
+            :title="t('HOME_OVERVIEW.METRICS.HANDOFF')"
+            :value="formatRate(handoff.rate)"
+            :delta="handoffDelta"
+            :previous-label="formatRate(handoff.previous_rate)"
+            :delta-unit="t('HOME_OVERVIEW.METRICS.PERCENTAGE_POINTS')"
+            lower-is-better
+            :detail="
+              t('HOME_OVERVIEW.METRICS.HANDOFF_DETAIL', {
+                handed: handoff.handed_off,
+                total: handoff.ai_conversations,
+              })
+            "
+          />
+        </HomeSection>
       </div>
     </template>
   </div>

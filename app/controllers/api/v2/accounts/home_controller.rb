@@ -5,6 +5,12 @@ class Api::V2::Accounts::HomeController < Api::V1::Accounts::BaseController
     render json: builder.build
   end
 
+  def section
+    render json: builder.section(params[:name])
+  rescue V2::Reports::Home::MetricsBuilder::UnknownSection
+    render json: { error: 'Unknown section' }, status: :unprocessable_entity
+  end
+
   def drilldown
     render json: builder.drilldown(metric: params[:metric], page: params[:page])
   rescue V2::Reports::Home::Drilldown::UnknownMetric

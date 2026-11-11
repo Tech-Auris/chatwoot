@@ -1,7 +1,7 @@
 # Everything the Início page shows, for one user: the day summary, the
-# indicator cards and the caixas the numbers come from. Administrators and
-# managers see every caixa of the account, agents only theirs, the same rule as
-# the conversation list.
+# indicator cards (a section at a time) and the caixas the numbers come from.
+# Administrators and managers see every caixa of the account, agents only
+# theirs, the same rule as the conversation list.
 class V2::Reports::HomeBuilder
   DEFAULT_PERIOD = 7.days
 
@@ -11,14 +11,19 @@ class V2::Reports::HomeBuilder
     @params = params
   end
 
+  # The top of the page: it ignores the filters, so the page only asks for it
+  # when it opens and on the minute refresh.
   def build
     {
       timezone: home_scope.zone.tzinfo.name,
       available_inboxes: inbox_rows(permitted_inboxes),
-      inboxes: inbox_rows(selected_inboxes),
-      today: V2::Reports::Home::TodayBuilder.new(scope: home_scope).build,
-      metrics: V2::Reports::Home::MetricsBuilder.new(scope: metrics_scope, period: period).build
+      today: V2::Reports::Home::TodayBuilder.new(scope: home_scope).build
     }
+  end
+
+  # One section of the indicator cards, for the picked period and filters.
+  def section(name)
+    V2::Reports::Home::MetricsBuilder.new(scope: metrics_scope, period: period).section(name)
   end
 
   # The conversations behind one card, for its detail dialog.
