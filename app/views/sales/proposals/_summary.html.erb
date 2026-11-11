@@ -26,4 +26,18 @@
     <span>Total</span>
     <span><%= proposal_amount(@proposal.effective_total_amount) %></span>
   </div>
+  <%# How the customer actually pays, as the plan builder shows it. %>
+  <% installments = proposal_installment_hint(@proposal) %>
+  <% if installments.present? %>
+    <% cash = proposal_pix_cash_hint(@proposal) %>
+    <div class="mt-1 text-right text-slate-900 text-base">
+      <div class="font-medium"><%= installments %></div>
+      <% if cash.present? %>
+        <div class="text-sm">
+          ou à vista <%= proposal_amount(cash[:amount]) %>
+          <span class="text-xs text-green-700">(<%= cash[:percent] %>% de desconto)</span>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
 </div>
