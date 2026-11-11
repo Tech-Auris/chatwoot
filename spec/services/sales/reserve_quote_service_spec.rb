@@ -23,6 +23,26 @@ RSpec.describe Sales::ReserveQuoteService do
     expect(result.quote.reload).to have_attributes(status: 'reserved', reserved_until: deadline)
   end
 
+  it 'cancels the other open proposals of the same deal, leaving other deals alone' do
+    replaced = create(:sales_quote, clickup_task_id: quote.clickup_task_id, status: :reserved, reserved_until: 3.days.from_now)
+    converted = create(:sales_quote, clickup_task_id: quote.clickup_task_id, status: :converted)
+    other_deal = create(:sales_quote, status: :reserved, reserved_until: 3.days.from_now)
+
+    reserve
+
+    expect(replaced.reload).to be_cancelled
+    expect(replaced.cancel_reason).to eq('replaced')
+    expect(converted.reload).to be_converted
+    expect(other_deal.reload).to be_reserved
+  end
+
+  it 'refuses to bring a cancelled proposal back' do
+    quote.update!(status: :cancelled)
+
+    expect { reserve }.to raise_error(ArgumentError, 'Esta proposta foi cancelada')
+    expect(quote.reload).to be_cancelled
+  end
+
   it 'renews the signing deadline of a contract still waiting for the customer' do
     contract = create(:sales_contract, sales_quote: quote, status: :awaiting_signature)
 

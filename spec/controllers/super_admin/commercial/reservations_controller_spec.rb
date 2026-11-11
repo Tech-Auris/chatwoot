@@ -46,6 +46,18 @@ RSpec.describe 'Super Admin Commercial Reservations', type: :request do
       expect(row['contract']).to include('status' => 'awaiting_signature', 'signing_url' => 'https://assina.ae/x')
     end
 
+    it 'hides a cancelled proposal until the finalized toggle is on, showing why it was cancelled' do
+      cancelled = create(:sales_quote, status: :reserved, clickup_status: 'negociação', reserved_until: 5.days.from_now)
+      cancelled.cancel!(reason: 'replaced', replaced_by_quote_id: negotiating.id)
+
+      get '/super_admin/commercial/reservations/data'
+      expect(response.parsed_body['reservations'].pluck('id')).not_to include(cancelled.id)
+
+      get '/super_admin/commercial/reservations/data', params: { include_finalized: '1' }
+      row = response.parsed_body['reservations'].find { |r| r['id'] == cancelled.id }
+      expect(row).to include('status' => 'cancelled', 'cancel_reason' => 'replaced', 'cancellable' => false)
+    end
+
     it 'brings back the closed deals when both toggles are on' do
       get '/super_admin/commercial/reservations/data',
           params: { include_finalized: '1', include_expired: '1' }
@@ -387,6 +399,28 @@ RSpec.describe 'Super Admin Commercial Reservations', type: :request do
 
         expect(response).to have_http_status(:unprocessable_entity)
       end
+    end
+  end
+
+  describe 'POST /super_admin/commercial/reservations/:id/cancel' do
+    it 'cancels an open proposal and records who did it' do
+      quote = create(:sales_quote, status: :details_confirmed, reserved_until: 3.days.from_now)
+
+      post "/super_admin/commercial/reservations/#{quote.id}/cancel"
+
+      expect(response).to have_http_status(:success)
+      expect(quote.reload).to be_cancelled
+      expect(quote.events.last).to have_attributes(event: 'cancelled',
+                                                   metadata: { 'reason' => 'manual', 'super_admin_id' => super_admin.id })
+    end
+
+    it 'refuses a proposal that already became an account' do
+      quote = create(:sales_quote, status: :converted, account: create(:account))
+
+      post "/super_admin/commercial/reservations/#{quote.id}/cancel"
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(quote.reload).to be_converted
     end
   end
 end
