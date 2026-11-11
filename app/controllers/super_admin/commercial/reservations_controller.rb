@@ -35,6 +35,17 @@ class SuperAdmin::Commercial::ReservationsController < SuperAdmin::ApplicationCo
     enable_payment_method('card_recurring')
   end
 
+  # The seller drops a proposal the customer will not take (usually replaced
+  # by a new one): no more reminders, renewals or payments through the link.
+  def cancel
+    quote = SalesQuote.find(params[:id])
+    return render(json: { error: 'Esta proposta não pode ser cancelada' }, status: :unprocessable_entity) unless quote.cancellable?
+
+    quote.cancel!(reason: 'manual', super_admin_id: current_super_admin.id)
+
+    render json: { reservation: serialize(quote) }
+  end
+
   # A manual sale confirmation — the finance team clicks this when the money
   # landed on AsaaS (card / boleto) or Inter (PIX) and the webhook has not
   # closed the sale on its own. Routes to the right service based on the
@@ -83,7 +94,7 @@ class SuperAdmin::Commercial::ReservationsController < SuperAdmin::ApplicationCo
   # Statuses the pipeline treats as closed — the deal is either won or lost
   # and there is nothing left to work on. Hidden by default so the screen
   # opens on what is still moving; a checkbox brings them back for the full
-  # history.
+  # history. Cancelled proposals are hidden the same way.
   FINALIZED_STATUSES = %w[ganho perdido].freeze
 
   def paginated_quotes
@@ -91,7 +102,7 @@ class SuperAdmin::Commercial::ReservationsController < SuperAdmin::ApplicationCo
       scope = SalesQuote.includes(:seller, :items).order(created_at: :desc)
       scope = scope.where('LOWER(clickup_status) = ?', params[:clickup_status].downcase) if params[:clickup_status].present?
       scope = filter_by_query(scope, params[:q]) if params[:q].present?
-      scope = scope.where('clickup_status IS NULL OR LOWER(clickup_status) NOT IN (?)', FINALIZED_STATUSES) unless include_finalized?
+      scope = scope.excluding_finalized(FINALIZED_STATUSES) unless include_finalized?
       # "Reserva vencida" na UI cobre dois casos: `reserved_until` no
       # passado e `reserved_until` nulo (nunca reservada). O filtro casa a
       # mesma semântica — só linhas com deadline futura aparecem quando o
@@ -168,6 +179,8 @@ class SuperAdmin::Commercial::ReservationsController < SuperAdmin::ApplicationCo
       # A deal that closed on our side is what the team calls "ganho"; the rest
       # is still being worked.
       won: quote.converted?,
+      cancellable: quote.cancellable?,
+      cancel_reason: quote.cancel_reason,
       reserved_until: quote.reserved_until,
       reservation_active: quote.reservation_active?,
       total_amount: quote.effective_total_amount,
@@ -193,6 +206,7 @@ class SuperAdmin::Commercial::ReservationsController < SuperAdmin::ApplicationCo
       subtotal_amount: quote.subtotal_amount,
       discount_amount: quote.effective_discount_amount,
       discount_summary: quote.effective_discount_summary,
+      meeting_discount_active: quote.meeting_discount_active?,
       items: quote.items.map { |item| serialize_item(item) },
       public_url: sales_proposal_url(quote.public_token, host: ENV.fetch('FRONTEND_URL', request.base_url)),
       access_code: quote.access_code,

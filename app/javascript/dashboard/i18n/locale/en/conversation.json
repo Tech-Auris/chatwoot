@@ -31,7 +31,8 @@
         "REENGAGED": "Patient replied",
         "CLOSED": "Closed",
         "NO_RESPONSE": "No reply",
-        "OPTED_OUT": "Stopped by opt-out"
+        "OPTED_OUT": "Stopped by opt-out",
+        "INTERRUPTED": "Interrupted by the team"
       },
       "HISTORY": {
         "TITLE": "Follow-ups of this conversation",

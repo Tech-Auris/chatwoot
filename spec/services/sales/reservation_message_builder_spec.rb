@@ -30,20 +30,33 @@ RSpec.describe Sales::ReservationMessageBuilder do
   end
 
   describe '.for_quote' do
-    let(:quote) { create(:sales_quote, reserved_until: 2.days.from_now) }
+    let(:seller) { create(:user, name: 'Gustavo Meneghetti') }
+    let(:quote) { create(:sales_quote, seller: seller, prospect_name: 'Fernanda Alarcon', reserved_until: 2.days.from_now) }
 
-    it 'lists the discounts the proposal carries' do
-      quote.update!(discount_summary: 'isenção implantação + 10% reunião + 5% indicação')
-
-      expect(described_class.for_quote(quote))
-        .to include('*condição especial de contratação da Auris* (isenção implantação, 10% reunião e 5% indicação).')
+    it 'greets the lead and the seller by first name' do
+      expect(described_class.for_quote(quote)).to start_with('Olá, Fernanda. Por aqui é o Gustavo da Auris.')
     end
 
-    it 'does not mention a discount the proposal does not have' do
-      message = described_class.for_quote(quote)
+    context 'when the meeting discount was given' do
+      before { quote.update!(meeting_discount: true, meeting_discount_amount: 139_500) }
 
-      expect(message).to include('*condição especial de contratação da Auris*.')
-      expect(message).not_to include('desconto')
+      it 'offers the special condition with the discounts the proposal carries until the deadline' do
+        quote.update!(discount_summary: 'isenção implantação + 10% reunião + 5% indicação')
+
+        expect(described_class.for_quote(quote))
+          .to include('*condição especial de contratação da Auris* (isenção implantação, 10% reunião e 5% indicação).',
+                      "ficará reservada até *#{quote.reserved_until.strftime('%d/%m/%Y')}*")
+      end
+    end
+
+    context 'without the meeting discount' do
+      it 'sends the quote without hinting at a special condition' do
+        quote.update!(discount_summary: '5% indicação')
+        message = described_class.for_quote(quote)
+
+        expect(message).to include('Segue seu orçamento.', described_class.public_url_for(quote), quote.access_code)
+        expect(message).not_to include('condição', 'desconto', 'indicação')
+      end
     end
   end
 end

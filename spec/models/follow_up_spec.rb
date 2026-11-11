@@ -42,4 +42,101 @@ RSpec.describe FollowUp do
     expect(ActionCableListener.instance).to have_received(:conversation_updated)
     expect(Rails.configuration.dispatcher).not_to have_received(:dispatch).with(Events::Types::CONVERSATION_UPDATED, any_args)
   end
+
+  describe 'settling the running FUP' do
+    let(:contact) { create(:contact, account: account) }
+
+    def patient_message(**attrs)
+      create(:message, conversation: conversation, account: account, inbox: conversation.inbox,
+                       message_type: :incoming, sender: contact, **attrs)
+    end
+
+    it 'marks the FUP as answered as soon as the patient writes' do
+      follow_up = create(:follow_up, conversation: conversation, delivery_status: :sent)
+
+      patient_message
+
+      expect(follow_up.reload).to have_attributes(outcome: 'reengaged', outcome_at: be_present)
+    end
+
+    it 'counts a reaction to the FUP as an answer' do
+      follow_up = create(:follow_up, conversation: conversation, delivery_status: :sent)
+
+      patient_message(content: '👍', content_attributes: { is_reaction: true })
+
+      expect(follow_up.reload.outcome).to eq('reengaged')
+    end
+
+    it 'only settles the latest FUP, when it was sent and is still waiting' do
+      old = create(:follow_up, conversation: conversation, run_id: 'a', delivery_status: :sent)
+      pending = create(:follow_up, conversation: conversation, run_id: 'b')
+
+      patient_message
+
+      expect([old.reload.outcome, pending.reload.outcome]).to eq(%w[waiting waiting])
+    end
+
+    it 'keeps a sequence already ended without an answer' do
+      follow_up = create(:follow_up, conversation: conversation, delivery_status: :sent, outcome: :no_response)
+
+      patient_message
+
+      expect(follow_up.reload.outcome).to eq('no_response')
+    end
+
+    it 'ignores private notes and messages sent to the patient' do
+      follow_up = create(:follow_up, conversation: conversation, delivery_status: :sent)
+
+      create(:message, conversation: conversation, message_type: :outgoing)
+      create(:message, conversation: conversation, message_type: :outgoing, private: true)
+
+      expect(follow_up.reload.outcome).to eq('waiting')
+    end
+
+    it 'keeps the answer when the reply also turns the AI off' do
+      account.update!(ai_status_uses_attribute: true)
+      conversation.inbox.update!(ai_paused: true)
+      follow_up = create(:follow_up, conversation: conversation, delivery_status: :sent)
+
+      patient_message
+
+      expect(conversation.reload.ai_enabled).to be(false)
+      expect(follow_up.reload.outcome).to eq('reengaged')
+    end
+
+    it 'marks the FUP as interrupted when the AI is turned off' do
+      account.update!(ai_status_uses_attribute: true)
+      follow_up = create(:follow_up, conversation: conversation, delivery_status: :sent)
+
+      conversation.set_ai_status!(false)
+
+      expect(follow_up.reload.outcome).to eq('interrupted')
+    end
+
+    it 'marks the FUP as interrupted when the agente-off label is added' do
+      account.update!(ai_status_uses_attribute: false)
+      follow_up = create(:follow_up, conversation: conversation, delivery_status: :sent)
+
+      conversation.set_ai_status!(false)
+
+      expect(follow_up.reload.outcome).to eq('interrupted')
+    end
+
+    it 'marks the FUP as closed when the conversation is resolved' do
+      follow_up = create(:follow_up, conversation: conversation, delivery_status: :sent)
+
+      conversation.resolved!
+
+      expect(follow_up.reload.outcome).to eq('closed')
+    end
+  end
+
+  it 'never rewrites a settled outcome' do
+    follow_up = create(:follow_up, conversation: conversation, outcome: :reengaged)
+    settled_at = follow_up.outcome_at
+
+    follow_up.update!(outcome: :no_response, delivery_status: :sent)
+
+    expect(follow_up.reload).to have_attributes(outcome: 'reengaged', outcome_at: settled_at, delivery_status: 'sent')
+  end
 end

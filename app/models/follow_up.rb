@@ -40,12 +40,16 @@ class FollowUp < ApplicationRecord
   enum :delivery_status, { pending: 0, sent: 1, failed: 2 }, prefix: :delivery, validate: true
   # `opted_out`: the sequence stopped because the contact turned on the
   # marketing opt-out (the n8n FUP checks it before each send).
-  enum :outcome, { waiting: 0, reengaged: 1, closed: 2, no_response: 3, opted_out: 4 }, prefix: true, validate: true
+  # `interrupted`: the AI was turned off mid-sequence (a human took over).
+  enum :outcome, { waiting: 0, reengaged: 1, closed: 2, no_response: 3, opted_out: 4, interrupted: 5 }, prefix: true, validate: true
 
   validates :run_id, presence: true
   validates :step, inclusion: { in: 1..MAX_STEP }, uniqueness: { scope: [:conversation_id, :run_id] }
   validates :delay_minutes, numericality: { only_integer: true, greater_than: 0 }
 
+  # An outcome is settled once: the AurisChat records the reply live, so a
+  # late n8n call ("no response", "closed") must not rewrite it.
+  before_save :keep_settled_outcome, if: -> { outcome_changed? && outcome_in_database != 'waiting' }
   before_save :stamp_processed_at, if: -> { delivery_status_changed? && !delivery_pending? }
   before_save :stamp_outcome_at, if: -> { outcome_changed? && !outcome_waiting? }
   # The badge on the conversation header follows the FUP live. Only the
@@ -53,7 +57,20 @@ class FollowUp < ApplicationRecord
   # automations, webhooks and bots on every FUP.
   after_commit :broadcast_conversation, on: %i[create update]
 
+  # Settles the conversation's running FUP: the latest one, already sent and
+  # still waiting.
+  def self.settle_latest!(conversation, outcome)
+    follow_up = conversation.follow_ups.order(:created_at, :id).last
+    return unless follow_up&.outcome_waiting? && follow_up.delivery_sent?
+
+    follow_up.update!(outcome: outcome)
+  end
+
   private
+
+  def keep_settled_outcome
+    restore_attributes([:outcome])
+  end
 
   def broadcast_conversation
     conversation.association(:latest_follow_up).reset

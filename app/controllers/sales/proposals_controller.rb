@@ -13,6 +13,7 @@ class Sales::ProposalsController < ActionController::Base
   layout 'sales_proposal'
 
   before_action :set_proposal
+  before_action :reject_cancelled
   before_action :require_unlock, only: [:show, :save_details, :checkout, :pay, :payment_return, :tokens, :save_token_card]
   before_action :remember_buyer_browser!, only: :pay
 
@@ -243,6 +244,12 @@ class Sales::ProposalsController < ActionController::Base
 
   def set_proposal
     @proposal = SalesQuote.find_by!(public_token: params[:token])
+  end
+
+  # A cancelled proposal (by hand, or because another one of the deal was paid)
+  # takes no more steps nor payments, whatever page the link lands on.
+  def reject_cancelled
+    render :closed, status: :gone if @proposal.cancelled?
   end
 
   def require_unlock

@@ -66,6 +66,16 @@ RSpec.describe Sales::GenerateContractService do
     expect(quote.contracts.count).to eq(1)
   end
 
+  it 'sends a new contract with the same data when asked to replace it' do
+    first = perform
+    allow(client).to receive(:create_document).and_return(document.merge('id' => 'doc-2'))
+
+    second = described_class.new(quote: quote, form: form, client: client, replace: true).perform
+
+    expect(second.autentique_document_id).to eq('doc-2')
+    expect(first.reload.status).to eq('cancelled')
+  end
+
   it 'lets the next generation run once the previous one finished' do
     perform
     allow(client).to receive(:create_document).and_return(document.merge('id' => 'doc-2'))

@@ -71,7 +71,9 @@ class Webhooks::Asaas::PaymentEventHandler
   def maybe_convert_sale(quote, record)
     return unless MONEY_IN_EVENTS.include?(event)
     return unless record.paid?
-    return unless quote.signed?
+    # A cancelled proposal whose boleto/card was issued before the
+    # cancellation still converts: money received wins.
+    return unless quote.signed? || quote.cancelled?
 
     Sales::RegisterAsaasPaymentService.new(quote: quote).perform
   rescue Sales::RegisterAsaasPaymentService::InvalidTransition => e

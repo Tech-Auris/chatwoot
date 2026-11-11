@@ -29,6 +29,26 @@ RSpec.describe 'Public sales proposal', type: :request do
   end
 
   describe 'GET /proposals/:token' do
+    it 'shows a cancelled proposal as closed, before even asking for the code' do
+      quote.update!(status: :cancelled)
+
+      get "/proposals/#{quote.public_token}"
+
+      expect(response).to have_http_status(:gone)
+      expect(response.body).to include('Proposta encerrada')
+      expect(response.body).not_to include('4 últimos dígitos')
+    end
+
+    it 'does not let a cancelled proposal reach the payment, even unlocked' do
+      unlock
+      quote.update!(status: :cancelled)
+
+      get "/proposals/#{quote.public_token}/pagamento"
+
+      expect(response).to have_http_status(:gone)
+      expect(response.body).to include('Proposta encerrada')
+    end
+
     # The prospect has no login, so the page asks for what the seller sent
     # before showing anything about the deal.
     it 'asks for the code before showing the proposal' do

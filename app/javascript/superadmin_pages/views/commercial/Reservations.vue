@@ -191,6 +191,15 @@ const contactLine = reservation => {
 
 const statusLabel = status => STATUS_LABELS[status] || status;
 
+const isCancelled = reservation => reservation.status === 'cancelled';
+// Won or cancelled: nothing left to chase on the deadline.
+const isClosed = reservation => reservation.won || isCancelled(reservation);
+const CANCEL_REASONS = {
+  manual: 'Cancelada manualmente',
+  replaced:
+    'Cancelada automaticamente: substituída por uma nova reserva do negócio',
+};
+
 // "Perdido" is a ClickUp-side terminal state — the proposal itself doesn't
 // carry a `lost` status, so we read it off `clickup_status`. Green scale
 // reads as progress toward "ganho": lighter tone for details_confirmed
@@ -199,6 +208,7 @@ const statusLabel = status => STATUS_LABELS[status] || status;
 const isLost = reservation =>
   reservation.clickup_status?.toLowerCase() === 'perdido';
 const situationClass = reservation => {
+  if (isCancelled(reservation)) return 'bg-slate-100 text-slate-500';
   if (isLost(reservation)) return 'bg-red-50 text-red-700';
   if (reservation.won) return 'bg-green-200 text-green-900';
   if (reservation.status === 'paid') return 'bg-green-100 text-green-800';
@@ -207,6 +217,7 @@ const situationClass = reservation => {
   return 'bg-slate-25 text-slate-600';
 };
 const situationLabel = reservation => {
+  if (isCancelled(reservation)) return statusLabel(reservation.status);
   if (isLost(reservation)) return 'Perdido';
   if (reservation.won) return 'Ganho';
   return statusLabel(reservation.status);
@@ -217,13 +228,13 @@ const isExpiring = reservation =>
   new Date(reservation.reserved_until) - Date.now() < 3 * 24 * 60 * 60 * 1000;
 
 const deadlineClass = reservation => {
-  if (reservation.won) return 'text-slate-500';
+  if (isClosed(reservation)) return 'text-slate-500';
   if (!reservation.reservation_active) return 'text-red-700';
   return isExpiring(reservation) ? 'text-yellow-700' : 'text-slate-700';
 };
 
 const expiringCount = computed(
-  () => reservations.value.filter(r => !r.won && isExpiring(r)).length
+  () => reservations.value.filter(r => !isClosed(r) && isExpiring(r)).length
 );
 
 // A sale that is `signed` and never had its money confirmed on the webhook
@@ -358,6 +369,39 @@ const waiveTokenCard = async reservation => {
   }
 };
 
+const cancelReservation = async reservation => {
+  if (
+    !window.confirm(
+      `Cancelar a reserva de ${reservation.prospect_name}? A proposta deixa de aceitar pagamento, o link passa a mostrar "proposta encerrada" e o lembrete de último dia não será enviado. Essa ação não pode ser desfeita.`
+    )
+  )
+    return;
+
+  busyId.value = reservation.id;
+  error.value = null;
+  try {
+    const res = await fetch(
+      `${props.componentData.reservations_url}/${reservation.id}/cancel`,
+      {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          Accept: 'application/json',
+          'X-CSRF-Token':
+            document.querySelector('meta[name="csrf-token"]')?.content ?? '',
+        },
+      }
+    );
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+    await fetchData();
+  } catch (e) {
+    error.value = e.message;
+  } finally {
+    busyId.value = null;
+  }
+};
+
 const copy = async (reservation, field, value) => {
   await navigator.clipboard.writeText(value);
   copied.value = { id: reservation.id, field };
@@ -414,7 +458,7 @@ const canCopyMessage = reservation =>
 // "Vencida" here means the deadline passed AND the deal has not been won yet
 // — a won deal is closed either way, no renewal to offer.
 const isExpired = reservation =>
-  !reservation.won &&
+  !isClosed(reservation) &&
   reservation.reserved_until &&
   !reservation.reservation_active;
 
@@ -590,6 +634,12 @@ const submitRenew = async () => {
               >
                 {{ situationLabel(reservation) }}
               </span>
+              <div
+                v-if="CANCEL_REASONS[reservation.cancel_reason]"
+                class="mt-1 text-xs leading-tight text-slate-500"
+              >
+                {{ CANCEL_REASONS[reservation.cancel_reason] }}
+              </div>
               <!-- A sale that never had its money confirmed on the webhook
                  (PIX, AsaaS card or AsaaS boleto) needs somebody to click
                  here. One click creates the Stripe customer + invoice and
@@ -745,6 +795,7 @@ const submitRenew = async () => {
                    when there is no `reserved_until` yet — the message
                    has a "até X" sentence that only reads right with an X. -->
                 <button
+                  v-if="!isCancelled(reservation)"
                   type="button"
                   class="reset-base px-2 py-1 rounded border border-woot-200 text-woot-600 text-xs leading-tight whitespace-nowrap bg-white hover:bg-woot-50 disabled:opacity-40 disabled:cursor-not-allowed"
                   :disabled="!canCopyMessage(reservation)"
@@ -795,6 +846,15 @@ const submitRenew = async () => {
                   @click="openRenew(reservation)"
                 >
                   Renovar
+                </button>
+                <button
+                  v-if="reservation.cancellable"
+                  type="button"
+                  class="reset-base px-2 py-1 rounded border border-red-200 text-red-600 text-xs leading-tight whitespace-nowrap bg-white hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                  :disabled="busyId === reservation.id"
+                  @click="cancelReservation(reservation)"
+                >
+                  Cancelar
                 </button>
               </div>
               <!-- Last WhatsApp message the lead got from the seller's number

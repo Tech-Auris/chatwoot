@@ -35,6 +35,12 @@ RSpec.describe 'Public sales proposal – contract step', type: :request do
     expect(response.body).to include('Termos de uso da Plataforma Auris', 'Plano Auris', 'Assinar Termos de Uso e continuar', '. Contrato<')
   end
 
+  it 'shows the terms page total with the card instalments and the PIX à vista price' do
+    get "/proposals/#{token}/termos"
+
+    expect(response.body).to include('R$ 22.190,40', '12x de R$ 1.849,20 no cartão de crédito', 'ou à vista R$ 19.971,36', '(10% de desconto)')
+  end
+
   it 'records the terms acceptance and opens the contract form, prefilled from the reservation' do
     accept_terms
 

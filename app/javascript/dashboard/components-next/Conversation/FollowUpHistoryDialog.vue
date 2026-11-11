@@ -52,6 +52,7 @@ const OUTCOME_CLASSES = {
   closed: 'bg-n-alpha-2 text-n-slate-11',
   no_response: 'bg-n-amber-3 text-n-amber-11',
   opted_out: 'bg-n-ruby-3 text-n-ruby-11',
+  interrupted: 'bg-n-slate-3 text-n-slate-11',
 };
 
 const deliveryLabels = computed(() => ({
@@ -65,6 +66,7 @@ const outcomeLabels = computed(() => ({
   closed: t('CONVERSATION.FOLLOW_UP.OUTCOME.CLOSED'),
   no_response: t('CONVERSATION.FOLLOW_UP.OUTCOME.NO_RESPONSE'),
   opted_out: t('CONVERSATION.FOLLOW_UP.OUTCOME.OPTED_OUT'),
+  interrupted: t('CONVERSATION.FOLLOW_UP.OUTCOME.INTERRUPTED'),
 }));
 
 const open = async () => {

@@ -38,7 +38,8 @@ class Webhooks::Commercial::InterController < ActionController::API
   def handle_pix_event(event)
     quote = SalesQuote.find_by(inter_txid: event['txid'])
     return if quote.blank?
-    return unless quote.signed?
+    # A PIX issued before the proposal was cancelled is still honoured.
+    return unless quote.signed? || quote.cancelled?
 
     quote.events.create!(event: 'inter_pix_received',
                          metadata: { txid: event['txid'], end_to_end_id: event['endToEndId'], value: event['valor'] })

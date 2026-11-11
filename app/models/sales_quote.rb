@@ -130,6 +130,18 @@ class SalesQuote < ApplicationRecord
 
   # Signed and not yet an account, minus the Stripe subscriptions (the monthly
   # card and the recurring card) — Stripe confirms those through the webhook.
+  # Still waiting on the customer: a proposal in any of these can be cancelled,
+  # and one that is cancelled stops reminding, renewing and taking payment.
+  CANCELLABLE_STATUSES = %w[draft reserved details_confirmed signed].freeze
+
+  # The Reservations grid hides cancelled proposals and deals closed on ClickUp
+  # (won or lost) until the operator asks for them.
+  scope :excluding_finalized, lambda { |clickup_statuses|
+    where.not(status: :cancelled).where('clickup_status IS NULL OR LOWER(clickup_status) NOT IN (?)', clickup_statuses)
+  }
+
+  # Signed and not yet an account, minus the monthly card sale — that one is a
+  # Stripe subscription, and Stripe confirms it through the webhook.
   scope :awaiting_manual_payment, lambda {
     where(status: :signed, account_id: nil)
       .where.not('payment_method = :card AND billing_cycle = :monthly',
@@ -274,6 +286,25 @@ class SalesQuote < ApplicationRecord
     return 0 unless payment_method_pix?
 
     Sales::CheckoutService.pix_discount_for(billing_cycle).to_i
+  end
+
+  def cancellable?
+    account_id.nil? && CANCELLABLE_STATUSES.include?(status)
+  end
+
+  # By hand from the Reservations grid, or when another proposal of the same
+  # ClickUp deal is reserved. A payment already issued before the cancellation is
+  # still honoured by the webhooks: money received wins over the cancellation.
+  def cancel!(reason:, **metadata)
+    update!(status: :cancelled)
+    events.create!(event: 'cancelled', metadata: metadata.merge(reason: reason))
+  end
+
+  # `manual` or `replaced`, from the event `cancel!` recorded.
+  def cancel_reason
+    return unless cancelled?
+
+    events.where(event: 'cancelled').order(:created_at).last&.metadata&.dig('reason')
   end
 
   # Both halves are sent by the seller over WhatsApp. The phone digits are what
