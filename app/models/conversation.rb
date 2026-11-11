@@ -390,6 +390,7 @@ class Conversation < ApplicationRecord
 
   def execute_after_update_commit_callbacks
     handle_resolved_status_change
+    settle_follow_up_on_handoff
     notify_status_change
     create_activity
     notify_conversation_updation
@@ -425,6 +426,25 @@ class Conversation < ApplicationRecord
       trigger_type: 'label_added',
       trigger_config: { 'label' => label }
     ).perform
+  end
+
+  # The n8n FUP stops when the AI is off or the conversation is resolved, so
+  # the FUP still waiting would never get an outcome.
+  def settle_follow_up_on_handoff
+    outcome = if saved_change_to_status? && resolved? then :closed
+              elsif ai_turned_off_in_last_save? then :interrupted
+              end
+    FollowUp.settle_latest!(self, outcome) if outcome
+  rescue StandardError => e
+    ChatwootExceptionTracker.new(e, account: account).capture_exception
+  end
+
+  def ai_turned_off_in_last_save?
+    if account.ai_status_uses_attribute?
+      saved_change_to_ai_enabled? && !ai_enabled
+    else
+      saved_change_to_cached_label_list? && added_labels_in_last_save.include?('agente-off')
+    end
   end
 
   def handle_resolved_status_change

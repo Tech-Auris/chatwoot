@@ -861,9 +861,10 @@
     "OUTCOME": {
       "WAITING": "Waiting",
       "REENGAGED": "Came back",
-      "CLOSED": "Closed by the patient",
+      "CLOSED": "Closed",
       "NO_RESPONSE": "No reply",
-      "OPTED_OUT": "Stopped by opt-out"
+      "OPTED_OUT": "Stopped by opt-out",
+      "INTERRUPTED": "Interrupted by the team"
     },
     "STEPS": {
       "TITLE": "Reengagement by FUP number",

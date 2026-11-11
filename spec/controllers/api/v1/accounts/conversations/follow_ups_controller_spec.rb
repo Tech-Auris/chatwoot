@@ -90,6 +90,15 @@ RSpec.describe 'Follow-ups API', type: :request do
       expect(follow_up.reload.outcome).to eq('waiting')
     end
 
+    it 'keeps the reply recorded by the AurisChat when n8n reports no answer later' do
+      follow_up.update!(outcome: :reengaged)
+
+      patch follow_up_url('latest'), params: { outcome: 'no_response' }, headers: admin.create_new_auth_token, as: :json
+
+      expect(response).to have_http_status(:success)
+      expect(follow_up.reload.outcome).to eq('reengaged')
+    end
+
     it 'refuses an unknown outcome' do
       patch follow_up_url(follow_up.id), params: { outcome: 'maybe' }, headers: admin.create_new_auth_token, as: :json
 
