@@ -498,6 +498,15 @@ RSpec.describe 'Public sales proposal', type: :request do
       expect(asaas).to have_received(:create_installment).with(hash_including(billing_type: 'BOLETO'))
     end
 
+    it 'offers the recurring card once the seller enabled it' do
+      get "/proposals/#{quote.public_token}/pagamento"
+      expect(response.body).not_to include('Cartão de crédito recorrente')
+
+      quote.update!(card_recurring_enabled_at: Time.current)
+      get "/proposals/#{quote.public_token}/pagamento"
+      expect(response.body).to include('Cartão de crédito recorrente')
+    end
+
     it 'does not offer boleto on a monthly plan' do
       quote.update!(billing_cycle: :monthly)
 

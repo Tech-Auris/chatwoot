@@ -26,15 +26,13 @@ class SuperAdmin::Commercial::ReservationsController < SuperAdmin::ApplicationCo
   # shape as `waive_token_card`: stamped when enabled, kept as an event
   # for the audit trail.
   def enable_boleto
-    quote = SalesQuote.find(params[:id])
-    unless Sales::CheckoutService.offers?('boleto', quote.billing_cycle)
-      return render(json: { error: 'boleto_unavailable_for_plan' }, status: :unprocessable_entity)
-    end
+    enable_payment_method('boleto')
+  end
 
-    quote.update!(boleto_enabled_at: Time.current) if quote.boleto_enabled_at.blank?
-    quote.events.create!(event: 'boleto_enabled', metadata: { super_admin_id: current_super_admin.id })
-
-    render json: { reservation: serialize(quote) }
+  # The recurring card is off by default too, and flipped on here the same way
+  # as the boleto. The two are independent.
+  def enable_card_recurring
+    enable_payment_method('card_recurring')
   end
 
   # The seller drops a proposal the customer will not take (usually replaced
@@ -149,6 +147,18 @@ class SuperAdmin::Commercial::ReservationsController < SuperAdmin::ApplicationCo
     )
   end
 
+  def enable_payment_method(method)
+    quote = SalesQuote.find(params[:id])
+    unless Sales::CheckoutService.offers?(method, quote.billing_cycle)
+      return render(json: { error: "#{method}_unavailable_for_plan" }, status: :unprocessable_entity)
+    end
+
+    quote.update!("#{method}_enabled_at": Time.current) if quote.public_send("#{method}_enabled_at").blank?
+    quote.events.create!(event: "#{method}_enabled", metadata: { super_admin_id: current_super_admin.id })
+
+    render json: { reservation: serialize(quote) }
+  end
+
   def serialize_contract(contract)
     return nil if contract.nil?
 
@@ -179,6 +189,8 @@ class SuperAdmin::Commercial::ReservationsController < SuperAdmin::ApplicationCo
       boleto_available: quote.boleto_available?,
       boleto_enabled: quote.boleto_enabled_at.present?,
       boleto_eligible_for_plan: Sales::CheckoutService.offers?('boleto', quote.billing_cycle),
+      card_recurring_enabled: quote.card_recurring_enabled_at.present?,
+      payment_label: quote.payment_method_label,
       payment_method: quote.payment_method,
       contract_required: quote.contract_required?,
       contract: serialize_contract(quote.current_contract),

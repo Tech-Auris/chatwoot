@@ -43,7 +43,7 @@ class SalesContract < ApplicationRecord
   enum :status, { failed: 0, awaiting_signature: 1, signed: 2, rejected: 3, cancelled: 4, expired: 5 }, prefix: true
   enum :person_type, { pj: 'pj', pf: 'pf' }, prefix: true
 
-  validates :payment_method, inclusion: { in: %w[pix card boleto] }
+  validates :payment_method, inclusion: { in: %w[pix card boleto card_recurring] }
 
   scope :live, -> { where.not(status: :cancelled) }
 

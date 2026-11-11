@@ -30,6 +30,13 @@ sales_reservation_reminder_job:
   class: 'Sales::ReservationReminderJob'
   queue: low
 
+# every day at 10:00 UTC (07:00 São Paulo)
+# suspends the accounts whose recurring-card charge is 30 days overdue
+sales_overdue_suspension_job:
+  cron: '0 10 * * *'
+  class: 'Sales::OverdueSuspensionJob'
+  queue: low
+
 marketing_spend_sync_job:
   cron: '0 4 * * *'
   class: 'Marketing::SpendSyncJob'

@@ -951,6 +951,7 @@ Rails.application.routes.draw do
           member do
             post :waive_token_card
             post :enable_boleto
+            post :enable_card_recurring
             post :cancel
             post :register_payment
             # kept until every operator is on the new UI bundle

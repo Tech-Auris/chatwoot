@@ -74,7 +74,7 @@ class Sales::ClickupCrmSyncService
 
     write_field(:plan, plan_option_id)
     write_field(:closed_at, closed_at_epoch_ms)
-    write_field(:payment_method, payment_method_label)
+    write_field(:payment_method, quote.payment_method_label)
     write_field(:responsible_name, quote.prospect_name)
     write_field(:channel_count, channel_count)
     write_field(:professional_count, professional_count)
@@ -138,18 +138,6 @@ class Sales::ClickupCrmSyncService
   # ClickUp date fields take epoch milliseconds.
   def closed_at_epoch_ms
     (Time.current.to_f * 1000).to_i
-  end
-
-  # The N is locked by the plan (see Sales::CheckoutService.installments_for).
-  # PIX is the exception — it is a single transfer with no parcels.
-  def payment_method_label
-    return 'PIX' if quote.payment_method_pix?
-    return 'Cartão' if quote.payment_method_card? && quote.billing_cycle_monthly?
-
-    n = Sales::CheckoutService.installments_for(quote.billing_cycle)
-    return "Cartão #{n}x" if quote.payment_method_card?
-
-    "Boleto #{n}x" if quote.payment_method_boleto?
   end
 
   def channel_count

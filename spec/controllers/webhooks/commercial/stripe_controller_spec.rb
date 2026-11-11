@@ -57,6 +57,66 @@ RSpec.describe 'Commercial Stripe webhook', type: :request do
     end
   end
 
+  describe 'the recurring card' do
+    let(:account) { create(:account) }
+
+    def invoice_event(type, subscription: 'sub_1')
+      Stripe::Event.construct_from(
+        type: type,
+        data: { object: { id: 'in_1', object: 'invoice', created: 1_794_000_000,
+                          parent: { subscription_details: { subscription: subscription } } } }
+      )
+    end
+
+    before { quote.update!(payment_method: :card_recurring, billing_cycle: :annual) }
+
+    it 'keeps the subscription and plans its renewal when the first charge is paid' do
+      payload = event(mode: 'subscription')
+      payload['data']['object']['subscription'] = 'sub_1'
+
+      expect { post_event(payload) }.to have_enqueued_job(Sales::CardRecurringScheduleJob).with(quote.id)
+      expect(quote.reload).to have_attributes(status: 'converted', stripe_subscription_id: 'sub_1')
+    end
+
+    context 'with the account already running' do
+      before { quote.update!(stripe_subscription_id: 'sub_1', account: account, status: :converted) }
+
+      it 'starts the overdue count when a monthly charge fails, once' do
+        post_event(invoice_event('invoice.payment_failed'))
+        travel(3.days) { post_event(invoice_event('invoice.payment_failed')) }
+
+        expect(quote.reload.payment_overdue_since).to eq(Time.zone.at(1_794_000_000))
+        expect(quote.events.where(event: 'payment_failed').count).to eq(1)
+      end
+
+      it 'stops the count and brings back an account suspended for it when the charge is paid' do
+        quote.update!(payment_overdue_since: 31.days.ago)
+        Sales::OverdueSuspensionJob.perform_now
+
+        post_event(invoice_event('invoice.paid'))
+
+        expect(quote.reload.payment_overdue_since).to be_nil
+        expect(account.reload).to be_active
+      end
+
+      it 'keeps an account the team suspended for another reason' do
+        quote.update!(payment_overdue_since: 2.days.ago)
+        account.suspended!
+
+        post_event(invoice_event('invoice.paid'))
+
+        expect(account.reload).to be_suspended
+      end
+
+      it 'ignores invoices of other subscriptions' do
+        post_event(invoice_event('invoice.payment_failed', subscription: 'sub_other'))
+
+        expect(response).to have_http_status(:ok)
+        expect(quote.reload.payment_overdue_since).to be_nil
+      end
+    end
+  end
+
   describe 'a saved card' do
     it 'records the card the token charges will use' do
       post_event(event(mode: 'setup'))

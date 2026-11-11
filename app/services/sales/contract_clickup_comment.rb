@@ -2,7 +2,8 @@
 # contract goes out (with the data the customer confirmed) and when the
 # customer signs it.
 module Sales::ContractClickupComment
-  PAYMENT_LABELS = { 'card' => 'Cartão de crédito', 'pix' => 'PIX à vista', 'boleto' => 'Boleto' }.freeze
+  PAYMENT_LABELS = { 'card' => 'Cartão de crédito', 'pix' => 'PIX à vista', 'boleto' => 'Boleto',
+                     'card_recurring' => 'Cartão recorrente' }.freeze
 
   module_function
 

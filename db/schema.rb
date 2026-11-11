@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_11_09_120200) do
+ActiveRecord::Schema[7.1].define(version: 2026_11_10_190000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -2009,6 +2009,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_09_120200) do
     t.datetime "fbclid_captured_at"
     t.string "client_ip"
     t.string "client_user_agent"
+    t.datetime "card_recurring_enabled_at"
+    t.datetime "payment_overdue_since"
     t.index ["account_id"], name: "index_sales_quotes_on_account_id"
     t.index ["clickup_task_id"], name: "index_sales_quotes_on_clickup_task_id"
     t.index ["inter_txid"], name: "index_sales_quotes_on_inter_txid", unique: true, where: "(inter_txid IS NOT NULL)"
