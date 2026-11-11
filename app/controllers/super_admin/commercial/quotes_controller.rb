@@ -336,6 +336,10 @@ class SuperAdmin::Commercial::QuotesController < SuperAdmin::ApplicationControll
       public_url: public_url_for(quote), qr_code: qr_code_for(quote),
       reserved_until: quote.reserved_until, phone_last4: quote.verification_phone_last4,
       prospect_name: quote.prospect_name,
+      # What the reservation message greets and whether it offers the
+      # special condition — see `commercialMessage.js`.
+      contact_name: quote.prospect_name, seller_name: quote.seller.name,
+      meeting_discount_active: quote.meeting_discount_active?,
       # Lead context on the "proposta criada" panel so the seller can
       # confirm at a glance who the deal is for without opening ClickUp.
       prospect_email: quote.prospect_email,

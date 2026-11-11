@@ -37,6 +37,18 @@ const discountsClause = summary => {
 export const isReservationMessageAvailable = quote =>
   Boolean(quote?.public_url && quote?.access_code && quote?.reserved_until);
 
+// "Olá, Fernanda. Por aqui é o Gustavo da Auris." — first names of the lead
+// and of the seller who made the proposal.
+const greeting = quote => {
+  const lead = (quote.contact_name || '').split(' ')[0];
+  const seller = (quote.seller_name || '').split(' ')[0];
+  const hello = lead ? `Olá, ${lead}.` : 'Olá!';
+  return `${hello} Por aqui é o ${seller} da Auris.`;
+};
+
+// Two wordings: the special condition when the meeting discount was given,
+// or a plain "here is your quote" otherwise — a lead without the discount
+// must not learn that one exists.
 export const buildReservationMessage = quote => {
   if (!isReservationMessageAvailable(quote)) return '';
 
@@ -44,8 +56,18 @@ export const buildReservationMessage = quote => {
   const code = quote.access_code;
   const deadline = formatReservedUntil(quote.reserved_until);
 
+  if (!quote.meeting_discount_active) {
+    return (
+      `${greeting(quote)}\n\n` +
+      'Segue seu orçamento. Para visualizar é necessário acessar a reserva pelo link abaixo, informar o *código de acesso* e preencher os dados solicitados:\n\n' +
+      `*Link para reserva:* ${link}\n` +
+      `*Código de acesso:* ${code}\n\n` +
+      'Se tiver qualquer dúvida durante o preenchimento, pode me chamar por aqui. 💙'
+    );
+  }
+
   return (
-    'Olá! 😊\n\n' +
+    `${greeting(quote)}\n\n` +
     `Conforme alinhado em nossa reunião, você tem uma *condição especial de contratação da Auris*${discountsClause(quote.discount_summary)}.\n\n` +
     'Para *reservar essa condição*, é necessário realizar a reserva pelo link abaixo, informar o *código de acesso* e preencher os dados solicitados:\n\n' +
     `*Link para reserva:* ${link}\n` +

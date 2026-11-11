@@ -181,6 +181,7 @@ class SuperAdmin::Commercial::ReservationsController < SuperAdmin::ApplicationCo
       subtotal_amount: quote.subtotal_amount,
       discount_amount: quote.effective_discount_amount,
       discount_summary: quote.effective_discount_summary,
+      meeting_discount_active: quote.meeting_discount_active?,
       items: quote.items.map { |item| serialize_item(item) },
       public_url: sales_proposal_url(quote.public_token, host: ENV.fetch('FRONTEND_URL', request.base_url)),
       access_code: quote.access_code,
