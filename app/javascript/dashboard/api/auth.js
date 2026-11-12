@@ -112,4 +112,10 @@ export default {
   revokeSession(id) {
     return axios.delete(`/api/v1/profile/sessions/${id}`);
   },
+  getOAuthApplications() {
+    return axios.get('/api/v1/profile/oauth_applications');
+  },
+  revokeOAuthApplication(id) {
+    return axios.delete(`/api/v1/profile/oauth_applications/${id}`);
+  },
 };

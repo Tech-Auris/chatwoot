@@ -23,6 +23,7 @@ import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
 import AccessToken from './AccessToken.vue';
 import MfaSettingsCard from './MfaSettingsCard.vue';
 import ActiveSessions from './ActiveSessions.vue';
+import ConnectedAssistants from './ConnectedAssistants.vue';
 import Policy from 'dashboard/components/policy.vue';
 import {
   ROLES,
@@ -45,6 +46,7 @@ export default {
     AccessToken,
     MfaSettingsCard,
     ActiveSessions,
+    ConnectedAssistants,
     BaseSettingsHeader,
   },
   setup() {
@@ -376,6 +378,15 @@ export default {
       :description="$t('PROFILE_SETTINGS.FORM.SESSIONS_SECTION.NOTE')"
     >
       <ActiveSessions />
+    </SectionLayout>
+    <SectionLayout
+      with-border
+      :title="$t('PROFILE_SETTINGS.FORM.CONNECTED_ASSISTANTS_SECTION.TITLE')"
+      :description="
+        $t('PROFILE_SETTINGS.FORM.CONNECTED_ASSISTANTS_SECTION.NOTE')
+      "
+    >
+      <ConnectedAssistants />
     </SectionLayout>
     <Policy :permissions="audioNotificationPermissions">
       <SectionLayout

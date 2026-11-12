@@ -1161,5 +1161,14 @@
         "SUBTITLE": "Connecting an inbox allows the assistant to handle initial questions from your customers before transferring them to you."
       }
     }
+  },
+  "OAUTH_AUTHORIZE": {
+    "TITLE": "Connect {client} to Auris",
+    "DESCRIPTION": "{client} will be able to read reports, the funnel, conversations and contacts on your behalf in these accounts:",
+    "READ_ONLY": "It can only read data and never changes anything. You can disconnect it at any time in your profile.",
+    "NO_ACCOUNTS": "None of your accounts has the AI assistant turned on, or you are not an administrator or manager there. An administrator can turn it on in Settings, Integrations, AI assistant (MCP).",
+    "APPROVE": "Authorize",
+    "DENY": "Cancel",
+    "ERROR_TITLE": "This connection request is not valid"
   }
 }

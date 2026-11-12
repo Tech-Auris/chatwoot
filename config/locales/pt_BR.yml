@@ -89,6 +89,7 @@ pt_BR:
   errors:
     mcp:
       terms_required: Aceite o termo para ligar o assistente de IA (MCP)
+      oauth_not_allowed: O assistente de IA (MCP) é só para administradores e gerentes de uma conta em que ele esteja ligado
     account:
       follow_up:
         invalid_steps: deve ter até %{max} follow-ups, cada um em minutos inteiros maiores que zero

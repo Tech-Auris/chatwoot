@@ -21,7 +21,10 @@ module EnsureCurrentAccountHelper
   def account_accessible_for_user?(account)
     @current_account_user = account.account_users.find_by(user_id: current_user.id)
     Current.account_user = @current_account_user
-    render_unauthorized('You are not authorized to access this account') unless @current_account_user
+    return render_unauthorized('You are not authorized to access this account') unless @current_account_user
+    return if @oauth_token.blank? || Oauth::McpAccess.allowed?(@current_account_user)
+
+    render_unauthorized('The AI assistant (MCP) is not enabled for you in this account')
   end
 
   def account_accessible_for_bot?(account)

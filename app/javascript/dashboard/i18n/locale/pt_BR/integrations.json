@@ -1164,5 +1164,14 @@
         "SUBTITLE": "Conectar uma caixa de entrada permite ao assistente lidar com perguntas iniciais de seus clientes antes de transferi-las para você."
       }
     }
+  },
+  "OAUTH_AUTHORIZE": {
+    "TITLE": "Conectar o {client} à Auris",
+    "DESCRIPTION": "O {client} vai poder ler relatórios, funil, conversas e contatos em seu nome nestas contas:",
+    "READ_ONLY": "Ele só lê dados e nunca altera nada. Você pode desconectar quando quiser no seu perfil.",
+    "NO_ACCOUNTS": "Nenhuma das suas contas está com o assistente de IA ligado, ou você não é administrador ou gerente nelas. Um administrador pode ligá-lo em Configurações, Integrações, Assistente de IA (MCP).",
+    "APPROVE": "Autorizar",
+    "DENY": "Cancelar",
+    "ERROR_TITLE": "Este pedido de conexão não é válido"
   }
 }

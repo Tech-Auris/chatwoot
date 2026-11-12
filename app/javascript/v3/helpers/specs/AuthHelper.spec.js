@@ -1,7 +1,25 @@
 import { getLoginRedirectURL, getCredentialsFromEmail } from '../AuthHelper';
+import { rememberOAuthReturn } from 'dashboard/helper/oauthReturn';
 
 describe('#URL Helpers', () => {
   describe('getLoginRedirectURL', () => {
+    it('returns to the AI assistant consent page the user came from, once', () => {
+      const consent = '/app/oauth/authorize?client_id=abc&state=xyz';
+      const user = { accounts: [{ id: 7500 }] };
+      rememberOAuthReturn(consent);
+
+      expect(getLoginRedirectURL({ user })).toBe(consent);
+      expect(getLoginRedirectURL({ user })).toBe('/app/accounts/7500/home');
+    });
+
+    it('ignores a remembered return that is not the consent page', () => {
+      rememberOAuthReturn('https://evil.example.com');
+
+      expect(getLoginRedirectURL({ user: { accounts: [{ id: 7500 }] } })).toBe(
+        '/app/accounts/7500/home'
+      );
+    });
+
     it('should return correct Account URL if account id is present', () => {
       expect(
         getLoginRedirectURL({

@@ -624,7 +624,12 @@ Rails.application.routes.draw do
           end
           resources :inbox_signatures, only: %i[index show update destroy], param: :inbox_id
           resources :sessions, only: [:index, :destroy]
+          resources :oauth_applications, only: [:index, :destroy]
         end
+      end
+
+      namespace :oauth do
+        resource :authorization, only: [:show, :create]
       end
 
       resource :notification_subscriptions, only: [:create, :destroy]
@@ -892,6 +897,15 @@ Rails.application.routes.draw do
   # ----------------------------------------------------------------------
   # Routes for external service verifications
   get '/manifest.json' => 'manifest#show'
+  # OAuth 2.1 for the Auris MCP connectors: Doorkeeper issues the tokens;
+  # registration, metadata and the authorize hand-off are ours.
+  use_doorkeeper do
+    skip_controllers :authorizations, :applications, :authorized_applications, :token_info
+  end
+  get 'oauth/authorize', to: 'oauth/authorizations#new'
+  post 'oauth/register', to: 'oauth/registrations#create'
+  get '.well-known/oauth-authorization-server', to: 'oauth/metadata#show'
+
   get '.well-known/assetlinks.json' => 'android_app#assetlinks'
   get '.well-known/apple-app-site-association' => 'apple_app#site_association'
   get '.well-known/microsoft-identity-association.json' => 'microsoft#identity_association'
