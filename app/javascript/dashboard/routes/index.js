@@ -17,13 +17,13 @@ export const validateAuthenticateRoutePermission = async (to, next) => {
   const { isLoggedIn, getCurrentUser: user } = store.getters;
 
   if (!isLoggedIn) {
-    if (to.name === 'oauth_authorize') rememberOAuthReturn(to.fullPath);
+    if (to.name === 'oauth_consent') rememberOAuthReturn(to.fullPath);
     window.location.assign('/app/login');
     return '';
   }
 
   // The consent page is not tied to an account: it lists the ones it covers.
-  if (to.name === 'oauth_authorize') return next();
+  if (to.name === 'oauth_consent') return next();
 
   const { accounts = [], account_id: accountId } = user;
 

@@ -79,8 +79,8 @@ export default {
       component: NoAccounts,
     },
     {
-      path: frontendURL('oauth/authorize'),
-      name: 'oauth_authorize',
+      path: frontendURL('oauth/consent'),
+      name: 'oauth_consent',
       component: OAuthAuthorize,
     },
   ],

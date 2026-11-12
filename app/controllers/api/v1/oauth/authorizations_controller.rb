@@ -1,5 +1,5 @@
 # Consent step of the MCP OAuth flow, called by the dashboard page
-# /app/oauth/authorize with the logged-in user's session. `show` describes the
+# /app/oauth/consent with the logged-in user's session. `show` describes the
 # request for the consent screen; `create` approves or denies it and answers
 # the URL to send the browser back to the client.
 class Api::V1::Oauth::AuthorizationsController < Api::BaseController

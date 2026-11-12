@@ -62,7 +62,14 @@ RSpec.describe 'MCP OAuth', type: :request do
     it 'hands a valid request over to the dashboard consent page' do
       get '/oauth/authorize', params: authorization_params
 
-      expect(response).to redirect_to("/app/oauth/authorize?#{authorization_params.to_query}")
+      expect(response).to redirect_to("/app/oauth/consent?#{authorization_params.to_query}")
+    end
+
+    # Paths containing "/auth" get the login pack, which has no consent page.
+    it 'serves the consent page with the dashboard pack' do
+      get '/app/oauth/consent', params: authorization_params
+
+      expect(controller.instance_variable_get(:@application_pack)).to eq('dashboard')
     end
 
     it 'sends PKCE-less requests back to the client with an error' do

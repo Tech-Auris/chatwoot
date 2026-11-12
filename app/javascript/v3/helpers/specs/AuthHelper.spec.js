@@ -4,7 +4,7 @@ import { rememberOAuthReturn } from 'dashboard/helper/oauthReturn';
 describe('#URL Helpers', () => {
   describe('getLoginRedirectURL', () => {
     it('returns to the AI assistant consent page the user came from, once', () => {
-      const consent = '/app/oauth/authorize?client_id=abc&state=xyz';
+      const consent = '/app/oauth/consent?client_id=abc&state=xyz';
       const user = { accounts: [{ id: 7500 }] };
       rememberOAuthReturn(consent);
 
