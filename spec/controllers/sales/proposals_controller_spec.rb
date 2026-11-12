@@ -443,7 +443,7 @@ RSpec.describe 'Public sales proposal', type: :request do
     # "Total" on a monthly plan is the first invoice, setup fee included; what
     # comes back every month is only the subscription.
     it 'says what the first charge covers and what recurs' do
-      quote.update!(billing_cycle: :monthly, subtotal_amount: 389_700, discount_amount: 0, total_amount: 389_700)
+      quote.update!(billing_cycle: :monthly, subtotal_amount: 479_400, discount_amount: 0, total_amount: 479_400)
       create(:sales_quote_item, sales_quote: quote, name: 'Plataforma Auris', unit_amount: 89_700, recurring_interval: 'month')
       create(:sales_quote_item, sales_quote: quote, name: 'Implantação', unit_amount: 300_000, recurring_interval: nil)
 

@@ -4,7 +4,7 @@
 # The terms are signed before any money moves. If the payment fails, the
 # customer has agreed to terms they were shown and did not pay — recoverable.
 # The reverse, money taken against a signature that was never recorded, is not.
-class Sales::CheckoutService
+class Sales::CheckoutService # rubocop:disable Metrics/ClassLength
   # How long each plan covers. A sale is never split into more instalments than
   # the months it pays for.
   CYCLE_MONTHS = { monthly: 1, semiannual: 6, annual: 12 }.freeze
@@ -277,24 +277,34 @@ class Sales::CheckoutService
     { quantity: 1, price_data: price_data }
   end
 
-  # The discount was agreed on the proposal as a whole and holds for as long as
-  # the plan runs, so it is spread across the lines and baked into the amounts
-  # rather than handed to Stripe as a coupon — one arithmetic, ours, and no
-  # drift between what the customer read and what the invoice says.
+  # The discounts are baked into the amounts rather than handed to Stripe as a
+  # coupon — one arithmetic, ours, and no drift between what the customer read
+  # and what the invoice says. They hold for as long as the plan runs, in the
+  # same order the proposal priced them:
+  #   1. A product discount (Commercial → Descontos) cuts only the lines sold
+  #      from its products — a waived setup fee leaves the subscription whole.
+  #   2. What else came off the proposal (reunião, indicação, a coupon) is
+  #      spread across what is left on each line.
   #
   # The rounding residue lands on the largest line, so the first invoice adds up
   # to the agreed total to the cent.
   def discounted_lines
-    @discounted_lines ||= begin
-      lines = quote.items.map { |item| { name: line_name(item), recurring: item.recurring_interval.present?, amount: discounted(item) } }
-      apply_residue(lines)
-    end
+    @discounted_lines ||= apply_residue(spread_order_discount(quote.items.map { |item| discounted_line(item) }))
   end
 
-  def discounted(item)
-    return item.total_amount if quote.subtotal_amount.to_i.zero?
+  def discounted_line(item)
+    { name: line_name(item), recurring: item.recurring_interval.present?, amount: item.total_amount - waived(item) }
+  end
 
-    (item.total_amount * (quote.subtotal_amount - quote.discount_amount) / quote.subtotal_amount.to_f).round
+  def waived(item)
+    percent = quote.applied_discounts.select { |discount| Array(discount['stripe_product_ids']).include?(item.stripe_product_id.to_s) }
+                   .sum { |discount| discount['percent'].to_f }
+    [(item.total_amount * percent / 100).round, item.total_amount].min
+  end
+
+  def spread_order_discount(lines)
+    remaining = lines.sum { |line| line[:amount] }
+    remaining.zero? ? lines : lines.each { |line| line[:amount] = (line[:amount] * quote.total_amount / remaining.to_f).round }
   end
 
   def apply_residue(lines)
