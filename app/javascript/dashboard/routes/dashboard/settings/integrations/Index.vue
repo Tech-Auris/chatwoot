@@ -27,10 +27,16 @@ const mcpIntegration = computed(() => ({
   enabled: !!currentAccount.value.mcp_enabled,
 }));
 
-const integrationList = computed(() => [
-  mcpIntegration.value,
-  ...getters['integrations/getAppIntegrations'].value,
-]);
+// The MCP card goes right after Webhooks.
+const integrationList = computed(() => {
+  const apps = getters['integrations/getAppIntegrations'].value;
+  const position = apps.findIndex(app => app.id === 'webhook') + 1;
+  return [
+    ...apps.slice(0, position),
+    mcpIntegration.value,
+    ...apps.slice(position),
+  ];
+});
 
 const filteredIntegrationList = computed(() => {
   const query = searchQuery.value.trim();
