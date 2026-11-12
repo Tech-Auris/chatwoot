@@ -116,6 +116,44 @@ RSpec.describe Sales::CheckoutService do
       expect(described_class.monthly_charge_for(quote.reload)).to eq(80_730)
     end
 
+    # A discount set up for some products (Commercial → Descontos) was agreed
+    # on those lines only — waiving the setup fee must not cut the subscription.
+    context 'with a discount on the one-off products' do
+      let(:waiver) do
+        { 'label' => 'PAGOPARCELADO (100%)', 'percent' => 100.0, 'stripe_product_ids' => %w[prod_setup prod_api], 'amount' => 399_900 }
+      end
+
+      before do
+        quote.items.destroy_all
+        create(:sales_quote_item, sales_quote: quote, name: 'Plataforma Auris', stripe_product_id: 'prod_platform',
+                                  unit_amount: 129_700, recurring_interval: 'month')
+        create(:sales_quote_item, sales_quote: quote, name: 'Implantação', stripe_product_id: 'prod_setup', unit_amount: 300_000)
+        create(:sales_quote_item, sales_quote: quote, name: 'Configuração de Integração API', stripe_product_id: 'prod_api',
+                                  unit_amount: 99_900)
+        quote.update!(subtotal_amount: 529_600, discount_amount: 399_900, total_amount: 129_700, applied_discounts: [waiver])
+        quote.items.reset
+      end
+
+      it 'keeps the subscription at full price' do
+        expect(described_class.monthly_charge_for(quote.reload)).to eq(129_700)
+      end
+
+      it 'cuts only the lines of the discounted products' do
+        checkout
+
+        amounts = received_session[:line_items].to_h { |line| [line[:price_data][:product_data][:name], line[:price_data][:unit_amount]] }
+        expect(amounts).to eq('Plataforma Auris' => 129_700, 'Implantação' => 0, 'Configuração de Integração API' => 0)
+      end
+
+      # An order-wide discount on top runs on what the waiver left behind.
+      it 'spreads an order-wide discount over what is left' do
+        meeting = { 'label' => '10% reunião', 'percent' => 10.0, 'stripe_product_ids' => [], 'amount' => 12_970 }
+        quote.update!(discount_amount: 412_870, total_amount: 116_730, applied_discounts: [waiver, meeting])
+
+        expect(described_class.monthly_charge_for(quote.reload)).to eq(116_730)
+      end
+    end
+
     # A monthly subscription is charged month by month; there is nothing to
     # split.
     it 'offers no instalments' do
