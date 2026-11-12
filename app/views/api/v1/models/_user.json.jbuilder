@@ -32,6 +32,7 @@ json.accounts do
     json.onboarding_step account_user.account.onboarding_step
     json.active_at account_user.active_at
     json.role account_user.role
+    json.mcp_enabled account_user.account.mcp_enabled
     json.permissions account_user.permissions
     # the actual availability user has configured
     json.availability account_user.availability

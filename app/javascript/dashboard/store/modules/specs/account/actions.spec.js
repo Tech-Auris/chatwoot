@@ -61,6 +61,23 @@ describe('#actions', () => {
     });
   });
 
+  describe('#updateMcp', () => {
+    it('saves the switch and updates the account', async () => {
+      axios.patch.mockResolvedValue({ data: { id: 1, mcp_enabled: true } });
+      await actions.updateMcp(
+        { commit },
+        { enabled: true, terms_accepted: true }
+      );
+      expect(axios.patch.mock.calls[0][1]).toEqual({
+        enabled: true,
+        terms_accepted: true,
+      });
+      expect(commit.mock.calls).toEqual([
+        [types.default.EDIT_ACCOUNT, { id: 1, mcp_enabled: true }],
+      ]);
+    });
+  });
+
   describe('#create', () => {
     it('sends correct actions if API is success', async () => {
       axios.post.mockResolvedValue({

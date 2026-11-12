@@ -411,6 +411,46 @@
         "CONFIRM": "Sim, excluir",
         "CANCEL": "Cancelar"
       }
+    },
+    "MCP": {
+      "HEADER": "Assistente de IA (MCP)",
+      "CARD_DESCRIPTION": "Permite que donos e gerentes perguntem ao Claude ou ao ChatGPT sobre relatórios, funil e conversas desta conta.",
+      "DESCRIPTION": "Conecte assistentes de IA como o Claude e o ChatGPT a esta conta. Eles leem relatórios, funil, conversas e contatos com as permissões de quem conecta e nunca alteram nada.",
+      "SWITCH_LABEL": "Permitir que assistentes de IA acessem esta conta",
+      "SWITCH_HELP": "Só administradores e gerentes conseguem conectar. Ao desligar, todo assistente conectado perde o acesso na hora.",
+      "ENABLED_INFO": "Ligado em {date} por {name}",
+      "ENABLED_SUCCESS": "Assistente de IA ligado",
+      "DISABLED_SUCCESS": "Assistente de IA desligado",
+      "ERROR": "Não foi possível salvar. Tente novamente.",
+      "COPY": "Copiar",
+      "COPIED": "Copiado para a área de transferência",
+      "CONNECT": {
+        "TITLE": "Como conectar",
+        "LOGIN_STEP": "Entre com a sua conta da Auris e clique em Autorizar.",
+        "CLAUDE": {
+          "TITLE": "Claude (claude.ai ou app do Claude)",
+          "STEP_1": "Vá em Configurações, Conectores, Adicionar conector personalizado.",
+          "STEP_2": "Cole o endereço acima e salve."
+        },
+        "CHATGPT": {
+          "TITLE": "ChatGPT",
+          "STEP_1": "Vá em Configurações, Conectores (Apps), Criar.",
+          "STEP_2": "Cole o endereço acima e escolha OAuth como autenticação."
+        },
+        "ADVANCED": {
+          "TITLE": "Avançado: Claude Code e outras ferramentas",
+          "HELP": "Ferramentas que aceitam um header personalizado podem conectar com o seu token de acesso pessoal, sem login.",
+          "TOKEN_LINK": "Pegue o seu token de acesso no seu perfil"
+        }
+      },
+      "TERMS": {
+        "TITLE": "Ligar o assistente de IA",
+        "PARAGRAPH_1": "Os assistentes conectados a esta conta vão ler relatórios, funil, conversas e contatos, inclusive mensagens de pacientes, com as permissões do administrador ou gerente que conectar.",
+        "PARAGRAPH_2": "Tudo o que o assistente ler é enviado ao provedor de IA escolhido pela clínica (como Anthropic ou OpenAI) e tratado conforme os termos desse provedor. As conversas podem conter dados de saúde, que a LGPD considera dados pessoais sensíveis.",
+        "PARAGRAPH_3": "A clínica é responsável pela escolha do provedor e por esse uso dos dados. O assistente só lê dados e pode ser desligado a qualquer momento nesta página.",
+        "ACCEPT": "Li e aceito, em nome da clínica",
+        "CONFIRM": "Ligar"
+      }
     }
   },
   "CAPTAIN": {

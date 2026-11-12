@@ -93,6 +93,10 @@ export const actions = {
       throw new Error(error);
     }
   },
+  updateMcp: async ({ commit }, data) => {
+    const response = await AccountAPI.updateMcp(data);
+    commit(types.default.EDIT_ACCOUNT, response.data);
+  },
   enableFeature: async ({ dispatch }, { feature }) => {
     await AccountAPI.enableFeature(feature);
     // refresh the account so feature_flags / enabled features are up-to-date
