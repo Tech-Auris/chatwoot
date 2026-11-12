@@ -29,15 +29,22 @@ RSpec.describe 'Account MCP API', type: :request do
     expect(account.reload).to have_attributes(mcp_enabled: false, mcp_enabled_at: nil, mcp_enabled_by: nil)
   end
 
-  it 'refuses managers and agents' do
+  it 'lets a manager turn it on, accepting the term' do
     manager = create(:user, account: account)
     manager.account_users.find_by(account: account).update!(role: :manager)
+
+    patch url, params: { enabled: true, terms_accepted: true }, headers: manager.create_new_auth_token, as: :json
+
+    expect(response).to have_http_status(:success)
+    expect(account.reload).to have_attributes(mcp_enabled: true, mcp_enabled_by: manager)
+  end
+
+  it 'refuses agents' do
     agent = create(:user, account: account, role: :agent)
 
-    [manager, agent].each do |user|
-      patch url, params: { enabled: true, terms_accepted: true }, headers: user.create_new_auth_token, as: :json
-      expect(response).to have_http_status(:unauthorized)
-    end
+    patch url, params: { enabled: true, terms_accepted: true }, headers: agent.create_new_auth_token, as: :json
+
+    expect(response).to have_http_status(:unauthorized)
     expect(account.reload.mcp_enabled).to be(false)
   end
 

@@ -15,6 +15,10 @@ class AccountPolicy < ApplicationPolicy
     @account_user.administrator?
   end
 
+  def update_mcp?
+    @account_user.administrator? || @account_user.manager?
+  end
+
   def update_active_at?
     true
   end
