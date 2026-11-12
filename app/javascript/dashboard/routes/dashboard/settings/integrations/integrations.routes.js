@@ -24,7 +24,7 @@ export default {
           component: Index,
           meta: {
             featureFlag: FEATURE_FLAGS.INTEGRATIONS,
-            permissions: ['administrator'],
+            permissions: ['administrator', 'manager'],
           },
         },
         {
@@ -33,7 +33,7 @@ export default {
           name: 'settings_integrations_dashboard_apps',
           meta: {
             featureFlag: FEATURE_FLAGS.INTEGRATIONS,
-            permissions: ['administrator'],
+            permissions: ['administrator', 'manager'],
           },
         },
         {
@@ -42,7 +42,7 @@ export default {
           name: 'settings_integrations_webhook',
           meta: {
             featureFlag: FEATURE_FLAGS.INTEGRATIONS,
-            permissions: ['administrator'],
+            permissions: ['administrator', 'manager'],
           },
         },
       ],
@@ -57,7 +57,7 @@ export default {
           component: Slack,
           meta: {
             featureFlag: FEATURE_FLAGS.INTEGRATIONS,
-            permissions: ['administrator'],
+            permissions: ['administrator', 'manager'],
           },
           props: route => ({ code: route.query.code }),
         },
@@ -66,7 +66,7 @@ export default {
           name: 'settings_integrations_linear',
           component: Linear,
           meta: {
-            permissions: ['administrator'],
+            permissions: ['administrator', 'manager'],
           },
           props: route => ({ code: route.query.code }),
         },
@@ -75,7 +75,7 @@ export default {
           name: 'settings_integrations_notion',
           component: Notion,
           meta: {
-            permissions: ['administrator'],
+            permissions: ['administrator', 'manager'],
           },
           props: route => ({ code: route.query.code }),
         },
@@ -85,7 +85,7 @@ export default {
           component: Shopify,
           meta: {
             featureFlag: FEATURE_FLAGS.INTEGRATIONS,
-            permissions: ['administrator'],
+            permissions: ['administrator', 'manager'],
           },
           props: route => ({ error: route.query.error }),
         },
@@ -95,7 +95,7 @@ export default {
           component: Mcp,
           meta: {
             featureFlag: FEATURE_FLAGS.INTEGRATIONS,
-            permissions: ['administrator'],
+            permissions: ['administrator', 'manager'],
           },
         },
         {
@@ -104,7 +104,7 @@ export default {
           component: IntegrationHooks,
           meta: {
             featureFlag: FEATURE_FLAGS.INTEGRATIONS,
-            permissions: ['administrator'],
+            permissions: ['administrator', 'manager'],
           },
           props: route => ({
             integrationId: route.params.integration_id,
