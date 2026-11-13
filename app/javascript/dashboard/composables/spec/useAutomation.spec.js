@@ -39,7 +39,7 @@ describe('useAutomation', () => {
     });
     useMapGetter.mockImplementation(getter => {
       const getterMap = {
-        'agents/getVerifiedAgents': agents,
+        'agents/getVerifiedNonInternalAgents': agents,
         'campaigns/getAllCampaigns': campaigns,
         'contacts/getContacts': contacts,
         'inboxes/getInboxes': inboxes,

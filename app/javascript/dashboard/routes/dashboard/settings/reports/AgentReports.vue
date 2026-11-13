@@ -6,7 +6,7 @@ import WootReports from './components/WootReports.vue';
   <WootReports
     key="agent-reports"
     type="agent"
-    getter-key="agents/getAgents"
+    getter-key="agents/getNonInternalAgents"
     action-key="agents/get"
     :download-button-label="$t('REPORT.DOWNLOAD_AGENT_REPORTS')"
     :report-title="$t('AGENT_REPORTS.HEADER')"

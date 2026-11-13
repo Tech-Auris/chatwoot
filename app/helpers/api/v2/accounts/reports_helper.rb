@@ -5,7 +5,7 @@ module Api::V2::Accounts::ReportsHelper
       params: build_params(type: :agent)
     ).build
 
-    Current.account.users.map do |agent|
+    Current.account.non_internal_users.map do |agent|
       report = reports.find { |r| r[:id] == agent.id }
       [agent.name] + generate_readable_report_metrics(report)
     end

@@ -24,6 +24,7 @@ const { t } = useI18n();
 
 const currentChat = useMapGetter('getSelectedChat');
 const currentUser = useMapGetter('getCurrentUser');
+const currentRole = useMapGetter('getCurrentRole');
 
 const assignedAgent = computed({
   get() {
@@ -52,7 +53,9 @@ const isAssignedToOtherAgent = computed(
 
 const showSelfAssignBanner = computed(() => {
   return (
-    isUserTyping.value && (isUnassigned.value || isAssignedToOtherAgent.value)
+    currentRole.value !== 'administrator' &&
+    isUserTyping.value &&
+    (isUnassigned.value || isAssignedToOtherAgent.value)
   );
 });
 

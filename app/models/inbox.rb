@@ -107,6 +107,8 @@ class Inbox < ApplicationRecord # rubocop:disable Metrics/ClassLength
   # @param user_ids [Array<Integer>] Array of user IDs to add as members
   # @return [void]
   def add_members(user_ids)
+    internal_user_ids = account.administrators.where.not(id: Conversation.ai_user_id).ids
+    user_ids = user_ids.reject { |user_id| internal_user_ids.include?(user_id.to_i) }
     inbox_members.create!(user_ids.map { |user_id| { user_id: user_id } })
     update_account_cache
   end
@@ -186,7 +188,7 @@ class Inbox < ApplicationRecord # rubocop:disable Metrics/ClassLength
   end
 
   def assignable_agents
-    (account.users.where(id: members.select(:user_id)) + account.administrators + account.managers).uniq
+    (account.non_internal_users.where(id: members.select(:user_id)) + account.managers + [account.ai_user].compact).uniq
   end
 
   def active_bot?

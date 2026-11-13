@@ -153,6 +153,31 @@ describe ActionService do
       end
     end
 
+    context 'when the agent is an administrator' do
+      let(:administrator) { create(:user, account: account, role: :administrator) }
+
+      it 'does not assign the administrator' do
+        original_assignee = conversation.assignee
+        action_service.assign_agent([administrator.id])
+        expect(conversation.reload.assignee).to eq(original_assignee)
+      end
+
+      it 'assigns the administrator when it is the AI user' do
+        InstallationConfig.where(name: 'SECRETARY_AI_USER_ID').first_or_create!(value: administrator.id.to_s, locked: false)
+        GlobalConfig.clear_cache
+        action_service.assign_agent([administrator.id])
+        expect(conversation.reload.assignee).to eq(administrator)
+      end
+    end
+
+    context 'when the agent is a manager outside the inbox' do
+      it 'assigns the manager' do
+        manager = create(:user, account: account, role: :manager)
+        action_service.assign_agent([manager.id])
+        expect(conversation.reload.assignee).to eq(manager)
+      end
+    end
+
     context 'when agent is unconfirmed' do
       let(:unconfirmed_agent) { create(:user, account: account, role: :agent, skip_confirmation: false) }
       let(:unconfirmed_inbox_member) { create(:inbox_member, inbox: conversation.inbox, user: unconfirmed_agent) }

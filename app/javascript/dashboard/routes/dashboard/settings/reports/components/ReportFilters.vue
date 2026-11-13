@@ -91,7 +91,7 @@ const filterSource = computed(() => {
     teams: store.getters['teams/getTeams'],
     inboxes: store.getters['inboxes/getInboxes'],
     labels: store.getters['labels/getLabels'],
-    agents: store.getters['agents/getAgents'],
+    agents: store.getters['agents/getNonInternalAgents'],
   };
   return sources[props.filterType] || [];
 });

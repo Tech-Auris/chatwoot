@@ -86,9 +86,9 @@ RSpec.describe 'Reports API', type: :request do
 
       it 'return conversation metrics for user in account level' do
         create_list(:conversation, 2, account: account, inbox: inbox,
-                                      assignee: admin, created_at: Time.zone.today)
+                                      assignee: agent, created_at: Time.zone.today)
         create_list(:conversation, 2, account: new_account, inbox: inbox,
-                                      assignee: admin, created_at: Time.zone.today)
+                                      assignee: agent, created_at: Time.zone.today)
 
         get "/api/v2/accounts/#{account.id}/reports/conversations",
             params: {
@@ -101,11 +101,12 @@ RSpec.describe 'Reports API', type: :request do
 
         json_response = response.parsed_body
         expect(json_response.blank?).to be false
-        user_metrics = json_response.find { |item| item['name'] == admin[:name] }
+        user_metrics = json_response.find { |item| item['name'] == agent[:name] }
         expect(user_metrics.present?).to be true
 
         expect(user_metrics['metric']['open']).to eq(2)
         expect(user_metrics['metric']['unattended']).to eq(2)
+        expect(json_response.pluck('name')).not_to include(admin[:name])
       end
     end
 

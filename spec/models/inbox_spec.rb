@@ -109,8 +109,45 @@ RSpec.describe Inbox do
     it 'includes managers even when they are not inbox members' do
       manager = create(:user, account: account, role: :manager)
 
-      expect(inbox.assignable_agents).to include(member_agent, administrator, manager)
+      expect(inbox.assignable_agents).to include(member_agent, manager)
       expect(inbox.assignable_agents).not_to include(outsider_agent)
+    end
+
+    it 'leaves administrators out' do
+      create(:inbox_member, user: administrator, inbox: inbox)
+
+      expect(inbox.assignable_agents).not_to include(administrator)
+    end
+
+    it 'keeps the AI user, even though it is an administrator' do
+      InstallationConfig.where(name: 'SECRETARY_AI_USER_ID').first_or_create!(value: administrator.id.to_s, locked: false)
+      GlobalConfig.clear_cache
+
+      expect(inbox.assignable_agents).to include(administrator)
+    end
+  end
+
+  describe '#add_members with administrators' do
+    let(:account) { create(:account) }
+    let(:inbox) { create(:inbox, account: account) }
+    let(:administrator) { create(:user, account: account, role: :administrator) }
+    let(:agent) { create(:user, account: account, role: :agent) }
+
+    before { allow(Rails.configuration.dispatcher).to receive(:dispatch) }
+
+    it 'ignores administrators' do
+      inbox.add_members([administrator.id, agent.id])
+
+      expect(inbox.reload.members).to contain_exactly(agent)
+    end
+
+    it 'still adds the AI user' do
+      InstallationConfig.where(name: 'SECRETARY_AI_USER_ID').first_or_create!(value: administrator.id.to_s, locked: false)
+      GlobalConfig.clear_cache
+
+      inbox.add_members([administrator.id])
+
+      expect(inbox.reload.members).to contain_exactly(administrator)
     end
   end
 

@@ -27,7 +27,7 @@ const onDownloadClick = () => {
   <SummaryReports
     ref="summarReportsRef"
     action-key="summaryReports/fetchAgentSummaryReports"
-    getter-key="agents/getAgents"
+    getter-key="agents/getNonInternalAgents"
     fetch-items-key="agents/get"
     summary-key="summaryReports/getAgentSummaryReports"
     type="agent"

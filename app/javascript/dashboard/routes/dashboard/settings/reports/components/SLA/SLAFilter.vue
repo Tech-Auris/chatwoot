@@ -34,7 +34,7 @@ const appliedFilters = ref({
   label_list: null,
 });
 
-const agents = computed(() => store.getters['agents/getAgents']);
+const agents = computed(() => store.getters['agents/getNonInternalAgents']);
 const inboxes = computed(() => store.getters['inboxes/getInboxes']);
 const teams = computed(() => store.getters['teams/getTeams']);
 const labels = computed(() => store.getters['labels/getLabels']);

@@ -58,7 +58,7 @@ const appliedFilters = ref({
   rating: urlFilters.rating,
 });
 
-const agents = computed(() => store.getters['agents/getAgents']);
+const agents = computed(() => store.getters['agents/getNonInternalAgents']);
 const inboxes = computed(() => store.getters['inboxes/getInboxes']);
 const teams = computed(() => store.getters['teams/getTeams']);
 

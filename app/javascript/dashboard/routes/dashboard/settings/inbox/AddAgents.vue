@@ -34,7 +34,7 @@ export default {
   },
   computed: {
     ...mapGetters({
-      agentList: 'agents/getAgents',
+      agentList: 'agents/getNonInternalAgents',
     }),
     selectedAgentNames() {
       return this.selectedAgentIds.map(
