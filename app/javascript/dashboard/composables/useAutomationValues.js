@@ -22,7 +22,7 @@ import { ORIGEM_OPTIONS } from 'dashboard/helper/origemOptions';
 export default function useAutomationValues() {
   const getters = useStoreGetters();
   const { t } = useI18n();
-  const agents = useMapGetter('agents/getVerifiedAgents');
+  const agents = useMapGetter('agents/getVerifiedNonInternalAgents');
   const campaigns = useMapGetter('campaigns/getAllCampaigns');
   const contacts = useMapGetter('contacts/getContacts');
   const inboxes = useMapGetter('inboxes/getInboxes');

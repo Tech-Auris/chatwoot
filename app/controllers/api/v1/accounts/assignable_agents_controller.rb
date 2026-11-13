@@ -8,8 +8,8 @@ class Api::V1::Accounts::AssignableAgentsController < Api::V1::Accounts::BaseCon
       member_ids
     end
     agent_ids = agent_ids.inject(:&)
-    agents = Current.account.users.where(id: agent_ids)
-    @assignable_agents = (agents + Current.account.administrators + Current.account.managers).uniq
+    agents = Current.account.non_internal_users.where(id: agent_ids)
+    @assignable_agents = (agents + Current.account.managers + [Current.account.ai_user].compact).uniq
   end
 
   private

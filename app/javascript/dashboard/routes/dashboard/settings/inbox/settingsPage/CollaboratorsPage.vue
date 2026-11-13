@@ -43,7 +43,7 @@ const isLoadingPolicies = ref(false);
 const showPolicyDropdown = ref(false);
 const isLinkingPolicy = ref(false);
 
-const agentList = computed(() => store.getters['agents/getAgents']);
+const agentList = computed(() => store.getters['agents/getNonInternalAgents']);
 
 const selectedAgentNames = computed(() =>
   selectedAgentIds.value.map(

@@ -112,7 +112,7 @@ class V2::ReportBuilder
   end
 
   def agent_metrics
-    account_users = @account.account_users.page(params[:page]).per(AGENT_RESULTS_PER_PAGE)
+    account_users = @account.account_users.reportable.page(params[:page]).per(AGENT_RESULTS_PER_PAGE)
     account_users.each_with_object([]) do |account_user, arr|
       @user = account_user.user
       arr << {

@@ -35,6 +35,8 @@ class AccountUser < ApplicationRecord
   belongs_to :inviter, class_name: 'User', optional: true
 
   enum role: { agent: 0, administrator: 1, manager: 2 }
+  scope :reportable, -> { where.not(role: :administrator).or(where(user_id: Conversation.ai_user_id)) }
+
   enum availability: { online: 0, offline: 1, busy: 2 }
 
   accepts_nested_attributes_for :account

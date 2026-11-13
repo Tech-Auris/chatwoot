@@ -129,4 +129,50 @@ describe('#getters', () => {
       offline: 1,
     });
   });
+
+  describe('administrators', () => {
+    const state = {
+      records: [
+        {
+          id: 1,
+          role: 'agent',
+          confirmed: true,
+          availability_status: 'online',
+        },
+        {
+          id: 2,
+          role: 'administrator',
+          confirmed: true,
+          availability_status: 'online',
+        },
+        {
+          id: 3,
+          role: 'administrator',
+          is_ai_user: true,
+          confirmed: true,
+          availability_status: 'busy',
+        },
+      ],
+    };
+
+    it('getNonInternalAgents hides administrators except the AI user', () => {
+      expect(getters.getNonInternalAgents(state).map(a => a.id)).toEqual([
+        1, 3,
+      ]);
+    });
+
+    it('getVerifiedNonInternalAgents hides administrators except the AI user', () => {
+      expect(
+        getters.getVerifiedNonInternalAgents(state).map(a => a.id)
+      ).toEqual([1, 3]);
+    });
+
+    it('getAgentStatus does not count administrators except the AI user', () => {
+      expect(getters.getAgentStatus(state)).toEqual({
+        online: 1,
+        busy: 1,
+        offline: 0,
+      });
+    });
+  });
 });

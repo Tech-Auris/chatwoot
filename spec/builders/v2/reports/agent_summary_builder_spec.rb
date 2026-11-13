@@ -15,6 +15,25 @@ RSpec.describe V2::Reports::AgentSummaryBuilder do
   let(:builder) { described_class.new(account: account, params: params) }
 
   describe '#build' do
+    context 'when the account has administrators' do
+      let(:administrator) { create(:user, account: account, role: :administrator) }
+      let(:ai_user) { create(:user, account: account, role: :administrator) }
+      let(:business_hours) { false }
+
+      before do
+        user1
+        administrator
+        InstallationConfig.where(name: 'SECRETARY_AI_USER_ID').first_or_create!(value: ai_user.id.to_s, locked: false)
+        GlobalConfig.clear_cache
+      end
+
+      it 'leaves administrators out, except the AI user' do
+        ids = builder.build.pluck(:id)
+
+        expect(ids).to contain_exactly(user1.id, ai_user.id)
+      end
+    end
+
     context 'when there is team data' do
       before do
         c1 = create(:conversation, account: account, assignee: user1, created_at: Time.current)

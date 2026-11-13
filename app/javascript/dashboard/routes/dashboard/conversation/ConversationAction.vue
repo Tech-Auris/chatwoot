@@ -65,6 +65,7 @@ export default {
     ...mapGetters({
       currentChat: 'getSelectedChat',
       currentUser: 'getCurrentUser',
+      currentRole: 'getCurrentRole',
       teams: 'teams/getTeams',
     }),
     hasAnAssignedTeam() {
@@ -149,6 +150,9 @@ export default {
       },
     },
     showSelfAssign() {
+      if (this.currentRole === 'administrator') {
+        return false;
+      }
       if (!this.assignedAgent) {
         return true;
       }

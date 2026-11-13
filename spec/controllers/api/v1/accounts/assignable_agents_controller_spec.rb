@@ -25,7 +25,7 @@ RSpec.describe 'Assignable Agents API', type: :request do
 
     context 'when the user is not part of an inbox' do
       context 'when the user is an admininstrator' do
-        it 'returns all assignable inbox members along with administrators' do
+        it 'returns the assignable inbox members without administrators' do
           get "/api/v1/accounts/#{account.id}/assignable_agents",
               params: { inbox_ids: [inbox1.id, inbox2.id] },
               headers: admin.create_new_auth_token,
@@ -33,8 +33,7 @@ RSpec.describe 'Assignable Agents API', type: :request do
 
           expect(response).to have_http_status(:success)
           response_data = JSON.parse(response.body, symbolize_names: true)[:payload]
-          expect(response_data.size).to eq(2)
-          expect(response_data.pluck(:role)).to include('agent', 'administrator')
+          expect(response_data.pluck(:id)).to contain_exactly(agent1.id)
         end
       end
 
@@ -51,7 +50,7 @@ RSpec.describe 'Assignable Agents API', type: :request do
     end
 
     context 'when the user is part of the inbox' do
-      it 'returns all assignable inbox members along with administrators' do
+      it 'returns the assignable inbox members without administrators' do
         get "/api/v1/accounts/#{account.id}/assignable_agents",
             params: { inbox_ids: [inbox1.id, inbox2.id] },
             headers: agent1.create_new_auth_token,
@@ -59,8 +58,25 @@ RSpec.describe 'Assignable Agents API', type: :request do
 
         expect(response).to have_http_status(:success)
         response_data = JSON.parse(response.body, symbolize_names: true)[:payload]
-        expect(response_data.size).to eq(2)
-        expect(response_data.pluck(:role)).to include('agent', 'administrator')
+        expect(response_data.pluck(:id)).to contain_exactly(agent1.id)
+      end
+    end
+
+    context 'when the AI user is an administrator' do
+      before do
+        InstallationConfig.where(name: 'SECRETARY_AI_USER_ID').first_or_create!(value: admin.id.to_s, locked: false)
+        GlobalConfig.clear_cache
+      end
+
+      it 'keeps it in the list' do
+        get "/api/v1/accounts/#{account.id}/assignable_agents",
+            params: { inbox_ids: [inbox1.id] },
+            headers: admin.create_new_auth_token,
+            as: :json
+
+        response_data = JSON.parse(response.body, symbolize_names: true)[:payload]
+        expect(response_data.pluck(:id)).to contain_exactly(agent1.id, admin.id)
+        expect(response_data.find { |agent| agent[:id] == admin.id }[:is_ai_user]).to be true
       end
     end
 
@@ -70,7 +86,7 @@ RSpec.describe 'Assignable Agents API', type: :request do
     context 'when a manager is not part of any queried inbox' do
       let!(:manager) { create(:user, account: account, role: :manager) }
 
-      it 'still returns the manager alongside members and administrators' do
+      it 'still returns the manager alongside the members' do
         get "/api/v1/accounts/#{account.id}/assignable_agents",
             params: { inbox_ids: [inbox1.id, inbox2.id] },
             headers: admin.create_new_auth_token,

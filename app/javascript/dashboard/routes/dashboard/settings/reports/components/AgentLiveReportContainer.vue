@@ -10,7 +10,7 @@ const store = useStore();
 
 const uiFlags = useMapGetter('getOverviewUIFlags');
 const agentConversationMetric = useMapGetter('getAgentConversationMetric');
-const agents = useMapGetter('agents/getAgents');
+const agents = useMapGetter('agents/getNonInternalAgents');
 
 const fetchData = () => store.dispatch('fetchAgentConversationMetric');
 

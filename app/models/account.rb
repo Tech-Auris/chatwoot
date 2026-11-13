@@ -195,6 +195,17 @@ class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
     users.where(account_users: { role: :manager })
   end
 
+  # Administrators are the Auris team, so they stay out of assignment lists and
+  # agent reports. The AI user ("IA | Auris") is an administrator too, but it
+  # must stay assignable and visible, so it is the one exception.
+  def non_internal_users
+    users.where.not(account_users: { role: :administrator }).or(users.where(id: Conversation.ai_user_id))
+  end
+
+  def ai_user
+    users.find_by(id: Conversation.ai_user_id)
+  end
+
   def all_conversation_tags
     # returns array of tags
     conversation_ids = conversations.pluck(:id)

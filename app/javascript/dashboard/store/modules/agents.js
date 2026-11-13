@@ -12,12 +12,24 @@ export const state = {
   },
 };
 
+// Administrators are the Auris team: hidden everywhere except the AI user.
+const isNonInternal = agent =>
+  agent.role !== 'administrator' || agent.is_ai_user;
+
 export const getters = {
   getAgents($state) {
     return $state.records;
   },
   getVerifiedAgents($state) {
     return $state.records.filter(record => record.confirmed);
+  },
+  getNonInternalAgents($state) {
+    return $state.records.filter(isNonInternal);
+  },
+  getVerifiedNonInternalAgents($state) {
+    return $state.records.filter(
+      record => record.confirmed && isNonInternal(record)
+    );
   },
   getUIFlags($state) {
     return $state.uiFlags;
@@ -26,15 +38,13 @@ export const getters = {
     return $state.records.find(record => record.id === Number(id)) || {};
   },
   getAgentStatus($state) {
+    const agents = $state.records.filter(isNonInternal);
     let status = {
-      online: $state.records.filter(
-        agent => agent.availability_status === 'online'
-      ).length,
-      busy: $state.records.filter(agent => agent.availability_status === 'busy')
+      online: agents.filter(agent => agent.availability_status === 'online')
         .length,
-      offline: $state.records.filter(
-        agent => agent.availability_status === 'offline'
-      ).length,
+      busy: agents.filter(agent => agent.availability_status === 'busy').length,
+      offline: agents.filter(agent => agent.availability_status === 'offline')
+        .length,
     };
     return status;
   },

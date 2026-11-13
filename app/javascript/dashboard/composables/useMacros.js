@@ -13,7 +13,9 @@ export const useMacros = () => {
 
   const labels = computed(() => getters['labels/getLabels'].value);
   const teams = computed(() => getters['teams/getTeams'].value);
-  const agents = computed(() => getters['agents/getVerifiedAgents'].value);
+  const agents = computed(
+    () => getters['agents/getVerifiedNonInternalAgents'].value
+  );
 
   const withNoneOption = options => [
     { id: 'nil', name: t('AUTOMATION.NONE_OPTION') },

@@ -104,6 +104,19 @@ RSpec.describe 'Inbox Member API', type: :request do
         expect(response).to have_http_status(:not_found)
       end
 
+      it 'ignores administrators' do
+        other_admin = create(:user, account: account, role: :administrator)
+        agent = create(:user, account: account, role: :agent)
+
+        post "/api/v1/accounts/#{account.id}/inbox_members",
+             headers: administrator.create_new_auth_token,
+             params: { inbox_id: inbox.id, user_ids: [other_admin.id, agent.id] },
+             as: :json
+
+        expect(response).to have_http_status(:success)
+        expect(inbox.reload.members).to contain_exactly(old_agent, agent)
+      end
+
       it 'renders error on invalid params' do
         params = { inbox_id: inbox.id, user_ids: ['invalid'] }
 
