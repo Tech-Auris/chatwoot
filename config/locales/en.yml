@@ -112,6 +112,7 @@ en:
   errors:
     mcp:
       terms_required: Accept the term to turn on the AI assistant (MCP)
+      oauth_not_allowed: The AI assistant (MCP) is only for administrators and managers of an account where it is turned on
     account:
       follow_up:
         invalid_steps: must have up to %{max} follow-ups, each a whole number of minutes greater than zero

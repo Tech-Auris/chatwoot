@@ -24,6 +24,7 @@ import homeRoutes from './home/home.routes';
 import AppContainer from './Dashboard.vue';
 import Suspended from './suspended/Index.vue';
 import NoAccounts from './noAccounts/Index.vue';
+import OAuthAuthorize from './oauth/Authorize.vue';
 import OnboardingAccountDetails from './onboarding/Index.vue';
 
 export default {
@@ -76,6 +77,11 @@ export default {
       path: frontendURL('no-accounts'),
       name: 'no_accounts',
       component: NoAccounts,
+    },
+    {
+      path: frontendURL('oauth/consent'),
+      name: 'oauth_consent',
+      component: OAuthAuthorize,
     },
   ],
 };

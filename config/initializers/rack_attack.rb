@@ -187,6 +187,15 @@ class Rack::Attack
     req.ip if req.path_without_extensions == '/api/v1/accounts' && req.post?
   end
 
+  ## MCP OAuth: anyone can register a client, so cap it; tokens are refreshed hourly per connector ###
+  throttle('oauth/register/ip', limit: 10, period: 1.hour) do |req|
+    req.ip if req.path_without_extensions == '/oauth/register' && req.post?
+  end
+
+  throttle('oauth/token/ip', limit: 60, period: 1.minute) do |req|
+    req.ip if req.path_without_extensions == '/oauth/token' && req.post?
+  end
+
   ##-----------------------------------------------##
 
   ###-----------------------------------------------###

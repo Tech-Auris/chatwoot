@@ -7,6 +7,7 @@ import { required, email } from '@vuelidate/validators';
 import { useVuelidate } from '@vuelidate/core';
 import { SESSION_STORAGE_KEYS } from 'dashboard/constants/sessionStorage';
 import SessionStorage from 'shared/helpers/sessionStorage';
+import { takeOAuthReturn } from 'dashboard/helper/oauthReturn';
 import { useBranding } from 'shared/composables/useBranding';
 import AnalyticsHelper from 'dashboard/helper/AnalyticsHelper';
 import { SESSION_EVENTS } from 'dashboard/helper/AnalyticsHelper/events';
@@ -234,7 +235,7 @@ export default {
     handleMfaVerified() {
       // MFA verification successful, continue with login
       this.handleImpersonation();
-      window.location = '/app';
+      window.location = takeOAuthReturn() || '/app';
     },
     handleMfaCancel() {
       // User cancelled MFA, reset state

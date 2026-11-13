@@ -1,6 +1,7 @@
 import Cookies from 'js-cookie';
 import { DEFAULT_REDIRECT_URL } from 'dashboard/constants/globals';
 import { frontendURL } from 'dashboard/helper/URLHelper';
+import { takeOAuthReturn } from 'dashboard/helper/oauthReturn';
 
 export const hasAuthCookie = () => {
   return !!Cookies.get('cw_d_session_info');
@@ -42,6 +43,9 @@ export const getLoginRedirectURL = ({
   ssoConversationId,
   user,
 }) => {
+  const oauthReturn = takeOAuthReturn();
+  if (oauthReturn) return oauthReturn;
+
   const accountPath = getSSOAccountPath({ ssoAccountId, user });
   if (accountPath) {
     if (ssoConversationId) {

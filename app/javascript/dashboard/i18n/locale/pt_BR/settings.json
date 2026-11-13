@@ -10,6 +10,15 @@
     "PASSWORD_UPDATE_SUCCESS": "A sua senha foi alterada com sucesso",
     "AFTER_EMAIL_CHANGED": "Seu perfil foi atualizado com sucesso. Faça login novamente, pois suas credenciais de login foram alteradas",
     "FORM": {
+      "CONNECTED_ASSISTANTS_SECTION": {
+        "TITLE": "Assistentes de IA",
+        "NOTE": "Assistentes como o Claude e o ChatGPT que você conectou à Auris. Eles só leem dados. Desconecte um para cortar o acesso na hora.",
+        "EMPTY": "Nenhum assistente conectado.",
+        "SINCE": "Conectado em {date}",
+        "REVOKE": "Desconectar",
+        "REVOKE_SUCCESS": "Assistente desconectado",
+        "REVOKE_ERROR": "Não foi possível desconectar. Tente novamente."
+      },
       "PICTURE": "Foto do perfil",
       "AVATAR": "Imagem de Perfil",
       "ERROR": "Por favor, corrija os erros",
