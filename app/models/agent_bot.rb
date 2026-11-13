@@ -19,6 +19,9 @@
 #
 
 class AgentBot < ApplicationRecord
+  include Auditable
+  auditable
+
   include AccessTokenable
   include Avatarable
 

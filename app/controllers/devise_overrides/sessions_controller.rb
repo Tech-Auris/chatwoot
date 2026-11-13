@@ -28,6 +28,12 @@ class DeviseOverrides::SessionsController < DeviseTokenAuth::SessionsController 
     render partial: 'devise/auth', formats: [:json], locals: { resource: @resource }
   end
 
+  def destroy
+    super do |user|
+      ActivityLog.record_session!(user, 'sign_out', ip_address: request.remote_ip, request_id: request.request_id)
+    end
+  end
+
   private
 
   def render_create_error_not_confirmed
@@ -257,6 +263,7 @@ class DeviseOverrides::SessionsController < DeviseTokenAuth::SessionsController 
       client_id: client_id
     ).create_or_update!
     LoginEventTrackingService.new(user: @resource, request: request).perform
+    ActivityLog.record_session!(@resource, 'sign_in', ip_address: request.remote_ip, request_id: request.request_id)
   rescue StandardError => e
     Rails.logger.warn "Session tracking failed: #{e.message}"
   end

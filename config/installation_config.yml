@@ -693,6 +693,11 @@
   description: 'Padrão das contas que não definem o seu: sem resposta nesse tempo depois do último follow-up, a conversa vai para Perdido.'
   value: 60
   locked: false
+- name: ACTIVITY_LOG_RETENTION_MONTHS
+  display_title: 'Retenção do histórico de alterações (meses)'
+  description: 'Os registros do histórico de alterações (Configurações › Histórico de alterações) mais antigos que isso são apagados pela rotina diária.'
+  value: 12
+  locked: false
 - name: WHATSAPP_MESSAGING_WINDOW_INDICATOR_ENABLED
   display_title: 'Mostrar janela de mensagens'
   description: 'Mostra nas conversas do WhatsApp Cloud o selo da janela (CTWA 72h · padrão 24h · fechada), para o atendente saber quando a resposta é gratuita ou paga.'

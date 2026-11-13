@@ -382,6 +382,7 @@
     "AGENT_BOTS": "Bots",
     "APPS": "Apps",
     "AUDIT_LOGS": "Audit Logs",
+    "ACTIVITY_LOGS": "Change history",
     "INBOXES": "Inboxes",
     "NOTIFICATIONS": "Notifications",
     "CANNED_RESPONSES": "Canned Responses",

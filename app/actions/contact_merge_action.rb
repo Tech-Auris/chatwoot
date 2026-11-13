@@ -14,6 +14,7 @@ class ContactMergeAction
       merge_contact_inboxes
       merge_contact_notes
       merge_and_remove_mergee_contact
+      @base_contact.record_activity('merge', { 'merged_contact' => ["#{@mergee_contact.name} (##{@mergee_contact.id})", nil] })
     end
     @base_contact
   end

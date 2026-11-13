@@ -20,6 +20,9 @@
 #
 
 class CannedResponse < ApplicationRecord
+  include Auditable
+  auditable label: ->(record) { record.short_code }
+
   validates :content, presence: true
   validates :short_code, presence: true
   validates :account, presence: true

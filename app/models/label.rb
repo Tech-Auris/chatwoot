@@ -17,6 +17,9 @@
 #  index_labels_on_title_and_account_id  (title,account_id) UNIQUE
 #
 class Label < ApplicationRecord
+  include Auditable
+  auditable
+
   include RegexHelper
   include AccountCacheRevalidator
 

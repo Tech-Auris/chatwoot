@@ -21,6 +21,9 @@
 #  index_working_hours_on_inbox_id    (inbox_id)
 #
 class WorkingHour < ApplicationRecord
+  include Auditable
+  auditable label: ->(record) { record.inbox&.name }
+
   belongs_to :inbox
 
   before_validation :ensure_open_all_day_hours

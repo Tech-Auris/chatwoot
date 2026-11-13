@@ -2,6 +2,9 @@
 # minutes from midnight in the inbox's timezone. A range past midnight is
 # saved as two ranges, one on each day.
 class InboxAiOffHour < ApplicationRecord
+  include Auditable
+  auditable account: ->(record) { record.inbox&.account_id }, label: ->(record) { record.inbox&.name }
+
   belongs_to :inbox
 
   validates :day_of_week, inclusion: { in: 0..6 }

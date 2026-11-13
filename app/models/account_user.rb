@@ -25,6 +25,9 @@
 #
 
 class AccountUser < ApplicationRecord
+  include Auditable
+  auditable except: %i[active_at availability], label: ->(record) { record.user&.name }
+
   include AvailabilityStatusable
 
   belongs_to :account

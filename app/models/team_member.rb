@@ -15,6 +15,9 @@
 #  index_team_members_on_user_id              (user_id)
 #
 class TeamMember < ApplicationRecord
+  include Auditable
+  auditable account: ->(record) { record.team&.account_id }, label: ->(record) { "#{record.team&.name} › #{record.user&.name}" }
+
   belongs_to :user
   belongs_to :team
   validates :user_id, uniqueness: { scope: :team_id }

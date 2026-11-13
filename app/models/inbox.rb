@@ -46,6 +46,9 @@
 #
 
 class Inbox < ApplicationRecord # rubocop:disable Metrics/ClassLength
+  include Auditable
+  auditable
+
   include Reportable
   include Avatarable
   include OutOfOffisable

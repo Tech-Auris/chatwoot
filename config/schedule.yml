@@ -132,3 +132,10 @@ audiences_refresh_counts_job:
   cron: '*/15 * * * *'
   class: 'Audiences::RefreshCountsJob'
   queue: scheduled_jobs
+
+# executed daily at 0500 UTC
+# deletes the activity log rows older than ACTIVITY_LOG_RETENTION_MONTHS
+activity_logs_purge_job:
+  cron: '0 5 * * *'
+  class: 'ActivityLogs::PurgeJob'
+  queue: scheduled_jobs

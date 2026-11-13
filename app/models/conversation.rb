@@ -68,6 +68,9 @@
 #
 
 class Conversation < ApplicationRecord
+  include Auditable
+  auditable only: %i[assignee_id ai_enabled], on: %i[update destroy], label: ->(record) { "##{record.display_id}" }
+
   include Labelable
   include LlmFormattable
   include AssignmentHandler

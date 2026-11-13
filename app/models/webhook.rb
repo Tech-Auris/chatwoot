@@ -20,6 +20,9 @@
 #
 
 class Webhook < ApplicationRecord
+  include Auditable
+  auditable label: ->(record) { record.name.presence || record.url }
+
   belongs_to :account
 
   include WebhookSecretable

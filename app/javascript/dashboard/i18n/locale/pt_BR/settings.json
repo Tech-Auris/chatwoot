@@ -371,6 +371,7 @@
     "AGENT_BOTS": "Robôs",
     "APPS": "Apps",
     "AUDIT_LOGS": "Auditoria",
+    "ACTIVITY_LOGS": "Histórico de alterações",
     "INBOXES": "Caixas de Entrada",
     "NOTIFICATIONS": "Notificações",
     "CANNED_RESPONSES": "Respostas Prontas",

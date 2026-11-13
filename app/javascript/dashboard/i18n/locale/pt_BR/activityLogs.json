@@ -1,0 +1,119 @@
+{
+  "ACTIVITY_LOGS": {
+    "HEADER": {
+      "TITLE": "Histórico de alterações",
+      "DESCRIPTION": "Quem alterou o quê, quando e por onde nesta conta: configurações, agentes, caixas, contatos, IA ligada/desligada, logins e mais."
+    },
+    "LOADING": "Carregando o histórico de alterações...",
+    "EMPTY": "Nenhuma alteração encontrada para esses filtros.",
+    "SYSTEM": "Sistema",
+    "FILTERS": {
+      "LAST_DAYS": "Últimos {days} dias",
+      "ALL_USERS": "Usuário: todos",
+      "ALL_TYPES": "Tipo: todos",
+      "ALL_ACTIONS": "Ação: todas",
+      "ALL_SOURCES": "Origem: todas",
+      "SEARCH_PLACEHOLDER": "Buscar por registro (ex.: contato 4512)"
+    },
+    "TABLE": {
+      "WHEN": "Quando",
+      "WHO": "Quem",
+      "WHAT": "O quê",
+      "SOURCE": "Origem"
+    },
+    "ACTIONS": {
+      "create": "Criou",
+      "update": "Alterou",
+      "destroy": "Excluiu",
+      "merge": "Mesclou",
+      "sign_in": "Entrou",
+      "sign_out": "Saiu"
+    },
+    "SOURCES": {
+      "dashboard": "Painel",
+      "api": "API",
+      "job": "Rotina",
+      "super_admin": "Super Admin",
+      "login": "Login"
+    },
+    "DETAIL": {
+      "CHANGES": "Alterações",
+      "NO_CHANGES": "Nenhum campo alterado neste registro.",
+      "FILTERED": "(alterado)",
+      "HISTORY": "Histórico deste registro"
+    },
+    "EXPORT": {
+      "BUTTON": "Exportar CSV",
+      "FILE_NAME": "historico-de-alteracoes.csv"
+    },
+    "ERRORS": {
+      "FETCH": "Não foi possível carregar o histórico de alterações.",
+      "EXPORT": "Não foi possível exportar o histórico de alterações."
+    },
+    "TYPES": {
+      "Account": "Conta",
+      "AccountUser": "Agente",
+      "AccountSecretary": "Secretária",
+      "AgentBot": "Robô",
+      "AutomationRule": "Automação",
+      "Campaign": "Campanha",
+      "CannedResponse": "Resposta pronta",
+      "Contact": "Contato",
+      "Conversation": "Conversa",
+      "CustomAttributeDefinition": "Atributo personalizado",
+      "Inbox": "Caixa de entrada",
+      "InboxAiOffHour": "Horário da IA",
+      "InboxMember": "Membro da caixa",
+      "Integrations_Hook": "Integração",
+      "Label": "Etiqueta",
+      "Macro": "Macro",
+      "RecurringScheduledMessage": "Mensagem recorrente",
+      "ScheduledMessage": "Mensagem agendada",
+      "Team": "Time",
+      "TeamMember": "Membro do time",
+      "User": "Usuário",
+      "Webhook": "Webhook",
+      "WorkingHour": "Horário de atendimento"
+    },
+    "FIELDS": {
+      "name": "Nome",
+      "title": "Título",
+      "email": "E-mail",
+      "phone_number": "Telefone",
+      "role": "Papel",
+      "ai_enabled": "IA ligada",
+      "ai_disabled": "IA desligada no contato",
+      "assignee_id": "Responsável",
+      "custom_attributes": "Atributos personalizados",
+      "additional_attributes": "Atributos adicionais",
+      "description": "Descrição",
+      "content": "Conteúdo",
+      "short_code": "Código",
+      "url": "URL",
+      "secret": "Segredo",
+      "settings": "Configurações",
+      "status": "Status",
+      "enabled": "Ativo",
+      "message": "Mensagem",
+      "scheduled_at": "Agendada para",
+      "merged_contact": "Contato mesclado",
+      "user_id": "Usuário",
+      "inbox_id": "Caixa de entrada",
+      "team_id": "Time",
+      "actions": "Ações",
+      "conditions": "Condições",
+      "feature_flags": "Recursos",
+      "locale": "Idioma",
+      "greeting_message": "Mensagem de boas-vindas",
+      "secretary_enabled": "Secretária ligada",
+      "ai_paused": "IA pausada",
+      "ai_schedule_enabled": "Horário da IA ligado",
+      "day_of_week": "Dia da semana",
+      "from_minutes": "De",
+      "to_minutes": "Até",
+      "subscriptions": "Eventos",
+      "outgoing_url": "URL do webhook",
+      "access_token": "Token de acesso"
+    }
+  }
+}

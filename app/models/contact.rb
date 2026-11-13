@@ -54,6 +54,9 @@
 # rubocop:enable Layout/LineLength
 
 class Contact < ApplicationRecord # rubocop:disable Metrics/ClassLength
+  include Auditable
+  auditable except: %i[last_activity_at], label: ->(record) { record.name.presence || record.phone_number || record.email }
+
   include Avatarable
   include AvailabilityStatusable
   include Labelable

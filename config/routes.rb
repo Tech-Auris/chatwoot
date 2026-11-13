@@ -137,6 +137,9 @@ Rails.application.routes.draw do
           end
           resources :assignable_agents, only: [:index]
           resource :audit_logs, only: [:show]
+          resources :activity_logs, only: [:index, :show] do
+            get :export, on: :collection
+          end
           resources :callbacks, only: [] do
             collection do
               post :register_facebook_page

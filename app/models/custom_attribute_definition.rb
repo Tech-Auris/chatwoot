@@ -22,6 +22,9 @@
 #  index_custom_attribute_definitions_on_account_id  (account_id)
 #
 class CustomAttributeDefinition < ApplicationRecord
+  include Auditable
+  auditable label: ->(record) { record.attribute_display_name }
+
   STANDARD_ATTRIBUTES = {
     :conversation => %w[status priority assignee_id inbox_id team_id display_id campaign_id labels browser_language country_code referer created_at
                         last_activity_at],

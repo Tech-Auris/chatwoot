@@ -34,6 +34,9 @@
 #  fk_rails_...  (inbox_id => inboxes.id)
 #
 class RecurringScheduledMessage < ApplicationRecord
+  include Auditable
+  auditable except: %i[occurrences_sent], label: ->(record) { "##{record.conversation&.display_id}" }
+
   include Rails.application.routes.url_helpers
 
   FREQUENCIES = %w[daily weekly monthly yearly].freeze

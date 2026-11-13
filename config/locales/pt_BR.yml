@@ -330,6 +330,33 @@ pt_BR:
       internal_chat_new_message: 'Nova mensagem de %{name}'
     attachment: 'Anexo'
     no_content: 'Sem conteúdo'
+  activity_logs:
+    system: 'Sistema'
+    filtered: '(alterado)'
+    sources:
+      dashboard: 'Painel'
+      api: 'API / integração'
+      job: 'Rotina'
+      super_admin: 'Super Admin'
+      login: 'Login'
+    actions:
+      create: 'Criou'
+      update: 'Alterou'
+      destroy: 'Excluiu'
+      merge: 'Mesclou'
+      sign_in: 'Entrou'
+      sign_out: 'Saiu'
+    export:
+      columns:
+        date: 'Data'
+        actor: 'Quem'
+        source: 'Origem'
+        action: 'Ação'
+        record_type: 'Tipo de registro'
+        record_id: 'ID do registro'
+        record: 'Registro'
+        ip: 'IP'
+        changes: 'Alterações'
   audiences:
     export:
       over_limit: 'Este público passa de %{limit} contatos. Divida o público, por exemplo com uma janela menor, para baixar.'
