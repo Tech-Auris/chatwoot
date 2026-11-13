@@ -110,6 +110,8 @@ en:
       cannot_revoke_current: You cannot revoke the current session.
 
   errors:
+    mcp:
+      terms_required: Accept the term to turn on the AI assistant (MCP)
     account:
       follow_up:
         invalid_steps: must have up to %{max} follow-ups, each a whole number of minutes greater than zero

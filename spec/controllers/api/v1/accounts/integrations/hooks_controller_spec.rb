@@ -28,6 +28,18 @@ RSpec.describe 'Integration Hooks API', type: :request do
         expect(response).to have_http_status(:unauthorized)
       end
 
+      it 'creates hooks if manager' do
+        manager = create(:user, account: account)
+        manager.account_users.find_by(account: account).update!(role: :manager)
+
+        post api_v1_account_integrations_hooks_url(account_id: account.id),
+             params: params,
+             headers: manager.create_new_auth_token,
+             as: :json
+
+        expect(response).to have_http_status(:success)
+      end
+
       it 'creates hooks if admin' do
         post api_v1_account_integrations_hooks_url(account_id: account.id),
              params: params,

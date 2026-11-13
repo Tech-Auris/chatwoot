@@ -87,6 +87,8 @@ pt_BR:
     saml_not_available: A autenticação SAML não está disponível nesta instalação.
     inbox_deletetion_response: Seu pedido de exclusão da caixa de entrada será processado dentro de algum tempo.
   errors:
+    mcp:
+      terms_required: Aceite o termo para ligar o assistente de IA (MCP)
     account:
       follow_up:
         invalid_steps: deve ter até %{max} follow-ups, cada um em minutos inteiros maiores que zero
