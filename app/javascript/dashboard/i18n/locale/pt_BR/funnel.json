@@ -34,6 +34,7 @@
       "FROM_DATE": "Lead entrou a partir de",
       "TO_DATE": "Lead entrou até",
       "HIDE_CLOSED": "Ocultar finalizadas",
+      "HIDE_RESOLVED": "Ocultar conversas resolvidas",
       "ORIGEM": "Origem do lead",
       "ORIGEM_ANY": "Todas as origens",
       "ORIGEM_NONE": "Sem origem",

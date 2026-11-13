@@ -12,7 +12,8 @@ const props = defineProps({
   inboxId: { type: [Number, String], default: '' },
   fromDate: { type: String, default: '' },
   toDate: { type: String, default: '' },
-  hideClosed: { type: Boolean, default: false },
+  hideClosed: { type: Boolean, default: true },
+  hideResolved: { type: Boolean, default: true },
   origem: { type: String, default: '' },
   label: { type: String, default: '' },
 });
@@ -22,6 +23,7 @@ const emit = defineEmits([
   'update:fromDate',
   'update:toDate',
   'update:hideClosed',
+  'update:hideResolved',
   'update:origem',
   'update:label',
   'reset',
@@ -67,7 +69,8 @@ const hasActiveFilters = computed(
     Boolean(props.toDate) ||
     Boolean(props.origem) ||
     Boolean(props.label) ||
-    props.hideClosed
+    !props.hideClosed ||
+    !props.hideResolved
 );
 
 const onInboxChange = event => emit('update:inboxId', event.target.value);
@@ -75,6 +78,8 @@ const onFromChange = event => emit('update:fromDate', event.target.value);
 const onToChange = event => emit('update:toDate', event.target.value);
 const onHideClosedChange = event =>
   emit('update:hideClosed', event.target.checked);
+const onHideResolvedChange = event =>
+  emit('update:hideResolved', event.target.checked);
 const onOrigemChange = event => emit('update:origem', event.target.value);
 const onLabelSelect = ({ value }) => {
   emit('update:label', value);
@@ -189,7 +194,7 @@ const onReset = () => emit('reset');
       </div>
     </div>
 
-    <label class="flex flex-col w-48">
+    <label class="flex flex-col">
       <span class="inline-flex items-top gap-2 h-11 text-xs text-n-slate-12">
         <input
           type="checkbox"
@@ -198,6 +203,18 @@ const onReset = () => emit('reset');
           @change="onHideClosedChange"
         />
         {{ t('FUNNEL.FILTERS.HIDE_CLOSED') }}
+      </span>
+    </label>
+
+    <label class="flex flex-col">
+      <span class="inline-flex items-top gap-2 h-11 text-xs text-n-slate-12">
+        <input
+          type="checkbox"
+          :checked="hideResolved"
+          class="size-4 rounded border-n-weak"
+          @change="onHideResolvedChange"
+        />
+        {{ t('FUNNEL.FILTERS.HIDE_RESOLVED') }}
       </span>
     </label>
 
