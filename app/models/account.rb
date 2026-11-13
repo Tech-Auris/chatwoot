@@ -48,6 +48,9 @@
 #
 
 class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
+  include Auditable
+  auditable account: :id
+
   # used for single column multi flags
   include FlagShihTzu
   include Reportable

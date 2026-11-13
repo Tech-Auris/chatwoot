@@ -15,6 +15,9 @@
 #
 
 class InboxMember < ApplicationRecord
+  include Auditable
+  auditable account: ->(record) { record.inbox&.account_id }, label: ->(record) { "#{record.inbox&.name} › #{record.user&.name}" }
+
   validates :inbox_id, presence: true
   validates :user_id, presence: true
   validates :user_id, uniqueness: { scope: :inbox_id }

@@ -358,6 +358,33 @@ en:
       internal_chat_new_message: 'New message from %{name}'
     attachment: 'Attachment'
     no_content: 'No content'
+  activity_logs:
+    system: 'System'
+    filtered: '(changed)'
+    sources:
+      dashboard: 'Dashboard'
+      api: 'API / integration'
+      job: 'Routine'
+      super_admin: 'Super Admin'
+      login: 'Login'
+    actions:
+      create: 'Created'
+      update: 'Updated'
+      destroy: 'Deleted'
+      merge: 'Merged'
+      sign_in: 'Signed in'
+      sign_out: 'Signed out'
+    export:
+      columns:
+        date: 'Date'
+        actor: 'Who'
+        source: 'Source'
+        action: 'Action'
+        record_type: 'Record type'
+        record_id: 'Record ID'
+        record: 'Record'
+        ip: 'IP'
+        changes: 'Changes'
   audiences:
     export:
       over_limit: 'This audience has more than %{limit} contacts. Split it, for example with a smaller window, to download it.'

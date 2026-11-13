@@ -15,6 +15,9 @@
 #  reference_id :string
 #
 class Integrations::Hook < ApplicationRecord
+  include Auditable
+  auditable label: ->(record) { record.app_id }
+
   include Reauthorizable
 
   attr_readonly :app_id, :account_id, :inbox_id, :hook_type

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_11_12_030000) do
+ActiveRecord::Schema[7.1].define(version: 2026_11_12_220000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -177,6 +177,25 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_12_030000) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "activity_logs", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "auditable_type", null: false
+    t.bigint "auditable_id"
+    t.string "auditable_label"
+    t.string "action", null: false
+    t.jsonb "audited_changes", default: {}, null: false
+    t.string "actor_type", null: false
+    t.bigint "actor_id"
+    t.string "actor_label"
+    t.string "source", null: false
+    t.string "ip_address"
+    t.string "request_id"
+    t.datetime "created_at", null: false
+    t.index ["account_id", "created_at"], name: "index_activity_logs_on_account_id_and_created_at"
+    t.index ["actor_type", "actor_id"], name: "index_activity_logs_on_actor_type_and_actor_id"
+    t.index ["auditable_type", "auditable_id"], name: "index_activity_logs_on_auditable_type_and_auditable_id"
   end
 
   create_table "agent_bot_inboxes", force: :cascade do |t|

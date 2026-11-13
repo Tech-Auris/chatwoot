@@ -1,0 +1,119 @@
+{
+  "ACTIVITY_LOGS": {
+    "HEADER": {
+      "TITLE": "Change history",
+      "DESCRIPTION": "Who changed what, when and from where in this account: settings, agents, inboxes, contacts, AI on/off, sign ins and more."
+    },
+    "LOADING": "Loading the change history...",
+    "EMPTY": "No changes found for these filters.",
+    "SYSTEM": "System",
+    "FILTERS": {
+      "LAST_DAYS": "Last {days} days",
+      "ALL_USERS": "User: all",
+      "ALL_TYPES": "Type: all",
+      "ALL_ACTIONS": "Action: all",
+      "ALL_SOURCES": "Source: all",
+      "SEARCH_PLACEHOLDER": "Search by record (e.g. contact 4512)"
+    },
+    "TABLE": {
+      "WHEN": "When",
+      "WHO": "Who",
+      "WHAT": "What",
+      "SOURCE": "Source"
+    },
+    "ACTIONS": {
+      "create": "Created",
+      "update": "Updated",
+      "destroy": "Deleted",
+      "merge": "Merged",
+      "sign_in": "Signed in",
+      "sign_out": "Signed out"
+    },
+    "SOURCES": {
+      "dashboard": "Dashboard",
+      "api": "API",
+      "job": "Routine",
+      "super_admin": "Super Admin",
+      "login": "Login"
+    },
+    "DETAIL": {
+      "CHANGES": "Changes",
+      "NO_CHANGES": "No field changes in this record.",
+      "FILTERED": "(changed)",
+      "HISTORY": "History of this record"
+    },
+    "EXPORT": {
+      "BUTTON": "Export CSV",
+      "FILE_NAME": "change-history.csv"
+    },
+    "ERRORS": {
+      "FETCH": "Could not load the change history.",
+      "EXPORT": "Could not export the change history."
+    },
+    "TYPES": {
+      "Account": "Account",
+      "AccountUser": "Agent",
+      "AccountSecretary": "Secretary",
+      "AgentBot": "Bot",
+      "AutomationRule": "Automation",
+      "Campaign": "Campaign",
+      "CannedResponse": "Canned response",
+      "Contact": "Contact",
+      "Conversation": "Conversation",
+      "CustomAttributeDefinition": "Custom attribute",
+      "Inbox": "Inbox",
+      "InboxAiOffHour": "AI schedule",
+      "InboxMember": "Inbox member",
+      "Integrations_Hook": "Integration",
+      "Label": "Label",
+      "Macro": "Macro",
+      "RecurringScheduledMessage": "Recurring message",
+      "ScheduledMessage": "Scheduled message",
+      "Team": "Team",
+      "TeamMember": "Team member",
+      "User": "User",
+      "Webhook": "Webhook",
+      "WorkingHour": "Business hours"
+    },
+    "FIELDS": {
+      "name": "Name",
+      "title": "Title",
+      "email": "E-mail",
+      "phone_number": "Phone",
+      "role": "Role",
+      "ai_enabled": "AI on",
+      "ai_disabled": "AI off for the contact",
+      "assignee_id": "Assignee",
+      "custom_attributes": "Custom attributes",
+      "additional_attributes": "Additional attributes",
+      "description": "Description",
+      "content": "Content",
+      "short_code": "Short code",
+      "url": "URL",
+      "secret": "Secret",
+      "settings": "Settings",
+      "status": "Status",
+      "enabled": "Enabled",
+      "message": "Message",
+      "scheduled_at": "Scheduled for",
+      "merged_contact": "Merged contact",
+      "user_id": "User",
+      "inbox_id": "Inbox",
+      "team_id": "Team",
+      "actions": "Actions",
+      "conditions": "Conditions",
+      "feature_flags": "Features",
+      "locale": "Language",
+      "greeting_message": "Greeting message",
+      "secretary_enabled": "Secretary on",
+      "ai_paused": "AI paused",
+      "ai_schedule_enabled": "AI schedule on",
+      "day_of_week": "Day of the week",
+      "from_minutes": "From",
+      "to_minutes": "To",
+      "subscriptions": "Events",
+      "outgoing_url": "Webhook URL",
+      "access_token": "Access token"
+    }
+  }
+}

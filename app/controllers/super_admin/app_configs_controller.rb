@@ -188,9 +188,10 @@ class SuperAdmin::AppConfigsController < SuperAdmin::ApplicationController
   # (AccountFollowUp) for accounts without their own. The messaging-window chip on WhatsApp
   # Cloud conversations: the backend always computes it for n8n and webhooks,
   # this only decides whether the dashboard shows it. Rack::Attack reads the
-  # API limits on every request (see ApiRateLimits).
+  # API limits on every request (see ApiRateLimits). How long the activity log
+  # keeps its rows (ActivityLogs::PurgeJob).
   def general_auris_configs
-    %w[FOLLOW_UP_END_WAIT_MINUTES WHATSAPP_MESSAGING_WINDOW_INDICATOR_ENABLED] + API_LIMIT_KEYS
+    %w[FOLLOW_UP_END_WAIT_MINUTES WHATSAPP_MESSAGING_WINDOW_INDICATOR_ENABLED ACTIVITY_LOG_RETENTION_MONTHS] + API_LIMIT_KEYS
   end
 
   def success_notice

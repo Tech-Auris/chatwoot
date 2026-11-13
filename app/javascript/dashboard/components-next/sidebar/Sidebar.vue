@@ -914,10 +914,10 @@ const menuItems = computed(() => {
           to: accountScopedRoute('settings_applications'),
         },
         {
-          name: 'Settings Audit Logs',
-          label: t('SIDEBAR.AUDIT_LOGS'),
-          icon: 'i-lucide-briefcase',
-          to: accountScopedRoute('auditlogs_list'),
+          name: 'Settings Activity Logs',
+          label: t('SIDEBAR.ACTIVITY_LOGS'),
+          icon: 'i-lucide-history',
+          to: accountScopedRoute('activity_logs_index'),
         },
         {
           name: 'Settings Custom Roles',

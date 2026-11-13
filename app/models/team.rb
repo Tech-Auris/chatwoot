@@ -17,6 +17,9 @@
 #  index_teams_on_name_and_account_id  (name,account_id) UNIQUE
 #
 class Team < ApplicationRecord
+  include Auditable
+  auditable
+
   include AccountCacheRevalidator
 
   belongs_to :account

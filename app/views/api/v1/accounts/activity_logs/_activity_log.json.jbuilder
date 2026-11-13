@@ -1,0 +1,12 @@
+json.id activity_log.id
+json.action activity_log.action
+json.auditable_type activity_log.auditable_type
+json.auditable_id activity_log.auditable_id
+json.auditable_label activity_log.auditable_label
+json.actor_type activity_log.actor_type
+json.actor_id activity_log.actor_id
+json.actor_label activity_log.actor_label
+json.source activity_log.source
+json.ip_address activity_log.ip_address
+json.changed_fields activity_log.audited_changes.keys
+json.created_at activity_log.created_at.to_i

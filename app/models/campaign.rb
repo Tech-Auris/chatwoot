@@ -36,6 +36,9 @@
 #  index_campaigns_on_scheduled_at        (scheduled_at)
 #
 class Campaign < ApplicationRecord
+  include Auditable
+  auditable
+
   include UrlHelper
 
   MIN_CADENCE_SECONDS = 10

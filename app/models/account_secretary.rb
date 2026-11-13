@@ -30,6 +30,9 @@
 #  fk_rails_...  (simulator_version_id => secretary_versions.id)
 #
 class AccountSecretary < ApplicationRecord
+  include Auditable
+  auditable label: ->(record) { record.secretary_version&.name }
+
   include WebhookSecretable
 
   belongs_to :account

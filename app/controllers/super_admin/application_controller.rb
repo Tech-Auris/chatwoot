@@ -18,6 +18,7 @@ class SuperAdmin::ApplicationController < Administrate::ApplicationController
   # authenticiation done via devise : SuperAdmin Model
   before_action :authenticate_super_admin!
   before_action :authorize_console_section!
+  around_action :with_audit_context
 
   # Controllers a finance-only super admin may reach. Everything under
   # Financeiro, plus what any signed-in admin needs to manage their own session:
@@ -81,6 +82,17 @@ class SuperAdmin::ApplicationController < Administrate::ApplicationController
       redirect_to super_admin_home_path_for(current_super_admin), alert: 'Seu acesso é restrito à seção Financeiro.'
     end
     # rubocop:enable Rails/I18nLocaleTexts
+  end
+
+  # Changes made here show up in the account's activity log as this super admin.
+  def with_audit_context
+    Current.audit_actor = current_super_admin
+    Current.audit_source = 'super_admin'
+    Current.audit_ip = request.remote_ip
+    Current.audit_request_id = request.request_id
+    yield
+  ensure
+    Current.reset
   end
 
   def allowed_controllers

@@ -43,6 +43,9 @@
 #  fk_rails_...  (recurring_scheduled_message_id => recurring_scheduled_messages.id)
 #
 class ScheduledMessage < ApplicationRecord
+  include Auditable
+  auditable label: ->(record) { "##{record.conversation&.display_id}" }
+
   include Rails.application.routes.url_helpers
 
   belongs_to :account
