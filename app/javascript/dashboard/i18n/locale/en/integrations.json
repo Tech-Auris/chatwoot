@@ -408,6 +408,46 @@
         "CONFIRM": "Yes, delete",
         "CANCEL": "Cancel"
       }
+    },
+    "MCP": {
+      "HEADER": "AI assistant (MCP)",
+      "CARD_DESCRIPTION": "Let owners and managers ask Claude or ChatGPT about reports, the funnel and conversations of this account.",
+      "DESCRIPTION": "Connect AI assistants such as Claude and ChatGPT to this account. They read reports, the funnel, conversations and contacts with the permissions of the person who connects, and never change anything.",
+      "SWITCH_LABEL": "Allow AI assistants to access this account",
+      "SWITCH_HELP": "Only administrators and managers can connect. Turning it off cuts every connected assistant right away.",
+      "ENABLED_INFO": "Turned on on {date} by {name}",
+      "ENABLED_SUCCESS": "AI assistant turned on",
+      "DISABLED_SUCCESS": "AI assistant turned off",
+      "ERROR": "Could not save. Try again.",
+      "COPY": "Copy",
+      "COPIED": "Copied to the clipboard",
+      "CONNECT": {
+        "TITLE": "How to connect",
+        "LOGIN_STEP": "Sign in with your Auris account and click Authorize.",
+        "CLAUDE": {
+          "TITLE": "Claude (claude.ai or Claude app)",
+          "STEP_1": "Go to Settings, Connectors, Add custom connector.",
+          "STEP_2": "Paste the address above and save."
+        },
+        "CHATGPT": {
+          "TITLE": "ChatGPT",
+          "STEP_1": "Go to Settings, Connectors (Apps), Create.",
+          "STEP_2": "Paste the address above and choose OAuth as the authentication."
+        },
+        "ADVANCED": {
+          "TITLE": "Advanced: Claude Code and other tools",
+          "HELP": "Tools that accept a custom header can connect with your personal access token instead of signing in.",
+          "TOKEN_LINK": "Get your access token in your profile"
+        }
+      },
+      "TERMS": {
+        "TITLE": "Turn on the AI assistant",
+        "PARAGRAPH_1": "Assistants connected to this account will read reports, the funnel, conversations and contacts, including patient messages, with the permissions of the administrator or manager who connects.",
+        "PARAGRAPH_2": "Whatever the assistant reads is sent to the AI provider the clinic chooses (such as Anthropic or OpenAI) and handled under that provider's terms. Conversations may contain health data, which the LGPD treats as sensitive personal data.",
+        "PARAGRAPH_3": "The clinic is responsible for choosing the provider and for this use of the data. The assistant only reads data and can be turned off at any time on this page.",
+        "ACCEPT": "I have read and accept, on behalf of the clinic",
+        "CONFIRM": "Turn on"
+      }
     }
   },
   "CAPTAIN": {
@@ -1121,5 +1161,14 @@
         "SUBTITLE": "Connecting an inbox allows the assistant to handle initial questions from your customers before transferring them to you."
       }
     }
+  },
+  "OAUTH_AUTHORIZE": {
+    "TITLE": "Connect {client} to Auris",
+    "DESCRIPTION": "{client} will be able to read reports, the funnel, conversations and contacts on your behalf in these accounts:",
+    "READ_ONLY": "It can only read data and never changes anything. You can disconnect it at any time in your profile.",
+    "NO_ACCOUNTS": "None of your accounts has the AI assistant turned on, or you are not an administrator or manager there. An administrator can turn it on in Settings, Integrations, AI assistant (MCP).",
+    "APPROVE": "Authorize",
+    "DENY": "Cancel",
+    "ERROR_TITLE": "This connection request is not valid"
   }
 }

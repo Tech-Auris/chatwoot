@@ -18,6 +18,8 @@
 #  internal_attributes              :jsonb            not null
 #  limits                           :jsonb
 #  locale                           :integer          default("pt_BR")
+#  mcp_enabled                      :boolean          default(FALSE), not null
+#  mcp_enabled_at                   :datetime
 #  multi_language_ai                :boolean          default(FALSE), not null
 #  name                             :string           not null
 #  settings                         :jsonb
@@ -29,6 +31,7 @@
 #  created_at                       :datetime         not null
 #  updated_at                       :datetime         not null
 #  erp_source_id                    :bigint
+#  mcp_enabled_by_id                :bigint
 #  simulator_inbox_id               :bigint
 #  stripe_customer_id               :string
 #
@@ -41,6 +44,7 @@
 # Foreign Keys
 #
 #  fk_rails_...  (erp_source_id => erp_sources.id)
+#  fk_rails_...  (mcp_enabled_by_id => users.id) ON DELETE => nullify
 #
 
 class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
@@ -156,6 +160,8 @@ class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
   belongs_to :simulator_inbox, class_name: 'Inbox', optional: true
   # The ERP (or calendar) the clinic schedules in.
   belongs_to :erp_source, optional: true
+  # The administrator who turned the Auris MCP on and accepted its term.
+  belongs_to :mcp_enabled_by, class_name: 'User', optional: true
 
   scope :with_auto_resolve, -> { where("(settings ->> 'auto_resolve_after')::int IS NOT NULL") }
 
@@ -300,6 +306,14 @@ class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
       update_column(:simulator_inbox_id, inbox.id)
       # rubocop:enable Rails/SkipsModelValidations
     end
+  end
+
+  def enable_mcp!(user)
+    update!(mcp_enabled: true, mcp_enabled_at: Time.current, mcp_enabled_by: user)
+  end
+
+  def disable_mcp!
+    update!(mcp_enabled: false, mcp_enabled_at: nil, mcp_enabled_by: nil)
   end
 
   private

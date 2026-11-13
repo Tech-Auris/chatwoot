@@ -124,6 +124,15 @@
         "LAST_ACTIVE": "Last active",
         "UNKNOWN_DEVICE": "Unknown device"
       },
+      "CONNECTED_ASSISTANTS_SECTION": {
+        "TITLE": "AI assistants",
+        "NOTE": "Assistants such as Claude and ChatGPT you connected to Auris. They only read data. Disconnect one to cut its access right away.",
+        "EMPTY": "No assistant connected.",
+        "SINCE": "Connected on {date}",
+        "REVOKE": "Disconnect",
+        "REVOKE_SUCCESS": "Assistant disconnected",
+        "REVOKE_ERROR": "Could not disconnect. Try again."
+      },
       "ACCESS_TOKEN": {
         "TITLE": "Access Token",
         "NOTE": "This token can be used if you are building an API based integration",

@@ -1,6 +1,7 @@
 <script setup>
 import { useStoreGetters, useStore } from 'dashboard/composables/store';
 import { computed, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useBranding } from 'shared/composables/useBranding';
 import { picoSearch } from '@scmmishra/pico-search';
 import IntegrationItem from './IntegrationItem.vue';
@@ -10,13 +11,32 @@ import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
 const store = useStore();
 const getters = useStoreGetters();
 const { replaceInstallationName } = useBranding();
+const { t } = useI18n();
 
 const searchQuery = ref('');
 const uiFlags = getters['integrations/getUIFlags'];
 
-const integrationList = computed(
-  () => getters['integrations/getAppIntegrations'].value
+const currentAccount = computed(() =>
+  getters['accounts/getAccount'].value(getters.getCurrentAccountId.value)
 );
+
+const mcpIntegration = computed(() => ({
+  id: 'mcp',
+  name: t('INTEGRATION_SETTINGS.MCP.HEADER'),
+  description: t('INTEGRATION_SETTINGS.MCP.CARD_DESCRIPTION'),
+  enabled: !!currentAccount.value.mcp_enabled,
+}));
+
+// The MCP card goes right after Webhooks.
+const integrationList = computed(() => {
+  const apps = getters['integrations/getAppIntegrations'].value;
+  const position = apps.findIndex(app => app.id === 'webhook') + 1;
+  return [
+    ...apps.slice(0, position),
+    mcpIntegration.value,
+    ...apps.slice(position),
+  ];
+});
 
 const filteredIntegrationList = computed(() => {
   const query = searchQuery.value.trim();

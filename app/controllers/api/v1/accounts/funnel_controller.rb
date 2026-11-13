@@ -92,7 +92,12 @@ class Api::V1::Accounts::FunnelController < Api::V1::Accounts::BaseController
     relation = relation.where(inbox_id: params[:inbox_id]) if params[:inbox_id].present?
     relation = apply_origem_filter(relation) if params[:origem].present?
     relation = relation.tagged_with(params[:label], any: true) if params[:label].present?
+    apply_hide_filters(relation)
+  end
+
+  def apply_hide_filters(relation)
     relation = relation.where.not(funnel_stage_id: closed_stage_ids) if hide_closed?
+    relation = relation.where.not(status: :resolved) if hide_resolved?
     relation
   end
 
@@ -221,6 +226,10 @@ class Api::V1::Accounts::FunnelController < Api::V1::Accounts::BaseController
 
   def hide_closed?
     ActiveModel::Type::Boolean.new.cast(params[:hide_closed])
+  end
+
+  def hide_resolved?
+    ActiveModel::Type::Boolean.new.cast(params[:hide_resolved])
   end
 
   def current_page

@@ -50,14 +50,18 @@ const accountAverageTicket = computed(
   () => Number(account.value?.average_ticket) || 0
 );
 
-const filters = ref({
+// Board and list open with closed stages and resolved conversations hidden;
+// "Limpar filtros" goes back to this same state.
+const DEFAULT_FILTERS = {
   inboxId: '',
   fromDate: '',
   toDate: '',
-  hideClosed: false,
+  hideClosed: true,
+  hideResolved: true,
   origem: '',
   label: '',
-});
+};
+const filters = ref({ ...DEFAULT_FILTERS });
 
 const setViewMode = mode => {
   if (!VIEW_MODES.includes(mode)) return;
@@ -71,6 +75,7 @@ const buildQueryParams = () => {
     params.from = `${filters.value.fromDate}T00:00:00`;
   if (filters.value.toDate) params.to = `${filters.value.toDate}T23:59:59`;
   if (filters.value.hideClosed) params.hide_closed = 'true';
+  if (filters.value.hideResolved) params.hide_resolved = 'true';
   if (filters.value.origem) params.origem = filters.value.origem;
   if (filters.value.label) params.label = filters.value.label;
   return params;
@@ -249,14 +254,7 @@ const onLossReasonClose = () => {
 };
 
 const resetFilters = () => {
-  filters.value = {
-    inboxId: '',
-    fromDate: '',
-    toDate: '',
-    hideClosed: false,
-    origem: '',
-    label: '',
-  };
+  filters.value = { ...DEFAULT_FILTERS };
 };
 
 const isEmpty = computed(() => !isLoading.value && stages.value.length === 0);
@@ -338,6 +336,7 @@ onMounted(fetchFunnel);
         v-model:from-date="filters.fromDate"
         v-model:to-date="filters.toDate"
         v-model:hide-closed="filters.hideClosed"
+        v-model:hide-resolved="filters.hideResolved"
         v-model:origem="filters.origem"
         v-model:label="filters.label"
         @reset="resetFilters"

@@ -17,6 +17,10 @@ class AccountAPI extends ApiClient {
     return response.data.cache_keys;
   }
 
+  updateMcp(data) {
+    return axios.patch(`/api/v1/accounts/${this.accountIdFromRoute}/mcp`, data);
+  }
+
   enableFeature(feature) {
     return axios.post(
       `/api/v1/accounts/${this.accountIdFromRoute}/enable_feature`,

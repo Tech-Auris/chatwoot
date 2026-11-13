@@ -77,6 +77,19 @@ RSpec.describe 'Funnel API', type: :request do
       card = perdido_payload['conversations'].first
       expect(card['loss_reason']).to include('id' => loss_reason.id, 'name' => 'Sem interesse')
     end
+
+    it 'drops resolved conversations when hide_resolved is set' do
+      open_conversation = create(:conversation, account: account, inbox: inbox, funnel_stage: novo)
+      create(:conversation, account: account, inbox: inbox, funnel_stage: novo, status: :resolved)
+
+      get "/api/v1/accounts/#{account.id}/funnel?hide_resolved=true",
+          headers: admin.create_new_auth_token,
+          as: :json
+
+      novo_stage = response.parsed_body.dig('payload', 'stages').find { |s| s['id'] == novo.id }
+      expect(novo_stage['count']).to eq(1)
+      expect(novo_stage['conversations'].pluck('id')).to eq([open_conversation.display_id])
+    end
   end
 
   describe 'label filter' do
