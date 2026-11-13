@@ -1,4 +1,18 @@
 ---
+- tag: v4.15.1-auris.1.78
+  published_at: '2026-11-13T20:00:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.78
+  notes:
+    en: |-
+      ### ⚡ Improvements
+
+      - **The Funnel opens with only what's in progress.** Board and List now hide finished and resolved conversations when you open them. Untick "Hide resolved conversations" or "Hide finished" to see them again, and "Clear filters" brings the hiding back.
+      - **Only your team in the agent lists.** When you assign a conversation or look at agent reports, you now see just your clinic's team and the AI assistant.
+    pt_BR: |-
+      ### ⚡ Melhorias
+
+      - **O Funil abre só com o que está em andamento.** O Quadro e a Lista agora escondem as conversas finalizadas e resolvidas ao abrir. Desmarque "Ocultar conversas resolvidas" ou "Ocultar finalizadas" para vê-las de novo, e "Limpar filtros" volta a esconder.
+      - **Só a sua equipe nas listas de atendentes.** Ao atribuir uma conversa ou olhar os relatórios de agentes, você agora vê apenas a equipe da clínica e a IA.
 - tag: v4.15.1-auris.1.77
   published_at: '2026-11-11T20:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.77
@@ -483,19 +497,3 @@
       - **Links de pagamento direto na linha da reserva.** Ao expandir uma reserva aparecem os links do AsaaS / Stripe / Inter gerados para aquela venda (quando existem), com um ícone azul Auris pra copiar.
       - **Automação reage quando a etapa do funil muda.** Um novo evento *Funil atualizado* permite disparar uma automação quando a conversa muda de etapa.
       - **Auto-atribuição do time pode incluir agentes offline.** Cada time agora pode optar por considerar o time inteiro (incluindo offline), pra nenhuma conversa ficar sem responsável fora do expediente.
-- tag: v4.15.1-auris.1.58
-  published_at: '2026-09-18T17:00:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.58
-  notes:
-    en: |-
-      ### ⚡ Improvements
-
-      - **Sidebar starts collapsed.** New accounts open with the menu tucked to the left, giving the conversation area more room. Pin it open if you prefer.
-      - **Meta template name checked as you type.** When you create a WhatsApp Meta template, the page tells you right away if the name breaks the format Meta requires — no more surprises on save.
-      - **Meta template body grows with the message.** The body field now expands as the message grows — long templates stop scrolling inside a small box while you're editing.
-    pt_BR: |-
-      ### ⚡ Melhorias
-
-      - **Menu lateral inicia recolhido.** Contas novas abrem com o menu encolhido à esquerda, sobrando mais espaço para as conversas. Se preferir, você pode fixar aberto.
-      - **Nome do template Meta conferido ao digitar.** Ao criar um template Meta pro WhatsApp, a página avisa na hora se o nome não segue o formato exigido pela Meta — sem sustos na hora de salvar.
-      - **Texto do corpo do template Meta cresce com a mensagem.** O campo aumenta conforme a mensagem fica maior — template longo deixa de rolar dentro de uma caixinha pequena enquanto você edita.
