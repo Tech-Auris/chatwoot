@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_11_13_120000) do
+ActiveRecord::Schema[7.1].define(version: 2026_11_14_210000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -2115,6 +2115,23 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_13_120000) do
     t.index ["status", "scheduled_at"], name: "index_scheduled_messages_on_status_and_scheduled_at"
   end
 
+  create_table "secretary_resource_types", force: :cascade do |t|
+    t.string "description", null: false
+  end
+
+  create_table "secretary_resources", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "secretary_resource_type_id", null: false
+    t.string "key", null: false
+    t.string "idioma"
+    t.text "resource_url"
+    t.text "caption"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "key", "idioma"], name: "index_secretary_resources_on_account_id_and_key_and_idioma"
+    t.index ["secretary_resource_type_id"], name: "index_secretary_resources_on_secretary_resource_type_id"
+  end
+
   create_table "secretary_versions", force: :cascade do |t|
     t.string "name", null: false
     t.datetime "released_at"
@@ -2480,6 +2497,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_13_120000) do
   add_foreign_key "scheduled_messages", "inboxes"
   add_foreign_key "scheduled_messages", "messages"
   add_foreign_key "scheduled_messages", "recurring_scheduled_messages"
+  add_foreign_key "secretary_resources", "accounts"
+  add_foreign_key "secretary_resources", "secretary_resource_types"
   add_foreign_key "terms_acceptance_requests", "terms_versions"
   add_foreign_key "terms_acceptance_requests", "users", column: "created_by_id"
   add_foreign_key "terms_acceptances", "account_users"
