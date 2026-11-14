@@ -10,10 +10,11 @@ class V2::Reports::Home::AiActivity
   # `[conversation_id, created_at]` of the leads where the AI sent the patient
   # at least one message.
   def acted_rows
-    @acted_rows ||= begin
-      leads = scope.conversations.where(created_at: period.window)
-      leads.where(id: ai_messages(leads).select(:conversation_id)).pluck(:id, :created_at)
-    end
+    @acted_rows ||= if ai_user_id
+                      scope.conversations.where(created_at: period.window).where(ai_message.arel.exists).pluck(:id, :created_at)
+                    else
+                      []
+                    end
   end
 
   def handoff
@@ -42,11 +43,13 @@ class V2::Reports::Home::AiActivity
 
   attr_reader :scope, :period
 
-  def ai_messages(leads)
-    return Message.none unless ai_user_id
-
-    Message.where(conversation_id: leads.select(:id), message_type: :outgoing, private: false,
-                  sender_type: 'User', sender_id: ai_user_id)
+  # Looked up lead by lead in the messages index by account and sender, never
+  # touching the table: collecting the AI's messages first scanned the whole
+  # messages table and ran past the statement timeout on accounts with many
+  # leads. Everything the AI user sends is an outgoing, public message.
+  def ai_message
+    Message.unscope(:order).where(account_id: scope.account.id, sender_type: 'User', sender_id: ai_user_id)
+           .where('messages.conversation_id = conversations.id')
   end
 
   def acted_in(range)
