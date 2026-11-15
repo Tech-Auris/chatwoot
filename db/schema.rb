@@ -1650,6 +1650,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_14_210000) do
     t.index ["account_id", "created_at", "message_type"], name: "index_messages_on_account_created_type"
     t.index ["account_id", "created_at"], name: "index_messages_on_account_created_campaign", where: "((message_type = 1) AND ((additional_attributes ->> 'campaign_id'::text) IS NOT NULL))"
     t.index ["account_id", "inbox_id"], name: "index_messages_on_account_id_and_inbox_id"
+    t.index ["account_id", "sender_type", "sender_id", "conversation_id"], name: "idx_messages_account_sender_senderid_conversation"
     t.index ["account_id"], name: "index_messages_on_account_id"
     t.index ["content"], name: "index_messages_on_content", opclass: :gin_trgm_ops, using: :gin
     t.index ["conversation_id", "account_id", "message_type", "created_at"], name: "index_messages_on_conversation_account_type_created"
