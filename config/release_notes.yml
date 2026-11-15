@@ -1,4 +1,18 @@
 ---
+- tag: v4.15.1-auris.1.79
+  published_at: '2026-11-15T03:00:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.79
+  notes:
+    en: |-
+      ### 🐛 Fixes
+
+      - **AI cards on Home load normally.** On clinics with many patients, "First response time", "Conversations the AI handled" and "AI → Human handoff" now show their numbers instead of an error.
+      - **Emoji reactions don't count as waiting.** If the patient only reacts with an emoji (❤️, 👏…) to a reply, the conversation no longer shows up in "No reply for 10+ min".
+    pt_BR: |-
+      ### 🐛 Correções
+
+      - **Cards de IA do Início voltam a carregar.** Em clínicas com muitos pacientes, "Tempo de primeira resposta", "Conversas que a IA atuou" e "Handoff IA → Humano" agora mostram os números em vez de erro.
+      - **Reação com emoji não conta como esperando.** Se o paciente só reage com um emoji (❤️, 👏…) a uma resposta, a conversa não aparece mais em "Sem resposta há +10 min".
 - tag: v4.15.1-auris.1.78
   published_at: '2026-11-13T20:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.78
@@ -475,25 +489,3 @@
       - **Mídia separada por tipo.** A tela Mídia agora tem cinco abas — Imagens, Vídeos, Áudios, Documentos e Links — para você ir direto no que procura.
       - **Miniaturas de verdade na Mídia.** Áudios ganharam ícone de onda sonora; vídeos tentam mostrar o primeiro frame do arquivo, com um ícone de play como alternativa quando o navegador não consegue.
       - **Mídia rola para itens mais antigos.** Ao chegar no fim da lista, mais mídias aparecem automaticamente — antes só a primeira leva era carregada.
-- tag: v4.15.1-auris.1.59
-  published_at: '2026-09-22T21:00:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.59
-  notes:
-    en: |-
-      ### ✨ What's new
-
-      - **Media Hub in the sidebar.** A new *Mídia* menu shows everything shared across every conversation, split in *Mídias*, *Documentos* and *Links*. Preview on click, forward, reply, star or delete from a per-item menu — and pick many at once to act on the whole selection.
-      - **WhatsApp window chip on the conversation.** A small chip on top of the conversation shows how much time is left in the 24h or 72h window ("Janela 24h", "Janela 72h - Anúncio", "Janela fechando…", "Janela fechada"). The "?" opens a short hint on what you can still send in that state.
-      - **Cleaner conversation header.** The *Resolver* button, the three-dot menu and the contact-panel toggle are now discrete icons, taking less space and leaving each action one click away.
-      - **Payment links right on the reservation row.** Expanding a reservation now shows the AsaaS / Stripe / Inter link generated for that sale (when there is one), with a copy icon in Auris blue.
-      - **Automation reacts when the funnel stage changes.** A new *Funil atualizado* event lets an automation run when a conversation moves between stages.
-      - **Auto-assign of the team can include offline agents.** Each team can now choose to fall back to the whole team (including offline) so no conversation stays unassigned after hours.
-    pt_BR: |-
-      ### ✨ Novidades
-
-      - **Media Hub no menu lateral.** Um novo menu *Mídia* mostra tudo o que foi compartilhado em todas as conversas, separado em *Mídias*, *Documentos* e *Links*. Você pode ver o preview, encaminhar, responder, favoritar ou apagar direto pelo menu de cada item — e selecionar vários de uma vez para agir na seleção toda.
-      - **Chip da janela do WhatsApp na conversa.** Um chip pequeno no topo da conversa mostra quanto tempo ainda falta na janela de 24h ou 72h ("Janela 24h", "Janela 72h - Anúncio", "Janela fechando…", "Janela fechada"). O "?" abre uma dica curta do que ainda dá pra enviar naquele estado.
-      - **Cabeçalho da conversa mais limpo.** O botão *Resolver*, o menu de três pontinhos e o botão do painel de contato viraram ícones discretos, ocupando menos espaço e deixando cada ação a um clique de distância.
-      - **Links de pagamento direto na linha da reserva.** Ao expandir uma reserva aparecem os links do AsaaS / Stripe / Inter gerados para aquela venda (quando existem), com um ícone azul Auris pra copiar.
-      - **Automação reage quando a etapa do funil muda.** Um novo evento *Funil atualizado* permite disparar uma automação quando a conversa muda de etapa.
-      - **Auto-atribuição do time pode incluir agentes offline.** Cada time agora pode optar por considerar o time inteiro (incluindo offline), pra nenhuma conversa ficar sem responsável fora do expediente.
