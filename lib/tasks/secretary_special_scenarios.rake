@@ -14,6 +14,16 @@ namespace :secretary_special_scenarios do
     puts "#{results.size} contas, #{divergent} com diferença#{' (simulação: nada foi gravado; rode com APPLY=true para importar)' unless apply}"
   end
 
+  desc 'Import (APPLY=true) or compare (default) cliente.allow_dynamic_special_scenario from a CSV export (CSV=path, columns id and the flag)'
+  task import_flag: :environment do
+    apply = ENV['APPLY'] == 'true'
+    results = SecretarySpecialScenarios::FlagImport.new(csv_path: ENV.fetch('CSV'), apply: apply).perform
+    results.each do |result|
+      puts [result.account_id, result.error || "CSV #{result.csv_value}, Rails #{result.rails_value}"].join(' | ')
+    end
+    puts "#{results.size} contas com diferença#{' (simulação: nada foi gravado; rode com APPLY=true para importar)' unless apply}"
+  end
+
   desc 'Print the cache_supabase_special_scenarios value Rails builds for one account (ACCOUNT_ID=id), to diff against the one in Redis'
   task cache_payload: :environment do
     puts JSON.generate(SecretarySpecialScenario.cache_payload(ENV.fetch('ACCOUNT_ID').to_i))

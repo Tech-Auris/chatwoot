@@ -84,6 +84,9 @@ class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
   store_accessor :settings, :reporting_timezone
   store_accessor :settings, :keep_pending_on_bot_failure
   store_accessor :settings, :captain_auto_resolve_mode
+  # Whether the secretary swaps the prompt's <special_scenarios> block for the
+  # list of SecretarySpecialScenario (instructions fetched on demand by the AI).
+  store_accessor :settings, :allow_dynamic_special_scenario
   include AccountCaptainAutoResolve
 
   has_many :account_users, dependent: :destroy_async
@@ -236,7 +239,7 @@ class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
 
   # Virtual reader consumed by the Super Admin `auris_settings` Administrate
   # field. Administrate instantiates each form field with
-  # `resource.send(attribute_name)`, so this needs to respond. The three keys
+  # `resource.send(attribute_name)`, so this needs to respond. The keys
   # are the toggles rendered in the "Auris settings" grid; persistence goes
   # through `SuperAdmin::AccountsController#merge_auris_settings` on submit.
   def auris_settings
@@ -244,7 +247,8 @@ class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
       funnel_enabled: funnel_enabled,
       ai_status_uses_attribute: ai_status_uses_attribute,
       multi_language_ai: multi_language_ai,
-      whatsapp_groups_enabled: whatsapp_groups_enabled
+      whatsapp_groups_enabled: whatsapp_groups_enabled,
+      allow_dynamic_special_scenario: allow_dynamic_special_scenario || false
     }
   end
 

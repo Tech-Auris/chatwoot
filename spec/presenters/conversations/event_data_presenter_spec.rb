@@ -80,7 +80,7 @@ RSpec.describe Conversations::EventDataPresenter do
       conversation.account.update!(funnel_enabled: true, ai_status_uses_attribute: false, multi_language_ai: true)
 
       expect(presenter.webhook_data[:account]).to eq(conversation.account.webhook_data)
-      expect(presenter.webhook_data.dig(:account, :settings)).to eq(
+      expect(presenter.webhook_data.dig(:account, :settings)).to include(
         funnel_enabled: true,
         ai_status_uses_attribute: false,
         multi_language_ai: true

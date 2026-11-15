@@ -275,6 +275,13 @@ RSpec.describe 'Super Admin accounts API', type: :request do
       expect(account.ai_status_uses_attribute).to be(true)
     end
 
+    it 'stores the dynamic special scenarios flag in the account settings' do
+      put "/super_admin/accounts/#{account.id}", params: params.deep_merge(auris_settings: { allow_dynamic_special_scenario: '1' })
+
+      expect(account.reload.settings['allow_dynamic_special_scenario']).to be(true)
+      expect(account.webhook_data.dig(:settings, :allow_dynamic_special_scenario)).to be(true)
+    end
+
     it 'flips the multi_language_ai column' do
       expect(account.multi_language_ai).to be(false)
 
