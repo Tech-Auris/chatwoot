@@ -1650,6 +1650,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_14_220000) do
     t.index ["account_id", "created_at", "message_type"], name: "index_messages_on_account_created_type"
     t.index ["account_id", "created_at"], name: "index_messages_on_account_created_campaign", where: "((message_type = 1) AND ((additional_attributes ->> 'campaign_id'::text) IS NOT NULL))"
     t.index ["account_id", "inbox_id"], name: "index_messages_on_account_id_and_inbox_id"
+    t.index ["account_id", "sender_type", "sender_id", "conversation_id"], name: "idx_messages_account_sender_senderid_conversation"
     t.index ["account_id"], name: "index_messages_on_account_id"
     t.index ["content"], name: "index_messages_on_content", opclass: :gin_trgm_ops, using: :gin
     t.index ["conversation_id", "account_id", "message_type", "created_at"], name: "index_messages_on_conversation_account_type_created"
@@ -2124,6 +2125,21 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_14_220000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["account_id", "name"], name: "index_secretary_special_scenarios_on_account_id_and_name"
+  create_table "secretary_resource_types", force: :cascade do |t|
+    t.string "description", null: false
+  end
+
+  create_table "secretary_resources", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "secretary_resource_type_id", null: false
+    t.string "key", null: false
+    t.string "idioma"
+    t.text "resource_url"
+    t.text "caption"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "key", "idioma"], name: "index_secretary_resources_on_account_id_and_key_and_idioma"
+    t.index ["secretary_resource_type_id"], name: "index_secretary_resources_on_secretary_resource_type_id"
   end
 
   create_table "secretary_versions", force: :cascade do |t|
@@ -2492,6 +2508,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_14_220000) do
   add_foreign_key "scheduled_messages", "messages"
   add_foreign_key "scheduled_messages", "recurring_scheduled_messages"
   add_foreign_key "secretary_special_scenarios", "accounts"
+  add_foreign_key "secretary_resources", "accounts"
+  add_foreign_key "secretary_resources", "secretary_resource_types"
   add_foreign_key "terms_acceptance_requests", "terms_versions"
   add_foreign_key "terms_acceptance_requests", "users", column: "created_by_id"
   add_foreign_key "terms_acceptances", "account_users"

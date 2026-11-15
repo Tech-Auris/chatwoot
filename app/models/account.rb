@@ -115,6 +115,7 @@ class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
   has_many :hooks, dependent: :destroy_async, class_name: 'Integrations::Hook'
   has_many :inboxes, dependent: :destroy_async
   has_many :secretary_special_scenarios, dependent: :delete_all
+  has_many :secretary_resources, dependent: :delete_all
   has_many :internal_chat_categories, class_name: 'InternalChat::Category', dependent: :destroy_async
   has_many :internal_chat_channels, class_name: 'InternalChat::Channel', dependent: :destroy_async
   has_many :funnel_stage_changes, dependent: :destroy_async
