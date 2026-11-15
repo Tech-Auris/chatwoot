@@ -434,8 +434,9 @@ class Message < ApplicationRecord
   end
 
   def set_waiting_since_on_incoming_message
-    # Set waiting_since when customer sends a message (if currently blank)
-    conversation.update!(waiting_since: created_at) if incoming? && conversation.waiting_since.blank?
+    # Set waiting_since when customer sends a message (if currently blank).
+    # A reaction to our reply is not a new question waiting for an answer.
+    conversation.update!(waiting_since: created_at) if incoming? && !reaction? && conversation.waiting_since.blank?
   end
 
   def human_response?

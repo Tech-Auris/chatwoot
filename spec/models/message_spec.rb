@@ -371,6 +371,15 @@ RSpec.describe Message do
       expect(conversation.waiting_since).not_to be_nil
     end
 
+    it 'does not set the waiting_since for an incoming reaction' do
+      conversation.update!(waiting_since: nil)
+      message.message_type = :incoming
+      message.content_attributes = { is_reaction: true }
+      message.save!
+
+      expect(conversation.waiting_since).to be_nil
+    end
+
     it 'does not overwrite the previous value if there are newer messages' do
       old_waiting_since = conversation.waiting_since
       message.message_type = :incoming
