@@ -16,12 +16,14 @@ module SuperAdmin::NavigationHelper
 
   # What drives the AI secretary: its flow versions and the LLMs it can run on.
   def ai_open?
+    params[:controller].in? %w[super_admin/secretary_versions super_admin/secretary_special_scenarios super_admin/ai_providers super_admin/ai_models]
     params[:controller].in? %w[super_admin/secretary_versions super_admin/secretary_resources super_admin/ai_providers super_admin/ai_models]
   end
 
   def ai_pages
     [
       { label: 'Secretary Versions', url: super_admin_secretary_versions_url },
+      { label: 'Special Scenarios', url: super_admin_secretary_special_scenarios_url },
       { label: 'Resources', url: super_admin_secretary_resources_url },
       { label: 'Providers', url: super_admin_ai_providers_url },
       { label: 'LLMs', url: super_admin_ai_models_url }

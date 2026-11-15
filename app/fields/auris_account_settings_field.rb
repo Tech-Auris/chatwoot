@@ -3,8 +3,8 @@ require 'administrate/field/base'
 # Auris-flavor account toggles rendered as a single Administrate field
 # in the Super Admin → Accounts edit page. The grid visual mirrors the
 # Enterprise "All features" widget so operators get the same look-and-feel
-# regardless of edition. All of them are plain boolean columns on `accounts`
-# so persistence stays trivial.
+# regardless of edition. They are boolean columns on `accounts`, except
+# `allow_dynamic_special_scenario`, which lives in `accounts.settings`.
 class AurisAccountSettingsField < Administrate::Field::Base
   def to_s
     'Auris settings'
@@ -23,7 +23,10 @@ class AurisAccountSettingsField < Administrate::Field::Base
         checked: resource.multi_language_ai },
       { key: :whatsapp_groups_enabled,
         label: 'WhatsApp groups (QR Code)',
-        checked: resource.whatsapp_groups_enabled }
+        checked: resource.whatsapp_groups_enabled },
+      { key: :allow_dynamic_special_scenario,
+        label: 'Dynamic special scenarios',
+        checked: resource.allow_dynamic_special_scenario }
     ]
   end
 end
