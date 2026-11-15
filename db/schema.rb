@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_11_13_120000) do
+ActiveRecord::Schema[7.1].define(version: 2026_11_14_220000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -2115,6 +2115,17 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_13_120000) do
     t.index ["status", "scheduled_at"], name: "index_scheduled_messages_on_status_and_scheduled_at"
   end
 
+  create_table "secretary_special_scenarios", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "name", null: false
+    t.text "situacao"
+    t.text "gatilho"
+    t.text "instrucao"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "name"], name: "index_secretary_special_scenarios_on_account_id_and_name"
+  end
+
   create_table "secretary_versions", force: :cascade do |t|
     t.string "name", null: false
     t.datetime "released_at"
@@ -2480,6 +2491,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_13_120000) do
   add_foreign_key "scheduled_messages", "inboxes"
   add_foreign_key "scheduled_messages", "messages"
   add_foreign_key "scheduled_messages", "recurring_scheduled_messages"
+  add_foreign_key "secretary_special_scenarios", "accounts"
   add_foreign_key "terms_acceptance_requests", "terms_versions"
   add_foreign_key "terms_acceptance_requests", "users", column: "created_by_id"
   add_foreign_key "terms_acceptances", "account_users"
