@@ -19,6 +19,10 @@ export default {
     {
       path: frontendURL('accounts/:accountId/settings/meta-templates'),
       component: SettingsWrapper,
+      // Every page mounts fresh: a cancelled or submitted form never reopens
+      // with the previous draft, and the list always opens on the inbox from
+      // ?inbox_id= or the one remembered in the browser.
+      props: { keepAlive: false },
       children: [
         {
           path: '',
