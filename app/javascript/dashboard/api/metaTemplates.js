@@ -19,6 +19,17 @@ class MetaTemplatesAPI extends ApiClient {
     return axios.get(`${this.url}/kit`, { params: { inbox_id: inboxId } });
   }
 
+  // Installs the follow-up templates the WABA is missing. Returns
+  // `{ templates, failures }`: the refreshed kit and `{ name: error }` for
+  // the ones Meta refused.
+  installFollowUp({ inboxId }) {
+    return axios.post(
+      `${this.url}/install_follow_up`,
+      {},
+      { params: { inbox_id: inboxId } }
+    );
+  }
+
   // Triggers an inline sync with Meta and returns the fresh payload.
   // Same shape as `fetch`.
   sync({ inboxId }) {
