@@ -1,14 +1,24 @@
 ---
 - tag: v4.15.1-auris.1.79
-  published_at: '2026-11-15T03:00:00Z'
+  published_at: '2026-11-16T20:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.79
   notes:
     en: |-
+      ### ⚡ Improvements
+
+      - **Login lasts 7 days.** For security, AurisChat asks you to sign in again every 7 days, or after 12 hours without use. The screen goes back to login on its own with a notice.
+      - **AI feedback box grows with your text.** When you give feedback on an AI reply, the box expands as you type and shows how many characters you have left (up to 5,000).
+
       ### 🐛 Fixes
 
       - **AI cards on Home load normally.** On clinics with many patients, "First response time", "Conversations the AI handled" and "AI → Human handoff" now show their numbers instead of an error.
       - **Emoji reactions don't count as waiting.** If the patient only reacts with an emoji (❤️, 👏…) to a reply, the conversation no longer shows up in "No reply for 10+ min".
     pt_BR: |-
+      ### ⚡ Melhorias
+
+      - **Login vale 7 dias.** Por segurança, o AurisChat pede para entrar de novo a cada 7 dias, ou depois de 12 horas sem uso. A tela volta sozinha para o login com um aviso.
+      - **Caixa de feedback da IA cresce com o texto.** Ao dar feedback numa resposta da IA, a caixa aumenta conforme você escreve e mostra quantos caracteres faltam (até 5.000).
+
       ### 🐛 Correções
 
       - **Cards de IA do Início voltam a carregar.** Em clínicas com muitos pacientes, "Tempo de primeira resposta", "Conversas que a IA atuou" e "Handoff IA → Humano" agora mostram os números em vez de erro.
