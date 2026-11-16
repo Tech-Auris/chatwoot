@@ -165,6 +165,18 @@ RSpec.describe Sales::ClickupCrmSyncService do
                                      '961dbc4a-ea0a-4f85-bab7-7b212e1568db') })
     end
 
+    it 'flags Implantação de Unidade on the setup addons besides its quantity field' do
+      create(:sales_quote_item, sales_quote: quote, name: 'Implantação de Unidade',
+                                unit_amount: 100_000, quantity: 2, stripe_product_id: 'prod_VEfJCsnsDSPxeZ')
+
+      sync
+
+      expect(client).to have_received(:set_custom_field)
+        .with('86akkgh7b', described_class::FIELDS[:unit_setup_count], 2)
+      expect(client).to have_received(:set_custom_field)
+        .with('86akkgh7b', described_class::FIELDS[:setup_addons], { add: ['cf71ecfc-434f-4c0e-892f-eb11a5ef3c07'] })
+    end
+
     it 'writes the total paid and the subscription discount in reais' do
       sync
 

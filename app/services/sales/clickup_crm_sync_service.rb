@@ -34,18 +34,20 @@ class Sales::ClickupCrmSyncService
     'annual' => '0708341c-2eec-49be-b471-ce80994236ef'
   }.freeze
 
+  # Standalone numeric-field products, matched by Stripe product id.
+  CUSTOM_DEV_PRODUCT_ID = 'prod_VEfLlaYCZDrjul'.freeze
+  UNIT_SETUP_PRODUCT_ID = 'prod_VEfJCsnsDSPxeZ'.freeze
+
   # Multi-select options on the "Adicionais de Setup" field, keyed by the
-  # Stripe product id we sold to identify each option.
+  # Stripe product id we sold to identify each option. Unit setup also
+  # fills its own quantity field; the label here is just the flag.
   SETUP_ADDON_OPTIONS = {
     'prod_VEfJKxVbBhF2Xl' => 'e787ba96-e509-4766-b55b-b36295368ef1', # Implantação Guiada
     'prod_VEfIAj5QnI3OMV' => 'bcb77b79-1f3b-443f-a369-55b9d64839d3', # Config. de Integração API
     'prod_UFkJIYgoIksh1w' => 'fb6f7748-7d90-485e-87d5-4c4060f5cc5b', # Desenv. de Integração API
-    'prod_VEfKJbd6SmlzZL' => '961dbc4a-ea0a-4f85-bab7-7b212e1568db'  # Configuração de API Meta
+    'prod_VEfKJbd6SmlzZL' => '961dbc4a-ea0a-4f85-bab7-7b212e1568db', # Configuração de API Meta
+    UNIT_SETUP_PRODUCT_ID => 'cf71ecfc-434f-4c0e-892f-eb11a5ef3c07'  # Implantação de Unidade
   }.freeze
-
-  # Standalone numeric-field products, matched by Stripe product id.
-  CUSTOM_DEV_PRODUCT_ID = 'prod_VEfLlaYCZDrjul'.freeze
-  UNIT_SETUP_PRODUCT_ID = 'prod_VEfJCsnsDSPxeZ'.freeze
 
   # The base plan already ships with these — the CK field counts the total,
   # so the item quantities are summed on top of it.
@@ -161,7 +163,7 @@ class Sales::ClickupCrmSyncService
   end
 
   # ClickUp's labels field takes { add: [option_ids] } — additive, does not
-  # remove labels already there manually. A sale with none of the four
+  # remove labels already there manually. A sale with none of the setup
   # addons writes an empty add list, which is a no-op on CK's side.
   def setup_addons_body
     ids = quote.items.where(stripe_product_id: SETUP_ADDON_OPTIONS.keys)
