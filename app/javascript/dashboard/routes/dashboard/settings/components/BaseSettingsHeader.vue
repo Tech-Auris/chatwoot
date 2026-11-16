@@ -121,7 +121,11 @@ const helpURL = getHelpUrlForFeature(props.featureName);
     </div>
     <div
       class="flex items-center gap-3 min-w-0"
-      :class="{ 'flex-row-reverse sm:flex-row': !slots.tabs }"
+      :class="{
+        'flex-row-reverse sm:flex-row': !slots.tabs,
+        'ltr:ml-auto rtl:mr-auto':
+          !slots.tabs && !slots.filters && !searchPlaceholder,
+      }"
     >
       <slot name="count" />
       <div
