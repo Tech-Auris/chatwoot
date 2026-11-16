@@ -1,5 +1,4 @@
 import fromUnixTime from 'date-fns/fromUnixTime';
-import differenceInDays from 'date-fns/differenceInDays';
 import Cookies from 'js-cookie';
 import { LOCAL_STORAGE_KEYS } from 'dashboard/constants/localStorage';
 import { SESSION_STORAGE_KEYS } from 'dashboard/constants/sessionStorage';
@@ -28,11 +27,20 @@ export const setUser = user => {
 export const getHeaderExpiry = response =>
   fromUnixTime(response.headers.expiry);
 
+// Shared by every tab, so using any of them keeps the session alive.
+export const markUserActivity = () => {
+  window.localStorage.setItem(
+    LOCAL_STORAGE_KEYS.LAST_USER_ACTIVITY_AT,
+    Date.now().toString()
+  );
+};
+
 export const setAuthCredentials = response => {
   const expiryDate = getHeaderExpiry(response);
   Cookies.set('cw_d_session_info', JSON.stringify(response.headers), {
-    expires: differenceInDays(expiryDate, new Date()),
+    expires: expiryDate,
   });
+  markUserActivity();
   setUser(response.data.data, expiryDate);
 };
 
@@ -44,6 +52,7 @@ export const clearBrowserSessionCookies = () => {
 
 export const clearLocalStorageOnLogout = () => {
   LocalStorage.remove(LOCAL_STORAGE_KEYS.DRAFT_MESSAGES);
+  LocalStorage.remove(LOCAL_STORAGE_KEYS.LAST_USER_ACTIVITY_AT);
 };
 
 export const clearSessionStorageOnLogout = () => {

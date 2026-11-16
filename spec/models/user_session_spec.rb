@@ -40,6 +40,25 @@ RSpec.describe UserSession do
     end
   end
 
+  describe '#idle?' do
+    let(:session) { described_class.new(user: user, client_id: 'abc') }
+
+    it 'is idle after 12 hours without activity' do
+      session.last_activity_at = 13.hours.ago
+      expect(session.idle?).to be true
+    end
+
+    it 'is not idle within 12 hours of the last activity' do
+      session.last_activity_at = 11.hours.ago
+      expect(session.idle?).to be false
+    end
+
+    it 'is not idle when no activity was recorded' do
+      session.last_activity_at = nil
+      expect(session.idle?).to be false
+    end
+  end
+
   describe '#should_update_activity?' do
     let(:session) { described_class.new(user: user, client_id: 'abc') }
 
