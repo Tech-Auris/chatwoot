@@ -222,6 +222,10 @@
       "VIEW": "Ver template",
       "ALREADY_CREATED": "Já criado",
       "NOT_INSTALLED": "Ainda não instalado",
+      "INSTALL": "Instalar pendentes",
+      "INSTALL_SUCCESS": "Templates de follow-up enviados para aprovação da Meta.",
+      "INSTALL_FAILED": "A Meta recusou alguns templates: {errors}",
+      "INSTALL_ERROR": "Não foi possível instalar os templates de follow-up. Tente novamente.",
       "GROUPS": {
         "follow_up": {
           "TITLE": "Follow-up",

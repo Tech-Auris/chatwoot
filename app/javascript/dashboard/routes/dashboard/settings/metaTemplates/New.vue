@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { useAlert } from 'dashboard/composables';
@@ -11,8 +11,8 @@ import TemplateForm from './components/TemplateForm.vue';
 
 import MetaTemplatesAPI from 'dashboard/api/metaTemplates';
 import { stashWriteSeed } from './writeSeed';
+import { rememberInbox } from './rememberedInbox';
 import { SYSTEM_LOCKED_FIELDS } from './kit';
-import { ref } from 'vue';
 
 const { t } = useI18n();
 const route = useRoute();
@@ -35,18 +35,21 @@ const cloudInboxes = computed(() =>
 
 const submitting = ref(false);
 
-// "Usar modelo" on the Kit Auris tab lands here with ?kit=<name>&inbox_id=,
-// and the form opens filled from the kit. System templates keep everything
-// but the body locked and only take the engine variables.
+// The list passes its selected inbox as ?inbox_id= so the form opens on it.
+// "Usar modelo" on the Kit Auris tab also adds ?kit=<name>, and the form
+// opens filled from the kit. System templates keep everything but the body
+// locked and only take the engine variables.
 const kitName = route.query.kit;
-const kitInboxId = route.query.inbox_id ? Number(route.query.inbox_id) : null;
+const inboxIdFromQuery = route.query.inbox_id
+  ? Number(route.query.inbox_id)
+  : null;
 const kitTemplate = ref(null);
 const systemVariables = ref(null);
 const isSystemTemplate = computed(() => kitTemplate.value?.group === 'system');
 
 const loadKitTemplate = async () => {
   try {
-    const { data } = await MetaTemplatesAPI.kit({ inboxId: kitInboxId });
+    const { data } = await MetaTemplatesAPI.kit({ inboxId: inboxIdFromQuery });
     kitTemplate.value = data.templates.find(item => item.name === kitName);
     systemVariables.value = data.system_variables;
   } catch (err) {
@@ -71,6 +74,7 @@ const handleSubmit = async ({ inboxId, template }) => {
       lastSyncedAt: data.last_synced_at,
     });
     useAlert(t('META_TEMPLATES.NEW.SUCCESS'));
+    rememberInbox(route.params.accountId, inboxId);
     router.push({ name: 'meta_templates_index' });
   } catch (err) {
     const data = err?.response?.data || {};
@@ -85,7 +89,7 @@ const handleCancel = () => router.push({ name: 'meta_templates_index' });
 
 onMounted(() => {
   if (!inboxes.value.length) store.dispatch('inboxes/get');
-  if (kitName && kitInboxId) loadKitTemplate();
+  if (kitName && inboxIdFromQuery) loadKitTemplate();
 });
 </script>
 
@@ -106,7 +110,7 @@ onMounted(() => {
         mode="create"
         :inboxes="cloudInboxes"
         :initial-template="kitTemplate"
-        :initial-inbox-id="kitTemplate ? kitInboxId : null"
+        :initial-inbox-id="inboxIdFromQuery"
         :locked-fields="isSystemTemplate ? SYSTEM_LOCKED_FIELDS : []"
         :allowed-variables="isSystemTemplate ? systemVariables : null"
         :submitting="submitting"

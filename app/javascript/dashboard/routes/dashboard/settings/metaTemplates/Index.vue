@@ -1,7 +1,7 @@
 <script setup>
-import { computed, onActivated, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useAlert } from 'dashboard/composables';
 import { useMapGetter, useStore } from 'dashboard/composables/store';
 import { picoSearch } from '@scmmishra/pico-search';
@@ -20,9 +20,11 @@ import KitTab from './components/KitTab.vue';
 
 import MetaTemplatesAPI from 'dashboard/api/metaTemplates';
 import { takeWriteSeed } from './writeSeed';
+import { rememberInbox, rememberedInbox } from './rememberedInbox';
 
 const { t } = useI18n();
 const store = useStore();
+const route = useRoute();
 const router = useRouter();
 
 // Only manager and administrator can create templates on Meta. Agents
@@ -279,17 +281,21 @@ const formatDate = iso => {
   }
 };
 
-// Auto-select the first Cloud inbox when the list resolves. If the user
-// only has one, they never see the dropdown as a "picker" — it just
-// stays there as a label. When cloudInboxes is empty (should not happen
-// because the sidebar gate hides the menu, but handles the race where
-// inboxes are still loading), the empty state below takes over.
+// Auto-select an inbox when the list resolves: the one remembered in this
+// browser (last picked here, or last written to on New/Edit), else the
+// first Cloud inbox. If the user only has one, they never see the dropdown
+// as a "picker" — it just stays there as a label. When cloudInboxes is
+// empty (should not happen because the sidebar gate hides the menu, but
+// handles the race where inboxes are still loading), the empty state below
+// takes over.
 watch(
   cloudInboxes,
   next => {
-    if (!selectedInboxId.value && next.length > 0) {
-      selectedInboxId.value = next[0].id;
-    }
+    if (selectedInboxId.value || next.length === 0) return;
+    const remembered = rememberedInbox(route.params.accountId);
+    selectedInboxId.value = next.some(inbox => inbox.id === remembered)
+      ? remembered
+      : next[0].id;
   },
   { immediate: true }
 );
@@ -314,7 +320,8 @@ watch(
 // leaving the page stuck on the loading spinner.
 watch(
   selectedInboxId,
-  () => {
+  inboxId => {
+    if (inboxId) rememberInbox(route.params.accountId, inboxId);
     templates.value = [];
     lastSyncedAt.value = null;
     fetchTemplates();
@@ -335,19 +342,6 @@ onMounted(async () => {
       if (!inboxes.value.length) loading.value = false;
     }
   }
-});
-
-// SettingsWrapper wraps its <router-view> in <keep-alive :key="route.
-// fullPath">. Same route.fullPath (e.g. /settings/meta-templates)
-// visited more than once REACTIVATES a cached instance instead of
-// re-running setup, so `takeWriteSeed` is never called on the return
-// trip from New/Edit and `templates.value` stays on whatever the
-// previous visit ended with. Explicitly re-fetch on activation so the
-// seed from the just-completed write lands, and so returning to the
-// page after time away picks up any background changes.
-onActivated(() => {
-  if (selectedInboxId.value) fetchTemplates();
-  kitReloadKey.value += 1;
 });
 </script>
 
@@ -466,7 +460,12 @@ onActivated(() => {
               solid
               blue
               :label="t('META_TEMPLATES.NEW.CTA')"
-              @click="$router.push({ name: 'meta_templates_new' })"
+              @click="
+                router.push({
+                  name: 'meta_templates_new',
+                  query: { inbox_id: selectedInboxId },
+                })
+              "
             />
           </div>
         </div>

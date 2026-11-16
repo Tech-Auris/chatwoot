@@ -222,6 +222,10 @@
       "VIEW": "View template",
       "ALREADY_CREATED": "Already created",
       "NOT_INSTALLED": "Not installed yet",
+      "INSTALL": "Install missing",
+      "INSTALL_SUCCESS": "Follow-up templates sent to Meta for approval.",
+      "INSTALL_FAILED": "Meta refused some templates: {errors}",
+      "INSTALL_ERROR": "Could not install the follow-up templates. Try again.",
       "GROUPS": {
         "follow_up": {
           "TITLE": "Follow-up",

@@ -39,7 +39,7 @@ const filters = ref({
 });
 
 const selectClass =
-  'bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg pl-3 pr-9 h-10 text-sm text-n-slate-12 focus:outline-n-brand';
+  '!w-auto !mb-0 shrink-0 bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg pl-3 pr-9 h-10 text-sm text-n-slate-12 focus:outline-n-brand';
 
 const queryParams = computed(() => {
   const { period, ...rest } = filters.value;
@@ -124,7 +124,7 @@ onMounted(() => {
 
     <template #body>
       <div class="grid gap-4">
-        <div class="flex flex-wrap items-end gap-3">
+        <div class="flex items-center gap-3">
           <select v-model="filters.period" :class="selectClass">
             <option v-for="days in PERIODS" :key="days" :value="days">
               {{ t('ACTIVITY_LOGS.FILTERS.LAST_DAYS', { days }) }}
@@ -161,7 +161,7 @@ onMounted(() => {
           <input
             v-model="filters.q"
             type="text"
-            class="flex-1 min-w-64 bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg px-3 h-10 text-sm text-n-slate-12 focus:outline-n-brand placeholder:text-n-slate-10"
+            class="flex-1 min-w-0 !mb-0 bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg px-3 h-10 text-sm text-n-slate-12 focus:outline-n-brand placeholder:text-n-slate-10"
             :placeholder="t('ACTIVITY_LOGS.FILTERS.SEARCH_PLACEHOLDER')"
           />
         </div>

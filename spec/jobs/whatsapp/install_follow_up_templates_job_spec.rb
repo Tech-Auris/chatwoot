@@ -28,11 +28,22 @@ RSpec.describe Whatsapp::InstallFollowUpTemplatesJob do
     expect(provider_service).not_to have_received(:create_template).with(hash_including('name' => 'auris_fup_geral'))
   end
 
-  it 'keeps going when Meta refuses one of them' do
+  it 'keeps going when Meta refuses one of them and returns the failures' do
     allow(provider_service).to receive(:create_template).and_return({ success: false, error_message: 'Invalid parameter' })
 
-    expect { described_class.perform_now(channel) }.not_to raise_error
+    failures = described_class.perform_now(channel)
+
     expect(provider_service).to have_received(:create_template).exactly(3).times
+    expect(failures).to eq(%w[auris_fup_geral auris_fup_geral2 auris_fup_geral3].index_with { 'Invalid parameter' })
+  end
+
+  it 'caches the created templates the sync does not return yet' do
+    allow(provider_service).to receive(:create_template).and_return({ success: true, template: { 'id' => '77', 'status' => 'PENDING' } })
+
+    described_class.perform_now(channel)
+
+    cached = channel.reload.message_templates.index_by { |t| t['name'] }
+    expect(cached['auris_fup_geral']).to include('id' => '77', 'status' => 'PENDING', 'language' => 'pt_BR')
   end
 
   it 'treats a template another number on the WABA already created as installed' do

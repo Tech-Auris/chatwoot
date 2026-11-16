@@ -745,6 +745,33 @@ RSpec.describe 'Meta Templates API', type: :request do
 
       expect(response).to have_http_status(:created)
     end
+
+    it 'installs the missing follow-up templates and reports what Meta refused' do
+      allow(provider).to receive(:create_template) do |payload|
+        if payload['name'] == 'auris_fup_geral3'
+          { success: false, error_message: 'Invalid parameter' }
+        else
+          { success: true, template: { 'id' => "9#{payload['name'].last}", 'status' => 'PENDING', 'category' => 'MARKETING' } }
+        end
+      end
+
+      post "/api/v2/accounts/#{account.id}/meta_templates/install_follow_up", params: { inbox_id: cloud_inbox.id },
+                                                                              headers: admin.create_new_auth_token
+
+      expect(response).to have_http_status(:ok)
+      expect(provider).to have_received(:create_template).twice
+      expect(response.parsed_body['failures']).to eq('auris_fup_geral3' => 'Invalid parameter')
+      kit = response.parsed_body['templates'].index_by { |template| template['name'] }
+      expect(kit['auris_fup_geral2']).to include('existing_status' => 'PENDING')
+      expect(kit['auris_fup_geral3']['existing_status']).to be_nil
+    end
+
+    it 'does not let an agent install the follow-up templates' do
+      post "/api/v2/accounts/#{account.id}/meta_templates/install_follow_up", params: { inbox_id: cloud_inbox.id },
+                                                                              headers: agent.create_new_auth_token
+
+      expect(response).to have_http_status(:unauthorized)
+    end
   end
 
   describe 'inboxes on the same WABA' do

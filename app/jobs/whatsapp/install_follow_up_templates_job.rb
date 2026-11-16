@@ -7,18 +7,17 @@ class Whatsapp::InstallFollowUpTemplatesJob < ApplicationJob
   queue_as :low
 
   def perform(channel)
-    return unless channel.provider == 'whatsapp_cloud'
+    return {} unless channel.provider == 'whatsapp_cloud'
 
     channel.sync_templates
-    existing = Array(channel.reload.message_templates).filter_map { |t| [t['name'], t['language']] if t.is_a?(Hash) }
+    missing = Whatsapp::TemplateKit.follow_up.reject { |template| installed?(channel, template) }
+    return {} if missing.empty?
 
-    Whatsapp::TemplateKit.follow_up.each do |template|
-      next if existing.include?([template['name'], Whatsapp::TemplateKit::LANGUAGE])
-
-      install(channel, template)
-    end
+    results = missing.index_with { |template| install(channel, template) }
     channel.sync_templates
     channel.share_templates_with_siblings
+    cache_created(channel, results.select { |_, result| result[:success] })
+    results.reject { |_, result| result[:success] }.to_h { |template, result| [template['name'], result[:error_message]] }
   end
 
   private
@@ -26,6 +25,11 @@ class Whatsapp::InstallFollowUpTemplatesJob < ApplicationJob
   # Meta's "content in this language already exists": another number on the
   # same WABA installed it first, which is what we wanted.
   ALREADY_EXISTS_SUBCODE = 2_388_024
+  def installed?(channel, template)
+    Array(channel.reload.message_templates).any? do |cached|
+      cached.is_a?(Hash) && cached['name'] == template['name'] && cached['language'] == Whatsapp::TemplateKit::LANGUAGE
+    end
+  end
 
   def install(channel, template)
     result = channel.provider_service.create_template(Whatsapp::TemplateKit.meta_payload(template))
@@ -37,5 +41,16 @@ class Whatsapp::InstallFollowUpTemplatesJob < ApplicationJob
                         "#{result[:error_message]} #{result[:error_details]}")
     end
     result
+  end
+
+  # Meta's list is eventually consistent: the sync right after a create may
+  # not return it yet, so keep what the create answered until the next sync.
+  def cache_created(channel, created)
+    pending = created.reject { |template, _| installed?(channel, template) }
+                     .map { |template, result| Whatsapp::TemplateKit.meta_payload(template).merge(result[:template] || {}) }
+    return if pending.empty?
+
+    cached = Array(channel.message_templates).select { |t| t.is_a?(Hash) }
+    channel.update_columns(message_templates: pending + cached, message_templates_last_updated: Time.now.utc) # rubocop:disable Rails/SkipsModelValidations
   end
 end
