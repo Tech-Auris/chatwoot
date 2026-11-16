@@ -2125,6 +2125,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_14_220000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["account_id", "name"], name: "index_secretary_special_scenarios_on_account_id_and_name"
+  end
+
   create_table "secretary_resource_types", force: :cascade do |t|
     t.string "description", null: false
   end
