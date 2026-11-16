@@ -12,6 +12,7 @@ import Button from 'dashboard/components-next/button/Button.vue';
 
 import MetaTemplatesAPI from 'dashboard/api/metaTemplates';
 import { stashWriteSeed } from './writeSeed';
+import { rememberInbox } from './rememberedInbox';
 
 const { t } = useI18n();
 const route = useRoute();
@@ -101,6 +102,7 @@ const handleSubmit = async ({ template: payload }) => {
       lastSyncedAt: data.last_synced_at,
     });
     useAlert(t('META_TEMPLATES.EDIT.SUCCESS'));
+    rememberInbox(route.params.accountId, inboxIdFromQuery.value);
     router.push({ name: 'meta_templates_index' });
   } catch (err) {
     const data = err?.response?.data || {};
