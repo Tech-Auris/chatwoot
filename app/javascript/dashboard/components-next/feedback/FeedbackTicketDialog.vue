@@ -8,11 +8,12 @@ import { BUS_EVENTS } from 'shared/constants/busEvents';
 
 import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
+import TextArea from 'dashboard/components-next/textarea/TextArea.vue';
 
 // PR2 of the Feedback Tickets project. Operators hit the flag icon next to
 // an outgoing/AI message and this dialog collects:
 //   - relatar_problema  (required) — what went wrong from their POV
-//   - comportamento_esperado (optional) — what should have happened
+//   - comportamento_esperado (required) — what should have happened
 //   - attachments (optional) — screenshots / evidence, up to 5 files 5MB each
 // The dispatch fires POST /tickets which enqueues the ClickUp sync + the
 // attachment jobs. Attachments upload asynchronously behind the ticket, so
@@ -20,6 +21,8 @@ import Button from 'dashboard/components-next/button/Button.vue';
 
 const MAX_ATTACHMENTS = 5;
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
+// Same limit as Ticket validations (app/models/ticket.rb).
+const MAX_TEXT_LENGTH = 5000;
 const requiredMark = '*';
 
 const { t } = useI18n();
@@ -135,46 +138,33 @@ onUnmounted(() => emitter.off(BUS_EVENTS.OPEN_FEEDBACK_TICKET, handleOpen));
     @close="handleClose"
   >
     <form class="flex flex-col gap-4" @submit.prevent="handleSubmit">
-      <div class="flex flex-col gap-1">
-        <label
-          for="feedback-relatar-problema"
-          class="text-sm font-medium text-n-slate-12"
-        >
-          {{
-            `${t('CONVERSATION.FEEDBACK_TICKET.RELATAR_PROBLEMA_LABEL')} ${requiredMark}`
-          }}
-        </label>
-        <textarea
-          id="feedback-relatar-problema"
-          v-model="relatarProblema"
-          rows="4"
-          :placeholder="
-            t('CONVERSATION.FEEDBACK_TICKET.RELATAR_PROBLEMA_PLACEHOLDER')
-          "
-          class="w-full text-sm rounded-lg border border-n-slate-6 bg-n-alpha-black1 focus:outline-none focus:border-n-brand p-3 resize-y text-n-slate-12"
-          required
-        />
-      </div>
+      <TextArea
+        id="feedback-relatar-problema"
+        v-model="relatarProblema"
+        :label="`${t('CONVERSATION.FEEDBACK_TICKET.RELATAR_PROBLEMA_LABEL')} ${requiredMark}`"
+        :placeholder="
+          t('CONVERSATION.FEEDBACK_TICKET.RELATAR_PROBLEMA_PLACEHOLDER')
+        "
+        :max-length="MAX_TEXT_LENGTH"
+        auto-height
+        min-height="6rem"
+        max-height="18rem"
+        show-character-count
+      />
 
-      <div class="flex flex-col gap-1">
-        <label
-          for="feedback-comportamento-esperado"
-          class="text-sm font-medium text-n-slate-12"
-        >
-          {{
-            `${t('CONVERSATION.FEEDBACK_TICKET.COMPORTAMENTO_ESPERADO_LABEL')} ${requiredMark}`
-          }}
-        </label>
-        <textarea
-          id="feedback-comportamento-esperado"
-          v-model="comportamentoEsperado"
-          rows="3"
-          :placeholder="
-            t('CONVERSATION.FEEDBACK_TICKET.COMPORTAMENTO_ESPERADO_PLACEHOLDER')
-          "
-          class="w-full text-sm rounded-lg border border-n-slate-6 bg-n-alpha-black1 focus:outline-none focus:border-n-brand p-3 resize-y text-n-slate-12"
-        />
-      </div>
+      <TextArea
+        id="feedback-comportamento-esperado"
+        v-model="comportamentoEsperado"
+        :label="`${t('CONVERSATION.FEEDBACK_TICKET.COMPORTAMENTO_ESPERADO_LABEL')} ${requiredMark}`"
+        :placeholder="
+          t('CONVERSATION.FEEDBACK_TICKET.COMPORTAMENTO_ESPERADO_PLACEHOLDER')
+        "
+        :max-length="MAX_TEXT_LENGTH"
+        auto-height
+        min-height="6rem"
+        max-height="18rem"
+        show-character-count
+      />
 
       <div class="flex flex-col gap-2">
         <label class="text-sm font-medium text-n-slate-12">
