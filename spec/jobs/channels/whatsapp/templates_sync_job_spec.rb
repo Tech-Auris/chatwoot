@@ -10,11 +10,25 @@ RSpec.describe Channels::Whatsapp::TemplatesSyncJob do
   end
 
   context 'when called' do
-    it 'calls sync_templates' do
-      whatsapp_channel = double
-      allow(whatsapp_channel).to receive(:sync_templates).and_return(true)
-      expect(whatsapp_channel).to receive(:sync_templates)
-      described_class.perform_now(whatsapp_channel)
+    let(:channel) { create(:channel_whatsapp, provider: 'whatsapp_cloud', validate_provider_config: false, sync_templates: false) }
+    let!(:sibling) { create(:channel_whatsapp, provider: 'whatsapp_cloud', validate_provider_config: false, sync_templates: false) }
+
+    it 'shares the synced list with the other numbers on the same WABA' do
+      allow(channel).to receive(:sync_templates).and_return(true)
+
+      described_class.perform_now(channel)
+
+      expect(Channels::Whatsapp::TemplatesCopyJob).to have_been_enqueued.with(sibling, channel)
+    end
+
+    it 'only stamps the sync time when Meta refuses the list, so the scheduler waits for the next window' do
+      allow(channel).to receive(:sync_templates).and_return(false)
+      channel.update_columns(message_templates_last_updated: 1.day.ago) # rubocop:disable Rails/SkipsModelValidations
+
+      described_class.perform_now(channel)
+
+      expect(channel.reload.message_templates_last_updated).to be > 1.minute.ago
+      expect(Channels::Whatsapp::TemplatesCopyJob).not_to have_been_enqueued
     end
   end
 end

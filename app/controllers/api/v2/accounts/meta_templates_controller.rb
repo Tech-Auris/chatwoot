@@ -37,6 +37,7 @@ class Api::V2::Accounts::MetaTemplatesController < Api::V1::Accounts::BaseContro
     if result[:success]
       @inbox.channel.sync_templates
       ensure_created_template_in_cache(result[:template], create_payload)
+      @inbox.channel.share_templates_with_siblings
       render json: {
         template: result[:template],
         templates: templates_with_created_guaranteed(result[:template]),
@@ -86,11 +87,7 @@ class Api::V2::Accounts::MetaTemplatesController < Api::V1::Accounts::BaseContro
     result = @inbox.channel.provider_service.delete_template(template_name, template_id: params[:id])
 
     if result[:success]
-      @inbox.channel.sync_templates
-      render json: {
-        templates: @inbox.channel.reload.message_templates || [],
-        last_synced_at: @inbox.channel.message_templates_last_updated
-      }
+      render_destroy_success
     else
       render json: {
         error: result[:error_message] || I18n.t('errors.meta_templates.delete_failed'),
@@ -160,11 +157,12 @@ class Api::V2::Accounts::MetaTemplatesController < Api::V1::Accounts::BaseContro
 
   # On-demand refresh. Runs inline instead of enqueueing the job so the
   # operator gets the fresh data in the same request — Meta's list call is
-  # a single roundtrip (with paging) and takes a couple of seconds.
-  # Wrapped in `Whatsapp::Providers::TransientError` awareness could come
-  # later; for a manual sync the error message is fine to surface as-is.
+  # a single roundtrip (with paging) and takes a couple of seconds. The
+  # other inboxes on the same WABA get the result in the background.
   def sync
-    @inbox.channel.sync_templates
+    return render json: { error: I18n.t('errors.meta_templates.sync_failed') }, status: :unprocessable_entity unless @inbox.channel.sync_templates
+
+    @inbox.channel.share_templates_with_siblings
     templates = @inbox.channel.reload.message_templates || []
     render json: {
       inbox: inbox_payload(@inbox),
@@ -220,9 +218,19 @@ class Api::V2::Accounts::MetaTemplatesController < Api::V1::Accounts::BaseContro
   def render_update_success(result)
     @inbox.channel.sync_templates
     force_edited_template_to_pending_in_cache(params[:id])
+    @inbox.channel.share_templates_with_siblings
     render json: {
       template: result[:template],
       templates: templates_with_edit_pending_guaranteed(params[:id]),
+      last_synced_at: @inbox.channel.message_templates_last_updated
+    }
+  end
+
+  def render_destroy_success
+    @inbox.channel.sync_templates
+    @inbox.channel.share_templates_with_siblings
+    render json: {
+      templates: @inbox.channel.reload.message_templates || [],
       last_synced_at: @inbox.channel.message_templates_last_updated
     }
   end

@@ -300,13 +300,30 @@ describe Whatsapp::Providers::WhatsappCloudService do
         expect(whatsapp_channel.reload.message_templates_last_updated).not_to eq(timstamp)
       end
 
-      it 'updates message_templates_last_updated even when template request fails' do
-        stub_request(:get, templates_url)
-          .to_return(status: 401)
+      it 'keeps the cached list and its sync time when Meta answers with an error' do
+        whatsapp_channel.update_columns(message_templates: [{ 'id' => '1' }], message_templates_last_updated: 1.day.ago) # rubocop:disable Rails/SkipsModelValidations
+        stub_request(:get, templates_url).to_return(status: 401)
 
-        timstamp = whatsapp_channel.reload.message_templates_last_updated
-        subject.sync_templates
-        expect(whatsapp_channel.reload.message_templates_last_updated).not_to eq(timstamp)
+        expect { expect(subject.sync_templates).to be(false) }.not_to(change { whatsapp_channel.reload.attributes })
+      end
+
+      it 'keeps the cached list when a later page fails' do
+        whatsapp_channel.update_columns(message_templates: [{ 'id' => '1' }]) # rubocop:disable Rails/SkipsModelValidations
+        stub_request(:get, templates_url).to_return(
+          { status: 200, headers: response_headers, body: { data: [{ id: '2' }], paging: { next: templates_url } }.to_json },
+          { status: 500 }
+        )
+
+        expect(subject.sync_templates).to be(false)
+        expect(whatsapp_channel.reload.message_templates).to eq([{ 'id' => '1' }])
+      end
+
+      it 'clears the list when the WABA has no templates left' do
+        whatsapp_channel.update_columns(message_templates: [{ 'id' => '1' }]) # rubocop:disable Rails/SkipsModelValidations
+        stub_request(:get, templates_url).to_return(status: 200, headers: response_headers, body: { data: [] }.to_json)
+
+        expect(subject.sync_templates).to be(true)
+        expect(whatsapp_channel.reload.message_templates).to eq([])
       end
 
       # Meta's `example.header_handle` on IMAGE-header templates is a

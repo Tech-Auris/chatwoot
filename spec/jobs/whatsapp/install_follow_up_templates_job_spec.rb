@@ -35,6 +35,23 @@ RSpec.describe Whatsapp::InstallFollowUpTemplatesJob do
     expect(provider_service).to have_received(:create_template).exactly(3).times
   end
 
+  it 'treats a template another number on the WABA already created as installed' do
+    allow(provider_service).to receive(:create_template).and_return({ success: false, error_subcode: 2_388_024, error_message: 'already exists' })
+    allow(Rails.logger).to receive(:warn)
+
+    described_class.perform_now(channel)
+
+    expect(Rails.logger).not_to have_received(:warn)
+  end
+
+  it 'shares the result with the other numbers on the same WABA' do
+    sibling = create(:channel_whatsapp, provider: 'whatsapp_cloud', validate_provider_config: false, sync_templates: false)
+
+    described_class.perform_now(channel)
+
+    expect(Channels::Whatsapp::TemplatesCopyJob).to have_been_enqueued.with(sibling, channel)
+  end
+
   it 'ignores channels that are not on the Cloud API' do
     channel.update_columns(provider: 'baileys') # rubocop:disable Rails/SkipsModelValidations
 

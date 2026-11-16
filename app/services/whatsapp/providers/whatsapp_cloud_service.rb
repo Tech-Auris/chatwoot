@@ -36,22 +36,29 @@ class Whatsapp::Providers::WhatsappCloudService < Whatsapp::Providers::BaseServi
     process_response(response, message)
   end
 
+  # Returns false and keeps the cached list (and its sync time) when Meta
+  # answers with an error. A WABA with no templates clears the list.
   def sync_templates
-    # ensuring that channels with wrong provider config wouldn't keep trying to sync templates
-    whatsapp_channel.mark_message_templates_updated
     templates = fetch_whatsapp_templates(
       "#{business_account_path}/message_templates?fields=#{TEMPLATE_FIELDS}&access_token=#{whatsapp_channel.provider_config['api_key']}"
     )
-    return if templates.blank?
+    return false if templates.nil?
 
-    # Turn `example.header_handle` into a reusable media_id on our side:
-    # `scontent.whatsapp.net` URLs are Meta's own preview URLs and cannot
-    # be passed back to their send API (they return 131053). Uploading
-    # the bytes to `/PHONE_NUMBER_ID/media` once yields a stable id that
-    # the send flow uses forever, until Meta expires it (~30 days idle),
-    # at which point the send flow refreshes it in-process.
+    store_templates(templates)
+  end
+
+  # Saves a list fetched from Meta, by this channel or by another number on
+  # the same WABA (`Channels::Whatsapp::TemplatesCopyJob`).
+  #
+  # Turns `example.header_handle` into a reusable media_id on our side:
+  # `scontent.whatsapp.net` URLs are Meta's own preview URLs and cannot
+  # be passed back to their send API (they return 131053). Uploading
+  # the bytes to `/PHONE_NUMBER_ID/media` once yields a stable id that
+  # the send flow uses forever, until Meta expires it (~30 days idle),
+  # at which point the send flow refreshes it in-process.
+  def store_templates(templates, synced_at: Time.now.utc)
     enrich_templates_with_header_media_ids(templates)
-    whatsapp_channel.update!(message_templates: templates, message_templates_last_updated: Time.now.utc)
+    whatsapp_channel.update!(message_templates: templates, message_templates_last_updated: synced_at)
   end
 
   # Downloads the file at `url` and posts it to Meta's messaging media
@@ -175,6 +182,7 @@ class Whatsapp::Providers::WhatsappCloudService < Whatsapp::Providers::BaseServi
       {
         success: false,
         error_code: error&.dig('code'),
+        error_subcode: error&.dig('error_subcode'),
         error_message: error&.dig('message') || response.body,
         error_details: error&.dig('error_user_msg') || error&.dig('error_data', 'details')
       }
@@ -199,15 +207,17 @@ class Whatsapp::Providers::WhatsappCloudService < Whatsapp::Providers::BaseServi
     upload_bytes_to_session(session_id, file_io)
   end
 
+  # nil when Meta answers with an error on any page, so it is not mistaken
+  # for a WABA without templates.
   def fetch_whatsapp_templates(url)
     response = HTTParty.get(url)
-    return [] unless response.success?
+    return unless response.success?
 
     next_url = next_url(response)
+    return response['data'] if next_url.blank?
 
-    return response['data'] + fetch_whatsapp_templates(next_url) if next_url.present?
-
-    response['data']
+    rest = fetch_whatsapp_templates(next_url)
+    response['data'] + rest if rest
   end
 
   def next_url(response)

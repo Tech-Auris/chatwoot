@@ -44,6 +44,7 @@ class Channel::Whatsapp < ApplicationRecord # rubocop:disable Metrics/ClassLengt
   validate :validate_provider_config
 
   scope :with_reconnection_enabled, -> { where(reconnection_enabled: [nil, true]) }
+  scope :cloud_on_waba, ->(waba_id) { where(provider: 'whatsapp_cloud').where("provider_config ->> 'business_account_id' = ?", waba_id) }
 
   has_one :inbox, as: :channel, dependent: :destroy
 
@@ -133,6 +134,21 @@ class Channel::Whatsapp < ApplicationRecord # rubocop:disable Metrics/ClassLengt
     rescue StandardError => e
       Rails.logger.warn "[WHATSAPP CALL] disable webhook re-subscribe failed: #{e.message}"
     end
+  end
+
+  # Other official numbers on the same WhatsApp Business Account. Meta keeps
+  # templates per WABA, so all of them must show the same template list.
+  def waba_siblings
+    waba_id = provider_config['business_account_id']
+    return Channel::Whatsapp.none unless provider == 'whatsapp_cloud' && waba_id.present?
+
+    Channel::Whatsapp.cloud_on_waba(waba_id).where.not(id: id)
+  end
+
+  # Copies this channel's template list to its WABA siblings in the
+  # background, so a change made from one inbox reaches all of them.
+  def share_templates_with_siblings
+    waba_siblings.each { |sibling| Channels::Whatsapp::TemplatesCopyJob.perform_later(sibling, self) }
   end
 
   def mark_message_templates_updated
