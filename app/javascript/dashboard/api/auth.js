@@ -12,14 +12,14 @@ export default {
     const urlData = endPoints('validityCheck');
     return axios.get(urlData.url);
   },
-  logout() {
+  logout({ redirectTo } = {}) {
     const urlData = endPoints('logout');
     const fetchPromise = new Promise((resolve, reject) => {
       axios
         .delete(urlData.url)
         .then(response => {
           deleteIndexedDBOnLogout();
-          clearCookiesOnLogout();
+          clearCookiesOnLogout({ redirectTo });
           resolve(response);
         })
         .catch(error => {

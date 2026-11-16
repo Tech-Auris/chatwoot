@@ -31,6 +31,7 @@
 
 class UserSession < ApplicationRecord
   ACTIVITY_THROTTLE = 5.minutes
+  IDLE_TIMEOUT = 12.hours
 
   belongs_to :user
 
@@ -38,6 +39,10 @@ class UserSession < ApplicationRecord
 
   def current?(active_client_id)
     client_id == active_client_id
+  end
+
+  def idle?
+    last_activity_at.present? && last_activity_at < IDLE_TIMEOUT.ago
   end
 
   def should_update_activity?

@@ -5,9 +5,9 @@ DeviseTokenAuth.setup do |config|
   # each request.
   config.change_headers_on_each_request = false
 
-  # By default, users will need to re-authenticate after 2 weeks. This setting
-  # determines how long tokens will remain valid after they are issued.
-  config.token_lifespan = 2.months
+  # Users re-authenticate 7 days after signing in, however active they are.
+  # Idle sessions end sooner: see UserSession::IDLE_TIMEOUT.
+  config.token_lifespan = 7.days
 
   # By default, old tokens are not invalidated when password is changed.
   # Enable this option if you want to make passwords updates to logout other devices.

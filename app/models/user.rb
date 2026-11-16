@@ -193,6 +193,16 @@ class User < ApplicationRecord
     mutations_from_database.changed?('email')
   end
 
+  # A session with no authenticated request for UserSession::IDLE_TIMEOUT ends:
+  # its token is revoked, so the dashboard falls back to the login page.
+  def valid_token?(token, client = 'default')
+    return false unless super
+    return true unless user_sessions.find_by(client_id: client)&.idle?
+
+    revoke_token!(client)
+    false
+  end
+
   def self.from_email(email)
     find_by(email: email&.downcase)
   end
@@ -253,6 +263,11 @@ class User < ApplicationRecord
   end
 
   private
+
+  def revoke_token!(client)
+    update_column(:tokens, tokens.except(client)) # rubocop:disable Rails/SkipsModelValidations
+    user_sessions.where(client_id: client).destroy_all
+  end
 
   def sync_user_sessions
     active_client_ids = (tokens || {}).keys
