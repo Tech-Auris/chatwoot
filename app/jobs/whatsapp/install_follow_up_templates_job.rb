@@ -1,9 +1,8 @@
 # Creates the kit's follow-up templates (auris_fup_*) on the channel's WABA
 # right after a Cloud number is connected, so the n8n follow-up can go out of
 # the 24h window from day one. Skips any template the WABA already has with
-# the same name and language, so reconnecting never duplicates. Also run
-# inline from the Kit Auris screen, which shows the returned failures
-# ({ name => Meta error }).
+# the same name and language, so reconnecting never duplicates, and shares
+# the result with the other numbers on the same WABA.
 class Whatsapp::InstallFollowUpTemplatesJob < ApplicationJob
   queue_as :low
 
@@ -16,12 +15,16 @@ class Whatsapp::InstallFollowUpTemplatesJob < ApplicationJob
 
     results = missing.index_with { |template| install(channel, template) }
     channel.sync_templates
+    channel.share_templates_with_siblings
     cache_created(channel, results.select { |_, result| result[:success] })
     results.reject { |_, result| result[:success] }.to_h { |template, result| [template['name'], result[:error_message]] }
   end
 
   private
 
+  # Meta's "content in this language already exists": another number on the
+  # same WABA installed it first, which is what we wanted.
+  ALREADY_EXISTS_SUBCODE = 2_388_024
   def installed?(channel, template)
     Array(channel.reload.message_templates).any? do |cached|
       cached.is_a?(Hash) && cached['name'] == template['name'] && cached['language'] == Whatsapp::TemplateKit::LANGUAGE
@@ -30,6 +33,7 @@ class Whatsapp::InstallFollowUpTemplatesJob < ApplicationJob
 
   def install(channel, template)
     result = channel.provider_service.create_template(Whatsapp::TemplateKit.meta_payload(template))
+    result = { success: true } if result[:error_subcode] == ALREADY_EXISTS_SUBCODE
     if result[:success]
       Rails.logger.info("[TemplateKit] account=#{channel.account_id} channel=#{channel.id} installed #{template['name']}")
     else

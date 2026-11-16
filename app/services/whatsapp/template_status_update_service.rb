@@ -68,7 +68,12 @@ class Whatsapp::TemplateStatusUpdateService
   # toast the moment Meta approves / rejects / pauses a template — no page
   # reload, no need to click Sync. Payload matches the shape the frontend
   # listener in dashboard/helper/actionCable.js expects (event + data).
+  # Meta sends the event to every number on the WABA, so the lock keeps it to
+  # one toast per account.
   def broadcast_status_change(template, previous_status)
+    lock_key = "meta_template_status_toast:#{@channel.account_id}:#{template['id']}:#{new_status}"
+    return unless Redis::Alfred.set(lock_key, 1, nx: true, ex: 5.minutes.to_i)
+
     ActionCable.server.broadcast(
       "account_#{@channel.account_id}",
       {

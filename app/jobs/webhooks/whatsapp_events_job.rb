@@ -208,7 +208,7 @@ class Webhooks::WhatsappEventsJob < MutexApplicationJob
     return unless template_status_from_official_number?(params[:phone_number], waba_id)
 
     service = TEMPLATE_EVENT_SERVICES[params.dig(:entry, 0, :changes, 0, :field).to_s].constantize
-    channels_by_waba_id(waba_id).each { |channel| service.new(channel, event_value).perform }
+    Channel::Whatsapp.cloud_on_waba(waba_id).each { |channel| service.new(channel, event_value).perform }
   end
 
   def template_status_from_official_number?(phone_number, waba_id)
@@ -217,11 +217,6 @@ class Webhooks::WhatsappEventsJob < MutexApplicationJob
 
     Rails.logger.warn("[whatsapp] template_status_update rejected: WABA id=#{waba_id} on the URL of #{phone_number}")
     false
-  end
-
-  def channels_by_waba_id(waba_id)
-    Channel::Whatsapp.where(provider: 'whatsapp_cloud')
-                     .where("provider_config ->> 'business_account_id' = ?", waba_id)
   end
 
   def get_channel_from_wb_payload(wb_params)

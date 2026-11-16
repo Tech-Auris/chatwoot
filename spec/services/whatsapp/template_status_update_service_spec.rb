@@ -112,6 +112,19 @@ RSpec.describe Whatsapp::TemplateStatusUpdateService do
       described_class.new(channel, payload).perform
     end
 
+    it 'broadcasts once per account when Meta sends the event to every number on the WABA' do
+      sibling = create(:channel_whatsapp, account: channel.account, provider: 'whatsapp_cloud', validate_provider_config: false,
+                                          sync_templates: false, message_templates: cached_templates)
+      payload = { 'event' => 'APPROVED', 'message_template_id' => 111 }
+      allow(ActionCable.server).to receive(:broadcast)
+
+      described_class.new(channel, payload).perform
+      described_class.new(sibling, payload).perform
+
+      expect(ActionCable.server).to have_received(:broadcast).once
+      expect(sibling.reload.message_templates.first['status']).to eq('APPROVED')
+    end
+
     it 'does not broadcast when Meta replays the same status (webhook retry)' do
       # Cache already has PENDING for id=111; a re-delivered PENDING must
       # not toast the operator again.

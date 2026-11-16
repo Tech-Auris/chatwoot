@@ -120,6 +120,18 @@ RSpec.describe 'Meta Templates API', type: :request do
       expect(response.parsed_body['templates'].first['status']).to eq('PENDING')
     end
 
+    it 'returns 422 and keeps the last sync time when Meta refuses the list' do
+      allow_any_instance_of(Channel::Whatsapp).to receive(:sync_templates).and_return(false) # rubocop:disable RSpec/AnyInstance
+
+      expect do
+        post "/api/v2/accounts/#{account.id}/meta_templates/sync",
+             params: { inbox_id: cloud_inbox.id }, headers: admin.create_new_auth_token
+      end.not_to(change { cloud_channel.reload.message_templates_last_updated })
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.parsed_body['error']).to be_present
+    end
+
     it 'returns 422 with a friendly error when Meta refresh raises' do
       allow_any_instance_of(Channel::Whatsapp).to receive(:sync_templates).and_raise(StandardError, 'boom') # rubocop:disable RSpec/AnyInstance
 
@@ -759,6 +771,65 @@ RSpec.describe 'Meta Templates API', type: :request do
                                                                               headers: agent.create_new_auth_token
 
       expect(response).to have_http_status(:unauthorized)
+    end
+  end
+
+  describe 'inboxes on the same WABA' do
+    # Other account on purpose: siblings are found by WABA, not by account.
+    let!(:sibling) { create(:channel_whatsapp, provider: 'whatsapp_cloud', validate_provider_config: false, sync_templates: false) }
+    let!(:other_waba) { create(:channel_whatsapp, provider: 'whatsapp_cloud', validate_provider_config: false, sync_templates: false) }
+    let(:provider) { instance_double(Whatsapp::Providers::WhatsappCloudService) }
+    let(:template_body) { { name: 'novo_template', language: 'pt_BR', category: 'UTILITY', components: [{ type: 'BODY', text: 'Oi' }] } }
+
+    before do
+      other_waba.update_columns(provider_config: other_waba.provider_config.merge('business_account_id' => 'other')) # rubocop:disable Rails/SkipsModelValidations
+      # rubocop:disable RSpec/AnyInstance
+      allow_any_instance_of(Channel::Whatsapp).to receive(:provider_service).and_return(provider)
+      allow_any_instance_of(Channel::Whatsapp).to receive(:sync_templates).and_return(true)
+      # rubocop:enable RSpec/AnyInstance
+    end
+
+    def expect_shared_with_sibling_only
+      expect(Channels::Whatsapp::TemplatesCopyJob).to have_been_enqueued.with(sibling, cloud_channel)
+      expect(Channels::Whatsapp::TemplatesCopyJob).not_to have_been_enqueued.with(other_waba, anything)
+    end
+
+    it 'shares a created template' do
+      allow(provider).to receive(:create_template).and_return(success: true, template: { 'id' => '999', 'status' => 'PENDING' })
+
+      post "/api/v2/accounts/#{account.id}/meta_templates",
+           params: { inbox_id: cloud_inbox.id, template: template_body }, headers: admin.create_new_auth_token
+
+      expect(response).to have_http_status(:created)
+      expect_shared_with_sibling_only
+    end
+
+    it 'shares an edited template' do
+      allow(provider).to receive(:update_template).and_return(success: true, template: { 'success' => true })
+
+      patch "/api/v2/accounts/#{account.id}/meta_templates/123",
+            params: { inbox_id: cloud_inbox.id, template: template_body.slice(:category, :components) }, headers: admin.create_new_auth_token
+
+      expect(response).to have_http_status(:success)
+      expect_shared_with_sibling_only
+    end
+
+    it 'shares a deleted template' do
+      allow(provider).to receive(:delete_template).and_return(success: true)
+
+      delete "/api/v2/accounts/#{account.id}/meta_templates/123",
+             params: { inbox_id: cloud_inbox.id }, headers: admin.create_new_auth_token
+
+      expect(response).to have_http_status(:success)
+      expect_shared_with_sibling_only
+    end
+
+    it 'shares a manual sync' do
+      post "/api/v2/accounts/#{account.id}/meta_templates/sync",
+           params: { inbox_id: cloud_inbox.id }, headers: admin.create_new_auth_token
+
+      expect(response).to have_http_status(:success)
+      expect_shared_with_sibling_only
     end
   end
 end
