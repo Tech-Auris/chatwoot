@@ -109,6 +109,14 @@ class Api::V2::Accounts::MetaTemplatesController < Api::V1::Accounts::BaseContro
     }
   end
 
+  # Installs the follow-up templates the WABA is still missing (the same job
+  # that runs when the number connects) and returns the refreshed kit plus
+  # the Meta error of any template that could not be created.
+  def install_follow_up
+    failures = Whatsapp::InstallFollowUpTemplatesJob.perform_now(@inbox.channel)
+    render json: { templates: Whatsapp::TemplateKit.for_inbox(@inbox.reload), failures: failures }
+  end
+
   # Per-template send funnel derived from our own outgoing messages: how
   # many attempts, how many Meta accepted (source_id present), how many
   # were later delivered / read / failed. The frontend renders this inside

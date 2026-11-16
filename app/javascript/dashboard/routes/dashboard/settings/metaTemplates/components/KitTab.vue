@@ -52,6 +52,41 @@ const fetchKit = async () => {
 
 watch(() => [props.inboxId, props.reloadKey], fetchKit, { immediate: true });
 
+const installing = ref(false);
+
+const canInstallFollowUp = group =>
+  props.canCreate &&
+  group === 'follow_up' &&
+  kit.value.some(
+    template => template.group === 'follow_up' && !template.existing_status
+  );
+
+const installFollowUp = async () => {
+  installing.value = true;
+  try {
+    const { data } = await MetaTemplatesAPI.installFollowUp({
+      inboxId: props.inboxId,
+    });
+    kit.value = data.templates || [];
+    const failures = Object.entries(data.failures || {});
+    useAlert(
+      failures.length
+        ? t('META_TEMPLATES.KIT.INSTALL_FAILED', {
+            errors: failures
+              .map(([name, error]) => `${name}: ${error}`)
+              .join(' · '),
+          })
+        : t('META_TEMPLATES.KIT.INSTALL_SUCCESS')
+    );
+  } catch (err) {
+    useAlert(
+      err?.response?.data?.error || t('META_TEMPLATES.KIT.INSTALL_ERROR')
+    );
+  } finally {
+    installing.value = false;
+  }
+};
+
 const useTemplate = template => {
   router.push({
     name: 'meta_templates_new',
@@ -70,13 +105,26 @@ const useTemplate = template => {
       :key="section.group"
       class="grid gap-3"
     >
-      <div>
-        <h3 class="text-sm font-medium text-n-slate-12">
-          {{ t(`META_TEMPLATES.KIT.GROUPS.${section.group}.TITLE`) }}
-        </h3>
-        <p class="text-xs text-n-slate-11">
-          {{ t(`META_TEMPLATES.KIT.GROUPS.${section.group}.DESCRIPTION`) }}
-        </p>
+      <div class="flex items-end justify-between gap-3">
+        <div>
+          <h3 class="text-sm font-medium text-n-slate-12">
+            {{ t(`META_TEMPLATES.KIT.GROUPS.${section.group}.TITLE`) }}
+          </h3>
+          <p class="text-xs text-n-slate-11">
+            {{ t(`META_TEMPLATES.KIT.GROUPS.${section.group}.DESCRIPTION`) }}
+          </p>
+        </div>
+        <Button
+          v-if="canInstallFollowUp(section.group)"
+          sm
+          faded
+          blue
+          class="shrink-0"
+          :label="t('META_TEMPLATES.KIT.INSTALL')"
+          :is-loading="installing"
+          :disabled="installing"
+          @click="installFollowUp"
+        />
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
         <article

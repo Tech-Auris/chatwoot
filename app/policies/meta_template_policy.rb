@@ -39,6 +39,11 @@ class MetaTemplatePolicy < ApplicationPolicy
     create?
   end
 
+  # Installs the kit's missing follow-up templates on the WABA.
+  def install_follow_up?
+    create?
+  end
+
   def destroy?
     create?
   end
