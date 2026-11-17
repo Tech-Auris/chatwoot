@@ -156,6 +156,17 @@ RSpec.describe 'MCP OAuth', type: :request do
       expect(response).to have_http_status(:unauthorized)
     end
 
+    it 'lets a super admin administrator keep reading with the MCP off' do
+      super_admin = create(:super_admin)
+      create(:account_user, account: account, user: super_admin, role: :administrator)
+      super_admin_headers = { api_access_token: token_for(super_admin) }
+      account.disable_mcp!
+
+      get "/api/v1/accounts/#{account.id}/conversations/meta", headers: super_admin_headers, as: :json
+
+      expect(response).to have_http_status(:success)
+    end
+
     it 'refreshes, and the user can revoke the connector from the profile' do
       token
       refresh = Rack::Utils.parse_query(authorize_as(admin).query)['code'].then { |code| exchange(code)['refresh_token'] }
