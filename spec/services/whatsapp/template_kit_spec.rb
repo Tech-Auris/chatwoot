@@ -18,10 +18,28 @@ RSpec.describe Whatsapp::TemplateKit do
       quick_replies = %w[Confirmar Reagendar Cancelar].map { |text| { 'type' => 'QUICK_REPLY', 'text' => text } }
       expect(buttons).to eq('type' => 'BUTTONS', 'buttons' => quick_replies)
     end
+
+    it 'uses the translated body and examples for another language' do
+      payload = described_class.meta_payload(described_class.find('auris_fup_fim'), 'es')
+
+      expect(payload).to include('name' => 'auris_fup_fim', 'language' => 'es', 'category' => 'UTILITY')
+      body = payload['components'].first
+      expect(body['text']).to eq("Hola,\n\n{{mensagem_escala}}\n\nGracias por tu atención.")
+      expect(body['example']['body_text_named_params'].first['example']).to start_with('Voy a avisar')
+    end
+  end
+
+  describe '.follow_up_payloads' do
+    it 'installs auris_fup_fim in the four follow-up languages' do
+      languages = described_class.follow_up_payloads.select { |payload| payload['name'] == 'auris_fup_fim' }.pluck('language')
+
+      expect(languages).to eq(%w[pt_BR es en fr])
+    end
   end
 
   it 'never starts or ends a body with a variable, which Meta rejects' do
-    bodies = described_class.templates.map { |template| template['body'].strip }
+    translations = described_class.templates.flat_map { |template| Array(template['translations']&.values) }
+    bodies = (described_class.templates + translations).map { |template| template['body'].strip }
 
     expect(bodies.select { |body| body.start_with?('{{') || body.end_with?('}}') }).to be_empty
   end

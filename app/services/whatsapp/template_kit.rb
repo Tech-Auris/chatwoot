@@ -1,7 +1,8 @@
 # The Auris template kit (config/meta_template_kit.yml): the follow-up
 # templates installed on every Cloud number, the system templates the Auris
-# engine sends by name, and the suggested starting points. The kit is pt_BR
-# only, so the clinic data it fills in is written in Portuguese.
+# engine sends by name, and the suggested starting points. The kit is pt_BR,
+# so the clinic data it fills in is written in Portuguese; a follow-up template
+# may also carry translations, installed alongside it.
 module Whatsapp::TemplateKit
   CONFIG = YAML.load_file(Rails.root.join('config/meta_template_kit.yml')).freeze
   LANGUAGE = 'pt_BR'.freeze
@@ -43,22 +44,31 @@ module Whatsapp::TemplateKit
     text.to_s.scan(VARIABLE_REGEX).flatten.uniq
   end
 
+  # The Meta payloads that install the follow-up templates: one per language.
+  def follow_up_payloads
+    follow_up.flat_map { |template| languages(template).map { |language| meta_payload(template, language) } }
+  end
+
+  def languages(template)
+    [LANGUAGE, *Array(template['translations']&.keys)]
+  end
+
   # Meta `/message_templates` payload with NAMED parameters.
-  def meta_payload(template)
-    components = [body_component(template['body'])]
+  def meta_payload(template, language = LANGUAGE)
+    translation = template.dig('translations', language) || {}
+    components = [body_component(translation['body'] || template['body'], translation['examples'] || {})]
     components << buttons_component(template['buttons']) if template['buttons'].present?
-    { 'name' => template['name'], 'language' => LANGUAGE, 'category' => template['category'],
+    { 'name' => template['name'], 'language' => language, 'category' => template['category'],
       'parameter_format' => 'NAMED', 'components' => components }
   end
 
-  def body_component(text)
+  def body_component(text, example_overrides = {})
     component = { 'type' => 'BODY', 'text' => text }
     variables = body_variables(text)
     return component if variables.empty?
 
-    component.merge('example' => {
-                      'body_text_named_params' => variables.map { |name| { 'param_name' => name, 'example' => examples.fetch(name, name) } }
-                    })
+    named_params = variables.map { |name| { 'param_name' => name, 'example' => example_overrides[name] || examples.fetch(name, name) } }
+    component.merge('example' => { 'body_text_named_params' => named_params })
   end
 
   def buttons_component(buttons)

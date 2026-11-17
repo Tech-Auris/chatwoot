@@ -2,6 +2,9 @@ require 'rails_helper'
 
 RSpec.describe Whatsapp::InstallFollowUpTemplatesJob do
   let(:channel) { create(:channel_whatsapp, provider: 'whatsapp_cloud', validate_provider_config: false, sync_templates: false) }
+  let(:failure_labels) do
+    ['auris_fup_geral', 'auris_fup_geral2', 'auris_fup_geral3', 'auris_fup_fim', 'auris_fup_fim (es)', 'auris_fup_fim (en)', 'auris_fup_fim (fr)']
+  end
   let(:provider_service) { instance_double(Whatsapp::Providers::WhatsappCloudService, create_template: { success: true }) }
 
   before do
@@ -9,12 +12,23 @@ RSpec.describe Whatsapp::InstallFollowUpTemplatesJob do
     allow(channel).to receive(:sync_templates)
   end
 
-  it 'creates the three follow-up templates' do
+  it 'creates the follow-up templates' do
     described_class.perform_now(channel)
 
     %w[auris_fup_geral auris_fup_geral2 auris_fup_geral3].each do |name|
       expect(provider_service).to have_received(:create_template).with(hash_including('name' => name, 'language' => 'pt_BR',
                                                                                       'category' => 'MARKETING', 'parameter_format' => 'NAMED'))
+    end
+  end
+
+  it 'creates auris_fup_fim in every follow-up language' do
+    described_class.perform_now(channel)
+
+    { 'pt_BR' => 'Olá,', 'es' => 'Hola,', 'en' => 'Hello,', 'fr' => 'Bonjour,' }.each do |language, greeting|
+      expect(provider_service).to have_received(:create_template).with(
+        hash_including('name' => 'auris_fup_fim', 'language' => language, 'category' => 'UTILITY',
+                       'components' => [hash_including('text' => start_with(greeting))])
+      )
     end
   end
 
@@ -24,8 +38,17 @@ RSpec.describe Whatsapp::InstallFollowUpTemplatesJob do
 
     described_class.perform_now(channel)
 
-    expect(provider_service).to have_received(:create_template).twice
+    expect(provider_service).to have_received(:create_template).exactly(6).times
     expect(provider_service).not_to have_received(:create_template).with(hash_including('name' => 'auris_fup_geral'))
+  end
+
+  it 'only creates the languages the WABA is missing' do
+    channel.update_columns(message_templates: [{ 'name' => 'auris_fup_fim', 'language' => 'pt_BR', 'status' => 'APPROVED' }]) # rubocop:disable Rails/SkipsModelValidations
+
+    described_class.perform_now(channel)
+
+    expect(provider_service).not_to have_received(:create_template).with(hash_including('name' => 'auris_fup_fim', 'language' => 'pt_BR'))
+    expect(provider_service).to have_received(:create_template).with(hash_including('name' => 'auris_fup_fim', 'language' => 'es'))
   end
 
   it 'keeps going when Meta refuses one of them and returns the failures' do
@@ -33,8 +56,8 @@ RSpec.describe Whatsapp::InstallFollowUpTemplatesJob do
 
     failures = described_class.perform_now(channel)
 
-    expect(provider_service).to have_received(:create_template).exactly(3).times
-    expect(failures).to eq(%w[auris_fup_geral auris_fup_geral2 auris_fup_geral3].index_with { 'Invalid parameter' })
+    expect(provider_service).to have_received(:create_template).exactly(7).times
+    expect(failures).to eq(failure_labels.index_with { 'Invalid parameter' })
   end
 
   it 'caches the created templates the sync does not return yet' do

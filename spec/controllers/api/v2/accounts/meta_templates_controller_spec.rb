@@ -759,7 +759,7 @@ RSpec.describe 'Meta Templates API', type: :request do
                                                                               headers: admin.create_new_auth_token
 
       expect(response).to have_http_status(:ok)
-      expect(provider).to have_received(:create_template).twice
+      expect(provider).to have_received(:create_template).exactly(6).times
       expect(response.parsed_body['failures']).to eq('auris_fup_geral3' => 'Invalid parameter')
       kit = response.parsed_body['templates'].index_by { |template| template['name'] }
       expect(kit['auris_fup_geral2']).to include('existing_status' => 'PENDING')
