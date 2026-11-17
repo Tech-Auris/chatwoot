@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_11_16_180000) do
+ActiveRecord::Schema[7.1].define(version: 2026_11_17_120100) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -2116,15 +2116,32 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_16_180000) do
     t.index ["status", "scheduled_at"], name: "index_scheduled_messages_on_status_and_scheduled_at"
   end
 
-  create_table "secretary_special_scenarios", force: :cascade do |t|
+  create_table "secretary_confirmation_send_logs", force: :cascade do |t|
     t.bigint "account_id", null: false
-    t.string "name", null: false
-    t.text "situacao"
-    t.text "gatilho"
-    t.text "instrucao"
+    t.text "calendar_id", default: "", null: false
+    t.text "event_id", null: false
+    t.string "reminder_type", null: false
+    t.datetime "sent_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.index ["account_id", "event_id", "calendar_id", "reminder_type"], name: "index_secretary_confirmation_send_logs_uniqueness", unique: true
+  end
+
+  create_table "secretary_confirmations", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "versao_workflow"
+    t.text "calendar_id"
+    t.string "inbox_id"
+    t.integer "unidade_id"
+    t.text "message"
+    t.text "message_96h"
+    t.text "message_72h"
+    t.text "message_48h"
+    t.text "message_hj"
+    t.text "message_2h"
+    t.text "message_30m"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["account_id", "name"], name: "index_secretary_special_scenarios_on_account_id_and_name"
+    t.index ["account_id"], name: "index_secretary_confirmations_on_account_id"
+    t.index ["versao_workflow"], name: "index_secretary_confirmations_on_versao_workflow"
   end
 
   create_table "secretary_resource_types", force: :cascade do |t|
@@ -2142,6 +2159,17 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_16_180000) do
     t.datetime "updated_at", null: false
     t.index ["account_id", "key", "idioma"], name: "index_secretary_resources_on_account_id_and_key_and_idioma"
     t.index ["secretary_resource_type_id"], name: "index_secretary_resources_on_secretary_resource_type_id"
+  end
+
+  create_table "secretary_special_scenarios", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "name", null: false
+    t.text "situacao"
+    t.text "gatilho"
+    t.text "instrucao"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "name"], name: "index_secretary_special_scenarios_on_account_id_and_name"
   end
 
   create_table "secretary_versions", force: :cascade do |t|
@@ -2509,9 +2537,11 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_16_180000) do
   add_foreign_key "scheduled_messages", "inboxes"
   add_foreign_key "scheduled_messages", "messages"
   add_foreign_key "scheduled_messages", "recurring_scheduled_messages"
-  add_foreign_key "secretary_special_scenarios", "accounts"
+  add_foreign_key "secretary_confirmation_send_logs", "accounts"
+  add_foreign_key "secretary_confirmations", "accounts"
   add_foreign_key "secretary_resources", "accounts"
   add_foreign_key "secretary_resources", "secretary_resource_types"
+  add_foreign_key "secretary_special_scenarios", "accounts"
   add_foreign_key "terms_acceptance_requests", "terms_versions"
   add_foreign_key "terms_acceptance_requests", "users", column: "created_by_id"
   add_foreign_key "terms_acceptances", "account_users"
