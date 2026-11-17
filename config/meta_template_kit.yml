@@ -10,6 +10,8 @@
 # Bodies use Meta's NAMED parameters ({{nome}}). Bracketed tokens such as
 # [nome da clínica] are clinic data replaced when the kit is served.
 # Meta rejects a body that starts or ends with a variable.
+# `translations` (follow_up only) installs the template in other languages too,
+# each with its own body and, optionally, its own variable examples.
 examples:
   nome: Maria
   dia: 15/09/2026
@@ -18,6 +20,7 @@ examples:
   procedimento: consulta de avaliação
   link: https://exemplo.com.br
   mensagem: nosso atendimento estará suspenso no feriado de 12/10.
+  mensagem_escala: Vou acionar a nossa equipe para te ajudar melhor neste ponto. Ela vai falar com você em instantes.
 
 templates:
   # Follow-up
@@ -35,6 +38,26 @@ templates:
     group: follow_up
     category: MARKETING
     body: '👀 {{mensagem}} Quando puder, me responde por aqui.'
+  # Sent at the end of the follow-up, before handing the lead to the team, with
+  # the account's "message to the patient before escalating". Also installed in
+  # the other languages the follow-up speaks.
+  - name: auris_fup_fim
+    group: follow_up
+    category: UTILITY
+    body: "Olá,\n\n{{mensagem_escala}}\n\nAgradecemos sua atenção."
+    translations:
+      es:
+        body: "Hola,\n\n{{mensagem_escala}}\n\nGracias por tu atención."
+        examples:
+          mensagem_escala: Voy a avisar a nuestro equipo para ayudarte mejor en este punto. Te escribirá en unos instantes.
+      en:
+        body: "Hello,\n\n{{mensagem_escala}}\n\nThank you for your attention."
+        examples:
+          mensagem_escala: I'm bringing in our team to help you better with this. They'll get in touch with you shortly.
+      fr:
+        body: "Bonjour,\n\n{{mensagem_escala}}\n\nMerci pour votre attention."
+        examples:
+          mensagem_escala: Je fais appel à notre équipe pour mieux vous aider sur ce point. Elle vous contactera dans quelques instants.
 
   # System: reminders
   - name: lembrete_72h
