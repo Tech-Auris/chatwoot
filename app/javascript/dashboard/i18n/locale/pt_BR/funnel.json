@@ -50,7 +50,10 @@
       "SHOW_SUMMARY": "Ver resumo da conversa",
       "SHOW_LOSS_REASON": "Ver motivo da perda",
       "OPEN_CONTACT": "Abrir contato",
-      "OPEN_CONVERSATION": "Abrir conversa"
+      "OPEN_CONVERSATION": "Abrir conversa",
+      "NEXT_APPOINTMENT": "Próximo agendamento",
+      "MORE_APPOINTMENTS_BADGE": "+{count}",
+      "MORE_APPOINTMENTS": "Mais {count} agendamento(s) em aberto"
     },
     "LIST": {
       "CONTACT": "Contato",

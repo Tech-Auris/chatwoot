@@ -14,4 +14,11 @@ class Appointment < ApplicationRecord
   enum :status, { scheduled: 0, rescheduled: 1, confirmed: 2, attended: 3, no_show: 4, canceled: 5 }
 
   scope :open, -> { where(status: OPEN_STATUSES) }
+
+  # The one the funnel card highlights among a lead's open appointments: the
+  # nearest upcoming, else the latest one (overdue or still undated).
+  def self.next_of(appointments)
+    upcoming = appointments.select { |a| a.scheduled_for&.future? }
+    upcoming.min_by(&:scheduled_for) || appointments.max_by { |a| a.scheduled_for || a.created_at }
+  end
 end

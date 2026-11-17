@@ -26,6 +26,12 @@ json.labels labels
 json.ai_enabled conversation.ai_status_enabled?
 json.follow_up conversation.follow_up_badge
 json.loss_reason loss_reason ? { id: loss_reason.id, name: loss_reason.name } : nil
+# Open appointments n8n recorded for the lead (preloaded by the controller);
+# a lead in a closed stage (lost, attended) no longer shows them.
+appointments = funnel_stage&.closed? ? [] : conversation.open_appointments
+next_appointment = Appointment.next_of(appointments)
+json.next_appointment next_appointment&.slice(:id, :status, :scheduled_for, :professional_name, :procedure_name)
+json.open_appointments_count appointments.size
 json.contact do
   json.id contact.id
   json.name contact.name

@@ -50,7 +50,10 @@
       "SHOW_SUMMARY": "Show conversation summary",
       "SHOW_LOSS_REASON": "Show loss reason",
       "OPEN_CONTACT": "Open contact",
-      "OPEN_CONVERSATION": "Open conversation"
+      "OPEN_CONVERSATION": "Open conversation",
+      "NEXT_APPOINTMENT": "Next appointment",
+      "MORE_APPOINTMENTS_BADGE": "+{count}",
+      "MORE_APPOINTMENTS": "{count} more open appointment(s)"
     },
     "LIST": {
       "CONTACT": "Contact",

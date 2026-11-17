@@ -127,7 +127,7 @@ class Api::V1::Accounts::FunnelController < Api::V1::Accounts::BaseController
     # once per card, which is what pushed the endpoint past the statement
     # timeout on busy accounts.
     permitted_conversations
-      .includes(:inbox, :funnel_stage, :account, contact: { avatar_attachment: :blob })
+      .includes(:inbox, :funnel_stage, :account, :open_appointments, contact: { avatar_attachment: :blob })
       .where(funnel_stage_id: active_stage_ids)
   end
 
