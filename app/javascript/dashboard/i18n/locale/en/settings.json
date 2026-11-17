@@ -430,6 +430,7 @@
     "REPORTS_SLA": "SLA",
     "REPORTS_IA_HUMAN_DISTRIBUTION": "AI → Human",
     "REPORTS_FOLLOW_UP": "Follow-up",
+    "REPORTS_APPOINTMENTS": "Appointments",
     "REPORTS_BOT": "Bot",
     "REPORTS_AGENT": "Agents",
     "REPORTS_LABEL": "Labels",

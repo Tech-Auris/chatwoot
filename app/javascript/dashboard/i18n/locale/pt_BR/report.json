@@ -876,5 +876,37 @@
     },
     "ALL_DELIVERIES": "Todos os envios",
     "ALL_OUTCOMES": "Todos os resultados"
+  },
+  "APPOINTMENTS_REPORT": {
+    "HEADER": "Agendamentos",
+    "DESCRIPTION": "Os próximos agendamentos em aberto (agendados, reagendados ou confirmados), do mais próximo para o mais distante.",
+    "PERIOD": "Período",
+    "PRESETS": {
+      "TODAY": "Hoje",
+      "TOMORROW": "Amanhã",
+      "NEXT_7": "Próximos 7 dias",
+      "NEXT_30": "Próximos 30 dias",
+      "CUSTOM": "Personalizado"
+    },
+    "FROM": "De",
+    "TO": "Até",
+    "ALL_PROFESSIONALS": "Todos os profissionais",
+    "ALL_SOURCES": "Todas as origens",
+    "TOTAL": "{count} agendamento(s) no período",
+    "ERROR_LOAD": "Não foi possível carregar o relatório: {error}",
+    "LOADING": "Carregando…",
+    "EMPTY_STATE": "Nenhum agendamento neste período.",
+    "DASH": "—",
+    "HASH_ID": "#{id}",
+    "COLUMNS": {
+      "DATETIME": "Data e hora",
+      "STATUS": "Status",
+      "CONTACT": "Contato",
+      "PROFESSIONAL": "Profissional",
+      "PROCEDURE": "Procedimento",
+      "SOURCE": "Origem",
+      "CONVERSATION": "Conversa",
+      "INBOX": "Caixa"
+    }
   }
 }

@@ -80,6 +80,25 @@ describe('useUISettings', () => {
     );
   });
 
+  it('adds appointments right below scheduled messages for a saved order', () => {
+    const original = getUISettingsMock.value.conversation_sidebar_items_order;
+    getUISettingsMock.value.conversation_sidebar_items_order = [
+      { name: 'conversation_actions' },
+      { name: 'scheduled_messages' },
+      { name: 'macros' },
+    ];
+    const { conversationSidebarItemsOrder } = useUISettings();
+    expect(
+      conversationSidebarItemsOrder.value.slice(0, 4).map(i => i.name)
+    ).toEqual([
+      'conversation_actions',
+      'scheduled_messages',
+      'appointments',
+      'macros',
+    ]);
+    getUISettingsMock.value.conversation_sidebar_items_order = original;
+  });
+
   it('returns correct contact sidebar items order', () => {
     const { contactSidebarItemsOrder } = useUISettings();
     expect(contactSidebarItemsOrder.value).toEqual(

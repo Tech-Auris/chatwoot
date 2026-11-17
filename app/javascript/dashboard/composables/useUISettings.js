@@ -3,6 +3,7 @@ import { useStore, useStoreGetters } from 'dashboard/composables/store';
 
 export const DEFAULT_CONVERSATION_SIDEBAR_ITEMS_ORDER = Object.freeze([
   { name: 'scheduled_messages' },
+  { name: 'appointments' },
   { name: 'conversation_actions' },
   { name: 'macros' },
   { name: 'conversation_info' },
@@ -49,6 +50,12 @@ const useConversationSidebarItemsOrder = uiSettings => {
       if (!itemsOrderCopy.find(i => i.name === item.name)) {
         if (item.name === 'scheduled_messages') {
           itemsOrderCopy.unshift(item);
+        } else if (item.name === 'appointments') {
+          // Right below the scheduled messages, near the top.
+          const index = itemsOrderCopy.findIndex(
+            i => i.name === 'scheduled_messages'
+          );
+          itemsOrderCopy.splice(index + 1, 0, item);
         } else {
           itemsOrderCopy.push(item);
         }

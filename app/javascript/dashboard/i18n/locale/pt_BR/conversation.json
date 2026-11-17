@@ -527,6 +527,7 @@
       "CONTACT_DETAILS": "Detalhes do contato",
       "SCHEDULED_MESSAGES": "Mensagens agendadas",
       "OPEN_SCHEDULED_HUB": "Ver todas as agendadas da conta",
+      "APPOINTMENTS": "Agendamentos",
       "CONVERSATION_ACTIONS": "Ações da conversa",
       "CONVERSATION_LABELS": "Etiquetas da conversa",
       "CONVERSATION_INFO": "Informação da conversa",
@@ -566,6 +567,21 @@
         "FULFILLED": "Concluído",
         "PARTIALLY_FULFILLED": "Parcialmente Concluído",
         "UNFULFILLED": "Não concluído"
+      }
+    },
+    "APPOINTMENTS": {
+      "EMPTY": "Este contato ainda não tem agendamentos.",
+      "NO_DATE": "Sem data definida",
+      "SOURCE": "Origem: {source}",
+      "CLOSED_PROCEDURES": "Procedimentos fechados",
+      "UNNAMED_PROCEDURE": "Procedimento",
+      "STATUS": {
+        "SCHEDULED": "Agendado",
+        "RESCHEDULED": "Reagendado",
+        "CONFIRMED": "Confirmado",
+        "ATTENDED": "Compareceu",
+        "NO_SHOW": "Não compareceu",
+        "CANCELED": "Cancelado"
       }
     }
   },
