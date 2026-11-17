@@ -1,4 +1,24 @@
 ---
+- tag: v4.15.1-auris.1.80
+  published_at: '2026-11-17T20:00:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.80
+  notes:
+    en: |-
+      ### ✨ What's new
+
+      - **See the patient's appointment on the Funnel card (beta).** The card shows the next appointment's date and time in green, with the professional and procedure. A "+1", "+2"… means the patient has more appointments booked.
+      - **Every appointment of the patient in the conversation (beta).** In the right sidebar, open "Agendamentos" to see all of the patient's appointments, with status, professional and what was closed at the visit.
+      - **Upcoming appointments in one place (beta).** In Relatórios → Agendamentos, see who's booked for today, tomorrow or the coming days, and filter by professional.
+
+      Appointments are in beta and show up only for clinics whose scheduling system is already connected to AurisChat. Other scheduling systems are being added gradually.
+    pt_BR: |-
+      ### ✨ Novidades
+
+      - **Veja o agendamento do paciente no card do Funil (beta).** O card mostra em verde a data e o horário do próximo agendamento, com o profissional e o procedimento. Um "+1", "+2"… indica que o paciente tem outros agendamentos marcados.
+      - **Todos os agendamentos do paciente na conversa (beta).** Na lateral direita, abra "Agendamentos" para ver todos os agendamentos do paciente, com status, profissional e o que foi fechado no atendimento.
+      - **Próximos agendamentos num lugar só (beta).** Em Relatórios → Agendamentos, veja quem está marcado para hoje, amanhã ou os próximos dias, e filtre por profissional.
+
+      Os agendamentos estão em fase beta e aparecem só para clínicas cujo sistema de agenda já está integrado ao AurisChat. Os demais sistemas estão sendo liberados aos poucos.
 - tag: v4.15.1-auris.1.79
   published_at: '2026-11-16T20:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.79
@@ -475,27 +495,3 @@
       ### ⚡ Melhorias
 
       - **Ícone de "Não atendidas".** Antes era quase igual ao de *Agendadas* (dois relógios); agora é um balão com aviso, para os dois ficarem distinguíveis num olhar.
-- tag: v4.15.1-auris.1.60
-  published_at: '2026-09-23T21:00:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.60
-  notes:
-    en: |-
-      ### 🐛 Fixes
-
-      - **Funil opens on busy accounts.** The Funil screen was showing an error on accounts with a lot of leads. Every column now brings the 25 most recent leads and offers a *Carregar mais* button at the bottom to page through the rest.
-
-      ### ✨ What's new
-
-      - **Mídia split by type.** The Mídia screen now has five tabs — Imagens, Vídeos, Áudios, Documentos and Links — so you jump straight to what you're looking for.
-      - **Real thumbnails on Mídia.** Audio rows show a sound-wave icon; video rows try to show the first frame from the file itself, with a play icon as a fallback when the browser can't preview it.
-      - **Mídia scrolls to older items.** Reaching the end of the list now brings more items automatically — before, only the first batch was loaded.
-    pt_BR: |-
-      ### 🐛 Correções
-
-      - **Funil abre em contas com muitos leads.** A tela do Funil estava dando erro em contas com muitos leads. Cada coluna agora traz os 25 leads mais recentes com um botão *Carregar mais* no rodapé para trazer os próximos aos poucos.
-
-      ### ✨ Novidades
-
-      - **Mídia separada por tipo.** A tela Mídia agora tem cinco abas — Imagens, Vídeos, Áudios, Documentos e Links — para você ir direto no que procura.
-      - **Miniaturas de verdade na Mídia.** Áudios ganharam ícone de onda sonora; vídeos tentam mostrar o primeiro frame do arquivo, com um ícone de play como alternativa quando o navegador não consegue.
-      - **Mídia rola para itens mais antigos.** Ao chegar no fim da lista, mais mídias aparecem automaticamente — antes só a primeira leva era carregada.
