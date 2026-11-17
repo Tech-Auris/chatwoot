@@ -192,6 +192,7 @@ Rails.application.routes.draw do
           resources :secretary_resources, only: [] do
             get :lookup, on: :collection
           end
+          resources :secretary_confirmation_send_logs, only: [:index, :create]
           resource :funnel, only: [:show], controller: 'funnel' do
             collection do
               post :move
@@ -643,6 +644,7 @@ Rails.application.routes.draw do
       resources :releases, only: [:index]
 
       resources :erp_sources, only: [:index]
+      resources :secretary_confirmations, only: [:index]
 
       resources :languages, only: [:index]
 
@@ -1105,6 +1107,7 @@ Rails.application.routes.draw do
       resources :secretary_versions, only: [:index, :new, :create, :show, :edit, :update]
       resources :secretary_special_scenarios, only: [:index, :new, :create, :show, :edit, :update, :destroy]
       resources :secretary_resources, only: [:index, :new, :create, :show, :edit, :update, :destroy]
+      resources :secretary_confirmations, only: [:index, :new, :create, :show, :edit, :update, :destroy]
       resources :account_statuses, only: [:index, :show, :edit, :update]
       resources :ai_providers, only: [:index, :new, :create, :show, :edit, :update]
       resources :ai_models, only: [:index, :new, :create, :show, :edit, :update]
