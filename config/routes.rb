@@ -342,6 +342,7 @@ Rails.application.routes.draw do
             end
             scope module: :contacts do
               resources :conversations, only: [:index]
+              resources :appointments, only: [:index]
               resources :contact_inboxes, only: [:create]
               resources :group_members, only: [:index, :create, :destroy] do
                 patch ':member_id', to: 'group_members#update', on: :collection
@@ -734,6 +735,7 @@ Rails.application.routes.draw do
           end
           resources :ia_human_distribution_reports, only: [:index]
           resources :follow_up_reports, only: [:index]
+          resources :appointment_reports, only: [:index]
           resources :meta_templates, only: %i[index create update destroy] do
             collection do
               get :kit

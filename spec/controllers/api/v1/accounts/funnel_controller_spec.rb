@@ -49,7 +49,10 @@ RSpec.describe 'Funnel API', type: :request do
             as: :json
       end
 
-      12.times { create(:conversation, account: account, inbox: inbox, funnel_stage: novo) }
+      12.times do
+        conversation = create(:conversation, account: account, inbox: inbox, funnel_stage: novo)
+        create(:appointment, account: account, conversation: conversation, scheduled_for: 1.day.from_now)
+      end
       grown = query_count do
         get "/api/v1/accounts/#{account.id}/funnel",
             headers: admin.create_new_auth_token,
@@ -76,6 +79,34 @@ RSpec.describe 'Funnel API', type: :request do
       perdido_payload = response.parsed_body.dig('payload', 'stages').find { |s| s['id'] == perdido.id }
       card = perdido_payload['conversations'].first
       expect(card['loss_reason']).to include('id' => loss_reason.id, 'name' => 'Sem interesse')
+    end
+
+    it 'ships the next open appointment and the open count on the card' do
+      conversation = create(:conversation, account: account, inbox: inbox, funnel_stage: novo)
+      create(:appointment, account: account, conversation: conversation, external_id: 'later', scheduled_for: 5.days.from_now)
+      create(:appointment, account: account, conversation: conversation, external_id: 'next', scheduled_for: 2.days.from_now,
+                           professional_name: 'Dra. Ana', procedure_name: 'Avaliação', status: :confirmed)
+      create(:appointment, account: account, conversation: conversation, external_id: 'done', scheduled_for: 1.day.from_now, status: :attended)
+      bare = create(:conversation, account: account, inbox: inbox, funnel_stage: novo)
+
+      get "/api/v1/accounts/#{account.id}/funnel", headers: admin.create_new_auth_token, as: :json
+
+      cards = response.parsed_body.dig('payload', 'stages').find { |s| s['id'] == novo.id }['conversations'].index_by { |c| c['id'] }
+      expect(cards[conversation.display_id]['next_appointment']).to include(
+        'status' => 'confirmed', 'professional_name' => 'Dra. Ana', 'procedure_name' => 'Avaliação'
+      )
+      expect(cards[conversation.display_id]['open_appointments_count']).to eq(2)
+      expect(cards[bare.display_id]).to include('next_appointment' => nil, 'open_appointments_count' => 0)
+    end
+
+    it 'hides the appointment of a lead in a closed stage' do
+      lost = create(:conversation, account: account, inbox: inbox, funnel_stage: perdido)
+      create(:appointment, account: account, conversation: lost, scheduled_for: 1.day.from_now)
+
+      get "/api/v1/accounts/#{account.id}/funnel", headers: admin.create_new_auth_token, as: :json
+
+      card = response.parsed_body.dig('payload', 'stages').find { |s| s['id'] == perdido.id }['conversations'].first
+      expect(card).to include('next_appointment' => nil, 'open_appointments_count' => 0)
     end
 
     it 'drops resolved conversations when hide_resolved is set' do

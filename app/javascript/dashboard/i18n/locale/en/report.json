@@ -876,5 +876,37 @@
     },
     "ALL_DELIVERIES": "All deliveries",
     "ALL_OUTCOMES": "All results"
+  },
+  "APPOINTMENTS_REPORT": {
+    "HEADER": "Appointments",
+    "DESCRIPTION": "Upcoming open appointments (scheduled, rescheduled or confirmed), nearest first.",
+    "PERIOD": "Period",
+    "PRESETS": {
+      "TODAY": "Today",
+      "TOMORROW": "Tomorrow",
+      "NEXT_7": "Next 7 days",
+      "NEXT_30": "Next 30 days",
+      "CUSTOM": "Custom"
+    },
+    "FROM": "From",
+    "TO": "To",
+    "ALL_PROFESSIONALS": "All professionals",
+    "ALL_SOURCES": "All sources",
+    "TOTAL": "{count} appointment(s) in the period",
+    "ERROR_LOAD": "Could not load the report: {error}",
+    "LOADING": "Loading…",
+    "EMPTY_STATE": "No appointments in this period.",
+    "DASH": "—",
+    "HASH_ID": "#{id}",
+    "COLUMNS": {
+      "DATETIME": "Date and time",
+      "STATUS": "Status",
+      "CONTACT": "Contact",
+      "PROFESSIONAL": "Professional",
+      "PROCEDURE": "Procedure",
+      "SOURCE": "Source",
+      "CONVERSATION": "Conversation",
+      "INBOX": "Inbox"
+    }
   }
 }

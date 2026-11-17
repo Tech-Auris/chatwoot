@@ -16,6 +16,7 @@ import ConversationParticipant from './ConversationParticipant.vue';
 import ContactInfo from './contact/ContactInfo.vue';
 import GroupContactInfo from './contact/GroupContactInfo.vue';
 import ContactNotes from './contact/ContactNotes.vue';
+import ContactAppointments from './contact/ContactAppointments.vue';
 import ScheduledMessages from './scheduledMessages/ScheduledMessages.vue';
 import ConversationInfo from './ConversationInfo.vue';
 import CustomAttributes from './customAttributes/CustomAttributes.vue';
@@ -211,6 +212,19 @@ onMounted(() => {
                 :conversation-id="conversationId"
                 :inbox-id="inboxId"
               />
+            </AccordionItem>
+          </div>
+          <div v-else-if="element.name === 'appointments'">
+            <AccordionItem
+              v-if="contact.id"
+              :title="$t('CONVERSATION_SIDEBAR.ACCORDION.APPOINTMENTS')"
+              :is-open="isContactSidebarItemOpen('is_appointments_open')"
+              compact
+              @toggle="
+                value => toggleSidebarUIState('is_appointments_open', value)
+              "
+            >
+              <ContactAppointments :contact-id="contact.id" />
             </AccordionItem>
           </div>
           <div

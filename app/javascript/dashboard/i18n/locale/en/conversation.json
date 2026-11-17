@@ -527,6 +527,7 @@
       "CONTACT_DETAILS": "Contact Details",
       "SCHEDULED_MESSAGES": "Scheduled Messages",
       "OPEN_SCHEDULED_HUB": "See all account-wide scheduled messages",
+      "APPOINTMENTS": "Appointments",
       "CONVERSATION_ACTIONS": "Conversation Actions",
       "CONVERSATION_LABELS": "Conversation Labels",
       "CONVERSATION_INFO": "Conversation Information",
@@ -567,6 +568,21 @@
         "FULFILLED": "Fulfilled",
         "PARTIALLY_FULFILLED": "Partially Fulfilled",
         "UNFULFILLED": "Unfulfilled"
+      }
+    },
+    "APPOINTMENTS": {
+      "EMPTY": "No appointments for this contact yet.",
+      "NO_DATE": "No date set",
+      "SOURCE": "Source: {source}",
+      "CLOSED_PROCEDURES": "Closed procedures",
+      "UNNAMED_PROCEDURE": "Procedure",
+      "STATUS": {
+        "SCHEDULED": "Scheduled",
+        "RESCHEDULED": "Rescheduled",
+        "CONFIRMED": "Confirmed",
+        "ATTENDED": "Attended",
+        "NO_SHOW": "No-show",
+        "CANCELED": "Canceled"
       }
     }
   },

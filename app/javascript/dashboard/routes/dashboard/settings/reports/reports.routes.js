@@ -25,6 +25,7 @@ import LiveReports from './LiveReports.vue';
 import SLAReports from './SLAReports.vue';
 import IaHumanDistributionReport from './IaHumanDistributionReport.vue';
 import FollowUpReport from './FollowUpReport.vue';
+import AppointmentsReport from './AppointmentsReport.vue';
 
 const meta = {
   featureFlag: FEATURE_FLAGS.REPORTS,
@@ -192,6 +193,12 @@ export default {
           name: 'follow_up_report',
           meta: { ...meta, fullWidth: true },
           component: FollowUpReport,
+        },
+        {
+          path: 'appointments',
+          name: 'appointments_report',
+          meta: { ...meta, fullWidth: true },
+          component: AppointmentsReport,
         },
       ],
     },

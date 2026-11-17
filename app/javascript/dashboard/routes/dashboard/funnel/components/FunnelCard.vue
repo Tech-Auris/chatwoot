@@ -51,6 +51,35 @@ const summary = computed(() =>
 );
 const hasSummary = computed(() => summary.value.length > 0);
 
+// Next open appointment n8n recorded for the lead (date, professional,
+// procedure); the date reads in green so the scheduled leads stand out.
+const nextAppointment = computed(() => props.conversation.next_appointment);
+const appointmentDateLabel = computed(() => {
+  const scheduledFor = nextAppointment.value?.scheduled_for;
+  if (!scheduledFor) return '';
+  return new Intl.DateTimeFormat(accountLocale.value.replace('_', '-'), {
+    weekday: 'short',
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(scheduledFor));
+});
+const appointmentDetails = computed(() =>
+  [
+    nextAppointment.value?.professional_name,
+    nextAppointment.value?.procedure_name,
+  ]
+    .filter(Boolean)
+    .join(' · ')
+);
+const hasAppointment = computed(
+  () => !!(appointmentDateLabel.value || appointmentDetails.value)
+);
+const moreAppointmentsCount = computed(() =>
+  Math.max(0, (props.conversation.open_appointments_count || 0) - 1)
+);
+
 const lossReasonName = computed(
   () => props.conversation.loss_reason?.name || ''
 );
@@ -130,6 +159,43 @@ const toggleLossReason = () => {
       <span v-if="phoneNumber" class="text-xs text-n-slate-11">
         {{ phoneNumber }}
       </span>
+      <div
+        v-if="hasAppointment"
+        class="flex flex-col gap-0.5 min-w-0"
+        :title="t('FUNNEL.CARD.NEXT_APPOINTMENT')"
+      >
+        <div class="flex items-center gap-1 min-w-0 text-n-teal-11">
+          <span class="i-lucide-calendar-check size-3.5 flex-shrink-0" />
+          <span
+            v-if="appointmentDateLabel"
+            class="text-xs font-semibold truncate"
+          >
+            {{ appointmentDateLabel }}
+          </span>
+          <span
+            v-if="moreAppointmentsCount"
+            class="px-1 text-[11px] font-medium rounded bg-n-teal-3"
+            :title="
+              t('FUNNEL.CARD.MORE_APPOINTMENTS', {
+                count: moreAppointmentsCount,
+              })
+            "
+          >
+            {{
+              t('FUNNEL.CARD.MORE_APPOINTMENTS_BADGE', {
+                count: moreAppointmentsCount,
+              })
+            }}
+          </span>
+        </div>
+        <span
+          v-if="appointmentDetails"
+          class="text-xs text-n-slate-11 truncate"
+          :title="appointmentDetails"
+        >
+          {{ appointmentDetails }}
+        </span>
+      </div>
       <div class="flex items-center justify-between gap-2 min-w-0">
         <span
           v-if="hasAverageTicket"
