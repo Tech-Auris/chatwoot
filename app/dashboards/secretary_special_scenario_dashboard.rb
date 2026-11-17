@@ -5,9 +5,9 @@ class SecretarySpecialScenarioDashboard < Administrate::BaseDashboard
     id: Field::Number,
     account: Field::BelongsTo.with_options(searchable: true, searchable_fields: ['name']),
     name: Field::String.with_options(searchable: true),
-    situacao: Field::Text,
-    gatilho: Field::Text,
-    instrucao: Field::Text,
+    situacao: LongTextField,
+    gatilho: LongTextField,
+    instrucao: LongTextField,
     created_at: Field::DateTime,
     updated_at: Field::DateTime
   }.freeze
