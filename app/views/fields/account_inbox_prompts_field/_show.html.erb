@@ -1,0 +1,9 @@
+<div class="space-y-3">
+  <% field.prompts.each do |prompt| %>
+    <div>
+      <%= link_to InboxIdsField.new(:inbox_ids, prompt.inbox_ids, :show).to_s, edit_super_admin_inbox_prompt_path(prompt) %>
+      <div class="text-sm text-n-slate-11"><%= prompt.ai_prompt_system_message.truncate(160) %></div>
+    </div>
+  <% end %>
+  <%= link_to 'Add inbox prompt', new_super_admin_inbox_prompt_path(account_id: field.resource.id), class: 'button' %>
+</div>
