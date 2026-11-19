@@ -48,6 +48,18 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_18_180100) do
     t.index ["captured_on"], name: "index_account_health_scores_on_captured_on"
   end
 
+  create_table "account_prompts", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "name", null: false
+    t.text "ai_prompt_system_message", null: false
+    t.bigint "inbox_ids", default: [], null: false, array: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_account_prompts_on_account_id"
+    t.index ["account_id"], name: "index_account_prompts_one_general_per_account", unique: true, where: "(inbox_ids = '{}'::bigint[])"
+    t.index ["inbox_ids"], name: "index_account_prompts_on_inbox_ids", using: :gin
+  end
+
   create_table "account_saml_settings", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.string "sso_url"
@@ -1265,16 +1277,6 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_18_180100) do
     t.index ["inbox_id"], name: "index_inbox_members_on_inbox_id"
   end
 
-  create_table "inbox_prompts", force: :cascade do |t|
-    t.bigint "account_id", null: false
-    t.text "ai_prompt_system_message", null: false
-    t.bigint "inbox_ids", default: [], null: false, array: true
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["account_id"], name: "index_inbox_prompts_on_account_id"
-    t.index ["inbox_ids"], name: "index_inbox_prompts_on_inbox_ids", using: :gin
-  end
-
   create_table "inbox_signatures", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "inbox_id", null: false
@@ -2471,6 +2473,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_18_180100) do
   end
 
   add_foreign_key "account_health_scores", "accounts", on_delete: :cascade
+  add_foreign_key "account_prompts", "accounts"
   add_foreign_key "account_secretaries", "accounts", on_delete: :cascade
   add_foreign_key "account_secretaries", "ai_models"
   add_foreign_key "account_secretaries", "secretary_versions"
@@ -2503,7 +2506,6 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_18_180100) do
   add_foreign_key "group_members", "contacts"
   add_foreign_key "group_members", "contacts", column: "group_contact_id"
   add_foreign_key "inbox_ai_off_hours", "inboxes", on_delete: :cascade
-  add_foreign_key "inbox_prompts", "accounts"
   add_foreign_key "inboxes", "portals"
   add_foreign_key "inboxes", "teams", column: "ai_schedule_team_id", on_delete: :nullify
   add_foreign_key "internal_chat_channel_members", "internal_chat_channels"

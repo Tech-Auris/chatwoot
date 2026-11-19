@@ -1111,7 +1111,7 @@ Rails.application.routes.draw do
       resources :secretary_resources, only: [:index, :new, :create, :show, :edit, :update, :destroy]
       resources :secretary_confirmations, only: [:index, :new, :create, :show, :edit, :update, :destroy]
       resources :secretary_prompts, only: [:index, :new, :create, :show, :edit, :update]
-      resources :inbox_prompts, only: [:index, :new, :create, :show, :edit, :update, :destroy]
+      resources :account_prompts, only: [:index, :new, :create, :show, :edit, :update, :destroy]
       resources :account_statuses, only: [:index, :show, :edit, :update]
       resources :ai_providers, only: [:index, :new, :create, :show, :edit, :update]
       resources :ai_models, only: [:index, :new, :create, :show, :edit, :update]

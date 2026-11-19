@@ -79,7 +79,7 @@ class AccountDashboard < Administrate::BaseDashboard
     campaigns_sms_menu_enabled: Field::Boolean,
     settings_macros_menu_enabled: Field::Boolean,
     account_users: Field::HasMany,
-    inbox_prompts: AccountInboxPromptsField,
+    account_prompts: AccountPromptsField,
     custom_attributes: Field::String
   }.merge(enterprise_attribute_types).freeze
 
@@ -126,7 +126,7 @@ class AccountDashboard < Administrate::BaseDashboard
     auris_settings
     auris_menus
     follow_up
-    inbox_prompts
+    account_prompts
     conversations
     account_users
   ] + enterprise_show_page_attributes).freeze
