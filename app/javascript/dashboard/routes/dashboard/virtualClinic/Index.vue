@@ -8,6 +8,7 @@ import VirtualClinicShell from './components/VirtualClinicShell.vue';
 import TeamPanel from './components/TeamPanel.vue';
 import AiChatPanel from './components/AiChatPanel.vue';
 import { useVirtualClinicConfig } from './composables/useVirtualClinicConfig';
+import { useVirtualClinicStatus } from './composables/useVirtualClinicStatus';
 
 const { t } = useI18n();
 const route = useRoute();
@@ -19,6 +20,9 @@ const selectedMember = ref('');
 
 const clinicName = computed(() => currentAccount.value?.name || '');
 const aiTeam = computed(() => configs.value[route.params.accountId] || null);
+const { status } = useVirtualClinicStatus(
+  computed(() => aiTeam.value?.enabled === true)
+);
 const openMember = computed(() => {
   if (!aiTeam.value?.enabled) return null;
   return aiTeam.value.members.find(m => m.persona === selectedMember.value);
@@ -49,6 +53,7 @@ onMounted(() => {
     <TeamPanel
       :clinic-name="clinicName"
       :ai-team="aiTeam"
+      :status="status"
       :selected="selectedMember"
       @select-member="selectedMember = $event"
     />

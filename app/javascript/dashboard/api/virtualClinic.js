@@ -11,6 +11,12 @@ class VirtualClinicAPI extends ApiClient {
     return axios.get(`${this.url}/config`);
   }
 
+  // `{ secretary: { active_conversations, in_follow_up },
+  //    manager: { month: { leads, appointments, conversion_rate } } }`
+  getStatus() {
+    return axios.get(`${this.url}/status`);
+  }
+
   // `{ persona, thread_id, messages }`
   getThread(persona) {
     return axios.get(`${this.url}/threads/${persona}`);

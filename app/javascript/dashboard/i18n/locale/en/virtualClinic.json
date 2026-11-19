@@ -66,6 +66,12 @@
       "REPORTS_V2_TEAMS": "teams",
       "AGENTS_LIST": "agents",
       "TEAMS_LIST": "teams"
+    },
+    "STATUS": {
+      "IDLE": "No patients right now",
+      "SECRETARY": "Serving {active} · {followUps} in follow-up",
+      "MANAGER": "{leads} leads this month · {rate}% conversion",
+      "MANAGER_LEADS": "{leads} leads this month"
     }
   }
 }

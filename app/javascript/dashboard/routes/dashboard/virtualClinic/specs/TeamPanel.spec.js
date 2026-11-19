@@ -28,9 +28,9 @@ const members = [
   { persona: 'manager', name: 'Helena' },
 ];
 
-const mountPanel = aiTeam =>
+const mountPanel = (aiTeam, status = null) =>
   mount(TeamPanel, {
-    props: { clinicName: 'Clínica Sorriso', aiTeam },
+    props: { clinicName: 'Clínica Sorriso', aiTeam, status },
     global: { stubs: { 'router-link': { template: '<a><slot /></a>' } } },
   });
 
@@ -41,6 +41,21 @@ describe('TeamPanel', () => {
     await wrapper.findAll('button')[1].trigger('click');
 
     expect(wrapper.emitted('selectMember')).toEqual([['manager']]);
+  });
+
+  it('shows what each teammate is doing from the live status', () => {
+    const wrapper = mountPanel(
+      { visible: true, enabled: true, members },
+      {
+        secretary: { active_conversations: 7, in_follow_up: 4 },
+        manager: {
+          month: { leads: 412, appointments: 131, conversion_rate: 31.8 },
+        },
+      }
+    );
+
+    expect(wrapper.text()).toContain('VIRTUAL_CLINIC.STATUS.SECRETARY');
+    expect(wrapper.text()).toContain('VIRTUAL_CLINIC.STATUS.MANAGER');
   });
 
   it('points to the OpenAI key when it is missing and blocks selection', async () => {

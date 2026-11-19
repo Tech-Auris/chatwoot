@@ -66,6 +66,12 @@
       "REPORTS_V2_TEAMS": "times",
       "AGENTS_LIST": "atendentes",
       "TEAMS_LIST": "times"
+    },
+    "STATUS": {
+      "IDLE": "Sem atendimentos agora",
+      "SECRETARY": "Atendendo {active} · {followUps} em follow-up",
+      "MANAGER": "{leads} leads no mês · {rate}% de conversão",
+      "MANAGER_LEADS": "{leads} leads no mês"
     }
   }
 }

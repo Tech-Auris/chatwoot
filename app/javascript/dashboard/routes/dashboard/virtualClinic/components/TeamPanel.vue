@@ -10,6 +10,7 @@ import VirtualClinicAPI from 'dashboard/api/virtualClinic';
 const props = defineProps({
   clinicName: { type: String, default: '' },
   aiTeam: { type: Object, default: null },
+  status: { type: Object, default: null },
   selected: { type: String, default: '' },
 });
 
@@ -80,6 +81,22 @@ const saveDailyLimit = event => {
   VirtualClinicAPI.updateSettings({ daily_question_limit: value });
 };
 
+// One line of what each teammate is doing, from the live status.
+const statusLine = persona => {
+  if (!enabled.value) return t('VIRTUAL_CLINIC.AI_TEAM.OFF');
+  if (!props.status) return t('VIRTUAL_CLINIC.AI_TEAM.AVAILABLE');
+  if (persona === 'secretary') {
+    const { active_conversations: active, in_follow_up: followUps } =
+      props.status.secretary;
+    if (!active && !followUps) return t('VIRTUAL_CLINIC.STATUS.IDLE');
+    return t('VIRTUAL_CLINIC.STATUS.SECRETARY', { active, followUps });
+  }
+  const { leads, conversion_rate: rate } = props.status.manager.month;
+  return rate === null
+    ? t('VIRTUAL_CLINIC.STATUS.MANAGER_LEADS', { leads })
+    : t('VIRTUAL_CLINIC.STATUS.MANAGER', { leads, rate });
+};
+
 const select = member => {
   if (enabled.value) emit('selectMember', member.persona);
 };
@@ -121,11 +138,7 @@ const select = member => {
             </span>
           </span>
           <span class="text-xs truncate text-n-slate-11">
-            {{
-              enabled
-                ? t('VIRTUAL_CLINIC.AI_TEAM.AVAILABLE')
-                : t('VIRTUAL_CLINIC.AI_TEAM.OFF')
-            }}
+            {{ statusLine(member.persona) }}
           </span>
         </span>
       </button>
