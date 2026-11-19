@@ -1,5 +1,5 @@
 # What the Clínica virtual page needs to know before drawing the AI team:
-# whether this user may see it, and what is still missing to turn it on.
+# whether this user sees it, and whether (or why not) they can talk to it.
 class Api::V2::Accounts::VirtualClinic::ConfigsController < Api::V1::Accounts::BaseController
   def show
     authorize :virtual_clinic, :show?
@@ -7,8 +7,8 @@ class Api::V2::Accounts::VirtualClinic::ConfigsController < Api::V1::Accounts::B
     render json: {
       ai_team: {
         visible: policy.ai_team_visible?,
-        enabled: policy.ai_team?,
-        missing: policy.ai_team_visible? ? policy.missing_requirement : nil,
+        chat_enabled: policy.ai_chat?,
+        chat_missing: policy.ai_team_visible? ? policy.missing_requirement : nil,
         members: policy.ai_team_visible? ? ::VirtualClinic::Persona.all.map(&:as_json) : [],
         daily_question_limit: ::VirtualClinic::QuestionLimit.for(Current.account),
         can_manage_settings: policy.update_settings?

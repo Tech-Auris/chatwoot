@@ -5,7 +5,8 @@ import { useRoute, useRouter } from 'vue-router';
 import { useMapGetter, useStore } from 'dashboard/composables/store';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
-import VirtualClinicAPI from 'dashboard/api/virtualClinic';
+import Icon from 'dashboard/components-next/icon/Icon.vue';
+import { isOffDuty, offDutyReason } from '../teamStatus';
 
 const props = defineProps({
   clinicName: { type: String, default: '' },
@@ -22,16 +23,19 @@ const router = useRouter();
 const agents = useMapGetter('agents/getNonInternalAgents');
 const currentUserId = useMapGetter('getCurrentUserID');
 
-// Online first, then busy, then offline; the user sits at the top.
+// Online first, then busy, then offline; the user sits at the top. The AI
+// user is left out: on the map it is Clara.
 const STATUS_ORDER = { online: 0, busy: 1, offline: 2 };
 const people = computed(() =>
-  [...(agents.value || [])].sort(
-    (a, b) =>
-      (b.id === currentUserId.value) - (a.id === currentUserId.value) ||
-      (STATUS_ORDER[a.availability_status] ?? 2) -
-        (STATUS_ORDER[b.availability_status] ?? 2) ||
-      a.name.localeCompare(b.name)
-  )
+  (agents.value || [])
+    .filter(agent => !agent.is_ai_user)
+    .sort(
+      (a, b) =>
+        (b.id === currentUserId.value) - (a.id === currentUserId.value) ||
+        (STATUS_ORDER[a.availability_status] ?? 2) -
+          (STATUS_ORDER[b.availability_status] ?? 2) ||
+        a.name.localeCompare(b.name)
+    )
 );
 const onlineCount = computed(
   () => people.value.filter(p => p.availability_status === 'online').length
@@ -51,18 +55,18 @@ const openDirectMessage = async person => {
 };
 
 const members = computed(() => props.aiTeam?.members || []);
-const enabled = computed(() => props.aiTeam?.enabled === true);
+const chatEnabled = computed(() => props.aiTeam?.chat_enabled === true);
 
-// Where the administrator goes to turn the AI team on.
+// Where the administrator goes to be able to talk to the AI team.
 const missingAction = computed(() => {
-  if (props.aiTeam?.missing === 'mcp') {
+  if (props.aiTeam?.chat_missing === 'mcp') {
     return {
       label: t('VIRTUAL_CLINIC.AI_TEAM.ENABLE_MCP'),
       hint: t('VIRTUAL_CLINIC.AI_TEAM.MISSING_MCP'),
       to: { name: 'settings_integrations_mcp' },
     };
   }
-  if (props.aiTeam?.missing === 'openai_key') {
+  if (props.aiTeam?.chat_missing === 'openai_key') {
     return {
       label: t('VIRTUAL_CLINIC.AI_TEAM.CONFIGURE_OPENAI'),
       hint: t('VIRTUAL_CLINIC.AI_TEAM.MISSING_OPENAI'),
@@ -75,16 +79,15 @@ const missingAction = computed(() => {
   return null;
 });
 
-// The clinic pays the OpenAI key, so its administrator caps the questions.
-const saveDailyLimit = event => {
-  const value = event.target.value;
-  VirtualClinicAPI.updateSettings({ daily_question_limit: value });
-};
-
-// One line of what each teammate is doing, from the live status.
+// One line of what each teammate is doing, from the live status. It does not
+// depend on the OpenAI key: Clara serves patients through the n8n anyway.
 const statusLine = persona => {
-  if (!enabled.value) return t('VIRTUAL_CLINIC.AI_TEAM.OFF');
-  if (!props.status) return t('VIRTUAL_CLINIC.AI_TEAM.AVAILABLE');
+  if (!props.status) return '';
+  if (isOffDuty(persona, props.status)) {
+    return t('VIRTUAL_CLINIC.STATUS.OFF_DUTY', {
+      reason: offDutyReason(props.status, t),
+    });
+  }
   if (persona === 'secretary') {
     const { active_conversations: active, in_follow_up: followUps } =
       props.status.secretary;
@@ -98,7 +101,7 @@ const statusLine = persona => {
 };
 
 const select = member => {
-  if (enabled.value) emit('selectMember', member.persona);
+  if (chatEnabled.value) emit('selectMember', member.persona);
 };
 </script>
 
@@ -120,7 +123,8 @@ const select = member => {
         type="button"
         class="flex items-center gap-3 p-2 text-left rounded-lg"
         :class="[
-          enabled ? 'hover:bg-n-alpha-2' : 'opacity-50 cursor-default',
+          chatEnabled ? 'hover:bg-n-alpha-2' : 'cursor-default',
+          isOffDuty(member.persona, status) ? 'opacity-50' : '',
           selected === member.persona ? 'bg-n-alpha-2' : '',
         ]"
         @click="select(member)"
@@ -140,23 +144,15 @@ const select = member => {
           <span class="text-xs truncate text-n-slate-11">
             {{ statusLine(member.persona) }}
           </span>
+          <span
+            v-if="!chatEnabled"
+            class="flex items-center gap-1 text-xs text-n-slate-10"
+          >
+            <Icon icon="i-lucide-message-circle-off" class="size-3" />
+            {{ t('VIRTUAL_CLINIC.AI_TEAM.CHAT_OFF') }}
+          </span>
         </span>
       </button>
-
-      <label
-        v-if="enabled && aiTeam.can_manage_settings"
-        class="flex items-center justify-between gap-2 px-2 mt-1 text-xs text-n-slate-11"
-      >
-        {{ t('VIRTUAL_CLINIC.SETTINGS.DAILY_LIMIT') }}
-        <input
-          type="number"
-          min="1"
-          class="w-16 px-2 py-1 text-xs border rounded-md border-n-weak bg-n-solid-2 text-n-slate-12"
-          :value="aiTeam.daily_question_limit"
-          :placeholder="t('VIRTUAL_CLINIC.SETTINGS.NO_LIMIT')"
-          @change="saveDailyLimit"
-        />
-      </label>
 
       <div
         v-if="missingAction"

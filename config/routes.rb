@@ -739,6 +739,7 @@ Rails.application.routes.draw do
           namespace :virtual_clinic do
             resource :config, only: [:show]
             resource :status, only: [:show]
+            get 'assets/*path', to: 'assets#show', format: false, as: :asset
             resource :settings, only: [:update]
             resources :threads, only: [:show], param: :persona do
               member do

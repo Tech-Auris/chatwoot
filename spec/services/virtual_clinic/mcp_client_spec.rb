@@ -4,6 +4,8 @@ RSpec.describe VirtualClinic::McpClient do
   let(:client) { described_class.new('user-token') }
   let(:url) { 'https://mcp.auris.ia.br/mcp' }
 
+  around { |example| with_modified_env(AURIS_MCP_URL: url) { example.run } }
+
   def stub_rpc(result)
     stub_request(:post, url).with(headers: { 'Authorization' => 'Bearer user-token' })
                             .to_return(status: 200, body: { jsonrpc: '2.0', id: 1, result: result }.to_json,
