@@ -27,6 +27,45 @@
         "BUSY": "Busy",
         "OFFLINE": "Offline"
       }
+    },
+    "CHAT": {
+      "NEW": "New conversation",
+      "THINKING": "{name} is checking the data…",
+      "RETRY": "Try again",
+      "CONSULTED": "Checked: {tools}",
+      "PLACEHOLDER": "Ask {name}…",
+      "DAILY_LIMIT": "You reached today's question limit set by the clinic. Come back tomorrow.",
+      "SEND_ERROR": "Could not send the question. Try again.",
+      "SUBTITLE": {
+        "SECRETARY": "Answers about patients being served and follow-ups",
+        "MANAGER": "Answers anything about the clinic, with numbers"
+      }
+    },
+    "SETTINGS": {
+      "DAILY_LIMIT": "Questions per person per day",
+      "NO_LIMIT": "none"
+    },
+    "TOOLS": {
+      "ATENDIMENTO_AGORA": "live service",
+      "BUSCAR_CONVERSAS": "conversations",
+      "RESUMIR_CONVERSA": "conversation summary",
+      "FOLLOW_UPS": "follow-ups",
+      "FOLLOW_UPS_EM_ANDAMENTO": "follow-ups in progress",
+      "MENSAGENS_AGENDADAS": "scheduled messages",
+      "TRANSFERENCIAS_IA_HUMANO": "handoffs to humans",
+      "BUSCAR_CONTATO": "contact",
+      "RESUMO_PERIODO": "period summary",
+      "DESEMPENHO_ATENDENTES": "agent performance",
+      "FUNIL_RESUMO": "funnel",
+      "FUNIL_ETAPA": "funnel stage",
+      "CONVERSAO_POR_CAMPANHA": "campaigns",
+      "AGENDAMENTOS_RESUMO": "appointments",
+      "HORARIOS_PICO": "peak hours",
+      "REPORTS_ACCOUNT_SUMMARY": "account report",
+      "REPORTS_V2_INBOXES": "inboxes",
+      "REPORTS_V2_TEAMS": "teams",
+      "AGENTS_LIST": "agents",
+      "TEAMS_LIST": "teams"
     }
   }
 }

@@ -10,6 +10,24 @@ class VirtualClinicAPI extends ApiClient {
   getConfig() {
     return axios.get(`${this.url}/config`);
   }
+
+  // `{ persona, thread_id, messages }`
+  getThread(persona) {
+    return axios.get(`${this.url}/threads/${persona}`);
+  }
+
+  // `{ messages: [question, pendingAnswer] }`; 429 over the daily limit.
+  sendMessage(persona, content) {
+    return axios.post(`${this.url}/threads/${persona}/messages`, { content });
+  }
+
+  resetThread(persona) {
+    return axios.post(`${this.url}/threads/${persona}/reset`);
+  }
+
+  updateSettings(settings) {
+    return axios.patch(`${this.url}/settings`, settings);
+  }
 }
 
 export default new VirtualClinicAPI();
