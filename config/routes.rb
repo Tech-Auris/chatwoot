@@ -738,6 +738,13 @@ Rails.application.routes.draw do
           resources :appointment_reports, only: [:index]
           namespace :virtual_clinic do
             resource :config, only: [:show]
+            resource :settings, only: [:update]
+            resources :threads, only: [:show], param: :persona do
+              member do
+                post :messages
+                post :reset
+              end
+            end
           end
           resources :meta_templates, only: %i[index create update destroy] do
             collection do
