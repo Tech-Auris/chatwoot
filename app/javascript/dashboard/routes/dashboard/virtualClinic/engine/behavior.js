@@ -2,7 +2,7 @@ import { CHARACTERS } from './layout';
 import { TRIPS } from './trips';
 
 const SPEED = 64; // world px per second
-const STAY_MS = 5000;
+const STAY_MS = [3500, 8000];
 const FIRST_TRIP_MS = [8000, 15000];
 const NEXT_TRIP_MS = [25000, 55000];
 
@@ -36,16 +36,20 @@ export function createTeamBehavior({
   );
   let trip = null;
   let nextTripAt = null;
+  let lastTripKey = null;
 
-  const startTrip = now => {
+  const startTrip = () => {
+    // Random walk, never the same one twice in a row.
     const options = TRIPS.filter(
       t =>
+        t.key !== lastTripKey &&
         personas.includes(t.who) &&
         canLeave(t.who) &&
         (!t.talkWith || personas.includes(t.talkWith))
     );
     if (!options.length) return;
     const chosen = options[Math.floor(random() * options.length)];
+    lastTripKey = chosen.key;
     trip = {
       ...chosen,
       points: chosen.path,
@@ -55,7 +59,6 @@ export function createTeamBehavior({
     };
     state[trip.who].away = true;
     state[trip.who].moving = true;
-    state[trip.who].startedAt = now;
   };
 
   const finishTrip = now => {
@@ -98,7 +101,7 @@ export function createTeamBehavior({
       });
       if (trip.talkWith) state[trip.talkWith].talking = true;
       trip.phase = 'staying';
-      trip.stayUntil = now + STAY_MS;
+      trip.stayUntil = now + between(STAY_MS, random);
     } else {
       finishTrip(now);
     }
@@ -113,7 +116,7 @@ export function createTeamBehavior({
       if (nextTripAt === null)
         nextTripAt = now + between(FIRST_TRIP_MS, random);
       if (!trip) {
-        if (now >= nextTripAt) startTrip(now);
+        if (now >= nextTripAt) startTrip();
         return;
       }
       const walker = state[trip.who];

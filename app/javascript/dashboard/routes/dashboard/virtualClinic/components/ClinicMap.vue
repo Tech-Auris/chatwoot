@@ -73,14 +73,11 @@ const characters = computed(() =>
   })
 );
 
-// Overlays follow the teammate: same offset from the frame as at the seat.
-const near = (persona, anchor) => {
-  const spot = CHARACTERS[persona];
+// Name (and status above it) sit right over the head, like in Gather, and
+// follow the teammate around. The frame is 32×64 with the head from ~y+18.
+const overHead = persona => {
   const place = placeOf(persona);
-  return {
-    x: place.x + spot[anchor].x - spot.x,
-    y: place.y + spot[anchor].y - spot.y,
-  };
+  return { x: place.x + 16, y: place.y + 18 };
 };
 
 // Nobody leaves while the user talks to them or when off duty.
@@ -310,29 +307,31 @@ onBeforeUnmount(() => {
           >
             {{ t(`VIRTUAL_CLINIC.MAP.ROOMS.${room.key}`) }}
           </span>
-          <template v-for="member in members" :key="member.persona">
+          <div
+            v-for="member in members"
+            :key="member.persona"
+            class="absolute flex flex-col items-center gap-1 -translate-x-1/2 -translate-y-full pointer-events-none"
+            :style="at(overHead(member.persona))"
+          >
             <span
               v-if="bubble(member.persona)"
-              class="absolute px-2 py-1 text-xs font-medium -translate-x-1/2 -translate-y-full bg-white rounded-lg shadow-md pointer-events-none whitespace-nowrap text-n-slate-12"
-              :style="at(near(member.persona, 'bubble'))"
+              class="px-2 py-1 text-xs font-medium bg-white rounded-lg shadow-md whitespace-nowrap text-n-slate-12"
             >
               {{ bubble(member.persona) }}
             </span>
             <button
               type="button"
-              class="absolute px-2 py-0.5 text-xs font-semibold text-white -translate-x-1/2 rounded-full shadow whitespace-nowrap"
+              class="px-2 py-0.5 text-xs font-semibold text-white rounded-full shadow whitespace-nowrap pointer-events-auto"
               :class="[
                 member.persona === 'secretary' ? 'bg-n-blue-9' : 'bg-n-iris-9',
                 chatEnabled ? '' : 'cursor-default',
                 isOffDuty(member.persona, status) ? 'opacity-50' : '',
               ]"
-              :style="at(near(member.persona, 'tag'))"
               @click="chatEnabled && emit('selectMember', member.persona)"
             >
-              {{ member.name }} ·
-              {{ t(`VIRTUAL_CLINIC.PERSONAS.${member.persona.toUpperCase()}`) }}
+              {{ member.name }}
             </button>
-          </template>
+          </div>
         </template>
       </div>
     </div>

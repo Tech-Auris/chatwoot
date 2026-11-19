@@ -18,7 +18,6 @@ describe('clinic layout', () => {
     ITEMS.forEach(item => expect(inside(item.x, item.y)).toBe(true));
     Object.values(CHARACTERS).forEach(spot => {
       expect(inside(spot.x, spot.y + 64)).toBe(true);
-      expect(inside(spot.bubble.x, spot.bubble.y)).toBe(true);
     });
   });
 

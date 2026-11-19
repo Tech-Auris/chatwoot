@@ -25,10 +25,11 @@ function frameOf(character, tick) {
   return { row: ROWS.idle, column: base + (Math.floor(tick / 2) % 6) };
 }
 
-// The Gather-like "talking" balloon: three dots, no words.
+// The Gather-like "talking" balloon: three dots, no words, to the right of
+// the mouth with its tail pointing at it.
 function drawTalking(context, x, y, tick) {
-  const left = x + 4;
-  const top = y + 2;
+  const left = x + 29;
+  const top = y + 24;
   context.fillStyle = '#ffffff';
   context.strokeStyle = OUTLINE;
   context.lineWidth = 1;
@@ -37,10 +38,12 @@ function drawTalking(context, x, y, tick) {
   context.fill();
   context.stroke();
   context.beginPath();
-  context.moveTo(left + 8, top + 12);
-  context.lineTo(left + 11, top + 16);
-  context.lineTo(left + 14, top + 12);
+  context.moveTo(left + 1, top + 6);
+  context.lineTo(left - 4, top + 11);
+  context.lineTo(left + 1, top + 10);
   context.fill();
+  context.stroke();
+  context.fillRect(left + 1, top + 6, 2, 4);
   [0, 1, 2].forEach(dot => {
     context.fillStyle = Math.floor(tick / 3) % 3 === dot ? OUTLINE : '#9ca3af';
     context.fillRect(left + 5 + dot * 6, top + 5, 3, 3);
