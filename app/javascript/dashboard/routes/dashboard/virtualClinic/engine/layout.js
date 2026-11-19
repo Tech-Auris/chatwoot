@@ -109,8 +109,9 @@ export const ITEMS = [
   { sprite: `${C}bebedouro.png`, x: 870, y: 355 },
   { sprite: `${C}cadeira_frente.png`, x: 788, y: 445 },
   { sprite: `${C}mesa_redonda.png`, x: 772, y: 470 },
-  { sprite: `${C}cadeira_lado.png`, x: 742, y: 492 },
-  { sprite: `${C}cadeira_lado.png`, x: 832, y: 492, flip: true },
+  // Side chairs face the table: the left one is mirrored.
+  { sprite: `${C}cadeira_lado.png`, x: 748, y: 492, flip: true },
+  { sprite: `${C}cadeira_lado.png`, x: 828, y: 492 },
   { sprite: `${C}planta.png`, x: 648, y: 590 },
   { sprite: `${C}lixeira.png`, x: 920, y: 592 },
 ];
