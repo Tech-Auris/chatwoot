@@ -30,6 +30,7 @@ import integrations from './integrations.json';
 import funnel from './funnel.json';
 import home from './home.json';
 import internalChat from './internalChat.json';
+import virtualClinic from './virtualClinic.json';
 import kanban from './kanban.json';
 import labelsMgmt from './labelsMgmt.json';
 import marketingAnalytics from './marketingAnalytics.json';
@@ -90,6 +91,7 @@ export default {
   ...funnel,
   ...home,
   ...internalChat,
+  ...virtualClinic,
   ...kanban,
   ...labelsMgmt,
   ...marketingAnalytics,

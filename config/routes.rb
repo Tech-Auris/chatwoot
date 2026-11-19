@@ -736,6 +736,9 @@ Rails.application.routes.draw do
           resources :ia_human_distribution_reports, only: [:index]
           resources :follow_up_reports, only: [:index]
           resources :appointment_reports, only: [:index]
+          namespace :virtual_clinic do
+            resource :config, only: [:show]
+          end
           resources :meta_templates, only: %i[index create update destroy] do
             collection do
               get :kit

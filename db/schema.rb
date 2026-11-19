@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_11_17_120100) do
+ActiveRecord::Schema[7.1].define(version: 2026_11_19_040000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -137,6 +137,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_17_120100) do
     t.boolean "mcp_enabled", default: false, null: false
     t.datetime "mcp_enabled_at"
     t.bigint "mcp_enabled_by_id"
+    t.boolean "virtual_clinic_enabled", default: false, null: false
     t.index ["erp_source_id"], name: "index_accounts_on_erp_source_id"
     t.index ["status"], name: "index_accounts_on_status"
     t.index ["stripe_customer_id"], name: "index_accounts_on_stripe_customer_id", unique: true, where: "(stripe_customer_id IS NOT NULL)"
