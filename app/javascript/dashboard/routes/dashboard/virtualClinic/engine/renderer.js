@@ -13,7 +13,7 @@ const OUTLINE = '#2b2d42';
 // Rows of the LimeZu character sheet: 6 frames per direction, in the order
 // right, up (back), left, down (front). The phone call only faces front.
 const DIRECTIONS = ['right', 'up', 'left', 'down'];
-const ROWS = { idle: 1, walk: 2 };
+const ROWS = { idle: 1, walk: 2, sit: 4 };
 const PHONE = { row: 6, columns: [3, 4, 5, 6, 7, 8] };
 
 function frameOf(character, tick) {
@@ -22,6 +22,11 @@ function frameOf(character, tick) {
   }
   const base = DIRECTIONS.indexOf(character.direction || 'down') * 6;
   if (character.moving) return { row: ROWS.walk, column: base + (tick % 6) };
+  if (character.sitting) {
+    // Seated frames only face right (0–5) or left (6–11).
+    const side = character.direction === 'left' ? 6 : 0;
+    return { row: ROWS.sit, column: side + (Math.floor(tick / 3) % 6) };
+  }
   return { row: ROWS.idle, column: base + (Math.floor(tick / 2) % 6) };
 }
 
@@ -133,7 +138,8 @@ export function createRenderer(canvas, sprites) {
     const people = characters.map(character => ({
       ...character,
       sheet: sprites[CHARACTERS[character.persona].sheet],
-      depth: character.y + FRAME.height,
+      // Someone sitting goes over their chair.
+      depth: character.y + FRAME.height + (character.sitting ? 8 : 0),
     }));
     // Stable sort: on a tie the furniture (a chair behind someone) goes first.
     [...items, ...people]

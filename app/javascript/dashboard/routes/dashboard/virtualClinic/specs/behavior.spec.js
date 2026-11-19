@@ -67,6 +67,30 @@ describe('team behavior', () => {
     expect(behavior.state.manager.away).toBe(true);
   });
 
+  it('sits Clara at the copa table, then brings her back to her desk', () => {
+    const index = TRIPS.findIndex(trip => trip.key === 'clara_sits_copa');
+    const behavior = createTeamBehavior({
+      personas: ['secretary', 'manager'],
+      random: () => (index + 0.5) / TRIPS.length,
+    });
+    const clara = behavior.state.secretary;
+    let sat = false;
+    for (let now = 0; now <= 120000 && !(sat && !clara.away); now += 100) {
+      behavior.update(now);
+      if (clara.sitting) {
+        sat = true;
+        expect(clara.direction).toBe('right');
+      }
+    }
+
+    expect(sat).toBe(true);
+    expect([clara.x, clara.y]).toEqual([
+      CHARACTERS.secretary.x,
+      CHARACTERS.secretary.y,
+    ]);
+    expect(clara.sitting).toBe(false);
+  });
+
   it('only takes walks that start at the teammate seat', () => {
     TRIPS.forEach(trip => {
       const seat = CHARACTERS[trip.who];

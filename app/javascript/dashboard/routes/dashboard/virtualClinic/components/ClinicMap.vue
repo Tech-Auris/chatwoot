@@ -66,6 +66,7 @@ const characters = computed(() =>
       direction: place.direction || 'down',
       moving: place.moving,
       talking: place.talking,
+      sitting: place.sitting,
       phone:
         member.persona === 'secretary' && secretaryBusy.value && !place.away,
       faded: isOffDuty(member.persona, props.status),

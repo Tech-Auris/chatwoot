@@ -30,7 +30,15 @@ export function createTeamBehavior({
       const [x, y] = home(persona);
       return [
         persona,
-        { x, y, direction: 'down', moving: false, talking: false, away: false },
+        {
+          x,
+          y,
+          direction: 'down',
+          moving: false,
+          talking: false,
+          sitting: false,
+          away: false,
+        },
       ];
     })
   );
@@ -98,6 +106,7 @@ export function createTeamBehavior({
         moving: false,
         direction: trip.face,
         talking: Boolean(trip.talkWith),
+        sitting: Boolean(trip.sit),
       });
       if (trip.talkWith) state[trip.talkWith].talking = true;
       trip.phase = 'staying';
@@ -123,6 +132,7 @@ export function createTeamBehavior({
       if (trip.phase === 'staying') {
         if (now < trip.stayUntil) return;
         walker.talking = false;
+        walker.sitting = false;
         if (trip.talkWith) state[trip.talkWith].talking = false;
         trip.points = [...trip.path].reverse();
         trip.index = 1;
