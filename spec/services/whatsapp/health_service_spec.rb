@@ -135,5 +135,41 @@ RSpec.describe Whatsapp::HealthService do
       expect(WebMock).not_to have_requested(:get, %r{graph.facebook.com/.+/#{waba_id}})
         .with(query: hash_including(fields: 'account_review_status,business_verification_status'))
     end
+
+    # Real support case: two coexistence numbers lost the WABA on Meta's side
+    # and every send failed for days while the inbox still looked healthy.
+    context 'when Meta no longer lets the app reach the number' do
+      def stub_phone_error(code, subcode = nil)
+        stub_request(:get, %r{graph.facebook.com/.+/#{phone_number_id}})
+          .with(query: hash_including(fields: /quality_rating/))
+          .to_return(status: 400, body: { error: { message: "Object with ID '#{phone_number_id}' does not exist", code: code,
+                                                   error_subcode: subcode }.compact }.to_json,
+                     headers: { 'Content-Type' => 'application/json' })
+      end
+
+      it 'flags the inbox for reconnection and emails the admins once' do
+        stub_phone_error(100, 33)
+
+        expect do
+          2.times { expect { described_class.new(channel).fetch_health_status }.to raise_error(RuntimeError) }
+        end.to have_enqueued_mail(AdministratorNotifications::ChannelNotificationsMailer, :whatsapp_disconnect).once
+
+        expect(channel.reauthorization_required?).to be(true)
+      end
+
+      it 'flags the inbox when the token was revoked' do
+        stub_phone_error(190)
+
+        expect { service.fetch_health_status }.to raise_error(RuntimeError)
+        expect(channel.reauthorization_required?).to be(true)
+      end
+
+      it 'does not flag the inbox on any other Meta error' do
+        stub_phone_error(1)
+
+        expect { service.fetch_health_status }.to raise_error(RuntimeError)
+        expect(channel.reauthorization_required?).to be(false)
+      end
+    end
   end
 end
