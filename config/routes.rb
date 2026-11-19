@@ -734,8 +734,12 @@ Rails.application.routes.draw do
             end
           end
           resources :ia_human_distribution_reports, only: [:index]
-          resources :follow_up_reports, only: [:index]
-          resources :appointment_reports, only: [:index]
+          resources :follow_up_reports, only: [:index] do
+            collection { get :in_progress }
+          end
+          resources :appointment_reports, only: [:index] do
+            collection { get :summary }
+          end
           namespace :virtual_clinic do
             resource :config, only: [:show]
             resource :status, only: [:show]

@@ -2,11 +2,14 @@
 # many conversations got one and how many patients came back. The period,
 # hour, inbox and contact filters all apply to when the FUP was sent; "total
 # conversations" counts the conversations started in the period, as the IA →
-# Humano report does with its leads.
+# Humano report does with its leads. `in_progress` lists the conversations
+# whose latest FUP went out and is still waiting for the patient.
 class Api::V2::Accounts::FollowUpReportsController < Api::V1::Accounts::BaseController
   TZ = ActiveSupport::TimeZone['America/Sao_Paulo']
   PER_PAGE = 50
+  IN_PROGRESS_PER_PAGE = 25
   CSV_LIMIT = 10_000
+  SENT_AT_SQL = 'COALESCE(follow_ups.processed_at, follow_ups.created_at)'.freeze
 
   before_action :check_authorization
 
@@ -19,6 +22,13 @@ class Api::V2::Accounts::FollowUpReportsController < Api::V1::Accounts::BaseCont
       end
       format.csv { send_data csv(scope), filename: 'follow-ups.csv', type: 'text/csv' }
     end
+  end
+
+  def in_progress
+    scope = in_progress_scope
+    rows = scope.includes(:inbox, conversation: :contact).order(Arel.sql("#{SENT_AT_SQL} DESC"), id: :desc)
+                .page(current_page).per(IN_PROGRESS_PER_PAGE).map { |follow_up| in_progress_row(follow_up) }
+    render json: { rows: rows, meta: { current_page: current_page, per_page: IN_PROGRESS_PER_PAGE, total_count: scope.count } }
   end
 
   private
@@ -136,5 +146,27 @@ class Api::V2::Accounts::FollowUpReportsController < Api::V1::Accounts::BaseCont
                  row[:inbox_name], row[:delivery_status], row[:error_message], row[:outcome]]
       end
     end
+  end
+
+  # The latest FUP of each conversation, kept only while it went out and the
+  # patient has not answered yet: a later step or a reply settles it.
+  def in_progress_scope
+    latest = Current.account.follow_ups.select('DISTINCT ON (follow_ups.conversation_id) follow_ups.*')
+                    .order(:conversation_id, created_at: :desc, id: :desc)
+    scope = FollowUp.from(latest, :follow_ups).delivery_sent.outcome_waiting
+    scope = scope.where("#{SENT_AT_SQL} >= ?", TZ.now.beginning_of_day) if ActiveModel::Type::Boolean.new.cast(params[:only_today])
+    scope
+  end
+
+  def in_progress_row(follow_up)
+    sent_at = follow_up.processed_at || follow_up.created_at
+    {
+      contact_name: follow_up.conversation.contact&.name,
+      conversation_id: follow_up.conversation.display_id,
+      step: follow_up.step,
+      sent_at: sent_at.in_time_zone(TZ).iso8601,
+      minutes_since_sent: ((Time.current - sent_at) / 60).floor,
+      inbox_name: follow_up.inbox.name
+    }
   end
 end
