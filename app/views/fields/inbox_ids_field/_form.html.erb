@@ -1,7 +1,43 @@
 <div class="field-unit__label self-start pt-2">
-  <%= f.label field.attribute %>
+  <%= f.label field.attribute, 'Inboxes' %>
 </div>
 <div class="field-unit__field">
-  <%= f.select field.attribute, grouped_options_for_select(field.grouped_options, field.data), {}, multiple: true, size: 10 %>
+  <%= f.select field.attribute, options_for_select(field.options, field.data), {},
+               multiple: true, placeholder: 'Add inbox…', data: { inbox_picker: true, inboxes: field.all_inboxes.to_json } %>
+  <div class="flex gap-4 mt-2 text-sm">
+    <a href="#" data-inbox-picker-all>Select all</a>
+    <a href="#" data-inbox-picker-clear>Clear</a>
+  </div>
   <p class="text-sm text-n-slate-11 mt-1">No inbox selected = the general prompt, used by every inbox that isn't in a specific prompt.</p>
 </div>
+
+<% content_for :javascript do %>
+  <script>
+    $(function () {
+      var $select = $('select[data-inbox-picker]');
+      if (!$select.length) return;
+
+      var inboxes = $select.data('inboxes');
+      var $account = $select.closest('form').find('select[name$="[account_id]"]');
+      var picker = $select.selectize({ plugins: ['remove_button'] })[0].selectize;
+
+      $account.on('change', function () {
+        var accountId = Number($account.val());
+        picker.clear();
+        picker.clearOptions();
+        picker.addOption(inboxes.filter(function (inbox) { return inbox.account_id === accountId; }));
+        picker.refreshOptions(false);
+      });
+
+      $('[data-inbox-picker-all]').on('click', function (event) {
+        event.preventDefault();
+        picker.setValue(Object.keys(picker.options));
+      });
+
+      $('[data-inbox-picker-clear]').on('click', function (event) {
+        event.preventDefault();
+        picker.clear();
+      });
+    });
+  </script>
+<% end %>
