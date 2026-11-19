@@ -25,8 +25,8 @@ RSpec.describe 'Super Admin account prompts', type: :request do
 
     get '/super_admin/account_prompts/new', params: { account_id: account.id }
 
-    expect(response.body).to include('Recepção')
-    expect(response.body).not_to include(foreign.name)
+    expect(response.body).to include("<option value=\"#{inbox.id}\">Recepção (##{inbox.id})</option>")
+    expect(response.body).not_to include("<option value=\"#{foreign.id}\"")
     expect(response.body).to include('value="Geral"')
   end
 
