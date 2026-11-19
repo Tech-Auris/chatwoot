@@ -1,4 +1,12 @@
 ---
+- tag: v4.15.1-auris.1.82
+  published_at: '2026-11-19T20:00:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.82
+  notes:
+    en: |-
+      Bug fixes and internal improvements.
+    pt_BR: |-
+      Correções de bugs e melhorias internas.
 - tag: v4.15.1-auris.1.81
   published_at: '2026-11-18T20:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.81
@@ -443,41 +451,3 @@
       ### ✨ Novidades
 
       - **Veja os pacientes por trás dos números do funil.** No relatório de conversão do funil, clique no número de agendados, confirmados ou comparecimentos (ou nas perdas) para ver quem são, com link para cada conversa.
-- tag: v4.15.1-auris.1.62
-  published_at: '2026-09-25T21:00:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.62
-  notes:
-    en: |-
-      ### ✨ What's new
-
-      - **WhatsApp official-account templates when scheduling.** If your inbox is an official WhatsApp account, the scheduling modal now lets you pick from your approved templates — no more errors on the delivery date.
-      - **Variables like contact name when scheduling.** Type `{{` in the Message field to insert the contact's name, email, phone. Same picker the conversation composer already has.
-
-      ### ⚡ Improvements
-
-      - **Scheduling modal in one line.** "Para" and "Via" at the top of the modal turned into compact chips — same feel as the "new conversation" pencil.
-      - **Message field grows with your text.** The Message box in the scheduling modal grows as you type — no more scrolling inside a small box.
-      - **"Retida" instead of "Suspensa".** The tab in the scheduled-messages panel was renamed to match the modal copy ("ficará retida para revisão").
-      - **Scheduling modal doesn't close by accident.** Clicking outside the box no longer closes the modal — only Cancelar / Agendar (or the X) close it.
-      - **Notifications with formatted titles and media.** Notifications from the team now show titles properly formatted and have room for images and videos in the body.
-
-      ### 🐛 Fixes
-
-      - **Steps bar on the proposal link.** The "1.Reservar → 6.Implantado" bar customers see when opening the proposal on their phone no longer breaks into two lines.
-    pt_BR: |-
-      ### ✨ Novidades
-
-      - **Templates do WhatsApp oficial nas mensagens agendadas.** Se sua caixa é WhatsApp oficial, o modal de agendar agora deixa você escolher um dos templates aprovados — sem erro no dia do disparo.
-      - **Variáveis como nome do contato ao agendar.** Digite `{{` no campo Mensagem para inserir nome do contato, e-mail, telefone. Mesmo seletor que o composer da conversa já tinha.
-
-      ### ⚡ Melhorias
-
-      - **Modal de agendar em uma linha.** "Para" e "Via" no topo do modal viraram chips compactos — mesma cara do lápis de nova conversa.
-      - **Campo Mensagem cresce com o texto.** A caixa Mensagem do modal de agendar cresce enquanto você digita — sem rolar dentro de uma caixinha pequena.
-      - **"Retida" no lugar de "Suspensa".** A aba do painel de mensagens agendadas foi renomeada pra bater com o texto do modal ("ficará retida para revisão").
-      - **Modal de agendar não fecha mais por acidente.** Clicar fora da caixa não fecha mais o modal — só Cancelar / Agendar (ou o X) fecham.
-      - **Notificações com títulos formatados e mídia.** As notificações que vocês recebem do time agora mostram títulos com formatação e têm espaço para imagens e vídeos no corpo.
-
-      ### 🐛 Correções
-
-      - **Barra de passos no link da proposta.** A barra "1.Reservar → 6.Implantado" que o cliente vê ao abrir a proposta no celular deixou de quebrar em duas linhas.
