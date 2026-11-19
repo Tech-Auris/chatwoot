@@ -329,7 +329,8 @@ onBeforeUnmount(() => {
               ]"
               @click="chatEnabled && emit('selectMember', member.persona)"
             >
-              {{ member.name }}
+              {{ member.name }} ·
+              {{ t(`VIRTUAL_CLINIC.PERSONAS.${member.persona.toUpperCase()}`) }}
             </button>
           </div>
         </template>
