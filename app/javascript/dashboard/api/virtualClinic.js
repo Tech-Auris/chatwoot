@@ -11,6 +11,13 @@ class VirtualClinicAPI extends ApiClient {
     return axios.get(`${this.url}/config`);
   }
 
+  // One PNG of the clinic art (served only to logged-in users).
+  getAsset(path) {
+    return axios
+      .get(`${this.url}/assets/${path}`, { responseType: 'blob' })
+      .then(({ data }) => data);
+  }
+
   // `{ secretary: { active_conversations, in_follow_up },
   //    manager: { month: { leads, appointments, conversion_rate } } }`
   getStatus() {

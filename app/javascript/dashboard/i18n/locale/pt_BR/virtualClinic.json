@@ -1,6 +1,5 @@
 {
   "VIRTUAL_CLINIC": {
-    "MAP_COMING": "O mapa da clínica está chegando.",
     "PERSONAS": {
       "SECRETARY": "Secretária",
       "MANAGER": "Gerente"
@@ -72,6 +71,21 @@
       "SECRETARY": "Atendendo {active} · {followUps} em follow-up",
       "MANAGER": "{leads} leads no mês · {rate}% de conversão",
       "MANAGER_LEADS": "{leads} leads no mês"
+    },
+    "MAP": {
+      "THINKING": "💭 Consultando os dados…",
+      "SECRETARY": "💬 Atendendo {active} pacientes · 🔁 {followUps} em follow-up",
+      "IDLE": "☕ Sem atendimentos agora",
+      "LEADS": "📊 {leads} leads este mês",
+      "APPOINTMENTS": "📅 {appointments} agendamentos no mês",
+      "CONVERSION": "📈 {rate}% de conversão no mês",
+      "LOAD_ERROR": "Não foi possível carregar o mapa da clínica.",
+      "ROOMS": {
+        "RECEPTION": "Recepção",
+        "WAITING_ROOM": "Sala de espera",
+        "MANAGEMENT": "Gerência",
+        "KITCHEN": "Copa"
+      }
     }
   }
 }

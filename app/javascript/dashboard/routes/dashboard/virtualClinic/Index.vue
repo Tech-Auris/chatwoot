@@ -1,22 +1,22 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useI18n } from 'vue-i18n';
 import { useStore } from 'dashboard/composables/store';
 import { useAccount } from 'dashboard/composables/useAccount';
 import VirtualClinicShell from './components/VirtualClinicShell.vue';
 import TeamPanel from './components/TeamPanel.vue';
 import AiChatPanel from './components/AiChatPanel.vue';
+import ClinicMap from './components/ClinicMap.vue';
 import { useVirtualClinicConfig } from './composables/useVirtualClinicConfig';
 import { useVirtualClinicStatus } from './composables/useVirtualClinicStatus';
 
-const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const store = useStore();
 const { currentAccount } = useAccount();
 const { configs, load } = useVirtualClinicConfig();
 const selectedMember = ref('');
+const thinking = ref('');
 
 const clinicName = computed(() => currentAccount.value?.name || '');
 const aiTeam = computed(() => configs.value[route.params.accountId] || null);
@@ -57,17 +57,17 @@ onMounted(() => {
       :selected="selectedMember"
       @select-member="selectedMember = $event"
     />
-    <main class="relative flex-1 overflow-hidden bg-n-alpha-1">
-      <p
-        class="absolute text-sm -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2 text-n-slate-11"
-      >
-        {{ t('VIRTUAL_CLINIC.MAP_COMING') }}
-      </p>
-    </main>
+    <ClinicMap
+      :ai-team="aiTeam"
+      :status="status"
+      :thinking="thinking"
+      @select-member="selectedMember = $event"
+    />
     <AiChatPanel
       v-if="openMember"
       :key="openMember.persona"
       :member="openMember"
+      @thinking="thinking = $event"
       @close="closeChat"
     />
   </VirtualClinicShell>
