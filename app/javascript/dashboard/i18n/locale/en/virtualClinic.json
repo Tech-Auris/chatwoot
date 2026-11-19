@@ -40,8 +40,14 @@
       }
     },
     "SETTINGS": {
+      "TITLE": "Virtual clinic",
+      "DESCRIPTION": "Talking to Clara and Helena uses this OpenAI key. Cap how many questions each person can ask per day.",
       "DAILY_LIMIT": "Questions per person per day",
-      "NO_LIMIT": "none"
+      "NO_LIMIT": "No limit",
+      "SAVE": "Save",
+      "SAVED": "Limit saved.",
+      "SAVE_ERROR": "Could not save the limit.",
+      "HINT": "Leave blank for no limit."
     },
     "TOOLS": {
       "ATENDIMENTO_AGORA": "live service",

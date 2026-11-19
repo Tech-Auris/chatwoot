@@ -40,8 +40,14 @@
       }
     },
     "SETTINGS": {
+      "TITLE": "Clínica virtual",
+      "DESCRIPTION": "A conversa com a Clara e a Helena usa esta chave da OpenAI. Limite quantas perguntas cada pessoa pode fazer por dia.",
       "DAILY_LIMIT": "Perguntas por pessoa por dia",
-      "NO_LIMIT": "sem"
+      "NO_LIMIT": "Sem limite",
+      "SAVE": "Salvar",
+      "SAVED": "Limite salvo.",
+      "SAVE_ERROR": "Não foi possível salvar o limite.",
+      "HINT": "Deixe em branco para não limitar."
     },
     "TOOLS": {
       "ATENDIMENTO_AGORA": "atendimento agora",
