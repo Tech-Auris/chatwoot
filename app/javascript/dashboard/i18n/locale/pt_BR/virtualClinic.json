@@ -6,13 +6,12 @@
     },
     "AI_TEAM": {
       "TITLE": "Equipe de IA ({count})",
-      "AVAILABLE": "Disponível para conversar",
-      "OFF": "Desligada",
-      "MISSING_MCP": "Ative o assistente de IA para conhecer a sua equipe.",
+      "MISSING_MCP": "Para conversar com a equipe de IA, ative o assistente de IA.",
       "ENABLE_MCP": "Ativar equipe de IA",
-      "MISSING_OPENAI": "A equipe de IA usa a chave da OpenAI da sua clínica.",
+      "MISSING_OPENAI": "Para conversar com a equipe de IA, cadastre a chave da OpenAI da clínica.",
       "CONFIGURE_OPENAI": "Configurar chave OpenAI",
-      "CHAT_SECTION": "Equipe de IA"
+      "CHAT_SECTION": "Equipe de IA",
+      "CHAT_OFF": "Conversa desligada"
     },
     "RAIL": {
       "MAP": "Clínica",
@@ -70,7 +69,9 @@
       "IDLE": "Sem atendimentos agora",
       "SECRETARY": "Atendendo {active} · {followUps} em follow-up",
       "MANAGER": "{leads} leads no mês · {rate}% de conversão",
-      "MANAGER_LEADS": "{leads} leads no mês"
+      "MANAGER_LEADS": "{leads} leads no mês",
+      "OFF_DUTY": "Atendimento desligado · {reason}",
+      "NOT_SET_UP": "secretária não configurada"
     },
     "MAP": {
       "THINKING": "💭 Consultando os dados…",
@@ -88,7 +89,8 @@
       },
       "ZOOM_IN": "Aproximar",
       "ZOOM_OUT": "Afastar",
-      "ZOOM_FIT": "Ajustar à tela"
+      "ZOOM_FIT": "Ajustar à tela",
+      "OFF_DUTY": "⏸ Atendimento desligado · {reason}"
     }
   }
 }

@@ -23,27 +23,27 @@ RSpec.describe VirtualClinicPolicy, type: :policy do
     account.update!(virtual_clinic_enabled: false)
 
     expect(policy_for(admin).show?).to be(false)
-    expect(policy_for(admin).ai_team?).to be(false)
+    expect(policy_for(admin).ai_chat?).to be(false)
   end
 
   it 'gives the AI team to administrators and managers only' do
-    expect(policy_for(admin).ai_team?).to be(true)
-    expect(policy_for(manager).ai_team?).to be(true)
+    expect(policy_for(admin).ai_chat?).to be(true)
+    expect(policy_for(manager).ai_chat?).to be(true)
     expect(policy_for(agent).ai_team_visible?).to be(false)
-    expect(policy_for(agent).ai_team?).to be(false)
+    expect(policy_for(agent).ai_chat?).to be(false)
   end
 
   it 'reports the AI assistant as missing before the OpenAI key' do
     account.update!(mcp_enabled: false)
 
-    expect(policy_for(admin).ai_team?).to be(false)
+    expect(policy_for(admin).ai_chat?).to be(false)
     expect(policy_for(admin).missing_requirement).to eq('mcp')
   end
 
   it 'requires the clinic own OpenAI key' do
     account.hooks.where(app_id: 'openai').delete_all
 
-    expect(policy_for(admin).ai_team?).to be(false)
+    expect(policy_for(admin).ai_chat?).to be(false)
     expect(policy_for(admin).missing_requirement).to eq('openai_key')
   end
 end

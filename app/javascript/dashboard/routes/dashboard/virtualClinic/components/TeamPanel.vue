@@ -6,6 +6,8 @@ import { useMapGetter, useStore } from 'dashboard/composables/store';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import VirtualClinicAPI from 'dashboard/api/virtualClinic';
+import Icon from 'dashboard/components-next/icon/Icon.vue';
+import { isOffDuty, offDutyReason } from '../teamStatus';
 
 const props = defineProps({
   clinicName: { type: String, default: '' },
@@ -54,18 +56,18 @@ const openDirectMessage = async person => {
 };
 
 const members = computed(() => props.aiTeam?.members || []);
-const enabled = computed(() => props.aiTeam?.enabled === true);
+const chatEnabled = computed(() => props.aiTeam?.chat_enabled === true);
 
-// Where the administrator goes to turn the AI team on.
+// Where the administrator goes to be able to talk to the AI team.
 const missingAction = computed(() => {
-  if (props.aiTeam?.missing === 'mcp') {
+  if (props.aiTeam?.chat_missing === 'mcp') {
     return {
       label: t('VIRTUAL_CLINIC.AI_TEAM.ENABLE_MCP'),
       hint: t('VIRTUAL_CLINIC.AI_TEAM.MISSING_MCP'),
       to: { name: 'settings_integrations_mcp' },
     };
   }
-  if (props.aiTeam?.missing === 'openai_key') {
+  if (props.aiTeam?.chat_missing === 'openai_key') {
     return {
       label: t('VIRTUAL_CLINIC.AI_TEAM.CONFIGURE_OPENAI'),
       hint: t('VIRTUAL_CLINIC.AI_TEAM.MISSING_OPENAI'),
@@ -84,10 +86,15 @@ const saveDailyLimit = event => {
   VirtualClinicAPI.updateSettings({ daily_question_limit: value });
 };
 
-// One line of what each teammate is doing, from the live status.
+// One line of what each teammate is doing, from the live status. It does not
+// depend on the OpenAI key: Clara serves patients through the n8n anyway.
 const statusLine = persona => {
-  if (!enabled.value) return t('VIRTUAL_CLINIC.AI_TEAM.OFF');
-  if (!props.status) return t('VIRTUAL_CLINIC.AI_TEAM.AVAILABLE');
+  if (!props.status) return '';
+  if (isOffDuty(persona, props.status)) {
+    return t('VIRTUAL_CLINIC.STATUS.OFF_DUTY', {
+      reason: offDutyReason(props.status, t),
+    });
+  }
   if (persona === 'secretary') {
     const { active_conversations: active, in_follow_up: followUps } =
       props.status.secretary;
@@ -101,7 +108,7 @@ const statusLine = persona => {
 };
 
 const select = member => {
-  if (enabled.value) emit('selectMember', member.persona);
+  if (chatEnabled.value) emit('selectMember', member.persona);
 };
 </script>
 
@@ -123,7 +130,8 @@ const select = member => {
         type="button"
         class="flex items-center gap-3 p-2 text-left rounded-lg"
         :class="[
-          enabled ? 'hover:bg-n-alpha-2' : 'opacity-50 cursor-default',
+          chatEnabled ? 'hover:bg-n-alpha-2' : 'cursor-default',
+          isOffDuty(member.persona, status) ? 'opacity-50' : '',
           selected === member.persona ? 'bg-n-alpha-2' : '',
         ]"
         @click="select(member)"
@@ -143,11 +151,18 @@ const select = member => {
           <span class="text-xs truncate text-n-slate-11">
             {{ statusLine(member.persona) }}
           </span>
+          <span
+            v-if="!chatEnabled"
+            class="flex items-center gap-1 text-xs text-n-slate-10"
+          >
+            <Icon icon="i-lucide-message-circle-off" class="size-3" />
+            {{ t('VIRTUAL_CLINIC.AI_TEAM.CHAT_OFF') }}
+          </span>
         </span>
       </button>
 
       <label
-        v-if="enabled && aiTeam.can_manage_settings"
+        v-if="chatEnabled && aiTeam.can_manage_settings"
         class="flex items-center justify-between gap-2 px-2 mt-1 text-xs text-n-slate-11"
       >
         {{ t('VIRTUAL_CLINIC.SETTINGS.DAILY_LIMIT') }}

@@ -7,6 +7,7 @@ import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import { CHARACTERS, ROOMS, SPRITE_PATHS, WORLD } from '../engine/layout';
 import { loadSprites } from '../engine/sprites';
 import { createRenderer, hitTest } from '../engine/renderer';
+import { isOffDuty, offDutyReason } from '../teamStatus';
 
 const props = defineProps({
   aiTeam: { type: Object, default: null },
@@ -38,7 +39,9 @@ let resizeObserver = null;
 const members = computed(() =>
   props.aiTeam?.visible ? props.aiTeam.members : []
 );
-const enabled = computed(() => props.aiTeam?.enabled === true);
+// Talking to them needs the clinic's OpenAI key; Clara is only faded when
+// she is not serving patients (the n8n secretary), which is another switch.
+const chatEnabled = computed(() => props.aiTeam?.chat_enabled === true);
 const secretaryBusy = computed(
   () => (props.status?.secretary?.active_conversations || 0) > 0
 );
@@ -48,15 +51,19 @@ const characters = computed(() =>
     persona: member.persona,
     animation:
       member.persona === 'secretary' && secretaryBusy.value ? 'phone' : 'idle',
-    faded: !enabled.value,
+    faded: isOffDuty(member.persona, props.status),
   }))
 );
 
 // What each teammate is doing, over their head.
 const bubble = persona => {
-  if (!enabled.value) return '';
   if (props.thinking === persona) return t('VIRTUAL_CLINIC.MAP.THINKING');
   if (!props.status) return '';
+  if (isOffDuty(persona, props.status)) {
+    return t('VIRTUAL_CLINIC.MAP.OFF_DUTY', {
+      reason: offDutyReason(props.status, t),
+    });
+  }
   if (persona === 'secretary') {
     const { active_conversations: active, in_follow_up: followUps } =
       props.status.secretary;
@@ -139,7 +146,7 @@ const onClick = event => {
     (event.clientY - rect.top) / scale.value,
     members.value.map(member => member.persona)
   );
-  if (persona && enabled.value) emit('selectMember', persona);
+  if (persona && chatEnabled.value) emit('selectMember', persona);
 };
 
 // Drag the map around when it is bigger than the screen.
@@ -260,10 +267,11 @@ onBeforeUnmount(() => {
               class="absolute px-2 py-0.5 text-xs font-semibold text-white -translate-x-1/2 rounded-full shadow whitespace-nowrap"
               :class="[
                 member.persona === 'secretary' ? 'bg-n-blue-9' : 'bg-n-iris-9',
-                enabled ? '' : 'opacity-50 cursor-default',
+                chatEnabled ? '' : 'cursor-default',
+                isOffDuty(member.persona, status) ? 'opacity-50' : '',
               ]"
               :style="at(CHARACTERS[member.persona].tag)"
-              @click="enabled && emit('selectMember', member.persona)"
+              @click="chatEnabled && emit('selectMember', member.persona)"
             >
               {{ member.name }} ·
               {{ t(`VIRTUAL_CLINIC.PERSONAS.${member.persona.toUpperCase()}`) }}

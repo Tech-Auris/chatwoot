@@ -3,8 +3,8 @@ import VirtualClinicAPI from 'dashboard/api/virtualClinic';
 
 const POLL_MS = 30000;
 
-// What the AI team is doing now. Polls while the page is visible and the AI
-// team is on; the server caches it for 30 s per account.
+// What the AI team is doing now. Polls while the page is visible and the user
+// sees the AI team (no OpenAI key needed); the server caches it for 30 s.
 export function useVirtualClinicStatus(enabled) {
   const status = ref(null);
   let timer = null;

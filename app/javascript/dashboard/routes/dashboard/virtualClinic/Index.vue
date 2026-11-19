@@ -21,10 +21,10 @@ const thinking = ref('');
 const clinicName = computed(() => currentAccount.value?.name || '');
 const aiTeam = computed(() => configs.value[route.params.accountId] || null);
 const { status } = useVirtualClinicStatus(
-  computed(() => aiTeam.value?.enabled === true)
+  computed(() => aiTeam.value?.visible === true)
 );
 const openMember = computed(() => {
-  if (!aiTeam.value?.enabled) return null;
+  if (!aiTeam.value?.chat_enabled) return null;
   return aiTeam.value.members.find(m => m.persona === selectedMember.value);
 });
 

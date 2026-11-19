@@ -6,13 +6,12 @@
     },
     "AI_TEAM": {
       "TITLE": "AI team ({count})",
-      "AVAILABLE": "Available to talk",
-      "OFF": "Off",
-      "MISSING_MCP": "Turn on the AI assistant to meet your team.",
+      "MISSING_MCP": "To talk to the AI team, turn on the AI assistant.",
       "ENABLE_MCP": "Turn on AI team",
-      "MISSING_OPENAI": "The AI team uses your clinic's OpenAI key.",
+      "MISSING_OPENAI": "To talk to the AI team, add the clinic's OpenAI key.",
       "CONFIGURE_OPENAI": "Set up OpenAI key",
-      "CHAT_SECTION": "AI team"
+      "CHAT_SECTION": "AI team",
+      "CHAT_OFF": "Chat off"
     },
     "RAIL": {
       "MAP": "Clinic",
@@ -70,7 +69,9 @@
       "IDLE": "No patients right now",
       "SECRETARY": "Serving {active} · {followUps} in follow-up",
       "MANAGER": "{leads} leads this month · {rate}% conversion",
-      "MANAGER_LEADS": "{leads} leads this month"
+      "MANAGER_LEADS": "{leads} leads this month",
+      "OFF_DUTY": "Not serving patients · {reason}",
+      "NOT_SET_UP": "secretary not set up"
     },
     "MAP": {
       "THINKING": "💭 Checking the data…",
@@ -88,7 +89,8 @@
       },
       "ZOOM_IN": "Zoom in",
       "ZOOM_OUT": "Zoom out",
-      "ZOOM_FIT": "Fit to screen"
+      "ZOOM_FIT": "Fit to screen",
+      "OFF_DUTY": "⏸ Not serving patients · {reason}"
     }
   }
 }

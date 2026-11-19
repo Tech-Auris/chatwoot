@@ -2,7 +2,7 @@
 class Api::V2::Accounts::VirtualClinic::ThreadsController < Api::V1::Accounts::BaseController
   MESSAGES_SHOWN = 50
 
-  before_action { authorize :virtual_clinic, :ai_team? }
+  before_action { authorize :virtual_clinic, :ai_chat? }
   before_action :set_persona
 
   def show

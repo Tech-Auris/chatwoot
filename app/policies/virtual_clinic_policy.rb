@@ -1,7 +1,8 @@
 # Clínica virtual: the page is released per account (`virtual_clinic_enabled`)
-# and open to every role, since the internal chat lives in it. The AI team
-# inside it is for administrators and managers only, and needs the AI
-# assistant (MCP) on plus the clinic's own OpenAI key.
+# and open to every role, since the internal chat lives in it. Administrators
+# and managers see the AI team and what it is doing; talking to it also needs
+# the AI assistant (MCP) on plus the clinic's own OpenAI key. Whether Clara
+# is serving patients is a different thing (the n8n secretary, our key).
 class VirtualClinicPolicy < ApplicationPolicy
   def show?
     account.virtual_clinic_enabled?
@@ -11,7 +12,7 @@ class VirtualClinicPolicy < ApplicationPolicy
     show? && (account_user.administrator? || account_user.manager?)
   end
 
-  def ai_team?
+  def ai_chat?
     ai_team_visible? && missing_requirement.nil?
   end
 
