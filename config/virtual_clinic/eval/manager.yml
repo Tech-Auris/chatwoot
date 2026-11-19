@@ -1,0 +1,27 @@
+# Perguntas de avaliação da Helena (Gerente). Confira os números com os
+# relatórios do painel; nenhum número pode ser inventado.
+- question: Como foi este mês comparado ao anterior?
+  tools: [resumo_periodo, funil_resumo, agendamentos_resumo]
+- question: Quantos leads entraram este mês e quantos viraram agendamento?
+  tools: [funil_resumo]
+- question: Qual campanha trouxe mais pacientes? E qual converte pior?
+  tools: [conversao_por_campanha]
+- question: Em que etapa do funil estamos perdendo mais pacientes?
+  tools: [funil_resumo, funil_etapa]
+- question: Qual a taxa de faltas do mês? Que dias da semana têm mais faltas?
+  tools: [agendamentos_resumo]
+- question: Quanto a IA resolveu sozinha e quanto foi para humano?
+  tools: [transferencias_ia_humano]
+- question: Qual atendente responde mais rápido? Quem tem mais conversas paradas?
+  tools: [desempenho_atendentes]
+- question: Em que horários chegam mais mensagens? Preciso de gente em algum turno?
+  tools: [horarios_pico]
+- question: Quantos follow-ups foram enviados e quantos pacientes responderam?
+  tools: [follow_ups]
+- question: Qual canal traz mais pacientes?
+  tools: [reports_v2_inboxes, funil_resumo]
+- question: O que eu deveria fazer esta semana para agendar mais?
+  tools: [funil_resumo, follow_ups, agendamentos_resumo, horarios_pico]
+- question: Qual foi o faturamento do mês?
+  tools: []
+  note: Dado financeiro; deve responder "Esse dado ainda não está na Auris."
