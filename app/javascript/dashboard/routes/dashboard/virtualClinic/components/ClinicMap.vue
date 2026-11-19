@@ -7,17 +7,19 @@ import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import { CHARACTERS, ROOMS, SPRITE_PATHS, WORLD } from '../engine/layout';
 import { loadSprites } from '../engine/sprites';
 import { createRenderer, hitTest } from '../engine/renderer';
+import { createTeamBehavior } from '../engine/behavior';
 import { isOffDuty, offDutyReason } from '../teamStatus';
 
 const props = defineProps({
   aiTeam: { type: Object, default: null },
   status: { type: Object, default: null },
   thinking: { type: String, default: '' },
+  focused: { type: String, default: '' },
 });
 const emit = defineEmits(['selectMember']);
 
 const { t } = useI18n();
-const FRAME_MS = 160;
+const FRAME_MS = 100;
 const ROTATE_MS = 10000;
 
 const viewport = ref(null);
@@ -32,6 +34,8 @@ const minScale = computed(() => Math.min(1, fitScale.value * 0.75));
 const tick = ref(0);
 const rotation = ref(0);
 let draw = null;
+let behavior = null;
+const positions = ref({});
 let frameTimer = null;
 let rotateTimer = null;
 let resizeObserver = null;
@@ -46,18 +50,60 @@ const secretaryBusy = computed(
   () => (props.status?.secretary?.active_conversations || 0) > 0
 );
 
+// Where each teammate is now (they take little walks, see engine/trips.js).
+const placeOf = persona => {
+  const spot = CHARACTERS[persona];
+  return positions.value[persona] || { x: spot.x, y: spot.y };
+};
+
 const characters = computed(() =>
-  members.value.map(member => ({
-    persona: member.persona,
-    animation:
-      member.persona === 'secretary' && secretaryBusy.value ? 'phone' : 'idle',
-    faded: isOffDuty(member.persona, props.status),
-  }))
+  members.value.map(member => {
+    const place = placeOf(member.persona);
+    return {
+      persona: member.persona,
+      x: place.x,
+      y: place.y,
+      direction: place.direction || 'down',
+      moving: place.moving,
+      talking: place.talking,
+      phone:
+        member.persona === 'secretary' && secretaryBusy.value && !place.away,
+      faded: isOffDuty(member.persona, props.status),
+    };
+  })
 );
 
-// What each teammate is doing, over their head.
+// Overlays follow the teammate: same offset from the frame as at the seat.
+const near = (persona, anchor) => {
+  const spot = CHARACTERS[persona];
+  const place = placeOf(persona);
+  return {
+    x: place.x + spot[anchor].x - spot.x,
+    y: place.y + spot[anchor].y - spot.y,
+  };
+};
+
+// Nobody leaves while the user talks to them or when off duty.
+const canLeave = persona =>
+  persona !== props.focused &&
+  persona !== props.thinking &&
+  !isOffDuty(persona, props.status);
+
+watch(
+  () => members.value.map(member => member.persona).join(),
+  personaList => {
+    behavior = personaList
+      ? createTeamBehavior({ personas: personaList.split(','), canLeave })
+      : null;
+    positions.value = {};
+  },
+  { immediate: true }
+);
+
+// What each teammate is doing, over their head (hidden while away).
 const bubble = persona => {
   if (props.thinking === persona) return t('VIRTUAL_CLINIC.MAP.THINKING');
+  if (placeOf(persona).away) return '';
   if (!props.status) return '';
   if (isOffDuty(persona, props.status)) {
     return t('VIRTUAL_CLINIC.MAP.OFF_DUTY', {
@@ -97,7 +143,17 @@ const render = () => draw?.(characters.value, tick.value);
 watch([characters, tick], render);
 
 const animate = () => {
-  if (!document.hidden) tick.value += 1;
+  if (document.hidden) return;
+  if (behavior) {
+    behavior.update(performance.now());
+    positions.value = Object.fromEntries(
+      Object.entries(behavior.state).map(([persona, place]) => [
+        persona,
+        { ...place },
+      ])
+    );
+  }
+  tick.value += 1;
 };
 
 // The map fills the area by default; the user can zoom in and out from
@@ -144,7 +200,7 @@ const onClick = event => {
   const persona = hitTest(
     (event.clientX - rect.left) / scale.value,
     (event.clientY - rect.top) / scale.value,
-    members.value.map(member => member.persona)
+    characters.value
   );
   if (persona && chatEnabled.value) emit('selectMember', persona);
 };
@@ -258,7 +314,7 @@ onBeforeUnmount(() => {
             <span
               v-if="bubble(member.persona)"
               class="absolute px-2 py-1 text-xs font-medium -translate-x-1/2 -translate-y-full bg-white rounded-lg shadow-md pointer-events-none whitespace-nowrap text-n-slate-12"
-              :style="at(CHARACTERS[member.persona].bubble)"
+              :style="at(near(member.persona, 'bubble'))"
             >
               {{ bubble(member.persona) }}
             </span>
@@ -270,7 +326,7 @@ onBeforeUnmount(() => {
                 chatEnabled ? '' : 'cursor-default',
                 isOffDuty(member.persona, status) ? 'opacity-50' : '',
               ]"
-              :style="at(CHARACTERS[member.persona].tag)"
+              :style="at(near(member.persona, 'tag'))"
               @click="chatEnabled && emit('selectMember', member.persona)"
             >
               {{ member.name }} ·
