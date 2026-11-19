@@ -61,6 +61,7 @@ onMounted(() => {
       :ai-team="aiTeam"
       :status="status"
       :thinking="thinking"
+      :focused="openMember?.persona || ''"
       @select-member="selectedMember = $event"
     />
     <AiChatPanel

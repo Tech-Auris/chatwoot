@@ -9,12 +9,51 @@ import {
 } from './layout';
 
 const FRAME = { width: 32, height: 64 };
-// Rows and columns of the LimeZu character sheet, facing the viewer.
-export const ANIMATIONS = {
-  idle: { row: 1, columns: [18, 19, 20, 21, 22, 23] },
-  phone: { row: 6, columns: [3, 4, 5, 6, 7, 8] },
-};
 const OUTLINE = '#2b2d42';
+// Rows of the LimeZu character sheet: 6 frames per direction, in the order
+// right, up (back), left, down (front). The phone call only faces front.
+const DIRECTIONS = ['right', 'up', 'left', 'down'];
+const ROWS = { idle: 1, walk: 2, sit: 4 };
+const PHONE = { row: 6, columns: [3, 4, 5, 6, 7, 8] };
+
+function frameOf(character, tick) {
+  if (character.phone) {
+    return { row: PHONE.row, column: PHONE.columns[Math.floor(tick / 2) % 6] };
+  }
+  const base = DIRECTIONS.indexOf(character.direction || 'down') * 6;
+  if (character.moving) return { row: ROWS.walk, column: base + (tick % 6) };
+  if (character.sitting) {
+    // Seated frames only face right (0–5) or left (6–11).
+    const side = character.direction === 'left' ? 6 : 0;
+    return { row: ROWS.sit, column: side + (Math.floor(tick / 3) % 6) };
+  }
+  return { row: ROWS.idle, column: base + (Math.floor(tick / 2) % 6) };
+}
+
+// The Gather-like "talking" balloon: three dots, no words, to the right of
+// the mouth with its tail pointing at it.
+function drawTalking(context, x, y, tick) {
+  const left = x + 29;
+  const top = y + 24;
+  context.fillStyle = '#ffffff';
+  context.strokeStyle = OUTLINE;
+  context.lineWidth = 1;
+  context.beginPath();
+  context.roundRect(left, top, 24, 12, 4);
+  context.fill();
+  context.stroke();
+  context.beginPath();
+  context.moveTo(left + 1, top + 6);
+  context.lineTo(left - 4, top + 11);
+  context.lineTo(left + 1, top + 10);
+  context.fill();
+  context.stroke();
+  context.fillRect(left + 1, top + 6, 2, 4);
+  [0, 1, 2].forEach(dot => {
+    context.fillStyle = Math.floor(tick / 3) % 3 === dot ? OUTLINE : '#9ca3af';
+    context.fillRect(left + 5 + dot * 6, top + 5, 3, 3);
+  });
+}
 
 function repeatBlock(context, block, area) {
   for (let y = area.y; y < area.y + area.h; y += block.height) {
@@ -81,7 +120,8 @@ function drawItem(context, image, item) {
 }
 
 // Draws the clinic into `canvas` (world size). `characters` lists the AI
-// teammates to show: `{ persona, animation, faded }`.
+// teammates to show: `{ persona, x, y, direction, moving, phone, talking,
+// faded }`, `x`/`y` being the top-left of their 32×64 frame.
 export function createRenderer(canvas, sprites) {
   const context = canvas.getContext('2d');
   context.imageSmoothingEnabled = false;
@@ -97,45 +137,49 @@ export function createRenderer(canvas, sprites) {
     context.drawImage(background, 0, 0);
     const people = characters.map(character => ({
       ...character,
-      spot: CHARACTERS[character.persona],
-      depth: CHARACTERS[character.persona].y + FRAME.height,
+      sheet: sprites[CHARACTERS[character.persona].sheet],
+      // Someone sitting goes over their chair.
+      depth: character.y + FRAME.height + (character.sitting ? 8 : 0),
     }));
     // Stable sort: on a tie the furniture (a chair behind someone) goes first.
     [...items, ...people]
       .sort((a, b) => a.depth - b.depth)
       .forEach(entry => {
-        if (!entry.spot) {
+        if (!entry.sheet) {
           drawItem(context, entry.image, entry);
           return;
         }
-        const { row, columns } = ANIMATIONS[entry.animation];
-        const column = columns[tick % columns.length];
+        const { row, column } = frameOf(entry, tick);
         context.globalAlpha = entry.faded ? 0.45 : 1;
         context.drawImage(
-          sprites[entry.spot.sheet],
+          entry.sheet,
           column * FRAME.width,
           row * FRAME.height,
           FRAME.width,
           FRAME.height,
-          entry.spot.x,
-          entry.spot.y,
+          Math.round(entry.x),
+          Math.round(entry.y),
           FRAME.width,
           FRAME.height
         );
         context.globalAlpha = 1;
       });
+    people
+      .filter(person => person.talking)
+      .forEach(person =>
+        drawTalking(context, Math.round(person.x), Math.round(person.y), tick)
+      );
   };
 }
 
-// The AI teammate under a world point, if any (the visible body of the frame).
-export function hitTest(x, y, personas) {
-  return personas.find(persona => {
-    const spot = CHARACTERS[persona];
-    return (
-      x >= spot.x &&
-      x < spot.x + FRAME.width &&
-      y >= spot.y + 16 &&
-      y < spot.y + FRAME.height
-    );
-  });
+// The AI teammate under a world point, if any (the visible body of the
+// frame). `characters` are `{ persona, x, y }` where they are now.
+export function hitTest(x, y, characters) {
+  return characters.find(
+    c =>
+      x >= c.x &&
+      x < c.x + FRAME.width &&
+      y >= c.y + 16 &&
+      y < c.y + FRAME.height
+  )?.persona;
 }

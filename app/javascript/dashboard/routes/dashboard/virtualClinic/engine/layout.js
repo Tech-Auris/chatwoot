@@ -118,22 +118,18 @@ export const ITEMS = [
   { sprite: `${C}lixeira.png`, x: 920, y: 592 },
 ];
 
-// Where each AI teammate stands (top-left of the 32×64 frame), where its
-// balloon and name tag go, and its spritesheet.
+// Where each AI teammate sits (top-left of the 32×64 frame) and their
+// spritesheet. Name and status are drawn over the head, wherever they are.
 export const CHARACTERS = {
   secretary: {
     sheet: '7_personagens/clara_secretaria_spritesheet.png',
     x: 304,
     y: 87,
-    bubble: { x: 320, y: 104 },
-    tag: { x: 320, y: 214 },
   },
   manager: {
     sheet: '7_personagens/helena_opcao_A_spritesheet.png',
     x: 708,
     y: 90,
-    bubble: { x: 724, y: 86 },
-    tag: { x: 740, y: 214 },
   },
 };
 

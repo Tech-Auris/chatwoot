@@ -18,7 +18,6 @@ describe('clinic layout', () => {
     ITEMS.forEach(item => expect(inside(item.x, item.y)).toBe(true));
     Object.values(CHARACTERS).forEach(spot => {
       expect(inside(spot.x, spot.y + 64)).toBe(true);
-      expect(inside(spot.bubble.x, spot.bubble.y)).toBe(true);
     });
   });
 
@@ -39,10 +38,14 @@ describe('clinic layout', () => {
 });
 
 describe('hitTest', () => {
-  it('finds the teammate under the pointer', () => {
-    const { x, y } = CHARACTERS.secretary;
-    expect(hitTest(x + 16, y + 40, ['secretary', 'manager'])).toBe('secretary');
-    expect(hitTest(x + 16, y + 2, ['secretary', 'manager'])).toBeUndefined();
-    expect(hitTest(x + 16, y + 40, ['manager'])).toBeUndefined();
+  it('finds the teammate under the pointer, wherever they are now', () => {
+    const clara = { persona: 'secretary', x: 440, y: 140 };
+    const helena = { persona: 'manager', ...CHARACTERS.manager };
+
+    expect(hitTest(456, 180, [clara, helena])).toBe('secretary');
+    expect(hitTest(456, 142, [clara, helena])).toBeUndefined();
+    expect(
+      hitTest(CHARACTERS.secretary.x + 16, CHARACTERS.secretary.y + 40, [clara])
+    ).toBeUndefined();
   });
 });
