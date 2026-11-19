@@ -18,6 +18,7 @@ import operationsNotificationsRoutes from './operationsNotifications/operationsN
 import releaseNotesRoutes from './releaseNotes/releaseNotes.routes';
 import dashboardAppsRoutes from './dashboardApps/dashboardApps.routes';
 import internalChatRoutes from './internalChat/internalChat.routes';
+import virtualClinicRoutes from './virtualClinic/virtualClinic.routes';
 import simulatorRoutes from './simulator/simulator.routes';
 import ticketsRoutes from './tickets/tickets.routes';
 import homeRoutes from './home/home.routes';
@@ -52,6 +53,7 @@ export default {
         ...releaseNotesRoutes.routes,
         ...dashboardAppsRoutes.routes,
         ...internalChatRoutes.routes,
+        ...virtualClinicRoutes.routes,
         ...simulatorRoutes.routes,
         ...ticketsRoutes.routes,
         ...homeRoutes.routes,

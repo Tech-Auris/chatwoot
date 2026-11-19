@@ -1,4 +1,7 @@
 class SuperAdmin::AppConfigsController < SuperAdmin::ApplicationController
+  # OpenAI models of the Clínica virtual AI team (the clinic pays with its own key).
+  VIRTUAL_CLINIC_MODEL_CONFIGS = %w[VIRTUAL_CLINIC_SECRETARY_MODEL VIRTUAL_CLINIC_MANAGER_MODEL].freeze
+
   before_action :set_config
   before_action :allowed_configs
   before_action :load_installation_configs, only: [:show, :create]
@@ -174,7 +177,7 @@ class SuperAdmin::AppConfigsController < SuperAdmin::ApplicationController
       'whatsapp_embedded' => %w[WHATSAPP_APP_ID WHATSAPP_APP_SECRET WHATSAPP_CONFIGURATION_ID WHATSAPP_API_VERSION],
       'notion' => %w[NOTION_CLIENT_ID NOTION_CLIENT_SECRET],
       'google' => %w[GOOGLE_OAUTH_CLIENT_ID GOOGLE_OAUTH_CLIENT_SECRET GOOGLE_OAUTH_REDIRECT_URI ENABLE_GOOGLE_OAUTH_LOGIN],
-      'captain' => %w[CAPTAIN_OPEN_AI_API_KEY CAPTAIN_OPEN_AI_MODEL CAPTAIN_OPEN_AI_ENDPOINT]
+      'captain' => %w[CAPTAIN_OPEN_AI_API_KEY CAPTAIN_OPEN_AI_MODEL CAPTAIN_OPEN_AI_ENDPOINT] + VIRTUAL_CLINIC_MODEL_CONFIGS
     }.merge(auris_config_mapping)
 
     @allowed_configs = mapping.fetch(

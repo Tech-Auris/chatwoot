@@ -9,23 +9,16 @@ class AurisAccountMenusField < Administrate::Field::Base
     'Auris menus'
   end
 
+  MENUS = {
+    inbox_view_menu_enabled: 'Caixa de Entrada',
+    help_center_menu_enabled: 'Central de Ajuda',
+    campaigns_live_chat_menu_enabled: 'Campanhas / Chat ao vivo',
+    campaigns_sms_menu_enabled: 'Campanhas / SMS',
+    settings_macros_menu_enabled: 'Configurações / Macros',
+    virtual_clinic_enabled: 'Clínica virtual'
+  }.freeze
+
   def options
-    [
-      { key: :inbox_view_menu_enabled,
-        label: 'Caixa de Entrada',
-        checked: resource.inbox_view_menu_enabled },
-      { key: :help_center_menu_enabled,
-        label: 'Central de Ajuda',
-        checked: resource.help_center_menu_enabled },
-      { key: :campaigns_live_chat_menu_enabled,
-        label: 'Campanhas / Chat ao vivo',
-        checked: resource.campaigns_live_chat_menu_enabled },
-      { key: :campaigns_sms_menu_enabled,
-        label: 'Campanhas / SMS',
-        checked: resource.campaigns_sms_menu_enabled },
-      { key: :settings_macros_menu_enabled,
-        label: 'Configurações / Macros',
-        checked: resource.settings_macros_menu_enabled }
-    ]
+    MENUS.map { |key, label| { key: key, label: label, checked: resource.public_send(key) } }
   end
 end

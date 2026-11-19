@@ -195,6 +195,14 @@
   display_title: 'OpenAI Model'
   description: 'The OpenAI model configured for use in Captain AI. Default: gpt-4.1-mini'
   locked: false
+- name: VIRTUAL_CLINIC_SECRETARY_MODEL
+  display_title: 'Clínica virtual: modelo da Secretária'
+  description: 'OpenAI model for the secretary of the Clínica virtual (uses the clinic own key). Default: gpt-4.1-mini'
+  locked: false
+- name: VIRTUAL_CLINIC_MANAGER_MODEL
+  display_title: 'Clínica virtual: modelo da Gerente'
+  description: 'OpenAI model for the manager of the Clínica virtual (uses the clinic own key). Default: gpt-5.1'
+  locked: false
 - name: CAPTAIN_OPEN_AI_ENDPOINT
   display_title: 'OpenAI API Endpoint (optional)'
   description: 'The OpenAI endpoint configured for use in Captain AI. Default: https://api.openai.com/'

@@ -1,0 +1,50 @@
+# The AI team of the Clínica virtual. `tools` is the allowlist each persona
+# gets from the MCP Auris; `model_config_key` is the InstallationConfig
+# entry that picks its OpenAI model.
+secretary:
+  default_name: Clara
+  model_config_key: VIRTUAL_CLINIC_SECRETARY_MODEL
+  default_model: gpt-4.1-mini
+  tools:
+    - atendimento_agora
+    - buscar_conversas
+    - resumir_conversa
+    - follow_ups
+    - follow_ups_em_andamento
+    - mensagens_agendadas
+    - transferencias_ia_humano
+    - buscar_contato
+    - resumo_periodo
+  suggestions:
+    - Quem você está atendendo agora?
+    - Quem está esperando resposta há mais tempo?
+    - Quem você passou para um humano hoje?
+manager:
+  default_name: Helena
+  model_config_key: VIRTUAL_CLINIC_MANAGER_MODEL
+  default_model: gpt-5.1
+  tools:
+    - resumo_periodo
+    - atendimento_agora
+    - transferencias_ia_humano
+    - desempenho_atendentes
+    - follow_ups
+    - follow_ups_em_andamento
+    - funil_resumo
+    - funil_etapa
+    - conversao_por_campanha
+    - buscar_conversas
+    - resumir_conversa
+    - buscar_contato
+    - mensagens_agendadas
+    - agendamentos_resumo
+    - horarios_pico
+    - reports_account_summary
+    - reports_v2_inboxes
+    - reports_v2_teams
+    - agents_list
+    - teams_list
+  suggestions:
+    - Como foi este mês comparado ao anterior?
+    - Onde estamos perdendo mais pacientes?
+    - Qual campanha trouxe mais pacientes?
