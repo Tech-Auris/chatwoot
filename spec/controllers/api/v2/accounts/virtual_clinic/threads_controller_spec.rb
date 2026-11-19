@@ -44,6 +44,14 @@ RSpec.describe 'Virtual clinic threads API', type: :request do
     expect(response.parsed_body['thread_id']).not_to eq(first_thread)
   end
 
+  it 'gives the live status of the AI team' do
+    get "/api/v2/accounts/#{account.id}/virtual_clinic/status", headers: admin.create_new_auth_token, as: :json
+
+    expect(response).to have_http_status(:ok)
+    expect(response.parsed_body.dig('secretary', 'active_conversations')).to eq(0)
+    expect(response.parsed_body.dig('manager', 'month')).to include('leads', 'appointments')
+  end
+
   it 'is refused to agents' do
     get url, headers: agent.create_new_auth_token, as: :json
 
