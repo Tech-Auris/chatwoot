@@ -22,16 +22,19 @@ const router = useRouter();
 const agents = useMapGetter('agents/getNonInternalAgents');
 const currentUserId = useMapGetter('getCurrentUserID');
 
-// Online first, then busy, then offline; the user sits at the top.
+// Online first, then busy, then offline; the user sits at the top. The AI
+// user is left out: on the map it is Clara.
 const STATUS_ORDER = { online: 0, busy: 1, offline: 2 };
 const people = computed(() =>
-  [...(agents.value || [])].sort(
-    (a, b) =>
-      (b.id === currentUserId.value) - (a.id === currentUserId.value) ||
-      (STATUS_ORDER[a.availability_status] ?? 2) -
-        (STATUS_ORDER[b.availability_status] ?? 2) ||
-      a.name.localeCompare(b.name)
-  )
+  (agents.value || [])
+    .filter(agent => !agent.is_ai_user)
+    .sort(
+      (a, b) =>
+        (b.id === currentUserId.value) - (a.id === currentUserId.value) ||
+        (STATUS_ORDER[a.availability_status] ?? 2) -
+          (STATUS_ORDER[b.availability_status] ?? 2) ||
+        a.name.localeCompare(b.name)
+    )
 );
 const onlineCount = computed(
   () => people.value.filter(p => p.availability_status === 'online').length

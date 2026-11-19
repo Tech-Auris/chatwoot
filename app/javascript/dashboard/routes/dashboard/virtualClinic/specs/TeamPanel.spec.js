@@ -15,6 +15,12 @@ const agents = [
   { id: 3, name: 'Juliana Reis', availability_status: 'offline' },
   { id: 2, name: 'Marcos Silva', availability_status: 'online' },
   { id: 1, name: 'Dra. Paula', availability_status: 'online' },
+  {
+    id: 10,
+    name: 'IA | Auris',
+    availability_status: 'online',
+    is_ai_user: true,
+  },
 ];
 vi.mock('dashboard/composables/store', () => ({
   useStore: () => ({ dispatch }),
@@ -84,6 +90,7 @@ describe('TeamPanel', () => {
 
     expect(names[0]).toContain('Dra. Paula');
     expect(names[1]).toContain('Marcos Silva');
+    expect(names.join()).not.toContain('IA | Auris');
 
     await wrapper.findAll('button')[1].trigger('click');
     await Promise.resolve();
