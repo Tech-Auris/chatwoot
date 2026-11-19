@@ -94,10 +94,12 @@ export const ITEMS = [
   { sprite: `${G}arquivo.png`, x: 848, y: 35 },
   { sprite: `${G}arquivo_2.png`, x: 882, y: 35 },
   { sprite: `${G}planta.png`, x: 920, y: 52 },
-  { sprite: `${G}cadeira_executiva_frente.png`, x: 708, y: 88 },
+  { sprite: `${G}cadeira_executiva_frente.png`, x: 708, y: 108 },
   { sprite: `${G}mesa_reta.png`, x: 676, y: 158 },
   { sprite: `${G}mesa_em_l.png`, x: 740, y: 132 },
-  { sprite: `${G}monitor_duplo.png`, x: 692, y: 124, sortY: 197 },
+  // Two monitors seen from behind, facing Helena.
+  { sprite: `${G}monitor_costas.png`, x: 690, y: 150, sortY: 197 },
+  { sprite: `${G}monitor_costas.png`, x: 719, y: 150, sortY: 197 },
   { sprite: `${G}luminaria.png`, x: 772, y: 116, sortY: 197 },
   { sprite: `${G}planta_2.png`, x: 648, y: 250 },
   { sprite: `${G}sofa_lateral.png`, x: 928, y: 196 },
@@ -129,7 +131,7 @@ export const CHARACTERS = {
   manager: {
     sheet: '7_personagens/helena_opcao_A_spritesheet.png',
     x: 708,
-    y: 70,
+    y: 90,
     bubble: { x: 724, y: 86 },
     tag: { x: 740, y: 214 },
   },
@@ -138,7 +140,8 @@ export const CHARACTERS = {
 export const ROOMS = [
   { key: 'RECEPTION', x: 8, y: 72 },
   { key: 'WAITING_ROOM', x: 8, y: 328 },
-  { key: 'MANAGEMENT', x: 652, y: 72 },
+  // Top right of the gerência, clear of Helena's name over her head.
+  { key: 'MANAGEMENT', x: 952, y: 114, alignRight: true },
   { key: 'KITCHEN', x: 886, y: 430 },
 ];
 
