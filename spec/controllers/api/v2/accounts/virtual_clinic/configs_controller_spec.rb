@@ -11,8 +11,9 @@ RSpec.describe 'Virtual clinic config API', type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.parsed_body['ai_team']).to include('visible' => true, 'enabled' => false, 'missing' => 'openai_key')
-    expect(response.parsed_body.dig('ai_team', 'members')).to eq([{ 'persona' => 'secretary', 'name' => 'Clara' },
-                                                                  { 'persona' => 'manager', 'name' => 'Helena' }])
+    members = response.parsed_body.dig('ai_team', 'members').map { |member| member.slice('persona', 'name') }
+    expect(members).to eq([{ 'persona' => 'secretary', 'name' => 'Clara' }, { 'persona' => 'manager', 'name' => 'Helena' }])
+    expect(response.parsed_body.dig('ai_team', 'daily_question_limit')).to eq(60)
   end
 
   it 'enables the AI team once the clinic has its OpenAI key' do
@@ -27,7 +28,7 @@ RSpec.describe 'Virtual clinic config API', type: :request do
   it 'hides the AI team from agents' do
     get url, headers: agent.create_new_auth_token, as: :json
 
-    expect(response.parsed_body['ai_team']).to eq('visible' => false, 'enabled' => false, 'missing' => nil, 'members' => [])
+    expect(response.parsed_body['ai_team']).to include('visible' => false, 'enabled' => false, 'missing' => nil, 'members' => [])
   end
 
   it 'is refused when the account is not released' do

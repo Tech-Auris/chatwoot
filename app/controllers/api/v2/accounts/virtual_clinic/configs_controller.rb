@@ -9,7 +9,8 @@ class Api::V2::Accounts::VirtualClinic::ConfigsController < Api::V1::Accounts::B
         visible: policy.ai_team_visible?,
         enabled: policy.ai_team?,
         missing: policy.ai_team_visible? ? policy.missing_requirement : nil,
-        members: policy.ai_team_visible? ? ::VirtualClinic::Persona.all.map(&:as_json) : []
+        members: policy.ai_team_visible? ? ::VirtualClinic::Persona.all.map(&:as_json) : [],
+        daily_question_limit: ::VirtualClinic::QuestionLimit.for(Current.account)
       }
     }
   end
