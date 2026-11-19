@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import VirtualClinicAPI from 'dashboard/api/virtualClinic';
-import Button from 'dashboard/components-next/button/Button.vue';
+import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import { CHARACTERS, ROOMS, SPRITE_PATHS, WORLD } from '../engine/layout';
 import { loadSprites } from '../engine/sprites';
@@ -24,6 +24,10 @@ const canvas = ref(null);
 const loading = ref(true);
 const failed = ref(false);
 const scale = ref(1);
+const fitScale = ref(1);
+const userZoomed = ref(false);
+const MAX_SCALE = 4;
+const minScale = computed(() => Math.min(1, fitScale.value * 0.75));
 const tick = ref(0);
 const rotation = ref(0);
 let draw = null;
@@ -89,13 +93,43 @@ const animate = () => {
   if (!document.hidden) tick.value += 1;
 };
 
-// Integer zoom only, so the pixel art stays sharp.
+// The map fills the area by default; the user can zoom in and out from
+// there (wheel or the +/- control), like in Gather.
 const fit = () => {
   const width = viewport.value?.clientWidth || WORLD.width;
-  scale.value = Math.max(1, Math.floor(width / WORLD.width));
+  const height = viewport.value?.clientHeight || WORLD.height;
+  fitScale.value = Math.min(width / WORLD.width, height / WORLD.height);
+  if (!userZoomed.value) scale.value = fitScale.value;
 };
-const zoom = step => {
-  scale.value = Math.min(3, Math.max(1, scale.value + step));
+
+// Keeps the point under the cursor (or the center) in place while zooming.
+const zoomTo = (next, anchor) => {
+  const target = Math.min(MAX_SCALE, Math.max(minScale.value, next));
+  const box = viewport.value;
+  const rect = box.getBoundingClientRect();
+  const point = anchor || {
+    x: rect.left + rect.width / 2,
+    y: rect.top + rect.height / 2,
+  };
+  const worldX = (box.scrollLeft + point.x - rect.left) / scale.value;
+  const worldY = (box.scrollTop + point.y - rect.top) / scale.value;
+  userZoomed.value = true;
+  scale.value = target;
+  requestAnimationFrame(() => {
+    box.scrollLeft = worldX * target - (point.x - rect.left);
+    box.scrollTop = worldY * target - (point.y - rect.top);
+  });
+};
+const zoom = factor => zoomTo(scale.value * factor);
+const onWheel = event => {
+  zoomTo(scale.value * (event.deltaY < 0 ? 1.1 : 1 / 1.1), {
+    x: event.clientX,
+    y: event.clientY,
+  });
+};
+const resetZoom = () => {
+  userZoomed.value = false;
+  scale.value = fitScale.value;
 };
 
 const onClick = event => {
@@ -157,31 +191,46 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="relative flex-1 min-w-0 overflow-hidden bg-n-alpha-1">
-    <div class="absolute z-10 flex gap-1 top-3 right-3">
-      <Button
-        icon="i-lucide-minus"
-        size="xs"
-        color="slate"
-        :disabled="scale === 1"
-        @click="zoom(-1)"
-      />
-      <Button
-        icon="i-lucide-plus"
-        size="xs"
-        color="slate"
-        :disabled="scale === 3"
-        @click="zoom(1)"
-      />
+    <div
+      class="absolute z-10 flex flex-col overflow-hidden text-white shadow-lg bottom-4 right-4 rounded-xl bg-n-slate-12/90"
+    >
+      <button
+        type="button"
+        class="grid size-10 place-items-center hover:bg-white/10 disabled:opacity-40"
+        :title="t('VIRTUAL_CLINIC.MAP.ZOOM_IN')"
+        :disabled="scale >= MAX_SCALE"
+        @click="zoom(1.25)"
+      >
+        <Icon icon="i-lucide-plus" class="size-5" />
+      </button>
+      <button
+        type="button"
+        class="grid size-10 place-items-center hover:bg-white/10"
+        :title="t('VIRTUAL_CLINIC.MAP.ZOOM_FIT')"
+        @click="resetZoom"
+      >
+        <Icon icon="i-lucide-scan" class="size-4" />
+      </button>
+      <button
+        type="button"
+        class="grid size-10 place-items-center hover:bg-white/10 disabled:opacity-40"
+        :title="t('VIRTUAL_CLINIC.MAP.ZOOM_OUT')"
+        :disabled="scale <= minScale"
+        @click="zoom(0.8)"
+      >
+        <Icon icon="i-lucide-minus" class="size-5" />
+      </button>
     </div>
     <div
       ref="viewport"
-      class="w-full h-full overflow-auto cursor-grab active:cursor-grabbing"
+      class="flex w-full h-full overflow-auto cursor-grab active:cursor-grabbing"
+      @wheel.prevent="onWheel"
       @mousedown="startDrag"
       @mousemove="moveDrag"
       @mouseup="endDrag"
       @mouseleave="endDrag"
     >
-      <div class="relative mx-auto my-4" :style="worldSize">
+      <div class="relative m-auto shrink-0" :style="worldSize">
         <canvas
           ref="canvas"
           :width="WORLD.width"

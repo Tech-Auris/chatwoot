@@ -11,7 +11,7 @@
       "MISSING_MCP": "Ative o assistente de IA para conhecer a sua equipe.",
       "ENABLE_MCP": "Ativar equipe de IA",
       "MISSING_OPENAI": "A equipe de IA usa a chave da OpenAI da sua clínica.",
-      "CONFIGURE_OPENAI": "Configurar chave da OpenAI",
+      "CONFIGURE_OPENAI": "Configurar chave OpenAI",
       "CHAT_SECTION": "Equipe de IA"
     },
     "RAIL": {
@@ -85,7 +85,10 @@
         "WAITING_ROOM": "Sala de espera",
         "MANAGEMENT": "Gerência",
         "KITCHEN": "Copa"
-      }
+      },
+      "ZOOM_IN": "Aproximar",
+      "ZOOM_OUT": "Afastar",
+      "ZOOM_FIT": "Ajustar à tela"
     }
   }
 }

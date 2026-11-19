@@ -85,7 +85,10 @@
         "WAITING_ROOM": "Waiting room",
         "MANAGEMENT": "Management",
         "KITCHEN": "Kitchen"
-      }
+      },
+      "ZOOM_IN": "Zoom in",
+      "ZOOM_OUT": "Zoom out",
+      "ZOOM_FIT": "Fit to screen"
     }
   }
 }

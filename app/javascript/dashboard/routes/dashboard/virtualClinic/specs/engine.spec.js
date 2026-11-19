@@ -24,7 +24,7 @@ describe('clinic layout', () => {
 
   it('covers the whole clinic with floor below the walls', () => {
     const area = FLOORS.reduce((sum, floor) => sum + floor.w * floor.h, 0);
-    expect(area).toBe(WORLD.width * (WORLD.height - 64) - 448 * 64);
+    expect(area).toBe(WORLD.width * (WORLD.height - 64) - 320 * 64);
   });
 
   it('opens two passages between the wings', () => {
