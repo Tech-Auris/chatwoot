@@ -999,6 +999,8 @@ async function handleDeleteCategory() {
         </div>
       </div>
 
+      <slot />
+
       <!-- Archived channels -->
       <div class="mb-3">
         <h3

@@ -13,6 +13,7 @@ import PaginationFooter from 'dashboard/components-next/pagination/PaginationFoo
 import Button from 'dashboard/components-next/button/Button.vue';
 import Select from 'dashboard/components-next/select/Select.vue';
 import TicketDetailDialog from 'dashboard/components-next/feedback/TicketDetailDialog.vue';
+import { clickupTaskUrl } from 'dashboard/components-next/feedback/clickupTaskUrl';
 
 // Meus Tickets. Renders every ticket the current user is allowed to see —
 // TicketPolicy::Scope on the backend already trims the payload to "own for
@@ -36,17 +37,6 @@ const isAdminOrManager = computed(() =>
 // so only administrators get that column — managers stay on the same "sees
 // every ticket" scope for the rest of the row.
 const isAdministrator = computed(() => currentRole.value === 'administrator');
-
-// ClickUp team id is fixed for the Auris workspace (see FieldMap::TEAM_ID
-// on the backend). We assemble the task URL client-side so the admin link
-// column stays populated even for older tickets whose sync response landed
-// the task id but not the URL (a state PR1 briefly allowed).
-const CLICKUP_TEAM_ID = '90132001451';
-const clickupTaskUrl = ticket => {
-  if (ticket.clickup_task_url) return ticket.clickup_task_url;
-  if (!ticket.clickup_task_id) return null;
-  return `https://app.clickup.com/t/${CLICKUP_TEAM_ID}/${ticket.clickup_task_id}`;
-};
 
 const statusFilter = ref('');
 const hideFinished = ref(false);

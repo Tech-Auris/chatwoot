@@ -103,3 +103,10 @@ CLAUDE.local.md
 .pnpm-store/*
 local/
 Procfile.worktree
+
+# LimeZu art of the Clínica virtual: licensed, never redistributed (public repo)
+**/limezu/**
+**/clinica-virtual-selecao/**
+**/modern-interiors/**
+**/modern-office/**
+**/modern-exteriors/**

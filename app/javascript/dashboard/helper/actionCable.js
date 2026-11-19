@@ -50,6 +50,7 @@ class ActionCableConnector extends BaseActionCableConnector {
         this.onRecurringScheduledMessageUpdated,
       'recurring_scheduled_message.deleted':
         this.onRecurringScheduledMessageDeleted,
+      'virtual_clinic.message.updated': this.onVirtualClinicMessageUpdated,
       'internal_chat.channel.updated': this.onInternalChatChannelUpdated,
       'internal_chat.message.created': this.onInternalChatMessageCreated,
       'internal_chat.message.updated': this.onInternalChatMessageUpdated,
@@ -364,6 +365,12 @@ class ActionCableConnector extends BaseActionCableConnector {
         last_activity_at: data.created_at,
       });
     }
+  };
+
+  // The answer of a Clínica virtual AI teammate is ready (or failed).
+  // eslint-disable-next-line class-methods-use-this
+  onVirtualClinicMessageUpdated = data => {
+    emitter.emit('virtualClinicMessageUpdated', data);
   };
 
   onInternalChatMessageUpdated = data => {

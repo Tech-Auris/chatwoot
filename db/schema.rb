@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_11_18_180100) do
+ActiveRecord::Schema[7.1].define(version: 2026_11_19_050000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -149,6 +149,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_18_180100) do
     t.boolean "mcp_enabled", default: false, null: false
     t.datetime "mcp_enabled_at"
     t.bigint "mcp_enabled_by_id"
+    t.boolean "virtual_clinic_enabled", default: false, null: false
     t.index ["erp_source_id"], name: "index_accounts_on_erp_source_id"
     t.index ["status"], name: "index_accounts_on_status"
     t.index ["stripe_customer_id"], name: "index_accounts_on_stripe_customer_id", unique: true, where: "(stripe_customer_id IS NOT NULL)"
@@ -2442,6 +2443,31 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_18_180100) do
     t.index ["uid", "provider"], name: "index_users_on_uid_and_provider", unique: true
   end
 
+  create_table "virtual_clinic_messages", force: :cascade do |t|
+    t.bigint "thread_id", null: false
+    t.integer "role", null: false
+    t.integer "status", default: 0, null: false
+    t.text "content"
+    t.jsonb "tool_calls", default: [], null: false
+    t.string "model"
+    t.integer "input_tokens"
+    t.integer "output_tokens"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["thread_id"], name: "index_virtual_clinic_messages_on_thread_id"
+  end
+
+  create_table "virtual_clinic_threads", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "user_id", null: false
+    t.integer "persona", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "user_id", "persona", "created_at"], name: "index_vc_threads_on_owner_and_persona"
+    t.index ["account_id"], name: "index_virtual_clinic_threads_on_account_id"
+    t.index ["user_id"], name: "index_virtual_clinic_threads_on_user_id"
+  end
+
   create_table "webhooks", force: :cascade do |t|
     t.integer "account_id"
     t.integer "inbox_id"
@@ -2577,6 +2603,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_18_180100) do
   add_foreign_key "tickets", "conversations", on_delete: :cascade
   add_foreign_key "tickets", "users", on_delete: :nullify
   add_foreign_key "user_sessions", "users"
+  add_foreign_key "virtual_clinic_messages", "virtual_clinic_threads", column: "thread_id"
+  add_foreign_key "virtual_clinic_threads", "accounts"
+  add_foreign_key "virtual_clinic_threads", "users"
   create_trigger("accounts_after_insert_row_tr", :generated => true, :compatibility => 1).
       on("accounts").
       after(:insert).

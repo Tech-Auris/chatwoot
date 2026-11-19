@@ -7,6 +7,7 @@ import { useAlert } from 'dashboard/composables';
 
 import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
+import { clickupTaskUrl } from './clickupTaskUrl';
 
 // Ticket detail modal used by Meus Tickets. Shows the readonly ticket
 // captured at open time (id, status, agent, problem, expected behavior,
@@ -46,6 +47,10 @@ const isSyncFailed = computed(
 // internals (task id, workspace URL) that don't belong in front of the
 // operator or the manager.
 const isAdministrator = computed(() => currentRole.value === 'administrator');
+const clickupUrl = computed(() => clickupTaskUrl(ticket.value));
+
+// `window` is not exposed to Vue templates, so the open lives here.
+const openInClickup = () => window.open(clickupUrl.value, '_blank');
 const isFinished = computed(
   () => (ticket.value?.clickup_status_name || '').toLowerCase() === 'encerrado'
 );
@@ -274,14 +279,14 @@ defineExpose({ openWith });
           @click="goToMessage"
         />
         <Button
-          v-if="isAdministrator && ticket.clickup_task_url"
+          v-if="isAdministrator && clickupUrl"
           type="button"
           variant="faded"
           color="slate"
           size="sm"
           icon="i-lucide-external-link"
           :label="t('MEUS_TICKETS.DETAIL.OPEN_IN_CLICKUP')"
-          @click="() => window.open(ticket.clickup_task_url, '_blank')"
+          @click="openInClickup"
         />
       </div>
 

@@ -1,4 +1,16 @@
 ---
+- tag: v4.15.1-auris.1.81
+  published_at: '2026-11-18T20:00:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.81
+  notes:
+    en: |-
+      ### 🐛 Fixes
+
+      - **A warning when the official WhatsApp gets disconnected.** If the clinic's official WhatsApp number loses its connection to AurisChat (for example, after disconnecting WhatsApp Business on the phone), the sidebar now shows the alert to reconnect it. Before, messages stopped going out without any warning.
+    pt_BR: |-
+      ### 🐛 Correções
+
+      - **Aviso quando o WhatsApp oficial é desconectado.** Se o número do WhatsApp oficial da clínica perder a conexão com o AurisChat (por exemplo, ao desconectar o WhatsApp Business no celular), a barra lateral agora mostra o alerta para reconectar. Antes, as mensagens deixavam de sair sem nenhum aviso.
 - tag: v4.15.1-auris.1.80
   published_at: '2026-11-17T20:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.80
@@ -469,29 +481,3 @@
       ### 🐛 Correções
 
       - **Barra de passos no link da proposta.** A barra "1.Reservar → 6.Implantado" que o cliente vê ao abrir a proposta no celular deixou de quebrar em duas linhas.
-- tag: v4.15.1-auris.1.61
-  published_at: '2026-09-24T21:00:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.61
-  notes:
-    en: |-
-      ### ✨ What's new
-
-      - **Scheduled messages panel.** A new *Agendadas* entry under *Conversas* on the left menu shows every scheduled message in one place, grouped by day (Hoje / Amanhã / Próximos 7 dias / Mais adiante) with tabs for Pendente, Enviada, Suspensa and Falhou. Click a row to jump to the conversation.
-      - **Cancel a pending scheduled message.** On the panel, each *Pendente* row now has a trash button that cancels the schedule with one click.
-      - **Schedule from the panel.** Click *+ Agendar mensagem* to schedule for any contact without opening the conversation first — you pick the contact and the inbox right there.
-      - **Shortcut from the conversation to the panel.** The *Mensagens agendadas* section on the conversation sidebar now has a small external-link icon that opens the full panel in a new tab.
-
-      ### ⚡ Improvements
-
-      - **"Não atendidas" icon.** Was almost identical to *Agendadas* (both clocks). It is now a distinct message-with-warning icon so the two read separately at a glance.
-    pt_BR: |-
-      ### ✨ Novidades
-
-      - **Painel de mensagens agendadas.** No menu lateral, sob *Conversas*, um novo item *Agendadas* mostra todas as mensagens agendadas em um só lugar, agrupadas por dia (Hoje / Amanhã / Próximos 7 dias / Mais adiante), com abas Pendente, Enviada, Suspensa e Falhou. Clicar na linha abre a conversa.
-      - **Cancelar mensagem agendada pendente.** No painel, cada linha em *Pendente* agora tem um botão de lixeira que cancela o agendamento em um clique.
-      - **Agendar mensagem direto do painel.** Clique em *+ Agendar mensagem* para agendar para qualquer contato sem precisar abrir a conversa — você escolhe o contato e a caixa ali mesmo.
-      - **Atalho da conversa para o painel.** A seção *Mensagens agendadas* na barra lateral da conversa ganhou um ícone de link externo que abre o painel completo em uma nova aba.
-
-      ### ⚡ Melhorias
-
-      - **Ícone de "Não atendidas".** Antes era quase igual ao de *Agendadas* (dois relógios); agora é um balão com aviso, para os dois ficarem distinguíveis num olhar.
