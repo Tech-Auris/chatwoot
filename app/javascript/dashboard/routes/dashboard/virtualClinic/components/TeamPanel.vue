@@ -1,7 +1,10 @@
 <script setup>
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useRoute, useRouter } from 'vue-router';
+import { useMapGetter, useStore } from 'dashboard/composables/store';
 import Button from 'dashboard/components-next/button/Button.vue';
+import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 
 const props = defineProps({
   clinicName: { type: String, default: '' },
@@ -11,6 +14,39 @@ const props = defineProps({
 
 const emit = defineEmits(['selectMember']);
 const { t } = useI18n();
+const store = useStore();
+const route = useRoute();
+const router = useRouter();
+const agents = useMapGetter('agents/getNonInternalAgents');
+const currentUserId = useMapGetter('getCurrentUserID');
+
+// Online first, then busy, then offline; the user sits at the top.
+const STATUS_ORDER = { online: 0, busy: 1, offline: 2 };
+const people = computed(() =>
+  [...(agents.value || [])].sort(
+    (a, b) =>
+      (b.id === currentUserId.value) - (a.id === currentUserId.value) ||
+      (STATUS_ORDER[a.availability_status] ?? 2) -
+        (STATUS_ORDER[b.availability_status] ?? 2) ||
+      a.name.localeCompare(b.name)
+  )
+);
+const onlineCount = computed(
+  () => people.value.filter(p => p.availability_status === 'online').length
+);
+
+// Opens (or creates) the direct message in the internal chat, Gather-style.
+const openDirectMessage = async person => {
+  if (person.id === currentUserId.value) return;
+  const channel = await store.dispatch('internalChat/create', {
+    channel: { channel_type: 'dm' },
+    member_ids: [person.id],
+  });
+  router.push({
+    name: 'internal_chat_dm',
+    params: { accountId: route.params.accountId, channelId: channel.id },
+  });
+};
 
 const members = computed(() => props.aiTeam?.members || []);
 const enabled = computed(() => props.aiTeam?.enabled === true);
@@ -95,6 +131,47 @@ const select = member => {
         <router-link :to="missingAction.to">
           <Button :label="missingAction.label" size="sm" class="w-full" />
         </router-link>
+      </div>
+    </div>
+
+    <div class="flex flex-col min-h-0 gap-1">
+      <h2 class="mb-1 text-xs font-medium text-n-slate-11">
+        {{ t('VIRTUAL_CLINIC.PEOPLE.TITLE', { count: onlineCount }) }}
+      </h2>
+      <div class="flex flex-col gap-1 overflow-y-auto">
+        <button
+          v-for="person in people"
+          :key="person.id"
+          type="button"
+          class="flex items-center gap-3 p-2 text-left rounded-lg hover:bg-n-alpha-2"
+          @click="openDirectMessage(person)"
+        >
+          <Avatar
+            :name="person.name"
+            :src="person.thumbnail || ''"
+            :status="person.availability_status"
+            :size="32"
+            rounded-full
+          />
+          <span class="flex flex-col min-w-0">
+            <span class="text-sm font-medium truncate text-n-slate-12">
+              {{ person.name }}
+              <span
+                v-if="person.id === currentUserId"
+                class="text-xs font-normal text-n-slate-11"
+              >
+                {{ t('VIRTUAL_CLINIC.PEOPLE.YOU') }}
+              </span>
+            </span>
+            <span class="text-xs text-n-slate-11">
+              {{
+                t(
+                  `VIRTUAL_CLINIC.PEOPLE.STATUS.${(person.availability_status || 'offline').toUpperCase()}`
+                )
+              }}
+            </span>
+          </span>
+        </button>
       </div>
     </div>
   </section>

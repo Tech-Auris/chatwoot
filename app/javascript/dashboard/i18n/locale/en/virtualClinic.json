@@ -12,7 +12,21 @@
       "MISSING_MCP": "Turn on the AI assistant to meet your team.",
       "ENABLE_MCP": "Turn on AI team",
       "MISSING_OPENAI": "The AI team uses your clinic's OpenAI key.",
-      "CONFIGURE_OPENAI": "Set up OpenAI key"
+      "CONFIGURE_OPENAI": "Set up OpenAI key",
+      "CHAT_SECTION": "AI team"
+    },
+    "RAIL": {
+      "MAP": "Clinic",
+      "CHAT": "Chat"
+    },
+    "PEOPLE": {
+      "TITLE": "People · {count} online",
+      "YOU": "(you)",
+      "STATUS": {
+        "ONLINE": "Online",
+        "BUSY": "Busy",
+        "OFFLINE": "Offline"
+      }
     }
   }
 }
