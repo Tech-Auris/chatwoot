@@ -42,7 +42,11 @@ class AccountPrompt < ApplicationRecord
   scope :specific, -> { where("inbox_ids <> '{}'") }
   scope :ordered, -> { order(Arel.sql('cardinality(inbox_ids) > 0'), :id) }
 
+  # Clinic prompts run past the 20k-character default of ApplicationRecord.
+  PROMPT_MAX_LENGTH = 100_000
+
   validates :name, :ai_prompt_system_message, presence: true
+  validates :ai_prompt_system_message, length: { maximum: PROMPT_MAX_LENGTH }
   validate :one_general_per_account, if: :general?
   validate :general_exists, unless: :general?
   validate :inboxes_belong_to_account

@@ -17,4 +17,7 @@
 #  updated_at          :datetime         not null
 #
 class SecretaryPrompt < ApplicationRecord
+  # The base blocks can run past the 20k-character default of ApplicationRecord.
+  validates :core_behavior, :communication_rules, :medical_compliance, :tools_usage,
+            length: { maximum: AccountPrompt::PROMPT_MAX_LENGTH }
 end

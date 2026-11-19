@@ -5,6 +5,17 @@ RSpec.describe AccountPrompt do
   let(:inbox) { create(:inbox, account: account) }
   let(:other_inbox) { create(:inbox, account: account) }
 
+  it 'accepts clinic prompts longer than the 20k-character default' do
+    prompt = described_class.create!(account: account, name: 'Geral', ai_prompt_system_message: 'a' * 30_000)
+
+    expect(prompt.reload.ai_prompt_system_message.length).to eq(30_000)
+    expect(described_class.new(account: account, name: 'Geral', ai_prompt_system_message: 'a' * 100_001)).not_to be_valid
+  end
+
+  it 'accepts base blocks longer than the 20k-character default' do
+    expect(SecretaryPrompt.create!(core_behavior: 'a' * 30_000).reload.core_behavior.length).to eq(30_000)
+  end
+
   it 'keeps the inbox ids unique, sorted and without blanks' do
     prompt = described_class.new(account: account, inbox_ids: ['', other_inbox.id.to_s, inbox.id.to_s, inbox.id.to_s])
 
