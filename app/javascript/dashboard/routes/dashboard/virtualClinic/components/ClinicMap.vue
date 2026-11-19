@@ -303,6 +303,7 @@ onBeforeUnmount(() => {
             v-for="room in ROOMS"
             :key="room.key"
             class="absolute px-2 py-0.5 text-xs font-semibold text-white rounded-md pointer-events-none bg-n-slate-12/80"
+            :class="{ '-translate-x-full': room.alignRight }"
             :style="at(room)"
           >
             {{ t(`VIRTUAL_CLINIC.MAP.ROOMS.${room.key}`) }}

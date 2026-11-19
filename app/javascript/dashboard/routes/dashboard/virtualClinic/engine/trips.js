@@ -10,8 +10,8 @@ const CLARA_OUT = [
   [440, 140],
 ];
 const HELENA_OUT = [
-  [708, 70],
-  [644, 70],
+  [708, 90],
+  [644, 90],
   [644, 140],
 ];
 // From the recepção, down the sala de espera and into the copa.
