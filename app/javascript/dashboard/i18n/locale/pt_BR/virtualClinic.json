@@ -27,6 +27,45 @@
         "BUSY": "Ocupado",
         "OFFLINE": "Offline"
       }
+    },
+    "CHAT": {
+      "NEW": "Nova conversa",
+      "THINKING": "{name} está consultando os dados…",
+      "RETRY": "Tentar de novo",
+      "CONSULTED": "Consultou: {tools}",
+      "PLACEHOLDER": "Pergunte para a {name}…",
+      "DAILY_LIMIT": "Você chegou ao limite de perguntas de hoje definido pela clínica. Volte amanhã.",
+      "SEND_ERROR": "Não consegui enviar a pergunta. Tente de novo.",
+      "SUBTITLE": {
+        "SECRETARY": "Responde sobre atendimentos e follow-ups",
+        "MANAGER": "Responde tudo sobre a clínica, com números"
+      }
+    },
+    "SETTINGS": {
+      "DAILY_LIMIT": "Perguntas por pessoa por dia",
+      "NO_LIMIT": "sem"
+    },
+    "TOOLS": {
+      "ATENDIMENTO_AGORA": "atendimento agora",
+      "BUSCAR_CONVERSAS": "conversas",
+      "RESUMIR_CONVERSA": "resumo da conversa",
+      "FOLLOW_UPS": "follow-ups",
+      "FOLLOW_UPS_EM_ANDAMENTO": "follow-ups em andamento",
+      "MENSAGENS_AGENDADAS": "mensagens agendadas",
+      "TRANSFERENCIAS_IA_HUMANO": "transferências para humano",
+      "BUSCAR_CONTATO": "contato",
+      "RESUMO_PERIODO": "resumo do período",
+      "DESEMPENHO_ATENDENTES": "desempenho dos atendentes",
+      "FUNIL_RESUMO": "funil",
+      "FUNIL_ETAPA": "etapa do funil",
+      "CONVERSAO_POR_CAMPANHA": "campanhas",
+      "AGENDAMENTOS_RESUMO": "agendamentos",
+      "HORARIOS_PICO": "horários de pico",
+      "REPORTS_ACCOUNT_SUMMARY": "relatório da conta",
+      "REPORTS_V2_INBOXES": "canais",
+      "REPORTS_V2_TEAMS": "times",
+      "AGENTS_LIST": "atendentes",
+      "TEAMS_LIST": "times"
     }
   }
 }

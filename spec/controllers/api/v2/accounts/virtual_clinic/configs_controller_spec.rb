@@ -13,7 +13,7 @@ RSpec.describe 'Virtual clinic config API', type: :request do
     expect(response.parsed_body['ai_team']).to include('visible' => true, 'enabled' => false, 'missing' => 'openai_key')
     members = response.parsed_body.dig('ai_team', 'members').map { |member| member.slice('persona', 'name') }
     expect(members).to eq([{ 'persona' => 'secretary', 'name' => 'Clara' }, { 'persona' => 'manager', 'name' => 'Helena' }])
-    expect(response.parsed_body.dig('ai_team', 'daily_question_limit')).to eq(60)
+    expect(response.parsed_body['ai_team']).to include('daily_question_limit' => 60, 'can_manage_settings' => true)
   end
 
   it 'enables the AI team once the clinic has its OpenAI key' do

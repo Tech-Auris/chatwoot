@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useMapGetter, useStore } from 'dashboard/composables/store';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
+import VirtualClinicAPI from 'dashboard/api/virtualClinic';
 
 const props = defineProps({
   clinicName: { type: String, default: '' },
@@ -73,6 +74,12 @@ const missingAction = computed(() => {
   return null;
 });
 
+// The clinic pays the OpenAI key, so its administrator caps the questions.
+const saveDailyLimit = event => {
+  const value = event.target.value;
+  VirtualClinicAPI.updateSettings({ daily_question_limit: value });
+};
+
 const select = member => {
   if (enabled.value) emit('selectMember', member.persona);
 };
@@ -122,6 +129,21 @@ const select = member => {
           </span>
         </span>
       </button>
+
+      <label
+        v-if="enabled && aiTeam.can_manage_settings"
+        class="flex items-center justify-between gap-2 px-2 mt-1 text-xs text-n-slate-11"
+      >
+        {{ t('VIRTUAL_CLINIC.SETTINGS.DAILY_LIMIT') }}
+        <input
+          type="number"
+          min="1"
+          class="w-16 px-2 py-1 text-xs border rounded-md border-n-weak bg-n-solid-2 text-n-slate-12"
+          :value="aiTeam.daily_question_limit"
+          :placeholder="t('VIRTUAL_CLINIC.SETTINGS.NO_LIMIT')"
+          @change="saveDailyLimit"
+        />
+      </label>
 
       <div
         v-if="missingAction"
