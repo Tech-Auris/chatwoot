@@ -4,6 +4,25 @@ import TeamPanel from '../components/TeamPanel.vue';
 
 vi.mock('vue-i18n', () => ({ useI18n: () => ({ t: key => key }) }));
 
+const push = vi.fn();
+vi.mock('vue-router', () => ({
+  useRoute: () => ({ params: { accountId: '1' } }),
+  useRouter: () => ({ push }),
+}));
+
+const dispatch = vi.fn(() => Promise.resolve({ id: 77 }));
+const agents = [
+  { id: 3, name: 'Juliana Reis', availability_status: 'offline' },
+  { id: 2, name: 'Marcos Silva', availability_status: 'online' },
+  { id: 1, name: 'Dra. Paula', availability_status: 'online' },
+];
+vi.mock('dashboard/composables/store', () => ({
+  useStore: () => ({ dispatch }),
+  useMapGetter: key => ({
+    value: key === 'getCurrentUserID' ? 1 : agents,
+  }),
+}));
+
 const members = [
   { persona: 'secretary', name: 'Clara' },
   { persona: 'manager', name: 'Helena' },
@@ -42,5 +61,25 @@ describe('TeamPanel', () => {
     const wrapper = mountPanel({ visible: false, enabled: false, members: [] });
 
     expect(wrapper.text()).not.toContain('VIRTUAL_CLINIC.AI_TEAM.TITLE');
+  });
+
+  it('lists the user first, then online people, and opens a DM on click', async () => {
+    const wrapper = mountPanel({ visible: false, members: [] });
+    const names = wrapper.findAll('button').map(b => b.text());
+
+    expect(names[0]).toContain('Dra. Paula');
+    expect(names[1]).toContain('Marcos Silva');
+
+    await wrapper.findAll('button')[1].trigger('click');
+    await Promise.resolve();
+
+    expect(dispatch).toHaveBeenCalledWith('internalChat/create', {
+      channel: { channel_type: 'dm' },
+      member_ids: [2],
+    });
+    expect(push).toHaveBeenCalledWith({
+      name: 'internal_chat_dm',
+      params: { accountId: '1', channelId: 77 },
+    });
   });
 });

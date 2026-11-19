@@ -394,7 +394,18 @@ const menuItems = computed(() => {
             label: t('SIDEBAR.VIRTUAL_CLINIC'),
             icon: 'i-lucide-map',
             to: accountScopedRoute('virtual_clinic_index'),
-            activeOn: ['virtual_clinic_index'],
+            activeOn: [
+              'virtual_clinic_index',
+              'internal_chat',
+              'internal_chat_home',
+              'internal_chat_channel',
+              'internal_chat_dm',
+              'internal_chat_thread',
+              'internal_chat_drafts',
+            ],
+            getterKeys: {
+              count: 'internalChat/getUnreadCount',
+            },
           },
         ]
       : []),
@@ -535,23 +546,28 @@ const menuItems = computed(() => {
         },
       ],
     },
-    {
-      name: 'InternalChat',
-      label: t('SIDEBAR.INTERNAL_CHAT'),
-      icon: 'i-lucide-messages-square',
-      to: accountScopedRoute('internal_chat_home'),
-      activeOn: [
-        'internal_chat',
-        'internal_chat_home',
-        'internal_chat_channel',
-        'internal_chat_dm',
-        'internal_chat_thread',
-        'internal_chat_drafts',
-      ],
-      getterKeys: {
-        count: 'internalChat/getUnreadCount',
-      },
-    },
+    // On accounts with the Clínica virtual the chat lives inside it.
+    ...(isVirtualClinicEnabled.value
+      ? []
+      : [
+          {
+            name: 'InternalChat',
+            label: t('SIDEBAR.INTERNAL_CHAT'),
+            icon: 'i-lucide-messages-square',
+            to: accountScopedRoute('internal_chat_home'),
+            activeOn: [
+              'internal_chat',
+              'internal_chat_home',
+              'internal_chat_channel',
+              'internal_chat_dm',
+              'internal_chat_thread',
+              'internal_chat_drafts',
+            ],
+            getterKeys: {
+              count: 'internalChat/getUnreadCount',
+            },
+          },
+        ]),
     ...(isClickupIntegrationEnabled.value
       ? [
           {

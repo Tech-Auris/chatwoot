@@ -7,6 +7,8 @@ import { useAlert } from 'dashboard/composables';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import ChannelSidebar from './ChannelSidebar.vue';
 import ChannelView from './ChannelView.vue';
+import VirtualClinicShell from 'dashboard/routes/dashboard/virtualClinic/components/VirtualClinicShell.vue';
+import AiTeamChatList from 'dashboard/routes/dashboard/virtualClinic/components/AiTeamChatList.vue';
 
 const store = useStore();
 const route = useRoute();
@@ -20,6 +22,13 @@ const activeChannel = computed(() => {
   if (!activeChannelId.value) return null;
   return store.getters['internalChat/getChannelById'](activeChannelId.value);
 });
+
+// Accounts with the Clínica virtual get the chat inside the clinic frame.
+const inClinic = computed(
+  () =>
+    store.getters['accounts/getAccount'](Number(route.params.accountId))
+      ?.virtual_clinic_enabled === true
+);
 
 const isDraftsRoute = computed(() => {
   return route.name === 'internal_chat_drafts';
@@ -45,8 +54,10 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex h-full w-full">
-    <ChannelSidebar />
+  <VirtualClinicShell :enabled="inClinic">
+    <ChannelSidebar>
+      <AiTeamChatList v-if="inClinic" />
+    </ChannelSidebar>
     <div class="flex-1 min-w-0">
       <ChannelView
         v-if="activeChannelId && activeChannel"
@@ -67,5 +78,5 @@ onMounted(async () => {
         </p>
       </div>
     </div>
-  </div>
+  </VirtualClinicShell>
 </template>

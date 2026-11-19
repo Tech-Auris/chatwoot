@@ -12,7 +12,21 @@
       "MISSING_MCP": "Ative o assistente de IA para conhecer a sua equipe.",
       "ENABLE_MCP": "Ativar equipe de IA",
       "MISSING_OPENAI": "A equipe de IA usa a chave da OpenAI da sua clínica.",
-      "CONFIGURE_OPENAI": "Configurar chave da OpenAI"
+      "CONFIGURE_OPENAI": "Configurar chave da OpenAI",
+      "CHAT_SECTION": "Equipe de IA"
+    },
+    "RAIL": {
+      "MAP": "Clínica",
+      "CHAT": "Chat"
+    },
+    "PEOPLE": {
+      "TITLE": "Pessoas · {count} online",
+      "YOU": "(você)",
+      "STATUS": {
+        "ONLINE": "Online",
+        "BUSY": "Ocupado",
+        "OFFLINE": "Offline"
+      }
     }
   }
 }
