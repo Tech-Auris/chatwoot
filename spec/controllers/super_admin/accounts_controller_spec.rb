@@ -249,6 +249,18 @@ RSpec.describe 'Super Admin accounts API', type: :request do
     end
   end
 
+  describe 'PUT /super_admin/accounts/{account_id} (Auris menus section)' do
+    before { sign_in(super_admin, scope: :super_admin) }
+
+    it 'releases the Clínica virtual for the account' do
+      put "/super_admin/accounts/#{account.id}",
+          params: { account: { name: account.name }, auris_menus: { virtual_clinic_enabled: '1' } }
+
+      expect(response).to have_http_status(:redirect)
+      expect(account.reload.virtual_clinic_enabled).to be(true)
+    end
+  end
+
   describe 'PUT /super_admin/accounts/{account_id} (Auris settings section)' do
     let(:params) do
       {

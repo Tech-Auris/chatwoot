@@ -1,0 +1,18 @@
+{
+  "VIRTUAL_CLINIC": {
+    "MAP_COMING": "The clinic map is on its way.",
+    "PERSONAS": {
+      "SECRETARY": "Secretary",
+      "MANAGER": "Manager"
+    },
+    "AI_TEAM": {
+      "TITLE": "AI team ({count})",
+      "AVAILABLE": "Available to talk",
+      "OFF": "Off",
+      "MISSING_MCP": "Turn on the AI assistant to meet your team.",
+      "ENABLE_MCP": "Turn on AI team",
+      "MISSING_OPENAI": "The AI team uses your clinic's OpenAI key.",
+      "CONFIGURE_OPENAI": "Set up OpenAI key"
+    }
+  }
+}
