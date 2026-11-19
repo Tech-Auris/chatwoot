@@ -1,0 +1,102 @@
+{
+  "VIRTUAL_CLINIC": {
+    "PERSONAS": {
+      "SECRETARY": "Secretary",
+      "MANAGER": "Manager"
+    },
+    "AI_TEAM": {
+      "TITLE": "AI team ({count})",
+      "MISSING_MCP": "To talk to the AI team, turn on the AI assistant.",
+      "ENABLE_MCP": "Turn on AI team",
+      "MISSING_OPENAI": "To talk to the AI team, add the clinic's OpenAI key.",
+      "CONFIGURE_OPENAI": "Set up OpenAI key",
+      "CHAT_SECTION": "AI team",
+      "CHAT_OFF": "Chat off"
+    },
+    "RAIL": {
+      "MAP": "Clinic",
+      "CHAT": "Chat"
+    },
+    "PEOPLE": {
+      "TITLE": "People · {count} online",
+      "YOU": "(you)",
+      "STATUS": {
+        "ONLINE": "Online",
+        "BUSY": "Busy",
+        "OFFLINE": "Offline"
+      }
+    },
+    "CHAT": {
+      "NEW": "New conversation",
+      "THINKING": "{name} is checking the data…",
+      "RETRY": "Try again",
+      "CONSULTED": "Checked: {tools}",
+      "PLACEHOLDER": "Ask {name}…",
+      "DAILY_LIMIT": "You reached today's question limit set by the clinic. Come back tomorrow.",
+      "SEND_ERROR": "Could not send the question. Try again.",
+      "SUBTITLE": {
+        "SECRETARY": "Answers about patients being served and follow-ups",
+        "MANAGER": "Answers anything about the clinic, with numbers"
+      }
+    },
+    "SETTINGS": {
+      "TITLE": "Virtual clinic",
+      "DESCRIPTION": "Talking to Clara and Helena uses this OpenAI key. Cap how many questions each person can ask per day.",
+      "DAILY_LIMIT": "Questions per person per day",
+      "NO_LIMIT": "No limit",
+      "SAVE": "Save",
+      "SAVED": "Limit saved.",
+      "SAVE_ERROR": "Could not save the limit.",
+      "HINT": "Leave blank for no limit."
+    },
+    "TOOLS": {
+      "ATENDIMENTO_AGORA": "live service",
+      "BUSCAR_CONVERSAS": "conversations",
+      "RESUMIR_CONVERSA": "conversation summary",
+      "FOLLOW_UPS": "follow-ups",
+      "FOLLOW_UPS_EM_ANDAMENTO": "follow-ups in progress",
+      "MENSAGENS_AGENDADAS": "scheduled messages",
+      "TRANSFERENCIAS_IA_HUMANO": "handoffs to humans",
+      "BUSCAR_CONTATO": "contact",
+      "RESUMO_PERIODO": "period summary",
+      "DESEMPENHO_ATENDENTES": "agent performance",
+      "FUNIL_RESUMO": "funnel",
+      "FUNIL_ETAPA": "funnel stage",
+      "CONVERSAO_POR_CAMPANHA": "campaigns",
+      "AGENDAMENTOS_RESUMO": "appointments",
+      "HORARIOS_PICO": "peak hours",
+      "REPORTS_ACCOUNT_SUMMARY": "account report",
+      "REPORTS_V2_INBOXES": "inboxes",
+      "REPORTS_V2_TEAMS": "teams",
+      "AGENTS_LIST": "agents",
+      "TEAMS_LIST": "teams"
+    },
+    "STATUS": {
+      "IDLE": "No patients right now",
+      "SECRETARY": "Serving {active} · {followUps} in follow-up",
+      "MANAGER": "{leads} leads this month · {rate}% conversion",
+      "MANAGER_LEADS": "{leads} leads this month",
+      "OFF_DUTY": "Not serving patients · {reason}",
+      "NOT_SET_UP": "secretary not set up"
+    },
+    "MAP": {
+      "THINKING": "💭 Checking the data…",
+      "SECRETARY": "💬 Serving {active} patients · 🔁 {followUps} in follow-up",
+      "IDLE": "☕ No patients right now",
+      "LEADS": "📊 {leads} leads this month",
+      "APPOINTMENTS": "📅 {appointments} appointments this month",
+      "CONVERSION": "📈 {rate}% conversion this month",
+      "LOAD_ERROR": "Could not load the clinic map.",
+      "ROOMS": {
+        "RECEPTION": "Reception",
+        "WAITING_ROOM": "Waiting room",
+        "MANAGEMENT": "Management",
+        "KITCHEN": "Kitchen"
+      },
+      "ZOOM_IN": "Zoom in",
+      "ZOOM_OUT": "Zoom out",
+      "ZOOM_FIT": "Fit to screen",
+      "OFF_DUTY": "⏸ Not serving patients · {reason}"
+    }
+  }
+}

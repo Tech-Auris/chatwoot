@@ -8,6 +8,7 @@ import SingleIntegrationHooks from './SingleIntegrationHooks.vue';
 import MultipleIntegrationHooks from './MultipleIntegrationHooks.vue';
 import SettingsLayout from '../SettingsLayout.vue';
 import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
+import DailyQuestionLimitCard from 'dashboard/routes/dashboard/virtualClinic/components/DailyQuestionLimitCard.vue';
 
 export default {
   components: {
@@ -16,6 +17,7 @@ export default {
     MultipleIntegrationHooks,
     SettingsLayout,
     BaseSettingsHeader,
+    DailyQuestionLimitCard,
   },
   props: {
     integrationId: {
@@ -142,6 +144,7 @@ export default {
             @add="openAddHookModal"
             @delete="openDeletePopup"
           />
+          <DailyQuestionLimitCard v-if="integrationId === 'openai'" />
         </div>
       </div>
     </template>

@@ -43,6 +43,13 @@ class FollowUp < ApplicationRecord
   # `interrupted`: the AI was turned off mid-sequence (a human took over).
   enum :outcome, { waiting: 0, reengaged: 1, closed: 2, no_response: 3, opted_out: 4, interrupted: 5 }, prefix: true, validate: true
 
+  # Conversations in follow-up right now: their latest FUP went out and the
+  # patient has not answered yet.
+  scope :in_progress, lambda {
+    latest = select('DISTINCT ON (follow_ups.conversation_id) follow_ups.*').order(:conversation_id, created_at: :desc, id: :desc)
+    from(latest, :follow_ups).delivery_sent.outcome_waiting
+  }
+
   validates :run_id, presence: true
   validates :step, inclusion: { in: 1..MAX_STEP }, uniqueness: { scope: [:conversation_id, :run_id] }
   validates :delay_minutes, numericality: { only_integer: true, greater_than: 0 }

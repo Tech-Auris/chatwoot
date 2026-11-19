@@ -75,4 +75,44 @@ RSpec.describe 'Follow-up reports API', type: :request do
     expect(lines.first).to include('Data/hora', 'FUP', 'Resultado')
     expect(lines.size).to eq(4)
   end
+
+  describe 'GET in_progress' do
+    let(:waiting_contact) { create(:contact, account: account, name: 'Paulo Lima') }
+    let(:waiting_conversation) { create(:conversation, account: account, inbox: inbox, contact: waiting_contact) }
+    let(:yesterday_conversation) { create(:conversation, account: account, inbox: other_inbox) }
+    let(:now) { Time.zone.parse('2026-10-08 10:00 -03:00') }
+
+    before do
+      travel_to now
+      create(:follow_up, conversation: waiting_conversation, run_id: 'c', step: 1, delivery_status: :sent, outcome: :no_response,
+                         created_at: now - 9.hours, processed_at: now - 9.hours)
+      create(:follow_up, conversation: waiting_conversation, run_id: 'c', step: 2, delivery_status: :sent,
+                         created_at: now - 5.hours, processed_at: now - 5.hours + 30.seconds)
+      # 23:30 in Brasília the day before, already "today" in UTC.
+      create(:follow_up, conversation: yesterday_conversation, run_id: 'd', step: 1, delivery_status: :sent,
+                         created_at: Time.zone.parse('2026-10-07 23:30 -03:00'), processed_at: Time.zone.parse('2026-10-07 23:30 -03:00'))
+    end
+
+    it 'is refused to agents' do
+      get "#{url}/in_progress", headers: agent.create_new_auth_token, as: :json
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it 'lists only the conversations whose latest FUP went out and is still waiting, newest first' do
+      get "#{url}/in_progress", headers: admin.create_new_auth_token, as: :json
+
+      body = response.parsed_body
+      expect(body['rows'].pluck('conversation_id')).to eq([waiting_conversation.display_id, yesterday_conversation.display_id])
+      expect(body['rows'].first).to eq('contact_name' => 'Paulo Lima', 'conversation_id' => waiting_conversation.display_id, 'step' => 2,
+                                       'sent_at' => '2026-10-08T05:00:30-03:00', 'minutes_since_sent' => 299, 'inbox_name' => inbox.name)
+      expect(body['meta']).to include('total_count' => 2, 'per_page' => 25)
+    end
+
+    it 'keeps only the FUPs sent today in Brasília time' do
+      get "#{url}/in_progress", params: { only_today: true }, headers: admin.create_new_auth_token, as: :json
+
+      expect(response.parsed_body['rows'].pluck('conversation_id')).to eq([waiting_conversation.display_id])
+    end
+  end
 end

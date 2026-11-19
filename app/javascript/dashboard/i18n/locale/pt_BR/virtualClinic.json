@@ -1,0 +1,102 @@
+{
+  "VIRTUAL_CLINIC": {
+    "PERSONAS": {
+      "SECRETARY": "Secretária",
+      "MANAGER": "Gerente"
+    },
+    "AI_TEAM": {
+      "TITLE": "Equipe de IA ({count})",
+      "MISSING_MCP": "Para conversar com a equipe de IA, ative o assistente de IA.",
+      "ENABLE_MCP": "Ativar equipe de IA",
+      "MISSING_OPENAI": "Para conversar com a equipe de IA, cadastre a chave da OpenAI da clínica.",
+      "CONFIGURE_OPENAI": "Configurar chave OpenAI",
+      "CHAT_SECTION": "Equipe de IA",
+      "CHAT_OFF": "Conversa desligada"
+    },
+    "RAIL": {
+      "MAP": "Clínica",
+      "CHAT": "Chat"
+    },
+    "PEOPLE": {
+      "TITLE": "Pessoas · {count} online",
+      "YOU": "(você)",
+      "STATUS": {
+        "ONLINE": "Online",
+        "BUSY": "Ocupado",
+        "OFFLINE": "Offline"
+      }
+    },
+    "CHAT": {
+      "NEW": "Nova conversa",
+      "THINKING": "{name} está consultando os dados…",
+      "RETRY": "Tentar de novo",
+      "CONSULTED": "Consultou: {tools}",
+      "PLACEHOLDER": "Pergunte para a {name}…",
+      "DAILY_LIMIT": "Você chegou ao limite de perguntas de hoje definido pela clínica. Volte amanhã.",
+      "SEND_ERROR": "Não consegui enviar a pergunta. Tente de novo.",
+      "SUBTITLE": {
+        "SECRETARY": "Responde sobre atendimentos e follow-ups",
+        "MANAGER": "Responde tudo sobre a clínica, com números"
+      }
+    },
+    "SETTINGS": {
+      "TITLE": "Clínica virtual",
+      "DESCRIPTION": "A conversa com a Clara e a Helena usa esta chave da OpenAI. Limite quantas perguntas cada pessoa pode fazer por dia.",
+      "DAILY_LIMIT": "Perguntas por pessoa por dia",
+      "NO_LIMIT": "Sem limite",
+      "SAVE": "Salvar",
+      "SAVED": "Limite salvo.",
+      "SAVE_ERROR": "Não foi possível salvar o limite.",
+      "HINT": "Deixe em branco para não limitar."
+    },
+    "TOOLS": {
+      "ATENDIMENTO_AGORA": "atendimento agora",
+      "BUSCAR_CONVERSAS": "conversas",
+      "RESUMIR_CONVERSA": "resumo da conversa",
+      "FOLLOW_UPS": "follow-ups",
+      "FOLLOW_UPS_EM_ANDAMENTO": "follow-ups em andamento",
+      "MENSAGENS_AGENDADAS": "mensagens agendadas",
+      "TRANSFERENCIAS_IA_HUMANO": "transferências para humano",
+      "BUSCAR_CONTATO": "contato",
+      "RESUMO_PERIODO": "resumo do período",
+      "DESEMPENHO_ATENDENTES": "desempenho dos atendentes",
+      "FUNIL_RESUMO": "funil",
+      "FUNIL_ETAPA": "etapa do funil",
+      "CONVERSAO_POR_CAMPANHA": "campanhas",
+      "AGENDAMENTOS_RESUMO": "agendamentos",
+      "HORARIOS_PICO": "horários de pico",
+      "REPORTS_ACCOUNT_SUMMARY": "relatório da conta",
+      "REPORTS_V2_INBOXES": "canais",
+      "REPORTS_V2_TEAMS": "times",
+      "AGENTS_LIST": "atendentes",
+      "TEAMS_LIST": "times"
+    },
+    "STATUS": {
+      "IDLE": "Sem atendimentos agora",
+      "SECRETARY": "Atendendo {active} · {followUps} em follow-up",
+      "MANAGER": "{leads} leads no mês · {rate}% de conversão",
+      "MANAGER_LEADS": "{leads} leads no mês",
+      "OFF_DUTY": "Atendimento desligado · {reason}",
+      "NOT_SET_UP": "secretária não configurada"
+    },
+    "MAP": {
+      "THINKING": "💭 Consultando os dados…",
+      "SECRETARY": "💬 Atendendo {active} pacientes · 🔁 {followUps} em follow-up",
+      "IDLE": "☕ Sem atendimentos agora",
+      "LEADS": "📊 {leads} leads este mês",
+      "APPOINTMENTS": "📅 {appointments} agendamentos no mês",
+      "CONVERSION": "📈 {rate}% de conversão no mês",
+      "LOAD_ERROR": "Não foi possível carregar o mapa da clínica.",
+      "ROOMS": {
+        "RECEPTION": "Recepção",
+        "WAITING_ROOM": "Sala de espera",
+        "MANAGEMENT": "Gerência",
+        "KITCHEN": "Copa"
+      },
+      "ZOOM_IN": "Aproximar",
+      "ZOOM_OUT": "Afastar",
+      "ZOOM_FIT": "Ajustar à tela",
+      "OFF_DUTY": "⏸ Atendimento desligado · {reason}"
+    }
+  }
+}

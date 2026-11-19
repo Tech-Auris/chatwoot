@@ -28,6 +28,7 @@
 #  support_email                    :string(100)
 #  token_billing_enabled            :boolean          default(TRUE), not null
 #  whatsapp_groups_enabled          :boolean          default(TRUE), not null
+#  virtual_clinic_enabled           :boolean          default(FALSE), not null
 #  created_at                       :datetime         not null
 #  updated_at                       :datetime         not null
 #  erp_source_id                    :bigint
@@ -263,7 +264,8 @@ class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
   def auris_menus
     {
       inbox_view_menu_enabled: inbox_view_menu_enabled,
-      help_center_menu_enabled: help_center_menu_enabled
+      help_center_menu_enabled: help_center_menu_enabled,
+      virtual_clinic_enabled: virtual_clinic_enabled
     }
   end
 

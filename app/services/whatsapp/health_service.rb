@@ -96,11 +96,27 @@ class Whatsapp::HealthService
     unless response.success?
       error_message = "WhatsApp API request failed: #{response.code} - #{response.body}"
       Rails.logger.error "[WHATSAPP HEALTH] #{error_message}"
+      prompt_reauthorization_on_lost_access(response)
       raise error_message
     end
 
     data = response.parsed_response
     format_health_response(data)
+  end
+
+  # The business took the number away from our app: 100/33 means the token no
+  # longer sees the phone number (a coexistence number disconnected on the
+  # phone, the WABA unshared), 190 means the token itself was revoked. Every
+  # send fails from then on, so flag the inbox for reconnection (sidebar alert,
+  # settings banner, email to admins) once instead of failing silently.
+  def prompt_reauthorization_on_lost_access(response)
+    error = response.parsed_response.is_a?(Hash) ? response.parsed_response['error'] : nil
+    return if error.blank?
+
+    lost_access = (error['code'] == 100 && error['error_subcode'] == 33) || error['code'] == 190
+    return if !lost_access || @channel.reauthorization_required?
+
+    @channel.prompt_reauthorization!
   end
 
   def format_health_response(response)

@@ -734,8 +734,24 @@ Rails.application.routes.draw do
             end
           end
           resources :ia_human_distribution_reports, only: [:index]
-          resources :follow_up_reports, only: [:index]
-          resources :appointment_reports, only: [:index]
+          resources :follow_up_reports, only: [:index] do
+            collection { get :in_progress }
+          end
+          resources :appointment_reports, only: [:index] do
+            collection { get :summary }
+          end
+          namespace :virtual_clinic do
+            resource :config, only: [:show]
+            resource :status, only: [:show]
+            get 'assets/*path', to: 'assets#show', format: false, as: :asset
+            resource :settings, only: [:update]
+            resources :threads, only: [:show], param: :persona do
+              member do
+                post :messages
+                post :reset
+              end
+            end
+          end
           resources :meta_templates, only: %i[index create update destroy] do
             collection do
               get :kit
