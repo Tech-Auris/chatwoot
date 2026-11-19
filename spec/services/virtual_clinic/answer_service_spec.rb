@@ -33,7 +33,8 @@ RSpec.describe VirtualClinic::AnswerService do
     expect(answer.reload).to have_attributes(status: 'done', content: reply, input_tokens: 900, output_tokens: 120, model: 'gpt-4.1-mini')
     expect(answer.tool_calls).to eq([{ 'name' => 'atendimento_agora', 'arguments' => {} }])
     expect(chat).to have_received(:with_tools) { |*tools| expect(tools.map(&:name)).to eq(%w[atendimento_agora buscar_conversas]) }
-    expect(ActionCableBroadcastJob).to have_been_enqueued.with([user.pubsub_token], 'virtual_clinic.message.updated', anything)
+    expect(ActionCableBroadcastJob).to have_been_enqueued.with([user.pubsub_token], 'virtual_clinic.message.updated',
+                                                               hash_including('id' => answer.id, 'account_id' => account.id))
   end
 
   it 'replays the earlier turns as history' do
