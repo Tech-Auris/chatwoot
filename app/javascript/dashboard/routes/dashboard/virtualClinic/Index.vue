@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useStore } from 'dashboard/composables/store';
+import { useMapGetter, useStore } from 'dashboard/composables/store';
 import { useAccount } from 'dashboard/composables/useAccount';
 import VirtualClinicShell from './components/VirtualClinicShell.vue';
 import TeamPanel from './components/TeamPanel.vue';
@@ -17,6 +17,23 @@ const { currentAccount } = useAccount();
 const { configs, load } = useVirtualClinicConfig();
 const selectedMember = ref('');
 const thinking = ref('');
+const peopleOnMap = ref([]);
+const currentUser = useMapGetter('getCurrentUser');
+
+// The avatar of whoever opened the clinic.
+const me = computed(() =>
+  currentUser.value?.id
+    ? {
+        id: currentUser.value.id,
+        name:
+          currentUser.value.available_name ||
+          currentUser.value.display_name ||
+          currentUser.value.name,
+        accountId: Number(route.params.accountId),
+        pubsubToken: currentUser.value.pubsub_token,
+      }
+    : null
+);
 
 const clinicName = computed(() => currentAccount.value?.name || '');
 const aiTeam = computed(() => configs.value[route.params.accountId] || null);
@@ -55,6 +72,7 @@ onMounted(() => {
       :ai-team="aiTeam"
       :status="status"
       :selected="selectedMember"
+      :people-on-map="peopleOnMap"
       @select-member="selectedMember = $event"
     />
     <ClinicMap
@@ -62,7 +80,9 @@ onMounted(() => {
       :status="status"
       :thinking="thinking"
       :focused="openMember?.persona || ''"
+      :me="me"
       @select-member="selectedMember = $event"
+      @people-on-map="peopleOnMap = $event"
     />
     <AiChatPanel
       v-if="openMember"

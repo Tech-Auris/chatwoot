@@ -24,7 +24,8 @@
         "ONLINE": "Online",
         "BUSY": "Ocupado",
         "OFFLINE": "Offline"
-      }
+      },
+      "ON_MAP": "Na clínica"
     },
     "CHAT": {
       "NEW": "Nova conversa",
@@ -96,7 +97,9 @@
       "ZOOM_IN": "Aproximar",
       "ZOOM_OUT": "Afastar",
       "ZOOM_FIT": "Ajustar à tela",
-      "OFF_DUTY": "⏸ Atendimento desligado · {reason}"
+      "OFF_DUTY": "⏸ Atendimento desligado · {reason}",
+      "TALK_TO": "Conversar com {name} (E)",
+      "MOVE_HINT": "Ande com as setas ou WASD, ou clique no chão"
     }
   }
 }

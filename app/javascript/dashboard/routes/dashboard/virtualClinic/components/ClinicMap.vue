@@ -4,10 +4,30 @@ import { useI18n } from 'vue-i18n';
 import VirtualClinicAPI from 'dashboard/api/virtualClinic';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
-import { CHARACTERS, ROOMS, SPRITE_PATHS, WORLD } from '../engine/layout';
+import {
+  CHARACTERS,
+  ENTRANCE,
+  ITEMS,
+  ROOMS,
+  SPRITE_PATHS,
+  TILE,
+  WORLD,
+  sheetForUser,
+} from '../engine/layout';
 import { loadSprites } from '../engine/sprites';
 import { createRenderer, hitTest } from '../engine/renderer';
 import { createTeamBehavior } from '../engine/behavior';
+import {
+  buildCollision,
+  cellOf,
+  centerOf,
+  feetOf,
+  frameAt,
+  isFree,
+} from '../engine/collision';
+import { corners, findPath } from '../engine/pathfinding';
+import { createAvatar } from '../engine/movement';
+import { useClinicPresence } from '../composables/useClinicPresence';
 import { isOffDuty, offDutyReason } from '../teamStatus';
 
 const props = defineProps({
@@ -15,8 +35,10 @@ const props = defineProps({
   status: { type: Object, default: null },
   thinking: { type: String, default: '' },
   focused: { type: String, default: '' },
+  // The user's own avatar: `{ id, name, accountId, pubsubToken }`.
+  me: { type: Object, default: null },
 });
-const emit = defineEmits(['selectMember']);
+const emit = defineEmits(['selectMember', 'peopleOnMap']);
 
 const { t } = useI18n();
 const FRAME_MS = 100;
@@ -36,9 +58,22 @@ const rotation = ref(0);
 let draw = null;
 let behavior = null;
 const positions = ref({});
-let frameTimer = null;
 let rotateTimer = null;
 let resizeObserver = null;
+let animationFrame = null;
+let lastFrame = null;
+
+// The user's avatar and everyone else walking around (Gather-style).
+let sprites = null;
+let grid = null;
+let avatar = null;
+const mine = ref(null);
+const presence = useClinicPresence();
+const loadingSheets = new Set();
+// The counter keeps people about three tiles from Clara.
+const NEAR = 4 * TILE;
+// The "how to walk" hint goes away once the user has walked.
+const hasWalked = ref(false);
 
 const members = computed(() =>
   props.aiTeam?.visible ? props.aiTeam.members : []
@@ -56,7 +91,7 @@ const placeOf = persona => {
   return positions.value[persona] || { x: spot.x, y: spot.y };
 };
 
-const characters = computed(() =>
+const team = computed(() =>
   members.value.map(member => {
     const place = placeOf(member.persona);
     return {
@@ -73,6 +108,37 @@ const characters = computed(() =>
     };
   })
 );
+
+const people = computed(() => {
+  const list = Object.entries(presence.others.value).map(([id, place]) => ({
+    ...place,
+    userId: Number(id),
+    sheet: sheetForUser(Number(id)),
+  }));
+  if (mine.value && props.me) {
+    list.push({
+      ...mine.value,
+      userId: props.me.id,
+      name: props.me.name,
+      sheet: sheetForUser(props.me.id),
+      self: true,
+    });
+  }
+  return list;
+});
+
+const characters = computed(() => [...team.value, ...people.value]);
+
+// The AI teammate within four tiles of the avatar: "Conversar com a Clara (E)".
+const nearMember = computed(() => {
+  if (!mine.value || !chatEnabled.value) return null;
+  const feet = feetOf(mine.value);
+  const member = members.value.find(({ persona }) => {
+    const other = feetOf(placeOf(persona));
+    return Math.hypot(other.x - feet.x, other.y - feet.y) <= NEAR;
+  });
+  return member && member.persona !== props.focused ? member : null;
+});
 
 // Name (and status above it) sit right over the head, like in Gather, and
 // follow the teammate around. The frame is 32×64 with the head from ~y+18.
@@ -140,10 +206,49 @@ const worldSize = computed(() => ({
 const render = () => draw?.(characters.value, tick.value);
 watch([characters, tick], render);
 
-const animate = () => {
-  if (document.hidden) return;
+const ensureSheet = async path => {
+  if (!sprites || sprites[path] || loadingSheets.has(path)) return;
+  loadingSheets.add(path);
+  const loaded = await loadSprites([path], file =>
+    VirtualClinicAPI.getAsset(file)
+  );
+  Object.assign(sprites, loaded);
+};
+
+watch(
+  () => people.value.map(person => person.userId).join(),
+  ids => {
+    const list = ids ? ids.split(',').map(Number) : [];
+    list.forEach(id => ensureSheet(sheetForUser(id)));
+    emit('peopleOnMap', list);
+  }
+);
+
+// Keeps the avatar in sight when the map is zoomed in.
+const FOLLOW_MARGIN = 96;
+const follow = () => {
+  const box = viewport.value;
+  if (!mine.value?.moving || !box) return;
+  const feet = feetOf(mine.value);
+  const left = feet.x * scale.value - box.scrollLeft;
+  const top = feet.y * scale.value - box.scrollTop;
+  if (left < FOLLOW_MARGIN) box.scrollLeft -= FOLLOW_MARGIN - left;
+  if (left > box.clientWidth - FOLLOW_MARGIN) {
+    box.scrollLeft += left - (box.clientWidth - FOLLOW_MARGIN);
+  }
+  if (top < FOLLOW_MARGIN) box.scrollTop -= FOLLOW_MARGIN - top;
+  if (top > box.clientHeight - FOLLOW_MARGIN) {
+    box.scrollTop += top - (box.clientHeight - FOLLOW_MARGIN);
+  }
+};
+
+const animate = now => {
+  animationFrame = requestAnimationFrame(animate);
+  const seconds =
+    lastFrame === null ? 0 : Math.min(0.1, (now - lastFrame) / 1000);
+  lastFrame = now;
   if (behavior) {
-    behavior.update(performance.now());
+    behavior.update(now);
     positions.value = Object.fromEntries(
       Object.entries(behavior.state).map(([persona, place]) => [
         persona,
@@ -151,8 +256,60 @@ const animate = () => {
       ])
     );
   }
-  tick.value += 1;
+  if (avatar) {
+    avatar.update(seconds);
+    mine.value = { ...avatar.state };
+    if (avatar.state.moving) hasWalked.value = true;
+    presence.send(avatar.state);
+    follow();
+  }
+  presence.step(seconds);
+  tick.value = Math.floor(now / FRAME_MS);
 };
+
+const startAvatar = async () => {
+  if (!props.me) return;
+  await ensureSheet(sheetForUser(props.me.id));
+  avatar = createAvatar({
+    ...ENTRANCE,
+    canStand: place => isFree(grid, feetOf(place)),
+  });
+  mine.value = { ...avatar.state };
+  presence.connect({
+    userId: props.me.id,
+    accountId: props.me.accountId,
+    pubsubToken: props.me.pubsubToken,
+    position: () => avatar.state,
+  });
+};
+
+const walkTowards = point => {
+  if (!avatar) return;
+  const path = findPath(grid, cellOf(feetOf(avatar.state)), cellOf(point));
+  if (!path) return;
+  avatar.walkTo(
+    corners(path)
+      .slice(1)
+      .map(cell => frameAt(centerOf(cell)))
+  );
+};
+
+// Typing in the chat must not walk the avatar around.
+const typing = target =>
+  target?.closest?.('input, textarea, select, [contenteditable="true"]');
+
+const onKeyDown = event => {
+  if (!avatar || typing(event.target)) return;
+  if (event.metaKey || event.ctrlKey || event.altKey) return;
+  if (event.key.toLowerCase() === 'e' && nearMember.value) {
+    event.preventDefault();
+    emit('selectMember', nearMember.value.persona);
+    return;
+  }
+  if (avatar.press(event.key)) event.preventDefault();
+};
+const onKeyUp = event => avatar?.release(event.key);
+const onBlur = () => avatar?.releaseAll();
 
 // The map fills the area by default; the user can zoom in and out from
 // there (wheel or the +/- control), like in Gather.
@@ -193,19 +350,12 @@ const resetZoom = () => {
   scale.value = fitScale.value;
 };
 
-const onClick = event => {
-  const rect = canvas.value.getBoundingClientRect();
-  const persona = hitTest(
-    (event.clientX - rect.left) / scale.value,
-    (event.clientY - rect.top) / scale.value,
-    characters.value
-  );
-  if (persona && chatEnabled.value) emit('selectMember', persona);
-};
-
-// Drag the map around when it is bigger than the screen.
+// Drag the map around when it is bigger than the screen; a drag is not a
+// click on the floor.
 let drag = null;
+let dragged = false;
 const startDrag = event => {
+  dragged = false;
   drag = {
     x: event.clientX,
     y: event.clientY,
@@ -215,8 +365,27 @@ const startDrag = event => {
 };
 const moveDrag = event => {
   if (!drag) return;
-  viewport.value.scrollLeft = drag.left - (event.clientX - drag.x);
-  viewport.value.scrollTop = drag.top - (event.clientY - drag.y);
+  const dx = event.clientX - drag.x;
+  const dy = event.clientY - drag.y;
+  if (Math.hypot(dx, dy) > 4) dragged = true;
+  viewport.value.scrollLeft = drag.left - dx;
+  viewport.value.scrollTop = drag.top - dy;
+};
+
+// Clicking a teammate opens the chat; clicking the floor walks there.
+const onClick = event => {
+  if (dragged) return;
+  const rect = canvas.value.getBoundingClientRect();
+  const point = {
+    x: (event.clientX - rect.left) / scale.value,
+    y: (event.clientY - rect.top) / scale.value,
+  };
+  const persona = hitTest(point.x, point.y, characters.value);
+  if (persona) {
+    if (chatEnabled.value) emit('selectMember', persona);
+    return;
+  }
+  walkTowards(point);
 };
 const endDrag = () => {
   drag = null;
@@ -227,15 +396,27 @@ onMounted(async () => {
   resizeObserver = new ResizeObserver(fit);
   resizeObserver.observe(viewport.value);
   try {
-    const sprites = await loadSprites(SPRITE_PATHS, path =>
+    sprites = await loadSprites(SPRITE_PATHS, path =>
       VirtualClinicAPI.getAsset(path)
+    );
+    grid = buildCollision(
+      Object.fromEntries(
+        ITEMS.map(({ sprite }) => [
+          sprite,
+          { width: sprites[sprite].width, height: sprites[sprite].height },
+        ])
+      )
     );
     draw = createRenderer(canvas.value, sprites);
     render();
-    frameTimer = setInterval(animate, FRAME_MS);
+    await startAvatar();
+    animationFrame = requestAnimationFrame(animate);
     rotateTimer = setInterval(() => {
       rotation.value += 1;
     }, ROTATE_MS);
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    window.addEventListener('blur', onBlur);
   } catch {
     failed.value = true;
   } finally {
@@ -244,9 +425,12 @@ onMounted(async () => {
 });
 
 onBeforeUnmount(() => {
-  clearInterval(frameTimer);
+  cancelAnimationFrame(animationFrame);
   clearInterval(rotateTimer);
   resizeObserver?.disconnect();
+  window.removeEventListener('keydown', onKeyDown);
+  window.removeEventListener('keyup', onKeyUp);
+  window.removeEventListener('blur', onBlur);
 });
 </script>
 
@@ -335,8 +519,36 @@ onBeforeUnmount(() => {
               {{ t(`VIRTUAL_CLINIC.PERSONAS.${member.persona.toUpperCase()}`) }}
             </button>
           </div>
+          <span
+            v-for="person in people"
+            :key="`person-${person.userId}`"
+            class="absolute px-2 py-0.5 text-xs font-semibold text-white rounded-full shadow pointer-events-none whitespace-nowrap -translate-x-1/2 -translate-y-full"
+            :class="person.self ? 'bg-n-brand' : 'bg-n-slate-12/80'"
+            :style="at({ x: person.x + 16, y: person.y + 18 })"
+          >
+            {{ person.name }}
+          </span>
         </template>
       </div>
+    </div>
+    <div
+      v-if="!loading && !failed && mine"
+      class="absolute z-10 flex flex-col items-center gap-2 -translate-x-1/2 bottom-4 left-1/2"
+    >
+      <button
+        v-if="nearMember"
+        type="button"
+        class="px-3 py-1.5 text-sm font-medium text-white rounded-full shadow-lg bg-n-slate-12/90 hover:bg-n-slate-12"
+        @click="emit('selectMember', nearMember.persona)"
+      >
+        {{ t('VIRTUAL_CLINIC.MAP.TALK_TO', { name: nearMember.name }) }}
+      </button>
+      <span
+        v-else-if="!hasWalked"
+        class="px-3 py-1 text-xs rounded-full pointer-events-none text-white/90 bg-n-slate-12/70"
+      >
+        {{ t('VIRTUAL_CLINIC.MAP.MOVE_HINT') }}
+      </span>
     </div>
     <div
       v-if="loading || failed"
