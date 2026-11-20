@@ -148,12 +148,8 @@ class Api::V2::Accounts::FollowUpReportsController < Api::V1::Accounts::BaseCont
     end
   end
 
-  # The latest FUP of each conversation, kept only while it went out and the
-  # patient has not answered yet: a later step or a reply settles it.
   def in_progress_scope
-    latest = Current.account.follow_ups.select('DISTINCT ON (follow_ups.conversation_id) follow_ups.*')
-                    .order(:conversation_id, created_at: :desc, id: :desc)
-    scope = FollowUp.from(latest, :follow_ups).delivery_sent.outcome_waiting
+    scope = Current.account.follow_ups.in_progress
     scope = scope.where("#{SENT_AT_SQL} >= ?", TZ.now.beginning_of_day) if ActiveModel::Type::Boolean.new.cast(params[:only_today])
     scope
   end
