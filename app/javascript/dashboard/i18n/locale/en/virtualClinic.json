@@ -172,6 +172,19 @@
       "OPEN_RELEASE": "See what's new",
       "HELLO": "Hi! {name} here. This is what came in for you:",
       "NOTHING": "Hi! {name} here. Nothing new for you for now."
+    },
+    "PROFILE": {
+      "TITLE": "Edit profile",
+      "PHOTO": "Profile picture",
+      "AVATAR": "Avatar",
+      "CHANGE_PHOTO": "Change picture",
+      "REMOVE_PHOTO": "Remove picture",
+      "NAME": "Full name",
+      "DISPLAY_NAME": "Display name",
+      "DISPLAY_NAME_HINT": "The name the team sees. Left blank, the full name is used.",
+      "SAVE": "Save",
+      "SAVED": "Profile updated.",
+      "SAVE_ERROR": "Couldn't save the profile."
     }
   }
 }

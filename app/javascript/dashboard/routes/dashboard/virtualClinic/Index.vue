@@ -12,6 +12,7 @@ import ClinicMap from './components/ClinicMap.vue';
 import EditorPanel from './components/EditorPanel.vue';
 import AvatarEditor from './components/AvatarEditor.vue';
 import NewsPanel from './components/NewsPanel.vue';
+import ProfileEditor from './components/ProfileEditor.vue';
 import { useHelenaNews } from './composables/useHelenaNews';
 import { FLOORS, sheetForUser } from './engine/layout';
 import { useUISettings } from 'dashboard/composables/useUISettings';
@@ -68,6 +69,7 @@ const { status } = useVirtualClinicStatus(
 // The avatar editor, for the user's own look (`{ persona: null }`) or for
 // an AI teammate's (from the team panel, or while editing the clinic).
 const avatarFor = ref(null);
+const editingProfile = ref(false);
 const avatarEditor = computed(() => {
   if (!avatarFor.value) return null;
   const floor = editor.layout.floors[0].block;
@@ -205,6 +207,7 @@ onMounted(() => {
       @select-member="selectedMember = $event"
       @edit="startEditing"
       @edit-avatar="avatarFor = { persona: $event || null }"
+      @edit-profile="editingProfile = true"
     />
     <ClinicMap
       ref="map"
@@ -235,6 +238,12 @@ onMounted(() => {
       :member="newsMember"
       :news="shownNews"
       @close="closeChat"
+    />
+    <ProfileEditor
+      v-if="editingProfile"
+      :avatar="me?.avatar"
+      @edit-avatar="avatarFor = { persona: null }"
+      @close="editingProfile = false"
     />
     <AvatarEditor
       v-if="avatarEditor"

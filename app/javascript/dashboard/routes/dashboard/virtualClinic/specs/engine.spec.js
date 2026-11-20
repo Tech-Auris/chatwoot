@@ -32,7 +32,7 @@ describe('clinic layout', () => {
 
   it('only asks the API for pack files in the approved folders', () => {
     SPRITE_PATHS.forEach(path =>
-      expect(path).toMatch(/^[1-7]_[a-z_]+\/[0-9A-Za-z_]+\.png$/)
+      expect(path).toMatch(/^([1-9]|10)_[a-z_]+\/[0-9A-Za-z_]+\.png$/)
     );
   });
 });

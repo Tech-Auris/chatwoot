@@ -7,6 +7,19 @@ import { lookSheet } from './avatar';
 export const TILE = 32;
 export const WORLD = { width: 30 * TILE, height: 20 * TILE };
 
+// Around the clinic, a garden people can walk in, Gather-style: the scene
+// is the clinic plus a margin of grass. Clinic coordinates stay as they
+// are (the garden is at negative coordinates and beyond the clinic size);
+// the glass door of the recepção is the way in and out.
+export const GARDEN = 5 * TILE;
+export const SCENE = {
+  x: -GARDEN,
+  y: -GARDEN,
+  width: WORLD.width + 2 * GARDEN,
+  height: WORLD.height + 2 * GARDEN,
+};
+export const DOOR = { x: 48, width: 48 };
+
 const R = '1_recepcao/';
 const E = '2_sala_de_espera/';
 const G = '3_gerencia/';
@@ -111,13 +124,48 @@ export const ITEMS = [
   { sprite: `${C}cafeteira_bancada.png`, x: 760, y: 360 },
   { sprite: `${C}maquina_cafe.png`, x: 816, y: 340 },
   { sprite: `${C}bebedouro.png`, x: 870, y: 355 },
-  { sprite: `${C}cadeira_frente.png`, x: 788, y: 445 },
+  { sprite: `${C}cadeira_frente.png`, x: 788, y: 437 },
   { sprite: `${C}mesa_redonda.png`, x: 772, y: 470 },
   // Side chairs face the table: the left one is mirrored.
   { sprite: `${C}cadeira_lado.png`, x: 748, y: 492, flip: true },
   { sprite: `${C}cadeira_lado.png`, x: 828, y: 492 },
   { sprite: `${C}planta.png`, x: 648, y: 590 },
   { sprite: `${C}lixeira.png`, x: 920, y: 592 },
+];
+
+// The garden around the clinic (fixed, not part of the editor).
+const J = '10_jardim/';
+export const GARDEN_ITEMS = [
+  // Above the clinic, leaving the way to the door free.
+  { sprite: `${J}arvore_copa.png`, x: -150, y: -140 },
+  { sprite: `${J}canteiro_flores_3.png`, x: -40, y: -44 },
+  { sprite: `${J}canteiro_flores_1.png`, x: 128, y: -44 },
+  { sprite: `${J}arvore_redonda.png`, x: 220, y: -126 },
+  { sprite: `${J}cipreste.png`, x: 330, y: -138 },
+  { sprite: `${J}arvore_grande.png`, x: 450, y: -132 },
+  { sprite: `${J}arbusto_pequeno.png`, x: 580, y: -46 },
+  { sprite: `${J}arvore_copa.png`, x: 690, y: -112 },
+  { sprite: `${J}cipreste_2.png`, x: 820, y: -138 },
+  { sprite: `${J}arvore_redonda_2.png`, x: 1020, y: -128 },
+  // Left.
+  { sprite: `${J}arvore_grande_2.png`, x: -146, y: 40 },
+  { sprite: `${J}arbusto.png`, x: -60, y: 230 },
+  { sprite: `${J}cipreste.png`, x: -140, y: 300 },
+  { sprite: `${J}arvore_redonda.png`, x: -132, y: 480 },
+  // Right.
+  { sprite: `${J}arvore_copa.png`, x: 1010, y: 50 },
+  { sprite: `${J}cipreste_2.png`, x: 1040, y: 240 },
+  { sprite: `${J}arvore_grande.png`, x: 1000, y: 400 },
+  { sprite: `${J}arbusto_pequeno.png`, x: 990, y: 600 },
+  // Below.
+  { sprite: `${J}arvore_grande_2.png`, x: -150, y: 660 },
+  { sprite: `${J}arvore_redonda_2.png`, x: 70, y: 672 },
+  { sprite: `${J}canteiro_flores_5.png`, x: 250, y: 720 },
+  { sprite: `${J}arvore_grande.png`, x: 420, y: 668 },
+  { sprite: `${J}cerca_viva.png`, x: 600, y: 730 },
+  { sprite: `${J}arvore_redonda.png`, x: 760, y: 680 },
+  { sprite: `${J}cipreste.png`, x: 900, y: 666 },
+  { sprite: `${J}arvore_copa.png`, x: 1040, y: 700 },
 ];
 
 // Where each AI teammate sits (top-left of the 32×64 frame) and their
@@ -225,6 +273,7 @@ export const spritePaths = (layout = DEFAULT_LAYOUT) => [
     ...layout.floors.map(f => f.block),
     ...layout.walls.map(w => w.block),
     ...layout.items.map(i => i.sprite),
+    ...GARDEN_ITEMS.map(i => i.sprite),
     ...Object.values(layout.team).map(sheetOf),
   ]),
 ];

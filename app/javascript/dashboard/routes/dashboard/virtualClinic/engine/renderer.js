@@ -1,7 +1,17 @@
-import { DEFAULT_LAYOUT, PARTITION, TILE, WORLD, sheetOf } from './layout';
+import {
+  DEFAULT_LAYOUT,
+  GARDEN_ITEMS,
+  PARTITION,
+  SCENE,
+  TILE,
+  WORLD,
+  sheetOf,
+} from './layout';
 
 const FRAME = { width: 32, height: 64 };
 const OUTLINE = '#2b2d42';
+// The garden ground around the clinic (Gather-like light grass).
+const GRASS = '#d9ecd2';
 // Rows of the LimeZu character sheet: 6 frames per direction, in the order
 // right, up (back), left, down (front). The phone call only faces front.
 const DIRECTIONS = ['right', 'up', 'left', 'down'];
@@ -126,7 +136,55 @@ function drawItem(context, image, item) {
   context.restore();
 }
 
-// Draws the clinic into `canvas` (world size). `characters` lists the AI
+// The zoomed-out view, Gather-style: the clinic as a plan (rooms in soft
+// colors, furniture as plain blocks, trees as round tops), no characters.
+const PLAN = {
+  rooms: ['#f4f5fb', '#eef3fb', '#f8f1e8', '#f1f1f1'],
+  wall: '#dcdff3',
+  furniture: '#e4e6ec',
+  tree: '#a9d4a0',
+};
+function drawPlan(context, layout, items) {
+  layout.floors.forEach((floor, index) => {
+    context.fillStyle = PLAN.rooms[index % PLAN.rooms.length];
+    context.fillRect(floor.x, floor.y, floor.w, floor.h);
+  });
+  context.fillStyle = PLAN.wall;
+  layout.walls.forEach(wall =>
+    context.fillRect(wall.x, wall.y, wall.w, 2 * TILE)
+  );
+  items.forEach(item => {
+    const { width, height } = item.image;
+    if (item.sprite.startsWith('10_jardim/')) {
+      context.fillStyle = PLAN.tree;
+      context.beginPath();
+      context.arc(
+        item.x + width / 2,
+        item.y + height / 3,
+        width / 2.6,
+        0,
+        2 * Math.PI
+      );
+      context.fill();
+      return;
+    }
+    if (item.y + height <= 2 * TILE) return;
+    context.fillStyle = PLAN.furniture;
+    context.fillRect(
+      item.x + 2,
+      item.y + height / 2,
+      width - 4,
+      height / 2 - 2
+    );
+  });
+  context.strokeStyle = PLAN.wall;
+  context.lineWidth = 6;
+  context.strokeRect(0, 0, WORLD.width, WORLD.height);
+  context.fillStyle = PLAN.wall;
+  context.fillRect(PARTITION.x, 0, PARTITION.width, WORLD.height);
+}
+
+// Draws the clinic and its garden into `canvas` (scene size). `characters` lists the AI
 // teammates (`persona`) and the people walking around (`sheet`): `{ x, y,
 // direction, moving, phone, talking, faded }`, `x`/`y` being the top-left
 // of their 32×64 frame.
@@ -134,15 +192,25 @@ export function createRenderer(canvas, sprites, layout = DEFAULT_LAYOUT) {
   const context = canvas.getContext('2d');
   context.imageSmoothingEnabled = false;
   const background = drawBackground(sprites, layout);
-  const items = layout.items.map(item => ({
-    ...item,
-    image: sprites[item.sprite],
-    depth: item.sortY ?? item.y + sprites[item.sprite].height,
-  }));
+  const items = [...GARDEN_ITEMS, ...layout.items]
+    .filter(item => sprites[item.sprite])
+    .map(item => ({
+      ...item,
+      image: sprites[item.sprite],
+      depth: item.sortY ?? item.y + sprites[item.sprite].height,
+    }));
 
-  // `selected` (editor): the box of the piece or teammate being moved.
-  return function draw(characters, tick, selected = null) {
-    context.clearRect(0, 0, WORLD.width, WORLD.height);
+  // `selected` (editor): the box of the piece or teammate being moved;
+  // `plan`: the zoomed-out view.
+  return function draw(characters, tick, selected = null, plan = false) {
+    // World coordinates from here on (the garden is at negative ones).
+    context.setTransform(1, 0, 0, 1, -SCENE.x, -SCENE.y);
+    context.fillStyle = GRASS;
+    context.fillRect(SCENE.x, SCENE.y, SCENE.width, SCENE.height);
+    if (plan) {
+      drawPlan(context, layout, items);
+      return;
+    }
     context.drawImage(background, 0, 0);
     const people = characters
       .map(character => ({

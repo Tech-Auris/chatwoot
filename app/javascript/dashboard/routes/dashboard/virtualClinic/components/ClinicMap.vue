@@ -4,11 +4,13 @@ import { useI18n } from 'vue-i18n';
 import VirtualClinicAPI from 'dashboard/api/virtualClinic';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
+import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
+import { useMapGetter } from 'dashboard/composables/store';
 import {
   DEFAULT_LAYOUT,
   ENTRANCE,
+  SCENE,
   TILE,
-  WORLD,
   sheetForUser,
   spritePaths,
 } from '../engine/layout';
@@ -63,7 +65,7 @@ const scale = ref(1);
 const fitScale = ref(1);
 const userZoomed = ref(false);
 const MAX_SCALE = 4;
-const minScale = computed(() => Math.min(1, fitScale.value * 0.75));
+const minScale = computed(() => Math.min(1, fitScale.value * 0.5));
 const tick = ref(0);
 const rotation = ref(0);
 let draw = null;
@@ -238,13 +240,14 @@ const bubble = persona => {
   return lines[rotation.value % lines.length];
 };
 
+// World coordinates (the clinic's) to pixels on the scene, garden included.
 const at = point => ({
-  left: `${point.x * scale.value}px`,
-  top: `${point.y * scale.value}px`,
+  left: `${(point.x - SCENE.x) * scale.value}px`,
+  top: `${(point.y - SCENE.y) * scale.value}px`,
 });
 const worldSize = computed(() => ({
-  width: `${WORLD.width * scale.value}px`,
-  height: `${WORLD.height * scale.value}px`,
+  width: `${SCENE.width * scale.value}px`,
+  height: `${SCENE.height * scale.value}px`,
 }));
 
 // The box around what the editor has selected.
@@ -262,8 +265,17 @@ const selectedBox = computed(() => {
     : null;
 });
 
-const render = () => draw?.(characters.value, tick.value, selectedBox.value);
-watch([characters, tick, selectedBox], render);
+// Zoomed well out: the plan view, with people as photo bubbles (Gather).
+const overview = computed(
+  () => !editing.value && scale.value < fitScale.value * 0.8
+);
+const agents = useMapGetter('agents/getAgents');
+const photoOf = userId =>
+  (agents.value || []).find(agent => agent.id === userId)?.thumbnail || '';
+
+const render = () =>
+  draw?.(characters.value, tick.value, selectedBox.value, overview.value);
+watch([characters, tick, selectedBox, overview], render);
 
 const sizesOf = items =>
   Object.fromEntries(
@@ -363,8 +375,8 @@ const follow = () => {
   const box = viewport.value;
   if (!mine.value?.moving || !box) return;
   const feet = feetOf(mine.value);
-  const left = feet.x * scale.value - box.scrollLeft;
-  const top = feet.y * scale.value - box.scrollTop;
+  const left = (feet.x - SCENE.x) * scale.value - box.scrollLeft;
+  const top = (feet.y - SCENE.y) * scale.value - box.scrollTop;
   if (left < FOLLOW_MARGIN) box.scrollLeft -= FOLLOW_MARGIN - left;
   if (left > box.clientWidth - FOLLOW_MARGIN) {
     box.scrollLeft += left - (box.clientWidth - FOLLOW_MARGIN);
@@ -508,9 +520,9 @@ const onBlur = () => avatar?.releaseAll();
 // The map fills the area by default; the user can zoom in and out from
 // there (wheel or the +/- control), like in Gather.
 const fit = () => {
-  const width = viewport.value?.clientWidth || WORLD.width;
-  const height = viewport.value?.clientHeight || WORLD.height;
-  fitScale.value = Math.min(width / WORLD.width, height / WORLD.height);
+  const width = viewport.value?.clientWidth || SCENE.width;
+  const height = viewport.value?.clientHeight || SCENE.height;
+  fitScale.value = Math.min(width / SCENE.width, height / SCENE.height);
   if (!userZoomed.value) scale.value = fitScale.value;
 };
 
@@ -547,8 +559,8 @@ const resetZoom = () => {
 const toWorld = event => {
   const rect = canvas.value.getBoundingClientRect();
   return {
-    x: (event.clientX - rect.left) / scale.value,
-    y: (event.clientY - rect.top) / scale.value,
+    x: (event.clientX - rect.left) / scale.value + SCENE.x,
+    y: (event.clientY - rect.top) / scale.value + SCENE.y,
   };
 };
 
@@ -713,8 +725,8 @@ onBeforeUnmount(() => {
       <div class="relative m-auto shrink-0" :style="worldSize">
         <canvas
           ref="canvas"
-          :width="WORLD.width"
-          :height="WORLD.height"
+          :width="SCENE.width"
+          :height="SCENE.height"
           class="block w-full h-full [image-rendering:pixelated]"
           @click="onClick"
         />
@@ -735,7 +747,7 @@ onBeforeUnmount(() => {
             :style="at(overHead(member.persona))"
           >
             <span
-              v-if="bubble(member.persona)"
+              v-if="bubble(member.persona) && !overview"
               class="px-2 py-1 text-xs font-medium bg-white rounded-lg shadow-md whitespace-nowrap text-n-slate-12"
             >
               {{ bubble(member.persona) }}
@@ -764,6 +776,7 @@ onBeforeUnmount(() => {
           </div>
           <span
             v-for="person in people"
+            v-show="!overview"
             :key="`person-${person.userId}`"
             class="absolute px-2 py-0.5 text-xs font-semibold text-white rounded-full shadow pointer-events-none whitespace-nowrap -translate-x-1/2 -translate-y-full"
             :class="person.self ? 'bg-n-brand' : 'bg-n-slate-12/80'"
@@ -771,6 +784,48 @@ onBeforeUnmount(() => {
           >
             {{ person.name }}
           </span>
+          <template v-if="overview">
+            <div
+              v-for="person in people"
+              :key="`bubble-${person.userId}`"
+              class="absolute flex flex-col items-center gap-1 -translate-x-1/2 -translate-y-full pointer-events-none"
+              :style="at({ x: person.x + 16, y: person.y + 60 })"
+            >
+              <span
+                class="px-2 py-0.5 text-xs font-semibold text-white rounded-full shadow whitespace-nowrap"
+                :class="person.self ? 'bg-n-brand' : 'bg-n-iris-9'"
+              >
+                {{ person.name }}
+              </span>
+              <span
+                class="rounded-full shadow-md ring-2"
+                :class="person.self ? 'ring-n-brand' : 'ring-n-iris-9'"
+              >
+                <Avatar
+                  :name="person.name"
+                  :src="photoOf(person.userId)"
+                  :size="32"
+                  rounded-full
+                />
+              </span>
+            </div>
+            <div
+              v-for="member in members"
+              :key="`bubble-${member.persona}`"
+              class="absolute grid text-sm font-semibold text-white -translate-x-1/2 -translate-y-full rounded-full shadow-md pointer-events-none size-8 place-items-center"
+              :class="
+                member.persona === 'secretary' ? 'bg-n-blue-9' : 'bg-n-iris-9'
+              "
+              :style="
+                at({
+                  x: placeOf(member.persona).x + 16,
+                  y: placeOf(member.persona).y + 60,
+                })
+              "
+            >
+              {{ nameOf(member).charAt(0) }}
+            </div>
+          </template>
         </template>
       </div>
     </div>

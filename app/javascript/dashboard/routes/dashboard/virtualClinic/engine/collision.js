@@ -1,12 +1,21 @@
-import { ITEMS, PARTITION, WALLS, WORLD } from './layout';
+import {
+  DOOR,
+  GARDEN_ITEMS,
+  ITEMS,
+  PARTITION,
+  SCENE,
+  WALLS,
+  WORLD,
+} from './layout';
 
 // Where people can stand, on a grid of 16 px cells (half a tile, so the
 // passages and the space between chairs stay open). Walls, the middle
 // partition and the base of every piece of furniture block; people walk
 // behind the top of a piece, like in Gather's 3/4 view.
 export const CELL = 16;
-export const COLUMNS = WORLD.width / CELL;
-export const ROWS = WORLD.height / CELL;
+// The grid covers the whole scene (clinic and garden); cell 0 is its corner.
+export const COLUMNS = SCENE.width / CELL;
+export const ROWS = SCENE.height / CELL;
 
 // Characters are 32×64 frames; they stand on the point under their feet.
 export const feetOf = ({ x, y }) => ({ x: x + 16, y: y + 60 });
@@ -16,17 +25,22 @@ const WALL_HEIGHT = 64;
 const FOOT_MIN = 16;
 const FOOT_MAX = 32;
 
-const blockRect = (grid, left, top, right, bottom) => {
-  const firstColumn = Math.max(0, Math.floor(left / CELL));
-  const lastColumn = Math.min(COLUMNS - 1, Math.ceil(right / CELL) - 1);
-  const firstRow = Math.max(0, Math.floor(top / CELL));
-  const lastRow = Math.min(ROWS - 1, Math.ceil(bottom / CELL) - 1);
+const fillRect = (grid, left, top, right, bottom, value) => {
+  const firstColumn = Math.max(0, Math.floor((left - SCENE.x) / CELL));
+  const lastColumn = Math.min(
+    COLUMNS - 1,
+    Math.ceil((right - SCENE.x) / CELL) - 1
+  );
+  const firstRow = Math.max(0, Math.floor((top - SCENE.y) / CELL));
+  const lastRow = Math.min(ROWS - 1, Math.ceil((bottom - SCENE.y) / CELL) - 1);
   for (let row = firstRow; row <= lastRow; row += 1) {
     for (let column = firstColumn; column <= lastColumn; column += 1) {
-      grid[row * COLUMNS + column] = 1;
+      grid[row * COLUMNS + column] = value;
     }
   }
 };
+const blockRect = (grid, left, top, right, bottom) =>
+  fillRect(grid, left, top, right, bottom, 1);
 
 // The base of a piece: its bottom half, between 16 and 32 px high. Things
 // standing on a desk (`sortY`) and wall decoration take no floor.
@@ -60,21 +74,30 @@ export function buildCollision(sizes, items = ITEMS) {
     const base = sizes[item.sprite] && footprint(item, sizes[item.sprite]);
     if (base) blockRect(grid, base.left, base.top, base.right, base.bottom);
   });
-  // The outer frame of the clinic.
+  // The outer frame of the clinic, open at the glass door.
   blockRect(grid, 0, WORLD.height - 4, WORLD.width, WORLD.height);
   blockRect(grid, 0, 0, 4, WORLD.height);
   blockRect(grid, WORLD.width - 4, 0, WORLD.width, WORLD.height);
+  fillRect(grid, DOOR.x, -CELL, DOOR.x + DOOR.width, WALL_HEIGHT, 0);
+  // Garden trees and bushes block at their trunk / base only.
+  GARDEN_ITEMS.forEach(item => {
+    const size = sizes[item.sprite];
+    if (!size) return;
+    const middle = item.x + size.width / 2;
+    const bottom = item.y + size.height;
+    blockRect(grid, middle - 12, bottom - 16, middle + 12, bottom);
+  });
   return grid;
 }
 
 export const cellOf = point => ({
-  column: Math.floor(point.x / CELL),
-  row: Math.floor(point.y / CELL),
+  column: Math.floor((point.x - SCENE.x) / CELL),
+  row: Math.floor((point.y - SCENE.y) / CELL),
 });
 
 export const centerOf = cell => ({
-  x: cell.column * CELL + CELL / 2,
-  y: cell.row * CELL + CELL / 2,
+  x: SCENE.x + cell.column * CELL + CELL / 2,
+  y: SCENE.y + cell.row * CELL + CELL / 2,
 });
 
 export function isFree(grid, point) {
