@@ -80,6 +80,7 @@ class AccountDashboard < Administrate::BaseDashboard
     settings_macros_menu_enabled: Field::Boolean,
     account_users: Field::HasMany,
     account_prompts: AccountPromptsField,
+    account_integrations: AccountIntegrationsField,
     custom_attributes: Field::String
   }.merge(enterprise_attribute_types).freeze
 
@@ -127,6 +128,7 @@ class AccountDashboard < Administrate::BaseDashboard
     auris_menus
     follow_up
     account_prompts
+    account_integrations
     conversations
     account_users
   ] + enterprise_show_page_attributes).freeze
