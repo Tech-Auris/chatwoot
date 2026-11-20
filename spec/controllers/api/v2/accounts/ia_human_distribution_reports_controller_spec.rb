@@ -288,6 +288,31 @@ RSpec.describe 'IA Human Distribution Reports API', type: :request do
           # (94 min + 30 min) / 2 — the offline handover was 1 minute later
           expect(response.parsed_body['totals']).to include('avg_first_reply_seconds' => 62 * 60, 'without_human_reply' => 1)
         end
+
+        it 'counts a reply typed on the connected WhatsApp phone as human' do
+          create(:message, :bot_message, conversation: conv_no_online, account: account, inbox: inbox,
+                                         content_attributes: { external_sender_name: 'WhatsApp' }, created_at: reference_time + 20.minutes)
+
+          get "/api/v2/accounts/#{account.id}/ia_human_distribution_reports",
+              params: { from: range_from, to: range_to },
+              headers: admin.create_new_auth_token
+
+          rows = response.parsed_body['rows'].index_by { |row| row['conversation_id'] }
+          expect(rows[conv_no_online.display_id]).to include('first_reply_seconds' => 18 * 60, 'first_reply_by' => nil)
+          expect(response.parsed_body['totals']).to include('without_human_reply' => 0)
+        end
+
+        it 'does not count a reaction as a reply' do
+          create(:message, conversation: conv_no_online, account: account, inbox: inbox, message_type: :outgoing,
+                           sender: agent_user, content_attributes: { is_reaction: true }, created_at: reference_time + 20.minutes)
+
+          get "/api/v2/accounts/#{account.id}/ia_human_distribution_reports",
+              params: { from: range_from, to: range_to },
+              headers: admin.create_new_auth_token
+
+          rows = response.parsed_body['rows'].index_by { |row| row['conversation_id'] }
+          expect(rows[conv_no_online.display_id]).to include('first_reply_seconds' => nil)
+        end
       end
     end
   end
