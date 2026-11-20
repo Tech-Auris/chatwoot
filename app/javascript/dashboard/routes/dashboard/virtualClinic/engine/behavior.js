@@ -1,4 +1,4 @@
-import { CHARACTERS } from './layout';
+import { DEFAULT_LAYOUT } from './layout';
 import { TRIPS } from './trips';
 
 const SPEED = 64; // world px per second
@@ -18,13 +18,16 @@ function directionTo(from, to) {
 // Runs one walk at a time for the AI team: go along the path, stay a few
 // seconds (talking, when it is a visit) and come back the same way.
 // `canLeave(persona)` keeps someone at their seat (e.g. while the user is
-// talking to them).
+// talking to them). `plan(trip)` gives the frame positions of the walk
+// (see planTrip), or null to skip it.
 export function createTeamBehavior({
   personas,
+  plan,
+  layout = DEFAULT_LAYOUT,
   canLeave = () => true,
   random = Math.random,
 }) {
-  const home = persona => [CHARACTERS[persona].x, CHARACTERS[persona].y];
+  const home = persona => [layout.team[persona].x, layout.team[persona].y];
   const state = Object.fromEntries(
     personas.map(persona => {
       const [x, y] = home(persona);
@@ -46,7 +49,7 @@ export function createTeamBehavior({
   let nextTripAt = null;
   let lastTripKey = null;
 
-  const startTrip = () => {
+  const startTrip = now => {
     // Random walk, never the same one twice in a row.
     const options = TRIPS.filter(
       t =>
@@ -58,9 +61,15 @@ export function createTeamBehavior({
     if (!options.length) return;
     const chosen = options[Math.floor(random() * options.length)];
     lastTripKey = chosen.key;
+    const path = plan(chosen);
+    if (!path) {
+      nextTripAt = now + between(NEXT_TRIP_MS, random);
+      return;
+    }
     trip = {
       ...chosen,
-      points: chosen.path,
+      path,
+      points: path,
       index: 1,
       phase: 'going',
       stayUntil: 0,
@@ -125,7 +134,7 @@ export function createTeamBehavior({
       if (nextTripAt === null)
         nextTripAt = now + between(FIRST_TRIP_MS, random);
       if (!trip) {
-        if (now >= nextTripAt) startTrip();
+        if (now >= nextTripAt) startTrip(now);
         return;
       }
       const walker = state[trip.who];

@@ -38,6 +38,24 @@ class VirtualClinicAPI extends ApiClient {
     return axios.post(`${this.url}/threads/${persona}/reset`);
   }
 
+  // `{ layout, updated_at, updated_by }`; `layout` is null for the default.
+  getLayout() {
+    return axios.get(`${this.url}/layout`);
+  }
+
+  saveLayout(layout) {
+    return axios.put(`${this.url}/layout`, { layout });
+  }
+
+  resetLayout() {
+    return axios.delete(`${this.url}/layout`);
+  }
+
+  // `{ paths }`: every file of the pack the editor can use.
+  listAssets() {
+    return axios.get(`${this.url}/assets`);
+  }
+
   updateSettings(settings) {
     return axios.patch(`${this.url}/settings`, settings);
   }
