@@ -1,3 +1,5 @@
+import { lookSheet } from './avatar';
+
 // The Clínica virtual (MVP: the same clinic for every account), from the
 // approved draft: a 30×20 grid of 32 px tiles. Coordinates are world
 // pixels; item positions are the top-left of the sprite cropped to its
@@ -120,6 +122,8 @@ export const ITEMS = [
 
 // Where each AI teammate sits (top-left of the 32×64 frame) and their
 // spritesheet. Name and status are drawn over the head, wherever they are.
+// A clinic can give them a look of its own in the avatar editor (`avatar`,
+// which then wins over `sheet`).
 export const CHARACTERS = {
   secretary: {
     sheet: '7_personagens/clara_secretaria_spritesheet.png',
@@ -133,6 +137,21 @@ export const CHARACTERS = {
   },
 };
 
+// Where people arrive: in front of the glass door of the recepção.
+export const ENTRANCE = { x: 52, y: 44 };
+
+// The clinic team walks around as LimeZu premade characters, one per user.
+export const PEOPLE_SHEETS = Array.from(
+  { length: 18 },
+  (_, i) => `8_pessoas/pessoa_${String(i + 1).padStart(2, '0')}.png`
+);
+export const sheetForUser = id => PEOPLE_SHEETS[id % PEOPLE_SHEETS.length];
+
+// The sheet a teammate or person is drawn with: their own look when they
+// made one in the avatar editor.
+export const sheetOf = ({ avatar, sheet }) =>
+  avatar ? lookSheet(avatar) : sheet;
+
 export const ROOMS = [
   { key: 'RECEPTION', x: 8, y: 72 },
   { key: 'WAITING_ROOM', x: 8, y: 328 },
@@ -141,11 +160,73 @@ export const ROOMS = [
   { key: 'KITCHEN', x: 886, y: 430 },
 ];
 
-export const SPRITE_PATHS = [
+// The clinic as drawn: the fixed rooms (floor and wall areas, partition)
+// plus what each clinic can change in the editor: floor and wall art,
+// furniture, room names and the AI team (name, look and seat).
+export const DEFAULT_LAYOUT = {
+  floors: FLOORS,
+  walls: WALLS,
+  items: ITEMS,
+  rooms: ROOMS,
+  team: CHARACTERS,
+};
+
+// The saved layout of a clinic (only what the editor changes) on top of the
+// default one. `saved` is null when the clinic never edited it.
+export function applySaved(saved) {
+  if (!saved) return DEFAULT_LAYOUT;
+  const pick = (list, blocks) =>
+    list.map((area, i) => ({ ...area, block: blocks?.[i] || area.block }));
+  return {
+    floors: pick(FLOORS, saved.floors),
+    walls: pick(WALLS, saved.walls),
+    items: saved.items || ITEMS,
+    rooms: ROOMS.map(room => ({ ...room, name: saved.rooms?.[room.key] })),
+    team: Object.fromEntries(
+      Object.entries(CHARACTERS).map(([persona, spot]) => [
+        persona,
+        { ...spot, ...saved.team?.[persona] },
+      ])
+    ),
+  };
+}
+
+// What goes to the API: the editable part only.
+export function toSaved(layout) {
+  return {
+    floors: layout.floors.map(floor => floor.block),
+    walls: layout.walls.map(wall => wall.block),
+    items: layout.items.map(({ sprite, x, y, flip, sortY }) => ({
+      sprite,
+      x: Math.round(x),
+      y: Math.round(y),
+      ...(flip ? { flip: true } : {}),
+      ...(sortY === undefined ? {} : { sortY: Math.round(sortY) }),
+    })),
+    rooms: Object.fromEntries(
+      layout.rooms.filter(room => room.name).map(room => [room.key, room.name])
+    ),
+    team: Object.fromEntries(
+      Object.entries(layout.team).map(([persona, spot]) => [
+        persona,
+        {
+          ...(spot.avatar ? { avatar: spot.avatar } : { sheet: spot.sheet }),
+          x: Math.round(spot.x),
+          y: Math.round(spot.y),
+          ...(spot.name ? { name: spot.name } : {}),
+        },
+      ])
+    ),
+  };
+}
+
+export const spritePaths = (layout = DEFAULT_LAYOUT) => [
   ...new Set([
-    ...FLOORS.map(f => f.block),
-    ...WALLS.map(w => w.block),
-    ...ITEMS.map(i => i.sprite),
-    ...Object.values(CHARACTERS).map(c => c.sheet),
+    ...layout.floors.map(f => f.block),
+    ...layout.walls.map(w => w.block),
+    ...layout.items.map(i => i.sprite),
+    ...Object.values(layout.team).map(sheetOf),
   ]),
 ];
+
+export const SPRITE_PATHS = spritePaths();

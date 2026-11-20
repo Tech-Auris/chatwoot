@@ -1,8 +1,13 @@
 # The AI team of the Clínica virtual. `tools` is the allowlist each persona
 # gets from the MCP Auris; `model_config_key` is the InstallationConfig
-# entry that picks its OpenAI model.
+# entry that picks its OpenAI model; `delegates_to` are the teammates it can
+# ask (one level: they can't ask back). `role` and `scope` describe the
+# persona to whoever asks it. `restricted` personas show what they are doing
+# (their numbers on the map) to administrators and managers only.
 secretary:
   default_name: Clara
+  role: secretária
+  scope: quem está sendo atendido agora, quem espera resposta, follow-ups em andamento, transferências para humanos e mensagens programadas de hoje
   model_config_key: VIRTUAL_CLINIC_SECRETARY_MODEL
   default_model: gpt-4.1-mini
   tools:
@@ -21,6 +26,12 @@ secretary:
     - Quem você passou para um humano hoje?
 manager:
   default_name: Helena
+  role: gerente
+  scope: números da clínica, funil, campanhas, agendamentos e comparação entre períodos
+  delegates_to:
+    - secretary
+  charts: true
+  restricted: true
   model_config_key: VIRTUAL_CLINIC_MANAGER_MODEL
   default_model: gpt-5.1
   tools:
