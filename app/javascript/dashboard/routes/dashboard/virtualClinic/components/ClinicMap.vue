@@ -12,7 +12,7 @@ import {
   sheetForUser,
   spritePaths,
 } from '../engine/layout';
-import { avatarKey } from '../engine/avatar';
+import { lookSheet } from '../engine/avatar';
 import { loadSprites } from '../engine/sprites';
 import { createRenderer, hitTest, itemAt } from '../engine/renderer';
 import { createTeamBehavior } from '../engine/behavior';
@@ -125,7 +125,7 @@ const team = computed(() =>
 );
 
 const mySheet = computed(() =>
-  props.me?.avatar ? avatarKey(props.me.avatar) : sheetForUser(props.me?.id)
+  props.me?.avatar ? lookSheet(props.me.avatar) : sheetForUser(props.me?.id)
 );
 
 const people = computed(() => {
@@ -133,7 +133,7 @@ const people = computed(() => {
   const list = Object.entries(presence.others.value).map(([id, place]) => ({
     ...place,
     userId: Number(id),
-    sheet: place.avatar ? avatarKey(place.avatar) : sheetForUser(Number(id)),
+    sheet: place.avatar ? lookSheet(place.avatar) : sheetForUser(Number(id)),
   }));
   if (mine.value && props.me) {
     list.push({

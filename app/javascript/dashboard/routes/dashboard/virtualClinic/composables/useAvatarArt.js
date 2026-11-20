@@ -1,6 +1,6 @@
 import { reactive } from 'vue';
 import VirtualClinicAPI from 'dashboard/api/virtualClinic';
-import { avatarKey, layerPath, layersOf } from '../engine/avatar';
+import { layerPath, layersOf, lookSheet } from '../engine/avatar';
 
 // Standing, facing front (row 1, column 18 of the sheet), from the top of
 // the hair down to the feet: 32×52 of the 32×64 frame.
@@ -26,11 +26,13 @@ const cut = async (path, region) =>
     region.height
   );
 
-// A region of the sheet of a look, every layer drawn in order.
-export async function drawLook(avatar, region) {
-  const layers = await Promise.all(
-    layersOf(avatarKey(avatar)).map(name => cut(layerPath(name), region))
-  );
+// A region of the sheet of a look: the premade sheet, or every layer drawn
+// in order.
+export async function drawLook(look, region) {
+  const paths = look.sheet
+    ? [look.sheet]
+    : layersOf(lookSheet(look)).map(layerPath);
+  const layers = await Promise.all(paths.map(path => cut(path, region)));
   const canvas = document.createElement('canvas');
   canvas.width = region.width;
   canvas.height = region.height;
@@ -85,9 +87,9 @@ const remember = (store, key, load) => {
 // Small pictures for the avatar editor, '' while they load: a look standing
 // and the color of a layer (both <img> srcs).
 export function useAvatarArt() {
-  const thumbnail = avatar =>
-    remember(thumbnails, avatarKey(avatar), async () =>
-      (await drawLook(avatar, FRONT)).toDataURL()
+  const thumbnail = look =>
+    remember(thumbnails, lookSheet(look), async () =>
+      (await drawLook(look, FRONT)).toDataURL()
     );
   const swatch = name => remember(swatches, name, () => swatchOf(name));
   return { thumbnail, swatch };

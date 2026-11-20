@@ -150,6 +150,7 @@
       "RANDOM": "Random look",
       "NONE": "None",
       "PARTS": {
+        "PREMADE": "Avatar",
         "BODY": "Skin",
         "EYES": "Eyes",
         "OUTFIT": "Outfit",

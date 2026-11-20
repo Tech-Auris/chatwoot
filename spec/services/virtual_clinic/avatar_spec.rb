@@ -10,6 +10,12 @@ RSpec.describe VirtualClinic::Avatar do
     expect(described_class.paths(look)).to include('9_avatar/Accessory_15_Glasses_32x32_01.png')
   end
 
+  it 'keeps a premade character of the pack' do
+    expect(described_class.sanitize({ 'sheet' => '8_pessoas/pessoa_03.png' })).to eq('sheet' => '8_pessoas/pessoa_03.png')
+    expect(described_class.sanitize({ 'sheet' => '../config/database.yml' })).to be_nil
+    expect(described_class.sanitize({ 'sheet' => '8_pessoas/pessoa_03.png', 'body' => 'Body_32x32_01' })).to be_nil
+  end
+
   it 'drops anything that is not a look' do
     expect(described_class.sanitize(nil)).to be_nil
     expect(described_class.sanitize(look.except('eyes'))).to be_nil

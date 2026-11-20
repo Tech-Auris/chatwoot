@@ -150,6 +150,7 @@
       "RANDOM": "Visual aleatório",
       "NONE": "Nenhum",
       "PARTS": {
+        "PREMADE": "Avatar",
         "BODY": "Pele",
         "EYES": "Olhos",
         "OUTFIT": "Roupa",

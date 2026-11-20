@@ -5,7 +5,9 @@ import {
   colorsOf,
   isAvatarKey,
   layersOf,
+  lookSheet,
   optionsOf,
+  premadeSheets,
   randomAvatar,
 } from '../engine/avatar';
 import { DEFAULT_LAYOUT, sheetOf, toSaved } from '../engine/layout';
@@ -76,6 +78,24 @@ describe('avatar looks', () => {
       'Outfit_02_32x32_02',
       'Hairstyle_01_32x32_03',
       'Smartphone_32x32_1',
+    ]);
+  });
+
+  it('draws a premade character with its own sheet and lists them', () => {
+    expect(lookSheet({ sheet: '8_pessoas/pessoa_03.png' })).toBe(
+      '8_pessoas/pessoa_03.png'
+    );
+    expect(lookSheet(look)).toBe(avatarKey(look));
+    expect(
+      premadeSheets([
+        '7_personagens/clara_secretaria.png',
+        '7_personagens/clara_secretaria_spritesheet.png',
+        '8_pessoas/pessoa_03.png',
+        '9_avatar/Body_32x32_01.png',
+      ])
+    ).toEqual([
+      '7_personagens/clara_secretaria_spritesheet.png',
+      '8_pessoas/pessoa_03.png',
     ]);
   });
 

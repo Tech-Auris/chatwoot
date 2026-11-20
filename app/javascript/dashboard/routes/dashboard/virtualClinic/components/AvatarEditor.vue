@@ -10,6 +10,7 @@ import {
   avatarCatalog,
   colorsOf,
   optionsOf,
+  premadeSheets,
   randomAvatar,
 } from '../engine/avatar';
 import {
@@ -19,16 +20,19 @@ import {
   useAvatarArt,
 } from '../composables/useAvatarArt';
 
-// Gather-style avatar editor: the parts on the left, the choices of the
-// part in the middle (style, then color dots) and, on the right, the look
-// standing on the clinic floor with its name tag.
+// Gather-style avatar editor: "Avatar" (premade characters) and the parts
+// on the left, the choices in the middle (style, then color dots) and, on
+// the right, the look standing on the clinic floor with its name tag.
 const props = defineProps({
   title: { type: String, required: true },
   // Name shown over the head in the preview.
   name: { type: String, default: '' },
-  // The look to start from (`{ body, eyes, outfit, hair?, accessory? }`),
-  // or null for a random one.
-  avatar: { type: Object, default: null },
+  // The look worn now: a premade character (`{ sheet }`) or the parts
+  // (`{ body, eyes, outfit, hair?, accessory? }`).
+  avatar: { type: Object, required: true },
+  // The parts a premade character turns into when a part is changed
+  // (random when not given).
+  base: { type: Object, default: null },
   // Floor art under the preview.
   floor: { type: String, default: '' },
 });
@@ -38,10 +42,15 @@ const { t } = useI18n();
 const { thumbnail, swatch } = useAvatarArt();
 const dialog = ref(null);
 const catalog = ref(null);
-const look = ref(props.avatar ? { ...props.avatar } : null);
-const part = ref('body');
+const premades = ref([]);
+const look = ref({ ...props.avatar });
+// The look as parts, kept while a premade character is picked.
+const parts = ref(props.avatar.sheet ? props.base : { ...props.avatar });
+const part = ref(props.avatar.sheet ? 'premade' : 'body');
 
+const MENU = [{ key: 'premade' }, ...PARTS];
 const ICONS = {
+  premade: 'i-lucide-user-round',
   body: 'i-lucide-hand',
   eyes: 'i-lucide-eye',
   outfit: 'i-lucide-shirt',
@@ -50,28 +59,40 @@ const ICONS = {
 };
 const currentPart = computed(() => PARTS.find(({ key }) => key === part.value));
 const options = computed(() =>
-  catalog.value ? optionsOf(catalog.value, part.value, look.value) : []
+  catalog.value && parts.value
+    ? optionsOf(catalog.value, part.value, parts.value)
+    : []
 );
 const colors = computed(() =>
-  catalog.value ? colorsOf(catalog.value, part.value, look.value) : []
+  catalog.value && parts.value
+    ? colorsOf(catalog.value, part.value, parts.value)
+    : []
 );
+const wearingParts = computed(() => !look.value.sheet);
 const sameStyle = (a, b) =>
   a && b && a.split('_32x32_')[0] === b.split('_32x32_')[0];
-const isPicked = option =>
-  options.value.length && colors.value.length
+const isPicked = option => {
+  if (!wearingParts.value) return false;
+  return colors.value.length
     ? sameStyle(look.value[part.value], option)
     : look.value[part.value] === option;
+};
 
-const choose = layer => {
-  const next = { ...look.value };
-  if (layer) next[part.value] = layer;
-  else delete next[part.value];
+const wear = next => {
+  parts.value = next;
   look.value = next;
 };
-const shuffle = () => {
-  look.value = randomAvatar(catalog.value);
+const choose = layer => {
+  const next = { ...parts.value };
+  if (layer) next[part.value] = layer;
+  else delete next[part.value];
+  wear(next);
 };
-const preview = option => ({ ...look.value, [part.value]: option });
+const choosePremade = sheet => {
+  look.value = { sheet };
+};
+const shuffle = () => wear(randomAvatar(catalog.value));
+const preview = option => ({ ...parts.value, [part.value]: option });
 
 // The preview: the floor, and the look breathing (standing frames).
 const canvas = ref(null);
@@ -108,7 +129,6 @@ const paint = () => {
 watch(
   look,
   async value => {
-    if (!value) return;
     const drawn = await drawLook(value, IDLE_FRONT);
     if (value === look.value) {
       frames = drawn;
@@ -127,7 +147,8 @@ onMounted(async () => {
   dialog.value.open();
   const { data } = await VirtualClinicAPI.listAssets();
   catalog.value = avatarCatalog(data.paths);
-  look.value ||= randomAvatar(catalog.value);
+  premades.value = premadeSheets(data.paths);
+  parts.value ||= randomAvatar(catalog.value);
   if (props.floor) {
     floorArt = await loadArt(props.floor);
     paint();
@@ -146,14 +167,13 @@ onBeforeUnmount(() => clearInterval(timer));
     width="3xl"
     :title="title"
     :confirm-button-label="t('VIRTUAL_CLINIC.AVATAR.DONE')"
-    :disable-confirm-button="!look"
     @confirm="save"
     @close="emit('close')"
   >
     <div class="flex gap-4 h-[26rem]">
       <nav class="flex flex-col w-36 gap-1 shrink-0">
         <button
-          v-for="{ key } in PARTS"
+          v-for="{ key } in MENU"
           :key="key"
           type="button"
           class="flex items-center gap-2 px-3 py-2 text-sm text-left rounded-lg"
@@ -173,12 +193,33 @@ onBeforeUnmount(() => clearInterval(timer));
         <div
           class="grid content-start flex-1 grid-cols-4 gap-2 p-3 overflow-y-auto rounded-xl bg-n-alpha-1"
         >
+          <template v-if="part === 'premade'">
+            <button
+              v-for="sheet in premades"
+              :key="sheet"
+              type="button"
+              class="grid p-1 rounded-lg aspect-[32/52] place-items-center bg-n-solid-1"
+              :class="
+                look.sheet === sheet
+                  ? 'ring-2 ring-n-brand'
+                  : 'hover:ring-1 hover:ring-n-slate-7'
+              "
+              @click="choosePremade(sheet)"
+            >
+              <img
+                v-if="thumbnail({ sheet })"
+                :src="thumbnail({ sheet })"
+                alt=""
+                class="object-contain w-full h-full [image-rendering:pixelated]"
+              />
+            </button>
+          </template>
           <button
-            v-if="currentPart.optional"
+            v-if="currentPart?.optional"
             type="button"
             class="grid rounded-lg aspect-[32/52] place-items-center bg-n-solid-1"
             :class="
-              look && !look[part]
+              wearingParts && !look[part]
                 ? 'ring-2 ring-n-brand'
                 : 'hover:ring-1 hover:ring-n-slate-7'
             "
@@ -188,7 +229,7 @@ onBeforeUnmount(() => clearInterval(timer));
             <Icon icon="i-lucide-ban" class="size-6 text-n-slate-10" />
           </button>
           <button
-            v-for="option in look ? options : []"
+            v-for="option in part === 'premade' ? [] : options"
             :key="option"
             type="button"
             class="grid p-1 rounded-lg aspect-[32/52] place-items-center bg-n-solid-1"
@@ -208,7 +249,7 @@ onBeforeUnmount(() => clearInterval(timer));
           </button>
         </div>
         <div
-          v-if="colors.length"
+          v-if="part !== 'premade' && colors.length"
           class="flex flex-wrap items-center gap-2 px-3 py-2 rounded-xl bg-n-alpha-1"
         >
           <button

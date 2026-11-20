@@ -1,4 +1,4 @@
-import { avatarKey } from './avatar';
+import { lookSheet } from './avatar';
 
 // The Clínica virtual (MVP: the same clinic for every account), from the
 // approved draft: a 30×20 grid of 32 px tiles. Coordinates are world
@@ -150,10 +150,10 @@ export const sheetForUser = id => PEOPLE_SHEETS[id % PEOPLE_SHEETS.length];
 // The sheet a teammate or person is drawn with: their own look when they
 // made one in the avatar editor.
 export const sheetOf = ({ avatar, sheet }) =>
-  avatar ? avatarKey(avatar) : sheet;
+  avatar ? lookSheet(avatar) : sheet;
 
-// The look the avatar editor starts from for a teammate still in the
-// premade art: Helena is built from these very layers.
+// What the avatar editor builds on when a teammate still in the premade art
+// gets a part changed: Helena is made of these very layers.
 export const TEAM_AVATARS = {
   secretary: {
     body: 'Body_32x32_02',

@@ -167,4 +167,19 @@ describe('TeamPanel', () => {
       expect.anything()
     );
   });
+
+  it('lets whoever edits the clinic change the look of each AI teammate', async () => {
+    const wrapper = mountPanel({
+      visible: true,
+      chat_enabled: true,
+      can_edit_layout: true,
+      members,
+    });
+
+    await wrapper
+      .findAll('button[title="VIRTUAL_CLINIC.AVATAR.EDIT"]')[1]
+      .trigger('click');
+
+    expect(wrapper.emitted('editAvatar')).toEqual([['manager']]);
+  });
 });

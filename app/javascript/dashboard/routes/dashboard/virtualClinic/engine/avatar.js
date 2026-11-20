@@ -1,7 +1,9 @@
-// Avatars built from the layers of the LimeZu character generator (art folder
-// `9_avatar/`), Gather-style: a look is `{ body, eyes, outfit, hair,
-// accessory }`, each the name of one layer ("Hairstyle_04_32x32_03"), drawn
-// in this order on top of each other. Hair and accessory may be left out.
+// Avatars, Gather-style. A look is either a premade character of the pack
+// (`{ sheet: '8_pessoas/pessoa_03.png' }`) or built from the layers of the
+// LimeZu character generator (art folder `9_avatar/`): `{ body, eyes,
+// outfit, hair, accessory }`, each the name of one layer
+// ("Hairstyle_04_32x32_03"), drawn in this order on top of each other. Hair
+// and accessory may be left out.
 export const AVATAR_FOLDER = '9_avatar';
 export const PARTS = [
   { key: 'body', prefix: 'Body_' },
@@ -21,6 +23,14 @@ export const layerPath = name => `${AVATAR_FOLDER}/${name}.png`;
 export const avatarKey = avatar =>
   KEY_PREFIX + PARTS.map(({ key }) => avatar[key] || '').join(',');
 export const isAvatarKey = key => key.startsWith(KEY_PREFIX);
+// The sheet any look is drawn with.
+export const lookSheet = look => look.sheet || avatarKey(look);
+
+// The premade characters the editor offers ("Avatar" tab).
+export const premadeSheets = paths =>
+  paths.filter(path =>
+    /^(7_personagens\/.+_spritesheet|8_pessoas\/.+)\.png$/.test(path)
+  );
 export const layersOf = key => [
   ...key.slice(KEY_PREFIX.length).split(',').filter(Boolean),
   PHONE,
