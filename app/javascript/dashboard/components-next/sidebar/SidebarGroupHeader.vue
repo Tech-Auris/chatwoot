@@ -1,7 +1,7 @@
 <script setup>
-import { computed } from 'vue';
 import { useMapGetter } from 'dashboard/composables/store.js';
 import Icon from 'next/icon/Icon.vue';
+import SidebarUnreadBadge from './SidebarUnreadBadge.vue';
 
 const props = defineProps({
   to: { type: [Object, String], default: '' },
@@ -12,15 +12,13 @@ const props = defineProps({
   isActive: { type: Boolean, default: false },
   hasActiveChild: { type: Boolean, default: false },
   getterKeys: { type: Object, default: () => ({}) },
+  badgeVariant: { type: String, default: 'default' },
 });
 
 const emit = defineEmits(['toggle']);
 
 const showBadge = useMapGetter(props.getterKeys.badge);
 const dynamicCount = useMapGetter(props.getterKeys.count);
-const count = computed(() =>
-  dynamicCount.value > 99 ? '99+' : dynamicCount.value
-);
 </script>
 
 <template>
@@ -57,12 +55,11 @@ const count = computed(() =>
       >
         {{ label }}
       </span>
-      <span
-        v-if="dynamicCount && !expandable"
-        class="inline-grid h-5 min-w-5 place-items-center rounded-full bg-n-slate-4 px-1 text-xxs font-medium leading-3 text-n-slate-12 dark:bg-n-slate-5 flex-shrink-0"
-      >
-        {{ count }}
-      </span>
+      <SidebarUnreadBadge
+        v-if="!expandable"
+        :count="dynamicCount"
+        :variant="badgeVariant"
+      />
     </div>
     <span
       v-if="expandable"
