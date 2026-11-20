@@ -5,6 +5,10 @@ import ProfileEditor from '../components/ProfileEditor.vue';
 
 vi.mock('vue-i18n', () => ({ useI18n: () => ({ t: key => key }) }));
 vi.mock('dashboard/composables', () => ({ useAlert: vi.fn() }));
+const updateUISettings = vi.fn();
+vi.mock('dashboard/composables/useUISettings', () => ({
+  useUISettings: () => ({ updateUISettings }),
+}));
 vi.mock('../composables/useAvatarArt', () => ({
   useAvatarArt: () => ({ thumbnail: () => '' }),
 }));
@@ -27,8 +31,8 @@ const DialogStub = defineComponent({
   },
 });
 
-const mountEditor = () =>
-  mount(ProfileEditor, { global: { stubs: { Dialog: DialogStub } } });
+const mountEditor = props =>
+  mount(ProfileEditor, { props, global: { stubs: { Dialog: DialogStub } } });
 
 describe('ProfileEditor', () => {
   it('saves the names to the profile and closes', async () => {
@@ -45,15 +49,29 @@ describe('ProfileEditor', () => {
       displayName: 'Fábio',
       avatar: null,
     });
+    expect(updateUISettings).not.toHaveBeenCalled();
   });
 
-  it('goes to the avatar editor', async () => {
+  it('saves the look picked in the avatar editor with the profile', async () => {
+    const look = { sheet: '8_pessoas/pessoa_03.png' };
+    const wrapper = mountEditor({ avatar: look, newAvatar: look });
+
+    await wrapper.findComponent(DialogStub).vm.$emit('confirm');
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(updateUISettings).toHaveBeenCalledWith({
+      virtual_clinic_avatar: look,
+    });
+  });
+
+  it('opens the avatar editor and stays open to come back to', async () => {
     const wrapper = mountEditor();
     await wrapper
       .find('[title="VIRTUAL_CLINIC.AVATAR.TITLE"]')
       .trigger('click');
 
     expect(wrapper.emitted('editAvatar')).toHaveLength(1);
-    expect(wrapper.emitted('close')).toHaveLength(1);
+    expect(wrapper.emitted('close')).toBeUndefined();
   });
 });

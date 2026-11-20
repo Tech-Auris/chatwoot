@@ -1,5 +1,6 @@
 import {
   DEFAULT_LAYOUT,
+  FACADE,
   GARDEN_ITEMS,
   PARTITION,
   SCENE,
@@ -136,6 +137,40 @@ function drawItem(context, image, item) {
   context.restore();
 }
 
+// The outside wall under the clinic, as seen from the garden: gray, with a
+// row of windows (Gather-style).
+const WALL_OUTSIDE = {
+  wall: '#6b7a7b',
+  edge: '#4f5a5b',
+  frame: '#2b3148',
+  glass: '#8fd3f4',
+};
+const WINDOW = { width: 72, height: 40, every: 160, top: 12 };
+function drawFacade(context) {
+  const top = WORLD.height;
+  context.fillStyle = WALL_OUTSIDE.wall;
+  context.fillRect(0, top, WORLD.width, FACADE);
+  context.fillStyle = WALL_OUTSIDE.edge;
+  context.fillRect(0, top + FACADE - 4, WORLD.width, 4);
+  for (let x = 44; x + WINDOW.width < WORLD.width; x += WINDOW.every) {
+    const y = top + WINDOW.top;
+    context.fillStyle = WALL_OUTSIDE.frame;
+    context.fillRect(x, y, WINDOW.width, WINDOW.height);
+    context.fillStyle = WALL_OUTSIDE.glass;
+    context.fillRect(x + 3, y + 3, WINDOW.width - 6, WINDOW.height - 6);
+    context.fillStyle = WALL_OUTSIDE.frame;
+    context.fillRect(x + 3, y + WINDOW.height / 2 - 1, WINDOW.width - 6, 3);
+    [1, 2].forEach(part =>
+      context.fillRect(
+        x + (WINDOW.width * part) / 3 - 1,
+        y + 3,
+        3,
+        WINDOW.height - 6
+      )
+    );
+  }
+}
+
 // The zoomed-out view, Gather-style: the clinic as a plan (rooms in soft
 // colors, furniture as plain blocks, trees as round tops), no characters.
 const PLAN = {
@@ -177,6 +212,8 @@ function drawPlan(context, layout, items) {
       height / 2 - 2
     );
   });
+  context.fillStyle = PLAN.wall;
+  context.fillRect(0, WORLD.height, WORLD.width, FACADE);
   context.strokeStyle = PLAN.wall;
   context.lineWidth = 6;
   context.strokeRect(0, 0, WORLD.width, WORLD.height);
@@ -212,6 +249,7 @@ export function createRenderer(canvas, sprites, layout = DEFAULT_LAYOUT) {
       return;
     }
     context.drawImage(background, 0, 0);
+    drawFacade(context);
     const people = characters
       .map(character => ({
         ...character,

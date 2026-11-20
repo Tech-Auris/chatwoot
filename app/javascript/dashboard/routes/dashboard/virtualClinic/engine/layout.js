@@ -19,6 +19,8 @@ export const SCENE = {
   height: WORLD.height + 2 * GARDEN,
 };
 export const DOOR = { x: 48, width: 48 };
+// The outside wall under the clinic (seen from the garden, with windows).
+export const FACADE = 2 * TILE;
 
 const R = '1_recepcao/';
 const E = '2_sala_de_espera/';
@@ -157,15 +159,15 @@ export const GARDEN_ITEMS = [
   { sprite: `${J}cipreste_2.png`, x: 1040, y: 240 },
   { sprite: `${J}arvore_grande.png`, x: 1000, y: 400 },
   { sprite: `${J}arbusto_pequeno.png`, x: 990, y: 600 },
-  // Below.
-  { sprite: `${J}arvore_grande_2.png`, x: -150, y: 660 },
-  { sprite: `${J}arvore_redonda_2.png`, x: 70, y: 672 },
-  { sprite: `${J}canteiro_flores_5.png`, x: 250, y: 720 },
-  { sprite: `${J}arvore_grande.png`, x: 420, y: 668 },
-  { sprite: `${J}cerca_viva.png`, x: 600, y: 730 },
-  { sprite: `${J}arvore_redonda.png`, x: 760, y: 680 },
-  { sprite: `${J}cipreste.png`, x: 900, y: 666 },
-  { sprite: `${J}arvore_copa.png`, x: 1040, y: 700 },
+  // Below, in front of the outside wall.
+  { sprite: `${J}arvore_grande_2.png`, x: -150, y: 681 },
+  { sprite: `${J}arvore_redonda_2.png`, x: 70, y: 705 },
+  { sprite: `${J}canteiro_flores_5.png`, x: 250, y: 760 },
+  { sprite: `${J}arvore_grande.png`, x: 420, y: 687 },
+  { sprite: `${J}cerca_viva.png`, x: 600, y: 760 },
+  { sprite: `${J}arvore_redonda.png`, x: 760, y: 709 },
+  { sprite: `${J}cipreste.png`, x: 900, y: 689 },
+  { sprite: `${J}arvore_copa.png`, x: 1040, y: 713 },
 ];
 
 // Where each AI teammate sits (top-left of the 32×64 frame) and their

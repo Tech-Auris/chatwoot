@@ -1,5 +1,6 @@
 import {
   DOOR,
+  FACADE,
   GARDEN_ITEMS,
   ITEMS,
   PARTITION,
@@ -79,6 +80,7 @@ export function buildCollision(sizes, items = ITEMS) {
   blockRect(grid, 0, 0, 4, WORLD.height);
   blockRect(grid, WORLD.width - 4, 0, WORLD.width, WORLD.height);
   fillRect(grid, DOOR.x, -CELL, DOOR.x + DOOR.width, WALL_HEIGHT, 0);
+  blockRect(grid, 0, WORLD.height, WORLD.width, WORLD.height + FACADE);
   // Garden trees and bushes block at their trunk / base only.
   GARDEN_ITEMS.forEach(item => {
     const size = sizes[item.sprite];

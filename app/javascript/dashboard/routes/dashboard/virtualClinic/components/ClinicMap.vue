@@ -9,8 +9,10 @@ import { useMapGetter } from 'dashboard/composables/store';
 import {
   DEFAULT_LAYOUT,
   ENTRANCE,
+  GARDEN,
   SCENE,
   TILE,
+  WORLD,
   sheetForUser,
   spritePaths,
 } from '../engine/layout';
@@ -65,7 +67,10 @@ const scale = ref(1);
 const fitScale = ref(1);
 const userZoomed = ref(false);
 const MAX_SCALE = 4;
-const minScale = computed(() => Math.min(1, fitScale.value * 0.5));
+// "Fit" frames the clinic only; zooming out shows the garden around it
+// (all of it at `sceneScale`) and then the plan view.
+const sceneScale = ref(1);
+const minScale = computed(() => Math.min(1, sceneScale.value * 0.6));
 const tick = ref(0);
 const rotation = ref(0);
 let draw = null;
@@ -267,7 +272,7 @@ const selectedBox = computed(() => {
 
 // Zoomed well out: the plan view, with people as photo bubbles (Gather).
 const overview = computed(
-  () => !editing.value && scale.value < fitScale.value * 0.8
+  () => !editing.value && scale.value < sceneScale.value * 0.9
 );
 const agents = useMapGetter('agents/getAgents');
 const photoOf = userId =>
@@ -519,11 +524,26 @@ const onBlur = () => avatar?.releaseAll();
 
 // The map fills the area by default; the user can zoom in and out from
 // there (wheel or the +/- control), like in Gather.
+// Scrolls so the clinic sits in the middle of the view.
+const centerClinic = () =>
+  requestAnimationFrame(() => {
+    const box = viewport.value;
+    if (!box) return;
+    box.scrollLeft =
+      GARDEN * scale.value - (box.clientWidth - WORLD.width * scale.value) / 2;
+    box.scrollTop =
+      GARDEN * scale.value -
+      (box.clientHeight - WORLD.height * scale.value) / 2;
+  });
 const fit = () => {
-  const width = viewport.value?.clientWidth || SCENE.width;
-  const height = viewport.value?.clientHeight || SCENE.height;
-  fitScale.value = Math.min(width / SCENE.width, height / SCENE.height);
-  if (!userZoomed.value) scale.value = fitScale.value;
+  const width = viewport.value?.clientWidth || WORLD.width;
+  const height = viewport.value?.clientHeight || WORLD.height;
+  fitScale.value = Math.min(width / WORLD.width, height / WORLD.height);
+  sceneScale.value = Math.min(width / SCENE.width, height / SCENE.height);
+  if (!userZoomed.value) {
+    scale.value = fitScale.value;
+    centerClinic();
+  }
 };
 
 // Keeps the point under the cursor (or the center) in place while zooming.
@@ -554,6 +574,7 @@ const onWheel = event => {
 const resetZoom = () => {
   userZoomed.value = false;
   scale.value = fitScale.value;
+  centerClinic();
 };
 
 const toWorld = event => {
@@ -754,9 +775,8 @@ onBeforeUnmount(() => {
             </span>
             <button
               type="button"
-              class="px-2 py-0.5 text-xs font-semibold text-white rounded-full shadow whitespace-nowrap pointer-events-auto"
+              class="px-2 py-0.5 text-xs font-semibold text-white rounded-full shadow whitespace-nowrap pointer-events-auto bg-n-iris-9"
               :class="[
-                member.persona === 'secretary' ? 'bg-n-blue-9' : 'bg-n-iris-9',
                 chatEnabled ? '' : 'cursor-default',
                 isOffDuty(member.persona, status) ? 'opacity-50' : '',
               ]"
@@ -778,8 +798,12 @@ onBeforeUnmount(() => {
             v-for="person in people"
             v-show="!overview"
             :key="`person-${person.userId}`"
-            class="absolute px-2 py-0.5 text-xs font-semibold text-white rounded-full shadow pointer-events-none whitespace-nowrap -translate-x-1/2 -translate-y-full"
-            :class="person.self ? 'bg-n-brand' : 'bg-n-slate-12/80'"
+            class="absolute px-2 py-0.5 text-xs font-semibold rounded-full shadow pointer-events-none whitespace-nowrap -translate-x-1/2 -translate-y-full"
+            :class="
+              person.self
+                ? 'bg-n-blue-9 text-white'
+                : 'bg-n-slate-3 text-n-slate-12'
+            "
             :style="at({ x: person.x + 16, y: person.y + 18 })"
           >
             {{ person.name }}
@@ -792,14 +816,18 @@ onBeforeUnmount(() => {
               :style="at({ x: person.x + 16, y: person.y + 60 })"
             >
               <span
-                class="px-2 py-0.5 text-xs font-semibold text-white rounded-full shadow whitespace-nowrap"
-                :class="person.self ? 'bg-n-brand' : 'bg-n-iris-9'"
+                class="px-2 py-0.5 text-xs font-semibold rounded-full shadow whitespace-nowrap"
+                :class="
+                  person.self
+                    ? 'bg-n-blue-9 text-white'
+                    : 'bg-n-slate-3 text-n-slate-12'
+                "
               >
                 {{ person.name }}
               </span>
               <span
                 class="rounded-full shadow-md ring-2"
-                :class="person.self ? 'ring-n-brand' : 'ring-n-iris-9'"
+                :class="person.self ? 'ring-n-blue-9' : 'ring-n-slate-6'"
               >
                 <Avatar
                   :name="person.name"
@@ -812,10 +840,7 @@ onBeforeUnmount(() => {
             <div
               v-for="member in members"
               :key="`bubble-${member.persona}`"
-              class="absolute grid text-sm font-semibold text-white -translate-x-1/2 -translate-y-full rounded-full shadow-md pointer-events-none size-8 place-items-center"
-              :class="
-                member.persona === 'secretary' ? 'bg-n-blue-9' : 'bg-n-iris-9'
-              "
+              class="absolute grid text-sm font-semibold text-white -translate-x-1/2 -translate-y-full rounded-full shadow-md pointer-events-none size-8 place-items-center bg-n-iris-9"
               :style="
                 at({
                   x: placeOf(member.persona).x + 16,

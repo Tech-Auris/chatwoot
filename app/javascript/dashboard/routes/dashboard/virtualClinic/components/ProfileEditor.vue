@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useMapGetter, useStore } from 'dashboard/composables/store';
 import { useAlert } from 'dashboard/composables';
+import { useUISettings } from 'dashboard/composables/useUISettings';
 import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
@@ -11,10 +12,13 @@ import { useAvatarArt } from '../composables/useAvatarArt';
 
 // Gather-style "Edit profile" from the clinic: the profile picture, the
 // avatar on the map and the names. It saves the same profile as Settings →
-// Profile.
+// Profile. The avatar editor opens on top and comes back here; the new look
+// is saved with the rest.
 const props = defineProps({
   // The look on the map (`{ sheet }` or the parts), null when never edited.
   avatar: { type: Object, default: null },
+  // A look picked in the avatar editor from here, saved with the profile.
+  newAvatar: { type: Object, default: null },
 });
 const emit = defineEmits(['close', 'editAvatar']);
 
@@ -22,6 +26,7 @@ const { t } = useI18n();
 const store = useStore();
 const currentUser = useMapGetter('getCurrentUser');
 const { thumbnail } = useAvatarArt();
+const { updateUISettings } = useUISettings();
 
 const dialog = ref(null);
 const name = ref(currentUser.value.name || '');
@@ -57,6 +62,9 @@ const save = async () => {
       displayName: displayName.value.trim(),
       avatar: photo.value,
     });
+    if (props.newAvatar) {
+      updateUISettings({ virtual_clinic_avatar: props.newAvatar });
+    }
     useAlert(t('VIRTUAL_CLINIC.PROFILE.SAVED'));
     dialog.value.close();
   } catch {
@@ -66,10 +74,7 @@ const save = async () => {
   }
 };
 
-const editAvatar = () => {
-  emit('editAvatar');
-  dialog.value.close();
-};
+const editAvatar = () => emit('editAvatar');
 
 onMounted(() => dialog.value.open());
 onBeforeUnmount(() => {
