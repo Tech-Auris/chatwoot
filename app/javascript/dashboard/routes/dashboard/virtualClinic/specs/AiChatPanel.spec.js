@@ -11,7 +11,13 @@ vi.mock('vue-i18n', () => ({
   }),
 }));
 vi.mock('dashboard/api/virtualClinic', () => ({
-  default: { getThread: vi.fn(), sendMessage: vi.fn(), resetThread: vi.fn() },
+  default: {
+    getThread: vi.fn(),
+    sendMessage: vi.fn(),
+    resetThread: vi.fn(),
+    getAlerts: vi.fn(),
+    acknowledgeAlerts: vi.fn(),
+  },
 }));
 
 const member = {
@@ -20,9 +26,9 @@ const member = {
   suggestions: ['Quem você está atendendo agora?'],
 };
 
-const mountPanel = () =>
+const mountPanel = (alertCount = 0) =>
   mount(AiChatPanel, {
-    props: { member },
+    props: { member, alertCount },
     global: {
       stubs: { Button: true, Icon: true },
       directives: {
@@ -91,5 +97,40 @@ describe('AiChatPanel', () => {
     await flushPromises();
 
     expect(wrapper.text()).toContain('VIRTUAL_CLINIC.CHAT.DAILY_LIMIT');
+  });
+
+  it('shows what Clara raised her hand for, with the patients, and marks it as seen', async () => {
+    VirtualClinicAPI.getAlerts.mockResolvedValue({
+      data: {
+        alerts: [
+          {
+            id: 7,
+            persona: 'secretary',
+            message: '1 paciente está sem resposta há mais de 30 minutos.',
+            payload: {
+              patients: [
+                { name: 'Maria', conversation_id: 42, waiting_minutes: 51 },
+              ],
+            },
+          },
+          { id: 8, persona: 'manager', message: 'Faltas', payload: {} },
+        ],
+      },
+    });
+    const wrapper = mountPanel(1);
+    await flushPromises();
+
+    expect(wrapper.text()).toContain('1 paciente está sem resposta');
+    expect(wrapper.text()).toContain('"name":"Maria","id":42,"minutes":51');
+    expect(wrapper.text()).not.toContain('Faltas');
+    expect(VirtualClinicAPI.acknowledgeAlerts).toHaveBeenCalledWith(
+      'secretary'
+    );
+  });
+
+  it('does not look for alerts when there are none', async () => {
+    mountPanel();
+    await flushPromises();
+    expect(VirtualClinicAPI.getAlerts).not.toHaveBeenCalled();
   });
 });

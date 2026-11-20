@@ -11,7 +11,8 @@
       "MISSING_OPENAI": "To talk to the AI team, add the clinic's OpenAI key.",
       "CONFIGURE_OPENAI": "Set up OpenAI key",
       "CHAT_SECTION": "AI team",
-      "CHAT_OFF": "Chat off"
+      "CHAT_OFF": "Chat off",
+      "DAILY_SUMMARY": "Good morning from {name}: yesterday in numbers at 8h, in the notifications"
     },
     "RAIL": {
       "MAP": "Clinic",
@@ -24,7 +25,8 @@
         "ONLINE": "Online",
         "BUSY": "Busy",
         "OFFLINE": "Offline"
-      }
+      },
+      "ON_MAP": "In the clinic"
     },
     "CHAT": {
       "NEW": "New conversation",
@@ -37,7 +39,12 @@
       "SUBTITLE": {
         "SECRETARY": "Answers about patients being served and follow-ups",
         "MANAGER": "Answers anything about the clinic, with numbers"
-      }
+      },
+      "ALERT": "❗ {message}",
+      "ALERT_PATIENT": "{name} · conversation #{id} · waiting for {minutes} min",
+      "ALERT_DISCONNECTED": "{name}: disconnected",
+      "ALERT_SILENT": "{name}: no patient messages for {hours} h",
+      "NO_NAME": "No name"
     },
     "SETTINGS": {
       "TITLE": "Virtual clinic",
@@ -69,7 +76,8 @@
       "REPORTS_V2_INBOXES": "inboxes",
       "REPORTS_V2_TEAMS": "teams",
       "AGENTS_LIST": "agents",
-      "TEAMS_LIST": "teams"
+      "TEAMS_LIST": "teams",
+      "PERGUNTAR_SECRETARY": "secretary"
     },
     "STATUS": {
       "IDLE": "No patients right now",
@@ -96,7 +104,39 @@
       "ZOOM_IN": "Zoom in",
       "ZOOM_OUT": "Zoom out",
       "ZOOM_FIT": "Fit to screen",
-      "OFF_DUTY": "⏸ Not serving patients · {reason}"
+      "OFF_DUTY": "⏸ Not serving patients · {reason}",
+      "TALK_TO": "Talk to {name} (E)",
+      "MOVE_HINT": "Walk with the arrow keys or WASD, or click the floor",
+      "ASKING": "💬 Asking {name}…",
+      "RAISED_HAND": "!"
+    },
+    "EDITOR": {
+      "EDIT": "Edit clinic",
+      "TITLE": "Editing the clinic",
+      "HINT": "Drag furniture and the team on the map. R turns the selected piece, Del removes it and Esc clears the selection.",
+      "SAVE": "Save",
+      "DISCARD": "Discard",
+      "RESTORE": "Restore default",
+      "RESTORE_CONFIRM": "Confirm: back to default",
+      "SELECTED": "Selected piece:",
+      "FLIP": "Turn (R)",
+      "REMOVE": "Remove (Del)",
+      "TEAM": "Team",
+      "ROOMS": "Room names",
+      "FLOORS": "Floors",
+      "WALLS": "Walls",
+      "WALL_AREAS": {
+        "0": "Reception and waiting room",
+        "1": "Management",
+        "2": "Kitchen"
+      },
+      "FURNITURE": "Furniture",
+      "FURNITURE_HINT": "Click a piece to put it in its room, then drag it on the map.",
+      "ERRORS": {
+        "ENTRANCE": "The clinic entrance is blocked. Move what is in front of the door.",
+        "UNREACHABLE": "Nobody can reach {name}. Open a way to the desk.",
+        "SAVE": "Could not save the clinic. Try again."
+      }
     }
   }
 }

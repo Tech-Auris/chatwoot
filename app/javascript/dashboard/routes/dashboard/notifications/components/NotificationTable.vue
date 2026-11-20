@@ -49,6 +49,9 @@ export default {
       return notification.notification_type?.startsWith('internal_chat');
     },
     notificationTitle(notification) {
+      if (notification.notification_type === 'virtual_clinic_alert') {
+        return this.$t('INBOX.TYPES_NEXT.VIRTUAL_CLINIC_ALERT');
+      }
       if (this.isInternalChat(notification)) {
         const channel = notification.primary_actor;
         if (channel?.channel_type !== 'dm' && channel?.name) {

@@ -1,0 +1,20 @@
+# What the AI team raised its hand for (VirtualClinic::AlertChecker), for
+# administrators and managers. Opening an alert on the map acknowledges it.
+class Api::V2::Accounts::VirtualClinic::AlertsController < Api::V1::Accounts::BaseController
+  SHOWN = 20
+
+  before_action { authorize :virtual_clinic, :ai_team_visible? }
+
+  def index
+    alerts = Current.account.virtual_clinic_alerts.open.order(created_at: :desc).limit(SHOWN)
+    render json: { alerts: alerts.map(&:push_event_data), counts: ::VirtualClinic::AlertBroadcast.counts(Current.account) }
+  end
+
+  def acknowledge
+    Current.account.virtual_clinic_alerts.open.where(persona: params.require(:persona)).find_each do |alert|
+      alert.update!(acknowledged_at: Time.current)
+    end
+    ::VirtualClinic::AlertBroadcast.new(Current.account).perform
+    head :ok
+  end
+end
