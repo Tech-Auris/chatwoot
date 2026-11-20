@@ -145,8 +145,8 @@ function drawItem(context, image, item) {
 // The outside wall under the clinic, as seen from the garden: gray, with a
 // row of windows (Gather-style).
 const WALL_OUTSIDE = {
-  wall: '#a3adb3',
-  edge: '#868f95',
+  wall: '#8a959b',
+  edge: '#6f797f',
   trim: '#eef1f4',
   frame: '#4a5677',
   glass: '#8fd3f4',
