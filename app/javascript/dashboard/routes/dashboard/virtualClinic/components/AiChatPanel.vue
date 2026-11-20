@@ -9,6 +9,8 @@ import Icon from 'dashboard/components-next/icon/Icon.vue';
 
 const props = defineProps({
   member: { type: Object, required: true },
+  // Open alerts of this teammate: shown on top and acknowledged on open.
+  alertCount: { type: Number, default: 0 },
 });
 const emit = defineEmits(['close', 'thinking']);
 
@@ -16,6 +18,7 @@ const { t, te } = useI18n();
 const { formatMessage } = useMessageFormatter();
 
 const messages = ref([]);
+const alerts = ref([]);
 const draft = ref('');
 const notice = ref('');
 const list = ref(null);
@@ -35,11 +38,21 @@ const scrollToBottom = async () => {
   if (list.value) list.value.scrollTop = list.value.scrollHeight;
 };
 
+// What the teammate raised her hand for, as her latest words, until seen.
+const loadAlerts = async () => {
+  if (!props.alertCount) return;
+  const { data } = await VirtualClinicAPI.getAlerts();
+  alerts.value = data.alerts.filter(alert => alert.persona === persona.value);
+  scrollToBottom();
+  await VirtualClinicAPI.acknowledgeAlerts(persona.value);
+};
+
 const load = async () => {
   notice.value = '';
   const { data } = await VirtualClinicAPI.getThread(persona.value);
   messages.value = data.messages;
   scrollToBottom();
+  loadAlerts();
 };
 watch(persona, load, { immediate: true });
 
@@ -186,6 +199,49 @@ useEmitter('virtualClinicMessageUpdated', data => {
           </p>
         </div>
       </template>
+      <div
+        v-for="alert in alerts"
+        :key="`alert-${alert.id}`"
+        class="self-start max-w-[92%] px-3 py-2 text-sm border rounded-2xl rounded-bl-sm border-n-amber-5 bg-n-amber-2 text-n-amber-12"
+      >
+        <p class="font-medium">
+          {{ t('VIRTUAL_CLINIC.CHAT.ALERT', { message: alert.message }) }}
+        </p>
+        <ul
+          v-if="alert.payload.patients?.length"
+          class="pl-5 mt-1 list-disc text-n-slate-12"
+        >
+          <li
+            v-for="patient in alert.payload.patients"
+            :key="patient.conversation_id"
+          >
+            {{
+              t('VIRTUAL_CLINIC.CHAT.ALERT_PATIENT', {
+                name: patient.name || t('VIRTUAL_CLINIC.CHAT.NO_NAME'),
+                id: patient.conversation_id,
+                minutes: patient.waiting_minutes,
+              })
+            }}
+          </li>
+        </ul>
+        <ul
+          v-if="alert.payload.inboxes?.length"
+          class="pl-5 mt-1 list-disc text-n-slate-12"
+        >
+          <li v-for="inbox in alert.payload.inboxes" :key="inbox.name">
+            {{
+              inbox.reason === 'disconnected'
+                ? t('VIRTUAL_CLINIC.CHAT.ALERT_DISCONNECTED', {
+                    name: inbox.name,
+                  })
+                : t('VIRTUAL_CLINIC.CHAT.ALERT_SILENT', {
+                    name: inbox.name,
+                    hours: inbox.hours,
+                  })
+            }}
+          </li>
+        </ul>
+      </div>
     </div>
 
     <div class="flex flex-wrap gap-1.5 px-4 pb-2">

@@ -27,6 +27,8 @@ const map = ref(null);
 const editor = reactive(useClinicLayout());
 const thinking = ref('');
 const peopleOnMap = ref([]);
+// Open alerts per AI teammate (the "❗"), kept live by the cable.
+const alertCounts = useMapGetter('virtualClinic/getAlertCounts');
 // The manager asking the secretary something (delegation), for the map.
 const consulting = ref(null);
 useEmitter('virtualClinicActivity', data => {
@@ -130,6 +132,7 @@ onMounted(() => {
       :status="status"
       :selected="selectedMember"
       :people-on-map="peopleOnMap"
+      :alert-counts="alertCounts"
       @select-member="selectedMember = $event"
       @edit="startEditing"
     />
@@ -143,6 +146,7 @@ onMounted(() => {
       :layout="editor.layout"
       :editor="editor"
       :consulting="consulting"
+      :alert-counts="alertCounts"
       @select-member="selectedMember = $event"
       @people-on-map="peopleOnMap = $event"
       @layout-changed="reloadLayout"
@@ -151,6 +155,7 @@ onMounted(() => {
       v-if="openMember"
       :key="openMember.persona"
       :member="openMember"
+      :alert-count="alertCounts[openMember.persona] || 0"
       @thinking="thinking = $event"
       @close="closeChat"
     />

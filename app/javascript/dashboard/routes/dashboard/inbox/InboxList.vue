@@ -200,11 +200,26 @@ const openInternalChatChannel = async notificationItem => {
   }
 };
 
+// A Clínica virtual alert opens the clinic with the teammate who raised it.
+const openVirtualClinicAlert = async notificationItem => {
+  await markAndUpdateCount(notificationItem);
+  const persona = notificationItem.primaryActor?.persona;
+  router.push({
+    name: 'virtual_clinic_index',
+    params: { accountId: route.params.accountId },
+    query: persona ? { member: persona } : {},
+  });
+};
+
 const openConversation = async notificationItem => {
   const { notificationType } = notificationItem;
 
   if (notificationType?.startsWith('internal_chat')) {
     openInternalChatChannel(notificationItem);
+    return;
+  }
+  if (notificationType === 'virtual_clinic_alert') {
+    openVirtualClinicAlert(notificationItem);
     return;
   }
 

@@ -47,6 +47,15 @@ export default {
 
       if (!primaryActor) return;
 
+      if (notificationType === 'virtual_clinic_alert') {
+        this.$router.push({
+          name: 'virtual_clinic_index',
+          params: { accountId: this.accountId },
+          query: { member: primaryActor.persona },
+        });
+        return;
+      }
+
       if (notificationType.startsWith('internal_chat')) {
         this.$router.push({
           name:
