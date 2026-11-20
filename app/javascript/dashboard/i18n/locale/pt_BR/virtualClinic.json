@@ -11,8 +11,7 @@
       "MISSING_OPENAI": "Para conversar com a equipe de IA, cadastre a chave da OpenAI da clínica.",
       "CONFIGURE_OPENAI": "Configurar chave OpenAI",
       "CHAT_SECTION": "Equipe de IA",
-      "CHAT_OFF": "Conversa desligada",
-      "DAILY_SUMMARY": "Bom dia da {name}: resumo de ontem às 8h, nas notificações"
+      "CHAT_OFF": "Conversa desligada"
     },
     "RAIL": {
       "MAP": "Clínica",
@@ -185,6 +184,27 @@
       "SAVE": "Salvar",
       "SAVED": "Perfil atualizado.",
       "SAVE_ERROR": "Não foi possível salvar o perfil."
+    },
+    "SUMMARY": {
+      "OPEN": "Resumos da {name}",
+      "TITLE": "Resumos da {name}",
+      "QUESTION": "Gostaria que a {name} envie o resumo para mim:",
+      "PERIODS": {
+        "DAILY": "Diário",
+        "WEEKLY": "Semanal",
+        "MONTHLY": "Mensal"
+      },
+      "WHEN": {
+        "DAILY": "Todo dia, com os números de ontem",
+        "WEEKLY": "Toda segunda-feira, com a semana passada",
+        "MONTHLY": "Todo dia 1º, com o mês passado"
+      },
+      "HOUR": "Horário",
+      "WHERE": "O resumo chega nas suas notificações e na conversa com a {name}. Só você recebe.",
+      "SAVE": "Salvar",
+      "SAVED": "Pronto! Os resumos chegam no horário escolhido.",
+      "TURNED_OFF": "Resumos desligados.",
+      "SAVE_ERROR": "Não foi possível salvar os resumos."
     }
   }
 }

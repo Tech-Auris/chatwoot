@@ -750,6 +750,7 @@ Rails.application.routes.draw do
             get 'assets', to: 'assets#index'
             get 'assets/*path', to: 'assets#show', format: false, as: :asset
             resource :settings, only: [:update]
+            resource :summary, only: %i[show update]
             resources :threads, only: [:show], param: :persona do
               member do
                 post :messages

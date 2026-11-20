@@ -177,4 +177,20 @@ describe('TeamPanel', () => {
 
     expect(wrapper.emitted('selectMember')).toEqual([['manager']]);
   });
+
+  it("opens the manager's summaries from the gear, for whoever manages the team", async () => {
+    const wrapper = mountPanel({
+      visible: true,
+      chat_enabled: true,
+      manages_team: true,
+      members,
+    });
+
+    const gears = wrapper.findAll(
+      'button[title="VIRTUAL_CLINIC.SUMMARY.OPEN"]'
+    );
+    expect(gears).toHaveLength(1);
+    await gears[0].trigger('click');
+    expect(wrapper.emitted('summarySettings')).toHaveLength(1);
+  });
 });

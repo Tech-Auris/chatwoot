@@ -13,6 +13,7 @@ import EditorPanel from './components/EditorPanel.vue';
 import AvatarEditor from './components/AvatarEditor.vue';
 import NewsPanel from './components/NewsPanel.vue';
 import ProfileEditor from './components/ProfileEditor.vue';
+import SummarySettings from './components/SummarySettings.vue';
 import { useHelenaNews } from './composables/useHelenaNews';
 import { FLOORS, sheetForUser } from './engine/layout';
 import { useUISettings } from 'dashboard/composables/useUISettings';
@@ -70,6 +71,14 @@ const { status } = useVirtualClinicStatus(
 // an AI teammate's (from the team panel, or while editing the clinic).
 const avatarFor = ref(null);
 const editingProfile = ref(false);
+// The gear next to the manager: her summaries for this person.
+const summarySettings = ref(false);
+const managerName = computed(
+  () =>
+    editor.layout.team.manager?.name ||
+    aiTeam.value?.members.find(m => m.persona === 'manager')?.name ||
+    ''
+);
 // The look picked from "Editar perfil": saved with the profile, not before.
 const profileAvatar = ref(null);
 const openProfile = () => {
@@ -217,6 +226,7 @@ onMounted(() => {
       @edit="startEditing"
       @edit-avatar="avatarFor = { persona: $event || null }"
       @edit-profile="openProfile"
+      @summary-settings="summarySettings = true"
     />
     <ClinicMap
       ref="map"
@@ -247,6 +257,11 @@ onMounted(() => {
       :member="newsMember"
       :news="shownNews"
       @close="closeChat"
+    />
+    <SummarySettings
+      v-if="summarySettings"
+      :name="managerName"
+      @close="summarySettings = false"
     />
     <ProfileEditor
       v-if="editingProfile"

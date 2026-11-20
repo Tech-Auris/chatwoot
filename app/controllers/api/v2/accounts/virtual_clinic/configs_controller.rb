@@ -13,7 +13,6 @@ class Api::V2::Accounts::VirtualClinic::ConfigsController < Api::V1::Accounts::B
         manages_team: policy.ai_team_manager?,
         daily_question_limit: ::VirtualClinic::QuestionLimit.for(Current.account),
         can_manage_settings: policy.update_settings?,
-        daily_summary: Current.account.settings[::VirtualClinic::Alerts::DailySummary::SETTING] == true,
         can_edit_layout: policy.update_layout?
       }
     }

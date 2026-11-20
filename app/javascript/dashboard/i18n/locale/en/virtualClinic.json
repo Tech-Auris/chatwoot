@@ -11,8 +11,7 @@
       "MISSING_OPENAI": "To talk to the AI team, add the clinic's OpenAI key.",
       "CONFIGURE_OPENAI": "Set up OpenAI key",
       "CHAT_SECTION": "AI team",
-      "CHAT_OFF": "Chat off",
-      "DAILY_SUMMARY": "Good morning from {name}: yesterday in numbers at 8h, in the notifications"
+      "CHAT_OFF": "Chat off"
     },
     "RAIL": {
       "MAP": "Clinic",
@@ -185,6 +184,27 @@
       "SAVE": "Save",
       "SAVED": "Profile updated.",
       "SAVE_ERROR": "Couldn't save the profile."
+    },
+    "SUMMARY": {
+      "OPEN": "{name}'s summaries",
+      "TITLE": "{name}'s summaries",
+      "QUESTION": "I'd like {name} to send me a summary:",
+      "PERIODS": {
+        "DAILY": "Daily",
+        "WEEKLY": "Weekly",
+        "MONTHLY": "Monthly"
+      },
+      "WHEN": {
+        "DAILY": "Every day, with yesterday's numbers",
+        "WEEKLY": "Every Monday, with last week",
+        "MONTHLY": "Every 1st, with last month"
+      },
+      "HOUR": "Time",
+      "WHERE": "The summary arrives in your notifications and in your chat with {name}. Only you get it.",
+      "SAVE": "Save",
+      "SAVED": "Done! The summaries arrive at the time you chose.",
+      "TURNED_OFF": "Summaries turned off.",
+      "SAVE_ERROR": "Couldn't save the summaries."
     }
   }
 }

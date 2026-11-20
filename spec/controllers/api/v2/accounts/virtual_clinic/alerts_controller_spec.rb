@@ -34,10 +34,17 @@ RSpec.describe 'Virtual clinic alerts API', type: :request do
     expect(response).to have_http_status(:unauthorized)
   end
 
-  it "lets the administrator turn on Helena's good morning" do
-    patch "/api/v2/accounts/#{account.id}/virtual_clinic/settings", params: { daily_summary: true }, headers: admin.create_new_auth_token, as: :json
+  it "shows each person's summary to that person only" do
+    other_admin = create(:user, account: account, role: :administrator)
+    account.virtual_clinic_alerts.create!(persona: :manager, rule: 'daily_summary', user: admin,
+                                          payload: { leads: 5, appointments: 2, conversations: 9, follow_ups: 3 })
 
-    expect(response.parsed_body).to include('daily_summary' => true, 'daily_question_limit' => 60)
-    expect(account.reload.settings).to include('virtual_clinic_daily_summary' => true)
+    get url, headers: admin.create_new_auth_token, as: :json
+    expect(response.parsed_body['counts']).to eq('secretary' => 1, 'manager' => 2)
+    expect(response.parsed_body['alerts'].pluck('rule')).to include('daily_summary')
+
+    get url, headers: other_admin.create_new_auth_token, as: :json
+    expect(response.parsed_body['counts']).to eq('secretary' => 1, 'manager' => 1)
+    expect(response.parsed_body['alerts'].pluck('rule')).not_to include('daily_summary')
   end
 end

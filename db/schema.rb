@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_11_20_130000) do
+ActiveRecord::Schema[7.1].define(version: 2026_11_20_140000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -2451,7 +2451,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_20_130000) do
     t.datetime "acknowledged_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "user_id"
     t.index ["account_id", "rule", "created_at"], name: "idx_on_account_id_rule_created_at_3e13cf67c1"
+    t.index ["user_id"], name: "index_virtual_clinic_alerts_on_user_id"
   end
 
   create_table "virtual_clinic_layouts", force: :cascade do |t|
@@ -2477,6 +2479,20 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_20_130000) do
     t.datetime "updated_at", null: false
     t.jsonb "attachments", default: [], null: false
     t.index ["thread_id"], name: "index_virtual_clinic_messages_on_thread_id"
+  end
+
+  create_table "virtual_clinic_summaries", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "user_id", null: false
+    t.boolean "daily", default: false, null: false
+    t.boolean "weekly", default: false, null: false
+    t.boolean "monthly", default: false, null: false
+    t.integer "hour", default: 8, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "user_id"], name: "index_virtual_clinic_summaries_on_account_id_and_user_id", unique: true
+    t.index ["account_id"], name: "index_virtual_clinic_summaries_on_account_id"
+    t.index ["user_id"], name: "index_virtual_clinic_summaries_on_user_id"
   end
 
   create_table "virtual_clinic_threads", force: :cascade do |t|
@@ -2628,9 +2644,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_20_130000) do
   add_foreign_key "tickets", "users", on_delete: :nullify
   add_foreign_key "user_sessions", "users"
   add_foreign_key "virtual_clinic_alerts", "accounts"
+  add_foreign_key "virtual_clinic_alerts", "users", on_delete: :cascade
   add_foreign_key "virtual_clinic_layouts", "accounts"
   add_foreign_key "virtual_clinic_layouts", "users", column: "updated_by_id", on_delete: :nullify
   add_foreign_key "virtual_clinic_messages", "virtual_clinic_threads", column: "thread_id"
+  add_foreign_key "virtual_clinic_summaries", "accounts"
+  add_foreign_key "virtual_clinic_summaries", "users", on_delete: :cascade
   add_foreign_key "virtual_clinic_threads", "accounts"
   add_foreign_key "virtual_clinic_threads", "users"
   add_foreign_key "virtual_clinic_threads", "virtual_clinic_messages", column: "parent_message_id", on_delete: :cascade

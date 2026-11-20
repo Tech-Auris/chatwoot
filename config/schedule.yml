@@ -149,9 +149,9 @@ virtual_clinic_alerts_job:
   class: 'VirtualClinic::AlertsJob'
   queue: scheduled_jobs
 
-# executed daily at 1100 UTC (8h in São Paulo)
-# "Bom dia da Helena": yesterday's numbers for the clinics that turned it on
-virtual_clinic_daily_summary_job:
-  cron: '0 11 * * *'
-  class: 'VirtualClinic::DailySummaryJob'
+# executed every hour
+# Helena's daily, weekly and monthly summaries, at each person's hour
+virtual_clinic_summary_job:
+  cron: '0 * * * *'
+  class: 'VirtualClinic::SummaryJob'
   queue: scheduled_jobs

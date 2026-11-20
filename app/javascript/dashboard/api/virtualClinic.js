@@ -61,6 +61,15 @@ class VirtualClinicAPI extends ApiClient {
   }
 
   // `{ paths }`: every file of the pack the editor can use.
+  // Helena's summaries the user wants: `{ daily, weekly, monthly, hour }`.
+  getSummary() {
+    return axios.get(`${this.url}/summary`);
+  }
+
+  saveSummary(summary) {
+    return axios.put(`${this.url}/summary`, summary);
+  }
+
   listAssets() {
     return axios.get(`${this.url}/assets`);
   }

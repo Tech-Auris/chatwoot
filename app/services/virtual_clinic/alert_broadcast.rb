@@ -6,12 +6,15 @@ class VirtualClinic::AlertBroadcast
     @users = users || account.account_users.where(role: %i[administrator manager]).includes(:user).map(&:user)
   end
 
-  def self.counts(account)
-    VirtualClinicAlert.personas.keys.index_with { 0 }.merge(account.virtual_clinic_alerts.open.group(:persona).count)
+  # Each person counts the team's alerts plus their own (summaries).
+  def self.counts(account, user)
+    VirtualClinicAlert.personas.keys.index_with { 0 }.merge(account.virtual_clinic_alerts.open.seen_by(user).group(:persona).count)
   end
 
   def perform
-    ActionCableBroadcastJob.perform_later(@users.map(&:pubsub_token), 'virtual_clinic.alerts.updated',
-                                          { counts: self.class.counts(@account), account_id: @account.id })
+    @users.each do |user|
+      ActionCableBroadcastJob.perform_later([user.pubsub_token], 'virtual_clinic.alerts.updated',
+                                            { counts: self.class.counts(@account, user), account_id: @account.id })
+    end
   end
 end
