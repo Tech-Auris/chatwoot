@@ -42,8 +42,9 @@ class AccountPrompt < ApplicationRecord
   scope :specific, -> { where("inbox_ids <> '{}'") }
   scope :ordered, -> { order(Arel.sql('cardinality(inbox_ids) > 0'), :id) }
 
-  # Clinic prompts run past the 20k-character default of ApplicationRecord.
-  PROMPT_MAX_LENGTH = 100_000
+  # Clinic prompts run past the 20k-character default of ApplicationRecord; the
+  # longest one imported from Supabase has about 123k characters.
+  PROMPT_MAX_LENGTH = 250_000
 
   validates :name, :ai_prompt_system_message, presence: true
   validates :ai_prompt_system_message, length: { maximum: PROMPT_MAX_LENGTH }
