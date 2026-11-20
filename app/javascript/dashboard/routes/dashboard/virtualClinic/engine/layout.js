@@ -133,6 +133,16 @@ export const CHARACTERS = {
   },
 };
 
+// Where people arrive: in front of the glass door of the recepção.
+export const ENTRANCE = { x: 52, y: 44 };
+
+// The clinic team walks around as LimeZu premade characters, one per user.
+export const PEOPLE_SHEETS = Array.from(
+  { length: 18 },
+  (_, i) => `8_pessoas/pessoa_${String(i + 1).padStart(2, '0')}.png`
+);
+export const sheetForUser = id => PEOPLE_SHEETS[id % PEOPLE_SHEETS.length];
+
 export const ROOMS = [
   { key: 'RECEPTION', x: 8, y: 72 },
   { key: 'WAITING_ROOM', x: 8, y: 328 },

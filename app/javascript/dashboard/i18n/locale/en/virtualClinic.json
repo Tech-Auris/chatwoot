@@ -24,7 +24,8 @@
         "ONLINE": "Online",
         "BUSY": "Busy",
         "OFFLINE": "Offline"
-      }
+      },
+      "ON_MAP": "In the clinic"
     },
     "CHAT": {
       "NEW": "New conversation",
@@ -96,7 +97,9 @@
       "ZOOM_IN": "Zoom in",
       "ZOOM_OUT": "Zoom out",
       "ZOOM_FIT": "Fit to screen",
-      "OFF_DUTY": "⏸ Not serving patients · {reason}"
+      "OFF_DUTY": "⏸ Not serving patients · {reason}",
+      "TALK_TO": "Talk to {name} (E)",
+      "MOVE_HINT": "Walk with the arrow keys or WASD, or click the floor"
     }
   }
 }
