@@ -30,7 +30,7 @@ const mountPanel = (alertCount = 0) =>
   mount(AiChatPanel, {
     props: { member, alertCount },
     global: {
-      stubs: { Button: true, Icon: true },
+      stubs: { Button: true, Icon: true, ChatChart: true },
       directives: {
         dompurifyHtml: (el, binding) => {
           el.innerHTML = binding.value;
@@ -132,5 +132,44 @@ describe('AiChatPanel', () => {
     mountPanel();
     await flushPromises();
     expect(VirtualClinicAPI.getAlerts).not.toHaveBeenCalled();
+  });
+
+  it('shows the tool in use, then the text as it is written, then the chart', async () => {
+    VirtualClinicAPI.getThread.mockResolvedValue({
+      data: {
+        messages: [
+          { id: 1, role: 'user', status: 'done', content: 'Leads por mês?' },
+          { id: 2, role: 'assistant', status: 'pending', content: null },
+        ],
+      },
+    });
+    const wrapper = mountPanel();
+    await flushPromises();
+
+    emitter.emit('virtualClinicMessageActivity', {
+      id: 2,
+      tool: 'funil_resumo',
+    });
+    await flushPromises();
+    expect(wrapper.text()).toContain('VIRTUAL_CLINIC.CHAT.ACTIVITY');
+    expect(wrapper.text()).toContain('"tool":"funil_resumo"');
+
+    emitter.emit('virtualClinicMessageDelta', { id: 2, content: 'Em outubro' });
+    await flushPromises();
+    expect(wrapper.text()).toContain('Em outubro');
+    expect(wrapper.text()).not.toContain('VIRTUAL_CLINIC.CHAT.ACTIVITY');
+
+    emitter.emit('virtualClinicMessageUpdated', {
+      id: 2,
+      role: 'assistant',
+      status: 'done',
+      content: 'Em outubro foram 40 leads.',
+      attachments: [
+        { type: 'bar', title: 'Leads', labels: ['out'], series: [] },
+      ],
+    });
+    await flushPromises();
+    expect(wrapper.findAllComponents({ name: 'ChatChart' })).toHaveLength(1);
+    expect(wrapper.text()).toContain('Em outubro foram 40 leads.');
   });
 });

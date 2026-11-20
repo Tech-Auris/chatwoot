@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_11_20_120000) do
+ActiveRecord::Schema[7.1].define(version: 2026_11_20_130000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -2475,6 +2475,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_20_120000) do
     t.integer "output_tokens"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.jsonb "attachments", default: [], null: false
     t.index ["thread_id"], name: "index_virtual_clinic_messages_on_thread_id"
   end
 

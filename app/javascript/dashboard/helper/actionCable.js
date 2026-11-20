@@ -52,6 +52,8 @@ class ActionCableConnector extends BaseActionCableConnector {
         this.onRecurringScheduledMessageDeleted,
       'virtual_clinic.message.updated': this.onVirtualClinicMessageUpdated,
       'virtual_clinic.activity': this.onVirtualClinicActivity,
+      'virtual_clinic.message.delta': this.onVirtualClinicMessageDelta,
+      'virtual_clinic.message.activity': this.onVirtualClinicMessageActivity,
       'virtual_clinic.alerts.updated': this.onVirtualClinicAlertsUpdated,
       'internal_chat.channel.updated': this.onInternalChatChannelUpdated,
       'internal_chat.message.created': this.onInternalChatMessageCreated,
@@ -379,6 +381,17 @@ class ActionCableConnector extends BaseActionCableConnector {
   // eslint-disable-next-line class-methods-use-this
   onVirtualClinicActivity = data => {
     emitter.emit('virtualClinicActivity', data);
+  };
+
+  // The text an AI teammate wrote so far, and the tool she is using now.
+  // eslint-disable-next-line class-methods-use-this
+  onVirtualClinicMessageDelta = data => {
+    emitter.emit('virtualClinicMessageDelta', data);
+  };
+
+  // eslint-disable-next-line class-methods-use-this
+  onVirtualClinicMessageActivity = data => {
+    emitter.emit('virtualClinicMessageActivity', data);
   };
 
   onVirtualClinicAlertsUpdated = data => {
