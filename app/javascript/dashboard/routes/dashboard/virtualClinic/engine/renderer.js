@@ -1,6 +1,8 @@
 import {
+  BACK_DOOR,
   DEFAULT_LAYOUT,
   FACADE,
+  PLAZA,
   GARDEN_ITEMS,
   PARTITION,
   SCENE,
@@ -140,16 +142,21 @@ function drawItem(context, image, item) {
 // The outside wall under the clinic, as seen from the garden: gray, with a
 // row of windows (Gather-style).
 const WALL_OUTSIDE = {
-  wall: '#6b7a7b',
-  edge: '#4f5a5b',
-  frame: '#2b3148',
+  wall: '#a3adb3',
+  edge: '#868f95',
+  trim: '#eef1f4',
+  frame: '#4a5677',
   glass: '#8fd3f4',
+  door: '#efdcc4',
+  brick: '#e3cba9',
 };
-const WINDOW = { width: 72, height: 40, every: 160, top: 12 };
+const WINDOW = { width: 72, height: 40, every: 160, top: 14 };
 function drawFacade(context) {
   const top = WORLD.height;
   context.fillStyle = WALL_OUTSIDE.wall;
   context.fillRect(0, top, WORLD.width, FACADE);
+  context.fillStyle = WALL_OUTSIDE.trim;
+  context.fillRect(0, top, WORLD.width, 4);
   context.fillStyle = WALL_OUTSIDE.edge;
   context.fillRect(0, top + FACADE - 4, WORLD.width, 4);
   for (let x = 44; x + WINDOW.width < WORLD.width; x += WINDOW.every) {
@@ -169,6 +176,23 @@ function drawFacade(context) {
       )
     );
   }
+  // The copa door: an opening in the wall, light bricks inside.
+  context.fillStyle = WALL_OUTSIDE.door;
+  context.fillRect(BACK_DOOR.x, top - 4, BACK_DOOR.width, FACADE + 4);
+  context.fillStyle = WALL_OUTSIDE.brick;
+  for (let y = top + 6; y < top + FACADE; y += 12) {
+    context.fillRect(BACK_DOOR.x, y, BACK_DOOR.width, 2);
+  }
+}
+
+// The garden square: a lighter lawn with a border.
+const SQUARE = { lawn: '#cfe5c7', border: '#b7d8ad' };
+function drawPlaza(context) {
+  context.fillStyle = SQUARE.lawn;
+  context.fillRect(PLAZA.x, PLAZA.y, PLAZA.w, PLAZA.h);
+  context.strokeStyle = SQUARE.border;
+  context.lineWidth = 4;
+  context.strokeRect(PLAZA.x + 2, PLAZA.y + 2, PLAZA.w - 4, PLAZA.h - 4);
 }
 
 // The zoomed-out view, Gather-style: the clinic as a plan (rooms in soft
@@ -190,7 +214,7 @@ function drawPlan(context, layout, items) {
   );
   items.forEach(item => {
     const { width, height } = item.image;
-    if (item.sprite.startsWith('10_jardim/')) {
+    if (/(arvore|cipreste)/.test(item.sprite)) {
       context.fillStyle = PLAN.tree;
       context.beginPath();
       context.arc(
@@ -244,6 +268,7 @@ export function createRenderer(canvas, sprites, layout = DEFAULT_LAYOUT) {
     context.setTransform(1, 0, 0, 1, -SCENE.x, -SCENE.y);
     context.fillStyle = GRASS;
     context.fillRect(SCENE.x, SCENE.y, SCENE.width, SCENE.height);
+    drawPlaza(context);
     if (plan) {
       drawPlan(context, layout, items);
       return;

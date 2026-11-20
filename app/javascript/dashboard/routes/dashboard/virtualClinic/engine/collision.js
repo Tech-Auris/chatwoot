@@ -1,4 +1,5 @@
 import {
+  BACK_DOOR,
   DOOR,
   FACADE,
   GARDEN_ITEMS,
@@ -59,7 +60,8 @@ export function footprint(item, size) {
 }
 
 // `sizes[sprite]` is `{ width, height }` of each piece as drawn (cropped).
-export function buildCollision(sizes, items = ITEMS) {
+// `garden`: the garden pieces (all of them, or without the seats).
+export function buildCollision(sizes, items = ITEMS, garden = GARDEN_ITEMS) {
   const grid = new Uint8Array(COLUMNS * ROWS);
   WALLS.forEach(wall =>
     blockRect(grid, wall.x, wall.y, wall.x + wall.w, wall.y + WALL_HEIGHT)
@@ -81,10 +83,23 @@ export function buildCollision(sizes, items = ITEMS) {
   blockRect(grid, WORLD.width - 4, 0, WORLD.width, WORLD.height);
   fillRect(grid, DOOR.x, -CELL, DOOR.x + DOOR.width, WALL_HEIGHT, 0);
   blockRect(grid, 0, WORLD.height, WORLD.width, WORLD.height + FACADE);
-  // Garden trees and bushes block at their trunk / base only.
-  GARDEN_ITEMS.forEach(item => {
+  fillRect(
+    grid,
+    BACK_DOOR.x,
+    WORLD.height - CELL,
+    BACK_DOOR.x + BACK_DOOR.width,
+    WORLD.height + FACADE,
+    0
+  );
+  // Trees block at their trunk only; the rest of the garden at its base.
+  garden.forEach(item => {
     const size = sizes[item.sprite];
     if (!size) return;
+    if (!/(arvore|cipreste)/.test(item.sprite)) {
+      const base = footprint(item, size);
+      if (base) blockRect(grid, base.left, base.top, base.right, base.bottom);
+      return;
+    }
     const middle = item.x + size.width / 2;
     const bottom = item.y + size.height;
     blockRect(grid, middle - 12, bottom - 16, middle + 12, bottom);

@@ -10,6 +10,7 @@ import {
   DEFAULT_LAYOUT,
   ENTRANCE,
   GARDEN,
+  GARDEN_ITEMS,
   SCENE,
   TILE,
   WORLD,
@@ -309,10 +310,14 @@ const rebuild = async () => {
     await rebuild();
     return;
   }
-  const sizes = sizesOf(layout.items);
+  const sizes = sizesOf([...GARDEN_ITEMS, ...layout.items]);
   grid = buildCollision(sizes, layout.items);
-  seats = seatsOf(layout.items, sizes, layout.team);
-  walkGrid = buildCollision(sizes, withoutSeats(layout.items, seats));
+  seats = seatsOf([...GARDEN_ITEMS, ...layout.items], sizes, layout.team);
+  walkGrid = buildCollision(
+    sizes,
+    withoutSeats(layout.items, seats),
+    withoutSeats(GARDEN_ITEMS, seats)
+  );
   draw = createRenderer(canvas.value, sprites, layout);
   restartBehavior();
   render();

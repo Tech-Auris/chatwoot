@@ -11,16 +11,22 @@ export const WORLD = { width: 30 * TILE, height: 20 * TILE };
 // is the clinic plus a margin of grass. Clinic coordinates stay as they
 // are (the garden is at negative coordinates and beyond the clinic size);
 // the glass door of the recepção is the way in and out.
-export const GARDEN = 5 * TILE;
+export const GARDEN = 8 * TILE;
+// Below the clinic there's room for the garden square (fountain, benches).
+const GARDEN_BOTTOM = 20 * TILE;
 export const SCENE = {
   x: -GARDEN,
   y: -GARDEN,
   width: WORLD.width + 2 * GARDEN,
-  height: WORLD.height + 2 * GARDEN,
+  height: WORLD.height + GARDEN + GARDEN_BOTTOM,
 };
 export const DOOR = { x: 48, width: 48 };
-// The outside wall under the clinic (seen from the garden, with windows).
+// The outside wall under the clinic (seen from the garden, with windows),
+// with a door from the copa to the garden.
 export const FACADE = 2 * TILE;
+export const BACK_DOOR = { x: 776, width: 48 };
+// The garden square, centered under the clinic.
+export const PLAZA = { x: 272, y: 760, w: 416, h: 320 };
 
 const R = '1_recepcao/';
 const E = '2_sala_de_espera/';
@@ -139,35 +145,69 @@ export const ITEMS = [
 const J = '10_jardim/';
 export const GARDEN_ITEMS = [
   // Above the clinic, leaving the way to the door free.
-  { sprite: `${J}arvore_copa.png`, x: -150, y: -140 },
+  { sprite: `${J}arvore_carvalho.png`, x: -230, y: -240 },
   { sprite: `${J}canteiro_flores_3.png`, x: -40, y: -44 },
   { sprite: `${J}canteiro_flores_1.png`, x: 128, y: -44 },
-  { sprite: `${J}arvore_redonda.png`, x: 220, y: -126 },
-  { sprite: `${J}cipreste.png`, x: 330, y: -138 },
-  { sprite: `${J}arvore_grande.png`, x: 450, y: -132 },
+  { sprite: `${J}pinheiro.png`, x: 150, y: -200 },
+  { sprite: `${J}arvore_redonda.png`, x: 240, y: -150 },
+  { sprite: `${J}arvore_frondosa.png`, x: 330, y: -230 },
+  { sprite: `${J}cipreste.png`, x: 500, y: -140 },
+  { sprite: `${J}arvore_grande.png`, x: 600, y: -200 },
   { sprite: `${J}arbusto_pequeno.png`, x: 580, y: -46 },
-  { sprite: `${J}arvore_copa.png`, x: 690, y: -112 },
-  { sprite: `${J}cipreste_2.png`, x: 820, y: -138 },
-  { sprite: `${J}arvore_redonda_2.png`, x: 1020, y: -128 },
+  { sprite: `${J}arvore_larga.png`, x: 720, y: -120 },
+  { sprite: `${J}pinheiro.png`, x: 900, y: -230 },
+  { sprite: `${J}arvore_carvalho.png`, x: 1000, y: -250 },
+  { sprite: `${J}arvore_redonda_2.png`, x: 1110, y: -110 },
   // Left.
-  { sprite: `${J}arvore_grande_2.png`, x: -146, y: 40 },
-  { sprite: `${J}arbusto.png`, x: -60, y: 230 },
-  { sprite: `${J}cipreste.png`, x: -140, y: 300 },
-  { sprite: `${J}arvore_redonda.png`, x: -132, y: 480 },
+  { sprite: `${J}arvore_grande_2.png`, x: -200, y: 20 },
+  { sprite: `${J}pinheiro.png`, x: -90, y: 120 },
+  { sprite: `${J}arvore_frondosa.png`, x: -250, y: 230 },
+  { sprite: `${J}arbusto.png`, x: -60, y: 300 },
+  { sprite: `${J}cipreste.png`, x: -150, y: 400 },
+  { sprite: `${J}arvore_carvalho.png`, x: -240, y: 500 },
+  { sprite: `${J}arvore_redonda.png`, x: -110, y: 600 },
   // Right.
-  { sprite: `${J}arvore_copa.png`, x: 1010, y: 50 },
-  { sprite: `${J}cipreste_2.png`, x: 1040, y: 240 },
-  { sprite: `${J}arvore_grande.png`, x: 1000, y: 400 },
-  { sprite: `${J}arbusto_pequeno.png`, x: 990, y: 600 },
-  // Below, in front of the outside wall.
-  { sprite: `${J}arvore_grande_2.png`, x: -150, y: 681 },
-  { sprite: `${J}arvore_redonda_2.png`, x: 70, y: 705 },
-  { sprite: `${J}canteiro_flores_5.png`, x: 250, y: 760 },
-  { sprite: `${J}arvore_grande.png`, x: 420, y: 687 },
-  { sprite: `${J}cerca_viva.png`, x: 600, y: 760 },
-  { sprite: `${J}arvore_redonda.png`, x: 760, y: 709 },
-  { sprite: `${J}cipreste.png`, x: 900, y: 689 },
-  { sprite: `${J}arvore_copa.png`, x: 1040, y: 713 },
+  { sprite: `${J}arvore_copa.png`, x: 1000, y: 40 },
+  { sprite: `${J}arvore_frondosa.png`, x: 1070, y: 150 },
+  { sprite: `${J}cipreste_2.png`, x: 990, y: 280 },
+  { sprite: `${J}arvore_carvalho.png`, x: 1050, y: 330 },
+  { sprite: `${J}pinheiro.png`, x: 990, y: 470 },
+  { sprite: `${J}arvore_grande.png`, x: 1110, y: 560 },
+  { sprite: `${J}arbusto_pequeno.png`, x: 980, y: 640 },
+  // By the copa door, along the outside wall.
+  { sprite: `${J}arbusto_pequeno.png`, x: 704, y: 708 },
+  { sprite: `${J}arbusto_pequeno.png`, x: 736, y: 712 },
+  { sprite: `${J}arbusto_pequeno.png`, x: 832, y: 712 },
+  { sprite: `${J}arbusto_pequeno.png`, x: 864, y: 708 },
+  // The garden square: the fountain, benches and lounge chairs around it.
+  { sprite: `${J}fonte.png`, x: 416, y: 852 },
+  { sprite: `${J}banco_frente.png`, x: 438, y: 780 },
+  { sprite: `${J}espreguicadeira.png`, x: 340, y: 772 },
+  { sprite: `${J}espreguicadeira.png`, x: 584, y: 772 },
+  { sprite: `${J}banco_lado.png`, x: 300, y: 862, flip: true },
+  { sprite: `${J}banco_lado.png`, x: 628, y: 862 },
+  { sprite: `${J}banco_sem_encosto.png`, x: 358, y: 1026 },
+  { sprite: `${J}banco_sem_encosto.png`, x: 538, y: 1026 },
+  { sprite: `${J}capim.png`, x: 282, y: 774 },
+  { sprite: `${J}capim.png`, x: 650, y: 774 },
+  { sprite: `${J}arbusto_pequeno.png`, x: 284, y: 1040 },
+  { sprite: `${J}arbusto_pequeno.png`, x: 644, y: 1040 },
+  // Below, around the square.
+  { sprite: `${J}arvore_grande_2.png`, x: -200, y: 740 },
+  { sprite: `${J}arvore_redonda_2.png`, x: 40, y: 800 },
+  { sprite: `${J}arvore_carvalho.png`, x: -60, y: 900 },
+  { sprite: `${J}cipreste.png`, x: 170, y: 980 },
+  { sprite: `${J}pinheiro.png`, x: -220, y: 1080 },
+  { sprite: `${J}arvore_frondosa.png`, x: 60, y: 1130 },
+  { sprite: `${J}arvore_redonda.png`, x: 900, y: 790 },
+  { sprite: `${J}arvore_grande.png`, x: 730, y: 900 },
+  { sprite: `${J}arvore_larga.png`, x: 930, y: 960 },
+  { sprite: `${J}cipreste_2.png`, x: 1130, y: 900 },
+  { sprite: `${J}arvore_carvalho.png`, x: 760, y: 1060 },
+  { sprite: `${J}arvore_copa.png`, x: 1100, y: 1150 },
+  { sprite: `${J}canteiro_flores_5.png`, x: 436, y: 1120 },
+  { sprite: `${J}pinheiro.png`, x: 300, y: 1150 },
+  { sprite: `${J}arbusto.png`, x: 600, y: 1150 },
 ];
 
 // Where each AI teammate sits (top-left of the 32×64 frame) and their
