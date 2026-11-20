@@ -2,12 +2,13 @@ import store from 'dashboard/store';
 import { frontendURL } from 'dashboard/helper/URLHelper';
 import VirtualClinicIndex from './Index.vue';
 
-// Released per account from Super Admin → Auris menus. Any other value than
-// `true` sends the user back home, like the sidebar hides the item.
+// Released per account from Super Admin → Auris menus: a loaded account
+// without it goes back home, like the sidebar hides the item. On a page
+// reload the account is not loaded yet, so the API (403) is the gate then.
 const guardRelease = (to, from, next) => {
   const accountId = Number(to.params.accountId);
   const account = store.getters['accounts/getAccount'](accountId);
-  if (account?.virtual_clinic_enabled !== true) {
+  if (account?.id && account.virtual_clinic_enabled !== true) {
     next({ name: 'home', params: { accountId } });
     return;
   }

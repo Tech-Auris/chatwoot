@@ -356,6 +356,7 @@ en:
       sla_missed_resolution: 'SLA target resolution missed for conversation (#%{display_id})'
       internal_chat_mention: 'You have been mentioned in %{name}'
       internal_chat_new_message: 'New message from %{name}'
+      virtual_clinic_alert: '%{name} needs you in the Virtual clinic'
     attachment: 'Attachment'
     no_content: 'No content'
   activity_logs:
@@ -985,6 +986,28 @@ en:
         body_html: Your account has been locked due to an excessive number of unsuccessful sign in attempts.
         action_prompt_html: "Click the link below to unlock your account:"
         unlock_account: Unlock my account
+  virtual_clinic:
+    layout:
+      errors:
+        invalid: 'The clinic layout is not in the expected format.'
+        unknown_art: 'This art is not available: %{path}.'
+        too_many_items: 'The clinic can have at most %{max} pieces of furniture.'
+        item_outside: 'A piece of furniture is outside the clinic: %{path}.'
+        team_outside: '%{persona} must be inside the clinic.'
+        name_length: 'Names must have between 1 and %{max} characters.'
+    alerts:
+      waiting_patients:
+        one: '1 patient has had no answer for more than %{minutes} minutes.'
+        other: '%{count} patients have had no answer for more than %{minutes} minutes.'
+      silent_inboxes:
+        one: 'An inbox stopped getting messages: %{names}.'
+        other: '%{count} inboxes stopped getting messages: %{names}.'
+      failed_follow_ups:
+        one: '1 follow-up failed to go out today.'
+        other: '%{count} follow-ups failed to go out today.'
+      conversion_drop: 'The conversion of the last 7 days dropped to %{rate}%%, against a %{average}%% average in the 4 weeks before.'
+      no_show_rate: 'The no-show rate of the last 7 days is %{rate}%% (%{no_shows} of %{total} appointments).'
+      daily_summary: 'Good morning! Yesterday: %{leads} leads, %{appointments} appointments, %{conversations} new conversations and %{follow_ups} follow-ups sent.'
   super_admin:
     push_diagnostics:
       user_not_found: 'User not found.'

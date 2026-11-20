@@ -40,11 +40,14 @@ const mountPanel = (aiTeam, status = null) =>
     global: { stubs: { 'router-link': { template: '<a><slot /></a>' } } },
   });
 
+// The buttons of the list, after the "edit your avatar" one of the header.
+const rows = wrapper => wrapper.findAll('button').slice(1);
+
 describe('TeamPanel', () => {
   it('lets the user pick a member when the AI team is on', async () => {
     const wrapper = mountPanel({ visible: true, chat_enabled: true, members });
 
-    await wrapper.findAll('button')[1].trigger('click');
+    await rows(wrapper)[1].trigger('click');
 
     expect(wrapper.emitted('selectMember')).toEqual([['manager']]);
   });
@@ -70,6 +73,7 @@ describe('TeamPanel', () => {
         visible: true,
         chat_enabled: false,
         chat_missing: 'openai_key',
+        manages_team: true,
         members,
       },
       {
@@ -79,7 +83,7 @@ describe('TeamPanel', () => {
         },
       }
     );
-    const clara = wrapper.findAll('button')[0];
+    const clara = rows(wrapper)[0];
 
     expect(clara.text()).toContain('VIRTUAL_CLINIC.STATUS.SECRETARY');
     expect(clara.text()).toContain('VIRTUAL_CLINIC.AI_TEAM.CHAT_OFF');
@@ -102,11 +106,9 @@ describe('TeamPanel', () => {
       }
     );
 
-    expect(wrapper.findAll('button')[0].classes()).toContain('opacity-50');
-    expect(wrapper.findAll('button')[0].text()).toContain(
-      'VIRTUAL_CLINIC.STATUS.OFF_DUTY'
-    );
-    expect(wrapper.findAll('button')[1].classes()).not.toContain('opacity-50');
+    expect(rows(wrapper)[0].classes()).toContain('opacity-50');
+    expect(rows(wrapper)[0].text()).toContain('VIRTUAL_CLINIC.STATUS.OFF_DUTY');
+    expect(rows(wrapper)[1].classes()).not.toContain('opacity-50');
   });
 
   it('points to the OpenAI key when it is missing and blocks selection', async () => {
@@ -117,7 +119,7 @@ describe('TeamPanel', () => {
       members,
     });
 
-    await wrapper.findAll('button')[0].trigger('click');
+    await rows(wrapper)[0].trigger('click');
 
     expect(wrapper.text()).toContain('VIRTUAL_CLINIC.AI_TEAM.CONFIGURE_OPENAI');
     expect(wrapper.emitted('selectMember')).toBeUndefined();
@@ -133,24 +135,46 @@ describe('TeamPanel', () => {
     expect(wrapper.text()).not.toContain('VIRTUAL_CLINIC.AI_TEAM.TITLE');
   });
 
-  it('lists the user first, then online people, and opens a DM on click', async () => {
+  it('opens the profile editor from the header', async () => {
     const wrapper = mountPanel({ visible: false, members: [] });
-    const names = wrapper.findAll('button').map(b => b.text());
 
-    expect(names[0]).toContain('Dra. Paula');
-    expect(names[1]).toContain('Marcos Silva');
-    expect(names.join()).not.toContain('IA | Auris');
+    await wrapper.findAll('button')[0].trigger('click');
 
-    await wrapper.findAll('button')[1].trigger('click');
-    await Promise.resolve();
+    expect(wrapper.emitted('editProfile')).toHaveLength(1);
+  });
 
-    expect(dispatch).toHaveBeenCalledWith('internalChat/create', {
-      channel: { channel_type: 'dm' },
-      member_ids: [2],
+  it('lets whoever edits the clinic change the look of each AI teammate', async () => {
+    const wrapper = mountPanel({
+      visible: true,
+      chat_enabled: true,
+      can_edit_layout: true,
+      members,
     });
-    expect(push).toHaveBeenCalledWith({
-      name: 'internal_chat_dm',
-      params: { accountId: '1', channelId: 77 },
-    });
+
+    await wrapper
+      .findAll('button[title="VIRTUAL_CLINIC.AVATAR.EDIT"]')[1]
+      .trigger('click');
+
+    expect(wrapper.emitted('editAvatar')).toEqual([['manager']]);
+  });
+
+  it('shows agents the team without the manager numbers or the chat-off hint', () => {
+    const wrapper = mountPanel(
+      { visible: true, chat_enabled: false, manages_team: false, members },
+      { secretary: { on_duty: true, active_conversations: 3, in_follow_up: 1 } }
+    );
+
+    expect(wrapper.text()).toContain('VIRTUAL_CLINIC.STATUS.SECRETARY');
+    expect(wrapper.text()).not.toContain('VIRTUAL_CLINIC.STATUS.MANAGER');
+    expect(wrapper.text()).not.toContain('VIRTUAL_CLINIC.AI_TEAM.CHAT_OFF');
+  });
+
+  it('opens the manager without the chat, for her news', async () => {
+    const wrapper = mountPanel({ visible: true, chat_enabled: false, members });
+
+    await rows(wrapper)[0].trigger('click');
+    await rows(wrapper)[1].trigger('click');
+
+    expect(wrapper.emitted('selectMember')).toEqual([['manager']]);
   });
 });

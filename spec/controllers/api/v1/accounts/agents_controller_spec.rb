@@ -29,6 +29,13 @@ RSpec.describe 'Agents API', type: :request do
         expect(response.parsed_body.size).to eq(account.users.count)
       end
 
+      it 'tells when each agent joined the account' do
+        get "/api/v1/accounts/#{account.id}/agents", headers: agent.create_new_auth_token, as: :json
+
+        joined = response.parsed_body.find { |item| item['id'] == agent.id }['joined_at']
+        expect(joined).to eq(agent.account_users.find_by(account: account).created_at.to_i)
+      end
+
       it 'returns custom fields on agents if present' do
         agent.update!(custom_attributes: { test: 'test' })
 

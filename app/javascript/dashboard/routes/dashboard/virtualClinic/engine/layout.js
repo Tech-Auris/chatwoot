@@ -1,9 +1,32 @@
+import { lookSheet } from './avatar';
+
 // The Clínica virtual (MVP: the same clinic for every account), from the
 // approved draft: a 30×20 grid of 32 px tiles. Coordinates are world
 // pixels; item positions are the top-left of the sprite cropped to its
 // outline. Art comes from the LimeZu pack, served by the API (never in git).
 export const TILE = 32;
 export const WORLD = { width: 30 * TILE, height: 20 * TILE };
+
+// Around the clinic, a garden people can walk in, Gather-style: the scene
+// is the clinic plus a margin of grass. Clinic coordinates stay as they
+// are (the garden is at negative coordinates and beyond the clinic size);
+// the glass door of the recepção is the way in and out.
+export const GARDEN = 8 * TILE;
+// Below the clinic there's room for the garden square (fountain, benches).
+const GARDEN_BOTTOM = 16 * TILE;
+export const SCENE = {
+  x: -GARDEN,
+  y: -GARDEN,
+  width: WORLD.width + 2 * GARDEN,
+  height: WORLD.height + GARDEN + GARDEN_BOTTOM,
+};
+export const DOOR = { x: 48, width: 48 };
+// The outside wall under the clinic (seen from the garden, with windows),
+// with a door from the copa to the garden.
+export const FACADE = 2 * TILE;
+export const BACK_DOOR = { x: 776, width: 48 };
+// The garden square, centered under the clinic.
+export const PLAZA = { x: 324, y: 752, w: 312, h: 240 };
 
 const R = '1_recepcao/';
 const E = '2_sala_de_espera/';
@@ -109,7 +132,7 @@ export const ITEMS = [
   { sprite: `${C}cafeteira_bancada.png`, x: 760, y: 360 },
   { sprite: `${C}maquina_cafe.png`, x: 816, y: 340 },
   { sprite: `${C}bebedouro.png`, x: 870, y: 355 },
-  { sprite: `${C}cadeira_frente.png`, x: 788, y: 445 },
+  { sprite: `${C}cadeira_frente.png`, x: 788, y: 437 },
   { sprite: `${C}mesa_redonda.png`, x: 772, y: 470 },
   // Side chairs face the table: the left one is mirrored.
   { sprite: `${C}cadeira_lado.png`, x: 748, y: 492, flip: true },
@@ -118,8 +141,80 @@ export const ITEMS = [
   { sprite: `${C}lixeira.png`, x: 920, y: 592 },
 ];
 
+// The garden around the clinic (fixed, not part of the editor). `scale`
+// draws the same tree bigger or smaller.
+const J = '10_jardim/';
+export const GARDEN_ITEMS = [
+  // Above the clinic, leaving the way to the door free.
+  { sprite: `${J}arvore_carvalho.png`, x: -230, y: -240 },
+  { sprite: `${J}canteiro_flores_3.png`, x: -40, y: -44 },
+  { sprite: `${J}canteiro_flores_1.png`, x: 128, y: -44 },
+  { sprite: `${J}pinheiro.png`, x: 150, y: -220, scale: 1.3 },
+  { sprite: `${J}arvore_redonda.png`, x: 240, y: -150, scale: 0.8 },
+  { sprite: `${J}arvore_frondosa.png`, x: 330, y: -230 },
+  { sprite: `${J}cipreste.png`, x: 500, y: -160, scale: 1.2 },
+  { sprite: `${J}arvore_grande.png`, x: 600, y: -200 },
+  { sprite: `${J}arbusto_pequeno.png`, x: 580, y: -46 },
+  { sprite: `${J}arvore_larga.png`, x: 720, y: -120 },
+  { sprite: `${J}pinheiro.png`, x: 900, y: -230, scale: 0.8 },
+  { sprite: `${J}arvore_carvalho.png`, x: 1000, y: -200, scale: 0.8 },
+  { sprite: `${J}arvore_redonda_2.png`, x: 1110, y: -110 },
+  // Left.
+  { sprite: `${J}arvore_grande_2.png`, x: -200, y: 0, scale: 1.3 },
+  { sprite: `${J}pinheiro.png`, x: -90, y: 140, scale: 0.75 },
+  { sprite: `${J}arvore_frondosa.png`, x: -250, y: 230, scale: 0.8 },
+  { sprite: `${J}arbusto.png`, x: -60, y: 300 },
+  { sprite: `${J}cipreste.png`, x: -150, y: 400 },
+  { sprite: `${J}arvore_carvalho.png`, x: -240, y: 500, scale: 1.2 },
+  { sprite: `${J}arvore_redonda.png`, x: -80, y: 640, scale: 0.7 },
+  // Right.
+  { sprite: `${J}arvore_copa.png`, x: 1000, y: 30, scale: 1.3 },
+  { sprite: `${J}arvore_frondosa.png`, x: 1070, y: 150, scale: 0.8 },
+  { sprite: `${J}cipreste_2.png`, x: 990, y: 280, scale: 0.8 },
+  { sprite: `${J}arvore_carvalho.png`, x: 1050, y: 330 },
+  { sprite: `${J}pinheiro.png`, x: 990, y: 470, scale: 1.2 },
+  { sprite: `${J}arvore_grande.png`, x: 1110, y: 570, scale: 0.8 },
+  { sprite: `${J}arbusto_pequeno.png`, x: 980, y: 640 },
+  // By the copa door, along the outside wall.
+  { sprite: `${J}arbusto_pequeno.png`, x: 704, y: 708 },
+  { sprite: `${J}arbusto_pequeno.png`, x: 736, y: 712 },
+  { sprite: `${J}arbusto_pequeno.png`, x: 832, y: 712 },
+  { sprite: `${J}arbusto_pequeno.png`, x: 864, y: 708 },
+  // The garden square: the fountain, benches and lounge chairs around it.
+  { sprite: `${J}fonte.png`, x: 448, y: 842 },
+  { sprite: `${J}banco_frente.png`, x: 438, y: 764 },
+  { sprite: `${J}espreguicadeira.png`, x: 364, y: 758 },
+  { sprite: `${J}espreguicadeira.png`, x: 560, y: 758 },
+  { sprite: `${J}banco_lado.png`, x: 340, y: 826, flip: true },
+  { sprite: `${J}banco_lado.png`, x: 588, y: 826 },
+  { sprite: `${J}banco_sem_encosto.png`, x: 382, y: 950 },
+  { sprite: `${J}banco_sem_encosto.png`, x: 514, y: 950 },
+  { sprite: `${J}capim.png`, x: 332, y: 764 },
+  { sprite: `${J}capim.png`, x: 600, y: 764 },
+  { sprite: `${J}arbusto_pequeno.png`, x: 334, y: 958 },
+  { sprite: `${J}arbusto_pequeno.png`, x: 594, y: 958 },
+  // Below, around the square.
+  { sprite: `${J}arvore_grande_2.png`, x: -200, y: 720, scale: 0.9 },
+  { sprite: `${J}arvore_redonda_2.png`, x: 60, y: 760 },
+  { sprite: `${J}arvore_carvalho.png`, x: -40, y: 880 },
+  { sprite: `${J}cipreste.png`, x: 200, y: 900, scale: 0.8 },
+  { sprite: `${J}pinheiro.png`, x: -220, y: 1000, scale: 1.3 },
+  { sprite: `${J}arvore_frondosa.png`, x: 150, y: 1040, scale: 0.8 },
+  { sprite: `${J}arvore_redonda.png`, x: 930, y: 760, scale: 0.8 },
+  { sprite: `${J}arvore_grande.png`, x: 700, y: 820, scale: 1.2 },
+  { sprite: `${J}arvore_larga.png`, x: 880, y: 900 },
+  { sprite: `${J}cipreste_2.png`, x: 1120, y: 860, scale: 1.2 },
+  { sprite: `${J}arvore_carvalho.png`, x: 760, y: 990, scale: 0.8 },
+  { sprite: `${J}arvore_copa.png`, x: 1090, y: 1040 },
+  { sprite: `${J}canteiro_flores_5.png`, x: 436, y: 1040 },
+  { sprite: `${J}pinheiro.png`, x: 330, y: 1050, scale: 0.75 },
+  { sprite: `${J}arbusto.png`, x: 600, y: 1060 },
+];
+
 // Where each AI teammate sits (top-left of the 32×64 frame) and their
 // spritesheet. Name and status are drawn over the head, wherever they are.
+// A clinic can give them a look of its own in the avatar editor (`avatar`,
+// which then wins over `sheet`).
 export const CHARACTERS = {
   secretary: {
     sheet: '7_personagens/clara_secretaria_spritesheet.png',
@@ -133,6 +228,21 @@ export const CHARACTERS = {
   },
 };
 
+// Where people arrive: in front of the glass door of the recepção.
+export const ENTRANCE = { x: 52, y: 44 };
+
+// The clinic team walks around as LimeZu premade characters, one per user.
+export const PEOPLE_SHEETS = Array.from(
+  { length: 18 },
+  (_, i) => `8_pessoas/pessoa_${String(i + 1).padStart(2, '0')}.png`
+);
+export const sheetForUser = id => PEOPLE_SHEETS[id % PEOPLE_SHEETS.length];
+
+// The sheet a teammate or person is drawn with: their own look when they
+// made one in the avatar editor.
+export const sheetOf = ({ avatar, sheet }) =>
+  avatar ? lookSheet(avatar) : sheet;
+
 export const ROOMS = [
   { key: 'RECEPTION', x: 8, y: 72 },
   { key: 'WAITING_ROOM', x: 8, y: 328 },
@@ -141,11 +251,74 @@ export const ROOMS = [
   { key: 'KITCHEN', x: 886, y: 430 },
 ];
 
-export const SPRITE_PATHS = [
+// The clinic as drawn: the fixed rooms (floor and wall areas, partition)
+// plus what each clinic can change in the editor: floor and wall art,
+// furniture, room names and the AI team (name, look and seat).
+export const DEFAULT_LAYOUT = {
+  floors: FLOORS,
+  walls: WALLS,
+  items: ITEMS,
+  rooms: ROOMS,
+  team: CHARACTERS,
+};
+
+// The saved layout of a clinic (only what the editor changes) on top of the
+// default one. `saved` is null when the clinic never edited it.
+export function applySaved(saved) {
+  if (!saved) return DEFAULT_LAYOUT;
+  const pick = (list, blocks) =>
+    list.map((area, i) => ({ ...area, block: blocks?.[i] || area.block }));
+  return {
+    floors: pick(FLOORS, saved.floors),
+    walls: pick(WALLS, saved.walls),
+    items: saved.items || ITEMS,
+    rooms: ROOMS.map(room => ({ ...room, name: saved.rooms?.[room.key] })),
+    team: Object.fromEntries(
+      Object.entries(CHARACTERS).map(([persona, spot]) => [
+        persona,
+        { ...spot, ...saved.team?.[persona] },
+      ])
+    ),
+  };
+}
+
+// What goes to the API: the editable part only.
+export function toSaved(layout) {
+  return {
+    floors: layout.floors.map(floor => floor.block),
+    walls: layout.walls.map(wall => wall.block),
+    items: layout.items.map(({ sprite, x, y, flip, sortY }) => ({
+      sprite,
+      x: Math.round(x),
+      y: Math.round(y),
+      ...(flip ? { flip: true } : {}),
+      ...(sortY === undefined ? {} : { sortY: Math.round(sortY) }),
+    })),
+    rooms: Object.fromEntries(
+      layout.rooms.filter(room => room.name).map(room => [room.key, room.name])
+    ),
+    team: Object.fromEntries(
+      Object.entries(layout.team).map(([persona, spot]) => [
+        persona,
+        {
+          ...(spot.avatar ? { avatar: spot.avatar } : { sheet: spot.sheet }),
+          x: Math.round(spot.x),
+          y: Math.round(spot.y),
+          ...(spot.name ? { name: spot.name } : {}),
+        },
+      ])
+    ),
+  };
+}
+
+export const spritePaths = (layout = DEFAULT_LAYOUT) => [
   ...new Set([
-    ...FLOORS.map(f => f.block),
-    ...WALLS.map(w => w.block),
-    ...ITEMS.map(i => i.sprite),
-    ...Object.values(CHARACTERS).map(c => c.sheet),
+    ...layout.floors.map(f => f.block),
+    ...layout.walls.map(w => w.block),
+    ...layout.items.map(i => i.sprite),
+    ...GARDEN_ITEMS.map(i => i.sprite),
+    ...Object.values(layout.team).map(sheetOf),
   ]),
 ];
+
+export const SPRITE_PATHS = spritePaths();
