@@ -18,6 +18,7 @@ const props = defineProps({
   activeOn: { type: Array, default: () => [] },
   children: { type: Array, default: undefined },
   getterKeys: { type: Object, default: () => ({}) },
+  badgeVariant: { type: String, default: 'default' },
 });
 
 const {
@@ -294,6 +295,7 @@ watch(
         :label
         :to
         :getter-keys="getterKeys"
+        :badge-variant="badgeVariant"
         :is-active="isActive"
         :has-active-child="hasActiveChild"
         :expandable="hasChildren"

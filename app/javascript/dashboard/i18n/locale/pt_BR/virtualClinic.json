@@ -18,13 +18,19 @@
       "CHAT": "Chat"
     },
     "PEOPLE": {
-      "TITLE": "Pessoas · {count} online",
       "YOU": "(você)",
       "STATUS": {
         "ONLINE": "Online",
         "BUSY": "Ocupado",
         "OFFLINE": "Offline"
-      }
+      },
+      "ON_MAP": "Na clínica",
+      "SEARCH": "Buscar pessoas",
+      "GROUPS": {
+        "ONLINE": "Online ({count})",
+        "OFFLINE": "Offline ({count})"
+      },
+      "NEW": "Novo 🎉"
     },
     "CHAT": {
       "NEW": "Nova conversa",
@@ -37,7 +43,15 @@
       "SUBTITLE": {
         "SECRETARY": "Responde sobre atendimentos e follow-ups",
         "MANAGER": "Responde tudo sobre a clínica, com números"
-      }
+      },
+      "ALERT": "❗ {message}",
+      "ALERT_PATIENT": "{name} · conversa #{id} · esperando há {minutes} min",
+      "ALERT_DISCONNECTED": "{name}: desconectada",
+      "ALERT_SILENT": "{name}: sem mensagens de pacientes há {hours} h",
+      "NO_NAME": "Sem nome",
+      "ACTIVITY": "{name} está consultando: {tool}…",
+      "SHOW_DATA": "Ver dados",
+      "HIDE_DATA": "Esconder dados"
     },
     "SETTINGS": {
       "TITLE": "Clínica virtual",
@@ -69,7 +83,9 @@
       "REPORTS_V2_INBOXES": "canais",
       "REPORTS_V2_TEAMS": "times",
       "AGENTS_LIST": "atendentes",
-      "TEAMS_LIST": "times"
+      "TEAMS_LIST": "times",
+      "PERGUNTAR_SECRETARY": "secretária",
+      "RENDER_CHART": "gráfico"
     },
     "STATUS": {
       "IDLE": "Sem atendimentos agora",
@@ -96,7 +112,99 @@
       "ZOOM_IN": "Aproximar",
       "ZOOM_OUT": "Afastar",
       "ZOOM_FIT": "Ajustar à tela",
-      "OFF_DUTY": "⏸ Atendimento desligado · {reason}"
+      "OFF_DUTY": "⏸ Atendimento desligado · {reason}",
+      "TALK_TO": "Conversar com {name} (E)",
+      "MOVE_HINT": "Ande com as setas ou WASD, ou clique no chão",
+      "ASKING": "💬 Perguntando para {name}…",
+      "RAISED_HAND": "!",
+      "OTHER_TAB": "A clínica está aberta em outra aba.",
+      "USE_HERE": "Usar aqui"
+    },
+    "EDITOR": {
+      "EDIT": "Editar clínica",
+      "TITLE": "Editando a clínica",
+      "HINT": "Arraste os móveis e a equipe no mapa. R gira o móvel selecionado, Del apaga e Esc tira a seleção.",
+      "SAVE": "Salvar",
+      "DISCARD": "Descartar",
+      "RESTORE": "Restaurar padrão",
+      "RESTORE_CONFIRM": "Confirmar: voltar ao padrão",
+      "SELECTED": "Móvel selecionado:",
+      "FLIP": "Girar (R)",
+      "REMOVE": "Apagar (Del)",
+      "TEAM": "Equipe",
+      "ROOMS": "Nomes dos ambientes",
+      "FLOORS": "Pisos",
+      "WALLS": "Paredes",
+      "WALL_AREAS": {
+        "0": "Recepção e sala de espera",
+        "1": "Gerência",
+        "2": "Copa"
+      },
+      "FURNITURE": "Móveis",
+      "FURNITURE_HINT": "Clique num móvel para colocá-lo no ambiente e depois arraste no mapa.",
+      "ERRORS": {
+        "ENTRANCE": "A entrada da clínica ficou bloqueada. Tire o que está na frente da porta.",
+        "UNREACHABLE": "Ninguém consegue chegar até {name}. Abra um caminho até a mesa.",
+        "SAVE": "Não foi possível salvar a clínica. Tente de novo."
+      }
+    },
+    "AVATAR": {
+      "TITLE": "Editar seu avatar",
+      "TITLE_TEAM": "Aparência de {name}",
+      "EDIT": "Editar aparência",
+      "DONE": "Pronto",
+      "RANDOM": "Visual aleatório",
+      "NONE": "Nenhum",
+      "PARTS": {
+        "PREMADE": "Avatar",
+        "BODY": "Pele",
+        "EYES": "Olhos",
+        "OUTFIT": "Roupa",
+        "HAIR": "Cabelo",
+        "ACCESSORY": "Acessório"
+      }
+    },
+    "NEWS": {
+      "NOTIFICATIONS": "Você tem 1 notificação nova | Você tem {n} notificações novas",
+      "OPEN_NOTIFICATIONS": "Abrir notificações",
+      "RELEASE": "Saiu uma versão nova ({tag}). O que mudou:",
+      "OPEN_RELEASE": "Ver novidades",
+      "HELLO": "Oi! Aqui é a {name}. Separei o que chegou para você:",
+      "NOTHING": "Oi! Aqui é a {name}. Nada de novo para você por enquanto."
+    },
+    "PROFILE": {
+      "TITLE": "Editar perfil",
+      "PHOTO": "Foto do perfil",
+      "AVATAR": "Avatar",
+      "CHANGE_PHOTO": "Trocar foto",
+      "REMOVE_PHOTO": "Remover foto",
+      "NAME": "Nome completo",
+      "DISPLAY_NAME": "Nome de exibição",
+      "DISPLAY_NAME_HINT": "É o nome que aparece para a equipe. Em branco, usa o nome completo.",
+      "SAVE": "Salvar",
+      "SAVED": "Perfil atualizado.",
+      "SAVE_ERROR": "Não foi possível salvar o perfil."
+    },
+    "SUMMARY": {
+      "OPEN": "Resumos da {name}",
+      "TITLE": "Resumos da {name}",
+      "QUESTION": "Gostaria que a {name} envie o resumo para mim:",
+      "PERIODS": {
+        "DAILY": "Diário",
+        "WEEKLY": "Semanal",
+        "MONTHLY": "Mensal"
+      },
+      "WHEN": {
+        "DAILY": "Todo dia, com os números de ontem",
+        "WEEKLY": "Toda segunda-feira, com a semana passada",
+        "MONTHLY": "Todo dia 1º, com o mês passado"
+      },
+      "HOUR": "Horário",
+      "WHERE": "O resumo chega nas suas notificações e na conversa com a {name}. Só você recebe.",
+      "SAVE": "Salvar",
+      "SAVED": "Pronto! Os resumos chegam no horário escolhido.",
+      "TURNED_OFF": "Resumos desligados.",
+      "SAVE_ERROR": "Não foi possível salvar os resumos."
     }
   }
 }

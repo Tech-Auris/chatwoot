@@ -4,10 +4,37 @@ import { useI18n } from 'vue-i18n';
 import VirtualClinicAPI from 'dashboard/api/virtualClinic';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
-import { CHARACTERS, ROOMS, SPRITE_PATHS, WORLD } from '../engine/layout';
+import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
+import { useMapGetter } from 'dashboard/composables/store';
+import {
+  DEFAULT_LAYOUT,
+  ENTRANCE,
+  GARDEN,
+  GARDEN_ITEMS,
+  SCENE,
+  TILE,
+  WORLD,
+  sheetForUser,
+  spritePaths,
+} from '../engine/layout';
+import { lookSheet } from '../engine/avatar';
 import { loadSprites } from '../engine/sprites';
-import { createRenderer, hitTest } from '../engine/renderer';
+import { createRenderer, hitTest, itemAt } from '../engine/renderer';
 import { createTeamBehavior } from '../engine/behavior';
+import { planTrip } from '../engine/trips';
+import { checkLayout } from '../engine/layoutCheck';
+import {
+  buildCollision,
+  cellOf,
+  centerOf,
+  feetOf,
+  frameAt,
+  isFree,
+} from '../engine/collision';
+import { corners, findPath } from '../engine/pathfinding';
+import { createAvatar } from '../engine/movement';
+import { seatAt, seatsOf, withoutSeats } from '../engine/seats';
+import { useClinicPresence } from '../composables/useClinicPresence';
 import { isOffDuty, offDutyReason } from '../teamStatus';
 
 const props = defineProps({
@@ -15,8 +42,19 @@ const props = defineProps({
   status: { type: Object, default: null },
   thinking: { type: String, default: '' },
   focused: { type: String, default: '' },
+  // The user's own avatar: `{ id, name, accountId, pubsubToken, avatar }`,
+  // `avatar` being the look made in the avatar editor (if any).
+  me: { type: Object, default: null },
+  // The clinic as arranged by the account (or the editor draft).
+  layout: { type: Object, default: () => DEFAULT_LAYOUT },
+  // The clinic editor (useClinicLayout) while the user edits the clinic.
+  editor: { type: Object, default: null },
+  // One AI teammate asking another right now: `{ persona, target }`.
+  consulting: { type: Object, default: null },
+  // Open alerts per teammate: they "raise their hand" (❗).
+  alertCounts: { type: Object, default: () => ({}) },
 });
-const emit = defineEmits(['selectMember']);
+const emit = defineEmits(['selectMember', 'peopleOnMap', 'layoutChanged']);
 
 const { t } = useI18n();
 const FRAME_MS = 100;
@@ -30,15 +68,35 @@ const scale = ref(1);
 const fitScale = ref(1);
 const userZoomed = ref(false);
 const MAX_SCALE = 4;
-const minScale = computed(() => Math.min(1, fitScale.value * 0.75));
+// "Fit" frames the clinic only; zooming out shows the garden around it
+// (all of it at `sceneScale`) and then the plan view.
+const sceneScale = ref(1);
+const minScale = computed(() => Math.min(1, sceneScale.value * 0.6));
 const tick = ref(0);
 const rotation = ref(0);
 let draw = null;
 let behavior = null;
 const positions = ref({});
-let frameTimer = null;
 let rotateTimer = null;
 let resizeObserver = null;
+let animationFrame = null;
+let lastFrame = null;
+
+// The user's avatar and everyone else walking around (Gather-style).
+let sprites = null;
+let grid = null;
+// The avatar walks on its own grid, where seats are free to step on.
+let walkGrid = null;
+let seats = [];
+let avatar = null;
+const mine = ref(null);
+const presence = useClinicPresence();
+const { passive } = presence;
+const loadingSheets = new Set();
+// The counter keeps people about three tiles from Clara.
+const NEAR = 4 * TILE;
+// The "how to walk" hint goes away once the user has walked.
+const hasWalked = ref(false);
 
 const members = computed(() =>
   props.aiTeam?.visible ? props.aiTeam.members : []
@@ -50,13 +108,18 @@ const secretaryBusy = computed(
   () => (props.status?.secretary?.active_conversations || 0) > 0
 );
 
+const editing = computed(() => props.editor?.editing === true);
+
 // Where each teammate is now (they take little walks, see engine/trips.js).
 const placeOf = persona => {
-  const spot = CHARACTERS[persona];
+  const spot = props.layout.team[persona];
   return positions.value[persona] || { x: spot.x, y: spot.y };
 };
 
-const characters = computed(() =>
+// The name the clinic gave a teammate (the editor draft while editing).
+const nameOf = member => props.layout.team[member.persona]?.name || member.name;
+
+const team = computed(() =>
   members.value.map(member => {
     const place = placeOf(member.persona);
     return {
@@ -74,6 +137,42 @@ const characters = computed(() =>
   })
 );
 
+const mySheet = computed(() =>
+  props.me?.avatar ? lookSheet(props.me.avatar) : sheetForUser(props.me?.id)
+);
+
+const people = computed(() => {
+  if (editing.value) return [];
+  const list = Object.entries(presence.others.value).map(([id, place]) => ({
+    ...place,
+    userId: Number(id),
+    sheet: place.avatar ? lookSheet(place.avatar) : sheetForUser(Number(id)),
+  }));
+  if (mine.value && props.me && !passive.value) {
+    list.push({
+      ...mine.value,
+      userId: props.me.id,
+      name: props.me.name,
+      sheet: mySheet.value,
+      self: true,
+    });
+  }
+  return list;
+});
+
+const characters = computed(() => [...team.value, ...people.value]);
+
+// The AI teammate within four tiles of the avatar: "Conversar com a Clara (E)".
+const nearMember = computed(() => {
+  if (!mine.value || !chatEnabled.value || editing.value) return null;
+  const feet = feetOf(mine.value);
+  const member = members.value.find(({ persona }) => {
+    const other = feetOf(placeOf(persona));
+    return Math.hypot(other.x - feet.x, other.y - feet.y) <= NEAR;
+  });
+  return member && member.persona !== props.focused ? member : null;
+});
+
 // Name (and status above it) sit right over the head, like in Gather, and
 // follow the teammate around. The frame is 32×64 with the head from ~y+18.
 const overHead = persona => {
@@ -87,22 +186,41 @@ const canLeave = persona =>
   persona !== props.thinking &&
   !isOffDuty(persona, props.status);
 
+// The team walks around unless the clinic is being edited.
+const restartBehavior = () => {
+  const personas = members.value.map(member => member.persona);
+  const { layout } = props;
+  behavior =
+    personas.length && grid && !editing.value
+      ? createTeamBehavior({
+          personas,
+          layout,
+          canLeave,
+          plan: trip => planTrip(trip, { layout, grid }),
+        })
+      : null;
+  positions.value = {};
+};
 watch(
   () => members.value.map(member => member.persona).join(),
-  personaList => {
-    behavior = personaList
-      ? createTeamBehavior({ personas: personaList.split(','), canLeave })
-      : null;
-    positions.value = {};
-  },
-  { immediate: true }
+  restartBehavior
 );
 
 // What each teammate is doing, over their head (hidden while away).
 const bubble = persona => {
+  if (editing.value) return '';
+  if (props.consulting?.persona === persona) {
+    const teammate = members.value.find(
+      m => m.persona === props.consulting.target
+    );
+    return t('VIRTUAL_CLINIC.MAP.ASKING', {
+      name: teammate ? nameOf(teammate) : '',
+    });
+  }
   if (props.thinking === persona) return t('VIRTUAL_CLINIC.MAP.THINKING');
   if (placeOf(persona).away) return '';
-  if (!props.status) return '';
+  // Agents don't get the numbers of the restricted teammates (the manager).
+  if (!props.status?.[persona]) return '';
   if (isOffDuty(persona, props.status)) {
     return t('VIRTUAL_CLINIC.MAP.OFF_DUTY', {
       reason: offDutyReason(props.status, t),
@@ -128,22 +246,191 @@ const bubble = persona => {
   return lines[rotation.value % lines.length];
 };
 
+// World coordinates (the clinic's) to pixels on the scene, garden included.
 const at = point => ({
-  left: `${point.x * scale.value}px`,
-  top: `${point.y * scale.value}px`,
+  left: `${(point.x - SCENE.x) * scale.value}px`,
+  top: `${(point.y - SCENE.y) * scale.value}px`,
 });
 const worldSize = computed(() => ({
-  width: `${WORLD.width * scale.value}px`,
-  height: `${WORLD.height * scale.value}px`,
+  width: `${SCENE.width * scale.value}px`,
+  height: `${SCENE.height * scale.value}px`,
 }));
 
-const render = () => draw?.(characters.value, tick.value);
-watch([characters, tick], render);
+// The box around what the editor has selected.
+const selectedBox = computed(() => {
+  const target = editing.value && props.editor.selected;
+  if (!target || !sprites) return null;
+  if (target.kind === 'team') {
+    const seat = props.layout.team[target.persona];
+    return { x: seat.x, y: seat.y, width: 32, height: 64 };
+  }
+  const item = props.layout.items[target.index];
+  const image = item && sprites[item.sprite];
+  return image
+    ? { x: item.x, y: item.y, width: image.width, height: image.height }
+    : null;
+});
 
-const animate = () => {
-  if (document.hidden) return;
+// Zoomed well out: the plan view, with people as photo bubbles (Gather).
+const overview = computed(
+  () => !editing.value && scale.value < sceneScale.value * 0.9
+);
+const agents = useMapGetter('agents/getAgents');
+const photoOf = userId =>
+  (agents.value || []).find(agent => agent.id === userId)?.thumbnail || '';
+
+const render = () =>
+  draw?.(characters.value, tick.value, selectedBox.value, overview.value);
+watch([characters, tick, selectedBox, overview], render);
+
+const sizesOf = items =>
+  Object.fromEntries(
+    items
+      .filter(({ sprite }) => sprites[sprite])
+      .map(({ sprite }) => [
+        sprite,
+        { width: sprites[sprite].width, height: sprites[sprite].height },
+      ])
+  );
+
+// Draws the clinic again after the layout changed (or the art arrived):
+// loads any new art, then the walk grid, the background and the team.
+const rebuild = async () => {
+  const { layout } = props;
+  const missing = spritePaths(layout).filter(path => !sprites[path]);
+  if (missing.length) {
+    Object.assign(
+      sprites,
+      await loadSprites(missing, path => VirtualClinicAPI.getAsset(path))
+    );
+  }
+  // The clinic changed while the art loaded (the saved layout arrived):
+  // build the latest one instead.
+  if (layout !== props.layout) {
+    await rebuild();
+    return;
+  }
+  const sizes = sizesOf([...GARDEN_ITEMS, ...layout.items]);
+  grid = buildCollision(sizes, layout.items);
+  seats = seatsOf([...GARDEN_ITEMS, ...layout.items], sizes, layout.team);
+  walkGrid = buildCollision(
+    sizes,
+    withoutSeats(layout.items, seats),
+    withoutSeats(GARDEN_ITEMS, seats)
+  );
+  draw = createRenderer(canvas.value, sprites, layout);
+  restartBehavior();
+  render();
+};
+watch(
+  () => props.layout,
+  () => sprites && rebuild()
+);
+watch(editing, restartBehavior);
+
+// The manager walks to the secretary's desk while she asks her something.
+watch(
+  () => props.consulting,
+  consulting => {
+    if (consulting) {
+      behavior?.consult(
+        consulting.persona,
+        consulting.target,
+        performance.now()
+      );
+    } else {
+      behavior?.release(performance.now());
+    }
+  }
+);
+
+// Editor check before saving, as a message (empty when all is fine).
+const check = layout => {
+  const result = checkLayout(layout, sizesOf(layout.items));
+  if (!result) return '';
+  if (result.problem === 'entrance') {
+    return t('VIRTUAL_CLINIC.EDITOR.ERRORS.ENTRANCE');
+  }
+  const member = members.value.find(m => m.persona === result.persona);
+  return t('VIRTUAL_CLINIC.EDITOR.ERRORS.UNREACHABLE', {
+    name: layout.team[result.persona].name || member?.name || result.persona,
+  });
+};
+defineExpose({ check });
+
+const ensureSheet = async path => {
+  if (!sprites || sprites[path] || loadingSheets.has(path)) return;
+  loadingSheets.add(path);
+  const loaded = await loadSprites([path], file =>
+    VirtualClinicAPI.getAsset(file)
+  );
+  Object.assign(sprites, loaded);
+};
+
+watch(
+  () => people.value.map(person => person.userId).join(),
+  ids => emit('peopleOnMap', ids ? ids.split(',').map(Number) : [])
+);
+// Loads the look of whoever shows up (or changes their avatar).
+watch(
+  () => people.value.map(person => person.sheet).join('|'),
+  () => people.value.forEach(person => ensureSheet(person.sheet))
+);
+// A new look of my own: everybody else sees it right away.
+watch(mySheet, () => avatar && presence.send(mine.value, true));
+
+// Keeps the avatar in sight when the map is zoomed in.
+const FOLLOW_MARGIN = 96;
+const follow = () => {
+  const box = viewport.value;
+  if (!mine.value?.moving || !box) return;
+  const feet = feetOf(mine.value);
+  const left = (feet.x - SCENE.x) * scale.value - box.scrollLeft;
+  const top = (feet.y - SCENE.y) * scale.value - box.scrollTop;
+  if (left < FOLLOW_MARGIN) box.scrollLeft -= FOLLOW_MARGIN - left;
+  if (left > box.clientWidth - FOLLOW_MARGIN) {
+    box.scrollLeft += left - (box.clientWidth - FOLLOW_MARGIN);
+  }
+  if (top < FOLLOW_MARGIN) box.scrollTop -= FOLLOW_MARGIN - top;
+  if (top > box.clientHeight - FOLLOW_MARGIN) {
+    box.scrollTop += top - (box.clientHeight - FOLLOW_MARGIN);
+  }
+};
+
+// Where the avatar was left, so it is back there after a reload or a trip
+// to another page (in this browser).
+const spotKey = () =>
+  `virtual-clinic-spot:${props.me.accountId}:${props.me.id}`;
+const savedSpot = () => {
+  try {
+    return JSON.parse(localStorage.getItem(spotKey()));
+  } catch {
+    return null;
+  }
+};
+const saveSpot = () => {
+  if (!avatar || !props.me) return;
+  try {
+    localStorage.setItem(
+      spotKey(),
+      JSON.stringify({
+        x: Math.round(avatar.state.x),
+        y: Math.round(avatar.state.y),
+        direction: avatar.state.direction,
+      })
+    );
+  } catch {
+    // No storage (private window): the avatar starts at the door.
+  }
+};
+
+const animate = now => {
+  animationFrame = requestAnimationFrame(animate);
+  const seconds =
+    lastFrame === null ? 0 : Math.min(0.1, (now - lastFrame) / 1000);
+  lastFrame = now;
   if (behavior) {
-    behavior.update(performance.now());
+    behavior.update(now);
     positions.value = Object.fromEntries(
       Object.entries(behavior.state).map(([persona, place]) => [
         persona,
@@ -151,16 +438,117 @@ const animate = () => {
       ])
     );
   }
-  tick.value += 1;
+  // In another tab the clinic is open too and that one is the person.
+  if (avatar && !passive.value) {
+    const wasMoving = avatar.state.moving;
+    avatar.update(seconds);
+    // Standing still on a chair: sit on it, facing where it faces.
+    const seat = !avatar.state.moving && seatAt(seats, avatar.state);
+    mine.value = seat
+      ? {
+          ...avatar.state,
+          ...seat.frame,
+          direction: seat.face,
+          sitting: true,
+          compact: seat.compact,
+        }
+      : { ...avatar.state };
+    if (avatar.state.moving) hasWalked.value = true;
+    if (wasMoving && !avatar.state.moving) saveSpot();
+    presence.send(mine.value);
+    follow();
+  }
+  presence.step(seconds);
+  tick.value = Math.floor(now / FRAME_MS);
 };
+
+const startAvatar = async () => {
+  if (!props.me) return;
+  await ensureSheet(mySheet.value);
+  const spot = savedSpot();
+  const canStand = place => isFree(walkGrid, feetOf(place));
+  avatar = createAvatar({
+    ...(spot && canStand(spot) ? spot : ENTRANCE),
+    canStand,
+  });
+  if (spot?.direction) avatar.state.direction = spot.direction;
+  mine.value = { ...avatar.state };
+  presence.connect({
+    userId: props.me.id,
+    accountId: props.me.accountId,
+    pubsubToken: props.me.pubsubToken,
+    position: () => avatar.state,
+    look: () => props.me?.avatar || null,
+    layoutChanged: () => emit('layoutChanged'),
+  });
+};
+
+const walkTowards = point => {
+  if (!avatar) return;
+  const path = findPath(walkGrid, cellOf(feetOf(avatar.state)), cellOf(point));
+  if (!path) return;
+  avatar.walkTo(
+    corners(path)
+      .slice(1)
+      .map(cell => frameAt(centerOf(cell)))
+  );
+};
+
+// Typing in the chat must not walk the avatar around.
+const typing = target =>
+  target?.closest?.('input, textarea, select, [contenteditable="true"]');
+
+// Editor keys: Del removes the selected piece, R turns it around, Esc
+// drops the selection.
+const onEditorKey = event => {
+  const key = event.key.toLowerCase();
+  if (key === 'delete' || key === 'backspace') props.editor.removeSelected();
+  else if (key === 'r') props.editor.flipSelected();
+  else if (key === 'escape') props.editor.select(null);
+  else return;
+  event.preventDefault();
+};
+
+const onKeyDown = event => {
+  if (typing(event.target)) return;
+  if (event.metaKey || event.ctrlKey || event.altKey) return;
+  if (editing.value) {
+    onEditorKey(event);
+    return;
+  }
+  if (!avatar) return;
+  if (event.key.toLowerCase() === 'e' && nearMember.value) {
+    event.preventDefault();
+    emit('selectMember', nearMember.value.persona);
+    return;
+  }
+  if (avatar.press(event.key)) event.preventDefault();
+};
+const onKeyUp = event => avatar?.release(event.key);
+const onBlur = () => avatar?.releaseAll();
 
 // The map fills the area by default; the user can zoom in and out from
 // there (wheel or the +/- control), like in Gather.
+// Scrolls so the clinic sits in the middle of the view.
+const centerClinic = () =>
+  requestAnimationFrame(() => {
+    const box = viewport.value;
+    if (!box) return;
+    box.scrollLeft =
+      GARDEN * scale.value - (box.clientWidth - WORLD.width * scale.value) / 2;
+    box.scrollTop =
+      GARDEN * scale.value -
+      (box.clientHeight - WORLD.height * scale.value) / 2;
+  });
 const fit = () => {
   const width = viewport.value?.clientWidth || WORLD.width;
   const height = viewport.value?.clientHeight || WORLD.height;
   fitScale.value = Math.min(width / WORLD.width, height / WORLD.height);
-  if (!userZoomed.value) scale.value = fitScale.value;
+  sceneScale.value = Math.min(width / SCENE.width, height / SCENE.height);
+  if (!userZoomed.value) {
+    scale.value = fitScale.value;
+    centerClinic();
+  }
 };
 
 // Keeps the point under the cursor (or the center) in place while zooming.
@@ -191,21 +579,56 @@ const onWheel = event => {
 const resetZoom = () => {
   userZoomed.value = false;
   scale.value = fitScale.value;
+  centerClinic();
 };
 
-const onClick = event => {
+const toWorld = event => {
   const rect = canvas.value.getBoundingClientRect();
-  const persona = hitTest(
-    (event.clientX - rect.left) / scale.value,
-    (event.clientY - rect.top) / scale.value,
-    characters.value
-  );
-  if (persona && chatEnabled.value) emit('selectMember', persona);
+  return {
+    x: (event.clientX - rect.left) / scale.value + SCENE.x,
+    y: (event.clientY - rect.top) / scale.value + SCENE.y,
+  };
 };
 
-// Drag the map around when it is bigger than the screen.
+// In the editor, pressing on a teammate or a piece selects it and drags it
+// around; pressing on the floor drops the selection.
+const pickForEditing = event => {
+  const point = toWorld(event);
+  const persona = hitTest(point.x, point.y, team.value);
+  const index = persona
+    ? -1
+    : itemAt(point.x, point.y, props.layout.items, sprites);
+  if (!persona && index === -1) {
+    props.editor.select(null);
+    return null;
+  }
+  const target = persona ? { kind: 'team', persona } : { kind: 'item', index };
+  props.editor.select(target);
+  const origin = persona
+    ? props.layout.team[persona]
+    : props.layout.items[index];
+  const image = persona ? null : sprites[origin.sprite];
+  return {
+    x: event.clientX,
+    y: event.clientY,
+    origin: { x: origin.x, y: origin.y },
+    size: image
+      ? { width: image.width, height: image.height }
+      : { width: 32, height: 64 },
+  };
+};
+
+// Drag the map around when it is bigger than the screen; a drag is not a
+// click on the floor.
 let drag = null;
+let moving = null;
+let dragged = false;
 const startDrag = event => {
+  dragged = false;
+  if (editing.value && event.target === canvas.value) {
+    moving = pickForEditing(event);
+    if (moving) return;
+  }
   drag = {
     x: event.clientX,
     y: event.clientY,
@@ -214,12 +637,39 @@ const startDrag = event => {
   };
 };
 const moveDrag = event => {
+  if (moving) {
+    props.editor.moveSelected(
+      moving.origin.x + (event.clientX - moving.x) / scale.value,
+      moving.origin.y + (event.clientY - moving.y) / scale.value,
+      moving.size
+    );
+    return;
+  }
   if (!drag) return;
-  viewport.value.scrollLeft = drag.left - (event.clientX - drag.x);
-  viewport.value.scrollTop = drag.top - (event.clientY - drag.y);
+  const dx = event.clientX - drag.x;
+  const dy = event.clientY - drag.y;
+  if (Math.hypot(dx, dy) > 4) dragged = true;
+  viewport.value.scrollLeft = drag.left - dx;
+  viewport.value.scrollTop = drag.top - dy;
+};
+
+// Clicking a teammate opens the chat; clicking the floor walks there.
+const onClick = event => {
+  if (dragged || editing.value) return;
+  const point = toWorld(event);
+  const persona = hitTest(point.x, point.y, characters.value);
+  if (persona) {
+    // The manager also opens without the chat: she has the person's news.
+    if (chatEnabled.value || persona === 'manager') {
+      emit('selectMember', persona);
+    }
+    return;
+  }
+  walkTowards(point);
 };
 const endDrag = () => {
   drag = null;
+  moving = null;
 };
 
 onMounted(async () => {
@@ -227,15 +677,17 @@ onMounted(async () => {
   resizeObserver = new ResizeObserver(fit);
   resizeObserver.observe(viewport.value);
   try {
-    const sprites = await loadSprites(SPRITE_PATHS, path =>
-      VirtualClinicAPI.getAsset(path)
-    );
-    draw = createRenderer(canvas.value, sprites);
-    render();
-    frameTimer = setInterval(animate, FRAME_MS);
+    sprites = {};
+    await rebuild();
+    await startAvatar();
+    animationFrame = requestAnimationFrame(animate);
     rotateTimer = setInterval(() => {
       rotation.value += 1;
     }, ROTATE_MS);
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    window.addEventListener('blur', onBlur);
+    window.addEventListener('pagehide', saveSpot);
   } catch {
     failed.value = true;
   } finally {
@@ -244,9 +696,14 @@ onMounted(async () => {
 });
 
 onBeforeUnmount(() => {
-  clearInterval(frameTimer);
+  saveSpot();
+  cancelAnimationFrame(animationFrame);
   clearInterval(rotateTimer);
   resizeObserver?.disconnect();
+  window.removeEventListener('keydown', onKeyDown);
+  window.removeEventListener('keyup', onKeyUp);
+  window.removeEventListener('blur', onBlur);
+  window.removeEventListener('pagehide', saveSpot);
 });
 </script>
 
@@ -294,20 +751,20 @@ onBeforeUnmount(() => {
       <div class="relative m-auto shrink-0" :style="worldSize">
         <canvas
           ref="canvas"
-          :width="WORLD.width"
-          :height="WORLD.height"
+          :width="SCENE.width"
+          :height="SCENE.height"
           class="block w-full h-full [image-rendering:pixelated]"
           @click="onClick"
         />
         <template v-if="!loading && !failed">
           <span
-            v-for="room in ROOMS"
+            v-for="room in layout.rooms"
             :key="room.key"
-            class="absolute px-2 py-0.5 text-xs font-semibold text-white rounded-md pointer-events-none bg-n-slate-12/80"
+            class="absolute px-2 py-0.5 text-xs font-semibold text-white rounded-md pointer-events-none whitespace-nowrap bg-n-slate-12/80"
             :class="{ '-translate-x-full': room.alignRight }"
             :style="at(room)"
           >
-            {{ t(`VIRTUAL_CLINIC.MAP.ROOMS.${room.key}`) }}
+            {{ room.name || t(`VIRTUAL_CLINIC.MAP.ROOMS.${room.key}`) }}
           </span>
           <div
             v-for="member in members"
@@ -316,27 +773,122 @@ onBeforeUnmount(() => {
             :style="at(overHead(member.persona))"
           >
             <span
-              v-if="bubble(member.persona)"
+              v-if="bubble(member.persona) && !overview"
               class="px-2 py-1 text-xs font-medium bg-white rounded-lg shadow-md whitespace-nowrap text-n-slate-12"
             >
               {{ bubble(member.persona) }}
             </span>
             <button
               type="button"
-              class="px-2 py-0.5 text-xs font-semibold text-white rounded-full shadow whitespace-nowrap pointer-events-auto"
+              class="px-2 py-0.5 text-xs font-semibold text-white rounded-full shadow whitespace-nowrap pointer-events-auto bg-n-iris-9"
               :class="[
-                member.persona === 'secretary' ? 'bg-n-blue-9' : 'bg-n-iris-9',
                 chatEnabled ? '' : 'cursor-default',
                 isOffDuty(member.persona, status) ? 'opacity-50' : '',
               ]"
-              @click="chatEnabled && emit('selectMember', member.persona)"
+              @click="
+                chatEnabled && !editing && emit('selectMember', member.persona)
+              "
             >
-              {{ member.name }} ·
+              <span
+                v-if="alertCounts[member.persona] && !editing"
+                class="inline-grid mr-1 font-bold rounded-full size-4 place-items-center bg-n-ruby-9 animate-pulse"
+              >
+                {{ t('VIRTUAL_CLINIC.MAP.RAISED_HAND') }}
+              </span>
+              {{ nameOf(member) }} ·
               {{ t(`VIRTUAL_CLINIC.PERSONAS.${member.persona.toUpperCase()}`) }}
             </button>
           </div>
+          <span
+            v-for="person in people"
+            v-show="!overview"
+            :key="`person-${person.userId}`"
+            class="absolute px-2 py-0.5 text-xs font-semibold rounded-full shadow pointer-events-none whitespace-nowrap -translate-x-1/2 -translate-y-full"
+            :class="
+              person.self ? 'bg-n-blue-9 text-white' : 'bg-n-slate-9 text-white'
+            "
+            :style="at({ x: person.x + 16, y: person.y + 18 })"
+          >
+            {{ person.name }}
+          </span>
+          <template v-if="overview">
+            <div
+              v-for="person in people"
+              :key="`bubble-${person.userId}`"
+              class="absolute flex flex-col items-center gap-1 -translate-x-1/2 -translate-y-full pointer-events-none"
+              :style="at({ x: person.x + 16, y: person.y + 60 })"
+            >
+              <span
+                class="px-2 py-0.5 text-xs font-semibold rounded-full shadow whitespace-nowrap"
+                :class="
+                  person.self
+                    ? 'bg-n-blue-9 text-white'
+                    : 'bg-n-slate-9 text-white'
+                "
+              >
+                {{ person.name }}
+              </span>
+              <span
+                class="rounded-full shadow-md ring-2"
+                :class="person.self ? 'ring-n-blue-9' : 'ring-n-slate-6'"
+              >
+                <Avatar
+                  :name="person.name"
+                  :src="photoOf(person.userId)"
+                  :size="32"
+                  rounded-full
+                />
+              </span>
+            </div>
+            <div
+              v-for="member in members"
+              :key="`bubble-${member.persona}`"
+              class="absolute grid text-sm font-semibold text-white -translate-x-1/2 -translate-y-full rounded-full shadow-md pointer-events-none size-8 place-items-center bg-n-iris-9"
+              :style="
+                at({
+                  x: placeOf(member.persona).x + 16,
+                  y: placeOf(member.persona).y + 60,
+                })
+              "
+            >
+              {{ nameOf(member).charAt(0) }}
+            </div>
+          </template>
         </template>
       </div>
+    </div>
+    <div
+      v-if="!loading && !failed && mine && !editing"
+      class="absolute z-10 flex flex-col items-center gap-2 -translate-x-1/2 bottom-4 left-1/2"
+    >
+      <button
+        v-if="nearMember"
+        type="button"
+        class="px-3 py-1.5 text-sm font-medium text-white rounded-full shadow-lg bg-n-slate-12/90 hover:bg-n-slate-12"
+        @click="emit('selectMember', nearMember.persona)"
+      >
+        {{ t('VIRTUAL_CLINIC.MAP.TALK_TO', { name: nearMember.name }) }}
+      </button>
+      <span
+        v-else-if="!hasWalked"
+        class="px-3 py-1 text-xs rounded-full pointer-events-none text-white/90 bg-n-slate-12/70"
+      >
+        {{ t('VIRTUAL_CLINIC.MAP.MOVE_HINT') }}
+      </span>
+    </div>
+    <div
+      v-if="passive && !editing"
+      class="absolute z-20 flex items-center gap-3 px-4 py-2 text-sm -translate-x-1/2 rounded-xl shadow-lg top-4 left-1/2 bg-n-solid-1 text-n-slate-12"
+    >
+      <Icon icon="i-lucide-copy" class="size-4 text-n-slate-11" />
+      {{ t('VIRTUAL_CLINIC.MAP.OTHER_TAB') }}
+      <button
+        type="button"
+        class="px-2.5 py-1 text-xs font-medium text-white rounded-lg bg-n-brand"
+        @click="presence.takeOver()"
+      >
+        {{ t('VIRTUAL_CLINIC.MAP.USE_HERE') }}
+      </button>
     </div>
     <div
       v-if="loading || failed"

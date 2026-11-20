@@ -278,6 +278,24 @@ onMounted(() => {
   store.dispatch('dashboardApps/get');
 });
 
+// The AI team alerts (Clínica virtual) for the menu badge: administrators
+// and managers only, like the alerts themselves.
+const currentRole = useMapGetter('getCurrentRole');
+watch(
+  [accountId, isVirtualClinicEnabled, currentRole],
+  () => {
+    if (
+      isVirtualClinicEnabled.value &&
+      ['administrator', 'manager'].includes(currentRole.value)
+    ) {
+      store.dispatch('virtualClinic/fetchAlertCounts').catch(() => {});
+    } else {
+      store.dispatch('virtualClinic/setAlertCounts', {});
+    }
+  },
+  { immediate: true }
+);
+
 watch([accountId, hasConversationUnreadCounts], fetchConversationUnreadCounts, {
   immediate: true,
 });
@@ -404,8 +422,9 @@ const menuItems = computed(() => {
               'internal_chat_drafts',
             ],
             getterKeys: {
-              count: 'internalChat/getUnreadCount',
+              count: 'virtualClinic/getMenuBadge',
             },
+            badgeVariant: 'brand',
           },
         ]
       : []),
