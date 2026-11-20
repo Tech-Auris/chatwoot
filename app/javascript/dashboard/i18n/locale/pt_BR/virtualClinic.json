@@ -11,7 +11,8 @@
       "MISSING_OPENAI": "Para conversar com a equipe de IA, cadastre a chave da OpenAI da clínica.",
       "CONFIGURE_OPENAI": "Configurar chave OpenAI",
       "CHAT_SECTION": "Equipe de IA",
-      "CHAT_OFF": "Conversa desligada"
+      "CHAT_OFF": "Conversa desligada",
+      "DAILY_SUMMARY": "Bom dia da {name}: resumo de ontem às 8h, nas notificações"
     },
     "RAIL": {
       "MAP": "Clínica",
@@ -24,7 +25,8 @@
         "ONLINE": "Online",
         "BUSY": "Ocupado",
         "OFFLINE": "Offline"
-      }
+      },
+      "ON_MAP": "Na clínica"
     },
     "CHAT": {
       "NEW": "Nova conversa",
@@ -37,7 +39,15 @@
       "SUBTITLE": {
         "SECRETARY": "Responde sobre atendimentos e follow-ups",
         "MANAGER": "Responde tudo sobre a clínica, com números"
-      }
+      },
+      "ALERT": "❗ {message}",
+      "ALERT_PATIENT": "{name} · conversa #{id} · esperando há {minutes} min",
+      "ALERT_DISCONNECTED": "{name}: desconectada",
+      "ALERT_SILENT": "{name}: sem mensagens de pacientes há {hours} h",
+      "NO_NAME": "Sem nome",
+      "ACTIVITY": "{name} está consultando: {tool}…",
+      "SHOW_DATA": "Ver dados",
+      "HIDE_DATA": "Esconder dados"
     },
     "SETTINGS": {
       "TITLE": "Clínica virtual",
@@ -69,7 +79,9 @@
       "REPORTS_V2_INBOXES": "canais",
       "REPORTS_V2_TEAMS": "times",
       "AGENTS_LIST": "atendentes",
-      "TEAMS_LIST": "times"
+      "TEAMS_LIST": "times",
+      "PERGUNTAR_SECRETARY": "secretária",
+      "RENDER_CHART": "gráfico"
     },
     "STATUS": {
       "IDLE": "Sem atendimentos agora",
@@ -96,7 +108,55 @@
       "ZOOM_IN": "Aproximar",
       "ZOOM_OUT": "Afastar",
       "ZOOM_FIT": "Ajustar à tela",
-      "OFF_DUTY": "⏸ Atendimento desligado · {reason}"
+      "OFF_DUTY": "⏸ Atendimento desligado · {reason}",
+      "TALK_TO": "Conversar com {name} (E)",
+      "MOVE_HINT": "Ande com as setas ou WASD, ou clique no chão",
+      "ASKING": "💬 Perguntando para {name}…",
+      "RAISED_HAND": "!"
+    },
+    "EDITOR": {
+      "EDIT": "Editar clínica",
+      "TITLE": "Editando a clínica",
+      "HINT": "Arraste os móveis e a equipe no mapa. R gira o móvel selecionado, Del apaga e Esc tira a seleção.",
+      "SAVE": "Salvar",
+      "DISCARD": "Descartar",
+      "RESTORE": "Restaurar padrão",
+      "RESTORE_CONFIRM": "Confirmar: voltar ao padrão",
+      "SELECTED": "Móvel selecionado:",
+      "FLIP": "Girar (R)",
+      "REMOVE": "Apagar (Del)",
+      "TEAM": "Equipe",
+      "ROOMS": "Nomes dos ambientes",
+      "FLOORS": "Pisos",
+      "WALLS": "Paredes",
+      "WALL_AREAS": {
+        "0": "Recepção e sala de espera",
+        "1": "Gerência",
+        "2": "Copa"
+      },
+      "FURNITURE": "Móveis",
+      "FURNITURE_HINT": "Clique num móvel para colocá-lo no ambiente e depois arraste no mapa.",
+      "ERRORS": {
+        "ENTRANCE": "A entrada da clínica ficou bloqueada. Tire o que está na frente da porta.",
+        "UNREACHABLE": "Ninguém consegue chegar até {name}. Abra um caminho até a mesa.",
+        "SAVE": "Não foi possível salvar a clínica. Tente de novo."
+      }
+    },
+    "AVATAR": {
+      "TITLE": "Editar seu avatar",
+      "TITLE_TEAM": "Aparência de {name}",
+      "EDIT": "Editar aparência",
+      "DONE": "Pronto",
+      "RANDOM": "Visual aleatório",
+      "NONE": "Nenhum",
+      "PARTS": {
+        "PREMADE": "Avatar",
+        "BODY": "Pele",
+        "EYES": "Olhos",
+        "OUTFIT": "Roupa",
+        "HAIR": "Cabelo",
+        "ACCESSORY": "Acessório"
+      }
     }
   }
 }

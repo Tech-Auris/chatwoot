@@ -38,6 +38,7 @@
       "ASSIGNED_CONVERSATION_NEW_MESSAGE": "Nova Mensagem",
       "INTERNAL_CHAT_MENTION": "Mencionado",
       "INTERNAL_CHAT_NEW_MESSAGE": "Mensagem direta",
+      "VIRTUAL_CLINIC_ALERT": "Clínica virtual",
       "SNOOZED_UNTIL": "Adiado para {time}",
       "SNOOZED_ENDS": "Adiamento encerrado"
     },

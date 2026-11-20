@@ -1,12 +1,4 @@
-import {
-  CHARACTERS,
-  FLOORS,
-  ITEMS,
-  PARTITION,
-  TILE,
-  WALLS,
-  WORLD,
-} from './layout';
+import { DEFAULT_LAYOUT, PARTITION, TILE, WORLD, sheetOf } from './layout';
 
 const FRAME = { width: 32, height: 64 };
 const OUTLINE = '#2b2d42';
@@ -85,14 +77,16 @@ function drawWall(context, block, wall) {
   );
 }
 
-function drawBackground(sprites) {
+function drawBackground(sprites, layout) {
   const canvas = document.createElement('canvas');
   canvas.width = WORLD.width;
   canvas.height = WORLD.height;
   const context = canvas.getContext('2d');
   context.imageSmoothingEnabled = false;
-  FLOORS.forEach(floor => repeatBlock(context, sprites[floor.block], floor));
-  WALLS.forEach(wall => drawWall(context, sprites[wall.block], wall));
+  layout.floors.forEach(floor =>
+    repeatBlock(context, sprites[floor.block], floor)
+  );
+  layout.walls.forEach(wall => drawWall(context, sprites[wall.block], wall));
   context.fillStyle = OUTLINE;
   let top = 0;
   [...PARTITION.gaps, [WORLD.height, WORLD.height]].forEach(
@@ -101,7 +95,12 @@ function drawBackground(sprites) {
       top = gapBottom;
     }
   );
-  context.fillRect(PARTITION.x, WALLS[2].y - 4, WORLD.width - PARTITION.x, 4);
+  context.fillRect(
+    PARTITION.x,
+    layout.walls[2].y - 4,
+    WORLD.width - PARTITION.x,
+    4
+  );
   context.lineWidth = 4;
   context.strokeRect(2, 2, WORLD.width - 4, WORLD.height - 4);
   return canvas;
@@ -120,27 +119,32 @@ function drawItem(context, image, item) {
 }
 
 // Draws the clinic into `canvas` (world size). `characters` lists the AI
-// teammates to show: `{ persona, x, y, direction, moving, phone, talking,
-// faded }`, `x`/`y` being the top-left of their 32×64 frame.
-export function createRenderer(canvas, sprites) {
+// teammates (`persona`) and the people walking around (`sheet`): `{ x, y,
+// direction, moving, phone, talking, faded }`, `x`/`y` being the top-left
+// of their 32×64 frame.
+export function createRenderer(canvas, sprites, layout = DEFAULT_LAYOUT) {
   const context = canvas.getContext('2d');
   context.imageSmoothingEnabled = false;
-  const background = drawBackground(sprites);
-  const items = ITEMS.map(item => ({
+  const background = drawBackground(sprites, layout);
+  const items = layout.items.map(item => ({
     ...item,
     image: sprites[item.sprite],
     depth: item.sortY ?? item.y + sprites[item.sprite].height,
   }));
 
-  return function draw(characters, tick) {
+  // `selected` (editor): the box of the piece or teammate being moved.
+  return function draw(characters, tick, selected = null) {
     context.clearRect(0, 0, WORLD.width, WORLD.height);
     context.drawImage(background, 0, 0);
-    const people = characters.map(character => ({
-      ...character,
-      sheet: sprites[CHARACTERS[character.persona].sheet],
-      // Someone sitting goes over their chair.
-      depth: character.y + FRAME.height + (character.sitting ? 8 : 0),
-    }));
+    const people = characters
+      .map(character => ({
+        ...character,
+        sheet:
+          sprites[character.sheet || sheetOf(layout.team[character.persona])],
+        // Someone sitting goes over their chair.
+        depth: character.y + FRAME.height + (character.sitting ? 8 : 0),
+      }))
+      .filter(person => person.sheet);
     // Stable sort: on a tie the furniture (a chair behind someone) goes first.
     [...items, ...people]
       .sort((a, b) => a.depth - b.depth)
@@ -169,7 +173,42 @@ export function createRenderer(canvas, sprites) {
       .forEach(person =>
         drawTalking(context, Math.round(person.x), Math.round(person.y), tick)
       );
+    if (selected) {
+      context.save();
+      context.strokeStyle = '#2563eb';
+      context.lineWidth = 2;
+      context.setLineDash([4, 3]);
+      context.strokeRect(
+        Math.round(selected.x) - 2,
+        Math.round(selected.y) - 2,
+        selected.width + 4,
+        selected.height + 4
+      );
+      context.restore();
+    }
   };
+}
+
+// Index of the piece of furniture under a world point (the one drawn in
+// front wins), or -1.
+export function itemAt(x, y, items, sprites) {
+  let found = -1;
+  let frontmost = -Infinity;
+  items.forEach((item, i) => {
+    const image = sprites[item.sprite];
+    if (!image) return;
+    const inside =
+      x >= item.x &&
+      x < item.x + image.width &&
+      y >= item.y &&
+      y < item.y + image.height;
+    const depth = item.sortY ?? item.y + image.height;
+    if (inside && depth > frontmost) {
+      found = i;
+      frontmost = depth;
+    }
+  });
+  return found;
 }
 
 // The AI teammate under a world point, if any (the visible body of the
@@ -177,6 +216,7 @@ export function createRenderer(canvas, sprites) {
 export function hitTest(x, y, characters) {
   return characters.find(
     c =>
+      c.persona &&
       x >= c.x &&
       x < c.x + FRAME.width &&
       y >= c.y + 16 &&

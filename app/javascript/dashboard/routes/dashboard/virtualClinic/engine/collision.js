@@ -1,0 +1,84 @@
+import { ITEMS, PARTITION, WALLS, WORLD } from './layout';
+
+// Where people can stand, on a grid of 16 px cells (half a tile, so the
+// passages and the space between chairs stay open). Walls, the middle
+// partition and the base of every piece of furniture block; people walk
+// behind the top of a piece, like in Gather's 3/4 view.
+export const CELL = 16;
+export const COLUMNS = WORLD.width / CELL;
+export const ROWS = WORLD.height / CELL;
+
+// Characters are 32×64 frames; they stand on the point under their feet.
+export const feetOf = ({ x, y }) => ({ x: x + 16, y: y + 60 });
+export const frameAt = ({ x, y }) => ({ x: x - 16, y: y - 60 });
+
+const WALL_HEIGHT = 64;
+const FOOT_MIN = 16;
+const FOOT_MAX = 32;
+
+const blockRect = (grid, left, top, right, bottom) => {
+  const firstColumn = Math.max(0, Math.floor(left / CELL));
+  const lastColumn = Math.min(COLUMNS - 1, Math.ceil(right / CELL) - 1);
+  const firstRow = Math.max(0, Math.floor(top / CELL));
+  const lastRow = Math.min(ROWS - 1, Math.ceil(bottom / CELL) - 1);
+  for (let row = firstRow; row <= lastRow; row += 1) {
+    for (let column = firstColumn; column <= lastColumn; column += 1) {
+      grid[row * COLUMNS + column] = 1;
+    }
+  }
+};
+
+// The base of a piece: its bottom half, between 16 and 32 px high. Things
+// standing on a desk (`sortY`) and wall decoration take no floor.
+export function footprint(item, size) {
+  if (item.sortY !== undefined) return null;
+  const bottom = item.y + size.height;
+  if (bottom <= WALL_HEIGHT) return null;
+  const height = Math.min(FOOT_MAX, Math.max(FOOT_MIN, size.height / 2));
+  return {
+    left: item.x,
+    top: Math.max(item.y, bottom - height, WALL_HEIGHT),
+    right: item.x + size.width,
+    bottom,
+  };
+}
+
+// `sizes[sprite]` is `{ width, height }` of each piece as drawn (cropped).
+export function buildCollision(sizes, items = ITEMS) {
+  const grid = new Uint8Array(COLUMNS * ROWS);
+  WALLS.forEach(wall =>
+    blockRect(grid, wall.x, wall.y, wall.x + wall.w, wall.y + WALL_HEIGHT)
+  );
+  let top = 0;
+  [...PARTITION.gaps, [WORLD.height, WORLD.height]].forEach(
+    ([gapTop, gapBottom]) => {
+      blockRect(grid, PARTITION.x, top, PARTITION.x + PARTITION.width, gapTop);
+      top = gapBottom;
+    }
+  );
+  items.forEach(item => {
+    const base = sizes[item.sprite] && footprint(item, sizes[item.sprite]);
+    if (base) blockRect(grid, base.left, base.top, base.right, base.bottom);
+  });
+  // The outer frame of the clinic.
+  blockRect(grid, 0, WORLD.height - 4, WORLD.width, WORLD.height);
+  blockRect(grid, 0, 0, 4, WORLD.height);
+  blockRect(grid, WORLD.width - 4, 0, WORLD.width, WORLD.height);
+  return grid;
+}
+
+export const cellOf = point => ({
+  column: Math.floor(point.x / CELL),
+  row: Math.floor(point.y / CELL),
+});
+
+export const centerOf = cell => ({
+  x: cell.column * CELL + CELL / 2,
+  y: cell.row * CELL + CELL / 2,
+});
+
+export function isFree(grid, point) {
+  const { column, row } = cellOf(point);
+  if (column < 0 || row < 0 || column >= COLUMNS || row >= ROWS) return false;
+  return grid[row * COLUMNS + column] === 0;
+}

@@ -30,6 +30,14 @@ RSpec.describe VirtualClinic::Persona do
     end
   end
 
+  it 'takes the names the clinic gave the team in the editor' do
+    VirtualClinicLayout.new(account: account, layout: { 'team' => { 'manager' => { 'name' => 'Marta' } } }).save!(validate: false)
+
+    expect(described_class.all(account: account).map(&:name)).to eq(%w[Clara Marta])
+    expect(described_class.find!('secretary', account: account).instructions(account: account, user: user))
+      .to include('a Marta, a gerente, responde isso melhor')
+  end
+
   it 'refuses an unknown persona' do
     expect { described_class.find!('financeiro') }.to raise_error(ActiveRecord::RecordNotFound)
   end
