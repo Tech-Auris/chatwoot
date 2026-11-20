@@ -98,6 +98,30 @@ describe('team behavior', () => {
     expect(clara.sitting).toBe(false);
   });
 
+  it("walks Helena to Clara's desk while she asks her, and back after", () => {
+    const behavior = createTeamBehavior({
+      personas: ['secretary', 'manager'],
+      random: () => 0,
+    });
+    const helena = behavior.state.manager;
+    behavior.consult('manager', 'secretary', 0);
+    run(behavior, 0, 60000);
+    expect(helena).toMatchObject({
+      away: true,
+      talking: true,
+      direction: 'up',
+    });
+    expect(behavior.state.secretary.talking).toBe(true);
+
+    behavior.release(60000);
+    run(behavior, 60100, 90000);
+    expect([helena.x, helena.y]).toEqual([
+      CHARACTERS.manager.x,
+      CHARACTERS.manager.y,
+    ]);
+    expect(helena.away).toBe(false);
+  });
+
   it('finds a way for every walk, from the teammate seat', () => {
     TRIPS.forEach(trip => {
       const path = plan(trip);

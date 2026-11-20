@@ -41,6 +41,8 @@ const props = defineProps({
   layout: { type: Object, default: () => DEFAULT_LAYOUT },
   // The clinic editor (useClinicLayout) while the user edits the clinic.
   editor: { type: Object, default: null },
+  // One AI teammate asking another right now: `{ persona, target }`.
+  consulting: { type: Object, default: null },
 });
 const emit = defineEmits(['selectMember', 'peopleOnMap', 'layoutChanged']);
 
@@ -186,6 +188,14 @@ watch(
 // What each teammate is doing, over their head (hidden while away).
 const bubble = persona => {
   if (editing.value) return '';
+  if (props.consulting?.persona === persona) {
+    const teammate = members.value.find(
+      m => m.persona === props.consulting.target
+    );
+    return t('VIRTUAL_CLINIC.MAP.ASKING', {
+      name: teammate ? nameOf(teammate) : '',
+    });
+  }
   if (props.thinking === persona) return t('VIRTUAL_CLINIC.MAP.THINKING');
   if (placeOf(persona).away) return '';
   if (!props.status) return '';
@@ -273,6 +283,22 @@ watch(
   () => sprites && rebuild()
 );
 watch(editing, restartBehavior);
+
+// The manager walks to the secretary's desk while she asks her something.
+watch(
+  () => props.consulting,
+  consulting => {
+    if (consulting) {
+      behavior?.consult(
+        consulting.persona,
+        consulting.target,
+        performance.now()
+      );
+    } else {
+      behavior?.release(performance.now());
+    }
+  }
+);
 
 // Editor check before saving, as a message (empty when all is fine).
 const check = layout => {

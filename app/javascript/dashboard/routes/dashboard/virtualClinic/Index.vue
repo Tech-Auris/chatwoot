@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { useMapGetter, useStore } from 'dashboard/composables/store';
 import { useAccount } from 'dashboard/composables/useAccount';
+import { useEmitter } from 'dashboard/composables/emitter';
 import VirtualClinicShell from './components/VirtualClinicShell.vue';
 import TeamPanel from './components/TeamPanel.vue';
 import AiChatPanel from './components/AiChatPanel.vue';
@@ -26,6 +27,14 @@ const map = ref(null);
 const editor = reactive(useClinicLayout());
 const thinking = ref('');
 const peopleOnMap = ref([]);
+// The manager asking the secretary something (delegation), for the map.
+const consulting = ref(null);
+useEmitter('virtualClinicActivity', data => {
+  consulting.value =
+    data.state === 'asking'
+      ? { persona: data.persona, target: data.target }
+      : null;
+});
 const currentUser = useMapGetter('getCurrentUser');
 
 // The avatar of whoever opened the clinic.
@@ -133,6 +142,7 @@ onMounted(() => {
       :me="me"
       :layout="editor.layout"
       :editor="editor"
+      :consulting="consulting"
       @select-member="selectedMember = $event"
       @people-on-map="peopleOnMap = $event"
       @layout-changed="reloadLayout"
