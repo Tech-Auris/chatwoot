@@ -1,7 +1,7 @@
 // Loads the clinic art. Furniture pieces from the pack carry a lot of
 // transparent margin, so each one is cropped to its outline on load; floor
 // and wall blocks and character sheets keep their exact grid.
-const KEEP_GRID = /^(5_pisos|6_paredes|7_personagens)\//;
+const KEEP_GRID = /^(5_pisos|6_paredes|7_personagens|8_pessoas)\//;
 
 export function cropToOutline(image) {
   const canvas = document.createElement('canvas');

@@ -1,7 +1,16 @@
 import { describe, it, expect } from 'vitest';
-import { createTeamBehavior } from '../engine/behavior';
-import { CHARACTERS } from '../engine/layout';
-import { TRIPS } from '../engine/trips';
+import { createTeamBehavior as createBehavior } from '../engine/behavior';
+import { CHARACTERS, DEFAULT_LAYOUT, ITEMS } from '../engine/layout';
+import { buildCollision } from '../engine/collision';
+import { TRIPS, planTrip } from '../engine/trips';
+
+const grid = buildCollision(
+  Object.fromEntries(
+    ITEMS.map(({ sprite }) => [sprite, { width: 32, height: 32 }])
+  )
+);
+const plan = trip => planTrip(trip, { layout: DEFAULT_LAYOUT, grid });
+const createTeamBehavior = options => createBehavior({ plan, ...options });
 
 // `random` always 0: first trip after the minimum wait, first trip option.
 const run = (behavior, from, to, step = 100) => {
@@ -22,13 +31,11 @@ describe('team behavior', () => {
     run(behavior, 8000, 8500);
     expect(clara).toMatchObject({ away: true, moving: true });
 
-    const destination = TRIPS[0].path.at(-1);
     run(behavior, 8600, 30000);
     expect([clara.x, clara.y]).toEqual([
       CHARACTERS.secretary.x,
       CHARACTERS.secretary.y,
     ]);
-    expect(destination).toEqual([708, 140]);
     expect(clara).toMatchObject({
       away: false,
       moving: false,
@@ -91,10 +98,30 @@ describe('team behavior', () => {
     expect(clara.sitting).toBe(false);
   });
 
-  it('only takes walks that start at the teammate seat', () => {
+  it('finds a way for every walk, from the teammate seat', () => {
     TRIPS.forEach(trip => {
+      const path = plan(trip);
       const seat = CHARACTERS[trip.who];
-      expect(trip.path[0]).toEqual([seat.x, seat.y]);
+      expect(path, trip.key).not.toBeNull();
+      expect(path[0]).toEqual([seat.x, seat.y]);
     });
+  });
+
+  it('skips a walk to something that is no longer in the clinic', () => {
+    const layout = { ...DEFAULT_LAYOUT, items: [] };
+    const fridge = TRIPS.find(trip => trip.key === 'clara_fridge');
+    expect(planTrip(fridge, { layout, grid })).toBeNull();
+  });
+
+  it('goes to the new seat of a teammate who was moved', () => {
+    const layout = {
+      ...DEFAULT_LAYOUT,
+      team: {
+        ...DEFAULT_LAYOUT.team,
+        manager: { ...CHARACTERS.manager, x: 840, y: 150 },
+      },
+    };
+    const visit = TRIPS.find(trip => trip.key === 'clara_visits_helena');
+    expect(planTrip(visit, { layout, grid }).at(-1)).toEqual([840, 200]);
   });
 });

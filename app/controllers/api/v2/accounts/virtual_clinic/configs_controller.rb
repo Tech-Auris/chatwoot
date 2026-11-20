@@ -9,9 +9,10 @@ class Api::V2::Accounts::VirtualClinic::ConfigsController < Api::V1::Accounts::B
         visible: policy.ai_team_visible?,
         chat_enabled: policy.ai_chat?,
         chat_missing: policy.ai_team_visible? ? policy.missing_requirement : nil,
-        members: policy.ai_team_visible? ? ::VirtualClinic::Persona.all.map(&:as_json) : [],
+        members: policy.ai_team_visible? ? ::VirtualClinic::Persona.all(account: Current.account).map(&:as_json) : [],
         daily_question_limit: ::VirtualClinic::QuestionLimit.for(Current.account),
-        can_manage_settings: policy.update_settings?
+        can_manage_settings: policy.update_settings?,
+        can_edit_layout: policy.update_layout?
       }
     }
   end

@@ -11,7 +11,7 @@ class VirtualClinic::AnswerService
   def initialize(answer)
     @answer = answer
     @thread = answer.thread
-    @persona = VirtualClinic::Persona.find!(@thread.persona)
+    @persona = VirtualClinic::Persona.find!(@thread.persona, account: @thread.account)
   end
 
   def perform

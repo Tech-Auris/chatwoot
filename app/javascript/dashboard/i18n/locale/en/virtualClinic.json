@@ -24,7 +24,8 @@
         "ONLINE": "Online",
         "BUSY": "Busy",
         "OFFLINE": "Offline"
-      }
+      },
+      "ON_MAP": "In the clinic"
     },
     "CHAT": {
       "NEW": "New conversation",
@@ -96,7 +97,37 @@
       "ZOOM_IN": "Zoom in",
       "ZOOM_OUT": "Zoom out",
       "ZOOM_FIT": "Fit to screen",
-      "OFF_DUTY": "⏸ Not serving patients · {reason}"
+      "OFF_DUTY": "⏸ Not serving patients · {reason}",
+      "TALK_TO": "Talk to {name} (E)",
+      "MOVE_HINT": "Walk with the arrow keys or WASD, or click the floor"
+    },
+    "EDITOR": {
+      "EDIT": "Edit clinic",
+      "TITLE": "Editing the clinic",
+      "HINT": "Drag furniture and the team on the map. R turns the selected piece, Del removes it and Esc clears the selection.",
+      "SAVE": "Save",
+      "DISCARD": "Discard",
+      "RESTORE": "Restore default",
+      "RESTORE_CONFIRM": "Confirm: back to default",
+      "SELECTED": "Selected piece:",
+      "FLIP": "Turn (R)",
+      "REMOVE": "Remove (Del)",
+      "TEAM": "Team",
+      "ROOMS": "Room names",
+      "FLOORS": "Floors",
+      "WALLS": "Walls",
+      "WALL_AREAS": {
+        "0": "Reception and waiting room",
+        "1": "Management",
+        "2": "Kitchen"
+      },
+      "FURNITURE": "Furniture",
+      "FURNITURE_HINT": "Click a piece to put it in its room, then drag it on the map.",
+      "ERRORS": {
+        "ENTRANCE": "The clinic entrance is blocked. Move what is in front of the door.",
+        "UNREACHABLE": "Nobody can reach {name}. Open a way to the desk.",
+        "SAVE": "Could not save the clinic. Try again."
+      }
     }
   }
 }
