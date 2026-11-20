@@ -31,7 +31,8 @@ RSpec.describe VirtualClinicChannel do
     expect { perform :move, x: 120.7, y: '88', direction: 'left', moving: true }
       .to have_broadcasted_to("virtual_clinic_#{account.id}")
       .with(event: 'virtual_clinic.presence',
-            data: { user_id: user.id, name: 'Fábio', x: 120, y: 88, moving: true, direction: 'left', avatar: nil })
+            data: { user_id: user.id, name: 'Fábio', x: 120, y: 88, moving: true, direction: 'left',
+                    sitting: false, compact: false, avatar: nil })
   end
 
   it 'shares the look made in the avatar editor, and drops anything else' do
@@ -43,6 +44,13 @@ RSpec.describe VirtualClinicChannel do
     expect { perform :move, x: 1, y: 2, avatar: look.merge('hair' => '../secret') }
       .to have_broadcasted_to("virtual_clinic_#{account.id}")
       .with(hash_including(data: hash_including(avatar: nil)))
+  end
+
+  it 'shares whether the avatar is sitting' do
+    join
+    expect { perform :move, x: 1, y: 2, direction: 'left', sitting: true, compact: true }
+      .to have_broadcasted_to("virtual_clinic_#{account.id}")
+      .with(hash_including(data: hash_including(sitting: true, compact: true)))
   end
 
   it 'falls back to facing down on an unknown direction' do

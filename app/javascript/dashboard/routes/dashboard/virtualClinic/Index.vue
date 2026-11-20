@@ -11,6 +11,8 @@ import AiChatPanel from './components/AiChatPanel.vue';
 import ClinicMap from './components/ClinicMap.vue';
 import EditorPanel from './components/EditorPanel.vue';
 import AvatarEditor from './components/AvatarEditor.vue';
+import NewsPanel from './components/NewsPanel.vue';
+import { useHelenaNews } from './composables/useHelenaNews';
 import { FLOORS, sheetForUser } from './engine/layout';
 import { useUISettings } from 'dashboard/composables/useUISettings';
 import { useClinicLayout } from './composables/useClinicLayout';
@@ -103,6 +105,33 @@ const openMember = computed(() => {
   return aiTeam.value.members.find(m => m.persona === selectedMember.value);
 });
 
+// The manager's news for this person: notifications since they last opened
+// her and a new version. Her "!" counts them; opening her shows them once.
+const NEWS_PERSONA = 'manager';
+const news = useHelenaNews(computed(() => currentUser.value?.id));
+const shownNews = ref(null);
+const teamAlerts = computed(() => {
+  const counts = alertCounts.value || {};
+  return {
+    ...counts,
+    [NEWS_PERSONA]: (counts[NEWS_PERSONA] || 0) + news.count.value,
+  };
+});
+watch(selectedMember, persona => {
+  if (persona !== NEWS_PERSONA) return;
+  shownNews.value = {
+    notifications: [...news.notifications.value],
+    release: news.release.value,
+  };
+  news.markSeen();
+});
+// Without the chat, the manager still tells her news.
+const newsMember = computed(() => {
+  if (openMember.value || editor.editing) return null;
+  if (selectedMember.value !== NEWS_PERSONA) return null;
+  return aiTeam.value?.members.find(m => m.persona === NEWS_PERSONA) || null;
+});
+
 const closeChat = () => {
   selectedMember.value = '';
   if (route.query.member) router.replace({ query: {} });
@@ -172,7 +201,7 @@ onMounted(() => {
       :status="status"
       :selected="selectedMember"
       :people-on-map="peopleOnMap"
-      :alert-counts="alertCounts"
+      :alert-counts="teamAlerts"
       @select-member="selectedMember = $event"
       @edit="startEditing"
       @edit-avatar="avatarFor = { persona: $event || null }"
@@ -187,7 +216,7 @@ onMounted(() => {
       :layout="editor.layout"
       :editor="editor"
       :consulting="consulting"
-      :alert-counts="alertCounts"
+      :alert-counts="teamAlerts"
       @select-member="selectedMember = $event"
       @people-on-map="peopleOnMap = $event"
       @layout-changed="reloadLayout"
@@ -197,7 +226,14 @@ onMounted(() => {
       :key="openMember.persona"
       :member="openMember"
       :alert-count="alertCounts[openMember.persona] || 0"
+      :news="openMember.persona === NEWS_PERSONA ? shownNews : null"
       @thinking="thinking = $event"
+      @close="closeChat"
+    />
+    <NewsPanel
+      v-else-if="newsMember && shownNews"
+      :member="newsMember"
+      :news="shownNews"
       @close="closeChat"
     />
     <AvatarEditor

@@ -19,14 +19,19 @@
       "CHAT": "Chat"
     },
     "PEOPLE": {
-      "TITLE": "Pessoas · {count} online",
       "YOU": "(você)",
       "STATUS": {
         "ONLINE": "Online",
         "BUSY": "Ocupado",
         "OFFLINE": "Offline"
       },
-      "ON_MAP": "Na clínica"
+      "ON_MAP": "Na clínica",
+      "SEARCH": "Buscar pessoas",
+      "GROUPS": {
+        "ONLINE": "Online ({count})",
+        "OFFLINE": "Offline ({count})"
+      },
+      "NEW": "Novo 🎉"
     },
     "CHAT": {
       "NEW": "Nova conversa",
@@ -157,6 +162,14 @@
         "HAIR": "Cabelo",
         "ACCESSORY": "Acessório"
       }
+    },
+    "NEWS": {
+      "NOTIFICATIONS": "Você tem 1 notificação nova | Você tem {n} notificações novas",
+      "OPEN_NOTIFICATIONS": "Abrir notificações",
+      "RELEASE": "Saiu uma versão nova ({tag}). O que mudou:",
+      "OPEN_RELEASE": "Ver novidades",
+      "HELLO": "Oi! Aqui é a {name}. Separei o que chegou para você:",
+      "NOTHING": "Oi! Aqui é a {name}. Nada de novo para você por enquanto."
     }
   }
 }

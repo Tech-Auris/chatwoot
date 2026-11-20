@@ -7,7 +7,7 @@ const GONE_MS = 15000;
 const SPEED = 160; // others glide to their last known spot, world px/s
 
 // Everyone else walking on the map of this account (VirtualClinicChannel).
-// `others` maps user id → `{ name, x, y, direction, moving, avatar }`, x/y being
+// `others` maps user id → `{ name, x, y, direction, moving, sitting, avatar }`, x/y being
 // where they are drawn now; positions arrive a few times per second and
 // are smoothed in `step`.
 export function useClinicPresence() {
@@ -22,7 +22,7 @@ export function useClinicPresence() {
   const send = (position, force = false) => {
     if (!subscription) return;
     const now = Date.now();
-    const key = `${Math.round(position.x)},${Math.round(position.y)},${position.direction},${position.moving}`;
+    const key = `${Math.round(position.x)},${Math.round(position.y)},${position.direction},${position.moving},${position.sitting}`;
     const changed = key !== lastSent.key;
     if (!force && now - lastSent.at < (changed ? SEND_MS : HEARTBEAT_MS)) {
       return;
@@ -33,6 +33,8 @@ export function useClinicPresence() {
       y: Math.round(position.y),
       direction: position.direction,
       moving: position.moving,
+      sitting: position.sitting === true,
+      compact: position.compact === true,
       avatar: me.look(),
     });
   };

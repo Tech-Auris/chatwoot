@@ -16,6 +16,7 @@ class VirtualClinicChannel < ApplicationCable::Channel
   def move(data)
     broadcast(x: data['x'].to_i, y: data['y'].to_i, moving: data['moving'] == true,
               direction: DIRECTIONS.include?(data['direction']) ? data['direction'] : 'down',
+              sitting: data['sitting'] == true, compact: data['compact'] == true,
               avatar: VirtualClinic::Avatar.sanitize(data['avatar']))
   end
 

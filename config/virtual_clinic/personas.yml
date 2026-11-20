@@ -2,7 +2,8 @@
 # gets from the MCP Auris; `model_config_key` is the InstallationConfig
 # entry that picks its OpenAI model; `delegates_to` are the teammates it can
 # ask (one level: they can't ask back). `role` and `scope` describe the
-# persona to whoever asks it.
+# persona to whoever asks it. `restricted` personas show what they are doing
+# (their numbers on the map) to administrators and managers only.
 secretary:
   default_name: Clara
   role: secretária
@@ -30,6 +31,7 @@ manager:
   delegates_to:
     - secretary
   charts: true
+  restricted: true
   model_config_key: VIRTUAL_CLINIC_MANAGER_MODEL
   default_model: gpt-5.1
   tools:

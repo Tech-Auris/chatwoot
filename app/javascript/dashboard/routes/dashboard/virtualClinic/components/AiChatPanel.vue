@@ -7,11 +7,14 @@ import VirtualClinicAPI from 'dashboard/api/virtualClinic';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import ChatChart from './ChatChart.vue';
+import HelenaNews from './HelenaNews.vue';
 
 const props = defineProps({
   member: { type: Object, required: true },
   // Open alerts of this teammate: shown on top and acknowledged on open.
   alertCount: { type: Number, default: 0 },
+  // The manager's news for this person (notifications, new version).
+  news: { type: Object, default: null },
 });
 const emit = defineEmits(['close', 'thinking']);
 
@@ -281,6 +284,12 @@ useEmitter('virtualClinicMessageUpdated', data => {
           </li>
         </ul>
       </div>
+      <HelenaNews
+        v-if="news"
+        class="self-start max-w-[92%]"
+        :notifications="news.notifications"
+        :release="news.release"
+      />
     </div>
 
     <div class="flex flex-wrap gap-1.5 px-4 pb-2">

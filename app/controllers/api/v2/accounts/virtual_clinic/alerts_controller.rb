@@ -3,7 +3,7 @@
 class Api::V2::Accounts::VirtualClinic::AlertsController < Api::V1::Accounts::BaseController
   SHOWN = 20
 
-  before_action { authorize :virtual_clinic, :ai_team_visible? }
+  before_action { authorize :virtual_clinic, :ai_team_manager? }
 
   def index
     alerts = Current.account.virtual_clinic_alerts.open.order(created_at: :desc).limit(SHOWN)
