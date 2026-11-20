@@ -202,6 +202,25 @@ RSpec.describe V2::Reports::HomeBuilder do
     end
   end
 
+  describe 'funnel' do
+    before do
+      FunnelStage.find_or_create_by!(name: 'Em Qualificação') { |stage| stage.assign_attributes(position: 10, color: '#000') }
+    end
+
+    it 'counts the leads that arrived in the period as Total de leads, the same as the Leads card' do
+      move(lead, 'Agendado', at: now - 1.day)
+      lead
+      lead(ai_enabled: false)
+      move(lead(created_at: now - 20.days), 'Agendado', at: now - 2.days)
+
+      total, scheduling = section('funnel')[:funnel].values_at(0, 1)
+
+      expect(total).to include(count: 3, count_ai: 2, count_manual: 1, conversion_rate: 66.67, drop_off_count: 1)
+      expect(total[:count]).to eq(section('leads')[:leads][:total])
+      expect(scheduling).to include(key: 'Agendamento', count: 2)
+    end
+  end
+
   describe 'today' do
     it 'summarizes today, tomorrow and the leads waiting for an answer' do
       lead(created_at: now - 1.hour)

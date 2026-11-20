@@ -191,7 +191,10 @@ class V2::Reports::Home::MetricsBuilder
   end
 
   def funnel_section
-    report = V2::Reports::FunnelConversionBuilder.new(account: scope.account, params: funnel_params).build
+    # "Total de leads" is the Leads card: the conversations that arrived in the period.
+    report = V2::Reports::FunnelConversionBuilder.new(
+      account: scope.account, params: funnel_params, leads: scope.conversations.where(created_at: period.range)
+    ).build
     { funnel: report[:stages], loss_reasons: report[:loss_reasons] }
   end
 
