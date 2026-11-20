@@ -424,6 +424,7 @@ const menuItems = computed(() => {
             getterKeys: {
               count: 'virtualClinic/getMenuBadge',
             },
+            badgeVariant: 'brand',
           },
         ]
       : []),
