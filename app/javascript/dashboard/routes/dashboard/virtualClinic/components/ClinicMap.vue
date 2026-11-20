@@ -83,6 +83,7 @@ let seats = [];
 let avatar = null;
 const mine = ref(null);
 const presence = useClinicPresence();
+const { passive } = presence;
 const loadingSheets = new Set();
 // The counter keeps people about three tiles from Clara.
 const NEAR = 4 * TILE;
@@ -139,7 +140,7 @@ const people = computed(() => {
     userId: Number(id),
     sheet: place.avatar ? lookSheet(place.avatar) : sheetForUser(Number(id)),
   }));
-  if (mine.value && props.me) {
+  if (mine.value && props.me && !passive.value) {
     list.push({
       ...mine.value,
       userId: props.me.id,
@@ -415,7 +416,8 @@ const animate = now => {
       ])
     );
   }
-  if (avatar) {
+  // In another tab the clinic is open too and that one is the person.
+  if (avatar && !passive.value) {
     const wasMoving = avatar.state.moving;
     avatar.update(seconds);
     // Standing still on a chair: sit on it, facing where it faces.
@@ -790,6 +792,20 @@ onBeforeUnmount(() => {
       >
         {{ t('VIRTUAL_CLINIC.MAP.MOVE_HINT') }}
       </span>
+    </div>
+    <div
+      v-if="passive && !editing"
+      class="absolute z-20 flex items-center gap-3 px-4 py-2 text-sm -translate-x-1/2 rounded-xl shadow-lg top-4 left-1/2 bg-n-solid-1 text-n-slate-12"
+    >
+      <Icon icon="i-lucide-copy" class="size-4 text-n-slate-11" />
+      {{ t('VIRTUAL_CLINIC.MAP.OTHER_TAB') }}
+      <button
+        type="button"
+        class="px-2.5 py-1 text-xs font-medium text-white rounded-lg bg-n-brand"
+        @click="presence.takeOver()"
+      >
+        {{ t('VIRTUAL_CLINIC.MAP.USE_HERE') }}
+      </button>
     </div>
     <div
       v-if="loading || failed"

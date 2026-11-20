@@ -117,7 +117,9 @@
       "TALK_TO": "Conversar com {name} (E)",
       "MOVE_HINT": "Ande com as setas ou WASD, ou clique no chão",
       "ASKING": "💬 Perguntando para {name}…",
-      "RAISED_HAND": "!"
+      "RAISED_HAND": "!",
+      "OTHER_TAB": "A clínica está aberta em outra aba.",
+      "USE_HERE": "Usar aqui"
     },
     "EDITOR": {
       "EDIT": "Editar clínica",

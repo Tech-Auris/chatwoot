@@ -117,7 +117,9 @@
       "TALK_TO": "Talk to {name} (E)",
       "MOVE_HINT": "Walk with the arrow keys or WASD, or click the floor",
       "ASKING": "💬 Asking {name}…",
-      "RAISED_HAND": "!"
+      "RAISED_HAND": "!",
+      "OTHER_TAB": "The clinic is open in another tab.",
+      "USE_HERE": "Use here"
     },
     "EDITOR": {
       "EDIT": "Edit clinic",
