@@ -13,7 +13,7 @@ export const WORLD = { width: 30 * TILE, height: 20 * TILE };
 // the glass door of the recepção is the way in and out.
 export const GARDEN = 8 * TILE;
 // Below the clinic there's room for the garden square (fountain, benches).
-const GARDEN_BOTTOM = 20 * TILE;
+const GARDEN_BOTTOM = 16 * TILE;
 export const SCENE = {
   x: -GARDEN,
   y: -GARDEN,
@@ -26,7 +26,7 @@ export const DOOR = { x: 48, width: 48 };
 export const FACADE = 2 * TILE;
 export const BACK_DOOR = { x: 776, width: 48 };
 // The garden square, centered under the clinic.
-export const PLAZA = { x: 272, y: 760, w: 416, h: 320 };
+export const PLAZA = { x: 324, y: 752, w: 312, h: 240 };
 
 const R = '1_recepcao/';
 const E = '2_sala_de_espera/';
@@ -141,38 +141,39 @@ export const ITEMS = [
   { sprite: `${C}lixeira.png`, x: 920, y: 592 },
 ];
 
-// The garden around the clinic (fixed, not part of the editor).
+// The garden around the clinic (fixed, not part of the editor). `scale`
+// draws the same tree bigger or smaller.
 const J = '10_jardim/';
 export const GARDEN_ITEMS = [
   // Above the clinic, leaving the way to the door free.
   { sprite: `${J}arvore_carvalho.png`, x: -230, y: -240 },
   { sprite: `${J}canteiro_flores_3.png`, x: -40, y: -44 },
   { sprite: `${J}canteiro_flores_1.png`, x: 128, y: -44 },
-  { sprite: `${J}pinheiro.png`, x: 150, y: -200 },
-  { sprite: `${J}arvore_redonda.png`, x: 240, y: -150 },
+  { sprite: `${J}pinheiro.png`, x: 150, y: -220, scale: 1.3 },
+  { sprite: `${J}arvore_redonda.png`, x: 240, y: -150, scale: 0.8 },
   { sprite: `${J}arvore_frondosa.png`, x: 330, y: -230 },
-  { sprite: `${J}cipreste.png`, x: 500, y: -140 },
+  { sprite: `${J}cipreste.png`, x: 500, y: -160, scale: 1.2 },
   { sprite: `${J}arvore_grande.png`, x: 600, y: -200 },
   { sprite: `${J}arbusto_pequeno.png`, x: 580, y: -46 },
   { sprite: `${J}arvore_larga.png`, x: 720, y: -120 },
-  { sprite: `${J}pinheiro.png`, x: 900, y: -230 },
-  { sprite: `${J}arvore_carvalho.png`, x: 1000, y: -250 },
+  { sprite: `${J}pinheiro.png`, x: 900, y: -230, scale: 0.8 },
+  { sprite: `${J}arvore_carvalho.png`, x: 1000, y: -200, scale: 0.8 },
   { sprite: `${J}arvore_redonda_2.png`, x: 1110, y: -110 },
   // Left.
-  { sprite: `${J}arvore_grande_2.png`, x: -200, y: 20 },
-  { sprite: `${J}pinheiro.png`, x: -90, y: 120 },
-  { sprite: `${J}arvore_frondosa.png`, x: -250, y: 230 },
+  { sprite: `${J}arvore_grande_2.png`, x: -200, y: 0, scale: 1.3 },
+  { sprite: `${J}pinheiro.png`, x: -90, y: 140, scale: 0.75 },
+  { sprite: `${J}arvore_frondosa.png`, x: -250, y: 230, scale: 0.8 },
   { sprite: `${J}arbusto.png`, x: -60, y: 300 },
   { sprite: `${J}cipreste.png`, x: -150, y: 400 },
-  { sprite: `${J}arvore_carvalho.png`, x: -240, y: 500 },
-  { sprite: `${J}arvore_redonda.png`, x: -110, y: 600 },
+  { sprite: `${J}arvore_carvalho.png`, x: -240, y: 500, scale: 1.2 },
+  { sprite: `${J}arvore_redonda.png`, x: -80, y: 640, scale: 0.7 },
   // Right.
-  { sprite: `${J}arvore_copa.png`, x: 1000, y: 40 },
-  { sprite: `${J}arvore_frondosa.png`, x: 1070, y: 150 },
-  { sprite: `${J}cipreste_2.png`, x: 990, y: 280 },
+  { sprite: `${J}arvore_copa.png`, x: 1000, y: 30, scale: 1.3 },
+  { sprite: `${J}arvore_frondosa.png`, x: 1070, y: 150, scale: 0.8 },
+  { sprite: `${J}cipreste_2.png`, x: 990, y: 280, scale: 0.8 },
   { sprite: `${J}arvore_carvalho.png`, x: 1050, y: 330 },
-  { sprite: `${J}pinheiro.png`, x: 990, y: 470 },
-  { sprite: `${J}arvore_grande.png`, x: 1110, y: 560 },
+  { sprite: `${J}pinheiro.png`, x: 990, y: 470, scale: 1.2 },
+  { sprite: `${J}arvore_grande.png`, x: 1110, y: 570, scale: 0.8 },
   { sprite: `${J}arbusto_pequeno.png`, x: 980, y: 640 },
   // By the copa door, along the outside wall.
   { sprite: `${J}arbusto_pequeno.png`, x: 704, y: 708 },
@@ -180,34 +181,34 @@ export const GARDEN_ITEMS = [
   { sprite: `${J}arbusto_pequeno.png`, x: 832, y: 712 },
   { sprite: `${J}arbusto_pequeno.png`, x: 864, y: 708 },
   // The garden square: the fountain, benches and lounge chairs around it.
-  { sprite: `${J}fonte.png`, x: 416, y: 852 },
-  { sprite: `${J}banco_frente.png`, x: 438, y: 780 },
-  { sprite: `${J}espreguicadeira.png`, x: 340, y: 772 },
-  { sprite: `${J}espreguicadeira.png`, x: 584, y: 772 },
-  { sprite: `${J}banco_lado.png`, x: 300, y: 862, flip: true },
-  { sprite: `${J}banco_lado.png`, x: 628, y: 862 },
-  { sprite: `${J}banco_sem_encosto.png`, x: 358, y: 1026 },
-  { sprite: `${J}banco_sem_encosto.png`, x: 538, y: 1026 },
-  { sprite: `${J}capim.png`, x: 282, y: 774 },
-  { sprite: `${J}capim.png`, x: 650, y: 774 },
-  { sprite: `${J}arbusto_pequeno.png`, x: 284, y: 1040 },
-  { sprite: `${J}arbusto_pequeno.png`, x: 644, y: 1040 },
+  { sprite: `${J}fonte.png`, x: 448, y: 842 },
+  { sprite: `${J}banco_frente.png`, x: 438, y: 764 },
+  { sprite: `${J}espreguicadeira.png`, x: 364, y: 758 },
+  { sprite: `${J}espreguicadeira.png`, x: 560, y: 758 },
+  { sprite: `${J}banco_lado.png`, x: 340, y: 826, flip: true },
+  { sprite: `${J}banco_lado.png`, x: 588, y: 826 },
+  { sprite: `${J}banco_sem_encosto.png`, x: 382, y: 950 },
+  { sprite: `${J}banco_sem_encosto.png`, x: 514, y: 950 },
+  { sprite: `${J}capim.png`, x: 332, y: 764 },
+  { sprite: `${J}capim.png`, x: 600, y: 764 },
+  { sprite: `${J}arbusto_pequeno.png`, x: 334, y: 958 },
+  { sprite: `${J}arbusto_pequeno.png`, x: 594, y: 958 },
   // Below, around the square.
-  { sprite: `${J}arvore_grande_2.png`, x: -200, y: 740 },
-  { sprite: `${J}arvore_redonda_2.png`, x: 40, y: 800 },
-  { sprite: `${J}arvore_carvalho.png`, x: -60, y: 900 },
-  { sprite: `${J}cipreste.png`, x: 170, y: 980 },
-  { sprite: `${J}pinheiro.png`, x: -220, y: 1080 },
-  { sprite: `${J}arvore_frondosa.png`, x: 60, y: 1130 },
-  { sprite: `${J}arvore_redonda.png`, x: 900, y: 790 },
-  { sprite: `${J}arvore_grande.png`, x: 730, y: 900 },
-  { sprite: `${J}arvore_larga.png`, x: 930, y: 960 },
-  { sprite: `${J}cipreste_2.png`, x: 1130, y: 900 },
-  { sprite: `${J}arvore_carvalho.png`, x: 760, y: 1060 },
-  { sprite: `${J}arvore_copa.png`, x: 1100, y: 1150 },
-  { sprite: `${J}canteiro_flores_5.png`, x: 436, y: 1120 },
-  { sprite: `${J}pinheiro.png`, x: 300, y: 1150 },
-  { sprite: `${J}arbusto.png`, x: 600, y: 1150 },
+  { sprite: `${J}arvore_grande_2.png`, x: -200, y: 720, scale: 0.9 },
+  { sprite: `${J}arvore_redonda_2.png`, x: 60, y: 760 },
+  { sprite: `${J}arvore_carvalho.png`, x: -40, y: 880 },
+  { sprite: `${J}cipreste.png`, x: 200, y: 900, scale: 0.8 },
+  { sprite: `${J}pinheiro.png`, x: -220, y: 1000, scale: 1.3 },
+  { sprite: `${J}arvore_frondosa.png`, x: 150, y: 1040, scale: 0.8 },
+  { sprite: `${J}arvore_redonda.png`, x: 930, y: 760, scale: 0.8 },
+  { sprite: `${J}arvore_grande.png`, x: 700, y: 820, scale: 1.2 },
+  { sprite: `${J}arvore_larga.png`, x: 880, y: 900 },
+  { sprite: `${J}cipreste_2.png`, x: 1120, y: 860, scale: 1.2 },
+  { sprite: `${J}arvore_carvalho.png`, x: 760, y: 990, scale: 0.8 },
+  { sprite: `${J}arvore_copa.png`, x: 1090, y: 1040 },
+  { sprite: `${J}canteiro_flores_5.png`, x: 436, y: 1040 },
+  { sprite: `${J}pinheiro.png`, x: 330, y: 1050, scale: 0.75 },
+  { sprite: `${J}arbusto.png`, x: 600, y: 1060 },
 ];
 
 // Where each AI teammate sits (top-left of the 32×64 frame) and their

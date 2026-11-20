@@ -127,15 +127,18 @@ function drawBackground(sprites, layout) {
   return canvas;
 }
 
+// `scale` draws a garden piece bigger or smaller; `flip` mirrors it.
 function drawItem(context, image, item) {
+  const width = Math.round(image.width * (item.scale || 1));
+  const height = Math.round(image.height * (item.scale || 1));
   if (!item.flip) {
-    context.drawImage(image, item.x, item.y);
+    context.drawImage(image, item.x, item.y, width, height);
     return;
   }
   context.save();
-  context.translate(item.x + image.width, item.y);
+  context.translate(item.x + width, item.y);
   context.scale(-1, 1);
-  context.drawImage(image, 0, 0);
+  context.drawImage(image, 0, 0, width, height);
   context.restore();
 }
 
@@ -213,8 +216,9 @@ function drawPlan(context, layout, items) {
     context.fillRect(wall.x, wall.y, wall.w, 2 * TILE)
   );
   items.forEach(item => {
-    const { width, height } = item.image;
-    if (/(arvore|cipreste)/.test(item.sprite)) {
+    const width = item.image.width * (item.scale || 1);
+    const height = item.image.height * (item.scale || 1);
+    if (/(arvore|cipreste|pinheiro)/.test(item.sprite)) {
       context.fillStyle = PLAN.tree;
       context.beginPath();
       context.arc(
@@ -258,7 +262,8 @@ export function createRenderer(canvas, sprites, layout = DEFAULT_LAYOUT) {
     .map(item => ({
       ...item,
       image: sprites[item.sprite],
-      depth: item.sortY ?? item.y + sprites[item.sprite].height,
+      depth:
+        item.sortY ?? item.y + sprites[item.sprite].height * (item.scale || 1),
     }));
 
   // `selected` (editor): the box of the piece or teammate being moved;

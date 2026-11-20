@@ -99,6 +99,21 @@ describe('findPath', () => {
     path.forEach(cell => expect(isFree(grid, centerOf(cell))).toBe(true));
   });
 
+  it('blocks a garden tree at its trunk, drawn bigger or smaller', () => {
+    const tree = { sprite: '10_jardim/pinheiro.png', x: -200, y: -200 };
+    const treeSizes = {
+      ...sizes,
+      '10_jardim/pinheiro.png': { width: 64, height: 96 },
+    };
+    const small = buildCollision(treeSizes, ITEMS, [tree]);
+    const big = buildCollision(treeSizes, ITEMS, [{ ...tree, scale: 1.5 }]);
+
+    // Trunk: bottom middle of the drawn tree.
+    expect(isFree(small, { x: -168, y: -110 })).toBe(false);
+    expect(isFree(big, { x: -168, y: -110 })).toBe(true);
+    expect(isFree(big, { x: -152, y: -62 })).toBe(false);
+  });
+
   it('goes out to the garden through the glass door only', () => {
     const outside = { x: -80, y: -80 };
     const path = findPath(grid, cellOf(feetOf(ENTRANCE)), cellOf(outside));

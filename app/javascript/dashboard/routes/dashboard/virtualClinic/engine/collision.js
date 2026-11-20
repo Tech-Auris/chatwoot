@@ -93,9 +93,11 @@ export function buildCollision(sizes, items = ITEMS, garden = GARDEN_ITEMS) {
   );
   // Trees block at their trunk only; the rest of the garden at its base.
   garden.forEach(item => {
-    const size = sizes[item.sprite];
-    if (!size) return;
-    if (!/(arvore|cipreste)/.test(item.sprite)) {
+    const drawn = sizes[item.sprite];
+    if (!drawn) return;
+    const scale = item.scale || 1;
+    const size = { width: drawn.width * scale, height: drawn.height * scale };
+    if (!/(arvore|cipreste|pinheiro)/.test(item.sprite)) {
       const base = footprint(item, size);
       if (base) blockRect(grid, base.left, base.top, base.right, base.bottom);
       return;
