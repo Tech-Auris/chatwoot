@@ -6,10 +6,10 @@ RSpec.describe AccountPrompt do
   let(:other_inbox) { create(:inbox, account: account) }
 
   it 'accepts clinic prompts longer than the 20k-character default' do
-    prompt = described_class.create!(account: account, name: 'Geral', ai_prompt_system_message: 'a' * 30_000)
+    prompt = described_class.create!(account: account, name: 'Geral', ai_prompt_system_message: 'a' * 150_000)
 
-    expect(prompt.reload.ai_prompt_system_message.length).to eq(30_000)
-    expect(described_class.new(account: account, name: 'Geral', ai_prompt_system_message: 'a' * 100_001)).not_to be_valid
+    expect(prompt.reload.ai_prompt_system_message.length).to eq(150_000)
+    expect(described_class.new(account: account, name: 'Geral', ai_prompt_system_message: 'a' * 250_001)).not_to be_valid
   end
 
   it 'accepts base blocks longer than the 20k-character default' do
