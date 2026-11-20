@@ -805,9 +805,7 @@ onBeforeUnmount(() => {
             :key="`person-${person.userId}`"
             class="absolute px-2 py-0.5 text-xs font-semibold rounded-full shadow pointer-events-none whitespace-nowrap -translate-x-1/2 -translate-y-full"
             :class="
-              person.self
-                ? 'bg-n-blue-9 text-white'
-                : 'bg-n-slate-3 text-n-slate-12'
+              person.self ? 'bg-n-blue-9 text-white' : 'bg-n-slate-9 text-white'
             "
             :style="at({ x: person.x + 16, y: person.y + 18 })"
           >
@@ -825,7 +823,7 @@ onBeforeUnmount(() => {
                 :class="
                   person.self
                     ? 'bg-n-blue-9 text-white'
-                    : 'bg-n-slate-3 text-n-slate-12'
+                    : 'bg-n-slate-9 text-white'
                 "
               >
                 {{ person.name }}
