@@ -28,7 +28,7 @@ class Api::V2::Accounts::VirtualClinic::ThreadsController < Api::V1::Accounts::B
   private
 
   def set_persona
-    @persona = ::VirtualClinic::Persona.find!(params[:persona])
+    @persona = ::VirtualClinic::Persona.find!(params[:persona], account: Current.account)
   end
 
   def current_thread

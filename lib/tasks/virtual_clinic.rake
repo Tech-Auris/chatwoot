@@ -5,7 +5,7 @@ namespace :virtual_clinic do
   task :eval, %i[account_id persona user_email] => :environment do |_task, args|
     account = Account.find(args[:account_id])
     VirtualClinic::Evaluation.new(account: account, user: account.users.find_by!(email: args[:user_email]),
-                                  persona: VirtualClinic::Persona.find!(args[:persona])).run
+                                  persona: VirtualClinic::Persona.find!(args[:persona], account: account)).run
   end
 
   # Uploads the approved LimeZu selection to private storage (production).

@@ -13,9 +13,11 @@ const props = defineProps({
   aiTeam: { type: Object, default: null },
   status: { type: Object, default: null },
   selected: { type: String, default: '' },
+  // User ids walking on the map right now.
+  peopleOnMap: { type: Array, default: () => [] },
 });
 
-const emit = defineEmits(['selectMember']);
+const emit = defineEmits(['selectMember', 'edit']);
 const { t } = useI18n();
 const store = useStore();
 const route = useRoute();
@@ -109,9 +111,20 @@ const select = member => {
   <section
     class="flex flex-col w-64 shrink-0 gap-4 p-4 border-r border-n-weak bg-n-solid-1"
   >
-    <h1 class="text-lg font-semibold text-n-slate-12 truncate">
-      {{ clinicName }}
-    </h1>
+    <div class="flex items-center gap-2">
+      <h1 class="flex-1 text-lg font-semibold truncate text-n-slate-12">
+        {{ clinicName }}
+      </h1>
+      <Button
+        v-if="aiTeam?.can_edit_layout"
+        icon="i-lucide-pencil-ruler"
+        variant="ghost"
+        color="slate"
+        size="xs"
+        :title="t('VIRTUAL_CLINIC.EDITOR.EDIT')"
+        @click="emit('edit')"
+      />
+    </div>
 
     <div v-if="aiTeam?.visible" class="flex flex-col gap-1">
       <h2 class="mb-1 text-xs font-medium text-n-slate-11">
@@ -194,12 +207,19 @@ const select = member => {
                 {{ t('VIRTUAL_CLINIC.PEOPLE.YOU') }}
               </span>
             </span>
-            <span class="text-xs text-n-slate-11">
+            <span class="flex items-center gap-1 text-xs text-n-slate-11">
               {{
                 t(
                   `VIRTUAL_CLINIC.PEOPLE.STATUS.${(person.availability_status || 'offline').toUpperCase()}`
                 )
               }}
+              <span
+                v-if="peopleOnMap.includes(person.id)"
+                class="flex items-center gap-0.5 text-n-teal-11"
+              >
+                · <Icon icon="i-lucide-map-pin" class="size-3" />
+                {{ t('VIRTUAL_CLINIC.PEOPLE.ON_MAP') }}
+              </span>
             </span>
           </span>
         </button>
