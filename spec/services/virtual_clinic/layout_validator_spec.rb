@@ -49,6 +49,19 @@ RSpec.describe VirtualClinic::LayoutValidator do
     expect(errors_for({ 'team' => { 'financeiro' => {} } })).to eq(['O layout da clínica não está no formato esperado.'])
   end
 
+  it 'accepts a teammate look from the avatar editor made of known layers' do
+    assets.push('9_avatar/Body_32x32_07.png', '9_avatar/Eyes_32x32_02.png', '9_avatar/Outfit_05_32x32_02.png')
+    look = { 'body' => 'Body_32x32_07', 'eyes' => 'Eyes_32x32_02', 'outfit' => 'Outfit_05_32x32_02' }
+    layout['team']['secretary'] = { 'avatar' => look, 'x' => 304, 'y' => 87 }
+    expect(errors_for(layout)).to be_empty
+
+    layout['team']['secretary']['avatar'] = look.merge('hair' => 'Hairstyle_99_32x32_01')
+    expect(errors_for(layout)).to eq(['Esta arte não está disponível: 9_avatar/Hairstyle_99_32x32_01.png.'])
+
+    layout['team']['secretary']['avatar'] = look.except('outfit')
+    expect(errors_for(layout)).to eq(['O layout da clínica não está no formato esperado.'])
+  end
+
   it 'caps the furniture' do
     layout['items'] = Array.new(201) { { 'sprite' => '4_copa/geladeira.png', 'x' => 1, 'y' => 1 } }
     expect(errors_for(layout)).to eq(['A clínica pode ter no máximo 200 móveis.'])

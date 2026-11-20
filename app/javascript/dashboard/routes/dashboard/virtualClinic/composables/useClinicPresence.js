@@ -7,7 +7,7 @@ const GONE_MS = 15000;
 const SPEED = 160; // others glide to their last known spot, world px/s
 
 // Everyone else walking on the map of this account (VirtualClinicChannel).
-// `others` maps user id → `{ name, x, y, direction, moving }`, x/y being
+// `others` maps user id → `{ name, x, y, direction, moving, avatar }`, x/y being
 // where they are drawn now; positions arrive a few times per second and
 // are smoothed in `step`.
 export function useClinicPresence() {
@@ -33,6 +33,7 @@ export function useClinicPresence() {
       y: Math.round(position.y),
       direction: position.direction,
       moving: position.moving,
+      avatar: me.look(),
     });
   };
 
@@ -67,9 +68,10 @@ export function useClinicPresence() {
     accountId,
     pubsubToken,
     position,
+    look = () => null,
     layoutChanged,
   }) => {
-    me = { userId, position };
+    me = { userId, position, look };
     onLayout = layoutChanged || onLayout;
     const { websocketURL = '' } = window.chatwootConfig || {};
     consumer = createConsumer(

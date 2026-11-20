@@ -1,3 +1,5 @@
+import { composeAvatar, isAvatarKey } from './avatar';
+
 // Loads the clinic art. Furniture pieces from the pack carry a lot of
 // transparent margin, so each one is cropped to its outline on load; floor
 // and wall blocks and character sheets keep their exact grid.
@@ -41,11 +43,15 @@ export function cropToOutline(image) {
   return cropped;
 }
 
-// `fetchBlob(path)` resolves to the PNG blob of one file of the pack.
+// `fetchBlob(path)` resolves to the PNG blob of one file of the pack. An
+// avatar key (see avatar.js) loads its layers and becomes one sheet.
 export async function loadSprites(paths, fetchBlob) {
+  const loadImage = async path => createImageBitmap(await fetchBlob(path));
   const entries = await Promise.all(
     paths.map(async path => {
-      const image = await createImageBitmap(await fetchBlob(path));
+      if (isAvatarKey(path))
+        return [path, await composeAvatar(path, loadImage)];
+      const image = await loadImage(path);
       return [path, KEEP_GRID.test(path) ? image : cropToOutline(image)];
     })
   );

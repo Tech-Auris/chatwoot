@@ -20,7 +20,7 @@ const props = defineProps({
   alertCounts: { type: Object, default: () => ({}) },
 });
 
-const emit = defineEmits(['selectMember', 'edit']);
+const emit = defineEmits(['selectMember', 'edit', 'editAvatar']);
 const { t } = useI18n();
 const store = useStore();
 const route = useRoute();
@@ -46,9 +46,13 @@ const onlineCount = computed(
   () => people.value.filter(p => p.availability_status === 'online').length
 );
 
-// Opens (or creates) the direct message in the internal chat, Gather-style.
+// Opens (or creates) the direct message in the internal chat, Gather-style;
+// on yourself, the avatar editor.
 const openDirectMessage = async person => {
-  if (person.id === currentUserId.value) return;
+  if (person.id === currentUserId.value) {
+    emit('editAvatar');
+    return;
+  }
   const channel = await store.dispatch('internalChat/create', {
     channel: { channel_type: 'dm' },
     member_ids: [person.id],
@@ -132,6 +136,14 @@ const select = member => {
       <h1 class="flex-1 text-lg font-semibold truncate text-n-slate-12">
         {{ clinicName }}
       </h1>
+      <Button
+        icon="i-lucide-shirt"
+        variant="ghost"
+        color="slate"
+        size="xs"
+        :title="t('VIRTUAL_CLINIC.AVATAR.TITLE')"
+        @click="emit('editAvatar')"
+      />
       <Button
         v-if="aiTeam?.can_edit_layout"
         icon="i-lucide-pencil-ruler"

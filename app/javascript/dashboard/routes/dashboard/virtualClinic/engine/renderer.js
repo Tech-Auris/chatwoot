@@ -1,4 +1,4 @@
-import { DEFAULT_LAYOUT, PARTITION, TILE, WORLD } from './layout';
+import { DEFAULT_LAYOUT, PARTITION, TILE, WORLD, sheetOf } from './layout';
 
 const FRAME = { width: 32, height: 64 };
 const OUTLINE = '#2b2d42';
@@ -139,7 +139,8 @@ export function createRenderer(canvas, sprites, layout = DEFAULT_LAYOUT) {
     const people = characters
       .map(character => ({
         ...character,
-        sheet: sprites[character.sheet || layout.team[character.persona].sheet],
+        sheet:
+          sprites[character.sheet || sheetOf(layout.team[character.persona])],
         // Someone sitting goes over their chair.
         depth: character.y + FRAME.height + (character.sitting ? 8 : 0),
       }))

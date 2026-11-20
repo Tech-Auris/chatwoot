@@ -12,6 +12,7 @@ import {
   sheetForUser,
   spritePaths,
 } from '../engine/layout';
+import { avatarKey } from '../engine/avatar';
 import { loadSprites } from '../engine/sprites';
 import { createRenderer, hitTest, itemAt } from '../engine/renderer';
 import { createTeamBehavior } from '../engine/behavior';
@@ -35,7 +36,8 @@ const props = defineProps({
   status: { type: Object, default: null },
   thinking: { type: String, default: '' },
   focused: { type: String, default: '' },
-  // The user's own avatar: `{ id, name, accountId, pubsubToken }`.
+  // The user's own avatar: `{ id, name, accountId, pubsubToken, avatar }`,
+  // `avatar` being the look made in the avatar editor (if any).
   me: { type: Object, default: null },
   // The clinic as arranged by the account (or the editor draft).
   layout: { type: Object, default: () => DEFAULT_LAYOUT },
@@ -122,19 +124,23 @@ const team = computed(() =>
   })
 );
 
+const mySheet = computed(() =>
+  props.me?.avatar ? avatarKey(props.me.avatar) : sheetForUser(props.me?.id)
+);
+
 const people = computed(() => {
   if (editing.value) return [];
   const list = Object.entries(presence.others.value).map(([id, place]) => ({
     ...place,
     userId: Number(id),
-    sheet: sheetForUser(Number(id)),
+    sheet: place.avatar ? avatarKey(place.avatar) : sheetForUser(Number(id)),
   }));
   if (mine.value && props.me) {
     list.push({
       ...mine.value,
       userId: props.me.id,
       name: props.me.name,
-      sheet: sheetForUser(props.me.id),
+      sheet: mySheet.value,
       self: true,
     });
   }
@@ -327,12 +333,15 @@ const ensureSheet = async path => {
 
 watch(
   () => people.value.map(person => person.userId).join(),
-  ids => {
-    const list = ids ? ids.split(',').map(Number) : [];
-    list.forEach(id => ensureSheet(sheetForUser(id)));
-    emit('peopleOnMap', list);
-  }
+  ids => emit('peopleOnMap', ids ? ids.split(',').map(Number) : [])
 );
+// Loads the look of whoever shows up (or changes their avatar).
+watch(
+  () => people.value.map(person => person.sheet).join('|'),
+  () => people.value.forEach(person => ensureSheet(person.sheet))
+);
+// A new look of my own: everybody else sees it right away.
+watch(mySheet, () => avatar && presence.send(avatar.state, true));
 
 // Keeps the avatar in sight when the map is zoomed in.
 const FOLLOW_MARGIN = 96;
@@ -379,7 +388,7 @@ const animate = now => {
 
 const startAvatar = async () => {
   if (!props.me) return;
-  await ensureSheet(sheetForUser(props.me.id));
+  await ensureSheet(mySheet.value);
   avatar = createAvatar({
     ...ENTRANCE,
     canStand: place => isFree(grid, feetOf(place)),
@@ -390,6 +399,7 @@ const startAvatar = async () => {
     accountId: props.me.accountId,
     pubsubToken: props.me.pubsubToken,
     position: () => avatar.state,
+    look: () => props.me?.avatar || null,
     layoutChanged: () => emit('layoutChanged'),
   });
 };

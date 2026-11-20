@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n';
 import VirtualClinicAPI from 'dashboard/api/virtualClinic';
 import Button from 'dashboard/components-next/button/Button.vue';
 import { useAssetThumbnails } from '../composables/useAssetThumbnails';
+import { useAvatarArt } from '../composables/useAvatarArt';
 
 // Left panel while editing the clinic: the AI team (name and look), room
 // names, floors and walls, and the furniture catalog. Pieces and teammates
@@ -12,10 +13,11 @@ const props = defineProps({
   editor: { type: Object, required: true },
   members: { type: Array, default: () => [] },
 });
-const emit = defineEmits(['save', 'addItem']);
+const emit = defineEmits(['save', 'addItem', 'editAvatar']);
 
 const { t } = useI18n();
 const { thumbnail } = useAssetThumbnails();
+const avatarArt = useAvatarArt();
 const paths = ref([]);
 const confirmingRestore = ref(false);
 
@@ -30,10 +32,6 @@ const ROOM_OF_FOLDER = ['RECEPTION', 'WAITING_ROOM', 'MANAGEMENT', 'KITCHEN'];
 const inFolder = pattern => paths.value.filter(path => pattern.test(path));
 const floors = computed(() => inFolder(/^5_pisos\//));
 const walls = computed(() => inFolder(/^6_paredes\//));
-const sheets = computed(() => [
-  ...inFolder(/^7_personagens\/.+_spritesheet\.png$/),
-  ...inFolder(/^8_pessoas\//),
-]);
 const catalog = computed(() =>
   FURNITURE_FOLDERS.map((folder, index) => ({
     folder,
@@ -45,6 +43,12 @@ const catalog = computed(() =>
 const layout = computed(() => props.editor.layout);
 const roomLabel = key => t(`VIRTUAL_CLINIC.MAP.ROOMS.${key}`);
 const selectedItem = computed(() => props.editor.selected?.kind === 'item');
+
+// The teammate standing: their look from the avatar editor, or the art.
+const lookOf = persona => {
+  const { avatar, sheet } = layout.value.team[persona];
+  return avatar ? avatarArt.thumbnail(avatar) : thumbnail(sheet);
+};
 
 const rename = (persona, value) =>
   props.editor.setTeam(persona, { name: value.trim() || undefined });
@@ -135,26 +139,25 @@ onMounted(async () => {
               @change="rename(member.persona, $event.target.value)"
             />
           </label>
-          <div class="flex flex-wrap gap-1">
-            <button
-              v-for="sheet in sheets"
-              :key="sheet"
-              type="button"
-              class="grid w-8 h-12 overflow-hidden border rounded place-items-center bg-n-alpha-1"
-              :class="
-                layout.team[member.persona].sheet === sheet
-                  ? 'border-n-brand ring-1 ring-n-brand'
-                  : 'border-n-weak hover:border-n-slate-8'
-              "
-              @click="editor.setTeam(member.persona, { sheet })"
+          <div class="flex items-center gap-3">
+            <div
+              class="grid w-10 h-16 overflow-hidden border rounded-lg place-items-center border-n-weak bg-n-alpha-1"
             >
               <img
-                v-if="thumbnail(sheet)"
-                :src="thumbnail(sheet)"
+                v-if="lookOf(member.persona)"
+                :src="lookOf(member.persona)"
                 alt=""
-                class="w-8 h-16 -mt-3 [image-rendering:pixelated]"
+                class="object-contain w-8 [image-rendering:pixelated]"
               />
-            </button>
+            </div>
+            <Button
+              :label="t('VIRTUAL_CLINIC.AVATAR.EDIT')"
+              size="xs"
+              variant="faded"
+              color="slate"
+              icon="i-lucide-shirt"
+              @click="emit('editAvatar', member.persona)"
+            />
           </div>
         </div>
       </div>

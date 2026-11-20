@@ -2,7 +2,7 @@
 # administrators and managers save it or restore the default clinic. Open
 # maps of the account reload it right away.
 class Api::V2::Accounts::VirtualClinic::LayoutsController < Api::V1::Accounts::BaseController
-  SEAT = %i[name sheet x y].freeze
+  SEAT = [:name, :sheet, :x, :y, { avatar: ::VirtualClinic::Avatar::PARTS.keys }].freeze
 
   def show
     authorize :virtual_clinic, :show?

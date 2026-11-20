@@ -15,7 +15,8 @@ RSpec.describe 'Virtual clinic layout API', type: :request do
   end
 
   before do
-    %w[4_copa/geladeira.png 8_pessoas/pessoa_01.png].each do |path|
+    %w[4_copa/geladeira.png 8_pessoas/pessoa_01.png 9_avatar/Body_32x32_07.png 9_avatar/Eyes_32x32_02.png
+       9_avatar/Outfit_05_32x32_02.png].each do |path|
       FileUtils.mkdir_p(File.join(assets_dir, File.dirname(path)))
       File.binwrite(File.join(assets_dir, path), 'png')
     end
@@ -48,6 +49,14 @@ RSpec.describe 'Virtual clinic layout API', type: :request do
     expect(VirtualClinic::Persona.find!('manager', account: account.reload).name).to eq('Marta')
   end
 
+  it 'saves the look a teammate got in the avatar editor' do
+    look = { body: 'Body_32x32_07', eyes: 'Eyes_32x32_02', outfit: 'Outfit_05_32x32_02' }
+    put_layout(manager, team: { secretary: { avatar: look, x: 304, y: 87 } })
+
+    expect(response).to have_http_status(:ok)
+    expect(account.reload.virtual_clinic_layout.layout.dig('team', 'secretary', 'avatar')).to eq(look.stringify_keys)
+  end
+
   it 'refuses an invalid clinic with the reason' do
     put_layout(manager, layout.merge(items: [{ sprite: '4_copa/geladeira.png', x: 2000, y: 1 }]))
 
@@ -76,6 +85,6 @@ RSpec.describe 'Virtual clinic layout API', type: :request do
       get "/api/v2/accounts/#{account.id}/virtual_clinic/assets", headers: manager.create_new_auth_token, as: :json
     end
 
-    expect(response.parsed_body['paths']).to eq(%w[4_copa/geladeira.png 8_pessoas/pessoa_01.png])
+    expect(response.parsed_body['paths']).to include('4_copa/geladeira.png', '8_pessoas/pessoa_01.png', '9_avatar/Body_32x32_07.png')
   end
 end

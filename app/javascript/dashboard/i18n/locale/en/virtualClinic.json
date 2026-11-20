@@ -141,6 +141,21 @@
         "UNREACHABLE": "Nobody can reach {name}. Open a way to the desk.",
         "SAVE": "Could not save the clinic. Try again."
       }
+    },
+    "AVATAR": {
+      "TITLE": "Edit your avatar",
+      "TITLE_TEAM": "{name}'s look",
+      "EDIT": "Edit look",
+      "DONE": "Done",
+      "RANDOM": "Random look",
+      "NONE": "None",
+      "PARTS": {
+        "BODY": "Skin",
+        "EYES": "Eyes",
+        "OUTFIT": "Outfit",
+        "HAIR": "Hair",
+        "ACCESSORY": "Accessory"
+      }
     }
   }
 }
