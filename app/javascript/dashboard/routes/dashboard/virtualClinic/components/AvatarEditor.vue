@@ -7,6 +7,7 @@ import Button from 'dashboard/components-next/button/Button.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import {
   PARTS,
+  PREMADE_LOOKS,
   avatarCatalog,
   colorsOf,
   optionsOf,
@@ -30,9 +31,6 @@ const props = defineProps({
   // The look worn now: a premade character (`{ sheet }`) or the parts
   // (`{ body, eyes, outfit, hair?, accessory? }`).
   avatar: { type: Object, required: true },
-  // The parts a premade character turns into when a part is changed
-  // (random when not given).
-  base: { type: Object, default: null },
   // Floor art under the preview.
   floor: { type: String, default: '' },
 });
@@ -44,8 +42,11 @@ const dialog = ref(null);
 const catalog = ref(null);
 const premades = ref([]);
 const look = ref({ ...props.avatar });
-// The look as parts, kept while a premade character is picked.
-const parts = ref(props.avatar.sheet ? props.base : { ...props.avatar });
+// The look as parts: what the premade character picked is made of, so
+// changing a part keeps the rest of it.
+const partsOf = worn =>
+  worn.sheet ? PREMADE_LOOKS[worn.sheet] || null : { ...worn };
+const parts = ref(partsOf(props.avatar));
 const part = ref(props.avatar.sheet ? 'premade' : 'body');
 
 const MENU = [{ key: 'premade' }, ...PARTS];
@@ -68,15 +69,12 @@ const colors = computed(() =>
     ? colorsOf(catalog.value, part.value, parts.value)
     : []
 );
-const wearingParts = computed(() => !look.value.sheet);
 const sameStyle = (a, b) =>
   a && b && a.split('_32x32_')[0] === b.split('_32x32_')[0];
-const isPicked = option => {
-  if (!wearingParts.value) return false;
-  return colors.value.length
-    ? sameStyle(look.value[part.value], option)
-    : look.value[part.value] === option;
-};
+const isPicked = option =>
+  colors.value.length
+    ? sameStyle(parts.value[part.value], option)
+    : parts.value[part.value] === option;
 
 const wear = next => {
   parts.value = next;
@@ -90,6 +88,7 @@ const choose = layer => {
 };
 const choosePremade = sheet => {
   look.value = { sheet };
+  parts.value = partsOf(look.value) || parts.value;
 };
 const shuffle = () => wear(randomAvatar(catalog.value));
 const preview = option => ({ ...parts.value, [part.value]: option });
@@ -219,7 +218,7 @@ onBeforeUnmount(() => clearInterval(timer));
             type="button"
             class="grid rounded-lg aspect-[32/52] place-items-center bg-n-solid-1"
             :class="
-              wearingParts && !look[part]
+              parts && !parts[part]
                 ? 'ring-2 ring-n-brand'
                 : 'hover:ring-1 hover:ring-n-slate-7'
             "
@@ -258,7 +257,7 @@ onBeforeUnmount(() => clearInterval(timer));
             type="button"
             class="w-7 h-7 p-0 overflow-hidden rounded-full shrink-0 ring-offset-2 ring-offset-n-solid-1"
             :class="
-              look[part] === color
+              parts[part] === color
                 ? 'ring-2 ring-n-brand'
                 : 'ring-1 ring-n-weak'
             "

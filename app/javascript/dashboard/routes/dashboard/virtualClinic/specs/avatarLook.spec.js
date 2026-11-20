@@ -4,13 +4,20 @@ import {
   avatarKey,
   colorsOf,
   isAvatarKey,
+  PREMADE_LOOKS,
   layersOf,
   lookSheet,
   optionsOf,
   premadeSheets,
   randomAvatar,
 } from '../engine/avatar';
-import { DEFAULT_LAYOUT, sheetOf, toSaved } from '../engine/layout';
+import {
+  CHARACTERS,
+  DEFAULT_LAYOUT,
+  PEOPLE_SHEETS,
+  sheetOf,
+  toSaved,
+} from '../engine/layout';
 
 const paths = [
   '5_pisos/madeira.png',
@@ -97,6 +104,20 @@ describe('avatar looks', () => {
       '7_personagens/clara_secretaria_spritesheet.png',
       '8_pessoas/pessoa_03.png',
     ]);
+  });
+
+  it('knows the parts of every premade character the clinic uses', () => {
+    const sheets = [
+      ...PEOPLE_SHEETS,
+      ...Object.values(CHARACTERS).map(({ sheet }) => sheet),
+    ];
+    sheets.forEach(sheet => {
+      expect(PREMADE_LOOKS[sheet]).toMatchObject({
+        body: expect.stringMatching(/^Body_/),
+        eyes: expect.stringMatching(/^Eyes_/),
+        outfit: expect.stringMatching(/^Outfit_/),
+      });
+    });
   });
 
   it('makes a random look with every required part', () => {

@@ -152,23 +152,6 @@ export const sheetForUser = id => PEOPLE_SHEETS[id % PEOPLE_SHEETS.length];
 export const sheetOf = ({ avatar, sheet }) =>
   avatar ? lookSheet(avatar) : sheet;
 
-// What the avatar editor builds on when a teammate still in the premade art
-// gets a part changed: Helena is made of these very layers.
-export const TEAM_AVATARS = {
-  secretary: {
-    body: 'Body_32x32_02',
-    eyes: 'Eyes_32x32_01',
-    outfit: 'Outfit_33_32x32_01',
-    hair: 'Hairstyle_08_32x32_01',
-  },
-  manager: {
-    body: 'Body_32x32_07',
-    eyes: 'Eyes_32x32_02',
-    outfit: 'Outfit_05_32x32_02',
-    hair: 'Hairstyle_04_32x32_03',
-  },
-};
-
 export const ROOMS = [
   { key: 'RECEPTION', x: 8, y: 72 },
   { key: 'WAITING_ROOM', x: 8, y: 328 },

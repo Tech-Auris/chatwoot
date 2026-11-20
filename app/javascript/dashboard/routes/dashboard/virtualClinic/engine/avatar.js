@@ -89,6 +89,160 @@ export function colorsOf(catalog, part, avatar) {
   return styles.find(entry => entry.style === style)?.colors || [];
 }
 
+// What each premade character of the pack is made of (worked out by matching
+// its pixels with the generator layers), so the editor changes one part of
+// the character you are wearing. A few premades carry a second accessory
+// (a mustache, glasses) that one accessory slot can't keep.
+export const PREMADE_LOOKS = {
+  '7_personagens/clara_secretaria_spritesheet.png': {
+    body: 'Body_32x32_03',
+    eyes: 'Eyes_32x32_05',
+    outfit: 'Outfit_33_32x32_03',
+    hair: 'Hairstyle_25_32x32_02',
+  },
+  '7_personagens/helena_gerente_spritesheet.png': {
+    body: 'Body_32x32_07',
+    eyes: 'Eyes_32x32_02',
+    outfit: 'Outfit_05_32x32_02',
+    hair: 'Hairstyle_24_32x32_03',
+  },
+  '7_personagens/helena_opcao_A_spritesheet.png': {
+    body: 'Body_32x32_07',
+    eyes: 'Eyes_32x32_02',
+    outfit: 'Outfit_05_32x32_02',
+    hair: 'Hairstyle_04_32x32_03',
+  },
+  '7_personagens/helena_opcao_B_spritesheet.png': {
+    body: 'Body_32x32_07',
+    eyes: 'Eyes_32x32_02',
+    outfit: 'Outfit_05_32x32_02',
+    hair: 'Hairstyle_09_32x32_03',
+  },
+  '7_personagens/helena_opcao_C_spritesheet.png': {
+    body: 'Body_32x32_07',
+    eyes: 'Eyes_32x32_02',
+    outfit: 'Outfit_05_32x32_02',
+    hair: 'Hairstyle_15_32x32_03',
+  },
+  '8_pessoas/pessoa_01.png': {
+    body: 'Body_32x32_01',
+    eyes: 'Eyes_32x32_01',
+    outfit: 'Outfit_01_32x32_02',
+    hair: 'Hairstyle_04_32x32_03',
+  },
+  '8_pessoas/pessoa_02.png': {
+    body: 'Body_32x32_01',
+    eyes: 'Eyes_32x32_01',
+    outfit: 'Outfit_05_32x32_01',
+    hair: 'Hairstyle_09_32x32_03',
+  },
+  '8_pessoas/pessoa_03.png': {
+    body: 'Body_32x32_01',
+    eyes: 'Eyes_32x32_01',
+    outfit: 'Outfit_01_32x32_05',
+    hair: 'Hairstyle_08_32x32_03',
+  },
+  '8_pessoas/pessoa_04.png': {
+    body: 'Body_32x32_01',
+    eyes: 'Eyes_32x32_01',
+    outfit: 'Outfit_07_32x32_03',
+    hair: 'Hairstyle_14_32x32_06',
+    accessory: 'Accessory_11_Beanie_32x32_05',
+  },
+  '8_pessoas/pessoa_05.png': {
+    body: 'Body_32x32_02',
+    eyes: 'Eyes_32x32_02',
+    outfit: 'Outfit_01_32x32_01',
+    hair: 'Hairstyle_01_32x32_07',
+  },
+  '8_pessoas/pessoa_06.png': {
+    body: 'Body_32x32_02',
+    eyes: 'Eyes_32x32_02',
+    outfit: 'Outfit_02_32x32_03',
+    hair: 'Hairstyle_07_32x32_03',
+  },
+  '8_pessoas/pessoa_07.png': {
+    body: 'Body_32x32_02',
+    eyes: 'Eyes_32x32_03',
+    outfit: 'Outfit_10_32x32_02',
+    hair: 'Hairstyle_10_32x32_06',
+    accessory: 'Accessory_11_Beanie_32x32_04',
+  },
+  '8_pessoas/pessoa_08.png': {
+    body: 'Body_32x32_02',
+    eyes: 'Eyes_32x32_03',
+    outfit: 'Outfit_18_32x32_02',
+    hair: 'Hairstyle_21_32x32_02',
+    accessory: 'Accessory_16_Monocle_32x32_01',
+  },
+  '8_pessoas/pessoa_09.png': {
+    body: 'Body_32x32_03',
+    eyes: 'Eyes_32x32_01',
+    outfit: 'Outfit_19_32x32_02',
+    hair: 'Hairstyle_26_32x32_06',
+  },
+  '8_pessoas/pessoa_10.png': {
+    body: 'Body_32x32_03',
+    eyes: 'Eyes_32x32_05',
+    outfit: 'Outfit_11_32x32_04',
+    hair: 'Hairstyle_16_32x32_03',
+    accessory: 'Accessory_03_Backpack_32x32_01',
+  },
+  '8_pessoas/pessoa_11.png': {
+    body: 'Body_32x32_03',
+    eyes: 'Eyes_32x32_01',
+    outfit: 'Outfit_01_32x32_10',
+    hair: 'Hairstyle_01_32x32_06',
+    accessory: 'Accessory_04_Snapback_32x32_06',
+  },
+  '8_pessoas/pessoa_12.png': {
+    body: 'Body_32x32_04',
+    eyes: 'Eyes_32x32_01',
+    outfit: 'Outfit_01_32x32_09',
+    hair: 'Hairstyle_03_32x32_03',
+  },
+  '8_pessoas/pessoa_13.png': {
+    body: 'Body_32x32_04',
+    eyes: 'Eyes_32x32_01',
+    outfit: 'Outfit_17_32x32_01',
+    hair: 'Hairstyle_12_32x32_05',
+    accessory: 'Accessory_15_Glasses_32x32_06',
+  },
+  '8_pessoas/pessoa_14.png': {
+    body: 'Body_32x32_04',
+    eyes: 'Eyes_32x32_01',
+    outfit: 'Outfit_06_32x32_03',
+    hair: 'Hairstyle_18_32x32_03',
+  },
+  '8_pessoas/pessoa_15.png': {
+    body: 'Body_32x32_04',
+    eyes: 'Eyes_32x32_01',
+    outfit: 'Outfit_09_32x32_03',
+    accessory: 'Accessory_09_Zombie_Brain_32x32_01',
+  },
+  '8_pessoas/pessoa_16.png': {
+    body: 'Body_32x32_07',
+    eyes: 'Eyes_32x32_06',
+    outfit: 'Outfit_10_32x32_04',
+    hair: 'Hairstyle_23_32x32_07',
+    accessory: 'Accessory_04_Snapback_32x32_05',
+  },
+  '8_pessoas/pessoa_17.png': {
+    body: 'Body_32x32_07',
+    eyes: 'Eyes_32x32_06',
+    outfit: 'Outfit_29_32x32_03',
+    hair: 'Hairstyle_22_32x32_03',
+    accessory: 'Accessory_06_Policeman_Hat_32x32_01',
+  },
+  '8_pessoas/pessoa_18.png': {
+    body: 'Body_32x32_07',
+    eyes: 'Eyes_32x32_01',
+    outfit: 'Outfit_14_32x32_03',
+    hair: 'Hairstyle_20_32x32_06',
+    accessory: 'Accessory_03_Backpack_32x32_10',
+  },
+};
+
 // A random look; hair always, accessory now and then.
 export function randomAvatar(catalog, random = Math.random) {
   const pick = list => list[Math.floor(random() * list.length)];

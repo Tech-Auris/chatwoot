@@ -11,7 +11,7 @@ import AiChatPanel from './components/AiChatPanel.vue';
 import ClinicMap from './components/ClinicMap.vue';
 import EditorPanel from './components/EditorPanel.vue';
 import AvatarEditor from './components/AvatarEditor.vue';
-import { FLOORS, TEAM_AVATARS, sheetForUser } from './engine/layout';
+import { FLOORS, sheetForUser } from './engine/layout';
 import { useUISettings } from 'dashboard/composables/useUISettings';
 import { useClinicLayout } from './composables/useClinicLayout';
 import { useVirtualClinicConfig } from './composables/useVirtualClinicConfig';
@@ -85,7 +85,6 @@ const avatarEditor = computed(() => {
     title: t('VIRTUAL_CLINIC.AVATAR.TITLE_TEAM', { name }),
     name,
     avatar: spot.avatar || { sheet: spot.sheet },
-    base: TEAM_AVATARS[persona],
     floor,
   };
 });
