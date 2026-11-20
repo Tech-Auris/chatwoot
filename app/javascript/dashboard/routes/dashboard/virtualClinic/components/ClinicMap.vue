@@ -4,10 +4,30 @@ import { useI18n } from 'vue-i18n';
 import VirtualClinicAPI from 'dashboard/api/virtualClinic';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
-import { CHARACTERS, ROOMS, SPRITE_PATHS, WORLD } from '../engine/layout';
+import {
+  DEFAULT_LAYOUT,
+  ENTRANCE,
+  TILE,
+  WORLD,
+  sheetForUser,
+  spritePaths,
+} from '../engine/layout';
 import { loadSprites } from '../engine/sprites';
-import { createRenderer, hitTest } from '../engine/renderer';
+import { createRenderer, hitTest, itemAt } from '../engine/renderer';
 import { createTeamBehavior } from '../engine/behavior';
+import { planTrip } from '../engine/trips';
+import { checkLayout } from '../engine/layoutCheck';
+import {
+  buildCollision,
+  cellOf,
+  centerOf,
+  feetOf,
+  frameAt,
+  isFree,
+} from '../engine/collision';
+import { corners, findPath } from '../engine/pathfinding';
+import { createAvatar } from '../engine/movement';
+import { useClinicPresence } from '../composables/useClinicPresence';
 import { isOffDuty, offDutyReason } from '../teamStatus';
 
 const props = defineProps({
@@ -15,8 +35,18 @@ const props = defineProps({
   status: { type: Object, default: null },
   thinking: { type: String, default: '' },
   focused: { type: String, default: '' },
+  // The user's own avatar: `{ id, name, accountId, pubsubToken }`.
+  me: { type: Object, default: null },
+  // The clinic as arranged by the account (or the editor draft).
+  layout: { type: Object, default: () => DEFAULT_LAYOUT },
+  // The clinic editor (useClinicLayout) while the user edits the clinic.
+  editor: { type: Object, default: null },
+  // One AI teammate asking another right now: `{ persona, target }`.
+  consulting: { type: Object, default: null },
+  // Open alerts per teammate: they "raise their hand" (❗).
+  alertCounts: { type: Object, default: () => ({}) },
 });
-const emit = defineEmits(['selectMember']);
+const emit = defineEmits(['selectMember', 'peopleOnMap', 'layoutChanged']);
 
 const { t } = useI18n();
 const FRAME_MS = 100;
@@ -36,9 +66,22 @@ const rotation = ref(0);
 let draw = null;
 let behavior = null;
 const positions = ref({});
-let frameTimer = null;
 let rotateTimer = null;
 let resizeObserver = null;
+let animationFrame = null;
+let lastFrame = null;
+
+// The user's avatar and everyone else walking around (Gather-style).
+let sprites = null;
+let grid = null;
+let avatar = null;
+const mine = ref(null);
+const presence = useClinicPresence();
+const loadingSheets = new Set();
+// The counter keeps people about three tiles from Clara.
+const NEAR = 4 * TILE;
+// The "how to walk" hint goes away once the user has walked.
+const hasWalked = ref(false);
 
 const members = computed(() =>
   props.aiTeam?.visible ? props.aiTeam.members : []
@@ -50,13 +93,18 @@ const secretaryBusy = computed(
   () => (props.status?.secretary?.active_conversations || 0) > 0
 );
 
+const editing = computed(() => props.editor?.editing === true);
+
 // Where each teammate is now (they take little walks, see engine/trips.js).
 const placeOf = persona => {
-  const spot = CHARACTERS[persona];
+  const spot = props.layout.team[persona];
   return positions.value[persona] || { x: spot.x, y: spot.y };
 };
 
-const characters = computed(() =>
+// The name the clinic gave a teammate (the editor draft while editing).
+const nameOf = member => props.layout.team[member.persona]?.name || member.name;
+
+const team = computed(() =>
   members.value.map(member => {
     const place = placeOf(member.persona);
     return {
@@ -74,6 +122,38 @@ const characters = computed(() =>
   })
 );
 
+const people = computed(() => {
+  if (editing.value) return [];
+  const list = Object.entries(presence.others.value).map(([id, place]) => ({
+    ...place,
+    userId: Number(id),
+    sheet: sheetForUser(Number(id)),
+  }));
+  if (mine.value && props.me) {
+    list.push({
+      ...mine.value,
+      userId: props.me.id,
+      name: props.me.name,
+      sheet: sheetForUser(props.me.id),
+      self: true,
+    });
+  }
+  return list;
+});
+
+const characters = computed(() => [...team.value, ...people.value]);
+
+// The AI teammate within four tiles of the avatar: "Conversar com a Clara (E)".
+const nearMember = computed(() => {
+  if (!mine.value || !chatEnabled.value || editing.value) return null;
+  const feet = feetOf(mine.value);
+  const member = members.value.find(({ persona }) => {
+    const other = feetOf(placeOf(persona));
+    return Math.hypot(other.x - feet.x, other.y - feet.y) <= NEAR;
+  });
+  return member && member.persona !== props.focused ? member : null;
+});
+
 // Name (and status above it) sit right over the head, like in Gather, and
 // follow the teammate around. The frame is 32×64 with the head from ~y+18.
 const overHead = persona => {
@@ -87,19 +167,37 @@ const canLeave = persona =>
   persona !== props.thinking &&
   !isOffDuty(persona, props.status);
 
+// The team walks around unless the clinic is being edited.
+const restartBehavior = () => {
+  const personas = members.value.map(member => member.persona);
+  const { layout } = props;
+  behavior =
+    personas.length && grid && !editing.value
+      ? createTeamBehavior({
+          personas,
+          layout,
+          canLeave,
+          plan: trip => planTrip(trip, { layout, grid }),
+        })
+      : null;
+  positions.value = {};
+};
 watch(
   () => members.value.map(member => member.persona).join(),
-  personaList => {
-    behavior = personaList
-      ? createTeamBehavior({ personas: personaList.split(','), canLeave })
-      : null;
-    positions.value = {};
-  },
-  { immediate: true }
+  restartBehavior
 );
 
 // What each teammate is doing, over their head (hidden while away).
 const bubble = persona => {
+  if (editing.value) return '';
+  if (props.consulting?.persona === persona) {
+    const teammate = members.value.find(
+      m => m.persona === props.consulting.target
+    );
+    return t('VIRTUAL_CLINIC.MAP.ASKING', {
+      name: teammate ? nameOf(teammate) : '',
+    });
+  }
   if (props.thinking === persona) return t('VIRTUAL_CLINIC.MAP.THINKING');
   if (placeOf(persona).away) return '';
   if (!props.status) return '';
@@ -137,13 +235,130 @@ const worldSize = computed(() => ({
   height: `${WORLD.height * scale.value}px`,
 }));
 
-const render = () => draw?.(characters.value, tick.value);
-watch([characters, tick], render);
+// The box around what the editor has selected.
+const selectedBox = computed(() => {
+  const target = editing.value && props.editor.selected;
+  if (!target || !sprites) return null;
+  if (target.kind === 'team') {
+    const seat = props.layout.team[target.persona];
+    return { x: seat.x, y: seat.y, width: 32, height: 64 };
+  }
+  const item = props.layout.items[target.index];
+  const image = item && sprites[item.sprite];
+  return image
+    ? { x: item.x, y: item.y, width: image.width, height: image.height }
+    : null;
+});
 
-const animate = () => {
-  if (document.hidden) return;
+const render = () => draw?.(characters.value, tick.value, selectedBox.value);
+watch([characters, tick, selectedBox], render);
+
+const sizesOf = items =>
+  Object.fromEntries(
+    items
+      .filter(({ sprite }) => sprites[sprite])
+      .map(({ sprite }) => [
+        sprite,
+        { width: sprites[sprite].width, height: sprites[sprite].height },
+      ])
+  );
+
+// Draws the clinic again after the layout changed (or the art arrived):
+// loads any new art, then the walk grid, the background and the team.
+const rebuild = async () => {
+  const { layout } = props;
+  const missing = spritePaths(layout).filter(path => !sprites[path]);
+  if (missing.length) {
+    Object.assign(
+      sprites,
+      await loadSprites(missing, path => VirtualClinicAPI.getAsset(path))
+    );
+  }
+  if (layout !== props.layout) return;
+  grid = buildCollision(sizesOf(layout.items), layout.items);
+  draw = createRenderer(canvas.value, sprites, layout);
+  restartBehavior();
+  render();
+};
+watch(
+  () => props.layout,
+  () => sprites && rebuild()
+);
+watch(editing, restartBehavior);
+
+// The manager walks to the secretary's desk while she asks her something.
+watch(
+  () => props.consulting,
+  consulting => {
+    if (consulting) {
+      behavior?.consult(
+        consulting.persona,
+        consulting.target,
+        performance.now()
+      );
+    } else {
+      behavior?.release(performance.now());
+    }
+  }
+);
+
+// Editor check before saving, as a message (empty when all is fine).
+const check = layout => {
+  const result = checkLayout(layout, sizesOf(layout.items));
+  if (!result) return '';
+  if (result.problem === 'entrance') {
+    return t('VIRTUAL_CLINIC.EDITOR.ERRORS.ENTRANCE');
+  }
+  const member = members.value.find(m => m.persona === result.persona);
+  return t('VIRTUAL_CLINIC.EDITOR.ERRORS.UNREACHABLE', {
+    name: layout.team[result.persona].name || member?.name || result.persona,
+  });
+};
+defineExpose({ check });
+
+const ensureSheet = async path => {
+  if (!sprites || sprites[path] || loadingSheets.has(path)) return;
+  loadingSheets.add(path);
+  const loaded = await loadSprites([path], file =>
+    VirtualClinicAPI.getAsset(file)
+  );
+  Object.assign(sprites, loaded);
+};
+
+watch(
+  () => people.value.map(person => person.userId).join(),
+  ids => {
+    const list = ids ? ids.split(',').map(Number) : [];
+    list.forEach(id => ensureSheet(sheetForUser(id)));
+    emit('peopleOnMap', list);
+  }
+);
+
+// Keeps the avatar in sight when the map is zoomed in.
+const FOLLOW_MARGIN = 96;
+const follow = () => {
+  const box = viewport.value;
+  if (!mine.value?.moving || !box) return;
+  const feet = feetOf(mine.value);
+  const left = feet.x * scale.value - box.scrollLeft;
+  const top = feet.y * scale.value - box.scrollTop;
+  if (left < FOLLOW_MARGIN) box.scrollLeft -= FOLLOW_MARGIN - left;
+  if (left > box.clientWidth - FOLLOW_MARGIN) {
+    box.scrollLeft += left - (box.clientWidth - FOLLOW_MARGIN);
+  }
+  if (top < FOLLOW_MARGIN) box.scrollTop -= FOLLOW_MARGIN - top;
+  if (top > box.clientHeight - FOLLOW_MARGIN) {
+    box.scrollTop += top - (box.clientHeight - FOLLOW_MARGIN);
+  }
+};
+
+const animate = now => {
+  animationFrame = requestAnimationFrame(animate);
+  const seconds =
+    lastFrame === null ? 0 : Math.min(0.1, (now - lastFrame) / 1000);
+  lastFrame = now;
   if (behavior) {
-    behavior.update(performance.now());
+    behavior.update(now);
     positions.value = Object.fromEntries(
       Object.entries(behavior.state).map(([persona, place]) => [
         persona,
@@ -151,8 +366,77 @@ const animate = () => {
       ])
     );
   }
-  tick.value += 1;
+  if (avatar) {
+    avatar.update(seconds);
+    mine.value = { ...avatar.state };
+    if (avatar.state.moving) hasWalked.value = true;
+    presence.send(avatar.state);
+    follow();
+  }
+  presence.step(seconds);
+  tick.value = Math.floor(now / FRAME_MS);
 };
+
+const startAvatar = async () => {
+  if (!props.me) return;
+  await ensureSheet(sheetForUser(props.me.id));
+  avatar = createAvatar({
+    ...ENTRANCE,
+    canStand: place => isFree(grid, feetOf(place)),
+  });
+  mine.value = { ...avatar.state };
+  presence.connect({
+    userId: props.me.id,
+    accountId: props.me.accountId,
+    pubsubToken: props.me.pubsubToken,
+    position: () => avatar.state,
+    layoutChanged: () => emit('layoutChanged'),
+  });
+};
+
+const walkTowards = point => {
+  if (!avatar) return;
+  const path = findPath(grid, cellOf(feetOf(avatar.state)), cellOf(point));
+  if (!path) return;
+  avatar.walkTo(
+    corners(path)
+      .slice(1)
+      .map(cell => frameAt(centerOf(cell)))
+  );
+};
+
+// Typing in the chat must not walk the avatar around.
+const typing = target =>
+  target?.closest?.('input, textarea, select, [contenteditable="true"]');
+
+// Editor keys: Del removes the selected piece, R turns it around, Esc
+// drops the selection.
+const onEditorKey = event => {
+  const key = event.key.toLowerCase();
+  if (key === 'delete' || key === 'backspace') props.editor.removeSelected();
+  else if (key === 'r') props.editor.flipSelected();
+  else if (key === 'escape') props.editor.select(null);
+  else return;
+  event.preventDefault();
+};
+
+const onKeyDown = event => {
+  if (typing(event.target)) return;
+  if (event.metaKey || event.ctrlKey || event.altKey) return;
+  if (editing.value) {
+    onEditorKey(event);
+    return;
+  }
+  if (!avatar) return;
+  if (event.key.toLowerCase() === 'e' && nearMember.value) {
+    event.preventDefault();
+    emit('selectMember', nearMember.value.persona);
+    return;
+  }
+  if (avatar.press(event.key)) event.preventDefault();
+};
+const onKeyUp = event => avatar?.release(event.key);
+const onBlur = () => avatar?.releaseAll();
 
 // The map fills the area by default; the user can zoom in and out from
 // there (wheel or the +/- control), like in Gather.
@@ -193,19 +477,53 @@ const resetZoom = () => {
   scale.value = fitScale.value;
 };
 
-const onClick = event => {
+const toWorld = event => {
   const rect = canvas.value.getBoundingClientRect();
-  const persona = hitTest(
-    (event.clientX - rect.left) / scale.value,
-    (event.clientY - rect.top) / scale.value,
-    characters.value
-  );
-  if (persona && chatEnabled.value) emit('selectMember', persona);
+  return {
+    x: (event.clientX - rect.left) / scale.value,
+    y: (event.clientY - rect.top) / scale.value,
+  };
 };
 
-// Drag the map around when it is bigger than the screen.
+// In the editor, pressing on a teammate or a piece selects it and drags it
+// around; pressing on the floor drops the selection.
+const pickForEditing = event => {
+  const point = toWorld(event);
+  const persona = hitTest(point.x, point.y, team.value);
+  const index = persona
+    ? -1
+    : itemAt(point.x, point.y, props.layout.items, sprites);
+  if (!persona && index === -1) {
+    props.editor.select(null);
+    return null;
+  }
+  const target = persona ? { kind: 'team', persona } : { kind: 'item', index };
+  props.editor.select(target);
+  const origin = persona
+    ? props.layout.team[persona]
+    : props.layout.items[index];
+  const image = persona ? null : sprites[origin.sprite];
+  return {
+    x: event.clientX,
+    y: event.clientY,
+    origin: { x: origin.x, y: origin.y },
+    size: image
+      ? { width: image.width, height: image.height }
+      : { width: 32, height: 64 },
+  };
+};
+
+// Drag the map around when it is bigger than the screen; a drag is not a
+// click on the floor.
 let drag = null;
+let moving = null;
+let dragged = false;
 const startDrag = event => {
+  dragged = false;
+  if (editing.value && event.target === canvas.value) {
+    moving = pickForEditing(event);
+    if (moving) return;
+  }
   drag = {
     x: event.clientX,
     y: event.clientY,
@@ -214,12 +532,36 @@ const startDrag = event => {
   };
 };
 const moveDrag = event => {
+  if (moving) {
+    props.editor.moveSelected(
+      moving.origin.x + (event.clientX - moving.x) / scale.value,
+      moving.origin.y + (event.clientY - moving.y) / scale.value,
+      moving.size
+    );
+    return;
+  }
   if (!drag) return;
-  viewport.value.scrollLeft = drag.left - (event.clientX - drag.x);
-  viewport.value.scrollTop = drag.top - (event.clientY - drag.y);
+  const dx = event.clientX - drag.x;
+  const dy = event.clientY - drag.y;
+  if (Math.hypot(dx, dy) > 4) dragged = true;
+  viewport.value.scrollLeft = drag.left - dx;
+  viewport.value.scrollTop = drag.top - dy;
+};
+
+// Clicking a teammate opens the chat; clicking the floor walks there.
+const onClick = event => {
+  if (dragged || editing.value) return;
+  const point = toWorld(event);
+  const persona = hitTest(point.x, point.y, characters.value);
+  if (persona) {
+    if (chatEnabled.value) emit('selectMember', persona);
+    return;
+  }
+  walkTowards(point);
 };
 const endDrag = () => {
   drag = null;
+  moving = null;
 };
 
 onMounted(async () => {
@@ -227,15 +569,16 @@ onMounted(async () => {
   resizeObserver = new ResizeObserver(fit);
   resizeObserver.observe(viewport.value);
   try {
-    const sprites = await loadSprites(SPRITE_PATHS, path =>
-      VirtualClinicAPI.getAsset(path)
-    );
-    draw = createRenderer(canvas.value, sprites);
-    render();
-    frameTimer = setInterval(animate, FRAME_MS);
+    sprites = {};
+    await rebuild();
+    await startAvatar();
+    animationFrame = requestAnimationFrame(animate);
     rotateTimer = setInterval(() => {
       rotation.value += 1;
     }, ROTATE_MS);
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    window.addEventListener('blur', onBlur);
   } catch {
     failed.value = true;
   } finally {
@@ -244,9 +587,12 @@ onMounted(async () => {
 });
 
 onBeforeUnmount(() => {
-  clearInterval(frameTimer);
+  cancelAnimationFrame(animationFrame);
   clearInterval(rotateTimer);
   resizeObserver?.disconnect();
+  window.removeEventListener('keydown', onKeyDown);
+  window.removeEventListener('keyup', onKeyUp);
+  window.removeEventListener('blur', onBlur);
 });
 </script>
 
@@ -301,13 +647,13 @@ onBeforeUnmount(() => {
         />
         <template v-if="!loading && !failed">
           <span
-            v-for="room in ROOMS"
+            v-for="room in layout.rooms"
             :key="room.key"
-            class="absolute px-2 py-0.5 text-xs font-semibold text-white rounded-md pointer-events-none bg-n-slate-12/80"
+            class="absolute px-2 py-0.5 text-xs font-semibold text-white rounded-md pointer-events-none whitespace-nowrap bg-n-slate-12/80"
             :class="{ '-translate-x-full': room.alignRight }"
             :style="at(room)"
           >
-            {{ t(`VIRTUAL_CLINIC.MAP.ROOMS.${room.key}`) }}
+            {{ room.name || t(`VIRTUAL_CLINIC.MAP.ROOMS.${room.key}`) }}
           </span>
           <div
             v-for="member in members"
@@ -329,14 +675,50 @@ onBeforeUnmount(() => {
                 chatEnabled ? '' : 'cursor-default',
                 isOffDuty(member.persona, status) ? 'opacity-50' : '',
               ]"
-              @click="chatEnabled && emit('selectMember', member.persona)"
+              @click="
+                chatEnabled && !editing && emit('selectMember', member.persona)
+              "
             >
-              {{ member.name }} ·
+              <span
+                v-if="alertCounts[member.persona] && !editing"
+                class="inline-grid mr-1 font-bold rounded-full size-4 place-items-center bg-n-ruby-9 animate-pulse"
+              >
+                {{ t('VIRTUAL_CLINIC.MAP.RAISED_HAND') }}
+              </span>
+              {{ nameOf(member) }} ·
               {{ t(`VIRTUAL_CLINIC.PERSONAS.${member.persona.toUpperCase()}`) }}
             </button>
           </div>
+          <span
+            v-for="person in people"
+            :key="`person-${person.userId}`"
+            class="absolute px-2 py-0.5 text-xs font-semibold text-white rounded-full shadow pointer-events-none whitespace-nowrap -translate-x-1/2 -translate-y-full"
+            :class="person.self ? 'bg-n-brand' : 'bg-n-slate-12/80'"
+            :style="at({ x: person.x + 16, y: person.y + 18 })"
+          >
+            {{ person.name }}
+          </span>
         </template>
       </div>
+    </div>
+    <div
+      v-if="!loading && !failed && mine && !editing"
+      class="absolute z-10 flex flex-col items-center gap-2 -translate-x-1/2 bottom-4 left-1/2"
+    >
+      <button
+        v-if="nearMember"
+        type="button"
+        class="px-3 py-1.5 text-sm font-medium text-white rounded-full shadow-lg bg-n-slate-12/90 hover:bg-n-slate-12"
+        @click="emit('selectMember', nearMember.persona)"
+      >
+        {{ t('VIRTUAL_CLINIC.MAP.TALK_TO', { name: nearMember.name }) }}
+      </button>
+      <span
+        v-else-if="!hasWalked"
+        class="px-3 py-1 text-xs rounded-full pointer-events-none text-white/90 bg-n-slate-12/70"
+      >
+        {{ t('VIRTUAL_CLINIC.MAP.MOVE_HINT') }}
+      </span>
     </div>
     <div
       v-if="loading || failed"

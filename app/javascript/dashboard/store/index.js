@@ -73,6 +73,7 @@ import captainTools from './captain/tools';
 import captainCustomTools from './captain/customTools';
 import internalChat from './modules/internalChat';
 import internalChatTypingStatus from './modules/internalChat/typingStatus';
+import virtualClinic from './modules/virtualClinic';
 
 const plugins = [];
 
@@ -151,6 +152,7 @@ export default createStore({
     captainCustomTools,
     internalChat,
     internalChatTypingStatus,
+    virtualClinic,
   },
   plugins,
 });

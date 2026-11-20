@@ -1,11 +1,12 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { useMapGetter, useStore } from 'dashboard/composables/store';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
+import VirtualClinicAPI from 'dashboard/api/virtualClinic';
 import { isOffDuty, offDutyReason } from '../teamStatus';
 
 const props = defineProps({
@@ -13,9 +14,13 @@ const props = defineProps({
   aiTeam: { type: Object, default: null },
   status: { type: Object, default: null },
   selected: { type: String, default: '' },
+  // User ids walking on the map right now.
+  peopleOnMap: { type: Array, default: () => [] },
+  // Open alerts per AI teammate (❗).
+  alertCounts: { type: Object, default: () => ({}) },
 });
 
-const emit = defineEmits(['selectMember']);
+const emit = defineEmits(['selectMember', 'edit']);
 const { t } = useI18n();
 const store = useStore();
 const route = useRoute();
@@ -100,6 +105,20 @@ const statusLine = persona => {
     : t('VIRTUAL_CLINIC.STATUS.MANAGER', { leads, rate });
 };
 
+// "Bom dia da Helena" at 8h, turned on by the clinic administrator.
+const dailySummary = ref(false);
+watch(
+  () => props.aiTeam?.daily_summary,
+  value => {
+    dailySummary.value = value === true;
+  },
+  { immediate: true }
+);
+const toggleDailySummary = async () => {
+  dailySummary.value = !dailySummary.value;
+  await VirtualClinicAPI.updateSettings({ daily_summary: dailySummary.value });
+};
+
 const select = member => {
   if (chatEnabled.value) emit('selectMember', member.persona);
 };
@@ -109,9 +128,20 @@ const select = member => {
   <section
     class="flex flex-col w-64 shrink-0 gap-4 p-4 border-r border-n-weak bg-n-solid-1"
   >
-    <h1 class="text-lg font-semibold text-n-slate-12 truncate">
-      {{ clinicName }}
-    </h1>
+    <div class="flex items-center gap-2">
+      <h1 class="flex-1 text-lg font-semibold truncate text-n-slate-12">
+        {{ clinicName }}
+      </h1>
+      <Button
+        v-if="aiTeam?.can_edit_layout"
+        icon="i-lucide-pencil-ruler"
+        variant="ghost"
+        color="slate"
+        size="xs"
+        :title="t('VIRTUAL_CLINIC.EDITOR.EDIT')"
+        @click="emit('edit')"
+      />
+    </div>
 
     <div v-if="aiTeam?.visible" class="flex flex-col gap-1">
       <h2 class="mb-1 text-xs font-medium text-n-slate-11">
@@ -137,6 +167,12 @@ const select = member => {
         <span class="flex flex-col min-w-0">
           <span class="text-sm font-medium text-n-slate-12">
             {{ member.name }}
+            <span
+              v-if="alertCounts[member.persona]"
+              class="px-1.5 ml-1 text-xs font-semibold text-white rounded-full bg-n-ruby-9"
+            >
+              {{ alertCounts[member.persona] }}
+            </span>
             <span class="ml-1 text-xs text-n-slate-11">
               {{ t(`VIRTUAL_CLINIC.PERSONAS.${member.persona.toUpperCase()}`) }}
             </span>
@@ -153,6 +189,25 @@ const select = member => {
           </span>
         </span>
       </button>
+
+      <label
+        v-if="aiTeam.can_manage_settings"
+        class="flex items-start gap-2 p-2 mt-1 text-xs cursor-pointer text-n-slate-11"
+      >
+        <input
+          type="checkbox"
+          class="mt-0.5"
+          :checked="dailySummary"
+          @change="toggleDailySummary"
+        />
+        <span>
+          {{
+            t('VIRTUAL_CLINIC.AI_TEAM.DAILY_SUMMARY', {
+              name: members.find(m => m.persona === 'manager')?.name || '',
+            })
+          }}
+        </span>
+      </label>
 
       <div
         v-if="missingAction"
@@ -194,12 +249,19 @@ const select = member => {
                 {{ t('VIRTUAL_CLINIC.PEOPLE.YOU') }}
               </span>
             </span>
-            <span class="text-xs text-n-slate-11">
+            <span class="flex items-center gap-1 text-xs text-n-slate-11">
               {{
                 t(
                   `VIRTUAL_CLINIC.PEOPLE.STATUS.${(person.availability_status || 'offline').toUpperCase()}`
                 )
               }}
+              <span
+                v-if="peopleOnMap.includes(person.id)"
+                class="flex items-center gap-0.5 text-n-teal-11"
+              >
+                · <Icon icon="i-lucide-map-pin" class="size-3" />
+                {{ t('VIRTUAL_CLINIC.PEOPLE.ON_MAP') }}
+              </span>
             </span>
           </span>
         </button>

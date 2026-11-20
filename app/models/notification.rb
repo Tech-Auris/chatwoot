@@ -45,7 +45,8 @@ class Notification < ApplicationRecord
     sla_missed_next_response: 7,
     sla_missed_resolution: 8,
     internal_chat_mention: 9,
-    internal_chat_new_message: 10
+    internal_chat_new_message: 10,
+    virtual_clinic_alert: 11
   }.freeze
 
   # Internal chat notifications don't have email mailers/templates yet, so email
@@ -59,7 +60,7 @@ class Notification < ApplicationRecord
   after_destroy_commit :dispatch_destroy_event
   after_update_commit :dispatch_update_event
 
-  PRIMARY_ACTORS = ['Conversation', 'InternalChat::Channel'].freeze
+  PRIMARY_ACTORS = ['Conversation', 'InternalChat::Channel', 'VirtualClinicAlert'].freeze
 
   def push_event_data
     # Secondary actor could be nil for cases like system assigning conversation
@@ -104,7 +105,8 @@ class Notification < ApplicationRecord
       'sla_missed_next_response' => 'notifications.notification_title.sla_missed_next_response',
       'sla_missed_resolution' => 'notifications.notification_title.sla_missed_resolution',
       'internal_chat_mention' => 'notifications.notification_title.internal_chat_mention',
-      'internal_chat_new_message' => 'notifications.notification_title.internal_chat_new_message'
+      'internal_chat_new_message' => 'notifications.notification_title.internal_chat_new_message',
+      'virtual_clinic_alert' => 'notifications.notification_title.virtual_clinic_alert'
     }
 
     i18n_key = notification_title_map[notification_type]
@@ -117,6 +119,8 @@ class Notification < ApplicationRecord
       I18n.t(i18n_key, display_id: conversation.display_id)
     elsif INTERNAL_CHAT_NOTIFICATION_TYPES.include?(notification_type)
       I18n.t(i18n_key, name: internal_chat_actor_name)
+    elsif notification_type == 'virtual_clinic_alert'
+      I18n.t(i18n_key, name: virtual_clinic_alert_name)
     else
       I18n.t(i18n_key, display_id: primary_actor.display_id)
     end
@@ -132,6 +136,8 @@ class Notification < ApplicationRecord
       message_body(secondary_actor)
     when 'conversation_assignment', 'sla_missed_next_response', 'sla_missed_resolution'
       message_body((conversation.messages.incoming.last || conversation.messages.outgoing.last))
+    when 'virtual_clinic_alert'
+      "#{virtual_clinic_alert_name}: #{primary_actor.message}"
     else
       ''
     end
@@ -142,6 +148,11 @@ class Notification < ApplicationRecord
   end
 
   private
+
+  # The AI teammate who raised her hand (named as in the clinic editor).
+  def virtual_clinic_alert_name
+    VirtualClinic::Persona.find!(primary_actor.persona, account: account).name
+  end
 
   # For internal chat, primary_actor is an InternalChat::Channel. Named channels use
   # their (#-prefixed) name; DMs have no name, so fall back to the sender's name.
@@ -191,9 +202,9 @@ class Notification < ApplicationRecord
     Notification::RemoveDuplicateNotificationJob.perform_later(self)
   end
 
-  # Internal chat types have no email mailer/templates yet (deferred), so skip email delivery.
+  # Internal chat and Clínica virtual types have no email mailer/templates yet, so skip email delivery.
   def email_delivery_supported?
-    INTERNAL_CHAT_NOTIFICATION_TYPES.exclude?(notification_type)
+    INTERNAL_CHAT_NOTIFICATION_TYPES.exclude?(notification_type) && notification_type != 'virtual_clinic_alert'
   end
 
   def user_subscribed_to_notification?(delivery_type)
