@@ -6,7 +6,7 @@ class AccountIntegrationDashboard < Administrate::BaseDashboard
     account: Field::BelongsTo.with_options(searchable: true, searchable_fields: ['name']),
     erp_source: Field::BelongsTo.with_options(order: :id),
     config: IntegrationConfigField,
-    config_json: LongTextField,
+    config_values: IntegrationConfigFormField,
     created_at: Field::DateTime,
     updated_at: Field::DateTime
   }.freeze
@@ -15,7 +15,7 @@ class AccountIntegrationDashboard < Administrate::BaseDashboard
 
   SHOW_PAGE_ATTRIBUTES = %i[id account erp_source config created_at updated_at].freeze
 
-  FORM_ATTRIBUTES = %i[account erp_source config_json].freeze
+  FORM_ATTRIBUTES = %i[config_values].freeze
 
   # Search `account:<id>` to list one account's integrations.
   COLLECTION_FILTERS = {

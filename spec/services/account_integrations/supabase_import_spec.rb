@@ -5,8 +5,12 @@ RSpec.describe AccountIntegrations::SupabaseImport do
   let(:account) { create(:account) }
 
   before do
-    { 2 => 'Feegow', 7 => 'VisualASA CIG', 13 => 'Klingo', 15 => 'VisualASA Geral' }.each do |id, name|
-      ErpSource.find_or_create_by!(id: id) { |erp| erp.name = name }
+    feegow = [{ 'key' => 'access_token', 'secret' => true }, { 'key' => 'local_id', 'type' => 'number' },
+              { 'key' => 'unidade_id', 'type' => 'number' }, { 'key' => 'procedimento_id', 'type' => 'number' },
+              { 'key' => 'token_overrides', 'type' => 'json', 'secret' => true }]
+    { 2 => ['Feegow', feegow], 7 => ['VisualASA CIG', []], 13 => ['Klingo', [{ 'key' => 'app-token', 'secret' => true }]],
+      15 => ['VisualASA Geral', []] }.each do |id, (name, fields)|
+      ErpSource.find_or_create_by!(id: id) { |erp| erp.assign_attributes(name: name, fields: fields) }
     end
   end
 
@@ -20,7 +24,7 @@ RSpec.describe AccountIntegrations::SupabaseImport do
     described_class.new(dir: dir, apply: apply).perform
   end
 
-  it 'imports every column but cliente_id under the same names, parsing jsonb, and compares clean afterwards' do
+  it 'imports every column but cliente_id under the same names, cast to the field types, and compares clean afterwards' do
     write_csv('feegow', 'cliente_id,access_token,local_id,unidade_id,procedimento_id,token_overrides',
               %(#{account.id},tok,10,,30,"{""5"": ""outro""}"))
     write_csv('klingo', 'cliente_id,app-token,link', "#{account.id},k-tok,https://klingo")
@@ -28,7 +32,7 @@ RSpec.describe AccountIntegrations::SupabaseImport do
     results = import
 
     expect(account.account_integrations.find_by(erp_source_id: 2).config).to eq(
-      'access_token' => 'tok', 'local_id' => '10', 'unidade_id' => nil, 'procedimento_id' => '30', 'token_overrides' => { '5' => 'outro' }
+      'access_token' => 'tok', 'local_id' => 10, 'unidade_id' => nil, 'procedimento_id' => 30, 'token_overrides' => { '5' => 'outro' }
     )
     expect(account.account_integrations.find_by(erp_source_id: 13).config).to eq('app-token' => 'k-tok', 'link' => 'https://klingo')
     expect(results.map(&:differences)).to all(be_empty)

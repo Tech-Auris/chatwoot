@@ -1,0 +1,37 @@
+<%= f.hidden_field :account_id %>
+<%= f.hidden_field :erp_source_id %>
+<div class="field-unit__label">Account · ERP</div>
+<div class="field-unit__field pt-2">
+  <strong><%= field.resource.account&.name %> · <%= field.resource.erp_source&.name || 'no ERP' %></strong>
+</div>
+
+<% if field.fields.empty? %>
+  <div class="field-unit__label"></div>
+  <div class="field-unit__field">
+    This ERP has no integration fields yet.
+    <% if field.resource.erp_source %>
+      <%= link_to 'Set them up on the ERP', edit_super_admin_erp_source_path(field.resource.erp_source) %>.
+    <% end %>
+  </div>
+<% end %>
+
+<% field.fields.each do |erp_field| %>
+  <% name = "#{f.object_name}[#{field.attribute}][#{erp_field['key']}]" %>
+  <div class="field-unit">
+    <div class="field-unit__label <%= 'self-start pt-2' if erp_field['type'] == 'json' %>">
+      <%= label_tag name, erp_field['label'] %>
+    </div>
+    <div class="field-unit__field">
+      <% if erp_field['secret'] && erp_field['type'] != 'json' %>
+        <%= password_field_tag name, nil, autocomplete: 'new-password', placeholder: field.secret_hint(erp_field) %>
+      <% elsif erp_field['type'] == 'json' %>
+        <%= text_area_tag name, (erp_field['secret'] ? nil : field.value(erp_field)), rows: 6, placeholder: erp_field['secret'] ? field.secret_hint(erp_field) : '{ }' %>
+      <% elsif erp_field['type'] == 'number' %>
+        <%= number_field_tag name, field.value(erp_field), step: 1 %>
+      <% else %>
+        <%= text_field_tag name, field.value(erp_field) %>
+      <% end %>
+      <p class="text-sm text-n-slate-11 mt-1"><code><%= erp_field['key'] %></code></p>
+    </div>
+  </div>
+<% end %>

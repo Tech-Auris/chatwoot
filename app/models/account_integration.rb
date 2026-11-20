@@ -1,7 +1,8 @@
 # The credentials an account uses to reach its ERP (or calendar), moved from the
 # Supabase `integration_<erp>` tables and edited in Super Admin. `config` keeps
 # that table's columns under the same names (Klingo's `app-token` included), so
-# the n8n nodes that replaced the Supabase ones return the same keys.
+# the n8n nodes that replaced the Supabase ones return the same keys. Which keys
+# an ERP has, their types and which are secret come from `erp_sources.fields`.
 #
 # An account may keep rows for several ERPs; the one that counts is the row of
 # the account's `erp_source`. n8n reads it live from Postgres on every call:
@@ -14,58 +15,45 @@
 class AccountIntegration < ApplicationRecord
   include Auditable
 
-  # The Supabase columns of each ERP, keyed by ErpSource id: the keys a new
-  # integration starts with. Prodoctor (9) uses a fixed n8n credential.
-  FIELDS = {
-    1 => %w[calendar_id],
-    2 => %w[access_token local_id unidade_id procedimento_id token_overrides],
-    3 => %w[access_token clinica_id convenio_id],
-    4 => %w[access_token api_url],
-    5 => %w[identificacao senha url],
-    6 => %w[access_token codelink businessid],
-    7 => %w[access_token url filial],
-    8 => %w[access_token],
-    10 => %w[access_token api_url usuclin],
-    11 => %w[access_token place_id],
-    12 => %w[identificacao senha link],
-    13 => %w[app-token link],
-    14 => %w[client_id client_secret link],
-    15 => %w[access_token url filial],
-    16 => %w[login senha link],
-    17 => %w[token link]
-  }.freeze
-
-  SECRET_KEYS = %w[access_token token senha client_secret app-token token_overrides].freeze
-
   belongs_to :account
   belongs_to :erp_source
 
   validates :erp_source_id, uniqueness: { scope: :account_id }
-  validate :config_json_is_an_object
+  validate :config_values_are_valid
+
+  before_validation :apply_config_values, if: -> { @config_values }
 
   # Secret values never reach the change history, only the fact that `config` changed.
   auditable filtered: %i[config], label: ->(integration) { integration.erp_source&.name }
 
-  def self.template_for(erp_source_id)
-    FIELDS.fetch(erp_source_id.to_i, []).index_with(nil)
-  end
+  # A form value cast to the field's type, as [value, error]. Blank is nil.
+  def self.cast(field, value)
+    return [value, nil] unless value.is_a?(String)
+    return [nil, nil] if value.strip.empty?
 
-  # `config` as the JSON the Super Admin form edits.
-  def config_json
-    @config_json || JSON.pretty_generate(config)
-  end
-
-  def config_json=(text)
-    @config_json = text
-    parsed = JSON.parse(text)
-    self.config = parsed if parsed.is_a?(Hash)
+    case field['type']
+    when 'number' then Integer(value.strip, 10, exception: false).then { |number| number ? [number, nil] : [nil, 'precisa ser um número inteiro'] }
+    when 'json' then [JSON.parse(value), nil]
+    else [value, nil]
+    end
   rescue JSON::ParserError
-    nil
+    [nil, 'não é um JSON válido']
+  end
+
+  # The Super Admin form posts one value per field of the ERP. A blank secret
+  # keeps the saved one; keys the ERP no longer lists are kept as they are.
+  def config_values
+    config
+  end
+
+  def config_values=(values)
+    @config_values = values.to_h.stringify_keys
   end
 
   # `config` with each secret cut down to its last 4 characters (`••••1234`).
   def masked_config
-    config.to_h { |key, value| [key, SECRET_KEYS.include?(key) && value.present? ? mask(value) : value] }
+    secrets = erp_source&.secret_keys || []
+    config.to_h { |key, value| [key, secrets.include?(key) && value.present? ? mask(value) : value] }
   end
 
   def active?
@@ -74,16 +62,26 @@ class AccountIntegration < ApplicationRecord
 
   private
 
-  def mask(value)
-    value.is_a?(String) && value.length > 8 ? "••••#{value.last(4)}" : '••••'
+  def apply_config_values
+    @config_errors = []
+    self.config = (erp_source&.fields || []).each_with_object(config.dup) { |field, config| apply_config_value(field, config) }
+    @config_values = nil
   end
 
-  def config_json_is_an_object
-    return if @config_json.nil?
+  def apply_config_value(field, config)
+    key = field['key']
+    return unless @config_values.key?(key)
+    return if field['secret'] && @config_values[key].blank? && config[key].present?
 
-    parsed = JSON.parse(@config_json)
-    errors.add(:config_json, 'precisa ser um objeto JSON ({ "chave": "valor" })') unless parsed.is_a?(Hash)
-  rescue JSON::ParserError => e
-    errors.add(:config_json, "não é um JSON válido: #{e.message.truncate(120)}")
+    value, error = self.class.cast(field, @config_values[key])
+    error ? @config_errors << "#{field['label']} #{error}" : config[key] = value
+  end
+
+  def config_values_are_valid
+    @config_errors&.each { |error| errors.add(:config, error) }
+  end
+
+  def mask(value)
+    value.is_a?(String) && value.length > 8 ? "••••#{value.last(4)}" : '••••'
   end
 end

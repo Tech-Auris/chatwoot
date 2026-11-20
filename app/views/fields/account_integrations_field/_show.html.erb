@@ -8,5 +8,9 @@
       <%= render 'fields/integration_config_field/show', field: IntegrationConfigField.new(:config, integration.config, :show, resource: integration) %>
     </div>
   <% end %>
-  <%= link_to 'Add integration', new_super_admin_account_integration_path(account_id: field.resource.id), class: 'button' %>
+  <%= form_tag configure_super_admin_account_integrations_path, method: :get, class: 'flex gap-2 items-center' do %>
+    <%= hidden_field_tag :account_id, field.resource.id, id: nil %>
+    <%= select_tag :erp_source_id, options_from_collection_for_select(ErpSource.active.ordered, :id, :name, field.resource.erp_source_id) %>
+    <%= submit_tag 'Configure integration', class: 'button', name: nil %>
+  <% end %>
 </div>

@@ -1168,6 +1168,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_20_120000) do
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.jsonb "fields", default: [], null: false
     t.index ["name"], name: "index_erp_sources_on_name", unique: true
   end
 

@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe AccountIntegration do
   let(:account) { create(:account) }
-  let(:feegow) { create(:erp_source) }
+  let(:feegow) { create(:erp_source, :with_fields) }
 
   it 'allows one integration per account and ERP' do
     create(:account_integration, account: account, erp_source: feegow)
@@ -11,25 +11,38 @@ RSpec.describe AccountIntegration do
     expect(build(:account_integration, account: account)).to be_valid
   end
 
-  it 'masks the secrets, keeping the last 4 characters of long ones' do
-    integration = build(:account_integration, config: {
-                          'access_token' => 'abcdefghij1234', 'senha' => 'curta', 'token_overrides' => { '1' => 'x' },
-                          'local_id' => '7', 'app-token' => nil
+  it "masks the ERP's secret fields, keeping the last 4 characters of long ones" do
+    integration = build(:account_integration, erp_source: feegow, config: {
+                          'access_token' => 'abcdefghij1234', 'token_overrides' => { '1' => 'x' }, 'local_id' => 7, 'extra' => 'abcdefghij1234'
                         })
 
-    expect(integration.masked_config).to eq('access_token' => '••••1234', 'senha' => '••••', 'token_overrides' => '••••',
-                                            'local_id' => '7', 'app-token' => nil)
+    expect(integration.masked_config).to eq('access_token' => '••••1234', 'token_overrides' => '••••', 'local_id' => 7,
+                                            'extra' => 'abcdefghij1234')
   end
 
-  it 'edits the config as JSON and refuses invalid JSON or a non-object' do
-    integration = create(:account_integration)
+  describe '#config_values=' do
+    let(:integration) do
+      create(:account_integration, erp_source: feegow, config: { 'access_token' => 'old-token', 'local_id' => 1, 'legacy' => 'x' })
+    end
 
-    integration.update!(config_json: '{"access_token": "novo", "app-token": "k"}')
-    expect(integration.reload.config).to eq('access_token' => 'novo', 'app-token' => 'k')
+    it 'casts each value to the type of its field and keeps keys the ERP no longer lists' do
+      integration.update!(config_values: { 'access_token' => 'new-token', 'local_id' => '42', 'token_overrides' => '{"5": "t"}' })
 
-    expect(integration.update(config_json: '{nope')).to be(false)
-    expect(integration.update(config_json: '[1]')).to be(false)
-    expect(integration.errors[:config_json]).to be_present
+      expect(integration.reload.config).to eq('access_token' => 'new-token', 'local_id' => 42, 'token_overrides' => { '5' => 't' },
+                                              'legacy' => 'x')
+    end
+
+    it 'keeps a saved secret when its input comes blank, and clears a blank non-secret' do
+      integration.update!(config_values: { 'access_token' => '', 'local_id' => '' })
+
+      expect(integration.reload.config).to include('access_token' => 'old-token', 'local_id' => nil)
+    end
+
+    it 'refuses a non-integer number and invalid JSON' do
+      expect(integration.update(config_values: { 'local_id' => '4x', 'token_overrides' => '{oops' })).to be(false)
+      expect(integration.errors[:config]).to contain_exactly('Local ID precisa ser um número inteiro', 'Token overrides não é um JSON válido')
+      expect(integration.reload.config['local_id']).to eq(1)
+    end
   end
 
   it 'logs config changes without their values' do
@@ -47,9 +60,5 @@ RSpec.describe AccountIntegration do
 
     expect(create(:account_integration, account: account, erp_source: feegow)).to be_active
     expect(create(:account_integration, account: account)).not_to be_active
-  end
-
-  it 'starts a new integration with the keys of the ERP' do
-    expect(described_class.template_for(13)).to eq('app-token' => nil, 'link' => nil)
   end
 end

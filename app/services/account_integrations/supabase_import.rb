@@ -1,7 +1,8 @@
 # Copies the ERP credentials from the Supabase `integration_<erp>` tables into
 # `account_integrations`, from CSV exports named `integration_<erp>.csv` in one
 # directory (a missing file is skipped). Each row becomes the `config` of its
-# account and ERP, with every column but `cliente_id`, under the same names;
+# account and ERP, with every column but `cliente_id`, under the same names and
+# cast to the type the ERP gives the field (number, json; text otherwise);
 # rerunning replaces it, so it can be rerun until the cut-over.
 #
 # VisualASA has one table for two ERPs (7 CIG, 15 Geral): a row goes to the
@@ -47,7 +48,7 @@ class AccountIntegrations::SupabaseImport
     return result.tap { |row| row.error = 'conta não encontrada' } if account.nil?
 
     result.erp_source_id = erp_source_id(account, erp_source_id)
-    sync(account, result, config(line))
+    sync(account, result, config(ErpSource.find(result.erp_source_id), line))
   end
 
   def sync(account, result, config)
@@ -63,12 +64,10 @@ class AccountIntegrations::SupabaseImport
     VISUALASA.include?(account.erp_source_id) ? account.erp_source_id : VISUALASA.first
   end
 
-  # jsonb columns (Feegow's token_overrides) come as JSON text and go back to JSON.
-  def config(line)
-    line.to_h.except(*IGNORED_COLUMNS).transform_values do |value|
-      value.is_a?(String) && value.start_with?('{', '[') ? JSON.parse(value) : value
-    rescue JSON::ParserError
-      value
+  def config(erp_source, line)
+    fields = erp_source.fields.index_by { |field| field['key'] }
+    line.to_h.except(*IGNORED_COLUMNS).to_h do |key, value|
+      [key, fields[key] ? AccountIntegration.cast(fields[key], value).first : value]
     end
   end
 
