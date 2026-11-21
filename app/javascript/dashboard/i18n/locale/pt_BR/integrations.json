@@ -66,7 +66,8 @@
             "INTERNAL_CHAT_MESSAGE_UPDATED": "Mensagem do chat interno atualizada",
             "INTERNAL_CHAT_MESSAGE_DELETED": "Mensagem do chat interno excluída",
             "INTERNAL_CHAT_CHANNEL_UPDATED": "Canal do chat interno atualizado",
-            "FUNNEL_UPDATED": "Funil atualizado"
+            "FUNNEL_UPDATED": "Funil atualizado",
+            "PIPELINE_ENTRY_UPDATED": "Funil da clínica atualizado"
           }
         },
         "NAME": {

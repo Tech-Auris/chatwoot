@@ -8,6 +8,7 @@ import InboxName from '../InboxName.vue';
 import AiStatusBadge from 'dashboard/components-next/Conversation/AiStatusBadge.vue';
 import FollowUpBadge from 'dashboard/components-next/Conversation/FollowUpBadge.vue';
 import FunnelStageBadge from 'dashboard/components-next/Conversation/FunnelStageBadge.vue';
+import ContactPipelinesButton from 'dashboard/components-next/Conversation/ContactPipelinesButton.vue';
 import { useAccount } from 'dashboard/composables/useAccount';
 import MoreActions from './MoreActions.vue';
 import Avatar from 'next/avatar/Avatar.vue';
@@ -231,6 +232,10 @@ const copyConversationId = async () => {
         v-if="chat?.id && isFunnelEnabled"
         :conversation-id="chat.id"
         :stage="chat.funnel_stage"
+      />
+      <ContactPipelinesButton
+        v-if="isFunnelEnabled && currentContact.id"
+        :contact-id="currentContact.id"
       />
       <SLACardLabel
         v-if="hasSlaPolicyId"

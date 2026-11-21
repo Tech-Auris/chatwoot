@@ -381,6 +381,20 @@ pt_BR:
       external_id_required: "Este lead tem mais de um agendamento aberto: envie o external_id do agendamento"
       invalid_source: "source_id %{source_id} não é um ERP cadastrado"
       block_required: "Envie um bloco appointment ou attendance"
+  pipelines:
+    stages:
+      won: Ganho
+      lost: Perdido
+    errors:
+      closing_stage_locked: "Ganho e Perdido não podem ser renomeados"
+      closing_stage_delete: "Ganho e Perdido não podem ser apagados"
+      last_open_stage: "O funil precisa de pelo menos uma etapa"
+      move_target_required: "Escolha para qual etapa vão os contatos desta etapa"
+      archived: "Este funil está arquivado"
+      stage_mismatch: "Esta etapa é de outro funil"
+      already_open: "Este contato já está em andamento neste funil"
+      loss_reason_required: "Escolha o motivo da perda"
+      stage_in_automation: "Esta etapa é usada nas automações %{rules}. Ajuste-as antes"
   conversations:
     captain:
       handoff: 'Transferindo para que outro agente dê assistência.'

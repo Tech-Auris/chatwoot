@@ -136,6 +136,26 @@ class WebhookListener < BaseListener # rubocop:disable Metrics/ClassLength
     deliver_webhook_payloads(payload, inbox)
   end
 
+  # A contact moved on a clinic pipeline. Pipelines follow the contact, not an
+  # inbox, so only account webhooks receive it.
+  def pipeline_entry_updated(event)
+    entry = event.data[:entry]
+    payload = {
+      event: __method__.to_s,
+      pipeline: { id: entry.pipeline_id, name: entry.pipeline.name },
+      entry: { id: entry.id, source: entry.source, closed_at: entry.closed_at, loss_reason: loss_reason_payload(entry.loss_reason) },
+      contact: entry.contact.webhook_data,
+      previous_stage: pipeline_stage_payload(event.data[:previous_stage]),
+      new_stage: pipeline_stage_payload(event.data[:new_stage]),
+      user_id: event.data[:user]&.id
+    }
+    deliver_account_webhooks(payload, entry.account)
+  end
+
+  def pipeline_stage_payload(stage)
+    stage && { id: stage.id, name: stage.name, kind: stage.kind, color: stage.color, position: stage.position }
+  end
+
   def funnel_stage_payload(stage)
     return nil if stage.blank?
 

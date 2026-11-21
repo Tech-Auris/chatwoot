@@ -57,6 +57,7 @@ import summaryReports from './modules/summaryReports';
 import teamMembers from './modules/teamMembers';
 import teams from './modules/teams';
 import funnelStages from './modules/funnelStages';
+import pipelines from './modules/pipelines';
 import lossReasons from './modules/lossReasons';
 import tickets from './modules/tickets';
 import userNotificationSettings from './modules/userNotificationSettings';
@@ -136,6 +137,7 @@ export default createStore({
     teamMembers,
     teams,
     funnelStages,
+    pipelines,
     lossReasons,
     tickets,
     userNotificationSettings,

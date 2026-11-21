@@ -406,6 +406,20 @@ en:
       external_id_required: "This lead has more than one open appointment: send the appointment's external_id"
       invalid_source: "source_id %{source_id} is not a registered ERP"
       block_required: "Send an appointment or attendance block"
+  pipelines:
+    stages:
+      won: Won
+      lost: Lost
+    errors:
+      closing_stage_locked: "Won and Lost cannot be renamed"
+      closing_stage_delete: "Won and Lost cannot be deleted"
+      last_open_stage: "A pipeline needs at least one stage"
+      move_target_required: "Choose where the contacts of this stage go"
+      archived: "This pipeline is archived"
+      stage_mismatch: "This stage belongs to another pipeline"
+      already_open: "This contact is already in progress in this pipeline"
+      loss_reason_required: "Choose the loss reason"
+      stage_in_automation: "This stage is used by the automations %{rules}. Change them first"
   conversations:
     captain:
       handoff: 'Transferring to another agent for further assistance.'

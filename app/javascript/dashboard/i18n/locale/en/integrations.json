@@ -66,7 +66,8 @@
             "INTERNAL_CHAT_MESSAGE_UPDATED": "Internal chat message updated",
             "INTERNAL_CHAT_MESSAGE_DELETED": "Internal chat message deleted",
             "INTERNAL_CHAT_CHANNEL_UPDATED": "Internal chat channel updated",
-            "FUNNEL_UPDATED": "Funnel updated"
+            "FUNNEL_UPDATED": "Funnel updated",
+            "PIPELINE_ENTRY_UPDATED": "Clinic pipeline updated"
           }
         },
         "NAME": {

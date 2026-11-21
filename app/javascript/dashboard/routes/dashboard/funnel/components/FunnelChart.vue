@@ -7,6 +7,12 @@ const props = defineProps({
     type: Array,
     required: true,
   },
+  // The Agendamento splits each stage by AI / manual conversations; a clinic
+  // pipeline follows contacts, so it shows one band and no legend.
+  splitByAi: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 // Emitted with the stage when its count is clicked (drillable stages only).
@@ -414,7 +420,7 @@ const hoveredTooltip = computed(() => {
         <div class="font-medium text-n-slate-12 mb-1">
           {{ hoveredTooltip.name }}
         </div>
-        <div class="flex items-center gap-1.5 text-n-slate-12">
+        <div v-if="splitByAi" class="flex items-center gap-1.5 text-n-slate-12">
           <span
             class="w-2.5 h-2.5 rounded-sm flex-shrink-0"
             :style="{ backgroundColor: AI_COLOR }"
@@ -429,7 +435,10 @@ const hoveredTooltip = computed(() => {
             }}
           </span>
         </div>
-        <div class="flex items-center gap-1.5 text-n-slate-12 mt-0.5">
+        <div
+          v-if="splitByAi"
+          class="flex items-center gap-1.5 text-n-slate-12 mt-0.5"
+        >
           <span
             class="w-2.5 h-2.5 rounded-sm flex-shrink-0"
             :style="{ backgroundColor: MANUAL_COLOR }"
@@ -450,6 +459,7 @@ const hoveredTooltip = computed(() => {
     <!-- Legend mapping color → semantic. Compact so it fits next to the
          loss-reasons donut on md+. -->
     <div
+      v-if="splitByAi"
       class="flex items-center justify-center gap-4 mt-2 text-xs text-n-slate-11"
     >
       <div class="flex items-center gap-1.5">

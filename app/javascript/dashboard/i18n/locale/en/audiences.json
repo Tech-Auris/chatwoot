@@ -50,6 +50,7 @@
     "FIELDS": {
       "LABELS": "Label",
       "FUNNEL_STAGE_ID": "Funnel stage",
+      "PIPELINE_STAGE_ID": "Clinic pipeline stage",
       "LOSS_REASON_ID": "Loss reason",
       "ORIGEM": "Lead origin",
       "INBOX_ID": "Inbox",

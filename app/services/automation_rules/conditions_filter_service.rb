@@ -155,6 +155,8 @@ class AutomationRules::ConditionsFilterService < FilterService
       # so conversation-scoped filters that live on the contact (like `origem`)
       # can reach the column directly.
       " contacts.additional_attributes ->> '#{attribute_key}' #{filter_operator_value} #{query_operator} "
+    when 'pipeline_entry'
+      pipeline_stage_condition(query_hash, current_index)
     when 'standard'
       if attribute_key == 'labels'
         build_label_query_string(query_hash, current_index, query_operator)

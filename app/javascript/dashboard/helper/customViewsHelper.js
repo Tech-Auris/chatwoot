@@ -131,7 +131,12 @@ export const getValuesForFilter = (filter, params) => {
 export const generateValuesForEditCustomViews = (filter, params) => {
   const { attribute_key, filter_operator, values } = filter;
   const { filterTypes, allCustomAttributes } = params;
-  const inputType = getInputType(attribute_key, filter_operator, filterTypes);
+  // "Etapa do funil" saves the Agendamento as `funnel_stage_id` and a clinic
+  // pipeline as `pipeline_stage_id`; the picker finds the funnel by the stage.
+  const lookupKey =
+    attribute_key === 'pipeline_stage_id' ? 'funnel_stage_id' : attribute_key;
+  const inputType = getInputType(lookupKey, filter_operator, filterTypes);
+  if (inputType === 'funnelStage') return { id: Number(values[0]) };
 
   if (inputType === undefined) {
     const filterInputTypes = getAttributeInputType(

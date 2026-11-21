@@ -44,7 +44,8 @@ class AutomationRule < ApplicationRecord
 
   def conditions_attributes
     %w[content email country_code status message_type browser_language assignee_id team_id referer city company company_name inbox_id
-       mail_subject phone_number priority conversation_language labels private_note ai_enabled funnel_stage_id loss_reason_id origem]
+       mail_subject phone_number priority conversation_language labels private_note ai_enabled funnel_stage_id loss_reason_id origem
+       pipeline_stage_id]
   end
 
   def actions_attributes
@@ -52,7 +53,7 @@ class AutomationRule < ApplicationRecord
        remove_assigned_team send_webhook_event mute_conversation send_attachment change_status resolve_conversation
        open_conversation pending_conversation snooze_conversation change_priority send_email_transcript
        add_private_note create_scheduled_message enable_ai disable_ai assign_origem trigger_conversion_event
-       move_to_funnel_stage].freeze
+       move_to_funnel_stage move_to_pipeline_stage].freeze
   end
 
   def file_base_data
@@ -124,16 +125,23 @@ class AutomationRule < ApplicationRecord
     end
   end
 
-  # Moving to a stage that asks for a loss reason (Perdido) needs one: the
-  # rule gives it as the second param, `[stage_id, loss_reason_id]`.
+  # Moving to a stage that asks for a loss reason (Perdido, on the
+  # Agendamento or on a clinic pipeline) needs one: the rule gives it as the
+  # second param, `[stage_id, loss_reason_id]`.
   def funnel_move_loss_reason
     Array(actions).each do |action|
-      next unless action['action_name'] == 'move_to_funnel_stage'
-
       stage_id, loss_reason_id = Array(action['action_params'])
-      next if loss_reason_id.present? || !FunnelStage.exists?(id: stage_id, requires_loss_reason: true)
+      next if loss_reason_id.present? || !move_to_lost_stage?(action['action_name'], stage_id)
 
       errors.add(:actions, I18n.t('errors.automation.funnel_move.loss_reason_required'))
+    end
+  end
+
+  def move_to_lost_stage?(action_name, stage_id)
+    case action_name
+    when 'move_to_funnel_stage' then FunnelStage.exists?(id: stage_id, requires_loss_reason: true)
+    when 'move_to_pipeline_stage' then PipelineStage.lost.exists?(id: stage_id)
+    else false
     end
   end
 

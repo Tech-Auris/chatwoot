@@ -2,10 +2,20 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
+import { useStore } from 'vuex';
 import { useStoreGetters } from 'dashboard/composables/store';
+import { useAdmin } from 'dashboard/composables/useAdmin';
 import { debounce } from '@chatwoot/utils';
 import FunnelAPI from 'dashboard/api/funnel';
 import LossReasonAPI from 'dashboard/api/lossReason';
+import PipelinesAPI from 'dashboard/api/pipelines';
+import Button from 'dashboard/components-next/button/Button.vue';
+import PipelineSelector from './components/PipelineSelector.vue';
+import PipelineCard from './components/PipelineCard.vue';
+import PipelineList from './components/PipelineList.vue';
+import PipelineConfigDialog from './components/PipelineConfigDialog.vue';
+import PipelineAddContactDialog from './components/PipelineAddContactDialog.vue';
+import PipelineConversion from './components/PipelineConversion.vue';
 
 import FunnelBoard from './components/FunnelBoard.vue';
 import SaveAsAudienceDialog from 'dashboard/routes/dashboard/marketing/audiences/components/SaveAsAudienceDialog.vue';
@@ -17,7 +27,19 @@ import LossReasonDialog from './components/LossReasonDialog.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 
 const { t } = useI18n();
+const store = useStore();
 const getters = useStoreGetters();
+const { isAdmin, isManager } = useAdmin();
+const canManagePipelines = computed(() => isAdmin.value || isManager.value);
+
+// null = Agendamento, the default funnel: per conversation, stages owned by
+// Auris. Any other value is a clinic pipeline (per contact). The Funil always
+// opens on the Agendamento — the choice is not remembered.
+const selectedPipelineId = ref(null);
+const isClinicPipeline = computed(() => selectedPipelineId.value !== null);
+const selectedPipeline = computed(() =>
+  getters['pipelines/getPipeline'].value(selectedPipelineId.value)
+);
 
 // 'board' and 'list' share the FunnelFilters / fetchFunnel pipeline below
 // (real-time stage layout with conversations grouped by stage). 'overview'
@@ -197,7 +219,7 @@ const callMove = async ({ conversationId, toStageName, lossReasonId }) => {
   }
 };
 
-const moveConversation = async ({ conversationId, stage }) => {
+const moveConversation = async ({ id: conversationId, stage }) => {
   let sourceStageName = null;
   Object.entries(conversationsByStage.value).some(([stageName, list]) => {
     const idx = list.findIndex(c => c.id === conversationId);
@@ -232,6 +254,11 @@ const moveConversation = async ({ conversationId, stage }) => {
 
 const onLossReasonConfirm = async lossReasonId => {
   if (!pendingMove.value) return;
+  if (pendingMove.value.entryId) {
+    // eslint-disable-next-line no-use-before-define
+    await confirmPipelineLoss(lossReasonId);
+    return;
+  }
   isSubmittingLossReason.value = true;
   try {
     optimisticMove(pendingMove.value);
@@ -249,8 +276,11 @@ const onLossReasonConfirm = async lossReasonId => {
 
 const onLossReasonClose = () => {
   if (!pendingMove.value) return;
+  const wasPipelineMove = !!pendingMove.value.entryId;
   pendingMove.value = null;
-  fetchFunnel();
+  // eslint-disable-next-line no-use-before-define
+  if (wasPipelineMove) fetchPipelineBoard();
+  else fetchFunnel();
 };
 
 const resetFilters = () => {
@@ -270,7 +300,11 @@ const condition = (key, value) => ({
   filter_operator: 'equal_to',
   values: [value],
 });
+// On a clinic pipeline the audience is the contacts on the stage; its
+// filters (contact labels, date of entry) do not map onto conversations.
 const audienceRule = computed(() => {
+  if (isClinicPipeline.value)
+    return [condition('pipeline_stage_id', audienceStage.value.id)];
   const { inboxId, origem, label } = filters.value;
   return [
     condition('funnel_stage_id', audienceStage.value.id),
@@ -280,6 +314,7 @@ const audienceRule = computed(() => {
   ].filter(Boolean);
 });
 const audienceWindow = computed(() => {
+  if (isClinicPipeline.value) return { type: 'all' };
   const { fromDate, toDate } = filters.value;
   return fromDate && toDate
     ? { type: 'range', from: fromDate, to: toDate }
@@ -291,17 +326,237 @@ const openSaveAsAudience = async stage => {
   saveAsAudienceDialogRef.value?.open();
 };
 
-onMounted(fetchFunnel);
+// ---- Clinic pipelines -------------------------------------------------
+const DEFAULT_PIPELINE_FILTERS = {
+  fromDate: '',
+  toDate: '',
+  hideClosed: true,
+  label: '',
+  source: '',
+};
+const pipelineFilters = ref({ ...DEFAULT_PIPELINE_FILTERS });
+const pipelineStages = ref([]);
+const entriesByStage = ref({});
+const entryPageByStageId = ref({});
+const loadingMoreEntryStageIds = ref([]);
+
+const buildPipelineParams = () => {
+  const { fromDate, toDate, hideClosed, label, source } = pipelineFilters.value;
+  const params = {};
+  if (fromDate) params.from = `${fromDate}T00:00:00`;
+  if (toDate) params.to = `${toDate}T23:59:59`;
+  if (hideClosed) params.hide_closed = 'true';
+  if (label) params.label = label;
+  if (source) params.source = source;
+  return params;
+};
+
+const fetchPipelineBoard = async () => {
+  if (!isClinicPipeline.value) return;
+  try {
+    const { data } = await PipelinesAPI.board(
+      selectedPipelineId.value,
+      buildPipelineParams()
+    );
+    pipelineStages.value = data?.payload?.stages || [];
+    entriesByStage.value = Object.fromEntries(
+      pipelineStages.value.map(stage => [stage.name, stage.entries || []])
+    );
+    entryPageByStageId.value = Object.fromEntries(
+      pipelineStages.value.map(stage => [stage.id, 1])
+    );
+  } catch (error) {
+    useAlert(t('FUNNEL.LOAD_ERROR'));
+  }
+};
+
+const loadMoreEntries = async stage => {
+  if (loadingMoreEntryStageIds.value.includes(stage.id)) return;
+  loadingMoreEntryStageIds.value = [
+    ...loadingMoreEntryStageIds.value,
+    stage.id,
+  ];
+  const nextPage = (entryPageByStageId.value[stage.id] || 1) + 1;
+  try {
+    const { data } = await PipelinesAPI.stageEntries(
+      selectedPipelineId.value,
+      stage.id,
+      nextPage,
+      buildPipelineParams()
+    );
+    entriesByStage.value = {
+      ...entriesByStage.value,
+      [stage.name]: [
+        ...(entriesByStage.value[stage.name] || []),
+        ...(data?.payload?.entries || []),
+      ],
+    };
+    entryPageByStageId.value = {
+      ...entryPageByStageId.value,
+      [stage.id]: nextPage,
+    };
+    pipelineStages.value = pipelineStages.value.map(s =>
+      s.id === stage.id ? { ...s, has_more: data?.payload?.meta?.has_more } : s
+    );
+  } catch (error) {
+    useAlert(t('FUNNEL.LOAD_ERROR'));
+  } finally {
+    loadingMoreEntryStageIds.value = loadingMoreEntryStageIds.value.filter(
+      id => id !== stage.id
+    );
+  }
+};
+
+const stageNameOfEntry = entryId =>
+  Object.keys(entriesByStage.value).find(name =>
+    entriesByStage.value[name].some(entry => entry.id === entryId)
+  );
+
+// Moves the card right away, the way the Agendamento board does; the API
+// answer then replaces it (new time on the stage, loss reason).
+const placeEntry = (entry, toStageName) => {
+  const fromStageName = stageNameOfEntry(entry.id);
+  const without = name =>
+    (entriesByStage.value[name] || []).filter(item => item.id !== entry.id);
+  entriesByStage.value = {
+    ...entriesByStage.value,
+    [fromStageName]: without(fromStageName),
+    [toStageName]: [entry, ...without(toStageName)],
+  };
+  pipelineStages.value = pipelineStages.value.map(stage => {
+    if (fromStageName === toStageName) return stage;
+    if (stage.name === fromStageName)
+      return { ...stage, count: Math.max(0, (stage.count || 0) - 1) };
+    if (stage.name === toStageName)
+      return { ...stage, count: (stage.count || 0) + 1 };
+    return stage;
+  });
+};
+
+const callPipelineMove = async ({ entryId, stageId, lossReasonId }) => {
+  const target = pipelineStages.value.find(stage => stage.id === stageId);
+  const current = entriesByStage.value[stageNameOfEntry(entryId)].find(
+    entry => entry.id === entryId
+  );
+  placeEntry(current, target.name);
+  try {
+    const { data } = await PipelinesAPI.moveEntry(entryId, {
+      stageId,
+      lossReasonId,
+    });
+    placeEntry(data.payload, target.name);
+  } catch (error) {
+    useAlert(error?.response?.data?.message || t('PIPELINES.MOVE_ERROR'));
+    await fetchPipelineBoard();
+  }
+};
+
+const moveEntry = async ({ id: entryId, stage: stageName }) => {
+  const target = pipelineStages.value.find(stage => stage.name === stageName);
+  if (!target || stageNameOfEntry(entryId) === stageName) return;
+  if (target.kind === 'lost') {
+    pendingMove.value = { entryId, stageId: target.id };
+    fetchLossReasons();
+    lossReasonDialogRef.value?.open();
+    return;
+  }
+  await callPipelineMove({ entryId, stageId: target.id });
+};
+
+const confirmPipelineLoss = async lossReasonId => {
+  isSubmittingLossReason.value = true;
+  try {
+    await callPipelineMove({ ...pendingMove.value, lossReasonId });
+    pendingMove.value = null;
+    lossReasonDialogRef.value?.close();
+  } finally {
+    isSubmittingLossReason.value = false;
+  }
+};
+
+const refreshPipelines = () => store.dispatch('pipelines/get', { force: true });
+
+// A card of another pipeline changed ("Adicionar a"): the counts of the
+// selector change; the board only when it is the one on screen.
+const onPipelineMembershipChanged = pipelineId => {
+  refreshPipelines();
+  if (pipelineId === selectedPipelineId.value) fetchPipelineBoard();
+};
+
+const configDialogRef = ref(null);
+const addContactDialogRef = ref(null);
+
+const openNewPipeline = () => configDialogRef.value?.open(null);
+const openPipelineConfig = () => {
+  const counts = Object.fromEntries(
+    pipelineStages.value.map(stage => [stage.id, stage.count || 0])
+  );
+  configDialogRef.value?.open(selectedPipeline.value, counts);
+};
+
+const onPipelineSaved = async pipelineId => {
+  await refreshPipelines();
+  if (selectedPipelineId.value === pipelineId) fetchPipelineBoard();
+  else selectedPipelineId.value = pipelineId;
+};
+
+const onPipelineGone = async () => {
+  selectedPipelineId.value = null;
+  await refreshPipelines();
+};
+
+// Switching pipelines clears the board (spinner) and resets the filters,
+// which fetches the new board through the filters watcher.
+watch(selectedPipelineId, () => {
+  pipelineStages.value = [];
+  entriesByStage.value = {};
+  pipelineFilters.value = { ...DEFAULT_PIPELINE_FILTERS };
+});
+watch(pipelineFilters, debounce(fetchPipelineBoard, 300), { deep: true });
+
+onMounted(() => {
+  fetchFunnel();
+  store.dispatch('pipelines/get');
+});
 </script>
 
 <template>
   <section class="flex flex-col w-full h-full bg-n-surface-1">
     <header
-      class="flex items-center justify-between gap-3 px-6 py-4 border-b border-n-weak"
+      class="flex flex-wrap items-center gap-3 px-6 py-4 border-b border-n-weak"
     >
-      <h1 class="text-heading-2 text-n-slate-12">
-        {{ t('FUNNEL.TITLE') }}
-      </h1>
+      <div class="flex items-center gap-3 min-w-0">
+        <h1 class="text-heading-2 text-n-slate-12">
+          {{ t('FUNNEL.TITLE') }}
+        </h1>
+        <PipelineSelector
+          v-model="selectedPipelineId"
+          :can-manage="canManagePipelines"
+          @create="openNewPipeline"
+        />
+      </div>
+      <div class="flex items-center gap-2 ms-auto">
+        <Button
+          v-if="isClinicPipeline"
+          :label="t('PIPELINES.ADD_CONTACT.BUTTON')"
+          icon="i-lucide-user-plus"
+          sm
+          @click="addContactDialogRef?.open()"
+        />
+        <Button
+          v-if="canManagePipelines"
+          v-tooltip.bottom="
+            isClinicPipeline ? '' : t('PIPELINES.CONFIG.AGENDAMENTO_LOCKED')
+          "
+          :label="t('PIPELINES.CONFIG.BUTTON')"
+          icon="i-lucide-settings-2"
+          slate
+          outline
+          sm
+          :disabled="!isClinicPipeline"
+          @click="openPipelineConfig"
+        />
+      </div>
       <div
         class="inline-flex items-center gap-1 p-1 rounded-lg bg-n-alpha-2"
         role="group"
@@ -325,8 +580,58 @@ onMounted(fetchFunnel);
       </div>
     </header>
 
+    <!-- Clinic pipeline reports -->
+    <FunnelOverview
+      v-if="isClinicPipeline && viewMode === 'overview'"
+      :key="`overview-${selectedPipelineId}`"
+      :pipeline-id="selectedPipelineId"
+    />
+    <PipelineConversion
+      v-else-if="isClinicPipeline && viewMode === 'conversion'"
+      :key="`conversion-${selectedPipelineId}`"
+      :pipeline-id="selectedPipelineId"
+    />
+
+    <!-- Clinic pipeline board / list (per contact) -->
+    <template v-else-if="isClinicPipeline">
+      <FunnelFilters
+        v-model:from-date="pipelineFilters.fromDate"
+        v-model:to-date="pipelineFilters.toDate"
+        v-model:hide-closed="pipelineFilters.hideClosed"
+        v-model:label="pipelineFilters.label"
+        v-model:source="pipelineFilters.source"
+        contact-mode
+        @reset="pipelineFilters = { ...DEFAULT_PIPELINE_FILTERS }"
+      />
+      <div
+        v-if="!pipelineStages.length"
+        class="flex items-center justify-center flex-1 text-n-slate-11"
+      >
+        <Spinner />
+      </div>
+      <FunnelBoard
+        v-else-if="viewMode === 'board'"
+        :stages="pipelineStages"
+        :items-by-stage="entriesByStage"
+        count-label-key="PIPELINES.STAGE.COUNT_LABEL"
+        :loading-more-stage-ids="loadingMoreEntryStageIds"
+        @move="moveEntry"
+        @load-more="loadMoreEntries"
+        @save-as-audience="openSaveAsAudience"
+      >
+        <template #card="{ item }">
+          <PipelineCard :entry="item" @changed="onPipelineMembershipChanged" />
+        </template>
+      </FunnelBoard>
+      <PipelineList
+        v-else
+        :stages="pipelineStages"
+        :entries-by-stage="entriesByStage"
+      />
+    </template>
+
     <!-- Report-style views (overview / conversion) -->
-    <FunnelOverview v-if="viewMode === 'overview'" />
+    <FunnelOverview v-else-if="viewMode === 'overview'" />
     <FunnelConversion v-else-if="viewMode === 'conversion'" />
 
     <!-- Stage-layout views (board / list) share the funnel fetch pipeline -->
@@ -359,7 +664,7 @@ onMounted(fetchFunnel);
       <FunnelBoard
         v-else-if="viewMode === 'board'"
         :stages="stages"
-        :conversations-by-stage="conversationsByStage"
+        :items-by-stage="conversationsByStage"
         :average-ticket="accountAverageTicket"
         :locale="accountLocale"
         :loading-more-stage-ids="loadingMoreStageIds"
@@ -381,7 +686,21 @@ onMounted(fetchFunnel);
       ref="saveAsAudienceDialogRef"
       :rule="audienceStage ? audienceRule : []"
       :window="audienceWindow"
-      :pick-loss-reason="!!audienceStage?.requires_loss_reason"
+      :pick-loss-reason="
+        !isClinicPipeline && !!audienceStage?.requires_loss_reason
+      "
+    />
+
+    <PipelineConfigDialog
+      ref="configDialogRef"
+      @saved="onPipelineSaved"
+      @archived="onPipelineGone"
+      @deleted="onPipelineGone"
+    />
+    <PipelineAddContactDialog
+      ref="addContactDialogRef"
+      :pipeline="selectedPipeline"
+      @added="onPipelineMembershipChanged(selectedPipelineId)"
     />
 
     <LossReasonDialog

@@ -71,6 +71,14 @@ conversations:
       - "not_equal_to"
       - "is_present"
       - "is_not_present"
+  # Stage of a clinic pipeline: matches the conversations whose contact is on
+  # that stage (pipelines follow the contact, not the conversation).
+  pipeline_stage_id:
+    attribute_type: "pipeline_entry"
+    data_type: "Number"
+    filter_operators:
+      - "equal_to"
+      - "not_equal_to"
   loss_reason_id:
     attribute_type: "standard"
     data_type: "Number"

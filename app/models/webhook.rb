@@ -43,7 +43,8 @@ class Webhook < ApplicationRecord
                               message_created message_incoming message_outgoing message_updated webwidget_triggered
                               inbox_created inbox_updated conversation_typing_on conversation_typing_off conversation_recording
                               provider_event_received internal_chat_message_created internal_chat_message_updated
-                              internal_chat_message_deleted internal_chat_channel_updated funnel_updated].freeze
+                              internal_chat_message_deleted internal_chat_channel_updated funnel_updated
+                              pipeline_entry_updated].freeze
 
   # A webhook left with no inbox would start receiving from every inbox, so
   # the one that only listened to the deleted inbox goes away with it.

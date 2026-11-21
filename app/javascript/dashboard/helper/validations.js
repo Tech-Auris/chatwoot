@@ -141,7 +141,9 @@ const validateSingleAction = action => {
   }
 
   if (
-    action.action_name === 'move_to_funnel_stage' &&
+    ['move_to_funnel_stage', 'move_to_pipeline_stage'].includes(
+      action.action_name
+    ) &&
     action.action_params[0]?.requires_loss_reason &&
     !action.action_params[1]
   ) {

@@ -221,6 +221,28 @@ describe('filterHelpers', () => {
       expect(matchesFilters(conversation, filters)).toBe(false);
     });
 
+    // The clinic pipeline stage lives on the contact's entries, not on the
+    // conversation payload: the backend's answer stands.
+    it('keeps the conversations the backend matched on a clinic pipeline stage', () => {
+      const conversation = { status: 'open' };
+      const filters = [
+        {
+          attribute_key: 'pipeline_stage_id',
+          filter_operator: 'equal_to',
+          values: [12],
+          query_operator: 'and',
+        },
+        {
+          attribute_key: 'status',
+          filter_operator: 'equal_to',
+          values: ['open'],
+          query_operator: null,
+        },
+      ];
+      expect(matchesFilters(conversation, filters)).toBe(true);
+      expect(matchesFilters(conversation, [filters[0]])).toBe(true);
+    });
+
     it('should not match conversation with equal_to operator when assignee is null', () => {
       const conversation = { meta: { assignee: null } };
       const filters = [

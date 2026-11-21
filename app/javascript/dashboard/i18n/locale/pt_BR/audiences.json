@@ -50,6 +50,7 @@
     "FIELDS": {
       "LABELS": "Etiqueta",
       "FUNNEL_STAGE_ID": "Fase do funil",
+      "PIPELINE_STAGE_ID": "Etapa de funil da clínica",
       "LOSS_REASON_ID": "Motivo de perda",
       "ORIGEM": "Origem do lead",
       "INBOX_ID": "Caixa de entrada",
