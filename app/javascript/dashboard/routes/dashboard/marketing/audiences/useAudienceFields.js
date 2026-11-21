@@ -14,6 +14,7 @@ import { ORIGEM_OPTIONS } from 'dashboard/helper/origemOptions';
 export const FIELD_KEYS = [
   'labels',
   'funnel_stage_id',
+  'pipeline_stage_id',
   'loss_reason_id',
   'origem',
   'inbox_id',
@@ -30,12 +31,14 @@ export function useAudienceFields() {
   const labels = useMapGetter('labels/getLabels');
   const stages = useMapGetter('funnelStages/getFunnelStages');
   const lossReasons = useMapGetter('lossReasons/getLossReasons');
+  const pipelines = useMapGetter('pipelines/getPipelines');
   const inboxes = useMapGetter('inboxes/getInboxes');
   const agents = useMapGetter('agents/getAgents');
 
   onMounted(() => {
     store.dispatch('labels/get');
     store.dispatch('funnelStages/get');
+    store.dispatch('pipelines/get');
     store.dispatch('lossReasons/get');
     store.dispatch('inboxes/get');
     store.dispatch('agents/get');
@@ -44,6 +47,7 @@ export function useAudienceFields() {
   const fieldLabels = computed(() => ({
     labels: t('AUDIENCES.FIELDS.LABELS'),
     funnel_stage_id: t('AUDIENCES.FIELDS.FUNNEL_STAGE_ID'),
+    pipeline_stage_id: t('AUDIENCES.FIELDS.PIPELINE_STAGE_ID'),
     loss_reason_id: t('AUDIENCES.FIELDS.LOSS_REASON_ID'),
     origem: t('AUDIENCES.FIELDS.ORIGEM'),
     inbox_id: t('AUDIENCES.FIELDS.INBOX_ID'),
@@ -72,6 +76,13 @@ export function useAudienceFields() {
         }));
       case 'funnel_stage_id':
         return (stages.value || []).map(s => ({ value: s.id, label: s.name }));
+      case 'pipeline_stage_id':
+        return (pipelines.value || []).flatMap(pipeline =>
+          pipeline.stages.map(stage => ({
+            value: stage.id,
+            label: `${pipeline.name} · ${stage.name}`,
+          }))
+        );
       case 'loss_reason_id':
         return (lossReasons.value || []).map(r => ({
           value: r.id,

@@ -418,6 +418,7 @@ en:
       stage_mismatch: "This stage belongs to another pipeline"
       already_open: "This contact is already in progress in this pipeline"
       loss_reason_required: "Choose the loss reason"
+      stage_in_automation: "This stage is used by the automations %{rules}. Change them first"
   conversations:
     captain:
       handoff: 'Transferring to another agent for further assistance.'

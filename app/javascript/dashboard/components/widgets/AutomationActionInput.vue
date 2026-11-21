@@ -87,10 +87,18 @@ export default {
       return this.actionTypes.find(action => action.key === this.action_name)
         .inputType;
     },
+    // `move_to_pipeline_stage` shows as the same "Mover no funil para".
+    displayActionName() {
+      return this.action_name === 'move_to_pipeline_stage'
+        ? 'move_to_funnel_stage'
+        : this.action_name;
+    },
     actionNameAsSelectModel: {
       get() {
         if (!this.action_name) return null;
-        const found = this.actionTypes.find(a => a.key === this.action_name);
+        const found = this.actionTypes.find(
+          a => a.key === this.displayActionName
+        );
         return found ? { id: found.key, name: found.label } : null;
       },
       set(value) {
@@ -98,7 +106,9 @@ export default {
       },
     },
     actionTypesAsOptions() {
-      return this.actionTypes.map(a => ({ id: a.key, name: a.label }));
+      return this.actionTypes
+        .filter(a => !a.hidden)
+        .map(a => ({ id: a.key, name: a.label }));
     },
     isVerticalLayout() {
       return ['team_message', 'textarea'].includes(this.inputType);
@@ -122,6 +132,16 @@ export default {
     },
     resetAction() {
       this.$emit('resetAction');
+    },
+    // The funnel picked decides the action saved, and clears the stage.
+    onFunnelChange({ actionName, params }) {
+      const payload = {
+        ...(this.modelValue || {}),
+        action_name: actionName,
+        action_params: params,
+      };
+      this.$emit('update:modelValue', payload);
+      this.$emit('input', payload);
     },
     onActionNameChange(value) {
       this.actionNameAsSelectModel = value;
@@ -156,8 +176,10 @@ export default {
           <AutomationActionFunnelStageInput
             v-else-if="inputType === 'funnel_stage'"
             v-model="action_params"
+            :action-name="action_name"
             :stages="dropdownValues"
             :dropdown-max-height="dropdownMaxHeight"
+            @change="onFunnelChange"
           />
           <MultiSelect
             v-else-if="inputType === 'multi_select'"

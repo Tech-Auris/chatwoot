@@ -154,7 +154,8 @@ export function useConversationFilterContext() {
             value: CONVERSATION_ATTRIBUTES.FUNNEL_STAGE_ID,
             attributeName: t('FILTER.ATTRIBUTES.FUNNEL_STAGE'),
             label: t('FILTER.ATTRIBUTES.FUNNEL_STAGE'),
-            inputType: 'searchSelect',
+            // Funnel + stage: the Agendamento or a clinic pipeline.
+            inputType: 'funnelStage',
             // Same colour dot the funnel board and the conversation header
             // paint, so a stage is recognized by colour here too.
             options: funnelStages.value.map(stage => ({

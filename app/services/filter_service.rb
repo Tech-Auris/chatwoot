@@ -43,6 +43,16 @@ class FilterService
     end
   end
 
+  # The contact of the conversation is on one of the given clinic pipeline
+  # stages (or, with not_equal_to, on none of them).
+  def pipeline_stage_condition(query_hash, current_index)
+    placeholder = "value_#{current_index}"
+    @filter_values[placeholder] = Array(query_hash['values']).map { |value| value.is_a?(Hash) ? value['id'] : value }.map(&:to_i)
+    negation = query_hash['filter_operator'] == 'not_equal_to' ? 'NOT ' : ''
+    "conversations.contact_id #{negation}IN (SELECT pipeline_entries.contact_id FROM pipeline_entries " \
+      "WHERE pipeline_entries.pipeline_stage_id IN (:#{placeholder})) #{query_hash['query_operator']} "
+  end
+
   def filter_values(query_hash)
     attribute_key = query_hash['attribute_key']
     values = query_hash['values']

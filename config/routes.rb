@@ -210,6 +210,7 @@ Rails.application.routes.draw do
             member do
               post :archive
               post :unarchive
+              get :automations
               get :board
               get 'stages/:stage_id/entries', action: :stage_entries
             end

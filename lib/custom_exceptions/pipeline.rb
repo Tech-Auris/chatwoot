@@ -3,7 +3,7 @@
 # `key` points at config/locales `pipelines.errors`.
 class CustomExceptions::Pipeline < CustomExceptions::Base
   def message
-    I18n.t("pipelines.errors.#{@data[:key]}")
+    I18n.t("pipelines.errors.#{@data[:key]}", **@data.except(:key))
   end
 
   def http_status

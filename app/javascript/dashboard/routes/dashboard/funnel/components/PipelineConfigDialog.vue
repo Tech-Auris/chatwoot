@@ -32,6 +32,7 @@ const stages = ref([]);
 const removed = ref([]);
 const isSaving = ref(false);
 const deleteConfirmation = ref('');
+const affectedAutomations = ref([]);
 
 let tempId = 0;
 const isNew = computed(() => !pipeline.value);
@@ -151,9 +152,17 @@ const archive = async () => {
   }
 };
 
-const askDelete = () => {
+// The warning lists the automations that stop working with the pipeline.
+const askDelete = async () => {
   deleteConfirmation.value = '';
+  affectedAutomations.value = [];
   deleteDialogRef.value?.open();
+  try {
+    const { data } = await PipelinesAPI.automations(pipeline.value.id);
+    affectedAutomations.value = data?.payload || [];
+  } catch (error) {
+    affectedAutomations.value = [];
+  }
 };
 
 const confirmDelete = async () => {
@@ -338,6 +347,17 @@ defineExpose({ open });
     :is-loading="isSaving"
     @confirm="confirmDelete"
   >
+    <div
+      v-if="affectedAutomations.length"
+      class="flex flex-col gap-1 p-3 mb-3 rounded-lg bg-n-ruby-2 text-sm text-n-ruby-11"
+    >
+      <span>{{ t('PIPELINES.CONFIG.DELETE_AUTOMATIONS') }}</span>
+      <ul class="m-0 ps-4 list-disc">
+        <li v-for="rule in affectedAutomations" :key="rule.id">
+          {{ rule.name }}
+        </li>
+      </ul>
+    </div>
     <Input
       v-model="deleteConfirmation"
       :placeholder="pipeline?.name"

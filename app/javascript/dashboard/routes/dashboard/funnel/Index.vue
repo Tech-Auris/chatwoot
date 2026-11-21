@@ -300,7 +300,11 @@ const condition = (key, value) => ({
   filter_operator: 'equal_to',
   values: [value],
 });
+// On a clinic pipeline the audience is the contacts on the stage; its
+// filters (contact labels, date of entry) do not map onto conversations.
 const audienceRule = computed(() => {
+  if (isClinicPipeline.value)
+    return [condition('pipeline_stage_id', audienceStage.value.id)];
   const { inboxId, origem, label } = filters.value;
   return [
     condition('funnel_stage_id', audienceStage.value.id),
@@ -310,6 +314,7 @@ const audienceRule = computed(() => {
   ].filter(Boolean);
 });
 const audienceWindow = computed(() => {
+  if (isClinicPipeline.value) return { type: 'all' };
   const { fromDate, toDate } = filters.value;
   return fromDate && toDate
     ? { type: 'range', from: fromDate, to: toDate }
@@ -609,10 +614,10 @@ onMounted(() => {
         :stages="pipelineStages"
         :items-by-stage="entriesByStage"
         count-label-key="PIPELINES.STAGE.COUNT_LABEL"
-        :show-save-as-audience="false"
         :loading-more-stage-ids="loadingMoreEntryStageIds"
         @move="moveEntry"
         @load-more="loadMoreEntries"
+        @save-as-audience="openSaveAsAudience"
       >
         <template #card="{ item }">
           <PipelineCard :entry="item" @changed="onPipelineMembershipChanged" />
@@ -681,7 +686,9 @@ onMounted(() => {
       ref="saveAsAudienceDialogRef"
       :rule="audienceStage ? audienceRule : []"
       :window="audienceWindow"
-      :pick-loss-reason="!!audienceStage?.requires_loss_reason"
+      :pick-loss-reason="
+        !isClinicPipeline && !!audienceStage?.requires_loss_reason
+      "
     />
 
     <PipelineConfigDialog

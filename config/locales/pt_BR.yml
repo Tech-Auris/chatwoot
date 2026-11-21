@@ -393,6 +393,7 @@ pt_BR:
       stage_mismatch: "Esta etapa é de outro funil"
       already_open: "Este contato já está em andamento neste funil"
       loss_reason_required: "Escolha o motivo da perda"
+      stage_in_automation: "Esta etapa é usada nas automações %{rules}. Ajuste-as antes"
   conversations:
     captain:
       handoff: 'Transferindo para que outro agente dê assistência.'

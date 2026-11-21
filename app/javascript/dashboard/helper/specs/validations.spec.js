@@ -104,6 +104,33 @@ describe('validateAutomation', () => {
     }
   );
 
+  it('asks for the loss reason when moving to Perdido of a clinic pipeline', () => {
+    const automation = {
+      name: 'Lost',
+      description: 'Mark as lost',
+      event_name: 'conversation_updated',
+      conditions: [
+        {
+          attribute_key: 'status',
+          filter_operator: 'equal_to',
+          values: 'open',
+        },
+      ],
+      actions: [
+        {
+          action_name: 'move_to_pipeline_stage',
+          action_params: [
+            { id: 31, name: 'Perdido', requires_loss_reason: true },
+          ],
+        },
+      ],
+    };
+
+    expect(validateAutomation(automation)).toEqual({
+      action_0: 'LOSS_REASON_REQUIRED',
+    });
+  });
+
   it('asks for the loss reason when moving to a stage that needs one', () => {
     const moveTo = actionParams => ({
       name: 'Lost',

@@ -70,7 +70,8 @@
       "SAVED": "Pipeline saved",
       "ARCHIVED": "Pipeline archived",
       "DELETED": "Pipeline deleted",
-      "ERROR": "Could not save the pipeline. Please try again."
+      "ERROR": "Could not save the pipeline. Please try again.",
+      "DELETE_AUTOMATIONS": "These automations use the pipeline and will stop working:"
     },
     "ADD_CONTACT": {
       "BUTTON": "Add contact",
@@ -95,6 +96,20 @@
       "LOST_RATE": "Loss rate",
       "AVG_TIME_TO_WON": "Average time until won",
       "OF_TOTAL": "{count} of {total} contacts"
+    },
+    "PICKER": {
+      "FUNNEL": "Pipeline",
+      "STAGE": "Stage",
+      "FUNNEL_FIRST": "Choose the pipeline first"
+    },
+    "HISTORY": {
+      "HISTORY": "History",
+      "ENTERED": "Entered in {stage}",
+      "MOVED": "{from} → {to}",
+      "BY_AUTOMATION": "Automation",
+      "BY_API": "API",
+      "BY_AI": "AI",
+      "EMPTY": "No moves yet."
     }
   }
 }

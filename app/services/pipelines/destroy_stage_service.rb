@@ -21,7 +21,12 @@ class Pipelines::DestroyStageService
   def validate!
     raise CustomExceptions::Pipeline.new(key: :closing_stage_delete) if stage.closing?
     raise CustomExceptions::Pipeline.new(key: :last_open_stage) if stage.pipeline.stages.open.count <= 1
+    raise CustomExceptions::Pipeline.new(key: :stage_in_automation, rules: rules_using_stage.map(&:name).join(', ')) if rules_using_stage.any?
     raise CustomExceptions::Pipeline.new(key: :move_target_required) if entries.exists? && !valid_target?
+  end
+
+  def rules_using_stage
+    @rules_using_stage ||= Pipelines::AutomationUsage.new(account: stage.pipeline.account, stage_ids: [stage.id]).rules
   end
 
   def valid_target?

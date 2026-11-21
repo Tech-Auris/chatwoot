@@ -63,6 +63,16 @@ RSpec.describe 'Pipelines API', type: :request do
       expect(PipelineEntry.exists?(entry.id)).to be false
     end
 
+    it 'lists the automations that use the pipeline before deleting it' do
+      create(:automation_rule, account: account, name: 'Retorno D+30',
+                               actions: [{ action_name: 'move_to_pipeline_stage', action_params: [pipeline.first_open_stage.id] }])
+      create(:automation_rule, account: account, name: 'Outra')
+
+      get "#{base_url}/#{pipeline.id}/automations", headers: admin.create_new_auth_token, as: :json
+
+      expect(response.parsed_body['payload'].pluck('name')).to eq(['Retorno D+30'])
+    end
+
     it 'does not show a pipeline of another account' do
       other = create(:pipeline)
 

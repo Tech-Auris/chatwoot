@@ -226,6 +226,23 @@ describe('customViewsHelper', () => {
   });
 
   describe('#generateValuesForEditCustomViews', () => {
+    it('reopens a clinic pipeline stage for the funnel picker', () => {
+      const filter = {
+        attribute_key: 'pipeline_stage_id',
+        filter_operator: 'equal_to',
+        values: ['30'],
+      };
+      const params = {
+        filterTypes: [
+          { attributeKey: 'funnel_stage_id', inputType: 'funnelStage' },
+        ],
+        allCustomAttributes: [],
+      };
+      expect(generateValuesForEditCustomViews(filter, params)).toEqual({
+        id: 30,
+      });
+    });
+
     it('should return id and name if inboxType is multi_select or search_select', () => {
       const filter = {
         attribute_key: 'assignee_id',

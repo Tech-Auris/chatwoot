@@ -9,7 +9,7 @@
 class Audiences::Resolver
   # The rule fields an audience accepts; anything else in a payload is left
   # out and reported back (see #ignored_conditions).
-  SUPPORTED_KEYS = %w[labels funnel_stage_id loss_reason_id origem inbox_id assignee_id status].freeze
+  SUPPORTED_KEYS = %w[labels funnel_stage_id pipeline_stage_id loss_reason_id origem inbox_id assignee_id status].freeze
 
   attr_reader :ignored_conditions, :rule, :exclusion
 

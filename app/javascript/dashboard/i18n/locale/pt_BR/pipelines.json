@@ -70,7 +70,8 @@
       "SAVED": "Funil salvo",
       "ARCHIVED": "Funil arquivado",
       "DELETED": "Funil apagado",
-      "ERROR": "Não foi possível salvar o funil. Tente novamente."
+      "ERROR": "Não foi possível salvar o funil. Tente novamente.",
+      "DELETE_AUTOMATIONS": "Estas automações usam o funil e vão parar de funcionar:"
     },
     "ADD_CONTACT": {
       "BUTTON": "Adicionar contato",
@@ -95,6 +96,20 @@
       "LOST_RATE": "Taxa de perda",
       "AVG_TIME_TO_WON": "Tempo médio até o ganho",
       "OF_TOTAL": "{count} de {total} contatos"
+    },
+    "PICKER": {
+      "FUNNEL": "Funil",
+      "STAGE": "Etapa",
+      "FUNNEL_FIRST": "Escolha o funil primeiro"
+    },
+    "HISTORY": {
+      "HISTORY": "Histórico",
+      "ENTERED": "Entrou em {stage}",
+      "MOVED": "{from} → {to}",
+      "BY_AUTOMATION": "Automação",
+      "BY_API": "API",
+      "BY_AI": "IA",
+      "EMPTY": "Nenhum movimento ainda."
     }
   }
 }

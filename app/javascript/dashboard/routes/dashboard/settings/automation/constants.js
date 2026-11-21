@@ -95,7 +95,7 @@ export const AUTOMATIONS = {
       {
         key: 'funnel_stage_id',
         name: 'FUNNEL_STAGE',
-        inputType: 'multi_select',
+        inputType: 'funnel_stage',
         filterOperators: OPERATOR_TYPES_1,
       },
       {
@@ -285,7 +285,7 @@ export const AUTOMATIONS = {
       {
         key: 'funnel_stage_id',
         name: 'FUNNEL_STAGE',
-        inputType: 'multi_select',
+        inputType: 'funnel_stage',
         filterOperators: OPERATOR_TYPES_1,
       },
       {
@@ -479,7 +479,7 @@ export const AUTOMATIONS = {
       {
         key: 'funnel_stage_id',
         name: 'FUNNEL_STAGE',
-        inputType: 'multi_select',
+        inputType: 'funnel_stage',
         filterOperators: OPERATOR_TYPES_1,
       },
       {
@@ -667,7 +667,7 @@ export const AUTOMATIONS = {
       {
         key: 'funnel_stage_id',
         name: 'FUNNEL_STAGE',
-        inputType: 'multi_select',
+        inputType: 'funnel_stage',
         filterOperators: OPERATOR_TYPES_1,
       },
       {
@@ -845,7 +845,7 @@ export const AUTOMATIONS = {
       {
         key: 'funnel_stage_id',
         name: 'FUNNEL_STAGE',
-        inputType: 'multi_select',
+        inputType: 'funnel_stage',
         filterOperators: OPERATOR_TYPES_1,
       },
       {
@@ -1087,6 +1087,14 @@ export const AUTOMATION_ACTION_TYPES = [
     key: 'move_to_funnel_stage',
     label: 'MOVE_TO_FUNNEL_STAGE',
     inputType: 'funnel_stage',
+  },
+  // Same "Mover no funil para" on screen, saved when the funnel picked is a
+  // clinic pipeline; not offered as an action of its own.
+  {
+    key: 'move_to_pipeline_stage',
+    label: 'MOVE_TO_FUNNEL_STAGE',
+    inputType: 'funnel_stage',
+    hidden: true,
   },
 ];
 

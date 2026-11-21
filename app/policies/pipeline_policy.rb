@@ -34,6 +34,10 @@ class PipelinePolicy < ApplicationPolicy
     create?
   end
 
+  def automations?
+    create?
+  end
+
   def unarchive?
     create?
   end

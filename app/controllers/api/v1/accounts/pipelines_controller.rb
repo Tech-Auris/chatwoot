@@ -41,6 +41,13 @@ class Api::V1::Accounts::PipelinesController < Api::V1::Accounts::BaseController
     head :ok
   end
 
+  # Automations that stop working if the pipeline is deleted (shown in the
+  # delete confirmation).
+  def automations
+    rules = Pipelines::AutomationUsage.new(account: Current.account, stage_ids: @pipeline.stages.ids).rules
+    render json: { payload: rules.map { |rule| { id: rule.id, name: rule.name } } }
+  end
+
   def archive
     @pipeline.update!(archived_at: Time.current)
     render :show

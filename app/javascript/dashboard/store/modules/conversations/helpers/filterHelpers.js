@@ -393,6 +393,17 @@ const buildJsonLogicRule = evaluatedFilters => {
   return andGroups[0];
 };
 
+// Conditions the conversation payload cannot answer: the clinic pipeline
+// stage lives on the contact's pipeline entries. The backend already applied
+// them, so the client-side re-filter trusts its answer.
+const SERVER_ONLY_ATTRIBUTES = ['pipeline_stage_id'];
+
+const evaluateFilter = (conversation, filter) => {
+  if (SERVER_ONLY_ATTRIBUTES.includes(filter.attribute_key)) return true;
+  const value = getValueFromConversation(conversation, filter.attribute_key);
+  return matchesCondition(value, filter);
+};
+
 /**
  * Evaluates each filter against the conversation and prepares the results array
  * @param {Object} conversation - The conversation to evaluate
@@ -401,8 +412,7 @@ const buildJsonLogicRule = evaluatedFilters => {
  */
 const evaluateFilters = (conversation, filters) => {
   return filters.map((filter, index) => {
-    const value = getValueFromConversation(conversation, filter.attribute_key);
-    const result = matchesCondition(value, filter);
+    const result = evaluateFilter(conversation, filter);
 
     // This part determines the logical operator that connects this filter to the next one:
     // - If this is not the last filter (index < filters.length - 1), use the filter's query_operator
@@ -429,12 +439,7 @@ export const matchesFilters = (conversation, filters) => {
 
   // Handle single filter case
   if (filters.length === 1) {
-    const value = getValueFromConversation(
-      conversation,
-      filters[0].attribute_key
-    );
-
-    return matchesCondition(value, filters[0]);
+    return evaluateFilter(conversation, filters[0]);
   }
 
   // Evaluate all conditions and prepare for jsonLogic

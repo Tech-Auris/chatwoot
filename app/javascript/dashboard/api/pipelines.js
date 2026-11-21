@@ -19,6 +19,10 @@ class PipelinesAPI extends ApiClient {
     return axios.post(`${this.url}/${id}/unarchive`);
   }
 
+  automations(id) {
+    return axios.get(`${this.url}/${id}/automations`);
+  }
+
   board(id, params = {}) {
     return axios.get(`${this.url}/${id}/board`, { params });
   }
@@ -60,6 +64,10 @@ class PipelinesAPI extends ApiClient {
 
   removeEntry(entryId) {
     return axios.delete(`${this.baseUrl()}/pipeline_entries/${entryId}`);
+  }
+
+  entryEvents(entryId) {
+    return axios.get(`${this.baseUrl()}/pipeline_entries/${entryId}/events`);
   }
 
   contactEntries(contactId) {
