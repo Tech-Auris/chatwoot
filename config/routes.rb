@@ -647,6 +647,14 @@ Rails.application.routes.draw do
       resources :erp_sources, only: [:index]
       resources :secretary_confirmations, only: [:index]
 
+      # Read-only account setup for super admins, used by the MCP Auris admin tools.
+      namespace :super_admin, module: :auris_admin do
+        resources :accounts, only: [:index] do
+          get :secretary_context, on: :member
+        end
+        resource :secretary_prompt, only: [:show]
+      end
+
       resources :languages, only: [:index]
 
       namespace :widget do
