@@ -40,6 +40,14 @@ class SuperAdmin::AccountsController < SuperAdmin::ApplicationController
     super.includes(account_secretary: [:secretary_version, { ai_model: :ai_provider }])
   end
 
+  # "Save and configure the integration" next to the ERP opens the account's
+  # integration with the ERP it was just saved with.
+  def after_resource_updated_path(account)
+    return super unless params[:configure_integration].present? && account.erp_source_id
+
+    configure_super_admin_account_integrations_path(account_id: account.id, erp_source_id: account.erp_source_id)
+  end
+
   # Override `resource_params` if you want to transform the submitted
   # data before it's persisted. For example, the following would turn all
   # empty values into nil values. It uses other APIs such as `resource_class`
