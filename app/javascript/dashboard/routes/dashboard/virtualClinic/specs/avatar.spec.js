@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { ENTRANCE, ITEMS, sheetForUser } from '../engine/layout';
 import {
-  CELL,
   COLUMNS,
   ROWS,
   buildCollision,
   cellOf,
+  centerOf,
   feetOf,
   footprint,
   isFree,
@@ -96,11 +96,35 @@ describe('findPath', () => {
       cellOf({ x: 800, y: 600 })
     );
     expect(path).not.toBeNull();
-    path.forEach(cell =>
-      expect(isFree(grid, { x: cell.column * CELL, y: cell.row * CELL })).toBe(
-        true
-      )
-    );
+    path.forEach(cell => expect(isFree(grid, centerOf(cell))).toBe(true));
+  });
+
+  it('blocks a garden tree at its trunk, drawn bigger or smaller', () => {
+    const tree = { sprite: '10_jardim/pinheiro.png', x: -200, y: -200 };
+    const treeSizes = {
+      ...sizes,
+      '10_jardim/pinheiro.png': { width: 64, height: 96 },
+    };
+    const small = buildCollision(treeSizes, ITEMS, [tree]);
+    const big = buildCollision(treeSizes, ITEMS, [{ ...tree, scale: 1.5 }]);
+
+    // Trunk: bottom middle of the drawn tree.
+    expect(isFree(small, { x: -168, y: -110 })).toBe(false);
+    expect(isFree(big, { x: -168, y: -110 })).toBe(true);
+    expect(isFree(big, { x: -152, y: -62 })).toBe(false);
+  });
+
+  it('goes out to the garden through the glass door only', () => {
+    const outside = { x: -80, y: -80 };
+    const path = findPath(grid, cellOf(feetOf(ENTRANCE)), cellOf(outside));
+    expect(path).not.toBeNull();
+    // Leaves the clinic at the door, in the top wall.
+    const exit = path.find(cell => centerOf(cell).y < 0);
+    expect(centerOf(exit).x).toBeGreaterThanOrEqual(48);
+    expect(centerOf(exit).x).toBeLessThanOrEqual(96);
+    // No way through the side walls.
+    expect(isFree(grid, { x: 2, y: 300 })).toBe(false);
+    expect(isFree(grid, { x: -40, y: 300 })).toBe(true);
   });
 
   it('keeps only the turns of a path', () => {

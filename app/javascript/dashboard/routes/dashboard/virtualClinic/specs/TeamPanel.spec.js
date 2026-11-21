@@ -135,12 +135,12 @@ describe('TeamPanel', () => {
     expect(wrapper.text()).not.toContain('VIRTUAL_CLINIC.AI_TEAM.TITLE');
   });
 
-  it('opens the avatar editor from the header', async () => {
+  it('opens the profile editor from the header', async () => {
     const wrapper = mountPanel({ visible: false, members: [] });
 
     await wrapper.findAll('button')[0].trigger('click');
 
-    expect(wrapper.emitted('editAvatar')).toHaveLength(1);
+    expect(wrapper.emitted('editProfile')).toHaveLength(1);
   });
 
   it('lets whoever edits the clinic change the look of each AI teammate', async () => {

@@ -38,17 +38,16 @@ const agents = [
     is_ai_user: true,
   },
 ];
-vi.mock('dashboard/composables/store', () => ({
-  useStore: () => ({ dispatch }),
-  useMapGetter: key => ({
-    value: key === 'getCurrentUserID' ? 1 : agents,
-  }),
-}));
+vi.mock('dashboard/composables/store', async () => {
+  const { ref } = await vi.importActual('vue');
+  return {
+    useStore: () => ({ dispatch }),
+    useMapGetter: key => ref(key === 'getCurrentUserID' ? 1 : agents),
+  };
+});
 
-const people = wrapper =>
-  wrapper
-    .findAll('section button')
-    .filter(button => !button.text().includes('PEOPLE.GROUPS'));
+// The row of each person (not the group headers or the row shortcuts).
+const people = wrapper => wrapper.findAll('section > div > button');
 
 describe('PeopleList', () => {
   beforeEach(() => vi.clearAllMocks());
@@ -58,7 +57,7 @@ describe('PeopleList', () => {
     const [online, offline] = wrapper.findAll('section');
 
     expect(online.text()).toContain('GROUPS.ONLINE {"count":3}');
-    const onlineNames = online.findAll('button').slice(1);
+    const onlineNames = online.findAll('div > button');
     expect(onlineNames.map(b => b.text())).toEqual([
       expect.stringContaining('Dra. Paula'),
       expect.stringContaining('Ana Nova'),
@@ -90,11 +89,19 @@ describe('PeopleList', () => {
     expect(wrapper.text()).not.toContain('Juliana Reis');
   });
 
-  it('opens the DM, or the avatar editor on yourself', async () => {
+  it('opens the DM, or your profile and avatar on yourself', async () => {
     const wrapper = mount(PeopleList);
     const [paula, ana] = people(wrapper);
 
     await paula.trigger('click');
+    expect(wrapper.emitted('editProfile')).toHaveLength(1);
+    await wrapper
+      .find('[title="VIRTUAL_CLINIC.PROFILE.TITLE"]')
+      .trigger('click');
+    await wrapper
+      .find('[title="VIRTUAL_CLINIC.AVATAR.TITLE"]')
+      .trigger('click');
+    expect(wrapper.emitted('editProfile')).toHaveLength(2);
     expect(wrapper.emitted('editAvatar')).toHaveLength(1);
 
     await ana.trigger('click');

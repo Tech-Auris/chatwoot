@@ -12,6 +12,7 @@ import ClinicMap from './components/ClinicMap.vue';
 import EditorPanel from './components/EditorPanel.vue';
 import AvatarEditor from './components/AvatarEditor.vue';
 import NewsPanel from './components/NewsPanel.vue';
+import ProfileEditor from './components/ProfileEditor.vue';
 import { useHelenaNews } from './composables/useHelenaNews';
 import { FLOORS, sheetForUser } from './engine/layout';
 import { useUISettings } from 'dashboard/composables/useUISettings';
@@ -68,15 +69,24 @@ const { status } = useVirtualClinicStatus(
 // The avatar editor, for the user's own look (`{ persona: null }`) or for
 // an AI teammate's (from the team panel, or while editing the clinic).
 const avatarFor = ref(null);
+const editingProfile = ref(false);
+// The look picked from "Editar perfil": saved with the profile, not before.
+const profileAvatar = ref(null);
+const openProfile = () => {
+  profileAvatar.value = null;
+  editingProfile.value = true;
+};
 const avatarEditor = computed(() => {
   if (!avatarFor.value) return null;
   const floor = editor.layout.floors[0].block;
   const { persona } = avatarFor.value;
   if (!persona) {
+    const current = avatarFor.value.fromProfile && profileAvatar.value;
     return {
       title: t('VIRTUAL_CLINIC.AVATAR.TITLE'),
       name: me.value?.name,
-      avatar: me.value?.avatar || { sheet: sheetForUser(me.value?.id) },
+      avatar: current ||
+        me.value?.avatar || { sheet: sheetForUser(me.value?.id) },
       floor,
     };
   }
@@ -94,8 +104,9 @@ const avatarEditor = computed(() => {
 const teamLook = look =>
   look.sheet ? { sheet: look.sheet, avatar: undefined } : { avatar: look };
 const saveAvatar = look => {
-  const { persona } = avatarFor.value;
-  if (!persona) updateUISettings({ virtual_clinic_avatar: look });
+  const { persona, fromProfile } = avatarFor.value;
+  if (fromProfile) profileAvatar.value = look;
+  else if (!persona) updateUISettings({ virtual_clinic_avatar: look });
   else if (editor.editing) editor.setTeam(persona, teamLook(look));
   else editor.saveTeam(persona, teamLook(look));
 };
@@ -205,6 +216,7 @@ onMounted(() => {
       @select-member="selectedMember = $event"
       @edit="startEditing"
       @edit-avatar="avatarFor = { persona: $event || null }"
+      @edit-profile="openProfile"
     />
     <ClinicMap
       ref="map"
@@ -235,6 +247,13 @@ onMounted(() => {
       :member="newsMember"
       :news="shownNews"
       @close="closeChat"
+    />
+    <ProfileEditor
+      v-if="editingProfile"
+      :avatar="profileAvatar || me?.avatar"
+      :new-avatar="profileAvatar"
+      @edit-avatar="avatarFor = { persona: null, fromProfile: true }"
+      @close="editingProfile = false"
     />
     <AvatarEditor
       v-if="avatarEditor"

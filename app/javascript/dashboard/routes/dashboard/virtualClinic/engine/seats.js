@@ -4,12 +4,13 @@ import { feetOf } from './collision';
 // the avatar sits down. A seat is known by its art: side chairs ("lado",
 // "lateral") face where they point (the mirrored ones to the right), chairs
 // seen from behind ("costas") have the sitter facing up, and the rest face
-// the room. Double armchairs and sofas take two people. The AI team's desk
+// the room. Double armchairs, sofas and benches take two people. The AI team's desk
 // chairs are left out: those are their seats.
-const SEAT = /(cadeira|poltrona|sofa)/;
+const SEAT = /(cadeira|poltrona|sofa|banco|espreguicadeira)/;
 const SIDE = /(lado|lateral)/;
-const BACK = /costas/;
-const DOUBLE = /(dupla|sofa)/;
+// Backless garden benches sit below what they face: the sitter faces up.
+const BACK = /(costas|sem_encosto)/;
+const DOUBLE = /(dupla|sofa|banco)/;
 // Armchairs and sofas use the compact sitting frames (hands on the lap).
 const SOFT = /(poltrona|sofa)/;
 const TEAM_DISTANCE = 32;

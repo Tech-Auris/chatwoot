@@ -5,15 +5,16 @@ import { useRoute, useRouter } from 'vue-router';
 import { useMapGetter, useStore } from 'dashboard/composables/store';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
+import Button from 'dashboard/components-next/button/Button.vue';
 
 // The clinic team, Gather-style: a search, then who is online and who is
 // offline (each can be folded). Clicking someone opens the direct message;
-// clicking yourself, the avatar editor.
+// on yourself, your profile, with shortcuts to it and to your avatar.
 defineProps({
   // User ids walking on the map right now.
   peopleOnMap: { type: Array, default: () => [] },
 });
-const emit = defineEmits(['editAvatar']);
+const emit = defineEmits(['editAvatar', 'editProfile']);
 
 const { t } = useI18n();
 const store = useStore();
@@ -56,7 +57,7 @@ const groups = computed(() => [
 
 const open = async person => {
   if (person.id === currentUserId.value) {
-    emit('editAvatar');
+    emit('editProfile');
     return;
   }
   const channel = await store.dispatch('internalChat/create', {
@@ -110,59 +111,80 @@ const open = async person => {
           />
         </button>
         <template v-if="!folded[group.key]">
-          <button
-            v-for="person in group.people"
-            :key="person.id"
-            type="button"
-            class="flex items-center gap-3 p-2 text-left rounded-lg hover:bg-n-alpha-2"
-            :class="group.key === 'offline' ? 'py-1.5' : ''"
-            @click="open(person)"
-          >
-            <Avatar
-              :name="person.name"
-              :src="person.thumbnail || ''"
-              :status="person.availability_status"
-              :size="group.key === 'online' ? 36 : 28"
-              rounded-full
-            />
-            <span class="flex flex-col min-w-0">
-              <span
-                class="flex items-center gap-1.5 text-sm truncate text-n-slate-12"
-                :class="group.key === 'online' ? 'font-medium' : ''"
-              >
-                <span class="truncate">{{ person.name }}</span>
+          <div v-for="person in group.people" :key="person.id" class="relative">
+            <button
+              type="button"
+              class="flex items-center w-full gap-3 p-2 text-left rounded-lg hover:bg-n-alpha-2"
+              :class="group.key === 'offline' ? 'py-1.5' : ''"
+              @click="open(person)"
+            >
+              <Avatar
+                :name="person.name"
+                :src="person.thumbnail || ''"
+                :status="person.availability_status"
+                :size="group.key === 'online' ? 36 : 28"
+                rounded-full
+              />
+              <span class="flex flex-col min-w-0">
                 <span
-                  v-if="person.id === currentUserId"
-                  class="text-xs font-normal text-n-slate-11"
+                  class="flex items-center gap-1.5 text-sm truncate text-n-slate-12"
+                  :class="group.key === 'online' ? 'font-medium' : ''"
                 >
-                  {{ t('VIRTUAL_CLINIC.PEOPLE.YOU') }}
+                  <span class="truncate">{{ person.name }}</span>
+                  <span
+                    v-if="person.id === currentUserId"
+                    class="text-xs font-normal text-n-slate-11"
+                  >
+                    {{ t('VIRTUAL_CLINIC.PEOPLE.YOU') }}
+                  </span>
+                  <span
+                    v-if="isNew(person)"
+                    class="px-1.5 py-0.5 text-xxs font-medium rounded-full shrink-0 bg-n-iris-3 text-n-iris-11"
+                  >
+                    {{ t('VIRTUAL_CLINIC.PEOPLE.NEW') }}
+                  </span>
                 </span>
                 <span
-                  v-if="isNew(person)"
-                  class="px-1.5 py-0.5 text-xxs font-medium rounded-full shrink-0 bg-n-iris-3 text-n-iris-11"
+                  v-if="group.key === 'online'"
+                  class="flex items-center gap-1 text-xs text-n-slate-11"
                 >
-                  {{ t('VIRTUAL_CLINIC.PEOPLE.NEW') }}
+                  {{
+                    t(
+                      `VIRTUAL_CLINIC.PEOPLE.STATUS.${person.availability_status.toUpperCase()}`
+                    )
+                  }}
+                  <span
+                    v-if="peopleOnMap.includes(person.id)"
+                    class="flex items-center gap-0.5 text-n-teal-11"
+                  >
+                    <Icon icon="i-lucide-map-pin" class="size-3" />
+                    {{ t('VIRTUAL_CLINIC.PEOPLE.ON_MAP') }}
+                  </span>
                 </span>
               </span>
-              <span
-                v-if="group.key === 'online'"
-                class="flex items-center gap-1 text-xs text-n-slate-11"
-              >
-                {{
-                  t(
-                    `VIRTUAL_CLINIC.PEOPLE.STATUS.${person.availability_status.toUpperCase()}`
-                  )
-                }}
-                <span
-                  v-if="peopleOnMap.includes(person.id)"
-                  class="flex items-center gap-0.5 text-n-teal-11"
-                >
-                  <Icon icon="i-lucide-map-pin" class="size-3" />
-                  {{ t('VIRTUAL_CLINIC.PEOPLE.ON_MAP') }}
-                </span>
-              </span>
+            </button>
+            <span
+              v-if="person.id === currentUserId"
+              class="absolute flex gap-0.5 -translate-y-1/2 top-1/2 right-1"
+            >
+              <Button
+                icon="i-lucide-user-pen"
+                variant="ghost"
+                color="slate"
+                size="xs"
+                :title="t('VIRTUAL_CLINIC.PROFILE.TITLE')"
+                @click="emit('editProfile')"
+              />
+              <Button
+                icon="i-lucide-shirt"
+                variant="ghost"
+                color="slate"
+                size="xs"
+                :title="t('VIRTUAL_CLINIC.AVATAR.TITLE')"
+                @click="emit('editAvatar')"
+              />
             </span>
-          </button>
+          </div>
         </template>
       </section>
     </div>

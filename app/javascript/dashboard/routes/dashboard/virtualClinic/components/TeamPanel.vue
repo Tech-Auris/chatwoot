@@ -18,7 +18,7 @@ const props = defineProps({
   alertCounts: { type: Object, default: () => ({}) },
 });
 
-const emit = defineEmits(['selectMember', 'edit', 'editAvatar']);
+const emit = defineEmits(['selectMember', 'edit', 'editAvatar', 'editProfile']);
 const { t } = useI18n();
 const members = computed(() => props.aiTeam?.members || []);
 const chatEnabled = computed(() => props.aiTeam?.chat_enabled === true);
@@ -98,12 +98,12 @@ const select = member => {
         {{ clinicName }}
       </h1>
       <Button
-        icon="i-lucide-shirt"
+        icon="i-lucide-user-pen"
         variant="ghost"
         color="slate"
         size="xs"
-        :title="t('VIRTUAL_CLINIC.AVATAR.TITLE')"
-        @click="emit('editAvatar')"
+        :title="t('VIRTUAL_CLINIC.PROFILE.TITLE')"
+        @click="emit('editProfile')"
       />
       <Button
         v-if="aiTeam?.can_edit_layout"
@@ -210,6 +210,7 @@ const select = member => {
     <PeopleList
       :people-on-map="peopleOnMap"
       @edit-avatar="emit('editAvatar')"
+      @edit-profile="emit('editProfile')"
     />
   </section>
 </template>

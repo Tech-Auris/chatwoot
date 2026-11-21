@@ -172,6 +172,19 @@
       "OPEN_RELEASE": "Ver novidades",
       "HELLO": "Oi! Aqui é a {name}. Separei o que chegou para você:",
       "NOTHING": "Oi! Aqui é a {name}. Nada de novo para você por enquanto."
+    },
+    "PROFILE": {
+      "TITLE": "Editar perfil",
+      "PHOTO": "Foto do perfil",
+      "AVATAR": "Avatar",
+      "CHANGE_PHOTO": "Trocar foto",
+      "REMOVE_PHOTO": "Remover foto",
+      "NAME": "Nome completo",
+      "DISPLAY_NAME": "Nome de exibição",
+      "DISPLAY_NAME_HINT": "É o nome que aparece para a equipe. Em branco, usa o nome completo.",
+      "SAVE": "Salvar",
+      "SAVED": "Perfil atualizado.",
+      "SAVE_ERROR": "Não foi possível salvar o perfil."
     }
   }
 }
