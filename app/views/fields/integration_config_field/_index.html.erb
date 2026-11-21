@@ -1,0 +1,8 @@
+<dl class="text-sm">
+  <% field.entries.each do |key, value| %>
+    <div class="flex gap-2">
+      <dt class="font-medium"><%= key %>:</dt>
+      <dd class="break-all"><%= value.is_a?(String) || value.nil? ? value : value.to_json %></dd>
+    </div>
+  <% end %>
+</dl>
