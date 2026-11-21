@@ -34,9 +34,13 @@ class V2::Reports::FunnelConversionBuilder
 
   attr_reader :account, :params
 
-  def initialize(account:, params:)
+  # `leads`: the conversations that make "Total de leads" (the Início page
+  # passes the ones that arrived in the period, the same as its Leads card).
+  # Without it, the total is every conversation that moved in the funnel.
+  def initialize(account:, params:, leads: nil)
     @account = account
     @params = params
+    @leads = leads
   end
 
   def build
@@ -49,7 +53,7 @@ class V2::Reports::FunnelConversionBuilder
     display_groups = build_display_groups(all_stages)
     rows = display_groups.any? ? fetch_stage_change_rows(display_groups) : []
     group_counts = build_group_counts(display_groups, rows)
-    universe = universe_counts_from(rows)
+    universe = @leads ? lead_counts : universe_counts_from(rows)
     # The first bar's count is the universe of conversations that moved
     # anywhere in the funnel during the period, not just entries into
     # the first stage. Otherwise a conversation that entered the first
@@ -156,6 +160,14 @@ class V2::Reports::FunnelConversionBuilder
       (ai_enabled ? ai_ids : manual_ids) << conv_id
     end
     { count: ai_ids.size + manual_ids.size, count_ai: ai_ids.size, count_manual: manual_ids.size }
+  end
+
+  # Same ai/manual split as the stage changes, read off the given leads.
+  def lead_counts
+    by_ai = @leads.reorder(nil).group(:ai_enabled).count
+    ai = by_ai.select { |enabled, _| enabled }.values.sum
+    manual = by_ai.values.sum - ai
+    { count: ai + manual, count_ai: ai, count_manual: manual }
   end
 
   def fetch_stage_change_rows(groups)
