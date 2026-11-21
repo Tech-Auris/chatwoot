@@ -53,10 +53,13 @@ class AutomationRules::ActionService < ActionService
     WebhookJob.perform_later(webhook_url[0], payload)
   end
 
+  # `[text, template_params]`: the template is a fallback, sent only when
+  # WhatsApp Cloud would refuse the text (24h window closed).
   def send_message(message)
     return if conversation_a_tweet?
 
     params = { content: message[0], private: false, content_attributes: { automation_rule_id: @rule.id } }
+    params[:template_params] = message[1] if message[1].present? && @conversation.requires_whatsapp_template?
     Messages::MessageBuilder.new(nil, @conversation, params).perform
   end
 

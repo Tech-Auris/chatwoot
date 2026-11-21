@@ -39,3 +39,14 @@ describe('#actionQueryGenerator', () => {
     ).toBe(true);
   });
 });
+
+it('keeps the text and the template fallback of send_message', () => {
+  const templateParams = { name: 'no_show', language: 'pt_BR' };
+  expect(
+    actionQueryGenerator([
+      { action_name: 'send_message', action_params: ['Oi', templateParams] },
+    ])
+  ).toEqual([
+    { action_name: 'send_message', action_params: ['Oi', templateParams] },
+  ]);
+});

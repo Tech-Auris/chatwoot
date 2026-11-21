@@ -164,6 +164,12 @@ class Conversation < ApplicationRecord
     Conversations::MessageWindowService.new(self).can_reply?
   end
 
+  # WhatsApp Cloud only accepts an approved template once the 24h window is closed.
+  def requires_whatsapp_template?
+    channel = inbox.channel
+    channel.is_a?(Channel::Whatsapp) && channel.provider == 'whatsapp_cloud' && !can_reply?
+  end
+
   def language
     additional_attributes&.dig('conversation_language')
   end
