@@ -16,7 +16,7 @@ class VirtualClinic::LayoutValidator
   FOLDERS = {
     floors: %r{\A5_pisos/},
     walls: %r{\A6_paredes/},
-    items: %r{\A[1-4]_[a-z_]+/},
+    items: %r{\A([1-4]_[a-z_]+|#{VirtualClinic::Season.folders.join('|')})/},
     team: %r{\A(7_personagens|8_pessoas)/}
   }.freeze
 

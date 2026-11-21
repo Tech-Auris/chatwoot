@@ -146,7 +146,9 @@
         "ENTRANCE": "The clinic entrance is blocked. Move what is in front of the door.",
         "UNREACHABLE": "Nobody can reach {name}. Open a way to the desk.",
         "SAVE": "Could not save the clinic. Try again."
-      }
+      },
+      "SEASON_UNTIL": "{name} · until {until}",
+      "SUGGESTED": "Use the suggested decoration"
     },
     "AVATAR": {
       "TITLE": "Edit your avatar",
@@ -205,6 +207,11 @@
       "SAVED": "Done! The summaries arrive at the time you chose.",
       "TURNED_OFF": "Summaries turned off.",
       "SAVE_ERROR": "Couldn't save the summaries."
+    },
+    "SEASONS": {
+      "CHRISTMAS": "Christmas",
+      "HALLOWEEN": "Halloween",
+      "PARTY": "Party"
     }
   }
 }

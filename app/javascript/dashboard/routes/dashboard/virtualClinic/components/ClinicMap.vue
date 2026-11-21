@@ -34,6 +34,7 @@ import {
 import { corners, findPath } from '../engine/pathfinding';
 import { createAvatar } from '../engine/movement';
 import { seatAt, seatsOf, withoutSeats } from '../engine/seats';
+import { inSeason } from '../engine/seasons';
 import { useClinicPresence } from '../composables/useClinicPresence';
 import { isOffDuty, offDutyReason } from '../teamStatus';
 
@@ -310,15 +311,20 @@ const rebuild = async () => {
     await rebuild();
     return;
   }
-  const sizes = sizesOf([...GARDEN_ITEMS, ...layout.items]);
-  grid = buildCollision(sizes, layout.items);
-  seats = seatsOf([...GARDEN_ITEMS, ...layout.items], sizes, layout.team);
+  // Decoration out of season stays saved but off the map (the editor shows
+  // it, to move or remove it).
+  const items = editing.value
+    ? layout.items
+    : layout.items.filter(item => inSeason(item.sprite, props.aiTeam?.seasons));
+  const sizes = sizesOf([...GARDEN_ITEMS, ...items]);
+  grid = buildCollision(sizes, items);
+  seats = seatsOf([...GARDEN_ITEMS, ...items], sizes, layout.team);
   walkGrid = buildCollision(
     sizes,
-    withoutSeats(layout.items, seats),
+    withoutSeats(items, seats),
     withoutSeats(GARDEN_ITEMS, seats)
   );
-  draw = createRenderer(canvas.value, sprites, layout);
+  draw = createRenderer(canvas.value, sprites, { ...layout, items });
   restartBehavior();
   render();
 };
@@ -326,7 +332,11 @@ watch(
   () => props.layout,
   () => sprites && rebuild()
 );
-watch(editing, restartBehavior);
+watch(editing, () => (sprites ? rebuild() : restartBehavior()));
+watch(
+  () => props.aiTeam?.seasons,
+  () => sprites && rebuild()
+);
 
 // The manager walks to the secretary's desk while she asks her something.
 watch(
