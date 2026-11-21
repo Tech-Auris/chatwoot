@@ -1,4 +1,28 @@
 ---
+- tag: v4.15.1-auris.1.83
+  published_at: '2026-11-21T20:00:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.83
+  notes:
+    en: |-
+      ### ✨ What's new
+
+      - **Clinic pipelines.** The clinic can now have other funnels besides Scheduling, such as "Weight-loss protocol" or "Follow-up visit". The same patient can be in several funnels at once, and each funnel has its own Board, List and Conversion.
+      - **Add a patient to another funnel in one click.** The "+" on every Funnel card adds the patient to another funnel. In the conversation, the "Funis" button shows the patient's stage in each funnel, and the contact panel shows the history.
+
+      ### 🐛 Fixes
+
+      - **A reply from the phone counts as answered.** When someone on the team answers the patient straight from the WhatsApp phone, the conversation leaves "No reply for 10+ min".
+      - **Total leads matches the Leads card.** On Home, the funnel's "Total leads" now shows the same number as the Leads card.
+    pt_BR: |-
+      ### ✨ Novidades
+
+      - **Funis da clínica.** Agora a clínica pode ter outros funis além do Agendamento, como "Protocolo Emagrecimento" ou "Retorno de consulta". O mesmo paciente pode estar em vários funis ao mesmo tempo, e cada funil tem seu Quadro, Lista e Conversão.
+      - **Coloque o paciente em outro funil com um clique.** O "+" em cada card do Funil adiciona o paciente a outro funil. Na conversa, o botão "Funis" mostra a etapa dele em cada funil, e a lateral do contato mostra o histórico.
+
+      ### 🐛 Correções
+
+      - **Resposta pelo celular conta como respondida.** Quando alguém da equipe responde o paciente direto no celular do WhatsApp, a conversa sai de "Sem resposta há +10 min".
+      - **Total de leads igual ao card Leads.** No Início, o "Total de leads" do funil agora mostra o mesmo número do card Leads.
 - tag: v4.15.1-auris.1.82
   published_at: '2026-11-19T20:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.82
@@ -439,15 +463,3 @@
       ### 🐛 Correções
 
       - **Mover cards no quadro do funil.** Arraste o card e solte em qualquer ponto de outra raia — ele move na hora, inclusive para uma raia vazia.
-- tag: v4.15.1-auris.1.63
-  published_at: '2026-09-28T23:30:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.63
-  notes:
-    en: |-
-      ### ✨ What's new
-
-      - **See the patients behind the funnel numbers.** In the funnel conversion report, click the number of scheduled, confirmed or attended patients (or the losses) to see who they are, with a link to each conversation.
-    pt_BR: |-
-      ### ✨ Novidades
-
-      - **Veja os pacientes por trás dos números do funil.** No relatório de conversão do funil, clique no número de agendados, confirmados ou comparecimentos (ou nas perdas) para ver quem são, com link para cada conversa.
