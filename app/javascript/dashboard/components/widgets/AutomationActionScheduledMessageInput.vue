@@ -8,10 +8,7 @@ import FileUpload from 'vue-upload-component';
 import WootMessageEditor from 'dashboard/components/widgets/WootWriter/Editor.vue';
 import DurationInput from 'dashboard/components-next/input/DurationInput.vue';
 import NextButton from 'dashboard/components-next/button/Button.vue';
-import TemplateQualityBadge from 'dashboard/components-next/whatsapp/TemplateQualityBadge.vue';
-import TemplateQualityWarning from 'dashboard/components-next/whatsapp/TemplateQualityWarning.vue';
-import { findTemplate } from 'dashboard/helper/templateQuality';
-import WhatsappTemplates from 'dashboard/components/widgets/conversation/WhatsappTemplates/Modal.vue';
+import AutomationActionTemplateFallback from './AutomationActionTemplateFallback.vue';
 import { DURATION_UNITS } from 'dashboard/components-next/input/constants';
 import { DEFAULT_SCHEDULED_MESSAGE_DELAY_MINUTES } from 'dashboard/routes/dashboard/settings/automation/constants.js';
 
@@ -36,8 +33,6 @@ const MAX_DELAY_MINUTES = 999 * 24 * 60; // 999 days
 
 const { t } = useI18n();
 const store = useStore();
-
-const showWhatsAppTemplatesModal = ref(false);
 
 const normalizedParams = computed(() => {
   const value = props.modelValue;
@@ -143,88 +138,19 @@ const clearAttachment = () => {
   attachmentFileName.value = '';
 };
 
-// Template params handling
+const isUploading = computed(() => attachmentState.value === 'uploading');
+const showActionButtons = computed(
+  () => !hasAttachment.value && !isUploading.value
+);
+
 const templateParams = computed(
   () => normalizedParams.value.template_params || null
 );
 
-const hasTemplate = computed(
-  () => templateParams.value && Object.keys(templateParams.value).length > 0
-);
-
-const templateName = computed(() => {
-  return templateParams.value?.name || templateParams.value?.id || null;
-});
-
-// Extract inbox IDs from conditions
-const inboxIdsFromConditions = computed(() => {
-  const inboxConditions = props.conditions.filter(
-    condition => condition.attribute_key === 'inbox_id'
-  );
-  const ids = [];
-  inboxConditions.forEach(condition => {
-    const values = condition.values;
-    if (Array.isArray(values)) {
-      values.forEach(v => {
-        const id = typeof v === 'object' ? v.id : v;
-        if (id) ids.push(Number(id));
-      });
-    } else if (values) {
-      const id = typeof values === 'object' ? values.id : values;
-      if (id) ids.push(Number(id));
-    }
-  });
-  return ids;
-});
-
-// Get the first inbox ID that has templates (for the modal)
-const inboxIdForTemplates = computed(() => {
-  const inboxWithTemplates = inboxIdsFromConditions.value.find(inboxId => {
-    const templates =
-      store.getters['inboxes/getWhatsAppTemplates'](inboxId) || [];
-    return templates.length > 0;
-  });
-  return inboxWithTemplates ?? null;
-});
-
-const selectedTemplate = computed(() =>
-  findTemplate(
-    store.getters['inboxes/getWhatsAppTemplates'](inboxIdForTemplates.value),
-    templateParams.value
-  )
-);
-
-// Check if any inbox has WhatsApp templates
-const showWhatsappTemplates = computed(() => {
-  return inboxIdForTemplates.value !== null;
-});
-
-// Show action buttons only when no attachment, no template, and not uploading
-const isUploading = computed(() => attachmentState.value === 'uploading');
-const showActionButtons = computed(
-  () => !hasAttachment.value && !hasTemplate.value && !isUploading.value
-);
-
-const openWhatsAppTemplatesModal = () => {
-  showWhatsAppTemplatesModal.value = true;
-};
-
-const hideWhatsAppTemplatesModal = () => {
-  showWhatsAppTemplatesModal.value = false;
-};
-
-const onTemplateSelect = messagePayload => {
+const onTemplateChange = (value, message) => {
   updateParams({
-    template_params: messagePayload.templateParams,
-    content: messagePayload.message,
-  });
-  hideWhatsAppTemplatesModal();
-};
-
-const clearTemplate = () => {
-  updateParams({
-    template_params: null,
-    content: '',
+    template_params: value,
+    content: content.value.trim() ? content.value : message || '',
   });
 };
 </script>
@@ -252,8 +178,6 @@ const clearTemplate = () => {
       enable-variables
       :placeholder="$t('AUTOMATION.ACTION.TEAM_MESSAGE_INPUT_PLACEHOLDER')"
       class="action-message"
-      :class="hasTemplate ? 'opacity-60 cursor-not-allowed' : ''"
-      :disabled="hasTemplate"
     />
 
     <div
@@ -285,14 +209,6 @@ const clearTemplate = () => {
           class="pointer-events-none"
         />
       </FileUpload>
-      <NextButton
-        v-if="showWhatsappTemplates"
-        ghost
-        xs
-        icon="i-lucide-zap"
-        :label="t('AUTOMATION.ACTION.TEMPLATE_SELECT')"
-        @click="openWhatsAppTemplatesModal"
-      />
     </div>
 
     <div
@@ -303,30 +219,10 @@ const clearTemplate = () => {
       <NextButton ghost xs slate icon="i-lucide-x" @click="clearAttachment" />
     </div>
 
-    <div
-      v-if="hasTemplate"
-      class="flex items-center gap-2 text-xs text-n-slate-11"
-    >
-      <span>
-        {{ t('AUTOMATION.ACTION.TEMPLATE_SELECTED', { name: templateName }) }}
-      </span>
-      <TemplateQualityBadge
-        v-if="selectedTemplate"
-        :template="selectedTemplate"
-      />
-      <NextButton ghost xs slate icon="i-lucide-x" @click="clearTemplate" />
-    </div>
-    <TemplateQualityWarning
-      v-if="hasTemplate && selectedTemplate"
-      :template="selectedTemplate"
-    />
-
-    <WhatsappTemplates
-      v-model:show="showWhatsAppTemplatesModal"
-      :inbox-id="inboxIdForTemplates"
-      :send-button-label="t('AUTOMATION.ACTION.TEMPLATE_USE')"
-      @on-send="onTemplateSelect"
-      @cancel="hideWhatsAppTemplatesModal"
+    <AutomationActionTemplateFallback
+      :model-value="templateParams"
+      :conditions="conditions"
+      @update:model-value="onTemplateChange"
     />
   </div>
 </template>

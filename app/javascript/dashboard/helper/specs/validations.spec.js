@@ -132,4 +132,39 @@ describe('validateAutomation', () => {
       {}
     );
   });
+
+  const withActions = actions => ({
+    name: 'Test',
+    description: 'Test',
+    event_name: 'message_created',
+    conditions: [
+      { attribute_key: 'content', filter_operator: 'contains', values: 'hi' },
+    ],
+    actions,
+  });
+
+  it('requires the text of send_message even with a template fallback', () => {
+    const errors = validateAutomation(
+      withActions([
+        { action_name: 'send_message', action_params: ['', { name: 'x' }] },
+      ])
+    );
+    expect(errors).toHaveProperty('action_0');
+  });
+
+  it('requires content or attachment on a scheduled message with a template', () => {
+    const scheduled = params =>
+      validateAutomation(
+        withActions([
+          {
+            action_name: 'create_scheduled_message',
+            action_params: [
+              { delay_minutes: 60, template_params: { name: 'x' }, ...params },
+            ],
+          },
+        ])
+      );
+    expect(scheduled({})).toHaveProperty('action_0');
+    expect(scheduled({ content: 'Oi' })).not.toHaveProperty('action_0');
+  });
 });

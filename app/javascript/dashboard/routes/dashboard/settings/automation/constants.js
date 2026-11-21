@@ -1041,7 +1041,7 @@ export const AUTOMATION_ACTION_TYPES = [
   {
     key: 'send_message',
     label: 'SEND_MESSAGE',
-    inputType: 'textarea',
+    inputType: 'message_with_template',
   },
   {
     key: 'create_scheduled_message',

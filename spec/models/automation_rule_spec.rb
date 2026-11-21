@@ -154,9 +154,14 @@ RSpec.describe AutomationRule do
       expect(rule).to be_valid
     end
 
-    it 'is valid with template_params and valid delay' do
-      rule = build_rule_with_scheduled_message({ 'template_params' => { 'name' => 'test' }, 'delay_minutes' => 60 })
+    it 'is valid with content, a template fallback and valid delay' do
+      rule = build_rule_with_scheduled_message({ 'content' => 'Hello', 'template_params' => { 'name' => 'test' }, 'delay_minutes' => 60 })
       expect(rule).to be_valid
+    end
+
+    it 'is invalid with only a template' do
+      rule = build_rule_with_scheduled_message({ 'template_params' => { 'name' => 'test' }, 'delay_minutes' => 60 })
+      expect(rule).not_to be_valid
     end
 
     it 'is invalid when delay_minutes is below minimum' do
@@ -181,7 +186,7 @@ RSpec.describe AutomationRule do
       expect(rule).to be_valid
     end
 
-    it 'is invalid without content, attachment, or template_params' do
+    it 'is invalid without content or attachment' do
       rule = build_rule_with_scheduled_message({ 'delay_minutes' => 60 })
       expect(rule).not_to be_valid
       expect(rule.errors[:actions]).to be_present

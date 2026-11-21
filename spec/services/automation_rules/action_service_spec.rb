@@ -99,6 +99,55 @@ RSpec.describe AutomationRules::ActionService do
       end
     end
 
+    describe '#perform with send_message action and a template fallback' do
+      let(:template_params) { { 'name' => 'no_show', 'language' => 'pt_BR', 'processed_params' => { 'body' => { '1' => '{{contact.name}}' } } } }
+      let(:provider) { 'whatsapp_cloud' }
+      let(:channel) do
+        create(:channel_whatsapp, account: account, provider: provider, sync_templates: false, validate_provider_config: false)
+      end
+      let(:conversation) { create(:conversation, account: account, inbox: channel.inbox) }
+      let(:window_open) { false }
+      let(:action_params) { ['Oi, sentimos sua falta', template_params] }
+      let(:sent_message) { conversation.messages.outgoing.last }
+
+      before do
+        rule.update!(actions: [{ action_name: 'send_message', action_params: action_params }])
+        allow(conversation).to receive(:can_reply?).and_return(window_open)
+        described_class.new(rule, account, conversation).perform
+      end
+
+      it 'sends the template when the 24h window is closed' do
+        expect(sent_message.content).to eq('Oi, sentimos sua falta')
+        expect(sent_message.additional_attributes['template_params']).to include('name' => 'no_show')
+      end
+
+      context 'when the 24h window is open' do
+        let(:window_open) { true }
+
+        it 'sends only the text' do
+          expect(sent_message.content).to eq('Oi, sentimos sua falta')
+          expect(sent_message.additional_attributes['template_params']).to be_nil
+        end
+      end
+
+      context 'when the inbox is Baileys' do
+        let(:provider) { 'baileys' }
+
+        it 'sends only the text' do
+          expect(sent_message.additional_attributes['template_params']).to be_nil
+        end
+      end
+
+      context 'when the rule only has the text' do
+        let(:action_params) { ['Oi, sentimos sua falta'] }
+
+        it 'sends the text as before' do
+          expect(sent_message.content).to eq('Oi, sentimos sua falta')
+          expect(sent_message.additional_attributes['template_params']).to be_nil
+        end
+      end
+    end
+
     describe '#perform with send_email_to_team action' do
       let!(:team) { create(:team, account: account) }
 
