@@ -58,6 +58,45 @@ RSpec.describe VirtualClinic::AnswerService do
     expect(ActionCableBroadcastJob).not_to have_been_enqueued
   end
 
+  it 'streams the text as it is written, at most every 150 ms' do
+    service = described_class.new(answer)
+    allow(service).to receive(:monotonic_now).and_return(0.0, 0.05, 0.2)
+    allow(chat).to receive(:ask).with(question.content) do |_content, &block|
+      ['Agora ', 'estou ', 'com 7.'].each { |text| block.call(double(content: text)) } # rubocop:disable RSpec/VerifiedDoubles
+      double(content: 'Agora estou com 7.', input_tokens: 1, output_tokens: 1) # rubocop:disable RSpec/VerifiedDoubles
+    end
+    allow(ActionCable.server).to receive(:broadcast)
+
+    service.perform
+
+    deltas = []
+    expect(ActionCable.server).to have_received(:broadcast).with(user.pubsub_token,
+                                                                 hash_including(event: 'virtual_clinic.message.delta')).twice do |_, payload|
+      deltas << payload[:data][:content]
+    end
+    expect(deltas).to eq(['Agora ', 'Agora estou com 7.'])
+  end
+
+  it 'says which tool is being used and keeps the charts with the answer' do
+    allow(ActionCable.server).to receive(:broadcast)
+    manager_thread = VirtualClinicThread.create!(account: account, user: user, persona: :manager)
+    manager_thread.messages.create!(role: :user, status: :done, content: question.content)
+    manager_answer = manager_thread.messages.create!(role: :assistant, status: :pending)
+    allow(chat).to receive(:with_tools) do |*tools|
+      tools.find { |tool| tool.name == 'render_chart' }.execute(type: 'bar', title: 'Leads', labels: %w[out nov],
+                                                                series: [{ 'name' => 'Leads', 'data' => [40, 52] }])
+      chat
+    end
+
+    described_class.new(manager_answer).perform
+
+    expect(manager_answer.reload.attachments).to eq([{ 'type' => 'bar', 'title' => 'Leads', 'labels' => %w[out nov],
+                                                       'series' => [{ 'name' => 'Leads', 'data' => [40, 52] }] }])
+    expect(ActionCable.server).to have_received(:broadcast)
+      .with(user.pubsub_token, { event: 'virtual_clinic.message.activity',
+                                 data: { id: manager_answer.id, persona: 'manager', account_id: account.id, tool: 'atendimento_agora' } })
+  end
+
   it 'replays the earlier turns as history' do
     question && answer.update!(status: :done, content: 'Olá!')
     follow_up = thread.messages.create!(role: :user, status: :done, content: 'E os follow-ups?')

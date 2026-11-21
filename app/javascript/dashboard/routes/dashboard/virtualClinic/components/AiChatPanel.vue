@@ -6,6 +6,7 @@ import { useMessageFormatter } from 'shared/composables/useMessageFormatter';
 import VirtualClinicAPI from 'dashboard/api/virtualClinic';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
+import ChatChart from './ChatChart.vue';
 
 const props = defineProps({
   member: { type: Object, required: true },
@@ -104,6 +105,20 @@ const onKeydown = event => {
   }
 };
 
+// While the answer is written: the text so far, and which tool is in use.
+const patchPending = (id, patch) => {
+  const message = messages.value.find(item => item.id === id);
+  if (message?.status !== 'pending') return;
+  Object.assign(message, patch);
+  scrollToBottom();
+};
+useEmitter('virtualClinicMessageDelta', data =>
+  patchPending(data.id, { content: data.content, activity: null })
+);
+useEmitter('virtualClinicMessageActivity', data =>
+  patchPending(data.id, { content: null, activity: data.tool })
+);
+
 useEmitter('virtualClinicMessageUpdated', data => {
   const index = messages.value.findIndex(message => message.id === data.id);
   if (index === -1) return;
@@ -160,10 +175,29 @@ useEmitter('virtualClinicMessageUpdated', data => {
           {{ message.content }}
         </p>
         <div
+          v-else-if="message.status === 'pending' && message.content"
+          class="self-start max-w-[92%] px-3 py-2 text-sm rounded-2xl rounded-bl-sm bg-n-alpha-2 text-n-slate-12"
+        >
+          <div
+            v-dompurify-html="formatMessage(message.content, false, false)"
+            class="leading-relaxed [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5"
+          />
+          <span
+            class="inline-block w-1.5 h-3.5 align-middle animate-pulse bg-n-slate-10"
+          />
+        </div>
+        <div
           v-else-if="message.status === 'pending'"
           class="self-start px-3 py-2 text-sm rounded-2xl rounded-bl-sm bg-n-alpha-2 text-n-slate-11"
         >
-          {{ t('VIRTUAL_CLINIC.CHAT.THINKING', { name: member.name }) }}
+          {{
+            message.activity
+              ? t('VIRTUAL_CLINIC.CHAT.ACTIVITY', {
+                  name: member.name,
+                  tool: toolLabel(message.activity),
+                })
+              : t('VIRTUAL_CLINIC.CHAT.THINKING', { name: member.name })
+          }}
         </div>
         <div
           v-else-if="message.status === 'failed'"
@@ -187,6 +221,11 @@ useEmitter('virtualClinicMessageUpdated', data => {
               formatMessage(message.content || '', false, false)
             "
             class="leading-relaxed [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5 [&_table]:w-full [&_table]:my-2 [&_td]:px-1.5 [&_td]:py-0.5 [&_td]:border-b [&_td]:border-n-weak [&_th]:px-1.5 [&_th]:text-left"
+          />
+          <ChatChart
+            v-for="(chart, index) in message.attachments || []"
+            :key="`chart-${message.id}-${index}`"
+            :chart="chart"
           />
           <p
             v-if="message.tool_calls?.length"

@@ -29,6 +29,7 @@ manager:
   scope: números da clínica, funil, campanhas, agendamentos e comparação entre períodos
   delegates_to:
     - secretary
+  charts: true
   model_config_key: VIRTUAL_CLINIC_MANAGER_MODEL
   default_model: gpt-5.1
   tools:

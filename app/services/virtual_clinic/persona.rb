@@ -36,6 +36,11 @@ class VirtualClinic::Persona
     config['role']
   end
 
+  # Whether the persona can answer with charts (RenderChartTool).
+  def charts?
+    config['charts'] == true
+  end
+
   def scope
     config['scope']
   end

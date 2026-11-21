@@ -44,7 +44,10 @@
       "ALERT_PATIENT": "{name} · conversa #{id} · esperando há {minutes} min",
       "ALERT_DISCONNECTED": "{name}: desconectada",
       "ALERT_SILENT": "{name}: sem mensagens de pacientes há {hours} h",
-      "NO_NAME": "Sem nome"
+      "NO_NAME": "Sem nome",
+      "ACTIVITY": "{name} está consultando: {tool}…",
+      "SHOW_DATA": "Ver dados",
+      "HIDE_DATA": "Esconder dados"
     },
     "SETTINGS": {
       "TITLE": "Clínica virtual",
@@ -77,7 +80,8 @@
       "REPORTS_V2_TEAMS": "times",
       "AGENTS_LIST": "atendentes",
       "TEAMS_LIST": "times",
-      "PERGUNTAR_SECRETARY": "secretária"
+      "PERGUNTAR_SECRETARY": "secretária",
+      "RENDER_CHART": "gráfico"
     },
     "STATUS": {
       "IDLE": "Sem atendimentos agora",
