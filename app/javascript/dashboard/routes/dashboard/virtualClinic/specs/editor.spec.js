@@ -147,6 +147,16 @@ describe('useClinicLayout', () => {
     expect(editor.editing.value).toBe(false);
   });
 
+  it('adds a pack decoration once', () => {
+    const editor = useClinicLayout();
+    editor.start();
+    const count = editor.layout.value.items.length;
+    const pack = [{ sprite: '11_natal/arvore_natal.png', x: 440, y: 100 }];
+    editor.addItems(pack);
+    editor.addItems(pack);
+    expect(editor.layout.value.items).toHaveLength(count + 1);
+  });
+
   it('discards the draft', () => {
     const editor = useClinicLayout();
     editor.start();

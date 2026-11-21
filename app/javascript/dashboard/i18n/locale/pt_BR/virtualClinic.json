@@ -146,7 +146,9 @@
         "ENTRANCE": "A entrada da clínica ficou bloqueada. Tire o que está na frente da porta.",
         "UNREACHABLE": "Ninguém consegue chegar até {name}. Abra um caminho até a mesa.",
         "SAVE": "Não foi possível salvar a clínica. Tente de novo."
-      }
+      },
+      "SEASON_UNTIL": "{name} · até {until}",
+      "SUGGESTED": "Usar a decoração sugerida"
     },
     "AVATAR": {
       "TITLE": "Editar seu avatar",
@@ -205,6 +207,11 @@
       "SAVED": "Pronto! Os resumos chegam no horário escolhido.",
       "TURNED_OFF": "Resumos desligados.",
       "SAVE_ERROR": "Não foi possível salvar os resumos."
+    },
+    "SEASONS": {
+      "CHRISTMAS": "Natal",
+      "HALLOWEEN": "Halloween",
+      "PARTY": "Festa"
     }
   }
 }

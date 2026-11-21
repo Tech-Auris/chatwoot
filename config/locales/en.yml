@@ -995,6 +995,15 @@ en:
         item_outside: 'A piece of furniture is outside the clinic: %{path}.'
         team_outside: '%{persona} must be inside the clinic.'
         name_length: 'Names must have between 1 and %{max} characters.'
+    seasons:
+      christmas:
+        name: 'Christmas'
+        extra: 'And the avatar got a Christmas hat.'
+      halloween:
+        name: 'Halloween'
+        extra: 'And the avatar got a pumpkin head.'
+      party:
+        name: 'Party'
     alerts:
       waiting_patients:
         one: '1 patient has had no answer for more than %{minutes} minutes.'
@@ -1010,6 +1019,7 @@ en:
       daily_summary: 'Yesterday: %{leads} leads, %{appointments} appointments, %{conversations} new conversations and %{follow_ups} follow-ups sent.'
       weekly_summary: 'Last week: %{leads} leads, %{appointments} appointments, %{conversations} new conversations and %{follow_ups} follow-ups sent.'
       monthly_summary: 'Last month: %{leads} leads, %{appointments} appointments, %{conversations} new conversations and %{follow_ups} follow-ups sent.'
+      seasonal_pack: 'The %{name} decoration pack is here! Until %{until}, you can decorate the clinic: in the editor (the pencil in the panel), use the suggested decoration or pick the pieces. %{extra}'
   super_admin:
     push_diagnostics:
       user_not_found: 'User not found.'

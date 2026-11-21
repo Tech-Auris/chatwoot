@@ -8,7 +8,8 @@ class VirtualClinic::AlertChecker
     VirtualClinic::Alerts::SilentInboxes,
     VirtualClinic::Alerts::FailedFollowUps,
     VirtualClinic::Alerts::ConversionDrop,
-    VirtualClinic::Alerts::NoShowRate
+    VirtualClinic::Alerts::NoShowRate,
+    VirtualClinic::Alerts::SeasonalPack
   ].freeze
 
   def initialize(account, rules: RULES)

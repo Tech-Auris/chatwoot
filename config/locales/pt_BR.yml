@@ -970,6 +970,15 @@ pt_BR:
         item_outside: 'Um móvel ficou fora da clínica: %{path}.'
         team_outside: '%{persona} precisa ficar dentro da clínica.'
         name_length: 'Os nomes precisam ter entre 1 e %{max} caracteres.'
+    seasons:
+      christmas:
+        name: 'Natal'
+        extra: 'E o avatar ganhou um gorro natalino.'
+      halloween:
+        name: 'Halloween'
+        extra: 'E o avatar ganhou uma cabeça de abóbora.'
+      party:
+        name: 'Festa'
     alerts:
       waiting_patients:
         one: '1 paciente está sem resposta há mais de %{minutes} minutos.'
@@ -985,6 +994,7 @@ pt_BR:
       daily_summary: 'Resumo de ontem: %{leads} leads, %{appointments} agendamentos, %{conversations} conversas novas e %{follow_ups} follow-ups enviados.'
       weekly_summary: 'Resumo da semana passada: %{leads} leads, %{appointments} agendamentos, %{conversations} conversas novas e %{follow_ups} follow-ups enviados.'
       monthly_summary: 'Resumo do mês passado: %{leads} leads, %{appointments} agendamentos, %{conversations} conversas novas e %{follow_ups} follow-ups enviados.'
+      seasonal_pack: 'Chegou o pacote de decoração de %{name}! Até %{until}, dá para enfeitar a clínica: no editor (o lápis no painel), use a decoração sugerida ou escolha as peças. %{extra}'
   super_admin:
     push_diagnostics:
       user_not_found: 'Usuário não encontrado.'

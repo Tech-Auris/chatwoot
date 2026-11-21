@@ -12,8 +12,10 @@ import { useAvatarArt } from '../composables/useAvatarArt';
 const props = defineProps({
   editor: { type: Object, required: true },
   members: { type: Array, default: () => [] },
+  // Decoration packs (clinic config): the active ones get their section.
+  seasons: { type: Object, default: null },
 });
-const emit = defineEmits(['save', 'addItem', 'editAvatar']);
+const emit = defineEmits(['save', 'addItem', 'editAvatar', 'decorate']);
 
 const { t } = useI18n();
 const { thumbnail } = useAssetThumbnails();
@@ -35,8 +37,15 @@ const walls = computed(() => inFolder(/^6_paredes\//));
 const catalog = computed(() =>
   FURNITURE_FOLDERS.map((folder, index) => ({
     folder,
-    room: ROOM_OF_FOLDER[index],
+    label: t(`VIRTUAL_CLINIC.MAP.ROOMS.${ROOM_OF_FOLDER[index]}`),
     paths: inFolder(new RegExp(`^${folder}/`)),
+  }))
+);
+// The decoration packs available now, with their suggested arrangement.
+const packs = computed(() =>
+  (props.seasons?.active || []).map(season => ({
+    ...season,
+    paths: inFolder(new RegExp(`^${season.folder}/`)),
   }))
 );
 
@@ -261,15 +270,53 @@ onMounted(async () => {
           :key="group.folder"
           class="flex flex-col gap-1"
         >
-          <span class="text-xs text-n-slate-11">{{
-            roomLabel(group.room)
-          }}</span>
+          <span class="text-xs text-n-slate-11">{{ group.label }}</span>
           <div class="grid grid-cols-5 gap-1">
             <button
               v-for="sprite in group.paths"
               :key="sprite"
               type="button"
               class="grid border rounded aspect-square place-items-center border-n-weak bg-n-alpha-1 hover:border-n-slate-8"
+              @click="emit('addItem', sprite)"
+            >
+              <img
+                v-if="thumbnail(sprite)"
+                :src="thumbnail(sprite)"
+                alt=""
+                class="object-contain max-w-full max-h-full p-0.5 [image-rendering:pixelated]"
+              />
+            </button>
+          </div>
+        </div>
+        <div
+          v-for="pack in packs"
+          :key="pack.key"
+          class="flex flex-col gap-1 p-2 mt-1 rounded-lg bg-n-alpha-1"
+        >
+          <span class="text-xs font-medium text-n-slate-12">
+            {{
+              pack.until
+                ? t('VIRTUAL_CLINIC.EDITOR.SEASON_UNTIL', {
+                    name: t(`VIRTUAL_CLINIC.SEASONS.${pack.key.toUpperCase()}`),
+                    until: pack.until,
+                  })
+                : t(`VIRTUAL_CLINIC.SEASONS.${pack.key.toUpperCase()}`)
+            }}
+          </span>
+          <Button
+            :label="t('VIRTUAL_CLINIC.EDITOR.SUGGESTED')"
+            size="xs"
+            variant="faded"
+            icon="i-lucide-sparkles"
+            class="self-start"
+            @click="emit('decorate', pack.key)"
+          />
+          <div class="grid grid-cols-5 gap-1">
+            <button
+              v-for="sprite in pack.paths"
+              :key="sprite"
+              type="button"
+              class="grid border rounded aspect-square place-items-center border-n-weak bg-n-solid-1 hover:border-n-slate-8"
               @click="emit('addItem', sprite)"
             >
               <img

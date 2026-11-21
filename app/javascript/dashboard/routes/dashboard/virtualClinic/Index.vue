@@ -16,6 +16,7 @@ import ProfileEditor from './components/ProfileEditor.vue';
 import SummarySettings from './components/SummarySettings.vue';
 import { useHelenaNews } from './composables/useHelenaNews';
 import { FLOORS, sheetForUser } from './engine/layout';
+import { SUGGESTED } from './engine/seasons';
 import { useUISettings } from 'dashboard/composables/useUISettings';
 import { useClinicLayout } from './composables/useClinicLayout';
 import { useVirtualClinicConfig } from './composables/useVirtualClinicConfig';
@@ -92,6 +93,7 @@ const avatarEditor = computed(() => {
   if (!persona) {
     const current = avatarFor.value.fromProfile && profileAvatar.value;
     return {
+      seasons: aiTeam.value?.seasons,
       title: t('VIRTUAL_CLINIC.AVATAR.TITLE'),
       name: me.value?.name,
       avatar: current ||
@@ -103,6 +105,7 @@ const avatarEditor = computed(() => {
   const spot = editor.layout.team[persona];
   const name = spot.name || member?.name || '';
   return {
+    seasons: aiTeam.value?.seasons,
     title: t('VIRTUAL_CLINIC.AVATAR.TITLE_TEAM', { name }),
     name,
     avatar: spot.avatar || { sheet: spot.sheet },
@@ -192,8 +195,9 @@ const ROOM_OF_FOLDER = {
   '3_gerencia': 2,
   '4_copa': 3,
 };
+// Decoration packs go in the recepção.
 const addItem = sprite => {
-  const room = FLOORS[ROOM_OF_FOLDER[sprite.split('/')[0]]];
+  const room = FLOORS[ROOM_OF_FOLDER[sprite.split('/')[0]] ?? 0];
   editor.addItem(sprite, room.x + room.w / 2 - 16, room.y + room.h / 2 - 16);
 };
 
@@ -210,8 +214,10 @@ onMounted(() => {
       v-if="editor.editing"
       :editor="editor"
       :members="aiTeam?.members || []"
+      :seasons="aiTeam?.seasons"
       @save="saveLayout"
       @add-item="addItem"
+      @decorate="editor.addItems(SUGGESTED[$event] || [])"
       @edit-avatar="avatarFor = { persona: $event }"
     />
     <TeamPanel

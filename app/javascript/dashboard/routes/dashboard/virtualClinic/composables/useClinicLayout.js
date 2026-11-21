@@ -121,6 +121,18 @@ export function useClinicLayout() {
     selected.value = { kind: 'item', index: draft.value.items.length - 1 };
   };
 
+  // A pack's suggested decoration: the pieces not there yet.
+  const addItems = items =>
+    update(next => {
+      items.forEach(item => {
+        const there = next.items.some(
+          ({ sprite, x, y }) =>
+            sprite === item.sprite && x === item.x && y === item.y
+        );
+        if (!there) next.items.push({ ...item });
+      });
+    });
+
   const setBlock = (kind, index, block) =>
     update(next => {
       next[kind][index].block = block;
@@ -154,6 +166,7 @@ export function useClinicLayout() {
     removeSelected,
     flipSelected,
     addItem,
+    addItems,
     setBlock,
     renameRoom,
     setTeam,

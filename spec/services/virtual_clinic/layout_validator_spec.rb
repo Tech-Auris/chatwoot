@@ -62,6 +62,12 @@ RSpec.describe VirtualClinic::LayoutValidator do
     expect(errors_for(layout)).to eq(['O layout da clínica não está no formato esperado.'])
   end
 
+  it 'accepts the decoration of a season pack' do
+    assets.push('11_natal/arvore_natal.png')
+    layout['items'] << { 'sprite' => '11_natal/arvore_natal.png', 'x' => 440, 'y' => 96 }
+    expect(errors_for(layout)).to be_empty
+  end
+
   it 'caps the furniture' do
     layout['items'] = Array.new(201) { { 'sprite' => '4_copa/geladeira.png', 'x' => 1, 'y' => 1 } }
     expect(errors_for(layout)).to eq(['A clínica pode ter no máximo 200 móveis.'])

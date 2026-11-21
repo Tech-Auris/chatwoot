@@ -14,6 +14,7 @@ import {
   premadeSheets,
   randomAvatar,
 } from '../engine/avatar';
+import { hiddenAccessories } from '../engine/seasons';
 import {
   IDLE_FRONT,
   drawLook,
@@ -33,6 +34,8 @@ const props = defineProps({
   avatar: { type: Object, required: true },
   // Floor art under the preview.
   floor: { type: String, default: '' },
+  // Decoration packs (clinic config): accessories out of season are hidden.
+  seasons: { type: Object, default: null },
 });
 const emit = defineEmits(['save', 'close']);
 
@@ -145,7 +148,12 @@ const save = () => {
 onMounted(async () => {
   dialog.value.open();
   const { data } = await VirtualClinicAPI.listAssets();
-  catalog.value = avatarCatalog(data.paths);
+  const hidden = hiddenAccessories(props.seasons);
+  catalog.value = avatarCatalog(
+    data.paths.filter(
+      path => !hidden.some(accessory => path.includes(`/${accessory}_32x32_`))
+    )
+  );
   premades.value = premadeSheets(data.paths);
   parts.value ||= randomAvatar(catalog.value);
   if (props.floor) {
