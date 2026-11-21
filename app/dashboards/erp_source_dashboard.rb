@@ -7,6 +7,7 @@ class ErpSourceDashboard < Administrate::BaseDashboard
     id: Field::Number,
     name: Field::String,
     active: Field::Boolean,
+    fields: ErpFieldsField,
     accounts: Field::HasMany,
     created_at: Field::DateTime,
     updated_at: Field::DateTime
@@ -14,10 +15,10 @@ class ErpSourceDashboard < Administrate::BaseDashboard
 
   COLLECTION_ATTRIBUTES = %i[id name active accounts].freeze
 
-  SHOW_PAGE_ATTRIBUTES = %i[id name active accounts created_at updated_at].freeze
+  SHOW_PAGE_ATTRIBUTES = %i[id name active fields accounts created_at updated_at].freeze
 
-  FORM_ATTRIBUTES_NEW = %i[id name active].freeze
-  FORM_ATTRIBUTES_EDIT = %i[name active].freeze
+  FORM_ATTRIBUTES_NEW = %i[id name active fields].freeze
+  FORM_ATTRIBUTES_EDIT = %i[name active fields].freeze
 
   COLLECTION_FILTERS = {}.freeze
 
