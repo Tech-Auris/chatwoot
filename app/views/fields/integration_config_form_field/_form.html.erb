@@ -1,0 +1,48 @@
+<%# Administrate wraps this partial in one flex row; the column keeps one field per line. %>
+<div class="w-full flex flex-col">
+  <%= f.hidden_field :account_id %>
+  <%= f.hidden_field :erp_source_id %>
+  <div class="field-unit">
+    <div class="field-unit__label">Account · ERP</div>
+    <div class="field-unit__field">
+      <strong><%= field.resource.account&.name %> · <%= field.resource.erp_source&.name || 'no ERP' %></strong>
+    </div>
+  </div>
+
+  <% if field.fields.empty? %>
+    <div class="field-unit">
+      <div class="field-unit__label"></div>
+      <div class="field-unit__field">
+        This ERP has no integration fields yet.
+        <% if field.resource.erp_source %>
+          <%= link_to 'Set them up on the ERP', edit_super_admin_erp_source_path(field.resource.erp_source) %>.
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <% field.fields.each do |erp_field| %>
+    <% name = "#{f.object_name}[#{field.attribute}][#{erp_field['key']}]" %>
+    <div class="field-unit">
+      <div class="field-unit__label <%= 'self-start pt-2' if erp_field['type'] == 'json' %>">
+        <%= label_tag name, erp_field['label'] %>
+      </div>
+      <div class="field-unit__field">
+        <% if erp_field['secret'] && erp_field['type'] != 'json' %>
+          <%= password_field_tag name, nil, autocomplete: 'new-password', placeholder: field.secret_hint(erp_field) %>
+        <% elsif erp_field['type'] == 'json' %>
+          <%= text_area_tag name, (erp_field['secret'] ? nil : field.value(erp_field)), rows: 6, placeholder: erp_field['secret'] ? field.secret_hint(erp_field) : '{ }' %>
+        <% elsif erp_field['type'] == 'number' %>
+          <%= number_field_tag name, field.value(erp_field), step: 1 %>
+        <% else %>
+          <%= text_field_tag name, field.value(erp_field) %>
+        <% end %>
+        <p class="text-sm text-n-slate-11 mt-1">
+          AI key: <code><%= erp_field['key'] %></code>
+          <span class="inline-flex items-center justify-center size-4 ml-1 rounded-full border border-n-slate-8 text-xs cursor-help"
+                title="The name this value gets in the integration's JSON config, which the AI and the internal flows (n8n) read. It is set on the ERP; renaming it there breaks those flows.">?</span>
+        </p>
+      </div>
+    </div>
+  <% end %>
+</div>

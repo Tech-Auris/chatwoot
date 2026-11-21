@@ -54,6 +54,7 @@
       "Account": "Account",
       "AccountUser": "Agent",
       "AccountSecretary": "Secretary",
+      "AccountIntegration": "ERP integration",
       "AgentBot": "Bot",
       "AutomationRule": "Automation",
       "Campaign": "Campaign",
