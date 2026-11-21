@@ -37,7 +37,11 @@
         <% else %>
           <%= text_field_tag name, field.value(erp_field) %>
         <% end %>
-        <p class="text-sm text-n-slate-11 mt-1"><code><%= erp_field['key'] %></code></p>
+        <p class="text-sm text-n-slate-11 mt-1">
+          AI key: <code><%= erp_field['key'] %></code>
+          <span class="inline-flex items-center justify-center size-4 ml-1 rounded-full border border-n-slate-8 text-xs cursor-help"
+                title="The name this value gets in the integration's JSON config, which the AI and the internal flows (n8n) read. It is set on the ERP; renaming it there breaks those flows.">?</span>
+        </p>
       </div>
     </div>
   <% end %>
