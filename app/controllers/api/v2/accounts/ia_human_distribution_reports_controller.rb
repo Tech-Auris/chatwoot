@@ -16,7 +16,11 @@ class Api::V2::Accounts::IaHumanDistributionReportsController < Api::V1::Account
   # First message a human sent the patient after this handover and before the
   # next one: public, outgoing, not from the IA user (it writes as a regular
   # user), not an automation, campaign or reaction. A reply sent from the
-  # WhatsApp app itself (echo) counts as human too.
+  # WhatsApp app itself counts as human too: an echo on Cloud, a sender-less
+  # 'WhatsApp' message on Baileys/Z-API (Message#sent_from_whatsapp_phone?).
+  # `content_attributes` is a `json` column holding a double-encoded string,
+  # so it is unwrapped to jsonb before reading any key.
+  MESSAGE_ATTRS = "(messages.content_attributes#>>'{}')::jsonb".freeze
   FIRST_REPLY_JOIN_SQL = <<~SQL.squish.freeze
     LEFT JOIN LATERAL (
       SELECT messages.created_at AS replied_at, messages.sender_id AS replier_id
@@ -31,10 +35,11 @@ class Api::V2::Accounts::IaHumanDistributionReportsController < Api::V1::Account
             AND next_attempt.created_at > ai_assignment_attempts.created_at
         ), 'infinity')
         AND ((users.id IS NOT NULL AND users.id <> :ai_user_id AND users.name !~* 'auris')
-             OR messages.content_attributes ->> 'external_echo' IS NOT NULL)
-        AND messages.content_attributes ->> 'automation_rule_id' IS NULL
+             OR #{MESSAGE_ATTRS} ->> 'external_echo' IS NOT NULL
+             OR (messages.sender_id IS NULL AND #{MESSAGE_ATTRS} ->> 'external_sender_name' = 'WhatsApp'))
+        AND #{MESSAGE_ATTRS} ->> 'automation_rule_id' IS NULL
         AND messages.additional_attributes ->> 'campaign_id' IS NULL
-        AND COALESCE(messages.content_attributes ->> 'is_reaction', 'false') <> 'true'
+        AND COALESCE(#{MESSAGE_ATTRS} ->> 'is_reaction', 'false') <> 'true'
       ORDER BY messages.created_at
       LIMIT 1
     ) first_reply ON true

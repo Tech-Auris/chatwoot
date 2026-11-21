@@ -1,0 +1,7 @@
+<% if field.erp_source %>
+  <%= field.erp_source.name %>
+  · <%= link_to 'Configure integration',
+                configure_super_admin_account_integrations_path(account_id: field.resource.id, erp_source_id: field.erp_source.id) %>
+<% else %>
+  —
+<% end %>
