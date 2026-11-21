@@ -1,0 +1,25 @@
+<div class="field-unit__label self-start pt-2">
+  <%= f.label field.attribute, 'Integration fields' %>
+</div>
+<div class="field-unit__field">
+  <table>
+    <thead><tr><th>Key (read by n8n)</th><th>Label</th><th>Type</th><th>Secret</th></tr></thead>
+    <tbody>
+      <% field.rows.each_with_index do |row, index| %>
+        <% name = "#{f.object_name}[#{field.attribute}][#{index}]" %>
+        <tr>
+          <td><%= text_field_tag "#{name}[key]", row['key'] %></td>
+          <td><%= text_field_tag "#{name}[label]", row['label'] %></td>
+          <td><%= select_tag "#{name}[type]", options_for_select(ErpSource::FIELD_TYPES, row['type']) %></td>
+          <td class="text-center">
+            <%= hidden_field_tag "#{name}[secret]", '0', id: nil %>
+            <%= check_box_tag "#{name}[secret]", '1', row['secret'] %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+  <p class="text-sm text-n-slate-11 mt-1">
+    Clear a key to remove its row. Renaming a key breaks the n8n nodes that read it. Secret fields are masked on screen.
+  </p>
+</div>

@@ -363,6 +363,18 @@ RSpec.describe Message do
       expect(conversation.waiting_since).to be_nil
     end
 
+    it 'resets the waiting_since when the team replies from the connected WhatsApp phone' do
+      create(:message, :bot_message, conversation: conversation, content_attributes: { external_sender_name: 'WhatsApp' })
+
+      expect(conversation.reload.waiting_since).to be_nil
+    end
+
+    it 'keeps the waiting_since for a sender-less outgoing message that did not come from the phone' do
+      create(:message, :bot_message, conversation: conversation)
+
+      expect(conversation.reload.waiting_since).not_to be_nil
+    end
+
     it 'sets the waiting_since if there is an incoming message' do
       conversation.update!(waiting_since: nil)
       message.message_type = :incoming
