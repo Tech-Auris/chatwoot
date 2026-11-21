@@ -90,7 +90,8 @@ RSpec.describe 'MCP OAuth', type: :request do
     it 'describes the request for the consent screen' do
       get '/api/v1/oauth/authorization', params: authorization_params, headers: admin.create_new_auth_token
 
-      expect(response.parsed_body).to eq('client_name' => 'Claude', 'accounts' => [{ 'id' => account.id, 'name' => account.name }])
+      expect(response.parsed_body).to eq('client_name' => 'Claude', 'accounts' => [{ 'id' => account.id, 'name' => account.name }],
+                                         'super_admin' => false)
     end
 
     it 'issues a code an administrator approves, which PKCE turns into a read token' do
@@ -165,6 +166,19 @@ RSpec.describe 'MCP OAuth', type: :request do
       get "/api/v1/accounts/#{account.id}/conversations/meta", headers: super_admin_headers, as: :json
 
       expect(response).to have_http_status(:success)
+    end
+
+    it 'lets a super admin with no account connect and read the admin API, read only' do
+      super_admin = create(:super_admin)
+      get '/api/v1/oauth/authorization', params: authorization_params, headers: super_admin.create_new_auth_token
+      expect(response.parsed_body).to include('accounts' => [], 'super_admin' => true)
+
+      super_admin_headers = { api_access_token: token_for(super_admin) }
+      get "/api/v1/super_admin/accounts/#{account.id}/secretary_context", headers: super_admin_headers, as: :json
+      expect(response).to have_http_status(:success)
+
+      post "/api/v1/accounts/#{account.id}/labels", params: { title: 'x' }, headers: super_admin_headers, as: :json
+      expect(response).to have_http_status(:forbidden)
     end
 
     it 'refreshes, and the user can revoke the connector from the profile' do

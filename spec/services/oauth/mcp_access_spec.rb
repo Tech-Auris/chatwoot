@@ -35,4 +35,11 @@ RSpec.describe Oauth::McpAccess do
       expect(described_class.accounts_for(super_admin)).to eq([account])
     end
   end
+
+  describe '.can_authorize?' do
+    it 'lets a super admin connect without any account, and nobody else' do
+      expect(described_class.can_authorize?(super_admin)).to be(true)
+      expect(described_class.can_authorize?(create(:user))).to be(false)
+    end
+  end
 end

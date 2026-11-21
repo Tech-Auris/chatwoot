@@ -11,16 +11,20 @@ const isLoading = ref(true);
 const isSubmitting = ref(false);
 const clientName = ref('');
 const accounts = ref([]);
+const superAdmin = ref(false);
 const error = ref('');
 
 const request = computed(() => route.query);
-const canAuthorize = computed(() => accounts.value.length > 0);
+const canAuthorize = computed(
+  () => accounts.value.length > 0 || superAdmin.value
+);
 
 onMounted(async () => {
   try {
     const { data } = await OAuthAuthorizationAPI.show(request.value);
     clientName.value = data.client_name;
     accounts.value = data.accounts;
+    superAdmin.value = data.super_admin;
   } catch (e) {
     error.value = e.response?.data?.error || 'invalid_request';
   } finally {
@@ -65,14 +69,19 @@ const respond = async approve => {
         </h1>
 
         <template v-if="canAuthorize">
-          <p class="text-body-main text-n-slate-11">
-            {{ $t('OAUTH_AUTHORIZE.DESCRIPTION', { client: clientName }) }}
+          <template v-if="accounts.length">
+            <p class="text-body-main text-n-slate-11">
+              {{ $t('OAUTH_AUTHORIZE.DESCRIPTION', { client: clientName }) }}
+            </p>
+            <ul class="list-disc ps-5 text-body-main text-n-slate-12">
+              <li v-for="account in accounts" :key="account.id">
+                {{ account.name }}
+              </li>
+            </ul>
+          </template>
+          <p v-if="superAdmin" class="text-body-main text-n-slate-11">
+            {{ $t('OAUTH_AUTHORIZE.SUPER_ADMIN', { client: clientName }) }}
           </p>
-          <ul class="list-disc ps-5 text-body-main text-n-slate-12">
-            <li v-for="account in accounts" :key="account.id">
-              {{ account.name }}
-            </li>
-          </ul>
           <p class="text-body-main text-n-slate-11">
             {{ $t('OAUTH_AUTHORIZE.READ_ONLY') }}
           </p>
