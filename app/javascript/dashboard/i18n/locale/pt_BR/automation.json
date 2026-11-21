@@ -105,6 +105,11 @@
       "TEMPLATE_SELECT": "Usar template",
       "TEMPLATE_SELECTED": "Template: {name}",
       "TEMPLATE_USE": "Usar este template",
+      "TEMPLATE_FALLBACK": {
+        "TITLE": "Template para fora da janela de 24 h",
+        "HELP": "Usado só nas caixas da API oficial (WhatsApp Cloud) quando o paciente não falou com a clínica nas últimas 24 h. Nos demais casos, vai o texto acima.",
+        "NEEDS_INBOX": "Para escolher um template, adicione a condição Caixa de Entrada com uma caixa da API oficial."
+      },
       "LOSS_REASON_PLACEHOLDER": "Motivo da perda"
     },
     "TOGGLE": {

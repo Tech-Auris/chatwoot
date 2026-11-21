@@ -45,6 +45,46 @@ RSpec.describe ScheduledMessages::SendScheduledMessageJob, type: :job do
       end
     end
 
+    context 'when an automation scheduled a template fallback' do
+      let(:channel) do
+        create(:channel_whatsapp, account: account, provider: 'whatsapp_cloud', sync_templates: false, validate_provider_config: false)
+      end
+      let(:inbox) { channel.inbox }
+      let(:automation_rule) { create(:automation_rule, account: account) }
+      let(:template_params) { { 'name' => 'no_show', 'language' => 'pt_BR' } }
+      let!(:automation_message) do
+        create(:scheduled_message, account: account, inbox: inbox, conversation: conversation, author: automation_rule,
+                                   content: 'Oi, sentimos sua falta', template_params: template_params)
+      end
+
+      def send_with_window(open)
+        allow_any_instance_of(Conversation).to receive(:can_reply?).and_return(open) # rubocop:disable RSpec/AnyInstance
+        travel_to(3.minutes.from_now) { described_class.new.perform(automation_message.id) }
+        conversation.messages.outgoing.last
+      end
+
+      it 'sends the text when the 24h window is open' do
+        message = send_with_window(true)
+
+        expect(message.content).to eq('Oi, sentimos sua falta')
+        expect(message.additional_attributes['template_params']).to be_nil
+      end
+
+      it 'sends the template when the 24h window is closed' do
+        expect(send_with_window(false).additional_attributes['template_params']).to eq(template_params)
+      end
+
+      it 'keeps sending the template a user picked by hand' do
+        manual = create(:scheduled_message, account: account, inbox: inbox, conversation: conversation, author: author,
+                                            content: 'Oi', template_params: template_params)
+        allow_any_instance_of(Conversation).to receive(:can_reply?).and_return(true) # rubocop:disable RSpec/AnyInstance
+
+        travel_to(3.minutes.from_now) { described_class.new.perform(manual.id) }
+
+        expect(conversation.messages.outgoing.last.additional_attributes['template_params']).to eq(template_params)
+      end
+    end
+
     it 'includes attachment when present' do
       file = Rack::Test::UploadedFile.new(Rails.root.join('spec/assets/avatar.png'), 'image/png')
       scheduled_message = create(:scheduled_message, account: account, inbox: inbox, conversation: conversation, author: author, content: nil,

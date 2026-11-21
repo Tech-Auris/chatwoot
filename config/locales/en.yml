@@ -160,7 +160,7 @@ en:
     automation:
       scheduled_message:
         delay_out_of_range: Delay must be between 1 minute and 999 days
-        content_attachment_or_template_required: Scheduled message must have content, attachment, or template
+        content_or_attachment_required: Scheduled message must have content or an attachment
       funnel_move:
         loss_reason_required: Moving to this funnel stage needs a loss reason
     scheduled_messages:
