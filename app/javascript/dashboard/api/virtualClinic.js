@@ -38,6 +38,42 @@ class VirtualClinicAPI extends ApiClient {
     return axios.post(`${this.url}/threads/${persona}/reset`);
   }
 
+  // `{ layout, updated_at, updated_by }`; `layout` is null for the default.
+  getLayout() {
+    return axios.get(`${this.url}/layout`);
+  }
+
+  saveLayout(layout) {
+    return axios.put(`${this.url}/layout`, { layout });
+  }
+
+  resetLayout() {
+    return axios.delete(`${this.url}/layout`);
+  }
+
+  // `{ alerts, counts }`: what the AI team raised its hand for.
+  getAlerts() {
+    return axios.get(`${this.url}/alerts`);
+  }
+
+  acknowledgeAlerts(persona) {
+    return axios.post(`${this.url}/alerts/acknowledge`, { persona });
+  }
+
+  // `{ paths }`: every file of the pack the editor can use.
+  // Helena's summaries the user wants: `{ daily, weekly, monthly, hour }`.
+  getSummary() {
+    return axios.get(`${this.url}/summary`);
+  }
+
+  saveSummary(summary) {
+    return axios.put(`${this.url}/summary`, summary);
+  }
+
+  listAssets() {
+    return axios.get(`${this.url}/assets`);
+  }
+
   updateSettings(settings) {
     return axios.patch(`${this.url}/settings`, settings);
   }

@@ -26,11 +26,13 @@ RSpec.describe VirtualClinicPolicy, type: :policy do
     expect(policy_for(admin).ai_chat?).to be(false)
   end
 
-  it 'gives the AI team to administrators and managers only' do
+  it 'shows the AI team to everyone, but only administrators and managers talk to it and manage it' do
     expect(policy_for(admin).ai_chat?).to be(true)
     expect(policy_for(manager).ai_chat?).to be(true)
-    expect(policy_for(agent).ai_team_visible?).to be(false)
+    expect(policy_for(agent).ai_team_visible?).to be(true)
+    expect(policy_for(agent).ai_team_manager?).to be(false)
     expect(policy_for(agent).ai_chat?).to be(false)
+    expect(policy_for(agent).update_layout?).to be(false)
   end
 
   it 'reports the AI assistant as missing before the OpenAI key' do

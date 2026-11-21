@@ -23,7 +23,7 @@ const openMember = persona =>
 </script>
 
 <template>
-  <div v-if="configs[route.params.accountId]?.visible" class="mb-3">
+  <div v-if="configs[route.params.accountId]?.manages_team" class="mb-3">
     <h3
       class="flex items-center gap-1.5 px-2 py-1 text-xs font-semibold uppercase tracking-wider text-n-slate-10"
     >

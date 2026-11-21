@@ -18,13 +18,19 @@
       "CHAT": "Chat"
     },
     "PEOPLE": {
-      "TITLE": "People · {count} online",
       "YOU": "(you)",
       "STATUS": {
         "ONLINE": "Online",
         "BUSY": "Busy",
         "OFFLINE": "Offline"
-      }
+      },
+      "ON_MAP": "In the clinic",
+      "SEARCH": "Search people",
+      "GROUPS": {
+        "ONLINE": "Online ({count})",
+        "OFFLINE": "Offline ({count})"
+      },
+      "NEW": "New 🎉"
     },
     "CHAT": {
       "NEW": "New conversation",
@@ -37,7 +43,15 @@
       "SUBTITLE": {
         "SECRETARY": "Answers about patients being served and follow-ups",
         "MANAGER": "Answers anything about the clinic, with numbers"
-      }
+      },
+      "ALERT": "❗ {message}",
+      "ALERT_PATIENT": "{name} · conversation #{id} · waiting for {minutes} min",
+      "ALERT_DISCONNECTED": "{name}: disconnected",
+      "ALERT_SILENT": "{name}: no patient messages for {hours} h",
+      "NO_NAME": "No name",
+      "ACTIVITY": "{name} is looking at: {tool}…",
+      "SHOW_DATA": "See data",
+      "HIDE_DATA": "Hide data"
     },
     "SETTINGS": {
       "TITLE": "Virtual clinic",
@@ -69,7 +83,9 @@
       "REPORTS_V2_INBOXES": "inboxes",
       "REPORTS_V2_TEAMS": "teams",
       "AGENTS_LIST": "agents",
-      "TEAMS_LIST": "teams"
+      "TEAMS_LIST": "teams",
+      "PERGUNTAR_SECRETARY": "secretary",
+      "RENDER_CHART": "chart"
     },
     "STATUS": {
       "IDLE": "No patients right now",
@@ -96,7 +112,106 @@
       "ZOOM_IN": "Zoom in",
       "ZOOM_OUT": "Zoom out",
       "ZOOM_FIT": "Fit to screen",
-      "OFF_DUTY": "⏸ Not serving patients · {reason}"
+      "OFF_DUTY": "⏸ Not serving patients · {reason}",
+      "TALK_TO": "Talk to {name} (E)",
+      "MOVE_HINT": "Walk with the arrow keys or WASD, or click the floor",
+      "ASKING": "💬 Asking {name}…",
+      "RAISED_HAND": "!",
+      "OTHER_TAB": "The clinic is open in another tab.",
+      "USE_HERE": "Use here"
+    },
+    "EDITOR": {
+      "EDIT": "Edit clinic",
+      "TITLE": "Editing the clinic",
+      "HINT": "Drag furniture and the team on the map. R turns the selected piece, Del removes it and Esc clears the selection.",
+      "SAVE": "Save",
+      "DISCARD": "Discard",
+      "RESTORE": "Restore default",
+      "RESTORE_CONFIRM": "Confirm: back to default",
+      "SELECTED": "Selected piece:",
+      "FLIP": "Turn (R)",
+      "REMOVE": "Remove (Del)",
+      "TEAM": "Team",
+      "ROOMS": "Room names",
+      "FLOORS": "Floors",
+      "WALLS": "Walls",
+      "WALL_AREAS": {
+        "0": "Reception and waiting room",
+        "1": "Management",
+        "2": "Kitchen"
+      },
+      "FURNITURE": "Furniture",
+      "FURNITURE_HINT": "Click a piece to put it in its room, then drag it on the map.",
+      "ERRORS": {
+        "ENTRANCE": "The clinic entrance is blocked. Move what is in front of the door.",
+        "UNREACHABLE": "Nobody can reach {name}. Open a way to the desk.",
+        "SAVE": "Could not save the clinic. Try again."
+      },
+      "SEASON_UNTIL": "{name} · until {until}",
+      "SUGGESTED": "Use the suggested decoration"
+    },
+    "AVATAR": {
+      "TITLE": "Edit your avatar",
+      "TITLE_TEAM": "{name}'s look",
+      "EDIT": "Edit look",
+      "DONE": "Done",
+      "RANDOM": "Random look",
+      "NONE": "None",
+      "PARTS": {
+        "PREMADE": "Avatar",
+        "BODY": "Skin",
+        "EYES": "Eyes",
+        "OUTFIT": "Outfit",
+        "HAIR": "Hair",
+        "ACCESSORY": "Accessory"
+      }
+    },
+    "NEWS": {
+      "NOTIFICATIONS": "You have 1 new notification | You have {n} new notifications",
+      "OPEN_NOTIFICATIONS": "Open notifications",
+      "RELEASE": "A new version is out ({tag}). What changed:",
+      "OPEN_RELEASE": "See what's new",
+      "HELLO": "Hi! {name} here. This is what came in for you:",
+      "NOTHING": "Hi! {name} here. Nothing new for you for now."
+    },
+    "PROFILE": {
+      "TITLE": "Edit profile",
+      "PHOTO": "Profile picture",
+      "AVATAR": "Avatar",
+      "CHANGE_PHOTO": "Change picture",
+      "REMOVE_PHOTO": "Remove picture",
+      "NAME": "Full name",
+      "DISPLAY_NAME": "Display name",
+      "DISPLAY_NAME_HINT": "The name the team sees. Left blank, the full name is used.",
+      "SAVE": "Save",
+      "SAVED": "Profile updated.",
+      "SAVE_ERROR": "Couldn't save the profile."
+    },
+    "SUMMARY": {
+      "OPEN": "{name}'s summaries",
+      "TITLE": "{name}'s summaries",
+      "QUESTION": "I'd like {name} to send me a summary:",
+      "PERIODS": {
+        "DAILY": "Daily",
+        "WEEKLY": "Weekly",
+        "MONTHLY": "Monthly"
+      },
+      "WHEN": {
+        "DAILY": "Every day, with yesterday's numbers",
+        "WEEKLY": "Every Monday, with last week",
+        "MONTHLY": "Every 1st, with last month"
+      },
+      "HOUR": "Time",
+      "WHERE": "The summary arrives in your notifications and in your chat with {name}. Only you get it.",
+      "SAVE": "Save",
+      "SAVED": "Done! The summaries arrive at the time you chose.",
+      "TURNED_OFF": "Summaries turned off.",
+      "SAVE_ERROR": "Couldn't save the summaries."
+    },
+    "SEASONS": {
+      "CHRISTMAS": "Christmas",
+      "HALLOWEEN": "Halloween",
+      "PARTY": "Party"
     }
   }
 }

@@ -21,6 +21,17 @@ class VirtualClinic::AssetStore
     File.binread(file) if File.file?(file)
   end
 
+  # Every file of the pack the clinic can use (the editor catalog).
+  def self.list
+    root = ENV.fetch('VIRTUAL_CLINIC_ASSETS_PATH', nil)
+    paths = if root.present?
+              Dir.glob('*/*.png', base: File.expand_path(root))
+            else
+              ActiveStorage::Blob.where('key LIKE ?', "#{KEY_PREFIX}%").pluck(:key).map { |key| key.delete_prefix(KEY_PREFIX) }
+            end
+    paths.grep(PATH_FORMAT).sort
+  end
+
   # Uploads every PNG of the selection folder, replacing what is there.
   def self.upload(dir)
     Dir.glob('*/*.png', base: dir).grep(PATH_FORMAT).each do |path|

@@ -38,6 +38,7 @@
       "ASSIGNED_CONVERSATION_NEW_MESSAGE": "New message",
       "INTERNAL_CHAT_MENTION": "Mentioned",
       "INTERNAL_CHAT_NEW_MESSAGE": "Direct message",
+      "VIRTUAL_CLINIC_ALERT": "Virtual clinic",
       "SNOOZED_UNTIL": "Snoozed for {time}",
       "SNOOZED_ENDS": "Snooze ended"
     },
