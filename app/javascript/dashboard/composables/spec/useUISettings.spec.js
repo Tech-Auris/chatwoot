@@ -80,7 +80,7 @@ describe('useUISettings', () => {
     );
   });
 
-  it('adds appointments right below scheduled messages for a saved order', () => {
+  it('adds appointments and pipelines right below scheduled messages for a saved order', () => {
     const original = getUISettingsMock.value.conversation_sidebar_items_order;
     getUISettingsMock.value.conversation_sidebar_items_order = [
       { name: 'conversation_actions' },
@@ -89,11 +89,12 @@ describe('useUISettings', () => {
     ];
     const { conversationSidebarItemsOrder } = useUISettings();
     expect(
-      conversationSidebarItemsOrder.value.slice(0, 4).map(i => i.name)
+      conversationSidebarItemsOrder.value.slice(0, 5).map(i => i.name)
     ).toEqual([
       'conversation_actions',
       'scheduled_messages',
       'appointments',
+      'pipelines',
       'macros',
     ]);
     getUISettingsMock.value.conversation_sidebar_items_order = original;

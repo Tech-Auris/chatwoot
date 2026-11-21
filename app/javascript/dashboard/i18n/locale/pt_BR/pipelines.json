@@ -1,0 +1,93 @@
+{
+  "PIPELINES": {
+    "AGENDAMENTO": "Agendamento",
+    "SEARCH": "Buscar funil",
+    "MOVE_ERROR": "Não foi possível mover o contato. Tente novamente.",
+    "ADD_TO": {
+      "BUTTON": "Adicionar a",
+      "TITLE": "Adicionar ao funil",
+      "AGENDAMENTO_LOCKED": "O Agendamento acompanha a conversa",
+      "ADDED": "Contato adicionado a {pipeline}",
+      "REMOVED": "Contato retirado de {pipeline}",
+      "ERROR": "Não foi possível atualizar os funis do contato. Tente novamente.",
+      "NO_MATCH": "Nenhum funil encontrado",
+      "EMPTY": "A clínica ainda não tem funis",
+      "REMOVE_TITLE": "Tirar do funil?",
+      "REMOVE_DESCRIPTION": "O contato sai de {pipeline}, junto com o histórico desta passagem.",
+      "REMOVE_CONFIRM": "Tirar"
+    },
+    "ORIGIN": {
+      "MANUAL": "Manual",
+      "MANUAL_BY": "Manual · {name}",
+      "AUTOMATIC": "Automático"
+    },
+    "CARD": {
+      "CONVERSATION_OPEN": "Aberta",
+      "CONVERSATION_RESOLVED": "Resolvida",
+      "IN_STAGE_FOR": "Tempo nesta etapa"
+    },
+    "STAGE": {
+      "COUNT_LABEL": "{count} contato | {count} contatos"
+    },
+    "LIST": {
+      "ORIGIN": "Origem",
+      "IN_STAGE_FOR": "Nesta etapa há",
+      "EMPTY": "Nenhum contato nesta etapa."
+    },
+    "SELECTOR": {
+      "DEFAULT": "Padrão",
+      "EMPTY": "Nenhum funil da clínica ainda",
+      "NEW": "Novo funil",
+      "SHOW_ARCHIVED": "Arquivados",
+      "HIDE_ARCHIVED": "Voltar aos ativos",
+      "NO_ARCHIVED": "Nenhum funil arquivado",
+      "UNARCHIVE": "Reativar",
+      "UNARCHIVED": "{pipeline} reativado"
+    },
+    "CONFIG": {
+      "BUTTON": "Configurar funil",
+      "AGENDAMENTO_LOCKED": "Funil padrão da Auris: as etapas não podem ser alteradas",
+      "TITLE": "Configurar funil",
+      "NEW_TITLE": "Novo funil",
+      "SAVE": "Salvar",
+      "NAME": "Nome do funil",
+      "NAME_PLACEHOLDER": "Ex.: Protocolo Emagrecimento",
+      "STAGES": "Etapas",
+      "COLOR": "Cor da etapa",
+      "STAGE_PLACEHOLDER": "Nome da etapa",
+      "REMOVE_STAGE": "Apagar etapa",
+      "ADD_STAGE": "Adicionar etapa",
+      "CLOSING_LOCKED": "Todo funil termina em Ganho e Perdido",
+      "CLOSING_HINT": "Todo funil também ganha as etapas finais Ganho e Perdido.",
+      "MOVE_CONTACTS": "{stage} tem {count} contato(s). Para qual etapa eles vão?",
+      "MOVE_CONTACTS_PLACEHOLDER": "Escolha a etapa",
+      "ARCHIVE": "Arquivar funil",
+      "DELETE": "Apagar funil",
+      "DELETE_TITLE": "Apagar o funil?",
+      "DELETE_DESCRIPTION": "Todos os dados de {pipeline} somem: contatos, etapas e histórico. Não dá para desfazer.",
+      "DELETE_TYPE_NAME": "Digite o nome do funil para confirmar",
+      "DELETE_CONFIRM": "Apagar de vez",
+      "SAVED": "Funil salvo",
+      "ARCHIVED": "Funil arquivado",
+      "DELETED": "Funil apagado",
+      "ERROR": "Não foi possível salvar o funil. Tente novamente."
+    },
+    "ADD_CONTACT": {
+      "BUTTON": "Adicionar contato",
+      "TITLE": "Adicionar contato a {pipeline}",
+      "PLACEHOLDER": "Buscar por nome ou telefone",
+      "EMPTY": "Nenhum contato encontrado"
+    },
+    "FILTERS": {
+      "FROM_DATE": "Entrou de",
+      "TO_DATE": "Entrou até",
+      "SOURCE": "Origem",
+      "SOURCE_ANY": "Todas as origens"
+    },
+    "HEADER": {
+      "BUTTON": "Funis ({count})",
+      "TITLE": "Funis do contato",
+      "EMPTY": "O contato não está em nenhum funil da clínica."
+    }
+  }
+}

@@ -28,6 +28,7 @@ import inboxMgmt from './inboxMgmt.json';
 import integrationApps from './integrationApps.json';
 import integrations from './integrations.json';
 import funnel from './funnel.json';
+import pipelines from './pipelines.json';
 import home from './home.json';
 import internalChat from './internalChat.json';
 import virtualClinic from './virtualClinic.json';
@@ -89,6 +90,7 @@ export default {
   ...integrationApps,
   ...integrations,
   ...funnel,
+  ...pipelines,
   ...home,
   ...internalChat,
   ...virtualClinic,

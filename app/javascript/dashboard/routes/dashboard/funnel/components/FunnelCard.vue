@@ -7,6 +7,7 @@ import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import ChannelIcon from 'dashboard/components-next/icon/ChannelIcon.vue';
 import AiStatusBadge from 'dashboard/components-next/Conversation/AiStatusBadge.vue';
 import FollowUpBadge from 'dashboard/components-next/Conversation/FollowUpBadge.vue';
+import AddToPipelineMenu from './AddToPipelineMenu.vue';
 import { formatCurrency } from '../funnelFormatters';
 
 const props = defineProps({
@@ -250,6 +251,10 @@ const toggleLossReason = () => {
           v-if="conversation.follow_up"
           :conversation-id="conversation.id"
           :follow-up="conversation.follow_up"
+        />
+        <AddToPipelineMenu
+          v-if="conversation.contact?.id"
+          :contact-id="conversation.contact.id"
         />
         <button
           type="button"

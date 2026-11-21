@@ -528,6 +528,7 @@
       "SCHEDULED_MESSAGES": "Scheduled Messages",
       "OPEN_SCHEDULED_HUB": "See all account-wide scheduled messages",
       "APPOINTMENTS": "Appointments",
+      "PIPELINES": "Pipelines",
       "CONVERSATION_ACTIONS": "Conversation Actions",
       "CONVERSATION_LABELS": "Conversation Labels",
       "CONVERSATION_INFO": "Conversation Information",

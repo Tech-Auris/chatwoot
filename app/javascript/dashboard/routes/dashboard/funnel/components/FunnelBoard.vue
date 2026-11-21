@@ -9,7 +9,11 @@ import { formatCurrency } from '../funnelFormatters';
 
 const props = defineProps({
   stages: { type: Array, required: true },
-  conversationsByStage: { type: Object, required: true },
+  // Cards per stage name: conversations on the Agendamento, pipeline entries
+  // (one per contact) on a clinic pipeline, rendered through the `card` slot.
+  itemsByStage: { type: Object, required: true },
+  countLabelKey: { type: String, default: 'FUNNEL.STAGE.COUNT_LABEL' },
+  showSaveAsAudience: { type: Boolean, default: true },
   averageTicket: { type: Number, default: 0 },
   locale: { type: String, default: 'en' },
   // Stage ids currently fetching their next page — the button shows a
@@ -29,14 +33,14 @@ const orderedStages = computed(() =>
   })
 );
 
-const cardsFor = stage => props.conversationsByStage[stage.name] || [];
+const cardsFor = stage => props.itemsByStage[stage.name] || [];
 
 // Only prefix the summary with the projected sum when an average ticket
 // is actually configured — otherwise "R$ 0,00 · N conversas" reads as
 // broken data next to a stage that has real cards.
 const stageSummary = stage => {
   const count = stage.count || 0;
-  const countLabel = t('FUNNEL.STAGE.COUNT_LABEL', count, { count });
+  const countLabel = t(props.countLabelKey, count, { count });
   if (!props.averageTicket) return countLabel;
   const sum = formatCurrency(count * props.averageTicket, props.locale);
   return `${sum} · ${countLabel}`;
@@ -44,12 +48,9 @@ const stageSummary = stage => {
 
 const onDragEnd = (event, targetStage) => {
   if (!event?.added) return;
-  const conversation = event.added.element;
-  if (!conversation) return;
-  emit('move', {
-    conversationId: conversation.id,
-    stage: targetStage.name,
-  });
+  const item = event.added.element;
+  if (!item) return;
+  emit('move', { id: item.id, stage: targetStage.name });
 };
 
 const isLoadingMore = stage => props.loadingMoreStageIds.includes(stage.id);
@@ -79,6 +80,7 @@ const requestMore = stage => emit('loadMore', stage);
               {{ stage.name }}
             </span>
             <NextButton
+              v-if="showSaveAsAudience"
               v-tooltip.top="t('AUDIENCES.SAVE_AS.BUTTON')"
               icon="i-lucide-users-round"
               slate
@@ -111,7 +113,11 @@ const requestMore = stage => emit('loadMore', stage);
             @change="event => onDragEnd(event, stage)"
           >
             <template #item="{ element }">
-              <FunnelCard :conversation="element" />
+              <div>
+                <slot name="card" :item="element">
+                  <FunnelCard :conversation="element" />
+                </slot>
+              </div>
             </template>
           </Draggable>
 
