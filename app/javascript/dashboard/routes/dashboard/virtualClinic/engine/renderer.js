@@ -5,7 +5,7 @@ const OUTLINE = '#2b2d42';
 // Rows of the LimeZu character sheet: 6 frames per direction, in the order
 // right, up (back), left, down (front). The phone call only faces front.
 const DIRECTIONS = ['right', 'up', 'left', 'down'];
-const ROWS = { idle: 1, walk: 2, sit: 4 };
+const ROWS = { idle: 1, walk: 2, sit: 4, sitCompact: 5 };
 const PHONE = { row: 6, columns: [3, 4, 5, 6, 7, 8] };
 
 function frameOf(character, tick) {
@@ -14,13 +14,21 @@ function frameOf(character, tick) {
   }
   const base = DIRECTIONS.indexOf(character.direction || 'down') * 6;
   if (character.moving) return { row: ROWS.walk, column: base + (tick % 6) };
-  if (character.sitting) {
-    // Seated frames only face right (0–5) or left (6–11).
+  if (character.sitting && ['left', 'right'].includes(character.direction)) {
+    // Seated frames only face right (0–5) or left (6–11); armchairs and
+    // sofas use the compact ones. Facing up or down, the standing frames
+    // go on the seat.
     const side = character.direction === 'left' ? 6 : 0;
-    return { row: ROWS.sit, column: side + (Math.floor(tick / 3) % 6) };
+    const row = character.compact ? ROWS.sitCompact : ROWS.sit;
+    return { row, column: side + (Math.floor(tick / 3) % 6) };
   }
   return { row: ROWS.idle, column: base + (Math.floor(tick / 2) % 6) };
 }
+
+const sittingDepth = ({ sitting, direction }) => {
+  if (!sitting) return 0;
+  return direction === 'left' || direction === 'right' ? 40 : 8;
+};
 
 // The Gather-like "talking" balloon: three dots, no words, to the right of
 // the mouth with its tail pointing at it.
@@ -141,8 +149,9 @@ export function createRenderer(canvas, sprites, layout = DEFAULT_LAYOUT) {
         ...character,
         sheet:
           sprites[character.sheet || sheetOf(layout.team[character.persona])],
-        // Someone sitting goes over their chair.
-        depth: character.y + FRAME.height + (character.sitting ? 8 : 0),
+        // Someone sitting goes over their chair; sideways, over the whole
+        // sofa (the upper place of a side sofa too).
+        depth: character.y + FRAME.height + sittingDepth(character),
       }))
       .filter(person => person.sheet);
     // Stable sort: on a tie the furniture (a chair behind someone) goes first.

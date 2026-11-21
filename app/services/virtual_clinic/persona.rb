@@ -36,6 +36,12 @@ class VirtualClinic::Persona
     config['role']
   end
 
+  # Whether only administrators and managers see what the persona is doing
+  # (its numbers on the map and its alerts).
+  def restricted?
+    config['restricted'] == true
+  end
+
   # Whether the persona can answer with charts (RenderChartTool).
   def charts?
     config['charts'] == true
@@ -68,7 +74,7 @@ class VirtualClinic::Persona
   end
 
   def as_json(*)
-    { persona: key, name: name, suggestions: suggestions }
+    { persona: key, name: name, suggestions: suggestions, restricted: restricted? }
   end
 
   private

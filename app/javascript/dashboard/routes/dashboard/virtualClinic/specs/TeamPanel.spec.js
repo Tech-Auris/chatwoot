@@ -73,6 +73,7 @@ describe('TeamPanel', () => {
         visible: true,
         chat_enabled: false,
         chat_missing: 'openai_key',
+        manages_team: true,
         members,
       },
       {
@@ -134,38 +135,12 @@ describe('TeamPanel', () => {
     expect(wrapper.text()).not.toContain('VIRTUAL_CLINIC.AI_TEAM.TITLE');
   });
 
-  it('lists the user first, then online people, and opens a DM on click', async () => {
-    const wrapper = mountPanel({ visible: false, members: [] });
-    const names = rows(wrapper).map(b => b.text());
-
-    expect(names[0]).toContain('Dra. Paula');
-    expect(names[1]).toContain('Marcos Silva');
-    expect(names.join()).not.toContain('IA | Auris');
-
-    await rows(wrapper)[1].trigger('click');
-    await Promise.resolve();
-
-    expect(dispatch).toHaveBeenCalledWith('internalChat/create', {
-      channel: { channel_type: 'dm' },
-      member_ids: [2],
-    });
-    expect(push).toHaveBeenCalledWith({
-      name: 'internal_chat_dm',
-      params: { accountId: '1', channelId: 77 },
-    });
-  });
-
-  it('opens the avatar editor from the header and from your own row', async () => {
+  it('opens the avatar editor from the header', async () => {
     const wrapper = mountPanel({ visible: false, members: [] });
 
     await wrapper.findAll('button')[0].trigger('click');
-    await rows(wrapper)[0].trigger('click');
 
-    expect(wrapper.emitted('editAvatar')).toHaveLength(2);
-    expect(dispatch).not.toHaveBeenCalledWith(
-      'internalChat/create',
-      expect.anything()
-    );
+    expect(wrapper.emitted('editAvatar')).toHaveLength(1);
   });
 
   it('lets whoever edits the clinic change the look of each AI teammate', async () => {
@@ -181,5 +156,25 @@ describe('TeamPanel', () => {
       .trigger('click');
 
     expect(wrapper.emitted('editAvatar')).toEqual([['manager']]);
+  });
+
+  it('shows agents the team without the manager numbers or the chat-off hint', () => {
+    const wrapper = mountPanel(
+      { visible: true, chat_enabled: false, manages_team: false, members },
+      { secretary: { on_duty: true, active_conversations: 3, in_follow_up: 1 } }
+    );
+
+    expect(wrapper.text()).toContain('VIRTUAL_CLINIC.STATUS.SECRETARY');
+    expect(wrapper.text()).not.toContain('VIRTUAL_CLINIC.STATUS.MANAGER');
+    expect(wrapper.text()).not.toContain('VIRTUAL_CLINIC.AI_TEAM.CHAT_OFF');
+  });
+
+  it('opens the manager without the chat, for her news', async () => {
+    const wrapper = mountPanel({ visible: true, chat_enabled: false, members });
+
+    await rows(wrapper)[0].trigger('click');
+    await rows(wrapper)[1].trigger('click');
+
+    expect(wrapper.emitted('selectMember')).toEqual([['manager']]);
   });
 });

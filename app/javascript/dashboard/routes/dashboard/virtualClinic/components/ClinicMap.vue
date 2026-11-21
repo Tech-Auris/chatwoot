@@ -28,6 +28,7 @@ import {
 } from '../engine/collision';
 import { corners, findPath } from '../engine/pathfinding';
 import { createAvatar } from '../engine/movement';
+import { seatAt, seatsOf, withoutSeats } from '../engine/seats';
 import { useClinicPresence } from '../composables/useClinicPresence';
 import { isOffDuty, offDutyReason } from '../teamStatus';
 
@@ -76,9 +77,13 @@ let lastFrame = null;
 // The user's avatar and everyone else walking around (Gather-style).
 let sprites = null;
 let grid = null;
+// The avatar walks on its own grid, where seats are free to step on.
+let walkGrid = null;
+let seats = [];
 let avatar = null;
 const mine = ref(null);
 const presence = useClinicPresence();
+const { passive } = presence;
 const loadingSheets = new Set();
 // The counter keeps people about three tiles from Clara.
 const NEAR = 4 * TILE;
@@ -135,7 +140,7 @@ const people = computed(() => {
     userId: Number(id),
     sheet: place.avatar ? lookSheet(place.avatar) : sheetForUser(Number(id)),
   }));
-  if (mine.value && props.me) {
+  if (mine.value && props.me && !passive.value) {
     list.push({
       ...mine.value,
       userId: props.me.id,
@@ -206,7 +211,8 @@ const bubble = persona => {
   }
   if (props.thinking === persona) return t('VIRTUAL_CLINIC.MAP.THINKING');
   if (placeOf(persona).away) return '';
-  if (!props.status) return '';
+  // Agents don't get the numbers of the restricted teammates (the manager).
+  if (!props.status?.[persona]) return '';
   if (isOffDuty(persona, props.status)) {
     return t('VIRTUAL_CLINIC.MAP.OFF_DUTY', {
       reason: offDutyReason(props.status, t),
@@ -280,8 +286,16 @@ const rebuild = async () => {
       await loadSprites(missing, path => VirtualClinicAPI.getAsset(path))
     );
   }
-  if (layout !== props.layout) return;
-  grid = buildCollision(sizesOf(layout.items), layout.items);
+  // The clinic changed while the art loaded (the saved layout arrived):
+  // build the latest one instead.
+  if (layout !== props.layout) {
+    await rebuild();
+    return;
+  }
+  const sizes = sizesOf(layout.items);
+  grid = buildCollision(sizes, layout.items);
+  seats = seatsOf(layout.items, sizes, layout.team);
+  walkGrid = buildCollision(sizes, withoutSeats(layout.items, seats));
   draw = createRenderer(canvas.value, sprites, layout);
   restartBehavior();
   render();
@@ -341,7 +355,7 @@ watch(
   () => people.value.forEach(person => ensureSheet(person.sheet))
 );
 // A new look of my own: everybody else sees it right away.
-watch(mySheet, () => avatar && presence.send(avatar.state, true));
+watch(mySheet, () => avatar && presence.send(mine.value, true));
 
 // Keeps the avatar in sight when the map is zoomed in.
 const FOLLOW_MARGIN = 96;
@@ -361,6 +375,33 @@ const follow = () => {
   }
 };
 
+// Where the avatar was left, so it is back there after a reload or a trip
+// to another page (in this browser).
+const spotKey = () =>
+  `virtual-clinic-spot:${props.me.accountId}:${props.me.id}`;
+const savedSpot = () => {
+  try {
+    return JSON.parse(localStorage.getItem(spotKey()));
+  } catch {
+    return null;
+  }
+};
+const saveSpot = () => {
+  if (!avatar || !props.me) return;
+  try {
+    localStorage.setItem(
+      spotKey(),
+      JSON.stringify({
+        x: Math.round(avatar.state.x),
+        y: Math.round(avatar.state.y),
+        direction: avatar.state.direction,
+      })
+    );
+  } catch {
+    // No storage (private window): the avatar starts at the door.
+  }
+};
+
 const animate = now => {
   animationFrame = requestAnimationFrame(animate);
   const seconds =
@@ -375,11 +416,24 @@ const animate = now => {
       ])
     );
   }
-  if (avatar) {
+  // In another tab the clinic is open too and that one is the person.
+  if (avatar && !passive.value) {
+    const wasMoving = avatar.state.moving;
     avatar.update(seconds);
-    mine.value = { ...avatar.state };
+    // Standing still on a chair: sit on it, facing where it faces.
+    const seat = !avatar.state.moving && seatAt(seats, avatar.state);
+    mine.value = seat
+      ? {
+          ...avatar.state,
+          ...seat.frame,
+          direction: seat.face,
+          sitting: true,
+          compact: seat.compact,
+        }
+      : { ...avatar.state };
     if (avatar.state.moving) hasWalked.value = true;
-    presence.send(avatar.state);
+    if (wasMoving && !avatar.state.moving) saveSpot();
+    presence.send(mine.value);
     follow();
   }
   presence.step(seconds);
@@ -389,10 +443,13 @@ const animate = now => {
 const startAvatar = async () => {
   if (!props.me) return;
   await ensureSheet(mySheet.value);
+  const spot = savedSpot();
+  const canStand = place => isFree(walkGrid, feetOf(place));
   avatar = createAvatar({
-    ...ENTRANCE,
-    canStand: place => isFree(grid, feetOf(place)),
+    ...(spot && canStand(spot) ? spot : ENTRANCE),
+    canStand,
   });
+  if (spot?.direction) avatar.state.direction = spot.direction;
   mine.value = { ...avatar.state };
   presence.connect({
     userId: props.me.id,
@@ -406,7 +463,7 @@ const startAvatar = async () => {
 
 const walkTowards = point => {
   if (!avatar) return;
-  const path = findPath(grid, cellOf(feetOf(avatar.state)), cellOf(point));
+  const path = findPath(walkGrid, cellOf(feetOf(avatar.state)), cellOf(point));
   if (!path) return;
   avatar.walkTo(
     corners(path)
@@ -564,7 +621,10 @@ const onClick = event => {
   const point = toWorld(event);
   const persona = hitTest(point.x, point.y, characters.value);
   if (persona) {
-    if (chatEnabled.value) emit('selectMember', persona);
+    // The manager also opens without the chat: she has the person's news.
+    if (chatEnabled.value || persona === 'manager') {
+      emit('selectMember', persona);
+    }
     return;
   }
   walkTowards(point);
@@ -589,6 +649,7 @@ onMounted(async () => {
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
     window.addEventListener('blur', onBlur);
+    window.addEventListener('pagehide', saveSpot);
   } catch {
     failed.value = true;
   } finally {
@@ -597,12 +658,14 @@ onMounted(async () => {
 });
 
 onBeforeUnmount(() => {
+  saveSpot();
   cancelAnimationFrame(animationFrame);
   clearInterval(rotateTimer);
   resizeObserver?.disconnect();
   window.removeEventListener('keydown', onKeyDown);
   window.removeEventListener('keyup', onKeyUp);
   window.removeEventListener('blur', onBlur);
+  window.removeEventListener('pagehide', saveSpot);
 });
 </script>
 
@@ -729,6 +792,20 @@ onBeforeUnmount(() => {
       >
         {{ t('VIRTUAL_CLINIC.MAP.MOVE_HINT') }}
       </span>
+    </div>
+    <div
+      v-if="passive && !editing"
+      class="absolute z-20 flex items-center gap-3 px-4 py-2 text-sm -translate-x-1/2 rounded-xl shadow-lg top-4 left-1/2 bg-n-solid-1 text-n-slate-12"
+    >
+      <Icon icon="i-lucide-copy" class="size-4 text-n-slate-11" />
+      {{ t('VIRTUAL_CLINIC.MAP.OTHER_TAB') }}
+      <button
+        type="button"
+        class="px-2.5 py-1 text-xs font-medium text-white rounded-lg bg-n-brand"
+        @click="presence.takeOver()"
+      >
+        {{ t('VIRTUAL_CLINIC.MAP.USE_HERE') }}
+      </button>
     </div>
     <div
       v-if="loading || failed"

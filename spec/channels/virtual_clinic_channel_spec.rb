@@ -7,7 +7,7 @@ RSpec.describe VirtualClinicChannel do
   before { stub_connection }
 
   def join(target = account)
-    subscribe(user_id: user.id, pubsub_token: user.pubsub_token, account_id: target.id)
+    subscribe(user_id: user.id, pubsub_token: user.pubsub_token, account_id: target.id, session: 'tab-1')
   end
 
   it 'streams the account map when the Clínica virtual is released' do
@@ -28,10 +28,11 @@ RSpec.describe VirtualClinicChannel do
 
   it 'shares the avatar position with the rest of the account' do
     join
-    expect { perform :move, x: 120.7, y: '88', direction: 'left', moving: true }
+    expect { perform :move, x: 120.7, y: '88', direction: 'left', moving: true, since: 1_700_000_000_000 }
       .to have_broadcasted_to("virtual_clinic_#{account.id}")
       .with(event: 'virtual_clinic.presence',
-            data: { user_id: user.id, name: 'Fábio', x: 120, y: 88, moving: true, direction: 'left', avatar: nil })
+            data: { user_id: user.id, name: 'Fábio', session: 'tab-1', x: 120, y: 88, moving: true, direction: 'left',
+                    sitting: false, compact: false, avatar: nil, since: 1_700_000_000_000 })
   end
 
   it 'shares the look made in the avatar editor, and drops anything else' do
@@ -45,6 +46,13 @@ RSpec.describe VirtualClinicChannel do
       .with(hash_including(data: hash_including(avatar: nil)))
   end
 
+  it 'shares whether the avatar is sitting' do
+    join
+    expect { perform :move, x: 1, y: 2, direction: 'left', sitting: true, compact: true }
+      .to have_broadcasted_to("virtual_clinic_#{account.id}")
+      .with(hash_including(data: hash_including(sitting: true, compact: true)))
+  end
+
   it 'falls back to facing down on an unknown direction' do
     join
     expect { perform :move, x: 1, y: 2, direction: 'sideways' }
@@ -55,6 +63,6 @@ RSpec.describe VirtualClinicChannel do
   it 'tells the others when the user leaves the map' do
     join
     expect { unsubscribe }.to have_broadcasted_to("virtual_clinic_#{account.id}")
-      .with(event: 'virtual_clinic.presence', data: { user_id: user.id, name: 'Fábio', left: true })
+      .with(event: 'virtual_clinic.presence', data: { user_id: user.id, name: 'Fábio', session: 'tab-1', left: true })
   end
 end

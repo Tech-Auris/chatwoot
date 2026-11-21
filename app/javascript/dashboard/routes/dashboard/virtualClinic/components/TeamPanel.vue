@@ -1,12 +1,10 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRoute, useRouter } from 'vue-router';
-import { useMapGetter, useStore } from 'dashboard/composables/store';
 import Button from 'dashboard/components-next/button/Button.vue';
-import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import VirtualClinicAPI from 'dashboard/api/virtualClinic';
+import PeopleList from './PeopleList.vue';
 import { isOffDuty, offDutyReason } from '../teamStatus';
 
 const props = defineProps({
@@ -22,47 +20,6 @@ const props = defineProps({
 
 const emit = defineEmits(['selectMember', 'edit', 'editAvatar']);
 const { t } = useI18n();
-const store = useStore();
-const route = useRoute();
-const router = useRouter();
-const agents = useMapGetter('agents/getNonInternalAgents');
-const currentUserId = useMapGetter('getCurrentUserID');
-
-// Online first, then busy, then offline; the user sits at the top. The AI
-// user is left out: on the map it is Clara.
-const STATUS_ORDER = { online: 0, busy: 1, offline: 2 };
-const people = computed(() =>
-  (agents.value || [])
-    .filter(agent => !agent.is_ai_user)
-    .sort(
-      (a, b) =>
-        (b.id === currentUserId.value) - (a.id === currentUserId.value) ||
-        (STATUS_ORDER[a.availability_status] ?? 2) -
-          (STATUS_ORDER[b.availability_status] ?? 2) ||
-        a.name.localeCompare(b.name)
-    )
-);
-const onlineCount = computed(
-  () => people.value.filter(p => p.availability_status === 'online').length
-);
-
-// Opens (or creates) the direct message in the internal chat, Gather-style;
-// on yourself, the avatar editor.
-const openDirectMessage = async person => {
-  if (person.id === currentUserId.value) {
-    emit('editAvatar');
-    return;
-  }
-  const channel = await store.dispatch('internalChat/create', {
-    channel: { channel_type: 'dm' },
-    member_ids: [person.id],
-  });
-  router.push({
-    name: 'internal_chat_dm',
-    params: { accountId: route.params.accountId, channelId: channel.id },
-  });
-};
-
 const members = computed(() => props.aiTeam?.members || []);
 const chatEnabled = computed(() => props.aiTeam?.chat_enabled === true);
 
@@ -91,7 +48,8 @@ const missingAction = computed(() => {
 // One line of what each teammate is doing, from the live status. It does not
 // depend on the OpenAI key: Clara serves patients through the n8n anyway.
 const statusLine = persona => {
-  if (!props.status) return '';
+  // Agents don't get the numbers of the restricted teammates.
+  if (!props.status?.[persona]) return '';
   if (isOffDuty(persona, props.status)) {
     return t('VIRTUAL_CLINIC.STATUS.OFF_DUTY', {
       reason: offDutyReason(props.status, t),
@@ -123,8 +81,11 @@ const toggleDailySummary = async () => {
   await VirtualClinicAPI.updateSettings({ daily_summary: dailySummary.value });
 };
 
+// The manager also opens without the chat: she has the person's news.
 const select = member => {
-  if (chatEnabled.value) emit('selectMember', member.persona);
+  if (chatEnabled.value || member.persona === 'manager') {
+    emit('selectMember', member.persona);
+  }
 };
 </script>
 
@@ -164,7 +125,9 @@ const select = member => {
           type="button"
           class="flex items-center w-full gap-3 p-2 text-left rounded-lg"
           :class="[
-            chatEnabled ? 'hover:bg-n-alpha-2' : 'cursor-default',
+            chatEnabled || member.persona === 'manager'
+              ? 'hover:bg-n-alpha-2'
+              : 'cursor-default',
             isOffDuty(member.persona, status) ? 'opacity-50' : '',
             selected === member.persona ? 'bg-n-alpha-2' : '',
           ]"
@@ -194,7 +157,7 @@ const select = member => {
               {{ statusLine(member.persona) }}
             </span>
             <span
-              v-if="!chatEnabled"
+              v-if="!chatEnabled && aiTeam.manages_team"
               class="flex items-center gap-1 text-xs text-n-slate-10"
             >
               <Icon icon="i-lucide-message-circle-off" class="size-3" />
@@ -244,52 +207,9 @@ const select = member => {
       </div>
     </div>
 
-    <div class="flex flex-col min-h-0 gap-1">
-      <h2 class="mb-1 text-xs font-medium text-n-slate-11">
-        {{ t('VIRTUAL_CLINIC.PEOPLE.TITLE', { count: onlineCount }) }}
-      </h2>
-      <div class="flex flex-col gap-1 overflow-y-auto">
-        <button
-          v-for="person in people"
-          :key="person.id"
-          type="button"
-          class="flex items-center gap-3 p-2 text-left rounded-lg hover:bg-n-alpha-2"
-          @click="openDirectMessage(person)"
-        >
-          <Avatar
-            :name="person.name"
-            :src="person.thumbnail || ''"
-            :status="person.availability_status"
-            :size="32"
-            rounded-full
-          />
-          <span class="flex flex-col min-w-0">
-            <span class="text-sm font-medium truncate text-n-slate-12">
-              {{ person.name }}
-              <span
-                v-if="person.id === currentUserId"
-                class="text-xs font-normal text-n-slate-11"
-              >
-                {{ t('VIRTUAL_CLINIC.PEOPLE.YOU') }}
-              </span>
-            </span>
-            <span class="flex items-center gap-1 text-xs text-n-slate-11">
-              {{
-                t(
-                  `VIRTUAL_CLINIC.PEOPLE.STATUS.${(person.availability_status || 'offline').toUpperCase()}`
-                )
-              }}
-              <span
-                v-if="peopleOnMap.includes(person.id)"
-                class="flex items-center gap-0.5 text-n-teal-11"
-              >
-                · <Icon icon="i-lucide-map-pin" class="size-3" />
-                {{ t('VIRTUAL_CLINIC.PEOPLE.ON_MAP') }}
-              </span>
-            </span>
-          </span>
-        </button>
-      </div>
-    </div>
+    <PeopleList
+      :people-on-map="peopleOnMap"
+      @edit-avatar="emit('editAvatar')"
+    />
   </section>
 </template>

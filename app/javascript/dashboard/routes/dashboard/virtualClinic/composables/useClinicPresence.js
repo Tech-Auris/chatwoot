@@ -7,11 +7,17 @@ const GONE_MS = 15000;
 const SPEED = 160; // others glide to their last known spot, world px/s
 
 // Everyone else walking on the map of this account (VirtualClinicChannel).
-// `others` maps user id → `{ name, x, y, direction, moving, avatar }`, x/y being
+// Each open map is a session: with the clinic open in two tabs, the one
+// opened (or taken back) last is the person; the other goes `passive`
+// (stops sending) until `takeOver`, and the others ignore the older one.
+// `others` maps user id → `{ name, x, y, direction, moving, sitting, avatar }`, x/y being
 // where they are drawn now; positions arrive a few times per second and
 // are smoothed in `step`.
 export function useClinicPresence() {
   const others = ref({});
+  const passive = ref(false);
+  const session = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  let since = Date.now();
   let consumer = null;
   let subscription = null;
   let me = null;
@@ -20,9 +26,9 @@ export function useClinicPresence() {
   const targets = {};
 
   const send = (position, force = false) => {
-    if (!subscription) return;
+    if (!subscription || passive.value) return;
     const now = Date.now();
-    const key = `${Math.round(position.x)},${Math.round(position.y)},${position.direction},${position.moving}`;
+    const key = `${Math.round(position.x)},${Math.round(position.y)},${position.direction},${position.moving},${position.sitting}`;
     const changed = key !== lastSent.key;
     if (!force && now - lastSent.at < (changed ? SEND_MS : HEARTBEAT_MS)) {
       return;
@@ -33,7 +39,10 @@ export function useClinicPresence() {
       y: Math.round(position.y),
       direction: position.direction,
       moving: position.moving,
+      sitting: position.sitting === true,
+      compact: position.compact === true,
       avatar: me.look(),
+      since,
     });
   };
 
@@ -43,8 +52,18 @@ export function useClinicPresence() {
       onLayout();
       return;
     }
-    if (event !== 'virtual_clinic.presence' || data.user_id === me?.userId) {
+    if (event !== 'virtual_clinic.presence') return;
+    if (data.user_id === me?.userId) {
+      // The clinic opened in another tab after this one: that one is me now.
+      if (data.session !== session && !data.left && data.since > since) {
+        passive.value = true;
+      }
       return;
+    }
+    const current = targets[data.user_id];
+    // A tab of theirs older than the one already seen: ignore it.
+    if (current && data.session !== current.session) {
+      if (data.left || (data.since || 0) < (current.since || 0)) return;
     }
     if (data.left) {
       delete targets[data.user_id];
@@ -83,6 +102,7 @@ export function useClinicPresence() {
         pubsub_token: pubsubToken,
         account_id: accountId,
         user_id: userId,
+        session,
       },
       { received, connected: () => send(position(), true) }
     );
@@ -114,6 +134,13 @@ export function useClinicPresence() {
     others.value = next;
   };
 
+  // Use the clinic in this tab again: the other one goes quiet.
+  const takeOver = () => {
+    since = Date.now();
+    passive.value = false;
+    if (me?.position) send(me.position(), true);
+  };
+
   const disconnect = () => {
     consumer?.disconnect();
     consumer = null;
@@ -121,5 +148,5 @@ export function useClinicPresence() {
   };
 
   onBeforeUnmount(disconnect);
-  return { others, connect, send, step };
+  return { others, passive, connect, send, step, takeOver };
 }

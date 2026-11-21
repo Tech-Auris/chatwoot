@@ -12,4 +12,6 @@ json.name resource.name
 json.role resource.role
 json.is_ai_user resource.id == Conversation.ai_user_id
 json.thumbnail resource.avatar_url
+# When they joined this account ("New" in the Clínica virtual people list).
+json.joined_at resource.current_account_user&.created_at&.to_i
 json.custom_role_id resource.current_account_user&.custom_role_id if ChatwootApp.enterprise?

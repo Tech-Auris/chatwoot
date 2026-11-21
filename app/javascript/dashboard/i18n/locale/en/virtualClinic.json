@@ -19,14 +19,19 @@
       "CHAT": "Chat"
     },
     "PEOPLE": {
-      "TITLE": "People · {count} online",
       "YOU": "(you)",
       "STATUS": {
         "ONLINE": "Online",
         "BUSY": "Busy",
         "OFFLINE": "Offline"
       },
-      "ON_MAP": "In the clinic"
+      "ON_MAP": "In the clinic",
+      "SEARCH": "Search people",
+      "GROUPS": {
+        "ONLINE": "Online ({count})",
+        "OFFLINE": "Offline ({count})"
+      },
+      "NEW": "New 🎉"
     },
     "CHAT": {
       "NEW": "New conversation",
@@ -112,7 +117,9 @@
       "TALK_TO": "Talk to {name} (E)",
       "MOVE_HINT": "Walk with the arrow keys or WASD, or click the floor",
       "ASKING": "💬 Asking {name}…",
-      "RAISED_HAND": "!"
+      "RAISED_HAND": "!",
+      "OTHER_TAB": "The clinic is open in another tab.",
+      "USE_HERE": "Use here"
     },
     "EDITOR": {
       "EDIT": "Edit clinic",
@@ -157,6 +164,14 @@
         "HAIR": "Hair",
         "ACCESSORY": "Accessory"
       }
+    },
+    "NEWS": {
+      "NOTIFICATIONS": "You have 1 new notification | You have {n} new notifications",
+      "OPEN_NOTIFICATIONS": "Open notifications",
+      "RELEASE": "A new version is out ({tag}). What changed:",
+      "OPEN_RELEASE": "See what's new",
+      "HELLO": "Hi! {name} here. This is what came in for you:",
+      "NOTHING": "Hi! {name} here. Nothing new for you for now."
     }
   }
 }
