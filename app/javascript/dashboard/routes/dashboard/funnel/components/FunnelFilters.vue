@@ -16,6 +16,10 @@ const props = defineProps({
   hideResolved: { type: Boolean, default: true },
   origem: { type: String, default: '' },
   label: { type: String, default: '' },
+  // Clinic pipelines follow the contact: no inbox, lead origin or
+  // conversation status; they filter by how the contact entered instead.
+  contactMode: { type: Boolean, default: false },
+  source: { type: String, default: '' },
 });
 
 const emit = defineEmits([
@@ -26,6 +30,7 @@ const emit = defineEmits([
   'update:hideResolved',
   'update:origem',
   'update:label',
+  'update:source',
   'reset',
 ]);
 
@@ -69,8 +74,9 @@ const hasActiveFilters = computed(
     Boolean(props.toDate) ||
     Boolean(props.origem) ||
     Boolean(props.label) ||
+    Boolean(props.source) ||
     !props.hideClosed ||
-    !props.hideResolved
+    (!props.contactMode && !props.hideResolved)
 );
 
 const onInboxChange = event => emit('update:inboxId', event.target.value);
@@ -81,6 +87,7 @@ const onHideClosedChange = event =>
 const onHideResolvedChange = event =>
   emit('update:hideResolved', event.target.checked);
 const onOrigemChange = event => emit('update:origem', event.target.value);
+const onSourceChange = event => emit('update:source', event.target.value);
 const onLabelSelect = ({ value }) => {
   emit('update:label', value);
   showLabelMenu.value = false;
@@ -92,7 +99,7 @@ const onReset = () => emit('reset');
   <div
     class="flex flex-wrap items-end gap-3 px-6 py-3 border-b border-n-weak bg-n-surface-1"
   >
-    <label class="flex flex-col gap-1 w-48">
+    <label v-if="!contactMode" class="flex flex-col gap-1 w-48">
       <span class="text-xs text-n-slate-11">
         {{ t('FUNNEL.FILTERS.INBOX') }}
       </span>
@@ -112,7 +119,11 @@ const onReset = () => emit('reset');
 
     <label class="flex flex-col gap-1 w-48">
       <span class="text-xs text-n-slate-11">
-        {{ t('FUNNEL.FILTERS.FROM_DATE') }}
+        {{
+          contactMode
+            ? t('PIPELINES.FILTERS.FROM_DATE')
+            : t('FUNNEL.FILTERS.FROM_DATE')
+        }}
       </span>
       <input
         type="date"
@@ -124,7 +135,11 @@ const onReset = () => emit('reset');
 
     <label class="flex flex-col gap-1 w-48">
       <span class="text-xs text-n-slate-11">
-        {{ t('FUNNEL.FILTERS.TO_DATE') }}
+        {{
+          contactMode
+            ? t('PIPELINES.FILTERS.TO_DATE')
+            : t('FUNNEL.FILTERS.TO_DATE')
+        }}
       </span>
       <input
         type="date"
@@ -134,7 +149,22 @@ const onReset = () => emit('reset');
       />
     </label>
 
-    <label class="flex flex-col gap-1 w-48">
+    <label v-if="contactMode" class="flex flex-col gap-1 w-48">
+      <span class="text-xs text-n-slate-11">
+        {{ t('PIPELINES.FILTERS.SOURCE') }}
+      </span>
+      <select
+        :value="source"
+        class="h-10 text-sm rounded-md border border-n-weak bg-n-input-background px-2 text-n-slate-12 focus:outline-none focus:ring-1 focus:ring-n-blue-9"
+        @change="onSourceChange"
+      >
+        <option value="">{{ t('PIPELINES.FILTERS.SOURCE_ANY') }}</option>
+        <option value="manual">{{ t('PIPELINES.ORIGIN.MANUAL') }}</option>
+        <option value="automatic">{{ t('PIPELINES.ORIGIN.AUTOMATIC') }}</option>
+      </select>
+    </label>
+
+    <label v-else class="flex flex-col gap-1 w-48">
       <span class="text-xs text-n-slate-11">
         {{ t('FUNNEL.FILTERS.ORIGEM') }}
       </span>
@@ -206,7 +236,7 @@ const onReset = () => emit('reset');
       </span>
     </label>
 
-    <label class="flex flex-col">
+    <label v-if="!contactMode" class="flex flex-col">
       <span class="inline-flex items-top gap-2 h-11 text-xs text-n-slate-12">
         <input
           type="checkbox"

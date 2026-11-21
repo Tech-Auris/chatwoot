@@ -204,6 +204,29 @@ Rails.application.routes.draw do
               get 'stages/:stage_id/conversations', to: 'funnel#stage_conversations'
             end
           end
+          # Clinic pipelines (funis da clínica), per contact. The Agendamento
+          # stays on `funnel` above.
+          resources :pipelines, only: [:index, :show, :create, :update, :destroy] do
+            member do
+              post :archive
+              post :unarchive
+              get :automations
+              get :board
+              get 'stages/:stage_id/entries', action: :stage_entries
+            end
+            scope module: :pipelines do
+              resources :stages, only: [:create, :update, :destroy] do
+                post :reorder, on: :collection
+              end
+              resources :entries, only: [:create]
+            end
+          end
+          resources :pipeline_entries, only: [:destroy] do
+            member do
+              patch :move
+              get :events
+            end
+          end
           resources :dashboard_apps, only: [:index, :show, :create, :update, :destroy]
           namespace :channels do
             resource :twilio_channel, only: [:create]
@@ -343,6 +366,7 @@ Rails.application.routes.draw do
             scope module: :contacts do
               resources :conversations, only: [:index]
               resources :appointments, only: [:index]
+              resources :pipeline_entries, only: [:index]
               resources :contact_inboxes, only: [:create]
               resources :group_members, only: [:index, :create, :destroy] do
                 patch ':member_id', to: 'group_members#update', on: :collection

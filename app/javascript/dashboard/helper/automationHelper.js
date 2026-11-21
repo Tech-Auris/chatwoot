@@ -114,6 +114,7 @@ export const getActionOptions = ({
   origemOptions,
   conversionEventOptions,
   funnelStageOptions,
+  pipelineStageOptions,
 }) => {
   const actionsMap = {
     assign_agent: addNoneToListFn ? addNoneToListFn(agents) : agents,
@@ -128,6 +129,7 @@ export const getActionOptions = ({
       : origemOptions,
     trigger_conversion_event: conversionEventOptions,
     move_to_funnel_stage: funnelStageOptions,
+    move_to_pipeline_stage: pipelineStageOptions,
   };
   return actionsMap[type];
 };
@@ -136,6 +138,7 @@ export const getConditionOptions = ({
   agents,
   aiStatusOptions,
   funnelStages,
+  pipelineStages,
   lossReasons,
   booleanFilterOptions,
   campaigns,
@@ -182,6 +185,11 @@ export const getConditionOptions = ({
     // Stages carry `name`, not the `title` that `generateConditionOptions`
     // reads — mapping them through it would list options with no label.
     funnel_stage_id: (funnelStages || []).map(stage => ({
+      id: stage.id,
+      name: stage.name,
+      icon: funnelStageDot(stage.color),
+    })),
+    pipeline_stage_id: (pipelineStages || []).map(stage => ({
       id: stage.id,
       name: stage.name,
       icon: funnelStageDot(stage.color),
@@ -241,8 +249,13 @@ export const filterCustomAttributes = customAttributes => {
   });
 };
 
+// A clinic pipeline stage is saved under its own key but edited as the same
+// "Etapa do funil" condition.
+const CONDITION_ALIASES = { pipeline_stage_id: 'funnel_stage_id' };
+
 export const getStandardAttributeInputType = (automationTypes, event, key) => {
-  return automationTypes[event].conditions.find(item => item.key === key)
+  const lookupKey = CONDITION_ALIASES[key] || key;
+  return automationTypes[event].conditions.find(item => item.key === lookupKey)
     .inputType;
 };
 

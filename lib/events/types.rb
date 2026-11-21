@@ -38,6 +38,7 @@ module Events::Types
 
   # funnel events
   FUNNEL_UPDATED = 'funnel.updated'
+  PIPELINE_ENTRY_UPDATED = 'pipeline_entry.updated'
 
   # message events
   MESSAGE_CREATED = 'message.created'

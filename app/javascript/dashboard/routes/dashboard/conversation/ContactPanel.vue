@@ -17,6 +17,7 @@ import ContactInfo from './contact/ContactInfo.vue';
 import GroupContactInfo from './contact/GroupContactInfo.vue';
 import ContactNotes from './contact/ContactNotes.vue';
 import ContactAppointments from './contact/ContactAppointments.vue';
+import ContactPipelines from './contact/ContactPipelines.vue';
 import ScheduledMessages from './scheduledMessages/ScheduledMessages.vue';
 import ConversationInfo from './ConversationInfo.vue';
 import CustomAttributes from './customAttributes/CustomAttributes.vue';
@@ -58,7 +59,11 @@ const isShopifyFeatureEnabled = computed(
   () => shopifyIntegration.value.enabled
 );
 
-const { isCloudFeatureEnabled, accountScopedRoute } = useAccount();
+const { isCloudFeatureEnabled, accountScopedRoute, currentAccount } =
+  useAccount();
+const isFunnelEnabled = computed(
+  () => currentAccount.value?.funnel_enabled === true
+);
 
 // Rota para o painel account-wide de mensagens agendadas — usada pelo
 // ícone no header da seção "Mensagens agendadas".
@@ -225,6 +230,19 @@ onMounted(() => {
               "
             >
               <ContactAppointments :contact-id="contact.id" />
+            </AccordionItem>
+          </div>
+          <div v-else-if="element.name === 'pipelines'">
+            <AccordionItem
+              v-if="contact.id && isFunnelEnabled"
+              :title="$t('CONVERSATION_SIDEBAR.ACCORDION.PIPELINES')"
+              :is-open="isContactSidebarItemOpen('is_pipelines_open')"
+              compact
+              @toggle="
+                value => toggleSidebarUIState('is_pipelines_open', value)
+              "
+            >
+              <ContactPipelines :contact-id="contact.id" />
             </AccordionItem>
           </div>
           <div

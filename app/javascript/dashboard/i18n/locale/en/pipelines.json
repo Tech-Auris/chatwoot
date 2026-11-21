@@ -1,0 +1,115 @@
+{
+  "PIPELINES": {
+    "AGENDAMENTO": "Agendamento",
+    "SEARCH": "Search pipeline",
+    "MOVE_ERROR": "Could not move the contact. Please try again.",
+    "ADD_TO": {
+      "BUTTON": "Add to",
+      "TITLE": "Add to pipeline",
+      "AGENDAMENTO_LOCKED": "The Agendamento follows the conversation",
+      "ADDED": "Contact added to {pipeline}",
+      "REMOVED": "Contact removed from {pipeline}",
+      "ERROR": "Could not update the contact's pipelines. Please try again.",
+      "NO_MATCH": "No pipeline found",
+      "EMPTY": "The clinic has no pipelines yet",
+      "REMOVE_TITLE": "Remove from the pipeline?",
+      "REMOVE_DESCRIPTION": "The contact leaves {pipeline} together with the history of this pass.",
+      "REMOVE_CONFIRM": "Remove"
+    },
+    "ORIGIN": {
+      "MANUAL": "Manual",
+      "MANUAL_BY": "Manual · {name}",
+      "AUTOMATIC": "Automatic"
+    },
+    "CARD": {
+      "CONVERSATION_OPEN": "Open",
+      "CONVERSATION_RESOLVED": "Resolved",
+      "IN_STAGE_FOR": "Time in this stage"
+    },
+    "STAGE": {
+      "COUNT_LABEL": "{count} contact | {count} contacts"
+    },
+    "LIST": {
+      "ORIGIN": "Origin",
+      "IN_STAGE_FOR": "In this stage for",
+      "EMPTY": "No contacts in this stage."
+    },
+    "SELECTOR": {
+      "DEFAULT": "Default",
+      "EMPTY": "No clinic pipelines yet",
+      "NEW": "New pipeline",
+      "SHOW_ARCHIVED": "Archived",
+      "HIDE_ARCHIVED": "Back to active",
+      "NO_ARCHIVED": "No archived pipelines",
+      "UNARCHIVE": "Reactivate",
+      "UNARCHIVED": "{pipeline} reactivated"
+    },
+    "CONFIG": {
+      "BUTTON": "Configure pipeline",
+      "AGENDAMENTO_LOCKED": "Auris default pipeline: its stages cannot be changed",
+      "TITLE": "Configure pipeline",
+      "NEW_TITLE": "New pipeline",
+      "SAVE": "Save",
+      "NAME": "Pipeline name",
+      "NAME_PLACEHOLDER": "e.g. Weight loss protocol",
+      "STAGES": "Stages",
+      "COLOR": "Stage color",
+      "STAGE_PLACEHOLDER": "Stage name",
+      "REMOVE_STAGE": "Delete stage",
+      "ADD_STAGE": "Add stage",
+      "CLOSING_LOCKED": "Every pipeline ends in Won and Lost",
+      "CLOSING_HINT": "Every pipeline also gets the final stages Won and Lost.",
+      "MOVE_CONTACTS": "{stage} has {count} contact(s). Where do they go?",
+      "MOVE_CONTACTS_PLACEHOLDER": "Choose a stage",
+      "ARCHIVE": "Archive pipeline",
+      "DELETE": "Delete pipeline",
+      "DELETE_TITLE": "Delete the pipeline?",
+      "DELETE_DESCRIPTION": "All data of {pipeline} is deleted: contacts, stages and history. This cannot be undone.",
+      "DELETE_TYPE_NAME": "Type the pipeline name to confirm",
+      "DELETE_CONFIRM": "Delete for good",
+      "SAVED": "Pipeline saved",
+      "ARCHIVED": "Pipeline archived",
+      "DELETED": "Pipeline deleted",
+      "ERROR": "Could not save the pipeline. Please try again.",
+      "DELETE_AUTOMATIONS": "These automations use the pipeline and will stop working:"
+    },
+    "ADD_CONTACT": {
+      "BUTTON": "Add contact",
+      "TITLE": "Add contact to {pipeline}",
+      "PLACEHOLDER": "Search by name or phone",
+      "EMPTY": "No contact found"
+    },
+    "FILTERS": {
+      "FROM_DATE": "Entered from",
+      "TO_DATE": "Entered until",
+      "SOURCE": "Origin",
+      "SOURCE_ANY": "All origins"
+    },
+    "HEADER": {
+      "BUTTON": "Pipelines ({count})",
+      "TITLE": "Contact pipelines",
+      "EMPTY": "The contact is in no clinic pipeline."
+    },
+    "CONVERSION": {
+      "DESCRIPTION": "How many contacts moved through each stage of the pipeline in the period, and how many reached Won or Lost.",
+      "WON_RATE": "Win rate",
+      "LOST_RATE": "Loss rate",
+      "AVG_TIME_TO_WON": "Average time until won",
+      "OF_TOTAL": "{count} of {total} contacts"
+    },
+    "PICKER": {
+      "FUNNEL": "Pipeline",
+      "STAGE": "Stage",
+      "FUNNEL_FIRST": "Choose the pipeline first"
+    },
+    "HISTORY": {
+      "HISTORY": "History",
+      "ENTERED": "Entered in {stage}",
+      "MOVED": "{from} → {to}",
+      "BY_AUTOMATION": "Automation",
+      "BY_API": "API",
+      "BY_AI": "AI",
+      "EMPTY": "No moves yet."
+    }
+  }
+}

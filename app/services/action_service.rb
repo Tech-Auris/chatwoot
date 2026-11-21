@@ -113,6 +113,32 @@ class ActionService
     ).perform
   end
 
+  # Puts the contact of the conversation on a stage of a clinic pipeline:
+  # adds it to the pipeline (as "Automático", keeping the rule as the origin)
+  # or moves the pass in progress. A contact whose last pass ended in Perdido
+  # and who opted out of marketing only comes back by hand.
+  def move_to_pipeline_stage(values = [])
+    stage_id, loss_reason_id = Array(values)
+    stage = PipelineStage.joins(:pipeline).merge(@conversation.account.pipelines.active).find_by(id: stage_id)
+    return if stage.nil?
+
+    entry = stage.pipeline.entries.open_entries.find_by(contact_id: @conversation.contact_id) || add_to_pipeline(stage)
+    return if entry.nil?
+
+    ::Pipelines::MoveEntryService.new(entry: entry, stage: stage, source: 'automation', loss_reason_id: loss_reason_id.presence).perform
+  end
+
+  def add_to_pipeline(stage)
+    contact = @conversation.contact
+    last_entry = stage.pipeline.entries.where(contact_id: contact.id).order(:created_at).last
+    return if last_entry&.stage&.lost? && contact.marketing_opt_out?
+
+    ::Pipelines::AddContactService.new(
+      pipeline: stage.pipeline, contact: contact, stage: stage.open? ? stage : nil,
+      source: :automatic, origin: @rule, event_source: 'automation'
+    ).perform
+  end
+
   def assign_team(team_ids = [])
     # Keep nil/0 handling for existing automation and macro payloads.
     should_unassign = team_ids.blank? || %w[nil 0].include?(team_ids[0].to_s)

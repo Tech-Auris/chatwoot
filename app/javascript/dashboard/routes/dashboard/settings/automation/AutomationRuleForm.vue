@@ -71,6 +71,7 @@ const INPUT_TYPE_MAP = {
   plain_text: 'plainText',
   comma_separated_plain_text: 'plainText',
   date: 'date',
+  funnel_stage: 'funnelStage',
 };
 
 const { t } = useI18n();
@@ -157,6 +158,8 @@ const filterTypes = computed(() => {
       attributeName: attr.name,
       label: attr.name,
       inputType: mappedInputType,
+      // Automations keep the funnel stage in an array.
+      multiple: mappedInputType === 'funnelStage',
       options,
       filterOperators,
       dataType: 'text',

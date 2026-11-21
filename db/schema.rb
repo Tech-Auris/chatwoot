@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_11_19_050000) do
+ActiveRecord::Schema[7.1].define(version: 2026_11_21_120100) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -1812,6 +1812,70 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_19_050000) do
     t.index ["subject_type", "subject_id"], name: "index_operations_notifications_on_subject"
   end
 
+  create_table "pipeline_entries", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "pipeline_id", null: false
+    t.bigint "contact_id", null: false
+    t.bigint "pipeline_stage_id", null: false
+    t.datetime "stage_entered_at", null: false
+    t.datetime "closed_at"
+    t.integer "source", default: 0, null: false
+    t.bigint "added_by_id"
+    t.string "origin_type"
+    t.bigint "origin_id"
+    t.bigint "loss_reason_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "pipeline_stage_id"], name: "index_pipeline_entries_on_account_id_and_pipeline_stage_id"
+    t.index ["added_by_id"], name: "index_pipeline_entries_on_added_by_id"
+    t.index ["contact_id"], name: "index_pipeline_entries_on_contact_id"
+    t.index ["loss_reason_id"], name: "index_pipeline_entries_on_loss_reason_id"
+    t.index ["origin_type", "origin_id"], name: "index_pipeline_entries_on_origin"
+    t.index ["pipeline_id", "contact_id"], name: "index_pipeline_entries_one_open_per_contact", unique: true, where: "(closed_at IS NULL)"
+    t.index ["pipeline_id", "pipeline_stage_id", "stage_entered_at"], name: "index_pipeline_entries_on_board"
+  end
+
+  create_table "pipeline_entry_events", force: :cascade do |t|
+    t.bigint "pipeline_entry_id", null: false
+    t.bigint "pipeline_id", null: false
+    t.bigint "from_stage_id"
+    t.bigint "to_stage_id"
+    t.bigint "user_id"
+    t.string "source", null: false
+    t.text "reason"
+    t.bigint "loss_reason_id"
+    t.datetime "created_at", null: false
+    t.index ["from_stage_id"], name: "index_pipeline_entry_events_on_from_stage_id"
+    t.index ["loss_reason_id"], name: "index_pipeline_entry_events_on_loss_reason_id"
+    t.index ["pipeline_entry_id"], name: "index_pipeline_entry_events_on_pipeline_entry_id"
+    t.index ["pipeline_id"], name: "index_pipeline_entry_events_on_pipeline_id"
+    t.index ["to_stage_id"], name: "index_pipeline_entry_events_on_to_stage_id"
+    t.index ["user_id"], name: "index_pipeline_entry_events_on_user_id"
+  end
+
+  create_table "pipeline_stages", force: :cascade do |t|
+    t.bigint "pipeline_id", null: false
+    t.string "name", null: false
+    t.integer "position", default: 0, null: false
+    t.integer "kind", default: 0, null: false
+    t.string "color", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["pipeline_id", "name"], name: "index_pipeline_stages_on_pipeline_id_and_name", unique: true
+    t.index ["pipeline_id"], name: "index_pipeline_stages_on_pipeline_id"
+  end
+
+  create_table "pipelines", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "name", null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "archived_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "name"], name: "index_pipelines_on_account_id_and_name", unique: true
+    t.index ["account_id"], name: "index_pipelines_on_account_id"
+  end
+
   create_table "pix_renewals", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.bigint "sales_quote_id", null: false
@@ -2567,6 +2631,20 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_19_050000) do
   add_foreign_key "operations_notification_acks", "accounts"
   add_foreign_key "operations_notification_acks", "operations_notifications", on_delete: :cascade
   add_foreign_key "operations_notification_acks", "users"
+  add_foreign_key "pipeline_entries", "accounts", on_delete: :cascade
+  add_foreign_key "pipeline_entries", "contacts", on_delete: :cascade
+  add_foreign_key "pipeline_entries", "loss_reasons", on_delete: :nullify
+  add_foreign_key "pipeline_entries", "pipeline_stages"
+  add_foreign_key "pipeline_entries", "pipelines", on_delete: :cascade
+  add_foreign_key "pipeline_entries", "users", column: "added_by_id", on_delete: :nullify
+  add_foreign_key "pipeline_entry_events", "loss_reasons", on_delete: :nullify
+  add_foreign_key "pipeline_entry_events", "pipeline_entries", on_delete: :cascade
+  add_foreign_key "pipeline_entry_events", "pipeline_stages", column: "from_stage_id", on_delete: :nullify
+  add_foreign_key "pipeline_entry_events", "pipeline_stages", column: "to_stage_id", on_delete: :nullify
+  add_foreign_key "pipeline_entry_events", "pipelines", on_delete: :cascade
+  add_foreign_key "pipeline_entry_events", "users", on_delete: :nullify
+  add_foreign_key "pipeline_stages", "pipelines", on_delete: :cascade
+  add_foreign_key "pipelines", "accounts", on_delete: :cascade
   add_foreign_key "pix_renewals", "accounts"
   add_foreign_key "pix_renewals", "sales_quotes"
   add_foreign_key "recurring_scheduled_messages", "accounts"

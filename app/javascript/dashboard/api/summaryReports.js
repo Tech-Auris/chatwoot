@@ -65,7 +65,14 @@ class SummaryReportsAPI extends ApiClient {
     });
   }
 
-  getFunnelReports({ since, until: untilTs, inboxId, label, origem } = {}) {
+  getFunnelReports({
+    since,
+    until: untilTs,
+    inboxId,
+    label,
+    origem,
+    pipelineId,
+  } = {}) {
     return axios.get(`${this.url}/funnel`, {
       params: {
         since,
@@ -73,6 +80,7 @@ class SummaryReportsAPI extends ApiClient {
         inbox_id: inboxId,
         label,
         origem,
+        pipeline_id: pipelineId,
       },
     });
   }
@@ -83,6 +91,7 @@ class SummaryReportsAPI extends ApiClient {
     inboxId,
     label,
     origem,
+    pipelineId,
   } = {}) {
     return axios.get(`${this.url}/funnel_conversion`, {
       params: {
@@ -91,6 +100,7 @@ class SummaryReportsAPI extends ApiClient {
         inbox_id: inboxId,
         label,
         origem,
+        pipeline_id: pipelineId,
       },
     });
   }

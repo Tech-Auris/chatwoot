@@ -6,6 +6,7 @@ import Input from 'dashboard/components-next/input/Input.vue';
 import FilterSelect from './inputs/FilterSelect.vue';
 import MultiSelect from './inputs/MultiSelect.vue';
 import SingleSelect from './inputs/SingleSelect.vue';
+import FunnelStagePicker from './inputs/FunnelStagePicker.vue';
 
 import { useSnakeCase } from 'dashboard/composables/useTransformKeys';
 import { validateSingleFilter } from 'dashboard/helper/validations.js';
@@ -42,8 +43,20 @@ const queryOperator = defineModel('queryOperator', {
   validator: value => ['and', 'or'].includes(value),
 });
 
+// A clinic pipeline stage is the same "Etapa do funil" attribute on screen;
+// the funnel picked in FunnelStagePicker decides which key is saved.
+const ATTRIBUTE_ALIASES = { pipeline_stage_id: 'funnel_stage_id' };
+const displayAttributeKey = computed({
+  get: () => ATTRIBUTE_ALIASES[attributeKey.value] || attributeKey.value,
+  set: value => {
+    attributeKey.value = value;
+  },
+});
+
 const getFilterFromFilterTypes = key =>
-  filterTypes.find(filterObj => filterObj.attributeKey === key);
+  filterTypes.find(
+    filterObj => filterObj.attributeKey === (ATTRIBUTE_ALIASES[key] || key)
+  );
 
 const currentFilter = computed(() =>
   getFilterFromFilterTypes(attributeKey.value)
@@ -121,6 +134,8 @@ const resetModelOnAttributeKeyChange = newAttributeKey => {
   const newInputType = getInputType(newOperator, filter);
   if (newInputType === 'multiSelect') {
     values.value = [];
+  } else if (newInputType === 'funnelStage') {
+    values.value = filter.multiple ? [] : {};
   } else if (['searchSelect', 'booleanSelect'].includes(newInputType)) {
     values.value = {};
   } else {
@@ -162,7 +177,7 @@ defineExpose({ validate, resetValidation });
         :options="queryOperatorOptions"
       />
       <FilterSelect
-        v-model="attributeKey"
+        v-model="displayAttributeKey"
         variant="faded"
         :options="filterTypes"
         @update:model-value="resetModelOnAttributeKeyChange"
@@ -178,6 +193,12 @@ defineExpose({ validate, resetValidation });
           v-model="values"
           :options="currentFilter.options"
           dropdown-max-height="max-h-72"
+        />
+        <FunnelStagePicker
+          v-else-if="inputType === 'funnelStage'"
+          v-model:attribute-key="attributeKey"
+          v-model:values="values"
+          :multiple="currentFilter.multiple"
         />
         <SingleSelect
           v-else-if="inputType === 'searchSelect'"

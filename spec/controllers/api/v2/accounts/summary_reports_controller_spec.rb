@@ -436,4 +436,30 @@ RSpec.describe 'Summary Reports API', type: :request do
       expect(response).to have_http_status(:unprocessable_entity)
     end
   end
+
+  describe 'clinic pipeline reports' do
+    let(:pipeline) { create(:pipeline, account: account) }
+    let(:params) { { since: start_of_today.to_s, until: end_of_today.to_s, pipeline_id: pipeline.id } }
+
+    before { create(:pipeline_entry, pipeline: pipeline).events.create!(pipeline: pipeline, to_stage: pipeline.first_open_stage, source: 'web') }
+
+    it 'serves the overview of the chosen pipeline' do
+      get "/api/v2/accounts/#{account.id}/summary_reports/funnel", params: params, headers: admin.create_new_auth_token, as: :json
+
+      expect(response.parsed_body.pluck('name')).to eq(pipeline.stages.map(&:name))
+    end
+
+    it 'serves the generic conversion of the chosen pipeline' do
+      get "/api/v2/accounts/#{account.id}/summary_reports/funnel_conversion", params: params, headers: admin.create_new_auth_token, as: :json
+
+      expect(response.parsed_body['kpis']).to include('total' => 1, 'won_count' => 0)
+    end
+
+    it 'does not serve a pipeline of another account' do
+      get "/api/v2/accounts/#{account.id}/summary_reports/funnel", params: params.merge(pipeline_id: create(:pipeline).id),
+                                                                   headers: admin.create_new_auth_token, as: :json
+
+      expect(response).to have_http_status(:not_found)
+    end
+  end
 end

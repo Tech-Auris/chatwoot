@@ -29,6 +29,22 @@ export default function useAutomationValues() {
   const labels = useMapGetter('labels/getLabels');
   const teams = useMapGetter('teams/getTeams');
   const funnelStages = useMapGetter('funnelStages/getFunnelStages');
+  const pipelines = useMapGetter('pipelines/getPipelines');
+  // Every stage of every clinic pipeline, for rules saved with
+  // `pipeline_stage_id` / `move_to_pipeline_stage`. Perdido asks for the
+  // loss reason like the Agendamento's.
+  const pipelineStageOptions = computed(() =>
+    (pipelines.value || []).flatMap(pipeline =>
+      pipeline.stages.map(stage => ({
+        id: stage.id,
+        name: stage.name,
+        color: stage.color,
+        icon: funnelStageDot(stage.color),
+        pipelineId: pipeline.id,
+        requires_loss_reason: stage.kind === 'lost',
+      }))
+    )
+  );
   const lossReasons = useMapGetter('lossReasons/getLossReasons');
   const slaPolicies = useMapGetter('sla/getSLA');
 
@@ -150,6 +166,7 @@ export default function useAutomationValues() {
       messageTypeOptions: messageTypeOptions.value,
       teams: teams.value,
       funnelStages: funnelStages.value,
+      pipelineStages: pipelineStageOptions.value,
       lossReasons: lossReasons.value,
       languages,
       countries,
@@ -187,6 +204,7 @@ export default function useAutomationValues() {
       origemOptions: origemOptions.value,
       conversionEventOptions: conversionEventOptions.value,
       funnelStageOptions: funnelStageOptions.value,
+      pipelineStageOptions: pipelineStageOptions.value,
     });
   };
 

@@ -568,3 +568,33 @@ describe('showActionInput', () => {
     ).toBe(false);
   });
 });
+
+describe('clinic pipeline stages', () => {
+  it('reads a pipeline_stage_id condition as the "Etapa do funil" input', () => {
+    const automationTypes = {
+      conversation_updated: {
+        conditions: [{ key: 'funnel_stage_id', inputType: 'funnel_stage' }],
+      },
+    };
+
+    expect(
+      helpers.getStandardAttributeInputType(
+        automationTypes,
+        'conversation_updated',
+        'pipeline_stage_id'
+      )
+    ).toBe('funnel_stage');
+  });
+
+  it('offers the pipeline stages for a saved pipeline_stage_id condition', () => {
+    const options = helpers.getConditionOptions({
+      type: 'pipeline_stage_id',
+      pipelineStages: [{ id: 30, name: 'Retorno D+30', color: '#111' }],
+      customAttributes: [],
+    });
+
+    expect(options.map(({ id, name }) => ({ id, name }))).toEqual([
+      { id: 30, name: 'Retorno D+30' },
+    ]);
+  });
+});
