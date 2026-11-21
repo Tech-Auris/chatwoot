@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_11_19_050000) do
+ActiveRecord::Schema[7.1].define(version: 2026_11_20_120000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -46,6 +46,16 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_19_050000) do
     t.index ["account_id", "captured_on"], name: "index_account_health_scores_on_account_id_and_captured_on", unique: true
     t.index ["account_id"], name: "index_account_health_scores_on_account_id"
     t.index ["captured_on"], name: "index_account_health_scores_on_captured_on"
+  end
+
+  create_table "account_integrations", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "erp_source_id", null: false
+    t.jsonb "config", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "erp_source_id"], name: "index_account_integrations_on_account_id_and_erp_source_id", unique: true
+    t.index ["erp_source_id"], name: "index_account_integrations_on_erp_source_id"
   end
 
   create_table "account_prompts", force: :cascade do |t|
@@ -1158,6 +1168,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_19_050000) do
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.jsonb "fields", default: [], null: false
     t.index ["name"], name: "index_erp_sources_on_name", unique: true
   end
 
@@ -2499,6 +2510,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_19_050000) do
   end
 
   add_foreign_key "account_health_scores", "accounts", on_delete: :cascade
+  add_foreign_key "account_integrations", "accounts"
+  add_foreign_key "account_integrations", "erp_sources"
   add_foreign_key "account_prompts", "accounts"
   add_foreign_key "account_secretaries", "accounts", on_delete: :cascade
   add_foreign_key "account_secretaries", "ai_models"

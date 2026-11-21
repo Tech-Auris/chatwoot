@@ -1,0 +1,7 @@
+<div class="field-unit__label">
+  <%= f.label field.attribute, 'ERP' %>
+</div>
+<div class="field-unit__field">
+  <%= f.select field.attribute, options_for_select(field.options, field.data), { include_blank: '(none)' } %>
+  <button type="submit" name="configure_integration" value="1" class="button mt-2">Save and configure the integration</button>
+</div>
