@@ -70,7 +70,8 @@
       "REPORTS_V2_INBOXES": "inboxes",
       "REPORTS_V2_TEAMS": "teams",
       "AGENTS_LIST": "agents",
-      "TEAMS_LIST": "teams"
+      "TEAMS_LIST": "teams",
+      "PERGUNTAR_SECRETARY": "secretary"
     },
     "STATUS": {
       "IDLE": "No patients right now",
@@ -99,7 +100,8 @@
       "ZOOM_FIT": "Fit to screen",
       "OFF_DUTY": "⏸ Not serving patients · {reason}",
       "TALK_TO": "Talk to {name} (E)",
-      "MOVE_HINT": "Walk with the arrow keys or WASD, or click the floor"
+      "MOVE_HINT": "Walk with the arrow keys or WASD, or click the floor",
+      "ASKING": "💬 Asking {name}…"
     },
     "EDITOR": {
       "EDIT": "Edit clinic",

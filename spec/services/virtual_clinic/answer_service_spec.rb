@@ -37,6 +37,27 @@ RSpec.describe VirtualClinic::AnswerService do
                                                                hash_including('id' => answer.id, 'account_id' => account.id))
   end
 
+  it 'lets the manager ask the secretary, but not the other way around' do
+    offered = []
+    allow(chat).to receive(:with_tools) { |*tools| (offered << tools.map(&:name)) && chat }
+    manager_thread = VirtualClinicThread.create!(account: account, user: user, persona: :manager)
+    manager_thread.messages.create!(role: :user, status: :done, content: question.content)
+    manager_answer = manager_thread.messages.create!(role: :assistant, status: :pending)
+
+    described_class.new(manager_answer).perform
+    described_class.new(answer).perform
+
+    expect(offered.first).to include('perguntar_secretary')
+    expect(offered.last).not_to include('perguntar_secretary', 'perguntar_manager')
+  end
+
+  it 'answers a teammate without asking anyone and without pushing it to the chat' do
+    described_class.new(answer, delegated: true).perform
+
+    expect(answer.reload.status).to eq('done')
+    expect(ActionCableBroadcastJob).not_to have_been_enqueued
+  end
+
   it 'replays the earlier turns as history' do
     question && answer.update!(status: :done, content: 'Olá!')
     follow_up = thread.messages.create!(role: :user, status: :done, content: 'E os follow-ups?')

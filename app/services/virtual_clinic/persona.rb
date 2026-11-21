@@ -32,6 +32,19 @@ class VirtualClinic::Persona
     config['tools']
   end
 
+  def role
+    config['role']
+  end
+
+  def scope
+    config['scope']
+  end
+
+  # The teammates this persona can ask (see AskTeammateTool).
+  def teammates
+    Array(config['delegates_to']).map { |teammate| self.class.find!(teammate, account: @account) }
+  end
+
   def suggestions
     config['suggestions']
   end

@@ -119,15 +119,50 @@ export function createTeamBehavior({
       });
       if (trip.talkWith) state[trip.talkWith].talking = true;
       trip.phase = 'staying';
-      trip.stayUntil = now + between(STAY_MS, random);
+      trip.stayUntil = trip.held ? Infinity : now + between(STAY_MS, random);
     } else {
       finishTrip(now);
     }
   };
 
+  // Back home at once, dropping the walk in progress.
+  const cancelTrip = now => {
+    if (!trip) return;
+    const [x, y] = home(trip.who);
+    Object.assign(state[trip.who], { x, y, sitting: false });
+    finishTrip(now);
+  };
+
   let last = null;
   return {
     state,
+    // `who` goes to `target`'s desk and stays there talking until release()
+    // (the manager asking the secretary something).
+    consult(who, target, now) {
+      const chosen = TRIPS.find(t => t.who === who && t.visit === target);
+      if (!chosen || !personas.includes(who) || !personas.includes(target)) {
+        return;
+      }
+      cancelTrip(now);
+      const path = plan(chosen);
+      if (!path) return;
+      trip = {
+        ...chosen,
+        path,
+        points: path,
+        index: 1,
+        phase: 'going',
+        stayUntil: 0,
+        held: true,
+      };
+      state[who].away = true;
+      state[who].moving = true;
+    },
+    release(now) {
+      if (!trip?.held) return;
+      trip.held = false;
+      if (trip.phase === 'staying') trip.stayUntil = now;
+    },
     update(now) {
       const seconds = last === null ? 0 : Math.min(0.25, (now - last) / 1000);
       last = now;

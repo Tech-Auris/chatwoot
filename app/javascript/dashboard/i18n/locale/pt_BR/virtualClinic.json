@@ -70,7 +70,8 @@
       "REPORTS_V2_INBOXES": "canais",
       "REPORTS_V2_TEAMS": "times",
       "AGENTS_LIST": "atendentes",
-      "TEAMS_LIST": "times"
+      "TEAMS_LIST": "times",
+      "PERGUNTAR_SECRETARY": "secretária"
     },
     "STATUS": {
       "IDLE": "Sem atendimentos agora",
@@ -99,7 +100,8 @@
       "ZOOM_FIT": "Ajustar à tela",
       "OFF_DUTY": "⏸ Atendimento desligado · {reason}",
       "TALK_TO": "Conversar com {name} (E)",
-      "MOVE_HINT": "Ande com as setas ou WASD, ou clique no chão"
+      "MOVE_HINT": "Ande com as setas ou WASD, ou clique no chão",
+      "ASKING": "💬 Perguntando para {name}…"
     },
     "EDITOR": {
       "EDIT": "Editar clínica",

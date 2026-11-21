@@ -8,8 +8,11 @@ class VirtualClinic::AnswerService
   KEY_REFUSED = 'A chave da OpenAI da clínica foi recusada. Confira em Configurações → Integrações → OpenAI.'.freeze
   DATA_UNAVAILABLE = 'Não consegui consultar os dados agora. Tente de novo em instantes.'.freeze
 
-  def initialize(answer)
+  # `delegated`: asked by another AI teammate (AskTeammateTool), so it can't
+  # ask anyone itself and nothing is pushed to the user's chat.
+  def initialize(answer, delegated: false)
     @answer = answer
+    @delegated = delegated
     @thread = answer.thread
     @persona = VirtualClinic::Persona.find!(@thread.persona, account: @thread.account)
   end
@@ -51,9 +54,16 @@ class VirtualClinic::AnswerService
   def tools
     client = VirtualClinic::McpClient.new(@thread.user.access_token.token)
     budget = VirtualClinic::ToolBudget.new(MAX_TOOL_CALLS)
-    client.tools.select { |tool| @persona.tools.include?(tool['name']) }.map do |definition|
+    data_tools = client.tools.select { |tool| @persona.tools.include?(tool['name']) }.map do |definition|
       VirtualClinic::McpTool.new(client: client, account_id: @thread.account_id, definition: definition, budget: budget)
     end
+    data_tools + teammate_tools
+  end
+
+  def teammate_tools
+    return [] if @delegated
+
+    @persona.teammates.map { |teammate| VirtualClinic::AskTeammateTool.new(answer: @answer, asker: @persona, teammate: teammate) }
   end
 
   def question
@@ -66,6 +76,8 @@ class VirtualClinic::AnswerService
 
   def finish(**attributes)
     @answer.update!(tool_calls: @tool_calls || [], **attributes)
+    return if @delegated
+
     ActionCableBroadcastJob.perform_later([@thread.user.pubsub_token], 'virtual_clinic.message.updated', @answer.push_event_data)
   end
 end
