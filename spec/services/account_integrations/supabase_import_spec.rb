@@ -8,8 +8,10 @@ RSpec.describe AccountIntegrations::SupabaseImport do
     feegow = [{ 'key' => 'access_token', 'secret' => true }, { 'key' => 'local_id', 'type' => 'number' },
               { 'key' => 'unidade_id', 'type' => 'number' }, { 'key' => 'procedimento_id', 'type' => 'number' },
               { 'key' => 'token_overrides', 'type' => 'json', 'secret' => true }]
-    { 2 => ['Feegow', feegow], 7 => ['VisualASA CIG', []], 13 => ['Klingo', [{ 'key' => 'app-token', 'secret' => true }]],
-      15 => ['VisualASA Geral', []] }.each do |id, (name, fields)|
+    visualasa = %w[access_token url filial].map { |key| { 'key' => key } }
+    klingo = [{ 'key' => 'app-token', 'secret' => true }, { 'key' => 'link' }]
+    { 2 => ['Feegow', feegow], 7 => ['VisualASA CIG', visualasa], 13 => ['Klingo', klingo],
+      15 => ['VisualASA Geral', visualasa] }.each do |id, (name, fields)|
       ErpSource.find_or_create_by!(id: id) { |erp| erp.assign_attributes(name: name, fields: fields) }
     end
   end
@@ -37,6 +39,15 @@ RSpec.describe AccountIntegrations::SupabaseImport do
     expect(account.account_integrations.find_by(erp_source_id: 13).config).to eq('app-token' => 'k-tok', 'link' => 'https://klingo')
     expect(results.map(&:differences)).to all(be_empty)
     expect(import(apply: false).map(&:differences)).to all(be_empty)
+  end
+
+  it 'fails, without saving, a row with a column the ERP does not list or a value that does not cast' do
+    write_csv('feegow', 'cliente_id,access_token,local_id,extra', "#{account.id},tok,abc,x")
+
+    results = import
+
+    expect(results.sole.error).to eq('local_id precisa ser um número inteiro; extra não é um campo do ERP Feegow')
+    expect(account.account_integrations).to be_empty
   end
 
   it 'is idempotent and replaces the config on rerun' do

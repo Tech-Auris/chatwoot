@@ -2,8 +2,11 @@
 # `account_integrations`, from CSV exports named `integration_<erp>.csv` in one
 # directory (a missing file is skipped). Each row becomes the `config` of its
 # account and ERP, with every column but `cliente_id`, under the same names and
-# cast to the type the ERP gives the field (number, json; text otherwise);
-# rerunning replaces it, so it can be rerun until the cut-over.
+# cast to the type the ERP gives the field (number, json; text otherwise), as
+# the Super Admin form saves it. A column the ERP doesn't list as a field, or a
+# value that doesn't cast, fails the row instead of being saved unseen: fix the
+# ERP's fields in Super Admin and rerun. Rerunning replaces the config, so it
+# can be rerun until the cut-over.
 #
 # VisualASA has one table for two ERPs (7 CIG, 15 Geral): a row goes to the
 # account's when it is one of them, else to 7.
@@ -48,7 +51,10 @@ class AccountIntegrations::SupabaseImport
     return result.tap { |row| row.error = 'conta não encontrada' } if account.nil?
 
     result.erp_source_id = erp_source_id(account, erp_source_id)
-    sync(account, result, config(ErpSource.find(result.erp_source_id), line))
+    config, errors = config(ErpSource.find(result.erp_source_id), line)
+    return result.tap { |row| row.error = errors.join('; ') } if errors.any?
+
+    sync(account, result, config)
   end
 
   def sync(account, result, config)
@@ -64,11 +70,18 @@ class AccountIntegrations::SupabaseImport
     VISUALASA.include?(account.erp_source_id) ? account.erp_source_id : VISUALASA.first
   end
 
+  # [config, errors], each column cast as the ERP's field of the same key.
   def config(erp_source, line)
     fields = erp_source.fields.index_by { |field| field['key'] }
-    line.to_h.except(*IGNORED_COLUMNS).to_h do |key, value|
-      [key, fields[key] ? AccountIntegration.cast(fields[key], value).first : value]
+    errors = []
+    config = line.to_h.except(*IGNORED_COLUMNS).to_h do |key, value|
+      next [key, errors << "#{key} não é um campo do ERP #{erp_source.name}"] unless fields[key]
+
+      value, error = AccountIntegration.cast(fields[key], value)
+      errors << "#{key} #{error}" if error
+      [key, value]
     end
+    [config, errors]
   end
 
   def save(account, erp_source_id, config)
