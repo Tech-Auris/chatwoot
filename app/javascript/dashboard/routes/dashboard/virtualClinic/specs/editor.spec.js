@@ -131,6 +131,22 @@ describe('useClinicLayout', () => {
     expect(VirtualClinicAPI.saveLayout).not.toHaveBeenCalled();
   });
 
+  it('saves one teammate right away, outside the editor', async () => {
+    VirtualClinicAPI.saveLayout.mockResolvedValue({ data: { layout: {} } });
+    const editor = useClinicLayout();
+    const avatar = {
+      body: 'Body_32x32_01',
+      eyes: 'Eyes_32x32_01',
+      outfit: 'Outfit_33_32x32_01',
+    };
+    await editor.saveTeam('secretary', { avatar });
+
+    const sent = VirtualClinicAPI.saveLayout.mock.calls[0][0];
+    expect(sent.team.secretary).toEqual({ avatar, x: 304, y: 87 });
+    expect(sent.items).toHaveLength(ITEMS.length);
+    expect(editor.editing.value).toBe(false);
+  });
+
   it('discards the draft', () => {
     const editor = useClinicLayout();
     editor.start();

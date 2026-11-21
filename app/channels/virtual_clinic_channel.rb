@@ -1,7 +1,7 @@
 # Where everyone is on the Clínica virtual map, Gather-style. Each open map
-# sends its avatar position (throttled to 5 per second by the page) and gets
-# everybody else's from the account stream. Nothing is stored: a position
-# only lives while the page is open.
+# sends its avatar position and look (throttled to 5 per second by the page)
+# and gets everybody else's from the account stream. Nothing is stored: a
+# position only lives while the page is open.
 class VirtualClinicChannel < ApplicationCable::Channel
   DIRECTIONS = %w[up down left right].freeze
 
@@ -15,7 +15,8 @@ class VirtualClinicChannel < ApplicationCable::Channel
 
   def move(data)
     broadcast(x: data['x'].to_i, y: data['y'].to_i, moving: data['moving'] == true,
-              direction: DIRECTIONS.include?(data['direction']) ? data['direction'] : 'down')
+              direction: DIRECTIONS.include?(data['direction']) ? data['direction'] : 'down',
+              avatar: VirtualClinic::Avatar.sanitize(data['avatar']))
   end
 
   def unsubscribed

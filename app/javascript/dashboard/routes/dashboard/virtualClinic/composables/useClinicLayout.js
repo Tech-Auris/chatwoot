@@ -63,6 +63,14 @@ export function useClinicLayout() {
     }
   };
 
+  // Changes one teammate right away, outside the editor (the team panel).
+  const saveTeam = async (persona, patch) => {
+    const next = clone(applySaved(saved.value));
+    Object.assign(next.team[persona], patch);
+    const { data } = await VirtualClinicAPI.saveLayout(toSaved(next));
+    saved.value = data.layout;
+  };
+
   const restore = async () => {
     await VirtualClinicAPI.resetLayout();
     saved.value = null;
@@ -139,6 +147,7 @@ export function useClinicLayout() {
     start,
     discard,
     save,
+    saveTeam,
     restore,
     select,
     moveSelected,

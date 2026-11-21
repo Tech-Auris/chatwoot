@@ -10,7 +10,9 @@ import TeamPanel from './components/TeamPanel.vue';
 import AiChatPanel from './components/AiChatPanel.vue';
 import ClinicMap from './components/ClinicMap.vue';
 import EditorPanel from './components/EditorPanel.vue';
-import { FLOORS } from './engine/layout';
+import AvatarEditor from './components/AvatarEditor.vue';
+import { FLOORS, sheetForUser } from './engine/layout';
+import { useUISettings } from 'dashboard/composables/useUISettings';
 import { useClinicLayout } from './composables/useClinicLayout';
 import { useVirtualClinicConfig } from './composables/useVirtualClinicConfig';
 import { useVirtualClinicStatus } from './composables/useVirtualClinicStatus';
@@ -38,6 +40,7 @@ useEmitter('virtualClinicActivity', data => {
       : null;
 });
 const currentUser = useMapGetter('getCurrentUser');
+const { uiSettings, updateUISettings } = useUISettings();
 
 // The avatar of whoever opened the clinic.
 const me = computed(() =>
@@ -50,6 +53,7 @@ const me = computed(() =>
           currentUser.value.name,
         accountId: Number(route.params.accountId),
         pubsubToken: currentUser.value.pubsub_token,
+        avatar: uiSettings.value.virtual_clinic_avatar || null,
       }
     : null
 );
@@ -59,6 +63,41 @@ const aiTeam = computed(() => configs.value[route.params.accountId] || null);
 const { status } = useVirtualClinicStatus(
   computed(() => aiTeam.value?.visible === true)
 );
+// The avatar editor, for the user's own look (`{ persona: null }`) or for
+// an AI teammate's (from the team panel, or while editing the clinic).
+const avatarFor = ref(null);
+const avatarEditor = computed(() => {
+  if (!avatarFor.value) return null;
+  const floor = editor.layout.floors[0].block;
+  const { persona } = avatarFor.value;
+  if (!persona) {
+    return {
+      title: t('VIRTUAL_CLINIC.AVATAR.TITLE'),
+      name: me.value?.name,
+      avatar: me.value?.avatar || { sheet: sheetForUser(me.value?.id) },
+      floor,
+    };
+  }
+  const member = aiTeam.value?.members.find(m => m.persona === persona);
+  const spot = editor.layout.team[persona];
+  const name = spot.name || member?.name || '';
+  return {
+    title: t('VIRTUAL_CLINIC.AVATAR.TITLE_TEAM', { name }),
+    name,
+    avatar: spot.avatar || { sheet: spot.sheet },
+    floor,
+  };
+});
+// A teammate in a premade character keeps it as `sheet`.
+const teamLook = look =>
+  look.sheet ? { sheet: look.sheet, avatar: undefined } : { avatar: look };
+const saveAvatar = look => {
+  const { persona } = avatarFor.value;
+  if (!persona) updateUISettings({ virtual_clinic_avatar: look });
+  else if (editor.editing) editor.setTeam(persona, teamLook(look));
+  else editor.saveTeam(persona, teamLook(look));
+};
+
 const openMember = computed(() => {
   if (!aiTeam.value?.chat_enabled || editor.editing) return null;
   return aiTeam.value.members.find(m => m.persona === selectedMember.value);
@@ -124,6 +163,7 @@ onMounted(() => {
       :members="aiTeam?.members || []"
       @save="saveLayout"
       @add-item="addItem"
+      @edit-avatar="avatarFor = { persona: $event }"
     />
     <TeamPanel
       v-else
@@ -135,6 +175,7 @@ onMounted(() => {
       :alert-counts="alertCounts"
       @select-member="selectedMember = $event"
       @edit="startEditing"
+      @edit-avatar="avatarFor = { persona: $event || null }"
     />
     <ClinicMap
       ref="map"
@@ -158,6 +199,12 @@ onMounted(() => {
       :alert-count="alertCounts[openMember.persona] || 0"
       @thinking="thinking = $event"
       @close="closeChat"
+    />
+    <AvatarEditor
+      v-if="avatarEditor"
+      v-bind="avatarEditor"
+      @save="saveAvatar"
+      @close="avatarFor = null"
     />
   </VirtualClinicShell>
 </template>

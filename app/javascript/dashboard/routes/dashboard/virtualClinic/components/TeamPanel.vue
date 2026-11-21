@@ -20,7 +20,7 @@ const props = defineProps({
   alertCounts: { type: Object, default: () => ({}) },
 });
 
-const emit = defineEmits(['selectMember', 'edit']);
+const emit = defineEmits(['selectMember', 'edit', 'editAvatar']);
 const { t } = useI18n();
 const store = useStore();
 const route = useRoute();
@@ -46,9 +46,13 @@ const onlineCount = computed(
   () => people.value.filter(p => p.availability_status === 'online').length
 );
 
-// Opens (or creates) the direct message in the internal chat, Gather-style.
+// Opens (or creates) the direct message in the internal chat, Gather-style;
+// on yourself, the avatar editor.
 const openDirectMessage = async person => {
-  if (person.id === currentUserId.value) return;
+  if (person.id === currentUserId.value) {
+    emit('editAvatar');
+    return;
+  }
   const channel = await store.dispatch('internalChat/create', {
     channel: { channel_type: 'dm' },
     member_ids: [person.id],
@@ -133,6 +137,14 @@ const select = member => {
         {{ clinicName }}
       </h1>
       <Button
+        icon="i-lucide-shirt"
+        variant="ghost"
+        color="slate"
+        size="xs"
+        :title="t('VIRTUAL_CLINIC.AVATAR.TITLE')"
+        @click="emit('editAvatar')"
+      />
+      <Button
         v-if="aiTeam?.can_edit_layout"
         icon="i-lucide-pencil-ruler"
         variant="ghost"
@@ -147,48 +159,60 @@ const select = member => {
       <h2 class="mb-1 text-xs font-medium text-n-slate-11">
         {{ t('VIRTUAL_CLINIC.AI_TEAM.TITLE', { count: members.length }) }}
       </h2>
-      <button
-        v-for="member in members"
-        :key="member.persona"
-        type="button"
-        class="flex items-center gap-3 p-2 text-left rounded-lg"
-        :class="[
-          chatEnabled ? 'hover:bg-n-alpha-2' : 'cursor-default',
-          isOffDuty(member.persona, status) ? 'opacity-50' : '',
-          selected === member.persona ? 'bg-n-alpha-2' : '',
-        ]"
-        @click="select(member)"
-      >
-        <span
-          class="grid text-sm font-semibold rounded-full size-9 place-items-center bg-n-teal-3 text-n-teal-11"
+      <div v-for="member in members" :key="member.persona" class="relative">
+        <button
+          type="button"
+          class="flex items-center w-full gap-3 p-2 text-left rounded-lg"
+          :class="[
+            chatEnabled ? 'hover:bg-n-alpha-2' : 'cursor-default',
+            isOffDuty(member.persona, status) ? 'opacity-50' : '',
+            selected === member.persona ? 'bg-n-alpha-2' : '',
+          ]"
+          @click="select(member)"
         >
-          {{ member.name.charAt(0) }}
-        </span>
-        <span class="flex flex-col min-w-0">
-          <span class="text-sm font-medium text-n-slate-12">
-            {{ member.name }}
-            <span
-              v-if="alertCounts[member.persona]"
-              class="px-1.5 ml-1 text-xs font-semibold text-white rounded-full bg-n-ruby-9"
-            >
-              {{ alertCounts[member.persona] }}
-            </span>
-            <span class="ml-1 text-xs text-n-slate-11">
-              {{ t(`VIRTUAL_CLINIC.PERSONAS.${member.persona.toUpperCase()}`) }}
-            </span>
-          </span>
-          <span class="text-xs truncate text-n-slate-11">
-            {{ statusLine(member.persona) }}
-          </span>
           <span
-            v-if="!chatEnabled"
-            class="flex items-center gap-1 text-xs text-n-slate-10"
+            class="grid text-sm font-semibold rounded-full size-9 place-items-center bg-n-teal-3 text-n-teal-11"
           >
-            <Icon icon="i-lucide-message-circle-off" class="size-3" />
-            {{ t('VIRTUAL_CLINIC.AI_TEAM.CHAT_OFF') }}
+            {{ member.name.charAt(0) }}
           </span>
-        </span>
-      </button>
+          <span class="flex flex-col min-w-0">
+            <span class="text-sm font-medium text-n-slate-12">
+              {{ member.name }}
+              <span
+                v-if="alertCounts[member.persona]"
+                class="px-1.5 ml-1 text-xs font-semibold text-white rounded-full bg-n-ruby-9"
+              >
+                {{ alertCounts[member.persona] }}
+              </span>
+              <span class="ml-1 text-xs text-n-slate-11">
+                {{
+                  t(`VIRTUAL_CLINIC.PERSONAS.${member.persona.toUpperCase()}`)
+                }}
+              </span>
+            </span>
+            <span class="text-xs truncate text-n-slate-11">
+              {{ statusLine(member.persona) }}
+            </span>
+            <span
+              v-if="!chatEnabled"
+              class="flex items-center gap-1 text-xs text-n-slate-10"
+            >
+              <Icon icon="i-lucide-message-circle-off" class="size-3" />
+              {{ t('VIRTUAL_CLINIC.AI_TEAM.CHAT_OFF') }}
+            </span>
+          </span>
+        </button>
+        <Button
+          v-if="aiTeam?.can_edit_layout"
+          icon="i-lucide-shirt"
+          variant="ghost"
+          color="slate"
+          size="xs"
+          class="absolute top-2 right-1"
+          :title="t('VIRTUAL_CLINIC.AVATAR.EDIT')"
+          @click="emit('editAvatar', member.persona)"
+        />
+      </div>
 
       <label
         v-if="aiTeam.can_manage_settings"

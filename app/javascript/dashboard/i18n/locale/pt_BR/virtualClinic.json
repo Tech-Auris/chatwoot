@@ -141,6 +141,22 @@
         "UNREACHABLE": "Ninguém consegue chegar até {name}. Abra um caminho até a mesa.",
         "SAVE": "Não foi possível salvar a clínica. Tente de novo."
       }
+    },
+    "AVATAR": {
+      "TITLE": "Editar seu avatar",
+      "TITLE_TEAM": "Aparência de {name}",
+      "EDIT": "Editar aparência",
+      "DONE": "Pronto",
+      "RANDOM": "Visual aleatório",
+      "NONE": "Nenhum",
+      "PARTS": {
+        "PREMADE": "Avatar",
+        "BODY": "Pele",
+        "EYES": "Olhos",
+        "OUTFIT": "Roupa",
+        "HAIR": "Cabelo",
+        "ACCESSORY": "Acessório"
+      }
     }
   }
 }

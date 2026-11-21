@@ -1,3 +1,5 @@
+import { lookSheet } from './avatar';
+
 // The Clínica virtual (MVP: the same clinic for every account), from the
 // approved draft: a 30×20 grid of 32 px tiles. Coordinates are world
 // pixels; item positions are the top-left of the sprite cropped to its
@@ -120,6 +122,8 @@ export const ITEMS = [
 
 // Where each AI teammate sits (top-left of the 32×64 frame) and their
 // spritesheet. Name and status are drawn over the head, wherever they are.
+// A clinic can give them a look of its own in the avatar editor (`avatar`,
+// which then wins over `sheet`).
 export const CHARACTERS = {
   secretary: {
     sheet: '7_personagens/clara_secretaria_spritesheet.png',
@@ -142,6 +146,11 @@ export const PEOPLE_SHEETS = Array.from(
   (_, i) => `8_pessoas/pessoa_${String(i + 1).padStart(2, '0')}.png`
 );
 export const sheetForUser = id => PEOPLE_SHEETS[id % PEOPLE_SHEETS.length];
+
+// The sheet a teammate or person is drawn with: their own look when they
+// made one in the avatar editor.
+export const sheetOf = ({ avatar, sheet }) =>
+  avatar ? lookSheet(avatar) : sheet;
 
 export const ROOMS = [
   { key: 'RECEPTION', x: 8, y: 72 },
@@ -201,7 +210,7 @@ export function toSaved(layout) {
       Object.entries(layout.team).map(([persona, spot]) => [
         persona,
         {
-          sheet: spot.sheet,
+          ...(spot.avatar ? { avatar: spot.avatar } : { sheet: spot.sheet }),
           x: Math.round(spot.x),
           y: Math.round(spot.y),
           ...(spot.name ? { name: spot.name } : {}),
@@ -216,7 +225,7 @@ export const spritePaths = (layout = DEFAULT_LAYOUT) => [
     ...layout.floors.map(f => f.block),
     ...layout.walls.map(w => w.block),
     ...layout.items.map(i => i.sprite),
-    ...Object.values(layout.team).map(c => c.sheet),
+    ...Object.values(layout.team).map(sheetOf),
   ]),
 ];
 

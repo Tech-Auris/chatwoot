@@ -85,9 +85,17 @@ class VirtualClinic::LayoutValidator
   def check_seat(persona, seat)
     return invalid! unless seat.is_a?(Hash) && integer?(seat['x']) && integer?(seat['y'])
 
-    check_art(seat['sheet'], FOLDERS[:team])
+    check_look(seat)
     check_name(seat['name']) if seat.key?('name')
     add(:team_outside, persona: persona) unless inside?(seat['x'], seat['y'], FRAME_WIDTH, FRAME_HEIGHT)
+  end
+
+  # A premade spritesheet, or a look of the avatar editor.
+  def check_look(seat)
+    return check_art(seat['sheet'], FOLDERS[:team]) unless seat.key?('avatar')
+    return invalid! unless VirtualClinic::Avatar.sanitize(seat['avatar'])
+
+    VirtualClinic::Avatar.paths(seat['avatar']).each { |path| check_art(path, %r{\A9_avatar/}) }
   end
 
   def check_art(path, folder)
