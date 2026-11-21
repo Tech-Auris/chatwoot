@@ -105,6 +105,11 @@
       "TEMPLATE_SELECT": "Use template",
       "TEMPLATE_SELECTED": "Template: {name}",
       "TEMPLATE_USE": "Use this template",
+      "TEMPLATE_FALLBACK": {
+        "TITLE": "Template outside the 24h window",
+        "HELP": "Used only on official API (WhatsApp Cloud) inboxes when the patient hasn't messaged in the last 24 hours. Otherwise the text above is sent.",
+        "NEEDS_INBOX": "To pick a template, add the Inbox condition with an official API inbox."
+      },
       "LOSS_REASON_PLACEHOLDER": "Loss reason"
     },
     "TOGGLE": {

@@ -153,12 +153,9 @@ class AutomationRule < ApplicationRecord
       errors.add(:actions, I18n.t('errors.automation.scheduled_message.delay_out_of_range'))
     end
 
-    has_content = params['content'].present?
-    has_attachment = params['blob_id'].present?
-    has_template = params['template_params'].present?
-    return if has_content || has_attachment || has_template
+    return if params['content'].present? || params['blob_id'].present?
 
-    errors.add(:actions, I18n.t('errors.automation.scheduled_message.content_attachment_or_template_required'))
+    errors.add(:actions, I18n.t('errors.automation.scheduled_message.content_or_attachment_required'))
   end
 end
 

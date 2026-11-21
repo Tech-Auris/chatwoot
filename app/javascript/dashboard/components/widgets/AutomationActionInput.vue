@@ -2,6 +2,7 @@
 import AutomationActionTeamMessageInput from './AutomationActionTeamMessageInput.vue';
 import AutomationActionFileInput from './AutomationFileInput.vue';
 import AutomationActionScheduledMessageInput from './AutomationActionScheduledMessageInput.vue';
+import AutomationActionMessageInput from './AutomationActionMessageInput.vue';
 import AutomationActionFunnelStageInput from './AutomationActionFunnelStageInput.vue';
 import WootMessageEditor from 'dashboard/components/widgets/WootWriter/Editor.vue';
 import NextButton from 'dashboard/components-next/button/Button.vue';
@@ -14,6 +15,7 @@ export default {
     AutomationActionTeamMessageInput,
     AutomationActionFileInput,
     AutomationActionScheduledMessageInput,
+    AutomationActionMessageInput,
     AutomationActionFunnelStageInput,
     WootMessageEditor,
     NextButton,
@@ -230,6 +232,11 @@ export default {
         enable-variables
         :placeholder="$t('AUTOMATION.ACTION.TEAM_MESSAGE_INPUT_PLACEHOLDER')"
         class="[&_.ProseMirror-menubar]:hidden px-3 py-1 bg-n-alpha-1 rounded-lg outline outline-1 outline-n-weak dark:outline-n-strong"
+      />
+      <AutomationActionMessageInput
+        v-if="inputType === 'message_with_template'"
+        v-model="action_params"
+        :conditions="conditions"
       />
       <AutomationActionScheduledMessageInput
         v-if="inputType === 'scheduled_message'"

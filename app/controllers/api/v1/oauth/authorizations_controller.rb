@@ -8,13 +8,14 @@ class Api::V1::Oauth::AuthorizationsController < Api::BaseController
   def show
     render json: {
       client_name: @pre_auth.client.name,
-      accounts: Oauth::McpAccess.accounts_for(current_user).map { |account| { id: account.id, name: account.name } }
+      accounts: Oauth::McpAccess.accounts_for(current_user).map { |account| { id: account.id, name: account.name } },
+      super_admin: current_user.is_a?(SuperAdmin)
     }
   end
 
   def create
     if ActiveModel::Type::Boolean.new.cast(params[:approve])
-      return render json: { error: I18n.t('errors.mcp.oauth_not_allowed') }, status: :forbidden if Oauth::McpAccess.accounts_for(current_user).empty?
+      return render json: { error: I18n.t('errors.mcp.oauth_not_allowed') }, status: :forbidden unless Oauth::McpAccess.can_authorize?(current_user)
 
       response = Doorkeeper::OAuth::CodeRequest.new(@pre_auth, current_user).authorize
     else

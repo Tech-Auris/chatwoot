@@ -39,11 +39,20 @@ class ScheduledMessages::SendScheduledMessageJob < ApplicationJob
       message_type: 'outgoing',
       scheduled_message: scheduled_message
     }
-    params[:template_params] = scheduled_message.template_params if scheduled_message.template_params.present?
+    params[:template_params] = scheduled_message.template_params if send_template?(scheduled_message)
     params[:attachments] = [scheduled_message.attachment.blob.signed_id] if scheduled_message.attachment.attached?
     params.merge!(scheduled_message_content_attributes(scheduled_message))
 
     Messages::MessageBuilder.new(message_author(scheduled_message), scheduled_message.conversation, params).perform
+  end
+
+  # An automation's template is a fallback for the closed 24h window, decided
+  # when the message goes out; a template picked by hand is always sent.
+  def send_template?(scheduled_message)
+    return false if scheduled_message.template_params.blank?
+    return true unless scheduled_message.author.is_a?(AutomationRule)
+
+    scheduled_message.conversation.requires_whatsapp_template?
   end
 
   def number_block_message(scheduled_message)

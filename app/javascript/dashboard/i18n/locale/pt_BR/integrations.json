@@ -1170,6 +1170,7 @@
     "TITLE": "Conectar o {client} à Auris",
     "DESCRIPTION": "O {client} vai poder ler relatórios, funil, conversas e contatos em seu nome nestas contas:",
     "READ_ONLY": "Ele só lê dados e nunca altera nada. Você pode desconectar quando quiser no seu perfil.",
+    "SUPER_ADMIN": "Como super admin, o {client} também vai poder ler a configuração da IA de todas as contas: prompts, cenários especiais, resources, confirmações, follow-up e flags. Segredos e credenciais aparecem só como preenchidos ou não, nunca o valor.",
     "NO_ACCOUNTS": "Nenhuma das suas contas está com o assistente de IA ligado, ou você não é administrador ou gerente nelas. Um administrador pode ligá-lo em Configurações, Integrações, Assistente de IA (MCP).",
     "APPROVE": "Autorizar",
     "DENY": "Cancelar",

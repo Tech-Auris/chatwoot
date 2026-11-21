@@ -137,7 +137,7 @@ pt_BR:
     automation:
       scheduled_message:
         delay_out_of_range: O atraso deve ser entre 1 minuto e 999 dias
-        content_attachment_or_template_required: A mensagem agendada deve ter conteúdo, anexo ou template
+        content_or_attachment_required: A mensagem agendada deve ter conteúdo ou anexo
       funnel_move:
         loss_reason_required: Mover para esta etapa do funil exige um motivo da perda
     saml:
@@ -331,6 +331,7 @@ pt_BR:
       sla_missed_resolution: 'Meta de SLA de Resolução não alcançada para a conversa (#%{display_id})'
       internal_chat_mention: 'Você foi mencionado em %{name}'
       internal_chat_new_message: 'Nova mensagem de %{name}'
+      virtual_clinic_alert: '%{name} precisa de você na Clínica virtual'
     attachment: 'Anexo'
     no_content: 'Sem conteúdo'
   activity_logs:
@@ -974,6 +975,40 @@ pt_BR:
         body_html: Sua conta foi bloqueada devido a um número excessivo de tentativas de login malsucedidas.
         action_prompt_html: "Clique no link abaixo para desbloquear sua conta:"
         unlock_account: Desbloquear minha conta
+  virtual_clinic:
+    layout:
+      errors:
+        invalid: 'O layout da clínica não está no formato esperado.'
+        unknown_art: 'Esta arte não está disponível: %{path}.'
+        too_many_items: 'A clínica pode ter no máximo %{max} móveis.'
+        item_outside: 'Um móvel ficou fora da clínica: %{path}.'
+        team_outside: '%{persona} precisa ficar dentro da clínica.'
+        name_length: 'Os nomes precisam ter entre 1 e %{max} caracteres.'
+    seasons:
+      christmas:
+        name: 'Natal'
+        extra: 'E o avatar ganhou um gorro natalino.'
+      halloween:
+        name: 'Halloween'
+        extra: 'E o avatar ganhou uma cabeça de abóbora.'
+      party:
+        name: 'Festa'
+    alerts:
+      waiting_patients:
+        one: '1 paciente está sem resposta há mais de %{minutes} minutos.'
+        other: '%{count} pacientes estão sem resposta há mais de %{minutes} minutos.'
+      silent_inboxes:
+        one: 'Uma caixa de entrada parou de receber mensagens: %{names}.'
+        other: '%{count} caixas de entrada pararam de receber mensagens: %{names}.'
+      failed_follow_ups:
+        one: '1 follow-up falhou no envio hoje.'
+        other: '%{count} follow-ups falharam no envio hoje.'
+      conversion_drop: 'A conversão dos últimos 7 dias caiu para %{rate}%%, contra %{average}%% de média nas 4 semanas anteriores.'
+      no_show_rate: 'A taxa de faltas dos últimos 7 dias está em %{rate}%% (%{no_shows} de %{total} consultas).'
+      daily_summary: 'Resumo de ontem: %{leads} leads, %{appointments} agendamentos, %{conversations} conversas novas e %{follow_ups} follow-ups enviados.'
+      weekly_summary: 'Resumo da semana passada: %{leads} leads, %{appointments} agendamentos, %{conversations} conversas novas e %{follow_ups} follow-ups enviados.'
+      monthly_summary: 'Resumo do mês passado: %{leads} leads, %{appointments} agendamentos, %{conversations} conversas novas e %{follow_ups} follow-ups enviados.'
+      seasonal_pack: 'Chegou o pacote de decoração de %{name}! Até %{until}, dá para enfeitar a clínica: no editor (o lápis no painel), use a decoração sugerida ou escolha as peças. %{extra}'
   super_admin:
     push_diagnostics:
       user_not_found: 'Usuário não encontrado.'

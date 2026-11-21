@@ -150,6 +150,15 @@ const validateSingleAction = action => {
     return 'LOSS_REASON_REQUIRED';
   }
 
+  // The template is only a fallback for the closed 24h window: the text is
+  // what goes out otherwise, so it is always required.
+  if (
+    action.action_name === 'send_message' &&
+    !action.action_params?.[0]?.trim?.()
+  ) {
+    return ACTION_PARAMETERS_REQUIRED;
+  }
+
   if (action.action_name === 'create_scheduled_message') {
     const params = action.action_params?.[0];
     if (!params || typeof params !== 'object') {
@@ -157,13 +166,8 @@ const validateSingleAction = action => {
     }
     const hasContent = params.content?.trim?.();
     const hasAttachment = params.blob_id;
-    const hasTemplateParams =
-      params.template_params &&
-      typeof params.template_params === 'object' &&
-      !Array.isArray(params.template_params) &&
-      Object.keys(params.template_params).length > 0;
     const hasDelay = params.delay_minutes && params.delay_minutes >= 1;
-    if (!hasContent && !hasAttachment && !hasTemplateParams) {
+    if (!hasContent && !hasAttachment) {
       return ACTION_PARAMETERS_REQUIRED;
     }
     if (!hasDelay) {

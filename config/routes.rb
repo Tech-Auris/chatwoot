@@ -671,6 +671,14 @@ Rails.application.routes.draw do
       resources :erp_sources, only: [:index]
       resources :secretary_confirmations, only: [:index]
 
+      # Read-only account setup for super admins, used by the MCP Auris admin tools.
+      namespace :super_admin, module: :auris_admin do
+        resources :accounts, only: [:index] do
+          get :secretary_context, on: :member
+        end
+        resource :secretary_prompt, only: [:show]
+      end
+
       resources :languages, only: [:index]
 
       namespace :widget do
@@ -767,8 +775,14 @@ Rails.application.routes.draw do
           namespace :virtual_clinic do
             resource :config, only: [:show]
             resource :status, only: [:show]
+            resource :layout, only: %i[show update destroy]
+            resources :alerts, only: [:index] do
+              collection { post :acknowledge }
+            end
+            get 'assets', to: 'assets#index'
             get 'assets/*path', to: 'assets#show', format: false, as: :asset
             resource :settings, only: [:update]
+            resource :summary, only: %i[show update]
             resources :threads, only: [:show], param: :persona do
               member do
                 post :messages
@@ -1152,6 +1166,9 @@ Rails.application.routes.draw do
       resources :secretary_confirmations, only: [:index, :new, :create, :show, :edit, :update, :destroy]
       resources :secretary_prompts, only: [:index, :new, :create, :show, :edit, :update]
       resources :account_prompts, only: [:index, :new, :create, :show, :edit, :update, :destroy]
+      resources :account_integrations, only: [:index, :new, :create, :show, :edit, :update, :destroy] do
+        get :configure, on: :collection
+      end
       resources :account_statuses, only: [:index, :show, :edit, :update]
       resources :ai_providers, only: [:index, :new, :create, :show, :edit, :update]
       resources :ai_models, only: [:index, :new, :create, :show, :edit, :update]

@@ -120,6 +120,7 @@ class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
   has_many :secretary_confirmations, dependent: :delete_all
   has_many :secretary_confirmation_send_logs, dependent: :delete_all
   has_many :account_prompts, dependent: :delete_all
+  has_many :account_integrations, dependent: :delete_all
   has_many :internal_chat_categories, class_name: 'InternalChat::Category', dependent: :destroy_async
   has_many :internal_chat_channels, class_name: 'InternalChat::Channel', dependent: :destroy_async
   has_many :funnel_stage_changes, dependent: :destroy_async
@@ -153,6 +154,9 @@ class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
   has_many :simulator_channels, dependent: :destroy_async, class_name: '::Channel::Simulator'
   has_many :webhooks, dependent: :destroy_async
   has_one :account_secretary, dependent: :destroy
+  has_one :virtual_clinic_layout, dependent: :destroy
+  has_many :virtual_clinic_alerts, dependent: :destroy_async
+  has_many :virtual_clinic_summaries, dependent: :destroy_async
   has_many :whatsapp_channels, dependent: :destroy_async, class_name: '::Channel::Whatsapp'
   has_many :working_hours, dependent: :destroy_async
 

@@ -139,3 +139,19 @@ activity_logs_purge_job:
   cron: '0 5 * * *'
   class: 'ActivityLogs::PurgeJob'
   queue: scheduled_jobs
+
+# every 15 minutes
+# the Clínica virtual alerts: Clara raises her hand for patients waiting,
+# silent inboxes and failed follow-ups (business hours), Helena for the
+# conversion and no-show numbers (once a day at 9h)
+virtual_clinic_alerts_job:
+  cron: '*/15 * * * *'
+  class: 'VirtualClinic::AlertsJob'
+  queue: scheduled_jobs
+
+# executed every hour
+# Helena's daily, weekly and monthly summaries, at each person's hour
+virtual_clinic_summary_job:
+  cron: '0 * * * *'
+  class: 'VirtualClinic::SummaryJob'
+  queue: scheduled_jobs

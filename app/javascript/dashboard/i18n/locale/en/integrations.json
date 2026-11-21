@@ -1167,6 +1167,7 @@
     "TITLE": "Connect {client} to Auris",
     "DESCRIPTION": "{client} will be able to read reports, the funnel, conversations and contacts on your behalf in these accounts:",
     "READ_ONLY": "It can only read data and never changes anything. You can disconnect it at any time in your profile.",
+    "SUPER_ADMIN": "As a super admin, {client} will also be able to read the AI setup of every account: prompts, special scenarios, resources, confirmations, follow-up and flags. Secrets and credentials only show whether they are filled in, never their value.",
     "NO_ACCOUNTS": "None of your accounts has the AI assistant turned on, or you are not an administrator or manager there. An administrator can turn it on in Settings, Integrations, AI assistant (MCP).",
     "APPROVE": "Authorize",
     "DENY": "Cancel",

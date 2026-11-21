@@ -52,6 +52,13 @@ RSpec.describe 'Virtual clinic threads API', type: :request do
     expect(response.parsed_body.dig('manager', 'month')).to include('leads', 'appointments')
   end
 
+  it 'gives agents only the status of teammates that are not restricted' do
+    get "/api/v2/accounts/#{account.id}/virtual_clinic/status", headers: agent.create_new_auth_token, as: :json
+
+    expect(response).to have_http_status(:ok)
+    expect(response.parsed_body.keys).to eq(['secretary'])
+  end
+
   it 'gives the live status even before the clinic sets its OpenAI key' do
     account.hooks.where(app_id: 'openai').delete_all
 

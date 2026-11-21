@@ -1,0 +1,12 @@
+<% if field.data.blank? %>
+  <span class="text-n-slate-11">No fields</span>
+<% else %>
+  <table>
+    <thead><tr><th>Key</th><th>Label</th><th>Type</th><th>Secret</th></tr></thead>
+    <tbody>
+      <% field.data.each do |row| %>
+        <tr><td><code><%= row['key'] %></code></td><td><%= row['label'] %></td><td><%= row['type'] %></td><td><%= row['secret'] ? 'yes' : '' %></td></tr>
+      <% end %>
+    </tbody>
+  </table>
+<% end %>

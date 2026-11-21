@@ -25,10 +25,22 @@ RSpec.describe 'Virtual clinic config API', type: :request do
     expect(response.parsed_body['ai_team']).to include('visible' => true, 'chat_enabled' => true, 'chat_missing' => nil)
   end
 
-  it 'hides the AI team from agents' do
+  it 'shows the AI team to agents, without talking to it or managing it' do
     get url, headers: agent.create_new_auth_token, as: :json
 
-    expect(response.parsed_body['ai_team']).to include('visible' => false, 'chat_enabled' => false, 'chat_missing' => nil, 'members' => [])
+    expect(response.parsed_body['ai_team']).to include('visible' => true, 'chat_enabled' => false, 'chat_missing' => nil,
+                                                       'manages_team' => false, 'can_edit_layout' => false)
+    restricted = response.parsed_body.dig('ai_team', 'members').to_h { |member| member.values_at('persona', 'restricted') }
+    expect(restricted).to eq('secretary' => false, 'manager' => true)
+  end
+
+  it 'lists the decoration packs in season' do
+    travel_to(Time.zone.local(2026, 11, 20, 12)) { get url, headers: admin.create_new_auth_token, as: :json }
+
+    seasons = response.parsed_body.dig('ai_team', 'seasons')
+    expect(seasons['active']).to eq([{ 'key' => 'christmas', 'folder' => '11_natal', 'accessory' => 'Accessory_20_Gorro_Natal', 'until' => '31/12' },
+                                     { 'key' => 'party', 'folder' => '13_festa', 'until' => nil }])
+    expect(seasons['folders']).to eq(%w[11_natal 12_halloween 13_festa])
   end
 
   it 'is refused when the account is not released' do
