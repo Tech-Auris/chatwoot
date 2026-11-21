@@ -960,6 +960,15 @@ pt_BR:
         body_html: Sua conta foi bloqueada devido a um número excessivo de tentativas de login malsucedidas.
         action_prompt_html: "Clique no link abaixo para desbloquear sua conta:"
         unlock_account: Desbloquear minha conta
+  virtual_clinic:
+    layout:
+      errors:
+        invalid: 'O layout da clínica não está no formato esperado.'
+        unknown_art: 'Esta arte não está disponível: %{path}.'
+        too_many_items: 'A clínica pode ter no máximo %{max} móveis.'
+        item_outside: 'Um móvel ficou fora da clínica: %{path}.'
+        team_outside: '%{persona} precisa ficar dentro da clínica.'
+        name_length: 'Os nomes precisam ter entre 1 e %{max} caracteres.'
   super_admin:
     push_diagnostics:
       user_not_found: 'Usuário não encontrado.'

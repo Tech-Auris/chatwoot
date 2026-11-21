@@ -16,6 +16,7 @@ export function useClinicPresence() {
   let subscription = null;
   let me = null;
   let lastSent = { at: 0, key: '' };
+  let onLayout = () => {};
   const targets = {};
 
   const send = (position, force = false) => {
@@ -36,6 +37,11 @@ export function useClinicPresence() {
   };
 
   const received = ({ event, data }) => {
+    // Someone saved the clinic in the editor: draw it again.
+    if (event === 'virtual_clinic.layout') {
+      onLayout();
+      return;
+    }
     if (event !== 'virtual_clinic.presence' || data.user_id === me?.userId) {
       return;
     }
@@ -56,8 +62,15 @@ export function useClinicPresence() {
     }
   };
 
-  const connect = ({ userId, accountId, pubsubToken, position }) => {
+  const connect = ({
+    userId,
+    accountId,
+    pubsubToken,
+    position,
+    layoutChanged,
+  }) => {
     me = { userId, position };
+    onLayout = layoutChanged || onLayout;
     const { websocketURL = '' } = window.chatwootConfig || {};
     consumer = createConsumer(
       websocketURL ? `${websocketURL}/cable` : undefined

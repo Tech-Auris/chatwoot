@@ -20,6 +20,11 @@ class VirtualClinicPolicy < ApplicationPolicy
     show? && account_user.administrator?
   end
 
+  # The clinic editor (furniture, rooms, the AI team's names and looks).
+  def update_layout?
+    ai_team_visible?
+  end
+
   def missing_requirement
     return 'mcp' unless account.mcp_enabled?
     return 'openai_key' if self.class.openai_api_key(account).blank?
