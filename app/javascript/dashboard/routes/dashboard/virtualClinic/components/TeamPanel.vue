@@ -13,6 +13,8 @@ const props = defineProps({
   aiTeam: { type: Object, default: null },
   status: { type: Object, default: null },
   selected: { type: String, default: '' },
+  // User ids walking on the map right now.
+  peopleOnMap: { type: Array, default: () => [] },
 });
 
 const emit = defineEmits(['selectMember']);
@@ -194,12 +196,19 @@ const select = member => {
                 {{ t('VIRTUAL_CLINIC.PEOPLE.YOU') }}
               </span>
             </span>
-            <span class="text-xs text-n-slate-11">
+            <span class="flex items-center gap-1 text-xs text-n-slate-11">
               {{
                 t(
                   `VIRTUAL_CLINIC.PEOPLE.STATUS.${(person.availability_status || 'offline').toUpperCase()}`
                 )
               }}
+              <span
+                v-if="peopleOnMap.includes(person.id)"
+                class="flex items-center gap-0.5 text-n-teal-11"
+              >
+                · <Icon icon="i-lucide-map-pin" class="size-3" />
+                {{ t('VIRTUAL_CLINIC.PEOPLE.ON_MAP') }}
+              </span>
             </span>
           </span>
         </button>

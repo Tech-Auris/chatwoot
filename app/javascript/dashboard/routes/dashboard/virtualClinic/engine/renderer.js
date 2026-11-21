@@ -120,8 +120,9 @@ function drawItem(context, image, item) {
 }
 
 // Draws the clinic into `canvas` (world size). `characters` lists the AI
-// teammates to show: `{ persona, x, y, direction, moving, phone, talking,
-// faded }`, `x`/`y` being the top-left of their 32×64 frame.
+// teammates (`persona`) and the people walking around (`sheet`): `{ x, y,
+// direction, moving, phone, talking, faded }`, `x`/`y` being the top-left
+// of their 32×64 frame.
 export function createRenderer(canvas, sprites) {
   const context = canvas.getContext('2d');
   context.imageSmoothingEnabled = false;
@@ -135,12 +136,14 @@ export function createRenderer(canvas, sprites) {
   return function draw(characters, tick) {
     context.clearRect(0, 0, WORLD.width, WORLD.height);
     context.drawImage(background, 0, 0);
-    const people = characters.map(character => ({
-      ...character,
-      sheet: sprites[CHARACTERS[character.persona].sheet],
-      // Someone sitting goes over their chair.
-      depth: character.y + FRAME.height + (character.sitting ? 8 : 0),
-    }));
+    const people = characters
+      .map(character => ({
+        ...character,
+        sheet: sprites[character.sheet || CHARACTERS[character.persona].sheet],
+        // Someone sitting goes over their chair.
+        depth: character.y + FRAME.height + (character.sitting ? 8 : 0),
+      }))
+      .filter(person => person.sheet);
     // Stable sort: on a tie the furniture (a chair behind someone) goes first.
     [...items, ...people]
       .sort((a, b) => a.depth - b.depth)
@@ -177,6 +180,7 @@ export function createRenderer(canvas, sprites) {
 export function hitTest(x, y, characters) {
   return characters.find(
     c =>
+      c.persona &&
       x >= c.x &&
       x < c.x + FRAME.width &&
       y >= c.y + 16 &&
