@@ -48,6 +48,16 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_20_140000) do
     t.index ["captured_on"], name: "index_account_health_scores_on_captured_on"
   end
 
+  create_table "account_integrations", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "erp_source_id", null: false
+    t.jsonb "config", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "erp_source_id"], name: "index_account_integrations_on_account_id_and_erp_source_id", unique: true
+    t.index ["erp_source_id"], name: "index_account_integrations_on_erp_source_id"
+  end
+
   create_table "account_prompts", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.string "name", null: false
@@ -1158,6 +1168,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_20_140000) do
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.jsonb "fields", default: [], null: false
     t.index ["name"], name: "index_erp_sources_on_name", unique: true
   end
 
@@ -2539,6 +2550,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_20_140000) do
   end
 
   add_foreign_key "account_health_scores", "accounts", on_delete: :cascade
+  add_foreign_key "account_integrations", "accounts"
+  add_foreign_key "account_integrations", "erp_sources"
   add_foreign_key "account_prompts", "accounts"
   add_foreign_key "account_secretaries", "accounts", on_delete: :cascade
   add_foreign_key "account_secretaries", "ai_models"

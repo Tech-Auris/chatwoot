@@ -21,4 +21,23 @@ RSpec.describe ErpSource do
     expect(erp_source.destroy).to be(false)
     expect(erp_source.update(active: false)).to be(true)
   end
+
+  describe '#fields=' do
+    it 'drops rows without a key and fills the defaults, from the form rows by index' do
+      erp_source = build(:erp_source, fields: {
+                           '0' => { 'key' => ' senha ', 'label' => '', 'type' => 'text', 'secret' => '1' },
+                           '1' => { 'key' => '', 'label' => 'ignored' }
+                         })
+
+      expect(erp_source.fields).to eq([{ 'key' => 'senha', 'label' => 'senha', 'type' => 'text', 'secret' => true }])
+      expect(erp_source.secret_keys).to eq(['senha'])
+    end
+
+    it 'refuses repeated keys and unknown types' do
+      erp_source = build(:erp_source, fields: [{ 'key' => 'a' }, { 'key' => 'a', 'type' => 'date' }])
+
+      expect(erp_source).not_to be_valid
+      expect(erp_source.errors[:fields].join).to include('a').and include('date')
+    end
+  end
 end
