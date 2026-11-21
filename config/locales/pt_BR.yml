@@ -982,7 +982,9 @@ pt_BR:
         other: '%{count} follow-ups falharam no envio hoje.'
       conversion_drop: 'A conversão dos últimos 7 dias caiu para %{rate}%%, contra %{average}%% de média nas 4 semanas anteriores.'
       no_show_rate: 'A taxa de faltas dos últimos 7 dias está em %{rate}%% (%{no_shows} de %{total} consultas).'
-      daily_summary: 'Bom dia! Ontem foram %{leads} leads, %{appointments} agendamentos, %{conversations} conversas novas e %{follow_ups} follow-ups enviados.'
+      daily_summary: 'Resumo de ontem: %{leads} leads, %{appointments} agendamentos, %{conversations} conversas novas e %{follow_ups} follow-ups enviados.'
+      weekly_summary: 'Resumo da semana passada: %{leads} leads, %{appointments} agendamentos, %{conversations} conversas novas e %{follow_ups} follow-ups enviados.'
+      monthly_summary: 'Resumo do mês passado: %{leads} leads, %{appointments} agendamentos, %{conversations} conversas novas e %{follow_ups} follow-ups enviados.'
   super_admin:
     push_diagnostics:
       user_not_found: 'Usuário não encontrado.'

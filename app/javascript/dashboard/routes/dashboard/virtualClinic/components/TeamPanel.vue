@@ -1,9 +1,8 @@
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
-import VirtualClinicAPI from 'dashboard/api/virtualClinic';
 import PeopleList from './PeopleList.vue';
 import { isOffDuty, offDutyReason } from '../teamStatus';
 
@@ -18,7 +17,13 @@ const props = defineProps({
   alertCounts: { type: Object, default: () => ({}) },
 });
 
-const emit = defineEmits(['selectMember', 'edit', 'editAvatar', 'editProfile']);
+const emit = defineEmits([
+  'selectMember',
+  'edit',
+  'editAvatar',
+  'editProfile',
+  'summarySettings',
+]);
 const { t } = useI18n();
 const members = computed(() => props.aiTeam?.members || []);
 const chatEnabled = computed(() => props.aiTeam?.chat_enabled === true);
@@ -65,20 +70,6 @@ const statusLine = persona => {
   return rate === null
     ? t('VIRTUAL_CLINIC.STATUS.MANAGER_LEADS', { leads })
     : t('VIRTUAL_CLINIC.STATUS.MANAGER', { leads, rate });
-};
-
-// "Bom dia da Helena" at 8h, turned on by the clinic administrator.
-const dailySummary = ref(false);
-watch(
-  () => props.aiTeam?.daily_summary,
-  value => {
-    dailySummary.value = value === true;
-  },
-  { immediate: true }
-);
-const toggleDailySummary = async () => {
-  dailySummary.value = !dailySummary.value;
-  await VirtualClinicAPI.updateSettings({ daily_summary: dailySummary.value });
 };
 
 // The manager also opens without the chat: she has the person's news.
@@ -165,36 +156,27 @@ const select = member => {
             </span>
           </span>
         </button>
-        <Button
-          v-if="aiTeam?.can_edit_layout"
-          icon="i-lucide-shirt"
-          variant="ghost"
-          color="slate"
-          size="xs"
-          class="absolute top-2 right-1"
-          :title="t('VIRTUAL_CLINIC.AVATAR.EDIT')"
-          @click="emit('editAvatar', member.persona)"
-        />
-      </div>
-
-      <label
-        v-if="aiTeam.can_manage_settings"
-        class="flex items-start gap-2 p-2 mt-1 text-xs cursor-pointer text-n-slate-11"
-      >
-        <input
-          type="checkbox"
-          class="mt-0.5"
-          :checked="dailySummary"
-          @change="toggleDailySummary"
-        />
-        <span>
-          {{
-            t('VIRTUAL_CLINIC.AI_TEAM.DAILY_SUMMARY', {
-              name: members.find(m => m.persona === 'manager')?.name || '',
-            })
-          }}
+        <span class="absolute flex gap-0.5 top-2 right-1">
+          <Button
+            v-if="member.persona === 'manager' && aiTeam.manages_team"
+            icon="i-lucide-settings"
+            variant="ghost"
+            color="slate"
+            size="xs"
+            :title="t('VIRTUAL_CLINIC.SUMMARY.OPEN', { name: member.name })"
+            @click="emit('summarySettings')"
+          />
+          <Button
+            v-if="aiTeam?.can_edit_layout"
+            icon="i-lucide-shirt"
+            variant="ghost"
+            color="slate"
+            size="xs"
+            :title="t('VIRTUAL_CLINIC.AVATAR.EDIT')"
+            @click="emit('editAvatar', member.persona)"
+          />
         </span>
-      </label>
+      </div>
 
       <div
         v-if="missingAction"

@@ -1007,7 +1007,9 @@ en:
         other: '%{count} follow-ups failed to go out today.'
       conversion_drop: 'The conversion of the last 7 days dropped to %{rate}%%, against a %{average}%% average in the 4 weeks before.'
       no_show_rate: 'The no-show rate of the last 7 days is %{rate}%% (%{no_shows} of %{total} appointments).'
-      daily_summary: 'Good morning! Yesterday: %{leads} leads, %{appointments} appointments, %{conversations} new conversations and %{follow_ups} follow-ups sent.'
+      daily_summary: 'Yesterday: %{leads} leads, %{appointments} appointments, %{conversations} new conversations and %{follow_ups} follow-ups sent.'
+      weekly_summary: 'Last week: %{leads} leads, %{appointments} appointments, %{conversations} new conversations and %{follow_ups} follow-ups sent.'
+      monthly_summary: 'Last month: %{leads} leads, %{appointments} appointments, %{conversations} new conversations and %{follow_ups} follow-ups sent.'
   super_admin:
     push_diagnostics:
       user_not_found: 'User not found.'

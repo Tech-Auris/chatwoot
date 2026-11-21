@@ -154,6 +154,7 @@ class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
   has_one :account_secretary, dependent: :destroy
   has_one :virtual_clinic_layout, dependent: :destroy
   has_many :virtual_clinic_alerts, dependent: :destroy_async
+  has_many :virtual_clinic_summaries, dependent: :destroy_async
   has_many :whatsapp_channels, dependent: :destroy_async, class_name: '::Channel::Whatsapp'
   has_many :working_hours, dependent: :destroy_async
 
