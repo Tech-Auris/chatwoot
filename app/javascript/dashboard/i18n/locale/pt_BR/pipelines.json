@@ -88,6 +88,13 @@
       "BUTTON": "Funis ({count})",
       "TITLE": "Funis do contato",
       "EMPTY": "O contato não está em nenhum funil da clínica."
+    },
+    "CONVERSION": {
+      "DESCRIPTION": "Quantos contatos passaram por cada etapa do funil no período e quantos chegaram a Ganho ou Perdido.",
+      "WON_RATE": "Taxa de ganho",
+      "LOST_RATE": "Taxa de perda",
+      "AVG_TIME_TO_WON": "Tempo médio até o ganho",
+      "OF_TOTAL": "{count} de {total} contatos"
     }
   }
 }

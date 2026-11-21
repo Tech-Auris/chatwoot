@@ -35,12 +35,14 @@ class Api::V2::Accounts::SummaryReportsController < Api::V1::Accounts::BaseContr
     render_report_with(V2::Reports::ChannelSummaryBuilder)
   end
 
+  # With `pipeline_id`, the reports of a clinic pipeline; without it, the
+  # Agendamento's, unchanged.
   def funnel
-    render_report_with(V2::Reports::FunnelSummaryBuilder)
+    render_report_with(pipeline_report? ? V2::Reports::PipelineSummaryBuilder : V2::Reports::FunnelSummaryBuilder)
   end
 
   def funnel_conversion
-    render_report_with(V2::Reports::FunnelConversionBuilder)
+    render_report_with(pipeline_report? ? V2::Reports::PipelineConversionBuilder : V2::Reports::FunnelConversionBuilder)
   end
 
   def funnel_conversion_campaigns
@@ -84,8 +86,13 @@ class Api::V2::Accounts::SummaryReportsController < Api::V1::Accounts::BaseContr
       # The Início page opens the funnel drill-down over several caixas.
       inbox_ids: permitted_params[:inbox_ids].presence,
       label: permitted_params[:label],
-      origem: permitted_params[:origem]
+      origem: permitted_params[:origem],
+      pipeline_id: permitted_params[:pipeline_id]
     }
+  end
+
+  def pipeline_report?
+    permitted_params[:pipeline_id].present?
   end
 
   def render_report_with(builder_class, type: nil)
@@ -95,7 +102,7 @@ class Api::V2::Accounts::SummaryReportsController < Api::V1::Accounts::BaseContr
   end
 
   def permitted_params
-    params.permit(:since, :until, :business_hours, :inbox_id, :label, :origem, inbox_ids: [])
+    params.permit(:since, :until, :business_hours, :inbox_id, :label, :origem, :pipeline_id, inbox_ids: [])
   end
 
   def date_range_too_long?

@@ -22,6 +22,12 @@ import {
   ORIGEM_NONE_TOKEN,
 } from 'dashboard/helper/origemOptions';
 
+// With `pipelineId`, the table of a clinic pipeline (no inbox or lead
+// origin: it follows contacts); without it, the Agendamento's.
+const props = defineProps({
+  pipelineId: { type: Number, default: null },
+});
+
 const store = useStore();
 const { t } = useI18n();
 
@@ -137,6 +143,7 @@ const fetchReports = async () => {
     inboxId: inboxId.value || undefined,
     label: labelName.value || undefined,
     origem: origem.value || undefined,
+    pipelineId: props.pipelineId || undefined,
   };
   loadError.value = '';
   try {
@@ -208,7 +215,7 @@ const table = useVueTable({
           v-model:range-type="selectedDateRange"
           @date-range-changed="onDateRangeChange"
         />
-        <div class="relative flex-shrink-0">
+        <div v-if="!pipelineId" class="relative flex-shrink-0">
           <select
             :value="inboxId"
             class="h-10 text-sm rounded-md border border-n-weak bg-n-input-background px-2 text-n-slate-12 focus:outline-none focus:ring-1 focus:ring-n-blue-9 w-[10.5rem]"
@@ -244,7 +251,7 @@ const table = useVueTable({
             </option>
           </select>
         </div>
-        <div class="relative flex-shrink-0">
+        <div v-if="!pipelineId" class="relative flex-shrink-0">
           <select
             :value="origem"
             class="h-10 text-sm rounded-md border border-n-weak bg-n-input-background px-2 text-n-slate-12 focus:outline-none focus:ring-1 focus:ring-n-blue-9 w-[12rem]"

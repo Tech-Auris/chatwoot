@@ -15,6 +15,7 @@ import PipelineCard from './components/PipelineCard.vue';
 import PipelineList from './components/PipelineList.vue';
 import PipelineConfigDialog from './components/PipelineConfigDialog.vue';
 import PipelineAddContactDialog from './components/PipelineAddContactDialog.vue';
+import PipelineConversion from './components/PipelineConversion.vue';
 
 import FunnelBoard from './components/FunnelBoard.vue';
 import SaveAsAudienceDialog from 'dashboard/routes/dashboard/marketing/audiences/components/SaveAsAudienceDialog.vue';
@@ -52,10 +53,6 @@ const VIEW_ICONS = {
   conversion: 'i-lucide-trending-down',
 };
 const viewMode = ref('board');
-// Overview and Conversion of the clinic pipelines come in a later delivery.
-const visibleViewModes = computed(() =>
-  isClinicPipeline.value ? ['board', 'list'] : VIEW_MODES
-);
 
 const isLoading = ref(false);
 const stages = ref([]);
@@ -89,7 +86,7 @@ const DEFAULT_FILTERS = {
 const filters = ref({ ...DEFAULT_FILTERS });
 
 const setViewMode = mode => {
-  if (!visibleViewModes.value.includes(mode)) return;
+  if (!VIEW_MODES.includes(mode)) return;
   viewMode.value = mode;
 };
 
@@ -506,8 +503,6 @@ const onPipelineGone = async () => {
 // Switching pipelines clears the board (spinner) and resets the filters,
 // which fetches the new board through the filters watcher.
 watch(selectedPipelineId, () => {
-  if (!visibleViewModes.value.includes(viewMode.value))
-    viewMode.value = 'board';
   pipelineStages.value = [];
   entriesByStage.value = {};
   pipelineFilters.value = { ...DEFAULT_PIPELINE_FILTERS };
@@ -563,7 +558,7 @@ onMounted(() => {
         :aria-label="t('FUNNEL.VIEW_MODE.ARIA_LABEL')"
       >
         <button
-          v-for="mode in visibleViewModes"
+          v-for="mode in VIEW_MODES"
           :key="mode"
           type="button"
           class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-sm font-medium transition-colors"
@@ -580,8 +575,20 @@ onMounted(() => {
       </div>
     </header>
 
-    <!-- Clinic pipeline (per contact) -->
-    <template v-if="isClinicPipeline">
+    <!-- Clinic pipeline reports -->
+    <FunnelOverview
+      v-if="isClinicPipeline && viewMode === 'overview'"
+      :key="`overview-${selectedPipelineId}`"
+      :pipeline-id="selectedPipelineId"
+    />
+    <PipelineConversion
+      v-else-if="isClinicPipeline && viewMode === 'conversion'"
+      :key="`conversion-${selectedPipelineId}`"
+      :pipeline-id="selectedPipelineId"
+    />
+
+    <!-- Clinic pipeline board / list (per contact) -->
+    <template v-else-if="isClinicPipeline">
       <FunnelFilters
         v-model:from-date="pipelineFilters.fromDate"
         v-model:to-date="pipelineFilters.toDate"

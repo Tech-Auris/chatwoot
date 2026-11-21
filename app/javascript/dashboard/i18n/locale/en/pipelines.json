@@ -88,6 +88,13 @@
       "BUTTON": "Pipelines ({count})",
       "TITLE": "Contact pipelines",
       "EMPTY": "The contact is in no clinic pipeline."
+    },
+    "CONVERSION": {
+      "DESCRIPTION": "How many contacts moved through each stage of the pipeline in the period, and how many reached Won or Lost.",
+      "WON_RATE": "Win rate",
+      "LOST_RATE": "Loss rate",
+      "AVG_TIME_TO_WON": "Average time until won",
+      "OF_TOTAL": "{count} of {total} contacts"
     }
   }
 }
