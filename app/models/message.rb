@@ -453,7 +453,13 @@ class Message < ApplicationRecord
     outgoing? &&
       content_attributes['automation_rule_id'].blank? &&
       additional_attributes['campaign_id'].blank? &&
-      (sender.is_a?(User) || content_attributes['external_echo'].present?)
+      (sender.is_a?(User) || content_attributes['external_echo'].present? || sent_from_whatsapp_phone?)
+  end
+
+  # Baileys and Z-API save what the team types on the connected phone as a
+  # sender-less outgoing message tagged `external_sender_name: 'WhatsApp'`.
+  def sent_from_whatsapp_phone?
+    sender.nil? && content_attributes['external_sender_name'] == 'WhatsApp'
   end
 
   def bot_response?
