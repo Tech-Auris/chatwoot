@@ -43,6 +43,8 @@ const props = defineProps({
   editor: { type: Object, default: null },
   // One AI teammate asking another right now: `{ persona, target }`.
   consulting: { type: Object, default: null },
+  // Open alerts per teammate: they "raise their hand" (❗).
+  alertCounts: { type: Object, default: () => ({}) },
 });
 const emit = defineEmits(['selectMember', 'peopleOnMap', 'layoutChanged']);
 
@@ -677,6 +679,12 @@ onBeforeUnmount(() => {
                 chatEnabled && !editing && emit('selectMember', member.persona)
               "
             >
+              <span
+                v-if="alertCounts[member.persona] && !editing"
+                class="inline-grid mr-1 font-bold rounded-full size-4 place-items-center bg-n-ruby-9 animate-pulse"
+              >
+                {{ t('VIRTUAL_CLINIC.MAP.RAISED_HAND') }}
+              </span>
               {{ nameOf(member) }} ·
               {{ t(`VIRTUAL_CLINIC.PERSONAS.${member.persona.toUpperCase()}`) }}
             </button>

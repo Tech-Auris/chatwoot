@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_11_20_120000) do
+ActiveRecord::Schema[7.1].define(version: 2026_11_20_125000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -2454,6 +2454,17 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_20_120000) do
     t.index ["uid", "provider"], name: "index_users_on_uid_and_provider", unique: true
   end
 
+  create_table "virtual_clinic_alerts", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.integer "persona", null: false
+    t.string "rule", null: false
+    t.jsonb "payload", default: {}, null: false
+    t.datetime "acknowledged_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "rule", "created_at"], name: "idx_on_account_id_rule_created_at_3e13cf67c1"
+  end
+
   create_table "virtual_clinic_layouts", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.bigint "updated_by_id"
@@ -2628,6 +2639,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_20_120000) do
   add_foreign_key "tickets", "conversations", on_delete: :cascade
   add_foreign_key "tickets", "users", on_delete: :nullify
   add_foreign_key "user_sessions", "users"
+  add_foreign_key "virtual_clinic_alerts", "accounts"
   add_foreign_key "virtual_clinic_layouts", "accounts"
   add_foreign_key "virtual_clinic_layouts", "users", column: "updated_by_id", on_delete: :nullify
   add_foreign_key "virtual_clinic_messages", "virtual_clinic_threads", column: "thread_id"

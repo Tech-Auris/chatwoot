@@ -331,6 +331,7 @@ pt_BR:
       sla_missed_resolution: 'Meta de SLA de Resolução não alcançada para a conversa (#%{display_id})'
       internal_chat_mention: 'Você foi mencionado em %{name}'
       internal_chat_new_message: 'Nova mensagem de %{name}'
+      virtual_clinic_alert: '%{name} precisa de você na Clínica virtual'
     attachment: 'Anexo'
     no_content: 'Sem conteúdo'
   activity_logs:
@@ -969,6 +970,19 @@ pt_BR:
         item_outside: 'Um móvel ficou fora da clínica: %{path}.'
         team_outside: '%{persona} precisa ficar dentro da clínica.'
         name_length: 'Os nomes precisam ter entre 1 e %{max} caracteres.'
+    alerts:
+      waiting_patients:
+        one: '1 paciente está sem resposta há mais de %{minutes} minutos.'
+        other: '%{count} pacientes estão sem resposta há mais de %{minutes} minutos.'
+      silent_inboxes:
+        one: 'Uma caixa de entrada parou de receber mensagens: %{names}.'
+        other: '%{count} caixas de entrada pararam de receber mensagens: %{names}.'
+      failed_follow_ups:
+        one: '1 follow-up falhou no envio hoje.'
+        other: '%{count} follow-ups falharam no envio hoje.'
+      conversion_drop: 'A conversão dos últimos 7 dias caiu para %{rate}%%, contra %{average}%% de média nas 4 semanas anteriores.'
+      no_show_rate: 'A taxa de faltas dos últimos 7 dias está em %{rate}%% (%{no_shows} de %{total} consultas).'
+      daily_summary: 'Bom dia! Ontem foram %{leads} leads, %{appointments} agendamentos, %{conversations} conversas novas e %{follow_ups} follow-ups enviados.'
   super_admin:
     push_diagnostics:
       user_not_found: 'Usuário não encontrado.'

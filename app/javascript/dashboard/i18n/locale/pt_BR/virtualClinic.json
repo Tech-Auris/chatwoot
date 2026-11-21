@@ -11,7 +11,8 @@
       "MISSING_OPENAI": "Para conversar com a equipe de IA, cadastre a chave da OpenAI da clínica.",
       "CONFIGURE_OPENAI": "Configurar chave OpenAI",
       "CHAT_SECTION": "Equipe de IA",
-      "CHAT_OFF": "Conversa desligada"
+      "CHAT_OFF": "Conversa desligada",
+      "DAILY_SUMMARY": "Bom dia da {name}: resumo de ontem às 8h, nas notificações"
     },
     "RAIL": {
       "MAP": "Clínica",
@@ -38,7 +39,12 @@
       "SUBTITLE": {
         "SECRETARY": "Responde sobre atendimentos e follow-ups",
         "MANAGER": "Responde tudo sobre a clínica, com números"
-      }
+      },
+      "ALERT": "❗ {message}",
+      "ALERT_PATIENT": "{name} · conversa #{id} · esperando há {minutes} min",
+      "ALERT_DISCONNECTED": "{name}: desconectada",
+      "ALERT_SILENT": "{name}: sem mensagens de pacientes há {hours} h",
+      "NO_NAME": "Sem nome"
     },
     "SETTINGS": {
       "TITLE": "Clínica virtual",
@@ -101,7 +107,8 @@
       "OFF_DUTY": "⏸ Atendimento desligado · {reason}",
       "TALK_TO": "Conversar com {name} (E)",
       "MOVE_HINT": "Ande com as setas ou WASD, ou clique no chão",
-      "ASKING": "💬 Perguntando para {name}…"
+      "ASKING": "💬 Perguntando para {name}…",
+      "RAISED_HAND": "!"
     },
     "EDITOR": {
       "EDIT": "Editar clínica",

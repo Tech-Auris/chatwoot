@@ -1,11 +1,12 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { useMapGetter, useStore } from 'dashboard/composables/store';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
+import VirtualClinicAPI from 'dashboard/api/virtualClinic';
 import { isOffDuty, offDutyReason } from '../teamStatus';
 
 const props = defineProps({
@@ -15,6 +16,8 @@ const props = defineProps({
   selected: { type: String, default: '' },
   // User ids walking on the map right now.
   peopleOnMap: { type: Array, default: () => [] },
+  // Open alerts per AI teammate (❗).
+  alertCounts: { type: Object, default: () => ({}) },
 });
 
 const emit = defineEmits(['selectMember', 'edit']);
@@ -102,6 +105,20 @@ const statusLine = persona => {
     : t('VIRTUAL_CLINIC.STATUS.MANAGER', { leads, rate });
 };
 
+// "Bom dia da Helena" at 8h, turned on by the clinic administrator.
+const dailySummary = ref(false);
+watch(
+  () => props.aiTeam?.daily_summary,
+  value => {
+    dailySummary.value = value === true;
+  },
+  { immediate: true }
+);
+const toggleDailySummary = async () => {
+  dailySummary.value = !dailySummary.value;
+  await VirtualClinicAPI.updateSettings({ daily_summary: dailySummary.value });
+};
+
 const select = member => {
   if (chatEnabled.value) emit('selectMember', member.persona);
 };
@@ -150,6 +167,12 @@ const select = member => {
         <span class="flex flex-col min-w-0">
           <span class="text-sm font-medium text-n-slate-12">
             {{ member.name }}
+            <span
+              v-if="alertCounts[member.persona]"
+              class="px-1.5 ml-1 text-xs font-semibold text-white rounded-full bg-n-ruby-9"
+            >
+              {{ alertCounts[member.persona] }}
+            </span>
             <span class="ml-1 text-xs text-n-slate-11">
               {{ t(`VIRTUAL_CLINIC.PERSONAS.${member.persona.toUpperCase()}`) }}
             </span>
@@ -166,6 +189,25 @@ const select = member => {
           </span>
         </span>
       </button>
+
+      <label
+        v-if="aiTeam.can_manage_settings"
+        class="flex items-start gap-2 p-2 mt-1 text-xs cursor-pointer text-n-slate-11"
+      >
+        <input
+          type="checkbox"
+          class="mt-0.5"
+          :checked="dailySummary"
+          @change="toggleDailySummary"
+        />
+        <span>
+          {{
+            t('VIRTUAL_CLINIC.AI_TEAM.DAILY_SUMMARY', {
+              name: members.find(m => m.persona === 'manager')?.name || '',
+            })
+          }}
+        </span>
+      </label>
 
       <div
         v-if="missingAction"

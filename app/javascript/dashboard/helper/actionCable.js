@@ -52,6 +52,7 @@ class ActionCableConnector extends BaseActionCableConnector {
         this.onRecurringScheduledMessageDeleted,
       'virtual_clinic.message.updated': this.onVirtualClinicMessageUpdated,
       'virtual_clinic.activity': this.onVirtualClinicActivity,
+      'virtual_clinic.alerts.updated': this.onVirtualClinicAlertsUpdated,
       'internal_chat.channel.updated': this.onInternalChatChannelUpdated,
       'internal_chat.message.created': this.onInternalChatMessageCreated,
       'internal_chat.message.updated': this.onInternalChatMessageUpdated,
@@ -378,6 +379,10 @@ class ActionCableConnector extends BaseActionCableConnector {
   // eslint-disable-next-line class-methods-use-this
   onVirtualClinicActivity = data => {
     emitter.emit('virtualClinicActivity', data);
+  };
+
+  onVirtualClinicAlertsUpdated = data => {
+    this.app.$store.dispatch('virtualClinic/setAlertCounts', data.counts);
   };
 
   onInternalChatMessageUpdated = data => {
