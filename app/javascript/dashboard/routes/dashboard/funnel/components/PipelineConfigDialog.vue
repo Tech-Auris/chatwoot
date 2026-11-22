@@ -197,7 +197,7 @@ defineExpose({ open });
     overflow-y-auto
     @confirm="save"
   >
-    <div class="flex flex-col gap-4">
+    <div class="flex flex-col gap-4 p-0.5">
       <Input
         v-model="name"
         :label="t('PIPELINES.CONFIG.NAME')"
