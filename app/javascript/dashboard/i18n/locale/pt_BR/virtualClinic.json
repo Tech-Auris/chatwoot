@@ -187,9 +187,16 @@
       "SAVED": "Perfil atualizado.",
       "SAVE_ERROR": "Não foi possível salvar o perfil."
     },
+    "MEMBER_SETTINGS": {
+      "OPEN": "Configurações da {name}",
+      "TITLE": "Configurações da {name}",
+      "NAME": "Nome",
+      "NAME_HINT": "Aparece no mapa e nas conversas da Clínica virtual, para toda a equipe. Em branco, volta ao nome padrão.",
+      "SAVE": "Salvar",
+      "SAVED": "Configurações salvas.",
+      "SAVE_ERROR": "Não foi possível salvar as configurações."
+    },
     "SUMMARY": {
-      "OPEN": "Resumos da {name}",
-      "TITLE": "Resumos da {name}",
       "QUESTION": "Gostaria que a {name} envie o resumo para mim:",
       "PERIODS": {
         "DAILY": "Diário",
@@ -203,10 +210,8 @@
       },
       "HOUR": "Horário",
       "WHERE": "O resumo chega nas suas notificações e na conversa com a {name}. Só você recebe.",
-      "SAVE": "Salvar",
       "SAVED": "Pronto! Os resumos chegam no horário escolhido.",
-      "TURNED_OFF": "Resumos desligados.",
-      "SAVE_ERROR": "Não foi possível salvar os resumos."
+      "TURNED_OFF": "Resumos desligados."
     },
     "SEASONS": {
       "CHRISTMAS": "Natal",

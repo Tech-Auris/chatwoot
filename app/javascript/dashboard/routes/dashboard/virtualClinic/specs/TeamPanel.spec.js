@@ -178,7 +178,7 @@ describe('TeamPanel', () => {
     expect(wrapper.emitted('selectMember')).toEqual([['manager']]);
   });
 
-  it("opens the manager's summaries from the gear, for whoever manages the team", async () => {
+  it('opens the settings of each teammate from the gear, for whoever manages the team', async () => {
     const wrapper = mountPanel({
       visible: true,
       chat_enabled: true,
@@ -187,10 +187,22 @@ describe('TeamPanel', () => {
     });
 
     const gears = wrapper.findAll(
-      'button[title="VIRTUAL_CLINIC.SUMMARY.OPEN"]'
+      'button[title="VIRTUAL_CLINIC.MEMBER_SETTINGS.OPEN"]'
     );
-    expect(gears).toHaveLength(1);
+    expect(gears).toHaveLength(2);
     await gears[0].trigger('click');
-    expect(wrapper.emitted('summarySettings')).toHaveLength(1);
+    await gears[1].trigger('click');
+    expect(wrapper.emitted('memberSettings')).toEqual([
+      ['secretary'],
+      ['manager'],
+    ]);
+  });
+
+  it('hides the gears from who does not manage the team', () => {
+    const wrapper = mountPanel({ visible: true, chat_enabled: false, members });
+
+    expect(
+      wrapper.findAll('button[title="VIRTUAL_CLINIC.MEMBER_SETTINGS.OPEN"]')
+    ).toHaveLength(0);
   });
 });

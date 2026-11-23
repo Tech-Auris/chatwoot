@@ -187,9 +187,16 @@
       "SAVED": "Profile updated.",
       "SAVE_ERROR": "Couldn't save the profile."
     },
+    "MEMBER_SETTINGS": {
+      "OPEN": "{name}'s settings",
+      "TITLE": "{name}'s settings",
+      "NAME": "Name",
+      "NAME_HINT": "Shown on the map and in the Clínica virtual conversations, for the whole team. Leave it blank to go back to the default name.",
+      "SAVE": "Save",
+      "SAVED": "Settings saved.",
+      "SAVE_ERROR": "Couldn't save the settings."
+    },
     "SUMMARY": {
-      "OPEN": "{name}'s summaries",
-      "TITLE": "{name}'s summaries",
       "QUESTION": "I'd like {name} to send me a summary:",
       "PERIODS": {
         "DAILY": "Daily",
@@ -203,10 +210,8 @@
       },
       "HOUR": "Time",
       "WHERE": "The summary arrives in your notifications and in your chat with {name}. Only you get it.",
-      "SAVE": "Save",
       "SAVED": "Done! The summaries arrive at the time you chose.",
-      "TURNED_OFF": "Summaries turned off.",
-      "SAVE_ERROR": "Couldn't save the summaries."
+      "TURNED_OFF": "Summaries turned off."
     },
     "SEASONS": {
       "CHRISTMAS": "Christmas",

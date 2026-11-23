@@ -13,7 +13,7 @@ import EditorPanel from './components/EditorPanel.vue';
 import AvatarEditor from './components/AvatarEditor.vue';
 import NewsPanel from './components/NewsPanel.vue';
 import ProfileEditor from './components/ProfileEditor.vue';
-import SummarySettings from './components/SummarySettings.vue';
+import MemberSettings from './components/MemberSettings.vue';
 import { useHelenaNews } from './composables/useHelenaNews';
 import { FLOORS, sheetForUser } from './engine/layout';
 import { SUGGESTED } from './engine/seasons';
@@ -72,13 +72,11 @@ const { status } = useVirtualClinicStatus(
 // an AI teammate's (from the team panel, or while editing the clinic).
 const avatarFor = ref(null);
 const editingProfile = ref(false);
-// The gear next to the manager: her summaries for this person.
-const summarySettings = ref(false);
-const managerName = computed(
+// The gear next to an AI teammate: their name (and the manager's summaries).
+const settingsFor = ref('');
+const settingsName = computed(
   () =>
-    editor.layout.team.manager?.name ||
-    aiTeam.value?.members.find(m => m.persona === 'manager')?.name ||
-    ''
+    aiTeam.value?.members.find(m => m.persona === settingsFor.value)?.name || ''
 );
 // The look picked from "Editar perfil": saved with the profile, not before.
 const profileAvatar = ref(null);
@@ -232,7 +230,7 @@ onMounted(() => {
       @edit="startEditing"
       @edit-avatar="avatarFor = { persona: $event || null }"
       @edit-profile="openProfile"
-      @summary-settings="summarySettings = true"
+      @member-settings="settingsFor = $event"
     />
     <ClinicMap
       ref="map"
@@ -264,10 +262,13 @@ onMounted(() => {
       :news="shownNews"
       @close="closeChat"
     />
-    <SummarySettings
-      v-if="summarySettings"
-      :name="managerName"
-      @close="summarySettings = false"
+    <MemberSettings
+      v-if="settingsFor"
+      :persona="settingsFor"
+      :name="settingsName"
+      :editor="editor"
+      @renamed="load(route.params.accountId)"
+      @close="settingsFor = ''"
     />
     <ProfileEditor
       v-if="editingProfile"
