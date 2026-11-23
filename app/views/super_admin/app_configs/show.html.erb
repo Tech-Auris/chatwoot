@@ -60,6 +60,10 @@
   <%= render 'autentique_connection_panel' %>
 <% end %>
 
+<% if @config == 'google' %>
+  <%= render 'agenda_google_connection_panel' %>
+<% end %>
+
 <% content_for :javascript do %>
   <script>
   document.addEventListener('DOMContentLoaded', () => {

@@ -1,0 +1,41 @@
+{
+  "AGENDA": {
+    "TITLE": "Agenda",
+    "SUBTITLE": "A agenda da clínica, lida na hora do ERP ou do calendário.",
+    "VIEW": {
+      "DAY": "Dia",
+      "WEEK": "Semana"
+    },
+    "TODAY": "Hoje",
+    "PREVIOUS": "Anterior",
+    "NEXT": "Próximo",
+    "DATE": "Data",
+    "PROFESSIONAL": "Profissional",
+    "ALL_PROFESSIONALS": "Todos os profissionais",
+    "NO_PROFESSIONAL": "Sem profissional",
+    "APPOINTMENTS_COUNT": "Nenhum agendamento | 1 agendamento | {count} agendamentos",
+    "EMPTY_DAY": "Nenhum agendamento neste dia.",
+    "ERROR": "Não foi possível carregar a agenda. Tente de novo em alguns minutos.",
+    "STATUS": {
+      "SCHEDULED": "Agendado",
+      "CONFIRMED": "Confirmado",
+      "RESCHEDULED": "Reagendado",
+      "WAITING": "Aguardando",
+      "IN_PROGRESS": "Em atendimento",
+      "ATTENDED": "Atendido",
+      "NO_SHOW": "Faltou",
+      "CANCELED": "Cancelado"
+    },
+    "APPOINTMENT": {
+      "TITLE": "Agendamento",
+      "CLOSE": "Fechar",
+      "PATIENT": "Paciente",
+      "PROFESSIONAL": "Profissional",
+      "DATE": "Data",
+      "STARTS_AT": "Início",
+      "ENDS_AT": "Fim",
+      "PROCEDURE": "Procedimento",
+      "STATUS": "Status"
+    }
+  }
+}

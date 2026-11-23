@@ -1,0 +1,41 @@
+{
+  "AGENDA": {
+    "TITLE": "Agenda",
+    "SUBTITLE": "The clinic's agenda, read live from its ERP or calendar.",
+    "VIEW": {
+      "DAY": "Day",
+      "WEEK": "Week"
+    },
+    "TODAY": "Today",
+    "PREVIOUS": "Previous",
+    "NEXT": "Next",
+    "DATE": "Date",
+    "PROFESSIONAL": "Professional",
+    "ALL_PROFESSIONALS": "All professionals",
+    "NO_PROFESSIONAL": "No professional",
+    "APPOINTMENTS_COUNT": "No appointments | 1 appointment | {count} appointments",
+    "EMPTY_DAY": "No appointments on this day.",
+    "ERROR": "Could not load the agenda. Try again in a few minutes.",
+    "STATUS": {
+      "SCHEDULED": "Scheduled",
+      "CONFIRMED": "Confirmed",
+      "RESCHEDULED": "Rescheduled",
+      "WAITING": "Waiting",
+      "IN_PROGRESS": "In progress",
+      "ATTENDED": "Attended",
+      "NO_SHOW": "No-show",
+      "CANCELED": "Canceled"
+    },
+    "APPOINTMENT": {
+      "TITLE": "Appointment",
+      "CLOSE": "Close",
+      "PATIENT": "Patient",
+      "PROFESSIONAL": "Professional",
+      "DATE": "Date",
+      "STARTS_AT": "Starts at",
+      "ENDS_AT": "Ends at",
+      "PROCEDURE": "Procedure",
+      "STATUS": "Status"
+    }
+  }
+}

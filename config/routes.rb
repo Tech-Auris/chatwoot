@@ -94,6 +94,8 @@ Rails.application.routes.draw do
           get 'scheduled_messages', to: 'scheduled_messages#index', defaults: { format: :json }
           post 'scheduled_messages/conversation', to: 'scheduled_messages#conversation', defaults: { format: :json }
           delete 'scheduled_messages/:id', to: 'scheduled_messages#destroy', defaults: { format: :json }
+          # ERP → Agenda: the clinic's agenda read live from its ERP or calendar.
+          get 'agenda', to: 'agenda#show', defaults: { format: :json }
           namespace :captain do
             resource :preferences, only: [:show, :update]
             resources :assistants do
@@ -1010,6 +1012,15 @@ Rails.application.routes.draw do
         # Token check behind Super Admin → Settings → Autentique.
         resource :autentique, only: [], controller: 'autentique' do
           post :test_connection
+        end
+
+        # The Google account the clinics share their calendars with, read by
+        # ERP → Agenda. Connected under Super Admin → Settings → Google.
+        resource :agenda_google, only: [], controller: 'agenda_google' do
+          post :connect
+          get :callback
+          post :test_connection
+          delete :disconnect
         end
       end
 

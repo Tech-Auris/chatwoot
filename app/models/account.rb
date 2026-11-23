@@ -11,6 +11,7 @@
 #  custom_attributes                :jsonb
 #  domain                           :string(100)
 #  environment                      :integer          default("test"), not null
+#  erp_menu_enabled                 :boolean          default(FALSE), not null
 #  feature_flags                    :bigint           default(0), not null
 #  funnel_enabled                   :boolean          default(FALSE), not null
 #  help_center_menu_enabled         :boolean          default(FALSE), not null

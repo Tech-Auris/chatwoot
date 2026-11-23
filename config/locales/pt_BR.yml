@@ -376,6 +376,21 @@ pt_BR:
         origin_date: 'Data de origem'
         assignee: 'Agente atribuído'
         conversation_id: 'Número da conversa'
+  agenda:
+    errors:
+      not_configured: "Esta conta não tem um ERP ou agenda configurado"
+      invalid_period: "Escolha um período de até %{days} dias"
+      source_failed: "Não foi possível ler a agenda: %{error}"
+      unauthorized: "o ERP recusou o token da integração (inválido ou inativo)"
+      erp_status: "o ERP respondeu com erro %{status}"
+      unreachable: "o ERP não respondeu"
+      api_url_missing: "o endereço da API do ERP não está configurado no servidor"
+      calendar_missing: "a integração do Google Calendar não tem nenhuma agenda (calendar_id) configurada"
+      calendar_not_shared: "a agenda %{calendar} não existe ou não está compartilhada com %{email}"
+      google_status: "o Google respondeu com erro %{status}"
+      google_not_connected: "a conta Google da Auris não está conectada (Super Admin → Configurações → Google)"
+      google_expired: "a conexão com a conta Google expirou ou foi revogada; conecte de novo em Super Admin → Configurações → Google"
+      google_no_refresh_token: "o Google não devolveu um token de acesso permanente; remova o acesso da Auris na conta Google e conecte de novo"
   funnel:
     appointments:
       external_id_required: "Este lead tem mais de um agendamento aberto: envie o external_id do agendamento"
