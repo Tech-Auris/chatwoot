@@ -80,7 +80,7 @@ export const FLOORS = [
     room: 'KITCHEN',
   },
   {
-    block: '5_pisos/madeira_gerencia.png',
+    block: '5_pisos/carpete_cinza.png',
     x: WING,
     y: 64,
     w: 320,
@@ -215,7 +215,7 @@ export const ITEMS = [
   // Two monitors seen from behind, facing Luciano.
   { sprite: `${M}monitor_costas.png`, x: 758, y: 150, sortY: 197 },
   { sprite: `${M}monitor_costas.png`, x: 787, y: 150, sortY: 197 },
-  { sprite: `${M}poltrona.png`, x: 652, y: 150 },
+  { sprite: `${M}poltrona_lateral.png`, x: 652, y: 186, flip: true },
   { sprite: `${M}planta_2.png`, x: 930, y: 196 },
   // Gerência
   { sprite: `${G}quadro_graficos.png`, x: 972, y: 8 },
