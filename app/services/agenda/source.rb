@@ -26,14 +26,17 @@ class Agenda::Source
 
   attr_reader :integration
 
+  # Only for the accounts with the ERP menu released (`erp_menu_enabled`).
   def self.for(account)
+    return unless account.erp_menu_enabled?
+
     source = SOURCES[account.erp_source_id]
     integration = source && account.account_integrations.find_by(erp_source_id: account.erp_source_id)
     source.constantize.new(integration) if integration
   end
 
   def self.available?(account)
-    SOURCES.key?(account.erp_source_id) && account.account_integrations.exists?(erp_source_id: account.erp_source_id)
+    account.erp_menu_enabled? && SOURCES.key?(account.erp_source_id) && account.account_integrations.exists?(erp_source_id: account.erp_source_id)
   end
 
   def initialize(integration)
