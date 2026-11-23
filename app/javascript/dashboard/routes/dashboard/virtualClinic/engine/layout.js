@@ -374,7 +374,6 @@ export const ROOMS = [
   { key: 'MANAGEMENT', x: 1272, y: 114, alignRight: true },
   { key: 'KITCHEN', x: 1272, y: 392, alignRight: true },
   { key: 'MARKETING', x: 648, y: 72 },
-  { key: 'CORRIDOR', x: 1272, y: 272, alignRight: true },
 ];
 
 // The clinic as drawn: the fixed rooms (floor and wall areas, partition)

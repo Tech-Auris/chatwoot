@@ -71,7 +71,7 @@ RSpec.describe VirtualClinic::LayoutValidator do
   it 'accepts the sala de marketing, its art and the new wing' do
     assets.push('14_marketing/painel_monitores.png')
     layout['items'] << { 'sprite' => '14_marketing/painel_monitores.png', 'x' => 668, 'y' => 8 }
-    layout['rooms'].merge!('MARKETING' => 'Marketing', 'CORRIDOR' => 'Corredor')
+    layout['rooms']['MARKETING'] = 'Marketing'
     layout['team']['marketing'] = { 'sheet' => '8_pessoas/pessoa_01.png', 'x' => 1200, 'y' => 90 }
     expect(errors_for(layout)).to be_empty
   end

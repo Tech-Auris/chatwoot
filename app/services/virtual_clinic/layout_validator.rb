@@ -12,7 +12,7 @@ class VirtualClinic::LayoutValidator
   WALLS = 4
   MAX_ITEMS = 200
   NAME_MAX = 40
-  ROOMS = %w[RECEPTION WAITING_ROOM MANAGEMENT KITCHEN MARKETING CORRIDOR].freeze
+  ROOMS = %w[RECEPTION WAITING_ROOM MANAGEMENT KITCHEN MARKETING].freeze
   FOLDERS = {
     floors: %r{\A5_pisos/},
     walls: %r{\A6_paredes/},
