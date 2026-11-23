@@ -4,7 +4,8 @@ RSpec.describe Agenda::Sources::Erp2 do
   subject(:source) { described_class.new(integration) }
 
   let(:api) { 'https://erp.example.com/v1/api' }
-  let(:integration) { create(:account_integration, config: { 'access_token' => 'tok-123' }) }
+  let(:erp_source) { create(:erp_source, :with_fields, api_url: "#{api}/") }
+  let(:integration) { create(:account_integration, erp_source: erp_source, config: { 'access_token' => 'tok-123' }) }
   let(:day) { Date.new(2026, 11, 24) }
   let(:headers) { { 'x-access-token' => 'tok-123' } }
 
@@ -18,8 +19,6 @@ RSpec.describe Agenda::Sources::Erp2 do
     { agendamento_id: id, data: '24-11-2026', horario: time, duracao: duration, paciente_id: patient, profissional_id: 25,
       procedimento_id: 3, status_id: status, notas: 'not kept' }
   end
-
-  around { |example| with_modified_env(AGENDA_ERP_2_API_URL: "#{api}/") { example.run } }
 
   before do
     stub_api('professional/list', [{ profissional_id: 25, nome: 'Dra. Ana' }, { profissional_id: 26, nome: nil }], query: { ativo: '1' })
@@ -85,9 +84,9 @@ RSpec.describe Agenda::Sources::Erp2 do
     expect { source.agenda(day, day) }.to raise_error(Agenda::Source::Error, I18n.t('agenda.errors.unreachable'))
   end
 
-  it 'explains when the API address is not configured' do
-    with_modified_env(AGENDA_ERP_2_API_URL: nil) do
-      expect { source.agenda(day, day) }.to raise_error(Agenda::Source::Error, I18n.t('agenda.errors.api_url_missing'))
-    end
+  it 'explains when the API address is not filled in on the ERP' do
+    erp_source.update!(api_url: '')
+
+    expect { source.agenda(day, day) }.to raise_error(Agenda::Source::Error, I18n.t('agenda.errors.api_url_missing'))
   end
 end

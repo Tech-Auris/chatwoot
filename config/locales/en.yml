@@ -409,7 +409,7 @@ en:
       unauthorized: "the ERP refused the integration token (invalid or inactive)"
       erp_status: "the ERP answered with error %{status}"
       unreachable: "the ERP did not answer"
-      api_url_missing: "the ERP API address is not configured on the server"
+      api_url_missing: "the ERP API address is not filled in (Super Admin → ERPs, Api url field)"
       calendar_missing: "the Google Calendar integration has no calendar (calendar_id) configured"
       calendar_not_shared: "the calendar %{calendar} does not exist or is not shared with %{email}"
       google_status: "Google answered with error %{status}"

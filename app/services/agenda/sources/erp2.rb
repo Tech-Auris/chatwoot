@@ -1,6 +1,6 @@
 # The agenda of ERP 2 (`erp_sources` id 2), read from its REST API with the
-# account's `access_token` (header `x-access-token`). The base URL comes from
-# AGENDA_ERP_2_API_URL.
+# account's `access_token` (header `x-access-token`). The base URL is the ERP's
+# `api_url`, filled in on the ERP in Super Admin.
 #
 # - professionals: `professional/list?ativo=1`
 # - appointments: `appoints/search` for the period, every professional at once.
@@ -138,6 +138,9 @@ class Agenda::Sources::Erp2 < Agenda::Source
   end
 
   def base_url
-    ENV.fetch('AGENDA_ERP_2_API_URL') { raise Agenda::Source::Error, I18n.t('agenda.errors.api_url_missing') }.chomp('/')
+    url = integration.erp_source.api_url.presence
+    raise Agenda::Source::Error, I18n.t('agenda.errors.api_url_missing') unless url
+
+    url.chomp('/')
   end
 end
