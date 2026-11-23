@@ -1,6 +1,6 @@
 class SuperAdmin::AppConfigsController < SuperAdmin::ApplicationController
   # OpenAI models of the Clínica virtual AI team (the clinic pays with its own key).
-  VIRTUAL_CLINIC_MODEL_CONFIGS = %w[VIRTUAL_CLINIC_SECRETARY_MODEL VIRTUAL_CLINIC_MANAGER_MODEL].freeze
+  VIRTUAL_CLINIC_MODEL_CONFIGS = %w[VIRTUAL_CLINIC_SECRETARY_MODEL VIRTUAL_CLINIC_MANAGER_MODEL VIRTUAL_CLINIC_MARKETING_MODEL].freeze
 
   before_action :set_config
   before_action :allowed_configs

@@ -15,6 +15,10 @@ const both = (key, target) => [
   { key: `clara_${key}`, who: 'secretary', ...target },
   { key: `helena_${key}`, who: 'manager', ...target },
 ];
+const all = (key, target) => [
+  ...both(key, target),
+  { key: `luciano_${key}`, who: 'marketing', ...target },
+];
 
 export const TRIPS = [
   {
@@ -33,12 +37,29 @@ export const TRIPS = [
     face: 'up',
     talkWith: 'secretary',
   },
+  // Luciano only talks to Helena, and she to him; he never goes to Clara.
+  {
+    key: 'luciano_visits_helena',
+    who: 'marketing',
+    visit: 'manager',
+    offset: [0, 50],
+    face: 'up',
+    talkWith: 'manager',
+  },
+  {
+    key: 'helena_visits_luciano',
+    who: 'manager',
+    visit: 'marketing',
+    offset: [0, 50],
+    face: 'up',
+    talkWith: 'marketing',
+  },
   ...both('waiting_room', {
     room: 'WAITING_ROOM',
     offset: [312, 102],
     face: 'down',
   }),
-  ...both('water', {
+  ...all('water', {
     near: '4_copa/bebedouro.png',
     offset: [-4, 21],
     face: 'up',
@@ -92,6 +113,20 @@ export const TRIPS = [
     who: 'manager',
     near: '3_gerencia/diploma_2.png',
     offset: [0, 39],
+    face: 'up',
+  },
+  {
+    key: 'luciano_monitors',
+    who: 'marketing',
+    near: '14_marketing/painel_monitores.png',
+    offset: [34, 48],
+    face: 'up',
+  },
+  {
+    key: 'luciano_campaign_board',
+    who: 'marketing',
+    near: '14_marketing/quadro_campanhas.png',
+    offset: [14, 48],
     face: 'up',
   },
 ];

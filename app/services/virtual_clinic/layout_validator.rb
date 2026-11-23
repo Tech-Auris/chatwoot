@@ -4,19 +4,19 @@
 # Whether the team can be reached from the entrance is checked by the editor,
 # which has the walk grid.
 class VirtualClinic::LayoutValidator
-  WORLD_WIDTH = 960
+  WORLD_WIDTH = 1280
   WORLD_HEIGHT = 640
   FRAME_WIDTH = 32
   FRAME_HEIGHT = 64
-  FLOORS = 4
-  WALLS = 3
+  FLOORS = 6
+  WALLS = 4
   MAX_ITEMS = 200
   NAME_MAX = 40
-  ROOMS = %w[RECEPTION WAITING_ROOM MANAGEMENT KITCHEN].freeze
+  ROOMS = %w[RECEPTION WAITING_ROOM MANAGEMENT KITCHEN MARKETING].freeze
   FOLDERS = {
     floors: %r{\A5_pisos/},
     walls: %r{\A6_paredes/},
-    items: %r{\A([1-4]_[a-z_]+|#{VirtualClinic::Season.folders.join('|')})/},
+    items: %r{\A([1-4]_[a-z_]+|14_marketing|#{VirtualClinic::Season.folders.join('|')})/},
     team: %r{\A(7_personagens|8_pessoas)/}
   }.freeze
 

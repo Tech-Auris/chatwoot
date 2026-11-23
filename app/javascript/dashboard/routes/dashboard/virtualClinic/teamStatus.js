@@ -63,3 +63,7 @@ export const faceLines = (persona, status, aiTeam, t) =>
         text: text ? `${label} · ${text}` : label,
       };
     });
+
+// Money in the marketing teammate's status (R$ 85,40).
+export const formatReais = value =>
+  value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });

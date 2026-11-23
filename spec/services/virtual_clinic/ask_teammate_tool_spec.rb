@@ -46,6 +46,22 @@ RSpec.describe VirtualClinic::AskTeammateTool do
     end
   end
 
+  it 'lets Luciano ask Helena, telling the map he went to her' do
+    marketing = VirtualClinic::Persona.find!('marketing', account: account)
+    marketing_answer = VirtualClinicThread.create!(account: account, user: user, persona: :marketing)
+                                          .messages.create!(role: :assistant, status: :pending)
+    ask_manager = described_class.new(answer: marketing_answer, asker: marketing, teammate: manager)
+    answer_with('Fechamos o mês com 120 leads.')
+
+    expect(ask_manager.name).to eq('perguntar_manager')
+    expect(ask_manager.execute(pergunta: 'Como foi o mês?')).to eq('Fechamos o mês com 120 leads.')
+    expect(VirtualClinicThread.find_by!(parent_message: marketing_answer).persona).to eq('manager')
+    expect(ActionCableBroadcastJob).to have_been_enqueued.with(
+      [user.pubsub_token], 'virtual_clinic.activity',
+      { persona: 'marketing', target: 'manager', state: 'asking', account_id: account.id }
+    )
+  end
+
   it 'gives up softly when the teammate takes too long or fails' do
     allow(Timeout).to receive(:timeout).and_raise(Timeout::Error)
 

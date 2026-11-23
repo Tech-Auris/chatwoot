@@ -36,7 +36,7 @@ import { createAvatar } from '../engine/movement';
 import { seatAt, seatsOf, withoutSeats } from '../engine/seats';
 import { inSeason } from '../engine/seasons';
 import { useClinicPresence } from '../composables/useClinicPresence';
-import { faceLines, isFaded } from '../teamStatus';
+import { faceLines, formatReais, isFaded } from '../teamStatus';
 
 const props = defineProps({
   aiTeam: { type: Object, default: null },
@@ -207,8 +207,22 @@ watch(
   restartBehavior
 );
 
-// The manager's numbers of the month, one at a time (agents don't get them).
+// The month numbers over the teammate's head, one at a time (agents don't
+// get the manager's).
 const monthLine = persona => {
+  if (persona === 'marketing' && props.status?.marketing) {
+    const { active_campaigns: campaigns, cost_per_appointment: cost } =
+      props.status.marketing;
+    const ads = [t('VIRTUAL_CLINIC.MAP.CAMPAIGNS', { campaigns })];
+    if (cost !== null) {
+      ads.push(
+        t('VIRTUAL_CLINIC.MAP.COST_PER_APPOINTMENT', {
+          cost: formatReais(cost),
+        })
+      );
+    }
+    return [{ key: 'month', text: ads[rotation.value % ads.length] }];
+  }
   if (persona !== 'manager' || !props.status?.manager) return [];
   const {
     leads,

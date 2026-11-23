@@ -2,7 +2,8 @@
   "VIRTUAL_CLINIC": {
     "PERSONAS": {
       "SECRETARY": "Secretary",
-      "MANAGER": "Manager"
+      "MANAGER": "Manager",
+      "MARKETING": "Marketing"
     },
     "AI_TEAM": {
       "TITLE": "AI team ({count})",
@@ -41,7 +42,8 @@
       "SEND_ERROR": "Could not send the question. Try again.",
       "SUBTITLE": {
         "SECRETARY": "Answers about patients being served and follow-ups",
-        "MANAGER": "Answers anything about the clinic, with numbers"
+        "MANAGER": "Answers anything about the clinic, with numbers",
+        "MARKETING": "Answers about campaigns, ads and conversions"
       },
       "ALERT": "❗ {message}",
       "ALERT_PATIENT": "{name} · conversation #{id} · waiting for {minutes} min",
@@ -54,7 +56,7 @@
     },
     "SETTINGS": {
       "TITLE": "Virtual clinic",
-      "DESCRIPTION": "Talking to Clara and Helena uses this OpenAI key. Cap how many questions each person can ask per day.",
+      "DESCRIPTION": "Talking to the AI team uses this OpenAI key. Cap how many questions each person can ask per day.",
       "DAILY_LIMIT": "Questions per person per day",
       "NO_LIMIT": "No limit",
       "SAVE": "Save",
@@ -84,11 +86,20 @@
       "AGENTS_LIST": "agents",
       "TEAMS_LIST": "teams",
       "PERGUNTAR_SECRETARY": "secretary",
+      "ANALYTICS_MARKETING": "ads",
+      "CAMPANHAS_WHATSAPP": "WhatsApp campaigns",
+      "TEMPLATES_META": "Meta templates",
+      "CONVERSOES_PIXEL": "Pixel",
+      "PUBLICOS": "audiences",
+      "PERGUNTAR_MARKETING": "marketing",
+      "PERGUNTAR_MANAGER": "manager",
       "RENDER_CHART": "chart"
     },
     "STATUS": {
       "MANAGER": "{leads} leads this month · {rate}% conversion",
-      "MANAGER_LEADS": "{leads} leads this month"
+      "MANAGER_LEADS": "{leads} leads this month",
+      "MARKETING": "{campaigns} active campaigns · {cost} per appointment",
+      "MARKETING_CAMPAIGNS": "{campaigns} active campaigns this month"
     },
     "FACES": {
       "ATTENDANCE": "Patient care",
@@ -106,12 +117,16 @@
       "LEADS": "📊 {leads} leads this month",
       "APPOINTMENTS": "📅 {appointments} appointments this month",
       "CONVERSION": "📈 {rate}% conversion this month",
+      "CAMPAIGNS": "📣 {campaigns} active campaigns this month",
+      "COST_PER_APPOINTMENT": "💰 {cost} per appointment",
       "LOAD_ERROR": "Could not load the clinic map.",
       "ROOMS": {
         "RECEPTION": "Reception",
         "WAITING_ROOM": "Waiting room",
         "MANAGEMENT": "Management",
-        "KITCHEN": "Kitchen"
+        "KITCHEN": "Kitchen",
+        "MARKETING": "Marketing room",
+        "CORRIDOR": "Corridor"
       },
       "ZOOM_IN": "Zoom in",
       "ZOOM_OUT": "Zoom out",
@@ -139,9 +154,10 @@
       "FLOORS": "Floors",
       "WALLS": "Walls",
       "WALL_AREAS": {
-        "0": "Reception and waiting room",
-        "1": "Management",
-        "2": "Kitchen"
+        "RECEPTION_WAITING": "Reception and waiting room",
+        "MANAGEMENT": "Management",
+        "KITCHEN": "Kitchen",
+        "MARKETING": "Marketing room"
       },
       "FURNITURE": "Furniture",
       "FURNITURE_HINT": "Click a piece to put it in its room, then drag it on the map.",
@@ -190,9 +206,16 @@
       "SAVED": "Profile updated.",
       "SAVE_ERROR": "Couldn't save the profile."
     },
+    "MEMBER_SETTINGS": {
+      "OPEN": "{name}'s settings",
+      "TITLE": "{name}'s settings",
+      "NAME": "Name",
+      "NAME_HINT": "Shown on the map and in the Clínica virtual conversations, for the whole team. Leave it blank to go back to the default name.",
+      "SAVE": "Save",
+      "SAVED": "Settings saved.",
+      "SAVE_ERROR": "Couldn't save the settings."
+    },
     "SUMMARY": {
-      "OPEN": "{name}'s summaries",
-      "TITLE": "{name}'s summaries",
       "QUESTION": "I'd like {name} to send me a summary:",
       "PERIODS": {
         "DAILY": "Daily",
@@ -206,10 +229,8 @@
       },
       "HOUR": "Time",
       "WHERE": "The summary arrives in your notifications and in your chat with {name}. Only you get it.",
-      "SAVE": "Save",
       "SAVED": "Done! The summaries arrive at the time you chose.",
-      "TURNED_OFF": "Summaries turned off.",
-      "SAVE_ERROR": "Couldn't save the summaries."
+      "TURNED_OFF": "Summaries turned off."
     },
     "SEASONS": {
       "CHRISTMAS": "Christmas",

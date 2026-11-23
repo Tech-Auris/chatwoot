@@ -19,7 +19,6 @@ secretary:
     - mensagens_agendadas
     - transferencias_ia_humano
     - buscar_contato
-    - resumo_periodo
   suggestions:
     - Quem você está atendendo agora?
     - Quem está esperando resposta há mais tempo?
@@ -27,9 +26,10 @@ secretary:
 manager:
   default_name: Helena
   role: gerente
-  scope: números da clínica, funil, campanhas, agendamentos e comparação entre períodos
+  scope: números da clínica, funil, agendamentos, faltas, desempenho da equipe e comparação entre períodos
   delegates_to:
     - secretary
+    - marketing
   charts: true
   restricted: true
   model_config_key: VIRTUAL_CLINIC_MANAGER_MODEL
@@ -58,4 +58,28 @@ manager:
   suggestions:
     - Como foi este mês comparado ao anterior?
     - Onde estamos perdendo mais pacientes?
+    - Quais atendentes converteram mais este mês?
+marketing:
+  default_name: Luciano
+  role: marketing
+  scope: campanhas de anúncios (Meta), campanhas de WhatsApp, templates da Meta, conversões do Pixel, públicos e conversão do funil por origem e campanha
+  delegates_to:
+    - manager
+  charts: true
+  restricted: true
+  model_config_key: VIRTUAL_CLINIC_MARKETING_MODEL
+  default_model: gpt-5.1
+  tools:
+    - analytics_marketing
+    - conversao_por_campanha
+    - funil_resumo
+    - funil_etapa
+    - resumo_periodo
+    - campanhas_whatsapp
+    - templates_meta
+    - conversoes_pixel
+    - publicos
+  suggestions:
     - Qual campanha trouxe mais pacientes?
+    - Quanto estou pagando por agendamento?
+    - Como foi o último disparo?

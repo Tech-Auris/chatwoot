@@ -12,7 +12,8 @@ RSpec.describe 'Virtual clinic config API', type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.parsed_body['ai_team']).to include('visible' => true, 'chat_enabled' => false, 'chat_missing' => 'openai_key')
     members = response.parsed_body.dig('ai_team', 'members').map { |member| member.slice('persona', 'name') }
-    expect(members).to eq([{ 'persona' => 'secretary', 'name' => 'Clara' }, { 'persona' => 'manager', 'name' => 'Helena' }])
+    expect(members).to eq([{ 'persona' => 'secretary', 'name' => 'Clara' }, { 'persona' => 'manager', 'name' => 'Helena' },
+                           { 'persona' => 'marketing', 'name' => 'Luciano' }])
     expect(response.parsed_body['ai_team']).to include('daily_question_limit' => 60, 'can_manage_settings' => true)
   end
 
@@ -31,7 +32,7 @@ RSpec.describe 'Virtual clinic config API', type: :request do
     expect(response.parsed_body['ai_team']).to include('visible' => true, 'chat_enabled' => false, 'chat_missing' => nil,
                                                        'manages_team' => false, 'can_edit_layout' => false)
     restricted = response.parsed_body.dig('ai_team', 'members').to_h { |member| member.values_at('persona', 'restricted') }
-    expect(restricted).to eq('secretary' => false, 'manager' => true)
+    expect(restricted).to eq('secretary' => false, 'manager' => true, 'marketing' => true)
   end
 
   it 'lists the decoration packs in season' do

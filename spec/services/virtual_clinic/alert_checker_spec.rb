@@ -22,8 +22,9 @@ RSpec.describe VirtualClinic::AlertChecker do
     alert = account.virtual_clinic_alerts.last
     expect(alert).to have_attributes(persona: 'secretary', rule: 'failed_follow_ups', payload: { 'count' => 1 })
     expect(alert.message).to eq('1 follow-up falhou no envio hoje.')
+    counts = { 'secretary' => 1, 'manager' => 0, 'marketing' => 0 }
     expect(ActionCableBroadcastJob).to have_been_enqueued.with([admin.pubsub_token], 'virtual_clinic.alerts.updated',
-                                                               { counts: { 'secretary' => 1, 'manager' => 0 }, account_id: account.id })
+                                                               { counts: counts, account_id: account.id })
   end
 
   it 'puts the alert in the notifications of administrators and managers only' do

@@ -40,8 +40,8 @@ const mountPanel = (aiTeam, status = null) =>
     global: { stubs: { 'router-link': { template: '<a><slot /></a>' } } },
   });
 
-// The buttons of the list, after the "edit your avatar" one of the header.
-const rows = wrapper => wrapper.findAll('button').slice(1);
+// One button per AI teammate (the gear and the shirt sit beside it).
+const rows = wrapper => wrapper.findAll('.relative > button');
 
 describe('TeamPanel', () => {
   it('lets the user pick a member when the AI team is on', async () => {
@@ -114,6 +114,25 @@ describe('TeamPanel', () => {
     });
   });
 
+  it('lists Luciano with his campaigns and cost per appointment', async () => {
+    const team = [...members, { persona: 'marketing', name: 'Luciano' }];
+    const wrapper = mountPanel(
+      { visible: true, chat_enabled: true, members: team },
+      {
+        secretary: { on_duty: true, active_conversations: 0, in_follow_up: 0 },
+        manager: {
+          month: { leads: 412, appointments: 131, conversion_rate: 31.8 },
+        },
+        marketing: { active_campaigns: 6, cost_per_appointment: 85.4 },
+      }
+    );
+
+    expect(wrapper.text()).toContain('Luciano');
+    expect(wrapper.text()).toContain('VIRTUAL_CLINIC.STATUS.MARKETING');
+    await rows(wrapper)[2].trigger('click');
+    expect(wrapper.emitted('selectMember')).toEqual([['marketing']]);
+  });
+
   it('points to the OpenAI key when it is missing and blocks selection', async () => {
     const wrapper = mountPanel({
       visible: true,
@@ -182,7 +201,7 @@ describe('TeamPanel', () => {
     expect(wrapper.emitted('selectMember')).toEqual([['manager']]);
   });
 
-  it("opens the manager's summaries from the gear, for whoever manages the team", async () => {
+  it('opens the settings of each teammate from the gear, for whoever manages the team', async () => {
     const wrapper = mountPanel({
       visible: true,
       chat_enabled: true,
@@ -191,10 +210,22 @@ describe('TeamPanel', () => {
     });
 
     const gears = wrapper.findAll(
-      'button[title="VIRTUAL_CLINIC.SUMMARY.OPEN"]'
+      'button[title="VIRTUAL_CLINIC.MEMBER_SETTINGS.OPEN"]'
     );
-    expect(gears).toHaveLength(1);
+    expect(gears).toHaveLength(2);
     await gears[0].trigger('click');
-    expect(wrapper.emitted('summarySettings')).toHaveLength(1);
+    await gears[1].trigger('click');
+    expect(wrapper.emitted('memberSettings')).toEqual([
+      ['secretary'],
+      ['manager'],
+    ]);
+  });
+
+  it('hides the gears from who does not manage the team', () => {
+    const wrapper = mountPanel({ visible: true, chat_enabled: false, members });
+
+    expect(
+      wrapper.findAll('button[title="VIRTUAL_CLINIC.MEMBER_SETTINGS.OPEN"]')
+    ).toHaveLength(0);
   });
 });

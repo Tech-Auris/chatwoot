@@ -68,4 +68,27 @@ RSpec.describe VirtualClinic::StatusBuilder do
   it 'brings the month numbers of the Home page for the manager' do
     expect(builder.build.dig(:manager, :month)).to include(:leads, :appointments, :conversion_rate)
   end
+
+  describe 'the ads of the month, for Luciano' do
+    let(:rows) do
+      [{ conversations_count: 10, spend_cents: 30_000, scheduled_count: 4 },
+       { conversations_count: 0, spend_cents: 12_000, scheduled_count: 0 },
+       { conversations_count: 0, spend_cents: 0, scheduled_count: 0 }]
+    end
+
+    before do
+      allow(V2::Reports::CampaignAnalyticsBuilder).to receive(:new)
+        .and_return(instance_double(V2::Reports::CampaignAnalyticsBuilder, build: rows))
+    end
+
+    it 'counts the campaigns that brought leads or spent, and what one appointment cost' do
+      expect(builder.build[:marketing]).to eq(active_campaigns: 2, cost_per_appointment: 105.0)
+    end
+
+    it 'has no cost per appointment without appointments' do
+      rows.first[:scheduled_count] = 0
+
+      expect(builder.build.dig(:marketing, :cost_per_appointment)).to be_nil
+    end
+  end
 end

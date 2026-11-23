@@ -2,7 +2,8 @@
   "VIRTUAL_CLINIC": {
     "PERSONAS": {
       "SECRETARY": "Secretária",
-      "MANAGER": "Gerente"
+      "MANAGER": "Gerente",
+      "MARKETING": "Marketing"
     },
     "AI_TEAM": {
       "TITLE": "Equipe de IA ({count})",
@@ -36,12 +37,13 @@
       "THINKING": "{name} está consultando os dados…",
       "RETRY": "Tentar de novo",
       "CONSULTED": "Consultou: {tools}",
-      "PLACEHOLDER": "Pergunte para a {name}…",
+      "PLACEHOLDER": "Pergunte algo para {name}…",
       "DAILY_LIMIT": "Você chegou ao limite de perguntas de hoje definido pela clínica. Volte amanhã.",
       "SEND_ERROR": "Não consegui enviar a pergunta. Tente de novo.",
       "SUBTITLE": {
         "SECRETARY": "Responde sobre atendimentos e follow-ups",
-        "MANAGER": "Responde tudo sobre a clínica, com números"
+        "MANAGER": "Responde tudo sobre a clínica, com números",
+        "MARKETING": "Responde sobre campanhas, anúncios e conversões"
       },
       "ALERT": "❗ {message}",
       "ALERT_PATIENT": "{name} · conversa #{id} · esperando há {minutes} min",
@@ -54,7 +56,7 @@
     },
     "SETTINGS": {
       "TITLE": "Clínica virtual",
-      "DESCRIPTION": "A conversa com a Clara e a Helena usa esta chave da OpenAI. Limite quantas perguntas cada pessoa pode fazer por dia.",
+      "DESCRIPTION": "A conversa com a equipe de IA usa esta chave da OpenAI. Limite quantas perguntas cada pessoa pode fazer por dia.",
       "DAILY_LIMIT": "Perguntas por pessoa por dia",
       "NO_LIMIT": "Sem limite",
       "SAVE": "Salvar",
@@ -84,11 +86,20 @@
       "AGENTS_LIST": "atendentes",
       "TEAMS_LIST": "times",
       "PERGUNTAR_SECRETARY": "secretária",
+      "ANALYTICS_MARKETING": "anúncios",
+      "CAMPANHAS_WHATSAPP": "campanhas de WhatsApp",
+      "TEMPLATES_META": "templates da Meta",
+      "CONVERSOES_PIXEL": "Pixel",
+      "PUBLICOS": "públicos",
+      "PERGUNTAR_MARKETING": "marketing",
+      "PERGUNTAR_MANAGER": "gerente",
       "RENDER_CHART": "gráfico"
     },
     "STATUS": {
       "MANAGER": "{leads} leads no mês · {rate}% de conversão",
-      "MANAGER_LEADS": "{leads} leads no mês"
+      "MANAGER_LEADS": "{leads} leads no mês",
+      "MARKETING": "{campaigns} campanhas ativas · {cost} por agendamento",
+      "MARKETING_CAMPAIGNS": "{campaigns} campanhas ativas no mês"
     },
     "FACES": {
       "ATTENDANCE": "Atendimento",
@@ -106,12 +117,16 @@
       "LEADS": "📊 {leads} leads este mês",
       "APPOINTMENTS": "📅 {appointments} agendamentos no mês",
       "CONVERSION": "📈 {rate}% de conversão no mês",
+      "CAMPAIGNS": "📣 {campaigns} campanhas ativas no mês",
+      "COST_PER_APPOINTMENT": "💰 {cost} por agendamento",
       "LOAD_ERROR": "Não foi possível carregar o mapa da clínica.",
       "ROOMS": {
         "RECEPTION": "Recepção",
         "WAITING_ROOM": "Sala de espera",
         "MANAGEMENT": "Gerência",
-        "KITCHEN": "Copa"
+        "KITCHEN": "Copa",
+        "MARKETING": "Sala de Marketing",
+        "CORRIDOR": "Corredor"
       },
       "ZOOM_IN": "Aproximar",
       "ZOOM_OUT": "Afastar",
@@ -139,9 +154,10 @@
       "FLOORS": "Pisos",
       "WALLS": "Paredes",
       "WALL_AREAS": {
-        "0": "Recepção e sala de espera",
-        "1": "Gerência",
-        "2": "Copa"
+        "RECEPTION_WAITING": "Recepção e sala de espera",
+        "MANAGEMENT": "Gerência",
+        "KITCHEN": "Copa",
+        "MARKETING": "Sala de Marketing"
       },
       "FURNITURE": "Móveis",
       "FURNITURE_HINT": "Clique num móvel para colocá-lo no ambiente e depois arraste no mapa.",
@@ -190,10 +206,17 @@
       "SAVED": "Perfil atualizado.",
       "SAVE_ERROR": "Não foi possível salvar o perfil."
     },
+    "MEMBER_SETTINGS": {
+      "OPEN": "Configurações da {name}",
+      "TITLE": "Configurações da {name}",
+      "NAME": "Nome",
+      "NAME_HINT": "Aparece no mapa e nas conversas da Clínica virtual, para toda a equipe. Em branco, volta ao nome padrão.",
+      "SAVE": "Salvar",
+      "SAVED": "Configurações salvas.",
+      "SAVE_ERROR": "Não foi possível salvar as configurações."
+    },
     "SUMMARY": {
-      "OPEN": "Resumos da {name}",
-      "TITLE": "Resumos da {name}",
-      "QUESTION": "Gostaria que a {name} envie o resumo para mim:",
+      "QUESTION": "Quero receber o resumo de {name}:",
       "PERIODS": {
         "DAILY": "Diário",
         "WEEKLY": "Semanal",
@@ -206,10 +229,8 @@
       },
       "HOUR": "Horário",
       "WHERE": "O resumo chega nas suas notificações e na conversa com a {name}. Só você recebe.",
-      "SAVE": "Salvar",
       "SAVED": "Pronto! Os resumos chegam no horário escolhido.",
-      "TURNED_OFF": "Resumos desligados.",
-      "SAVE_ERROR": "Não foi possível salvar os resumos."
+      "TURNED_OFF": "Resumos desligados."
     },
     "SEASONS": {
       "CHRISTMAS": "Natal",
