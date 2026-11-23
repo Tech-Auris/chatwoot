@@ -92,7 +92,7 @@ const select = member => {
 
 <template>
   <section
-    class="flex flex-col w-64 shrink-0 gap-4 p-4 border-r border-n-weak bg-n-solid-1"
+    class="flex flex-col w-72 shrink-0 gap-4 p-4 border-r border-n-weak bg-n-solid-1"
   >
     <div class="flex items-center gap-2">
       <h1 class="flex-1 text-lg font-semibold truncate text-n-slate-12">
@@ -140,7 +140,7 @@ const select = member => {
             {{ member.name.charAt(0) }}
           </span>
           <span class="flex flex-col min-w-0">
-            <span class="text-sm font-medium text-n-slate-12">
+            <span class="pr-12 text-sm font-medium text-n-slate-12">
               {{ member.name }}
               <span
                 v-if="alertCounts[member.persona]"
@@ -166,13 +166,14 @@ const select = member => {
             </span>
           </span>
         </button>
-        <span class="absolute flex gap-0.5 top-2 right-1">
+        <span class="absolute flex top-2 right-1">
           <Button
             v-if="aiTeam.manages_team"
             icon="i-lucide-settings"
             variant="ghost"
             color="slate"
             size="xs"
+            class="!w-5"
             :title="
               t('VIRTUAL_CLINIC.MEMBER_SETTINGS.OPEN', { name: member.name })
             "
@@ -184,6 +185,7 @@ const select = member => {
             variant="ghost"
             color="slate"
             size="xs"
+            class="!w-5"
             :title="t('VIRTUAL_CLINIC.AVATAR.EDIT')"
             @click="emit('editAvatar', member.persona)"
           />
