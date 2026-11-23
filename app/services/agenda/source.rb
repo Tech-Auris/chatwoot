@@ -22,7 +22,7 @@ class Agenda::Source
   STATUSES = %w[scheduled confirmed rescheduled waiting in_progress attended no_show canceled].freeze
   MAX_DAYS = 7
   # The source class of each ERP that has one, by `erp_sources` id.
-  SOURCES = {}.freeze
+  SOURCES = { 2 => 'Agenda::Sources::Erp2' }.freeze
 
   attr_reader :integration
 

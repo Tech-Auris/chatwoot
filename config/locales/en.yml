@@ -406,6 +406,10 @@ en:
       not_configured: "This account has no ERP or calendar with an agenda configured"
       invalid_period: "Choose a period of up to %{days} days"
       source_failed: "Could not read the agenda from the ERP: %{error}"
+      unauthorized: "the ERP refused the integration token (invalid or inactive)"
+      erp_status: "the ERP answered with error %{status}"
+      unreachable: "the ERP did not answer"
+      api_url_missing: "the ERP API address is not configured on the server"
   funnel:
     appointments:
       external_id_required: "This lead has more than one open appointment: send the appointment's external_id"
