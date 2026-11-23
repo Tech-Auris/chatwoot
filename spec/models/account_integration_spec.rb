@@ -11,12 +11,12 @@ RSpec.describe AccountIntegration do
     expect(build(:account_integration, account: account)).to be_valid
   end
 
-  it "masks the ERP's secret fields, keeping the last 4 characters of long ones" do
+  it "masks the ERP's secret fields, keeping the first 3 and last 4 characters of long ones" do
     integration = build(:account_integration, erp_source: feegow, config: {
                           'access_token' => 'abcdefghij1234', 'token_overrides' => { '1' => 'x' }, 'local_id' => 7, 'extra' => 'abcdefghij1234'
                         })
 
-    expect(integration.masked_config).to eq('access_token' => '••••1234', 'token_overrides' => '••••', 'local_id' => 7,
+    expect(integration.masked_config).to eq('access_token' => 'abc••••1234', 'token_overrides' => '••••', 'local_id' => 7,
                                             'extra' => 'abcdefghij1234')
   end
 

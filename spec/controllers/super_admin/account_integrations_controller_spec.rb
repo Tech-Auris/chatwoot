@@ -13,7 +13,7 @@ RSpec.describe 'Super Admin account integrations', type: :request do
     get "/super_admin/accounts/#{account.id}"
 
     expect(response.body).to include("/super_admin/account_integrations/#{integration.id}/edit")
-    expect(response.body).to include('••••1234')
+    expect(response.body).to include('seg••••1234')
     expect(response.body).not_to include('segredo-abcd1234')
     expect(response.body).to include("/super_admin/account_integrations/configure?account_id=#{account.id}&amp;erp_source_id=#{feegow.id}")
   end

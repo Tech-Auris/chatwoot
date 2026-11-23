@@ -50,7 +50,7 @@ class AccountIntegration < ApplicationRecord
     @config_values = values.to_h.stringify_keys
   end
 
-  # `config` with each secret cut down to its last 4 characters (`••••1234`).
+  # `config` with each secret cut down to its first 3 and last 4 characters (`abc••••1234`).
   def masked_config
     secrets = erp_source&.secret_keys || []
     config.to_h { |key, value| [key, secrets.include?(key) && value.present? ? mask(value) : value] }
@@ -82,6 +82,6 @@ class AccountIntegration < ApplicationRecord
   end
 
   def mask(value)
-    value.is_a?(String) && value.length > 8 ? "••••#{value.last(4)}" : '••••'
+    value.is_a?(String) && value.length > 10 ? "#{value.first(3)}••••#{value.last(4)}" : '••••'
   end
 end
