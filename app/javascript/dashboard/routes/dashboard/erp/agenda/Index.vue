@@ -72,12 +72,26 @@ const fetchAgenda = async () => {
 
 watch(period, fetchAgenda, { immediate: true, deep: true });
 
+// Appointments without a professional (an event created outside Auris in a
+// single Google calendar, say) share a column and a filter option of their own.
+const NO_PROFESSIONAL = '__none__';
+const keyOf = appointment =>
+  appointment.professional_id
+    ? String(appointment.professional_id)
+    : NO_PROFESSIONAL;
+
 // Professionals from the ERP, plus any that only show up in an appointment.
 const professionalOptions = computed(() => {
   const options = new Map(professionals.value.map(p => [String(p.id), p.name]));
   appointments.value.forEach(a => {
-    if (a.professional_id && !options.has(String(a.professional_id))) {
-      options.set(String(a.professional_id), a.professional_name);
+    const key = keyOf(a);
+    if (!options.has(key)) {
+      options.set(
+        key,
+        key === NO_PROFESSIONAL
+          ? t('AGENDA.NO_PROFESSIONAL')
+          : a.professional_name
+      );
     }
   });
   return [...options]
@@ -87,9 +101,7 @@ const professionalOptions = computed(() => {
 
 const filteredAppointments = computed(() =>
   professionalId.value
-    ? appointments.value.filter(
-        a => String(a.professional_id) === professionalId.value
-      )
+    ? appointments.value.filter(a => keyOf(a) === professionalId.value)
     : appointments.value
 );
 
@@ -99,18 +111,12 @@ const nameOf = id =>
 const dayColumns = computed(() => {
   const ids = professionalId.value
     ? [professionalId.value]
-    : [
-        ...new Set(
-          filteredAppointments.value.map(a => String(a.professional_id))
-        ),
-      ];
+    : [...new Set(filteredAppointments.value.map(keyOf))];
   return ids
     .map(id => ({
       key: id,
       label: nameOf(id),
-      appointments: filteredAppointments.value.filter(
-        a => String(a.professional_id) === id
-      ),
+      appointments: filteredAppointments.value.filter(a => keyOf(a) === id),
     }))
     .sort((a, b) => a.label.localeCompare(b.label, locale.value));
 });

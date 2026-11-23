@@ -405,11 +405,17 @@ en:
     errors:
       not_configured: "This account has no ERP or calendar with an agenda configured"
       invalid_period: "Choose a period of up to %{days} days"
-      source_failed: "Could not read the agenda from the ERP: %{error}"
+      source_failed: "Could not read the agenda: %{error}"
       unauthorized: "the ERP refused the integration token (invalid or inactive)"
       erp_status: "the ERP answered with error %{status}"
       unreachable: "the ERP did not answer"
       api_url_missing: "the ERP API address is not configured on the server"
+      calendar_missing: "the Google Calendar integration has no calendar (calendar_id) configured"
+      calendar_not_shared: "the calendar %{calendar} does not exist or is not shared with %{email}"
+      google_status: "Google answered with error %{status}"
+      google_not_connected: "the Auris Google account is not connected (Super Admin → Settings → Google)"
+      google_expired: "the connection with the Google account expired or was revoked; connect again in Super Admin → Settings → Google"
+      google_no_refresh_token: "Google did not return a permanent access token; remove Auris access in the Google account and connect again"
   funnel:
     appointments:
       external_id_required: "This lead has more than one open appointment: send the appointment's external_id"

@@ -1013,6 +1013,15 @@ Rails.application.routes.draw do
         resource :autentique, only: [], controller: 'autentique' do
           post :test_connection
         end
+
+        # The Google account the clinics share their calendars with, read by
+        # ERP → Agenda. Connected under Super Admin → Settings → Google.
+        resource :agenda_google, only: [], controller: 'agenda_google' do
+          post :connect
+          get :callback
+          post :test_connection
+          delete :disconnect
+        end
       end
 
       # Financeiro: Stripe-backed screens for products, account links,

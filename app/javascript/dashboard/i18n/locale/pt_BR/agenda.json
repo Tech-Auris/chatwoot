@@ -12,6 +12,7 @@
     "DATE": "Data",
     "PROFESSIONAL": "Profissional",
     "ALL_PROFESSIONALS": "Todos os profissionais",
+    "NO_PROFESSIONAL": "Sem profissional",
     "APPOINTMENTS_COUNT": "Nenhum agendamento | 1 agendamento | {count} agendamentos",
     "EMPTY_DAY": "Nenhum agendamento neste dia.",
     "ERROR": "Não foi possível carregar a agenda. Tente de novo em alguns minutos.",

@@ -1,0 +1,44 @@
+<% email = Agenda::GoogleConnection.email %>
+<% connected = Agenda::GoogleConnection.connected? %>
+
+<section class="main-content__body">
+  <hr class="my-8" />
+
+  <h2 class="text-lg font-medium mb-2">Conta Google da Agenda</h2>
+  <p class="text-sm text-slate-500 mb-4">
+    As clínicas que agendam no Google Calendar compartilham a agenda com uma conta Google da Auris. Conecte essa
+    conta aqui, uma vez, para a tela <strong>ERP → Agenda</strong> mostrar os eventos (só leitura). Qual agenda
+    ler fica na integração Google Calendar de cada conta: <code>calendar_id</code> para uma agenda única, ou
+    <code>calendars</code> para uma agenda por profissional, no formato
+    <code>[{"calendar_id": "...", "professional": "Dra. Ana"}]</code>.
+  </p>
+
+  <div class="mb-4 p-3 rounded border border-slate-100 bg-slate-25">
+    <p class="text-sm text-slate-600">
+      <strong>Antes de conectar:</strong> no app OAuth do Google (as credenciais acima), cadastre a URI de redirecionamento
+      <code class="px-1 bg-slate-100 rounded break-all"><%= SuperAdmin::Integrations::AgendaGoogleController.callback_url(request) %></code>,
+      ative a <strong>Google Calendar API</strong> e deixe o app com status de publicação <strong>Em produção</strong>
+      (em "Teste" o Google derruba a conexão a cada 7 dias).
+    </p>
+  </div>
+
+  <div class="mb-4 p-3 rounded border border-slate-100 bg-slate-25">
+    <p class="text-sm text-slate-600">
+      <% if connected %>
+        Conectada com <strong><%= email %></strong>.
+      <% else %>
+        Nenhuma conta Google conectada: a agenda das clínicas do Google Calendar mostra um erro até conectar.
+      <% end %>
+    </p>
+  </div>
+
+  <div class="flex gap-2">
+    <%= button_to (connected ? 'Conectar outra conta' : 'Conectar conta Google'), connect_super_admin_integrations_agenda_google_path,
+                  method: :post, class: 'button' %>
+    <% if connected %>
+      <%= button_to 'Testar conexão', test_connection_super_admin_integrations_agenda_google_path, method: :post, class: 'button button--clear' %>
+      <%= button_to 'Desconectar', disconnect_super_admin_integrations_agenda_google_path, method: :delete,
+                    form: { onsubmit: "return confirm('Desconectar a conta Google da Agenda?')" }, class: 'button button--clear' %>
+    <% end %>
+  </div>
+</section>

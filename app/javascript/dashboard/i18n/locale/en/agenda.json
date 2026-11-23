@@ -12,6 +12,7 @@
     "DATE": "Date",
     "PROFESSIONAL": "Professional",
     "ALL_PROFESSIONALS": "All professionals",
+    "NO_PROFESSIONAL": "No professional",
     "APPOINTMENTS_COUNT": "No appointments | 1 appointment | {count} appointments",
     "EMPTY_DAY": "No appointments on this day.",
     "ERROR": "Could not load the agenda. Try again in a few minutes.",
