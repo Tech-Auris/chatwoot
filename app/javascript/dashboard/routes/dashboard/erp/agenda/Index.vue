@@ -7,6 +7,7 @@ import AgendaAPI from 'dashboard/api/agenda';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import AgendaGrid from './components/AgendaGrid.vue';
+import AppointmentDialog from './components/AppointmentDialog.vue';
 
 // ERP → Agenda: the clinic's agenda read live from its ERP or calendar, by day
 // (a column per professional) or by week (a column per day). Read only.
@@ -164,8 +165,11 @@ const periodTitle = computed(() => {
   return `${dayLabel(weekDays.value[0])} – ${dayLabel(weekDays.value[6])}`;
 });
 
+const appointmentDialog = ref(null);
+
+// `!w-auto !h-8`: the global input/select styles take the whole line.
 const CONTROL_CLASS =
-  '!mb-0 h-8 bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg px-3 text-sm text-n-slate-12 focus:outline-n-brand';
+  '!mb-0 !w-auto !h-8 !py-0 bg-n-alpha-black2 outline outline-1 outline-n-weak rounded-lg px-3 text-sm text-n-slate-12 focus:outline-n-brand';
 </script>
 
 <template>
@@ -268,7 +272,9 @@ const CONTROL_CLASS =
         :columns="columns"
         :show-professional="view === 'week' && !professionalId"
         :locale="locale"
+        @select="appointmentDialog.open($event)"
       />
     </div>
+    <AppointmentDialog ref="appointmentDialog" :locale="locale" />
   </div>
 </template>

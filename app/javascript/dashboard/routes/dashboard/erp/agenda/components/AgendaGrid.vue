@@ -11,9 +11,11 @@ const props = defineProps({
   locale: { type: String, default: 'en' },
 });
 
+const emit = defineEmits(['select']);
 const { t } = useI18n();
 
-const HOUR_HEIGHT = 64;
+// Tall enough for a 30-minute appointment to show its two lines.
+const HOUR_HEIGHT = 96;
 
 const hours = computed(() =>
   hourRange(props.columns.flatMap(column => column.appointments))
@@ -82,7 +84,7 @@ const cardTitle = appointment =>
       <div
         v-for="label in hourLabels"
         :key="label"
-        class="h-16 pr-2 text-xs text-right -translate-y-2 text-n-slate-10"
+        class="h-24 pr-2 text-xs text-right -translate-y-2 text-n-slate-10"
       >
         {{ label }}
       </div>
@@ -110,15 +112,17 @@ const cardTitle = appointment =>
         <div
           v-for="label in hourLabels"
           :key="label"
-          class="h-16 border-b border-n-weak border-dashed"
+          class="h-24 border-b border-n-weak border-dashed"
         />
-        <div
+        <button
           v-for="item in column.placed"
           :key="item.appointment.id"
+          type="button"
           :title="cardTitle(item.appointment)"
-          class="absolute px-2 py-1 mx-0.5 overflow-hidden text-xs border-l-4 rounded-md"
+          class="absolute flex flex-col items-stretch px-2 py-0.5 mx-0.5 overflow-hidden text-xs text-left border-l-4 rounded-md hover:brightness-95"
           :class="STATUS_CLASS[item.appointment.status]"
           :style="cardStyle(item)"
+          @click="emit('select', item.appointment)"
         >
           <div class="font-semibold truncate">
             {{ formatTime(item.appointment.starts_at) }}
@@ -133,7 +137,7 @@ const cardTitle = appointment =>
           >
             {{ item.appointment.professional_name }}
           </div>
-        </div>
+        </button>
       </div>
     </div>
   </div>

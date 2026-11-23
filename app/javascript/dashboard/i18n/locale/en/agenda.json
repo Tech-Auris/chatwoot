@@ -25,6 +25,17 @@
       "ATTENDED": "Attended",
       "NO_SHOW": "No-show",
       "CANCELED": "Canceled"
+    },
+    "APPOINTMENT": {
+      "TITLE": "Appointment",
+      "CLOSE": "Close",
+      "PATIENT": "Patient",
+      "PROFESSIONAL": "Professional",
+      "DATE": "Date",
+      "STARTS_AT": "Starts at",
+      "ENDS_AT": "Ends at",
+      "PROCEDURE": "Procedure",
+      "STATUS": "Status"
     }
   }
 }
