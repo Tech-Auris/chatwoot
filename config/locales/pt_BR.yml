@@ -384,7 +384,7 @@ pt_BR:
       unauthorized: "o ERP recusou o token da integração (inválido ou inativo)"
       erp_status: "o ERP respondeu com erro %{status}"
       unreachable: "o ERP não respondeu"
-      api_url_missing: "o endereço da API do ERP não está configurado no servidor"
+      api_url_missing: "o endereço da API do ERP não está cadastrado (Super Admin → ERPs, campo Api url)"
       calendar_missing: "a integração do Google Calendar não tem nenhuma agenda (calendar_id) configurada"
       calendar_not_shared: "a agenda %{calendar} não existe ou não está compartilhada com %{email}"
       google_status: "o Google respondeu com erro %{status}"

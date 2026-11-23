@@ -12,6 +12,7 @@
 #
 #  id         :bigint           not null, primary key
 #  active     :boolean          default(TRUE), not null
+#  api_url    :string
 #  fields     :jsonb            not null
 #  name       :string           not null
 #  created_at :datetime         not null
