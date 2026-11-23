@@ -12,3 +12,7 @@ export const offDutyReason = (status, t) => {
     ? t('VIRTUAL_CLINIC.STATUS.NOT_SET_UP')
     : reason;
 };
+
+// Money in the marketing teammate's status (R$ 85,40).
+export const formatReais = value =>
+  value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });

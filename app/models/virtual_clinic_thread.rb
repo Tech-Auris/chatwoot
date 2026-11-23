@@ -31,7 +31,7 @@ class VirtualClinicThread < ApplicationRecord
   has_many :messages, -> { order(:id) }, class_name: 'VirtualClinicMessage', foreign_key: :thread_id, dependent: :destroy,
                                          inverse_of: :thread
 
-  enum :persona, { secretary: 0, manager: 1 }
+  enum :persona, { secretary: 0, manager: 1, marketing: 2 }
 
   # The thread the user is talking in now for this persona, opened on demand.
   def self.current_for(account:, user:, persona:)

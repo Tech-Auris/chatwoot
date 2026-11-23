@@ -1,5 +1,5 @@
 # Lets one AI teammate ask another (the manager asks the secretary about
-# the front desk now). Runs the other persona right away, with the same user
+# the front desk now, or the marketing teammate about a campaign, and back). Runs the other persona right away, with the same user
 # and token, in a child thread of the asking answer, so the talk is kept for
 # audit. The one asked cannot ask anyone back (one level only). The map
 # shows the walk to the teammate's desk while the question runs.
@@ -19,7 +19,7 @@ class VirtualClinic::AskTeammateTool < RubyLLM::Tool
   end
 
   def description
-    "Pergunta algo para #{@teammate.name} (#{@teammate.role}) e devolve a resposta dela. " \
+    "Pergunta algo para #{@teammate.name} (#{@teammate.role}) e devolve a resposta. " \
       "Use para assuntos da área de #{@teammate.name}: #{@teammate.scope}."
   end
 

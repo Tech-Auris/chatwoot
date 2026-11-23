@@ -35,8 +35,8 @@ export const SUGGESTED = {
     { sprite: `${N}quebra_nozes.png`, x: 556, y: 466 },
     { sprite: `${N}biscoitos.png`, x: 780, y: 478, sortY: 525 },
     { sprite: `${N}bengala_doce.png`, x: 802, y: 500, sortY: 525 },
-    { sprite: `${N}arvore_natal_3.png`, x: 860, y: 236 },
-    { sprite: `${N}presente_azul.png`, x: 900, y: 284 },
+    { sprite: `${N}arvore_natal_3.png`, x: 1196, y: 392 },
+    { sprite: `${N}presente_azul.png`, x: 1236, y: 470 },
   ],
   halloween: [
     { sprite: `${H}aboboras.png`, x: 450, y: 140 },

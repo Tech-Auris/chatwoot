@@ -67,6 +67,25 @@ describe('TeamPanel', () => {
     expect(wrapper.text()).toContain('VIRTUAL_CLINIC.STATUS.MANAGER');
   });
 
+  it('lists Luciano with his campaigns and cost per appointment', async () => {
+    const team = [...members, { persona: 'marketing', name: 'Luciano' }];
+    const wrapper = mountPanel(
+      { visible: true, chat_enabled: true, members: team },
+      {
+        secretary: { on_duty: true, active_conversations: 0, in_follow_up: 0 },
+        manager: {
+          month: { leads: 412, appointments: 131, conversion_rate: 31.8 },
+        },
+        marketing: { active_campaigns: 6, cost_per_appointment: 85.4 },
+      }
+    );
+
+    expect(wrapper.text()).toContain('Luciano');
+    expect(wrapper.text()).toContain('VIRTUAL_CLINIC.STATUS.MARKETING');
+    await rows(wrapper)[2].trigger('click');
+    expect(wrapper.emitted('selectMember')).toEqual([['marketing']]);
+  });
+
   it('keeps Clara serving patients without the OpenAI key, only the chat is off', () => {
     const wrapper = mountPanel(
       {

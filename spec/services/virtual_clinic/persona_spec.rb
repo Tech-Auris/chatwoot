@@ -15,6 +15,28 @@ RSpec.describe VirtualClinic::Persona do
     expect(manager.tools).to include('agendamentos_resumo', 'horarios_pico', 'conversao_por_campanha')
   end
 
+  it 'has Luciano for marketing, with the marketing tools Clara does not have' do
+    marketing = described_class.find!('marketing')
+
+    expect([marketing.name, marketing.model]).to eq(%w[Luciano gpt-5.1])
+    expect(marketing).to be_restricted.and(be_charts)
+    expect(marketing.tools).to include('analytics_marketing', 'campanhas_whatsapp', 'templates_meta', 'conversoes_pixel', 'publicos')
+    expect(described_class.find!('secretary').tools)
+      .not_to include('resumo_periodo', 'analytics_marketing', 'conversao_por_campanha', 'campanhas_whatsapp', 'publicos')
+  end
+
+  it 'lets Helena and Luciano ask each other, and nobody else' do
+    expect(described_class.find!('manager').teammates.map(&:key)).to eq(%w[secretary marketing])
+    expect(described_class.find!('marketing').teammates.map(&:key)).to eq(%w[manager])
+    expect(described_class.find!('secretary').teammates).to be_empty
+  end
+
+  it 'sends marketing questions from Clara to Luciano' do
+    prompt = described_class.find!('secretary').instructions(account: account, user: user)
+
+    expect(prompt).to include('isso é com o Luciano, do marketing')
+  end
+
   it 'renders the prompt with the clinic, the user and the date' do
     prompt = described_class.find!('manager').instructions(account: account, user: user)
 
@@ -33,7 +55,7 @@ RSpec.describe VirtualClinic::Persona do
   it 'takes the names the clinic gave the team in the editor' do
     VirtualClinicLayout.new(account: account, layout: { 'team' => { 'manager' => { 'name' => 'Marta' } } }).save!(validate: false)
 
-    expect(described_class.all(account: account).map(&:name)).to eq(%w[Clara Marta])
+    expect(described_class.all(account: account).map(&:name)).to eq(%w[Clara Marta Luciano])
     expect(described_class.find!('secretary', account: account).instructions(account: account, user: user))
       .to include('a Marta, a gerente, responde isso melhor')
   end

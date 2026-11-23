@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import PeopleList from './PeopleList.vue';
-import { isOffDuty, offDutyReason } from '../teamStatus';
+import { formatReais, isOffDuty, offDutyReason } from '../teamStatus';
 
 const props = defineProps({
   clinicName: { type: String, default: '' },
@@ -65,6 +65,16 @@ const statusLine = persona => {
       props.status.secretary;
     if (!active && !followUps) return t('VIRTUAL_CLINIC.STATUS.IDLE');
     return t('VIRTUAL_CLINIC.STATUS.SECRETARY', { active, followUps });
+  }
+  if (persona === 'marketing') {
+    const { active_campaigns: campaigns, cost_per_appointment: cost } =
+      props.status.marketing;
+    return cost === null
+      ? t('VIRTUAL_CLINIC.STATUS.MARKETING_CAMPAIGNS', { campaigns })
+      : t('VIRTUAL_CLINIC.STATUS.MARKETING', {
+          campaigns,
+          cost: formatReais(cost),
+        });
   }
   const { leads, conversion_rate: rate } = props.status.manager.month;
   return rate === null

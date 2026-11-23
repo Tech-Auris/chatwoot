@@ -4,15 +4,16 @@ import {
   FACADE,
   GARDEN_ITEMS,
   ITEMS,
-  PARTITION,
+  KITCHEN_DOOR,
+  partitionRects,
   SCENE,
   WALLS,
   WORLD,
 } from './layout';
 
 // Where people can stand, on a grid of 16 px cells (half a tile, so the
-// passages and the space between chairs stay open). Walls, the middle
-// partition and the base of every piece of furniture block; people walk
+// passages and the space between chairs stay open). Walls, the thin walls
+// between rooms and the base of every piece of furniture block; people walk
 // behind the top of a piece, like in Gather's 3/4 view.
 export const CELL = 16;
 // The grid covers the whole scene (clinic and garden); cell 0 is its corner.
@@ -66,12 +67,10 @@ export function buildCollision(sizes, items = ITEMS, garden = GARDEN_ITEMS) {
   WALLS.forEach(wall =>
     blockRect(grid, wall.x, wall.y, wall.x + wall.w, wall.y + WALL_HEIGHT)
   );
-  let top = 0;
-  [...PARTITION.gaps, [WORLD.height, WORLD.height]].forEach(
-    ([gapTop, gapBottom]) => {
-      blockRect(grid, PARTITION.x, top, PARTITION.x + PARTITION.width, gapTop);
-      top = gapBottom;
-    }
+  const door = KITCHEN_DOOR;
+  fillRect(grid, door.x, door.y, door.x + door.w, door.y + door.h, 0);
+  partitionRects().forEach(rect =>
+    blockRect(grid, rect.x, rect.y, rect.x + rect.w, rect.y + rect.h)
   );
   items.forEach(item => {
     const base = sizes[item.sprite] && footprint(item, sizes[item.sprite]);
