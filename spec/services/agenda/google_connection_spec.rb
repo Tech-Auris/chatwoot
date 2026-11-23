@@ -73,4 +73,13 @@ RSpec.describe Agenda::GoogleConnection do
 
     expect(described_class).not_to be_connected
   end
+
+  it 'is configured only with both credentials of the OAuth app' do
+    expect(described_class.configured?).to be(true)
+
+    InstallationConfig.find_by(name: 'GOOGLE_OAUTH_CLIENT_SECRET').update!(value: '')
+    GlobalConfig.clear_cache
+
+    expect(described_class.configured?).to be(false)
+  end
 end

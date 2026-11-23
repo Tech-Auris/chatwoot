@@ -4,6 +4,10 @@ class SuperAdmin::Integrations::AgendaGoogleController < SuperAdmin::Application
   STATE = :agenda_google_state
 
   def connect
+    unless Agenda::GoogleConnection.configured?
+      return back_to_settings(alert: 'Preencha o Client ID e o Client Secret do app OAuth do Google acima, salve e conecte de novo.')
+    end
+
     session[STATE] = SecureRandom.hex(16)
     redirect_to Agenda::GoogleConnection.authorize_url(redirect_uri: self.class.callback_url(request), state: session[STATE]),
                 allow_other_host: true
