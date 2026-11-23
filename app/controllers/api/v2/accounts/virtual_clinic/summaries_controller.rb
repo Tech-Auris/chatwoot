@@ -1,5 +1,6 @@
-# Which of Helena's summaries the person wants (daily, weekly, monthly) and
-# at what hour. Only administrators and managers: they have her numbers.
+# Which summaries the person wants from Helena or Luciano (`persona`, Helena
+# by default): daily, weekly, monthly, and at what hour. Only administrators
+# and managers: they have their numbers.
 class Api::V2::Accounts::VirtualClinic::SummariesController < Api::V1::Accounts::BaseController
   before_action { authorize :virtual_clinic, :ai_team_manager? }
 
@@ -16,7 +17,10 @@ class Api::V2::Accounts::VirtualClinic::SummariesController < Api::V1::Accounts:
   private
 
   def summary
-    Current.account.virtual_clinic_summaries.find_or_initialize_by(user: Current.user)
+    persona = params[:persona].presence || 'manager'
+    raise ActiveRecord::RecordNotFound unless VirtualClinicSummary.personas.key?(persona)
+
+    Current.account.virtual_clinic_summaries.find_or_initialize_by(user: Current.user, persona: persona)
   end
 
   def summary_params

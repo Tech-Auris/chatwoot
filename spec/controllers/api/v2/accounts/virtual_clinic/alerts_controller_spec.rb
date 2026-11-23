@@ -15,7 +15,7 @@ RSpec.describe 'Virtual clinic alerts API', type: :request do
     get url, headers: admin.create_new_auth_token, as: :json
 
     expect(response).to have_http_status(:ok)
-    expect(response.parsed_body['counts']).to eq('secretary' => 1, 'manager' => 1)
+    expect(response.parsed_body['counts']).to eq('secretary' => 1, 'manager' => 1, 'marketing' => 0)
     expect(response.parsed_body['alerts'].pluck('message')).to contain_exactly(
       '2 follow-ups falharam no envio hoje.', 'A taxa de faltas dos últimos 7 dias está em 20.0% (2 de 10 consultas).'
     )
@@ -40,11 +40,11 @@ RSpec.describe 'Virtual clinic alerts API', type: :request do
                                           payload: { leads: 5, appointments: 2, conversations: 9, follow_ups: 3 })
 
     get url, headers: admin.create_new_auth_token, as: :json
-    expect(response.parsed_body['counts']).to eq('secretary' => 1, 'manager' => 2)
+    expect(response.parsed_body['counts']).to eq('secretary' => 1, 'manager' => 2, 'marketing' => 0)
     expect(response.parsed_body['alerts'].pluck('rule')).to include('daily_summary')
 
     get url, headers: other_admin.create_new_auth_token, as: :json
-    expect(response.parsed_body['counts']).to eq('secretary' => 1, 'manager' => 1)
+    expect(response.parsed_body['counts']).to eq('secretary' => 1, 'manager' => 1, 'marketing' => 0)
     expect(response.parsed_body['alerts'].pluck('rule')).not_to include('daily_summary')
   end
 end

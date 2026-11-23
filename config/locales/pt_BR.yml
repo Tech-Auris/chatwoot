@@ -1008,6 +1008,9 @@ pt_BR:
       daily_summary: 'Resumo de ontem: %{leads} leads, %{appointments} agendamentos, %{conversations} conversas novas e %{follow_ups} follow-ups enviados.'
       weekly_summary: 'Resumo da semana passada: %{leads} leads, %{appointments} agendamentos, %{conversations} conversas novas e %{follow_ups} follow-ups enviados.'
       monthly_summary: 'Resumo do mês passado: %{leads} leads, %{appointments} agendamentos, %{conversations} conversas novas e %{follow_ups} follow-ups enviados.'
+      marketing_daily_summary: 'Marketing de ontem: %{active_campaigns} campanhas ativas, %{leads} leads de anúncios, %{appointments} agendamentos, %{spend} investidos e %{cost_per_appointment} por agendamento.'
+      marketing_weekly_summary: 'Marketing da semana passada: %{active_campaigns} campanhas ativas, %{leads} leads de anúncios, %{appointments} agendamentos, %{spend} investidos e %{cost_per_appointment} por agendamento.'
+      marketing_monthly_summary: 'Marketing do mês passado: %{active_campaigns} campanhas ativas, %{leads} leads de anúncios, %{appointments} agendamentos, %{spend} investidos e %{cost_per_appointment} por agendamento.'
       seasonal_pack: 'Chegou o pacote de decoração de %{name}! Até %{until}, dá para enfeitar a clínica: no editor (o lápis no painel), use a decoração sugerida ou escolha as peças. %{extra}'
   super_admin:
     push_diagnostics:

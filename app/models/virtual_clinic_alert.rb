@@ -27,7 +27,7 @@ class VirtualClinicAlert < ApplicationRecord
   # Set for one person's alert (their summary); nil for the whole team.
   belongs_to :user, optional: true
 
-  enum :persona, { secretary: 0, manager: 1 }
+  enum :persona, { secretary: 0, manager: 1, marketing: 2 }
 
   validates :rule, presence: true
 

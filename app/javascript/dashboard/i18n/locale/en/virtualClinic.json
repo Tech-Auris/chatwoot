@@ -2,7 +2,8 @@
   "VIRTUAL_CLINIC": {
     "PERSONAS": {
       "SECRETARY": "Secretary",
-      "MANAGER": "Manager"
+      "MANAGER": "Manager",
+      "MARKETING": "Marketing"
     },
     "AI_TEAM": {
       "TITLE": "AI team ({count})",
@@ -42,7 +43,8 @@
       "SEND_ERROR": "Could not send the question. Try again.",
       "SUBTITLE": {
         "SECRETARY": "Answers about patients being served and follow-ups",
-        "MANAGER": "Answers anything about the clinic, with numbers"
+        "MANAGER": "Answers anything about the clinic, with numbers",
+        "MARKETING": "Answers about campaigns, ads and conversions"
       },
       "ALERT": "❗ {message}",
       "ALERT_PATIENT": "{name} · conversation #{id} · waiting for {minutes} min",
@@ -55,7 +57,7 @@
     },
     "SETTINGS": {
       "TITLE": "Virtual clinic",
-      "DESCRIPTION": "Talking to Clara and Helena uses this OpenAI key. Cap how many questions each person can ask per day.",
+      "DESCRIPTION": "Talking to the AI team uses this OpenAI key. Cap how many questions each person can ask per day.",
       "DAILY_LIMIT": "Questions per person per day",
       "NO_LIMIT": "No limit",
       "SAVE": "Save",
@@ -85,6 +87,13 @@
       "AGENTS_LIST": "agents",
       "TEAMS_LIST": "teams",
       "PERGUNTAR_SECRETARY": "secretary",
+      "ANALYTICS_MARKETING": "ads",
+      "CAMPANHAS_WHATSAPP": "WhatsApp campaigns",
+      "TEMPLATES_META": "Meta templates",
+      "CONVERSOES_PIXEL": "Pixel",
+      "PUBLICOS": "audiences",
+      "PERGUNTAR_MARKETING": "marketing",
+      "PERGUNTAR_MANAGER": "manager",
       "RENDER_CHART": "chart"
     },
     "STATUS": {
@@ -92,6 +101,8 @@
       "SECRETARY": "Serving {active} · {followUps} in follow-up",
       "MANAGER": "{leads} leads this month · {rate}% conversion",
       "MANAGER_LEADS": "{leads} leads this month",
+      "MARKETING": "{campaigns} active campaigns · {cost} per appointment",
+      "MARKETING_CAMPAIGNS": "{campaigns} active campaigns this month",
       "OFF_DUTY": "Not serving patients · {reason}",
       "NOT_SET_UP": "secretary not set up"
     },
@@ -102,12 +113,16 @@
       "LEADS": "📊 {leads} leads this month",
       "APPOINTMENTS": "📅 {appointments} appointments this month",
       "CONVERSION": "📈 {rate}% conversion this month",
+      "CAMPAIGNS": "📣 {campaigns} active campaigns this month",
+      "COST_PER_APPOINTMENT": "💰 {cost} per appointment",
       "LOAD_ERROR": "Could not load the clinic map.",
       "ROOMS": {
         "RECEPTION": "Reception",
         "WAITING_ROOM": "Waiting room",
         "MANAGEMENT": "Management",
-        "KITCHEN": "Kitchen"
+        "KITCHEN": "Kitchen",
+        "MARKETING": "Marketing room",
+        "CORRIDOR": "Corridor"
       },
       "ZOOM_IN": "Zoom in",
       "ZOOM_OUT": "Zoom out",
@@ -136,9 +151,10 @@
       "FLOORS": "Floors",
       "WALLS": "Walls",
       "WALL_AREAS": {
-        "0": "Reception and waiting room",
-        "1": "Management",
-        "2": "Kitchen"
+        "RECEPTION_WAITING": "Reception and waiting room",
+        "MANAGEMENT": "Management",
+        "KITCHEN": "Kitchen",
+        "MARKETING": "Marketing room"
       },
       "FURNITURE": "Furniture",
       "FURNITURE_HINT": "Click a piece to put it in its room, then drag it on the map.",

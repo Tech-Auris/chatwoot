@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import PeopleList from './PeopleList.vue';
-import { isOffDuty, offDutyReason } from '../teamStatus';
+import { formatReais, isOffDuty, offDutyReason } from '../teamStatus';
 
 const props = defineProps({
   clinicName: { type: String, default: '' },
@@ -66,6 +66,16 @@ const statusLine = persona => {
     if (!active && !followUps) return t('VIRTUAL_CLINIC.STATUS.IDLE');
     return t('VIRTUAL_CLINIC.STATUS.SECRETARY', { active, followUps });
   }
+  if (persona === 'marketing') {
+    const { active_campaigns: campaigns, cost_per_appointment: cost } =
+      props.status.marketing;
+    return cost === null
+      ? t('VIRTUAL_CLINIC.STATUS.MARKETING_CAMPAIGNS', { campaigns })
+      : t('VIRTUAL_CLINIC.STATUS.MARKETING', {
+          campaigns,
+          cost: formatReais(cost),
+        });
+  }
   const { leads, conversion_rate: rate } = props.status.manager.month;
   return rate === null
     ? t('VIRTUAL_CLINIC.STATUS.MANAGER_LEADS', { leads })
@@ -82,7 +92,7 @@ const select = member => {
 
 <template>
   <section
-    class="flex flex-col w-64 shrink-0 gap-4 p-4 border-r border-n-weak bg-n-solid-1"
+    class="flex flex-col w-72 shrink-0 gap-4 p-4 border-r border-n-weak bg-n-solid-1"
   >
     <div class="flex items-center gap-2">
       <h1 class="flex-1 text-lg font-semibold truncate text-n-slate-12">
@@ -130,7 +140,7 @@ const select = member => {
             {{ member.name.charAt(0) }}
           </span>
           <span class="flex flex-col min-w-0">
-            <span class="text-sm font-medium text-n-slate-12">
+            <span class="pr-12 text-sm font-medium text-n-slate-12">
               {{ member.name }}
               <span
                 v-if="alertCounts[member.persona]"
@@ -156,13 +166,14 @@ const select = member => {
             </span>
           </span>
         </button>
-        <span class="absolute flex gap-0.5 top-2 right-1">
+        <span class="absolute flex top-2 right-1">
           <Button
             v-if="aiTeam.manages_team"
             icon="i-lucide-settings"
             variant="ghost"
             color="slate"
             size="xs"
+            class="!w-5"
             :title="
               t('VIRTUAL_CLINIC.MEMBER_SETTINGS.OPEN', { name: member.name })
             "
@@ -174,6 +185,7 @@ const select = member => {
             variant="ghost"
             color="slate"
             size="xs"
+            class="!w-5"
             :title="t('VIRTUAL_CLINIC.AVATAR.EDIT')"
             @click="emit('editAvatar', member.persona)"
           />

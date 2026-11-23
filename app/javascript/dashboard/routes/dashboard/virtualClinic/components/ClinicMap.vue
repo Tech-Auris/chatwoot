@@ -36,7 +36,7 @@ import { createAvatar } from '../engine/movement';
 import { seatAt, seatsOf, withoutSeats } from '../engine/seats';
 import { inSeason } from '../engine/seasons';
 import { useClinicPresence } from '../composables/useClinicPresence';
-import { isOffDuty, offDutyReason } from '../teamStatus';
+import { formatReais, isOffDuty, offDutyReason } from '../teamStatus';
 
 const props = defineProps({
   aiTeam: { type: Object, default: null },
@@ -233,6 +233,19 @@ const bubble = persona => {
     return active || followUps
       ? t('VIRTUAL_CLINIC.MAP.SECRETARY', { active, followUps })
       : t('VIRTUAL_CLINIC.MAP.IDLE');
+  }
+  if (persona === 'marketing') {
+    const { active_campaigns: campaigns, cost_per_appointment: cost } =
+      props.status.marketing;
+    const ads = [t('VIRTUAL_CLINIC.MAP.CAMPAIGNS', { campaigns })];
+    if (cost !== null) {
+      ads.push(
+        t('VIRTUAL_CLINIC.MAP.COST_PER_APPOINTMENT', {
+          cost: formatReais(cost),
+        })
+      );
+    }
+    return ads[rotation.value % ads.length];
   }
   const {
     leads,

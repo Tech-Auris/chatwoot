@@ -52,7 +52,8 @@ describe('MemberSettings', () => {
     await wrapper.find('select').setValue('18');
     await confirm(wrapper);
 
-    expect(VirtualClinicAPI.saveSummary).toHaveBeenCalledWith({
+    expect(VirtualClinicAPI.getSummary).toHaveBeenCalledWith('manager');
+    expect(VirtualClinicAPI.saveSummary).toHaveBeenCalledWith('manager', {
       daily: true,
       weekly: true,
       monthly: true,
@@ -72,6 +73,20 @@ describe('MemberSettings', () => {
     expect(editor.saveTeam).toHaveBeenCalledWith('manager', { name: 'Marta' });
     expect(VirtualClinicAPI.saveSummary).toHaveBeenCalled();
     expect(wrapper.emitted('renamed')).toHaveLength(1);
+  });
+
+  it("has Luciano's own summaries", async () => {
+    const wrapper = mountSettings('marketing', 'Luciano');
+    await flushPromises();
+
+    expect(VirtualClinicAPI.getSummary).toHaveBeenCalledWith('marketing');
+    await wrapper.findAll('input[type="checkbox"]')[2].setValue(true);
+    await confirm(wrapper);
+
+    expect(VirtualClinicAPI.saveSummary).toHaveBeenCalledWith(
+      'marketing',
+      expect.objectContaining({ monthly: true })
+    );
   });
 
   it('only has the name for the secretary', async () => {

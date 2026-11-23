@@ -124,6 +124,12 @@ export const PREMADE_LOOKS = {
     outfit: 'Outfit_05_32x32_02',
     hair: 'Hairstyle_15_32x32_03',
   },
+  '7_personagens/luciano_marketing_spritesheet.png': {
+    body: 'Body_32x32_04',
+    eyes: 'Eyes_32x32_01',
+    outfit: 'Outfit_06_32x32_03',
+    hair: 'Hairstyle_18_32x32_03',
+  },
   '8_pessoas/pessoa_01.png': {
     body: 'Body_32x32_01',
     eyes: 'Eyes_32x32_01',

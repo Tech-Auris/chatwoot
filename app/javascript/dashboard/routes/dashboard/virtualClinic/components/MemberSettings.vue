@@ -6,8 +6,9 @@ import VirtualClinicAPI from 'dashboard/api/virtualClinic';
 import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
 
 // The gear next to an AI teammate: their name in the Clínica virtual (for
-// the whole clinic) and, for the manager, which of her summaries this person
-// wants (daily, weekly, monthly; any of them) and at what hour of the clinic.
+// the whole clinic) and, for Helena and Luciano, which of their summaries
+// this person wants (daily, weekly, monthly; any of them) and at what hour
+// of the clinic.
 const props = defineProps({
   persona: { type: String, required: true },
   name: { type: String, required: true },
@@ -18,7 +19,9 @@ const emit = defineEmits(['close', 'renamed']);
 
 const { t } = useI18n();
 const dialog = ref(null);
-const isManager = computed(() => props.persona === 'manager');
+// The teammates who send summaries.
+const SUMMARY_PERSONAS = ['manager', 'marketing'];
+const sendsSummaries = computed(() => SUMMARY_PERSONAS.includes(props.persona));
 const PERIODS = ['daily', 'weekly', 'monthly'];
 const newName = ref(props.name);
 const form = ref({ daily: false, weekly: false, monthly: false, hour: 8 });
@@ -31,7 +34,9 @@ const hours = Array.from({ length: 24 }, (_, hour) => ({
 const anyChosen = computed(() => PERIODS.some(period => form.value[period]));
 
 const savedMessage = () => {
-  if (!isManager.value) return t('VIRTUAL_CLINIC.MEMBER_SETTINGS.SAVED');
+  if (!sendsSummaries.value) {
+    return t('VIRTUAL_CLINIC.MEMBER_SETTINGS.SAVED');
+  }
   return anyChosen.value
     ? t('VIRTUAL_CLINIC.SUMMARY.SAVED')
     : t('VIRTUAL_CLINIC.SUMMARY.TURNED_OFF');
@@ -46,7 +51,9 @@ const save = async () => {
       await props.editor.saveTeam(props.persona, { name: name || undefined });
       emit('renamed');
     }
-    if (isManager.value) await VirtualClinicAPI.saveSummary(form.value);
+    if (sendsSummaries.value) {
+      await VirtualClinicAPI.saveSummary(props.persona, form.value);
+    }
     useAlert(savedMessage());
     dialog.value.close();
   } catch {
@@ -58,8 +65,8 @@ const save = async () => {
 
 onMounted(async () => {
   dialog.value.open();
-  if (!isManager.value) return;
-  const { data } = await VirtualClinicAPI.getSummary();
+  if (!sendsSummaries.value) return;
+  const { data } = await VirtualClinicAPI.getSummary(props.persona);
   form.value = { ...form.value, ...data };
 });
 </script>
@@ -89,7 +96,7 @@ onMounted(async () => {
         </span>
       </label>
 
-      <template v-if="isManager">
+      <template v-if="sendsSummaries">
         <p>{{ t('VIRTUAL_CLINIC.SUMMARY.QUESTION', { name }) }}</p>
         <div class="flex flex-col gap-2">
           <label
