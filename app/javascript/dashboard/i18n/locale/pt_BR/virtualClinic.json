@@ -213,7 +213,7 @@
       "SAVE_ERROR": "Não foi possível salvar as configurações."
     },
     "SUMMARY": {
-      "QUESTION": "Gostaria que a {name} envie o resumo para mim:",
+      "QUESTION": "Quero receber o resumo de {name}:",
       "PERIODS": {
         "DAILY": "Diário",
         "WEEKLY": "Semanal",

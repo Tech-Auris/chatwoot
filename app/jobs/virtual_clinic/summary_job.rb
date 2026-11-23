@@ -1,6 +1,6 @@
-# Every hour: Helena's summaries due now (each person's daily, weekly and
+# Every hour: Helena's and Luciano's summaries due now (each person's daily, weekly and
 # monthly choices at their hour, in the clinic's time zone). Only
-# administrators and managers get them: they have her numbers.
+# administrators and managers get them: they have their numbers.
 class VirtualClinic::SummaryJob < ApplicationJob
   queue_as :scheduled_jobs
 

@@ -52,17 +52,8 @@ class VirtualClinic::StatusBuilder
     { leads: leads, appointments: appointments, conversion_rate: leads.zero? ? nil : (appointments * 100.0 / leads).round(1) }
   end
 
-  # Ads that brought conversations or spent this month, and what one
-  # appointment cost (in reais; nil without spend or appointments).
+  # Luciano's ads of the month: how many are on and what one appointment cost.
   def marketing
-    rows = V2::Reports::CampaignAnalyticsBuilder.new(account: @account, params: { since: month_start.to_i.to_s, until: Time.current.to_i.to_s }).build
-    spend = rows.sum { |row| row[:spend_cents].to_i }
-    appointments = rows.sum { |row| row[:scheduled_count].to_i }
-    { active_campaigns: rows.count { |row| (row[:conversations_count].to_i + row[:spend_cents].to_i).positive? },
-      cost_per_appointment: cost_per(spend, appointments) }
-  end
-
-  def cost_per(spend_cents, count)
-    (spend_cents / 100.0 / count).round(2) if spend_cents.positive? && count.positive?
+    VirtualClinic::MarketingNumbers.new(@account, month_start, Time.current).to_h.slice(:active_campaigns, :cost_per_appointment)
   end
 end

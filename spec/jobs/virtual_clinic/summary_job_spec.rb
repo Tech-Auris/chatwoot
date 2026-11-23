@@ -27,6 +27,22 @@ RSpec.describe VirtualClinic::SummaryJob do
     expect(message).to eq('Resumo de ontem: 12 leads, 4 agendamentos, 0 conversas novas e 0 follow-ups enviados.')
   end
 
+  it "sends Luciano's summary with the ads of the period, in his chat" do
+    rows = [{ conversations_count: 20, spend_cents: 50_000, scheduled_count: 5 },
+            { conversations_count: 0, spend_cents: 0, scheduled_count: 0 }]
+    allow(V2::Reports::CampaignAnalyticsBuilder).to receive(:new)
+      .and_return(instance_double(V2::Reports::CampaignAnalyticsBuilder, build: rows))
+    create(:virtual_clinic_summary, account: account, user: admin, persona: :marketing, daily: false, monthly: true, hour: 8)
+
+    travel_to(monday_first) { described_class.perform_now }
+
+    alert = account.virtual_clinic_alerts.find_by!(user: admin)
+    expect(alert).to have_attributes(persona: 'marketing', rule: 'marketing_monthly_summary')
+    expect(I18n.with_locale(:pt_BR) { alert.message }).to eq(
+      'Marketing do mês passado: 1 campanhas ativas, 20 leads de anúncios, 5 agendamentos, R$ 500,00 investidos e R$ 100,00 por agendamento.'
+    )
+  end
+
   it 'sends nothing at another hour, twice in the same hour, or to agents' do
     create(:virtual_clinic_summary, account: account, user: admin, hour: 9)
     create(:virtual_clinic_summary, account: account, user: agent, hour: 8)
