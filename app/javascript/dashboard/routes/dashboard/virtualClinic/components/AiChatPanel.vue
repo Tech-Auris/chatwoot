@@ -23,6 +23,9 @@ const { formatMessage } = useMessageFormatter();
 
 const messages = ref([]);
 const alerts = ref([]);
+// Messages already in the thread when it was opened: alerts and news go
+// right after them, and everything said afterwards goes below.
+const openedCount = ref(0);
 const draft = ref('');
 const notice = ref('');
 const list = ref(null);
@@ -31,6 +34,16 @@ const persona = computed(() => props.member.persona);
 const isThinking = computed(() =>
   messages.value.some(message => message.status === 'pending')
 );
+// One timeline, top to bottom: earlier history, alerts, news, then the new talk.
+const timeline = computed(() => {
+  const asItem = message => ({ key: message.id, message });
+  return [
+    ...messages.value.slice(0, openedCount.value).map(asItem),
+    ...alerts.value.map(alert => ({ key: `alert-${alert.id}`, alert })),
+    ...(props.news ? [{ key: 'news', news: props.news }] : []),
+    ...messages.value.slice(openedCount.value).map(asItem),
+  ];
+});
 const roleLabel = computed(() =>
   t(`VIRTUAL_CLINIC.PERSONAS.${persona.value.toUpperCase()}`)
 );
@@ -55,6 +68,7 @@ const load = async () => {
   notice.value = '';
   const { data } = await VirtualClinicAPI.getThread(persona.value);
   messages.value = data.messages;
+  openedCount.value = data.messages.length;
   scrollToBottom();
   loadAlerts();
 };
@@ -98,6 +112,7 @@ const retry = message => {
 const reset = async () => {
   await VirtualClinicAPI.resetThread(persona.value);
   messages.value = [];
+  openedCount.value = 0;
   notice.value = '';
 };
 
@@ -170,9 +185,60 @@ useEmitter('virtualClinicMessageUpdated', data => {
     </header>
 
     <div ref="list" class="flex flex-col flex-1 gap-3 p-4 overflow-y-auto">
-      <template v-for="message in messages" :key="message.id">
+      <template
+        v-for="{ key, message, alert, news: itemNews } in timeline"
+        :key="key"
+      >
+        <div
+          v-if="alert"
+          class="self-start max-w-[92%] px-3 py-2 text-sm border rounded-2xl rounded-bl-sm border-n-amber-5 bg-n-amber-2 text-n-amber-12"
+        >
+          <p class="font-medium">
+            {{ t('VIRTUAL_CLINIC.CHAT.ALERT', { message: alert.message }) }}
+          </p>
+          <ul
+            v-if="alert.payload.patients?.length"
+            class="pl-5 mt-1 list-disc text-n-slate-12"
+          >
+            <li
+              v-for="patient in alert.payload.patients"
+              :key="patient.conversation_id"
+            >
+              {{
+                t('VIRTUAL_CLINIC.CHAT.ALERT_PATIENT', {
+                  name: patient.name || t('VIRTUAL_CLINIC.CHAT.NO_NAME'),
+                  id: patient.conversation_id,
+                  minutes: patient.waiting_minutes,
+                })
+              }}
+            </li>
+          </ul>
+          <ul
+            v-if="alert.payload.inboxes?.length"
+            class="pl-5 mt-1 list-disc text-n-slate-12"
+          >
+            <li v-for="inbox in alert.payload.inboxes" :key="inbox.name">
+              {{
+                inbox.reason === 'disconnected'
+                  ? t('VIRTUAL_CLINIC.CHAT.ALERT_DISCONNECTED', {
+                      name: inbox.name,
+                    })
+                  : t('VIRTUAL_CLINIC.CHAT.ALERT_SILENT', {
+                      name: inbox.name,
+                      hours: inbox.hours,
+                    })
+              }}
+            </li>
+          </ul>
+        </div>
+        <HelenaNews
+          v-else-if="itemNews"
+          class="self-start max-w-[92%]"
+          :notifications="itemNews.notifications"
+          :release="itemNews.release"
+        />
         <p
-          v-if="message.role === 'user'"
+          v-else-if="message.role === 'user'"
           class="self-end max-w-[80%] px-3 py-2 text-sm text-white rounded-2xl rounded-br-sm bg-n-brand whitespace-pre-wrap"
         >
           {{ message.content }}
@@ -241,55 +307,6 @@ useEmitter('virtualClinicMessageUpdated', data => {
           </p>
         </div>
       </template>
-      <div
-        v-for="alert in alerts"
-        :key="`alert-${alert.id}`"
-        class="self-start max-w-[92%] px-3 py-2 text-sm border rounded-2xl rounded-bl-sm border-n-amber-5 bg-n-amber-2 text-n-amber-12"
-      >
-        <p class="font-medium">
-          {{ t('VIRTUAL_CLINIC.CHAT.ALERT', { message: alert.message }) }}
-        </p>
-        <ul
-          v-if="alert.payload.patients?.length"
-          class="pl-5 mt-1 list-disc text-n-slate-12"
-        >
-          <li
-            v-for="patient in alert.payload.patients"
-            :key="patient.conversation_id"
-          >
-            {{
-              t('VIRTUAL_CLINIC.CHAT.ALERT_PATIENT', {
-                name: patient.name || t('VIRTUAL_CLINIC.CHAT.NO_NAME'),
-                id: patient.conversation_id,
-                minutes: patient.waiting_minutes,
-              })
-            }}
-          </li>
-        </ul>
-        <ul
-          v-if="alert.payload.inboxes?.length"
-          class="pl-5 mt-1 list-disc text-n-slate-12"
-        >
-          <li v-for="inbox in alert.payload.inboxes" :key="inbox.name">
-            {{
-              inbox.reason === 'disconnected'
-                ? t('VIRTUAL_CLINIC.CHAT.ALERT_DISCONNECTED', {
-                    name: inbox.name,
-                  })
-                : t('VIRTUAL_CLINIC.CHAT.ALERT_SILENT', {
-                    name: inbox.name,
-                    hours: inbox.hours,
-                  })
-            }}
-          </li>
-        </ul>
-      </div>
-      <HelenaNews
-        v-if="news"
-        class="self-start max-w-[92%]"
-        :notifications="news.notifications"
-        :release="news.release"
-      />
     </div>
 
     <div class="flex flex-wrap gap-1.5 px-4 pb-2">

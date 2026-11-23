@@ -26,11 +26,11 @@ const member = {
   suggestions: ['Quem você está atendendo agora?'],
 };
 
-const mountPanel = (alertCount = 0) =>
+const mountPanel = (alertCount = 0, news = null) =>
   mount(AiChatPanel, {
-    props: { member, alertCount },
+    props: { member, alertCount, news },
     global: {
-      stubs: { Button: true, Icon: true, ChatChart: true },
+      stubs: { Button: true, Icon: true, ChatChart: true, HelenaNews: true },
       directives: {
         dompurifyHtml: (el, binding) => {
           el.innerHTML = binding.value;
@@ -126,6 +126,52 @@ describe('AiChatPanel', () => {
     expect(VirtualClinicAPI.acknowledgeAlerts).toHaveBeenCalledWith(
       'secretary'
     );
+  });
+
+  it('keeps the earlier talk above the alert and the new talk below it', async () => {
+    VirtualClinicAPI.getThread.mockResolvedValue({
+      data: {
+        messages: [
+          { id: 1, role: 'user', status: 'done', content: 'Pergunta antiga' },
+        ],
+      },
+    });
+    VirtualClinicAPI.getAlerts.mockResolvedValue({
+      data: {
+        alerts: [
+          {
+            id: 7,
+            persona: 'secretary',
+            message: '5 pacientes sem resposta',
+            payload: {},
+          },
+        ],
+      },
+    });
+    VirtualClinicAPI.sendMessage.mockResolvedValue({
+      data: {
+        messages: [
+          { id: 2, role: 'user', status: 'done', content: 'Pergunta nova' },
+          { id: 3, role: 'assistant', status: 'pending', content: null },
+        ],
+      },
+    });
+    const wrapper = mountPanel(1, { notifications: [], release: null });
+    await flushPromises();
+
+    await wrapper.find('button.rounded-full').trigger('click');
+    await flushPromises();
+
+    const html = wrapper.html();
+    const order = [
+      'Pergunta antiga',
+      '5 pacientes sem resposta',
+      'helena-news-stub',
+      'Pergunta nova',
+      'VIRTUAL_CLINIC.CHAT.THINKING',
+    ].map(text => html.indexOf(text));
+    expect(order.every(index => index > -1)).toBe(true);
+    expect(order).toEqual([...order].sort((a, b) => a - b));
   });
 
   it('does not look for alerts when there are none', async () => {
