@@ -43,13 +43,13 @@ RSpec.describe Agenda::Sources::GoogleCalendar do
       expect(agenda[:appointments]).to eq([
                                             { id: 'e1', starts_at: '2026-11-24T09:00:00-03:00', ends_at: '2026-11-24T09:30:00-03:00',
                                               patient_name: 'Maria Souza', professional_id: 'Dra. Ana', professional_name: 'Dra. Ana',
-                                              procedure_name: 'Retorno', status: 'confirmed' },
+                                              procedure_name: 'Retorno', status: 'confirmed', auris_conversation_id: nil },
                                             { id: 'e2', starts_at: '2026-11-24T10:00:00-03:00', ends_at: '2026-11-24T10:30:00-03:00',
                                               patient_name: 'João Lima', professional_id: 'Dr. Beto', professional_name: 'Dr. Beto',
-                                              procedure_name: 'Avaliação', status: 'scheduled' },
+                                              procedure_name: 'Avaliação', status: 'scheduled', auris_conversation_id: nil },
                                             { id: 'e3', starts_at: '2026-11-24T11:00:00-03:00', ends_at: '2026-11-24T11:30:00-03:00',
                                               patient_name: 'Reunião de equipe', professional_id: nil, professional_name: nil,
-                                              procedure_name: nil, status: 'scheduled' }
+                                              procedure_name: nil, status: 'scheduled', auris_conversation_id: nil }
                                           ])
       expect(agenda[:professionals]).to eq([{ id: 'Dra. Ana', name: 'Dra. Ana' }, { id: 'Dr. Beto', name: 'Dr. Beto' }])
       expect(agenda[:complete]).to be(true)

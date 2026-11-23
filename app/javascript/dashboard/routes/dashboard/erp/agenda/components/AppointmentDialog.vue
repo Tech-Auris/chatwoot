@@ -1,6 +1,8 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useRoute } from 'vue-router';
+import Button from 'dashboard/components-next/button/Button.vue';
 import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
 
 // The basic data of one appointment, the same for every ERP (the shape of
@@ -10,6 +12,7 @@ const props = defineProps({
 });
 
 const { t } = useI18n();
+const route = useRoute();
 const dialogRef = ref(null);
 const appointment = ref(null);
 
@@ -46,6 +49,14 @@ const rows = computed(() => {
   ];
 });
 
+const conversationRoute = computed(() => ({
+  name: 'inbox_conversation',
+  params: {
+    accountId: route.params.accountId,
+    conversation_id: appointment.value?.auris_conversation_id,
+  },
+}));
+
 const open = item => {
   appointment.value = item;
   dialogRef.value?.open();
@@ -73,5 +84,26 @@ defineExpose({ open });
         </dd>
       </template>
     </dl>
+    <div
+      v-if="appointment?.auris_conversation_id"
+      class="flex items-center justify-between gap-3 p-3 mt-4 rounded-lg bg-n-alpha-1"
+    >
+      <span class="flex items-center gap-2 text-sm text-n-slate-12">
+        <span
+          class="px-1.5 text-xs font-semibold leading-5 text-white rounded bg-n-brand"
+        >
+          {{ t('AGENDA.AURIS.BADGE') }}
+        </span>
+        {{ t('AGENDA.AURIS.BOOKED') }}
+      </span>
+      <router-link :to="conversationRoute">
+        <Button
+          :label="t('AGENDA.AURIS.OPEN_CONVERSATION')"
+          icon="i-lucide-message-circle"
+          variant="link"
+          size="sm"
+        />
+      </router-link>
+    </div>
   </Dialog>
 </template>

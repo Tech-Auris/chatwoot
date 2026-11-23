@@ -11,6 +11,11 @@
 #                                professional_id:, professional_name:,
 #                                procedure_name:, status: }]
 #
+# `agenda` adds `auris_conversation_id` to each appointment: the conversation
+# of the patient when the AI booked it (a row in `appointments` with the same
+# ERP and id), nil otherwise. Read on every request, outside the cache, so the
+# badge shows as soon as the AI books.
+#
 # `from` and `to` are dates (both included), times are ISO 8601 and `status` is
 # one of STATUSES. A failure talking to the ERP raises Error with a message the
 # screen can show. A source that couldn't fill everything in time (patient
@@ -44,7 +49,7 @@ class Agenda::Source
   end
 
   def agenda(from, to)
-    appointments = appointments(from, to)
+    appointments = with_auris(appointments(from, to))
     { professionals: professionals, appointments: appointments, complete: complete? }
   end
 
@@ -61,6 +66,13 @@ class Agenda::Source
   end
 
   private
+
+  def with_auris(appointments)
+    booked = Appointment.where(account_id: integration.account_id, erp_source_id: integration.erp_source_id,
+                               external_id: appointments.pluck(:id))
+                        .joins(:conversation).pluck(:external_id, 'conversations.display_id').to_h
+    appointments.map { |appointment| appointment.merge(auris_conversation_id: booked[appointment[:id]]) }
+  end
 
   # Saving the integration (a new token, say) starts a fresh cache.
   def cached(*key, expires_in:, &)

@@ -38,10 +38,10 @@ RSpec.describe Agenda::Sources::Erp2 do
     expect(agenda[:appointments]).to eq([
                                           { id: '10', starts_at: '2026-11-24T09:00:00-03:00', ends_at: '2026-11-24T09:30:00-03:00',
                                             patient_name: 'Maria Souza', professional_id: '25', professional_name: 'Dra. Ana',
-                                            procedure_name: 'Consulta', status: 'confirmed' },
+                                            procedure_name: 'Consulta', status: 'confirmed', auris_conversation_id: nil },
                                           { id: '11', starts_at: '2026-11-24T10:00:00-03:00', ends_at: nil, patient_name: nil,
                                             professional_id: '25', professional_name: 'Dra. Ana', procedure_name: 'Consulta',
-                                            status: 'canceled' }
+                                            status: 'canceled', auris_conversation_id: nil }
                                         ])
     expect(agenda[:complete]).to be(true)
   end

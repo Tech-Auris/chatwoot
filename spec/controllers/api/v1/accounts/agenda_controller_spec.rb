@@ -31,8 +31,22 @@ RSpec.describe 'Agenda API', type: :request do
       expect(response).to have_http_status(:ok)
       body = response.parsed_body
       expect(body['professionals']).to eq([{ 'id' => '7', 'name' => 'Dra. Ana' }])
-      expect(body['appointments']).to eq([appointment.stringify_keys])
+      expect(body['appointments']).to eq([appointment.merge(auris_conversation_id: nil).stringify_keys])
       expect(body.slice('from', 'to', 'complete')).to eq('from' => '2026-11-24', 'to' => '2026-11-30', 'complete' => true)
+    end
+
+    it 'links the appointments the AI booked to the patient conversation' do
+      second = appointment.merge(id: '11')
+      allow_any_instance_of(FakeAgendaSource).to receive(:appointments).and_return([appointment, second]) # rubocop:disable RSpec/AnyInstance
+      conversation = create(:conversation, account: account)
+      create(:appointment, account: account, conversation: conversation, contact: conversation.contact, erp_source: erp, external_id: '10')
+      # The same id in another ERP or another account is not this booking.
+      create(:appointment, account: account, erp_source: create(:erp_source), external_id: '11')
+      create(:appointment, erp_source: erp, external_id: '11')
+
+      get url, params: { from: '2026-11-24', to: '2026-11-24' }, headers: agent.create_new_auth_token, as: :json
+
+      expect(response.parsed_body['appointments'].pluck('id', 'auris_conversation_id')).to eq([['10', conversation.display_id], ['11', nil]])
     end
 
     it 'refuses a period longer than a week' do
