@@ -17,7 +17,7 @@ class VirtualClinic::MarketingWingUpgrade
     '3_gerencia/arquivo_2.png' => 44, '11_natal/arvore_natal_3.png' => 68
   }.freeze
   DEFAULT_HEIGHT = 48
-  NEW_FLOORS = %w[5_pisos/carpete_cinza.png 5_pisos/alternativa_branco_liso.png].freeze
+  NEW_FLOORS = %w[5_pisos/carpete_vinho.png 5_pisos/alternativa_branco_liso.png].freeze
   NEW_WALLS = %w[6_paredes/alternativa_branca.png].freeze
   # The default sala de marketing and new half of the copa (engine/layout.js).
   NEW_ITEMS = [
