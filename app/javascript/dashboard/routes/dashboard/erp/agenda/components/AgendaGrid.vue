@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useRoute } from 'vue-router';
 import { layoutColumn, hourRange } from '../agendaLayout';
 
 // A time grid with one column per professional (day view) or per day (week
@@ -13,6 +14,13 @@ const props = defineProps({
 
 const emit = defineEmits(['select']);
 const { t } = useI18n();
+const route = useRoute();
+
+// The badge of the appointments the AI booked opens the patient conversation.
+const conversationRoute = conversationId => ({
+  name: 'inbox_conversation',
+  params: { accountId: route.params.accountId, conversation_id: conversationId },
+});
 
 // Tall enough for a 30-minute appointment to show its two lines.
 const HOUR_HEIGHT = 96;
@@ -114,19 +122,32 @@ const cardTitle = appointment =>
           :key="label"
           class="h-24 border-b border-n-weak border-dashed"
         />
-        <button
+        <div
           v-for="item in column.placed"
           :key="item.appointment.id"
-          type="button"
+          role="button"
+          tabindex="0"
           :title="cardTitle(item.appointment)"
-          class="absolute flex flex-col items-stretch px-2 py-0.5 mx-0.5 overflow-hidden text-xs text-left border-l-4 rounded-md hover:brightness-95"
+          class="absolute flex flex-col px-2 py-0.5 mx-0.5 overflow-hidden text-xs text-left border-l-4 rounded-md cursor-pointer hover:brightness-95"
           :class="STATUS_CLASS[item.appointment.status]"
           :style="cardStyle(item)"
           @click="emit('select', item.appointment)"
+          @keydown.enter="emit('select', item.appointment)"
         >
-          <div class="font-semibold truncate">
-            {{ formatTime(item.appointment.starts_at) }}
-            {{ item.appointment.patient_name }}
+          <div class="flex items-center gap-1 font-semibold">
+            <span class="truncate">
+              {{ formatTime(item.appointment.starts_at) }}
+              {{ item.appointment.patient_name }}
+            </span>
+            <router-link
+              v-if="item.appointment.auris_conversation_id"
+              :to="conversationRoute(item.appointment.auris_conversation_id)"
+              :title="t('AGENDA.AURIS.OPEN_CONVERSATION')"
+              class="px-1 ml-auto font-semibold no-underline rounded shrink-0 text-[10px] leading-4 bg-n-brand text-white hover:opacity-90"
+              @click.stop
+            >
+              {{ t('AGENDA.AURIS.BADGE') }}
+            </router-link>
           </div>
           <div v-if="item.appointment.procedure_name" class="truncate">
             {{ item.appointment.procedure_name }}
@@ -137,7 +158,7 @@ const cardTitle = appointment =>
           >
             {{ item.appointment.professional_name }}
           </div>
-        </button>
+        </div>
       </div>
     </div>
   </div>

@@ -142,6 +142,11 @@ const weekColumns = computed(() =>
 const columns = computed(() =>
   view.value === 'day' ? dayColumns.value : weekColumns.value
 );
+// How many appointments of the period (and filter) the AI booked.
+const aurisCount = computed(
+  () => filteredAppointments.value.filter(a => a.auris_conversation_id).length
+);
+
 const isEmpty = computed(
   () => !loading.value && !error.value && !filteredAppointments.value.length
 );
@@ -247,6 +252,22 @@ const CONTROL_CLASS =
         </select>
         <span class="text-sm font-medium capitalize text-n-slate-12">
           {{ periodTitle }}
+        </span>
+        <span
+          v-if="aurisCount"
+          class="flex items-center gap-1.5 text-sm text-n-slate-11"
+        >
+          <span
+            class="px-1.5 text-xs font-semibold leading-5 text-white rounded bg-n-brand"
+          >
+            {{ t('AGENDA.AURIS.BADGE') }}
+          </span>
+          {{
+            t('AGENDA.AURIS.COUNT', {
+              count: aurisCount,
+              total: filteredAppointments.length,
+            })
+          }}
         </span>
         <Spinner v-if="loading" class="size-4 text-n-slate-10" />
       </div>

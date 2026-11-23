@@ -36,6 +36,12 @@
       "ENDS_AT": "Ends at",
       "PROCEDURE": "Procedure",
       "STATUS": "Status"
+    },
+    "AURIS": {
+      "BADGE": "Auris",
+      "BOOKED": "Booked by Auris",
+      "OPEN_CONVERSATION": "Open conversation",
+      "COUNT": "{count} of {total} appointments booked by Auris"
     }
   }
 }

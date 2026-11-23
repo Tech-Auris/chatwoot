@@ -36,6 +36,12 @@
       "ENDS_AT": "Fim",
       "PROCEDURE": "Procedimento",
       "STATUS": "Status"
+    },
+    "AURIS": {
+      "BADGE": "Auris",
+      "BOOKED": "Marcado pela Auris",
+      "OPEN_CONVERSATION": "Abrir conversa",
+      "COUNT": "{count} de {total} agendamentos marcados pela Auris"
     }
   }
 }
