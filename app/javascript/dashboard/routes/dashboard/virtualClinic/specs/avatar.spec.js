@@ -24,11 +24,17 @@ const block = (target, column, row) => {
 };
 
 describe('collision', () => {
-  it('blocks the walls and the middle partition but keeps both passages open', () => {
+  it('blocks the walls and the thin walls but keeps the doors to the corridor open', () => {
     expect(isFree(grid, { x: 300, y: 40 })).toBe(false);
     expect(isFree(grid, { x: 640, y: 120 })).toBe(false);
-    expect(isFree(grid, { x: 640, y: 224 })).toBe(true);
-    expect(isFree(grid, { x: 640, y: 512 })).toBe(true);
+    expect(isFree(grid, { x: 640, y: 224 })).toBe(false);
+    expect(isFree(grid, { x: 640, y: 512 })).toBe(false);
+    // The recepção door, the doors of both rooms and the copa door.
+    expect(isFree(grid, { x: 640, y: 296 })).toBe(true);
+    expect(isFree(grid, { x: 896, y: 256 })).toBe(true);
+    expect(isFree(grid, { x: 1184, y: 256 })).toBe(true);
+    expect(isFree(grid, { x: 960, y: 352 })).toBe(true);
+    expect(isFree(grid, { x: 1100, y: 352 })).toBe(false);
   });
 
   it('blocks the base of the furniture, not its top', () => {

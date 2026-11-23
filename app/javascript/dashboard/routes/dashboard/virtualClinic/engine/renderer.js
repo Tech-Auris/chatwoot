@@ -4,7 +4,8 @@ import {
   FACADE,
   PLAZA,
   GARDEN_ITEMS,
-  PARTITION,
+  KITCHEN_DOOR,
+  partitionRects,
   SCENE,
   TILE,
   WORLD,
@@ -108,18 +109,23 @@ function drawBackground(sprites, layout) {
     repeatBlock(context, sprites[floor.block], floor)
   );
   layout.walls.forEach(wall => drawWall(context, sprites[wall.block], wall));
+  // The copa door: its floor seen through the opening in the tiled wall.
+  const door = KITCHEN_DOOR;
+  const kitchen = layout.floors.find(floor => floor.room === 'KITCHEN');
+  repeatBlock(context, sprites[kitchen.block], door);
   context.fillStyle = OUTLINE;
-  let top = 0;
-  [...PARTITION.gaps, [WORLD.height, WORLD.height]].forEach(
-    ([gapTop, gapBottom]) => {
-      context.fillRect(PARTITION.x, top, PARTITION.width, gapTop - top);
-      top = gapBottom;
-    }
+  context.fillRect(door.x, door.y, 4, door.h);
+  context.fillRect(door.x + door.w - 4, door.y, 4, door.h);
+  partitionRects().forEach(rect =>
+    context.fillRect(rect.x, rect.y, rect.w, rect.h)
   );
+  // The line between the corridor and the copa wall, open at the door.
+  const kitchenWall = layout.walls.find(wall => wall.area === 'KITCHEN');
+  context.fillRect(kitchenWall.x, kitchenWall.y - 4, door.x - kitchenWall.x, 4);
   context.fillRect(
-    PARTITION.x,
-    layout.walls[2].y - 4,
-    WORLD.width - PARTITION.x,
+    door.x + door.w,
+    kitchenWall.y - 4,
+    kitchenWall.x + kitchenWall.w - door.x - door.w,
     4
   );
   context.lineWidth = 4;
@@ -201,7 +207,7 @@ function drawPlaza(context) {
 // The zoomed-out view, Gather-style: the clinic as a plan (rooms in soft
 // colors, furniture as plain blocks, trees as round tops), no characters.
 const PLAN = {
-  rooms: ['#f4f5fb', '#eef3fb', '#f8f1e8', '#f1f1f1'],
+  rooms: ['#f4f5fb', '#eef3fb', '#f8f1e8', '#f1f1f1', '#eef6f1', '#f6f6f8'],
   wall: '#dcdff3',
   furniture: '#e4e6ec',
   tree: '#a9d4a0',
@@ -246,7 +252,9 @@ function drawPlan(context, layout, items) {
   context.lineWidth = 6;
   context.strokeRect(0, 0, WORLD.width, WORLD.height);
   context.fillStyle = PLAN.wall;
-  context.fillRect(PARTITION.x, 0, PARTITION.width, WORLD.height);
+  partitionRects().forEach(rect =>
+    context.fillRect(rect.x, rect.y, rect.w, rect.h)
+  );
 }
 
 // Draws the clinic and its garden into `canvas` (scene size). `characters` lists the AI

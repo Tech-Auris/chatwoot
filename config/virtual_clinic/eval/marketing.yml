@@ -1,0 +1,25 @@
+# Perguntas de avaliação do Luciano (Marketing). Confira os números com o
+# menu Marketing (Analytics, Campanhas, Meta Templates, Pixel e Públicos);
+# nenhum número pode ser inventado.
+- question: Qual campanha trouxe mais pacientes este mês?
+  tools: [analytics_marketing]
+- question: Quanto estou pagando por agendamento?
+  tools: [analytics_marketing]
+- question: Qual anúncio tem o pior custo por agendamento? Vale pausar?
+  tools: [analytics_marketing]
+- question: Como foi o último disparo?
+  tools: [campanhas_whatsapp]
+- question: Tem algum template rejeitado ou pendente?
+  tools: [templates_meta]
+- question: O Pixel está configurado? Quais conversões estamos mandando para a Meta?
+  tools: [conversoes_pixel]
+- question: Quais públicos eu tenho e qual é o maior?
+  tools: [publicos]
+- question: Os leads do Instagram convertem melhor que os do Google?
+  tools: [conversao_por_campanha, funil_resumo]
+- question: Como foi este mês comparado ao anterior no geral da clínica?
+  tools: []
+  note: Números gerais; deve perguntar para a Helena (perguntar_manager).
+- question: Quem está esperando resposta agora?
+  tools: []
+  note: Atendimento; deve responder que isso é com a Clara, sem número.

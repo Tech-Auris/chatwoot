@@ -36,8 +36,15 @@ const affectedAutomations = ref([]);
 
 let tempId = 0;
 const isNew = computed(() => !pipeline.value);
+// A new pipeline gets Ganho and Perdido from the backend on create
+// (Pipeline#create_closing_stages!); preview them with the same colors.
 const closingStages = computed(() =>
-  (pipeline.value?.stages || []).filter(stage => stage.kind !== 'open')
+  isNew.value
+    ? [
+        { kind: 'won', name: t('PIPELINES.CONFIG.WON'), color: '#086944' },
+        { kind: 'lost', name: t('PIPELINES.CONFIG.LOST'), color: '#dc2626' },
+      ]
+    : pipeline.value.stages.filter(stage => stage.kind !== 'open')
 );
 const keptExistingStages = computed(() => stages.value.filter(s => s.id));
 
@@ -197,7 +204,7 @@ defineExpose({ open });
     overflow-y-auto
     @confirm="save"
   >
-    <div class="flex flex-col gap-4">
+    <div class="flex flex-col gap-4 p-0.5">
       <Input
         v-model="name"
         :label="t('PIPELINES.CONFIG.NAME')"
@@ -253,7 +260,7 @@ defineExpose({ open });
 
         <div
           v-for="stage in closingStages"
-          :key="stage.id"
+          :key="stage.kind"
           class="flex items-center gap-2 text-sm text-n-slate-11"
           :title="t('PIPELINES.CONFIG.CLOSING_LOCKED')"
         >
@@ -264,9 +271,6 @@ defineExpose({ open });
           />
           {{ stage.name }}
         </div>
-        <p v-if="isNew" class="mb-0 text-xs text-n-slate-11">
-          {{ t('PIPELINES.CONFIG.CLOSING_HINT') }}
-        </p>
 
         <Button
           :label="t('PIPELINES.CONFIG.ADD_STAGE')"

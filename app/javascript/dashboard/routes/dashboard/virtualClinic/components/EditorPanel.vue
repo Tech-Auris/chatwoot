@@ -28,8 +28,15 @@ const FURNITURE_FOLDERS = [
   '2_sala_de_espera',
   '3_gerencia',
   '4_copa',
+  '14_marketing',
 ];
-const ROOM_OF_FOLDER = ['RECEPTION', 'WAITING_ROOM', 'MANAGEMENT', 'KITCHEN'];
+const ROOM_OF_FOLDER = [
+  'RECEPTION',
+  'WAITING_ROOM',
+  'MANAGEMENT',
+  'KITCHEN',
+  'MARKETING',
+];
 
 const inFolder = pattern => paths.value.filter(path => pattern.test(path));
 const floors = computed(() => inFolder(/^5_pisos\//));
@@ -196,7 +203,7 @@ onMounted(async () => {
           class="flex flex-col gap-1"
         >
           <span class="text-xs text-n-slate-11">
-            {{ roomLabel(ROOM_OF_FOLDER[index]) }}
+            {{ roomLabel(floor.room) }}
           </span>
           <div class="flex flex-wrap gap-1">
             <button
@@ -232,7 +239,7 @@ onMounted(async () => {
           class="flex flex-col gap-1"
         >
           <span class="text-xs text-n-slate-11">
-            {{ t(`VIRTUAL_CLINIC.EDITOR.WALL_AREAS.${index}`) }}
+            {{ t(`VIRTUAL_CLINIC.EDITOR.WALL_AREAS.${wall.area}`) }}
           </span>
           <div class="flex flex-wrap gap-1">
             <button

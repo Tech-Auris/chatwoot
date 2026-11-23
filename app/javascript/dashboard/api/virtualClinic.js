@@ -61,13 +61,14 @@ class VirtualClinicAPI extends ApiClient {
   }
 
   // `{ paths }`: every file of the pack the editor can use.
-  // Helena's summaries the user wants: `{ daily, weekly, monthly, hour }`.
-  getSummary() {
-    return axios.get(`${this.url}/summary`);
+  // The summaries the user wants from Helena or Luciano (`persona`):
+  // `{ daily, weekly, monthly, hour }`.
+  getSummary(persona) {
+    return axios.get(`${this.url}/summary`, { params: { persona } });
   }
 
-  saveSummary(summary) {
-    return axios.put(`${this.url}/summary`, summary);
+  saveSummary(persona, summary) {
+    return axios.put(`${this.url}/summary`, { ...summary, persona });
   }
 
   listAssets() {

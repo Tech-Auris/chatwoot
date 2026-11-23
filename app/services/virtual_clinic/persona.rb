@@ -1,6 +1,6 @@
 # The AI team of the Clínica virtual (config/virtual_clinic/personas.yml).
 # Each persona is a seat on the map and a conversation the clinic owner can
-# open. Their names (Clara and Helena by default) can be changed in the
+# open. Their names (Clara, Helena and Luciano by default) can be changed in the
 # clinic editor; that name only applies inside the Clínica virtual.
 class VirtualClinic::Persona
   CONFIG = YAML.load_file(Rails.root.join('config/virtual_clinic/personas.yml')).freeze
@@ -69,6 +69,7 @@ class VirtualClinic::Persona
       'name' => name, 'clinic_name' => account.name, 'user_name' => user.name,
       'secretary_name' => self.class.find!('secretary', account: account).name,
       'manager_name' => self.class.find!('manager', account: account).name,
+      'marketing_name' => self.class.find!('marketing', account: account).name,
       'now' => Time.current.in_time_zone(account.reporting_timezone.presence || 'America/Sao_Paulo').strftime('%A, %d/%m/%Y %H:%M')
     )
   end

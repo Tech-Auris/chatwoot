@@ -72,10 +72,10 @@ describe('checkLayout', () => {
   });
 
   it('refuses a teammate nobody can reach', () => {
-    // A row of plants closing the door between the recepção and the gerência.
+    // A row of plants closing the door of the gerência to the corridor.
     const wall = [];
-    for (let y = 48; y < 320; y += 16) {
-      wall.push({ sprite: '3_gerencia/planta.png', x: 644, y });
+    for (let x = 1152; x < 1216; x += 16) {
+      wall.push({ sprite: '3_gerencia/planta.png', x, y: 240 });
     }
     const layout = { ...DEFAULT_LAYOUT, items: [...ITEMS, ...wall] };
     expect(
@@ -117,7 +117,7 @@ describe('useClinicLayout', () => {
     const count = editor.layout.value.items.length;
     editor.select({ kind: 'item', index: 2 });
     editor.moveSelected(5000, -40, { width: 40, height: 40 });
-    expect(editor.layout.value.items[2]).toMatchObject({ x: 920, y: 0 });
+    expect(editor.layout.value.items[2]).toMatchObject({ x: 1240, y: 0 });
     editor.removeSelected();
     expect(editor.layout.value.items).toHaveLength(count - 1);
     expect(editor.selected.value).toBeNull();

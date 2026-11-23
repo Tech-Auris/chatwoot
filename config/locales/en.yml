@@ -1048,6 +1048,9 @@ en:
       daily_summary: 'Yesterday: %{leads} leads, %{appointments} appointments, %{conversations} new conversations and %{follow_ups} follow-ups sent.'
       weekly_summary: 'Last week: %{leads} leads, %{appointments} appointments, %{conversations} new conversations and %{follow_ups} follow-ups sent.'
       monthly_summary: 'Last month: %{leads} leads, %{appointments} appointments, %{conversations} new conversations and %{follow_ups} follow-ups sent.'
+      marketing_daily_summary: 'Marketing yesterday: %{active_campaigns} active campaigns, %{leads} leads from ads, %{appointments} appointments, %{spend} spent and %{cost_per_appointment} per appointment.'
+      marketing_weekly_summary: 'Marketing last week: %{active_campaigns} active campaigns, %{leads} leads from ads, %{appointments} appointments, %{spend} spent and %{cost_per_appointment} per appointment.'
+      marketing_monthly_summary: 'Marketing last month: %{active_campaigns} active campaigns, %{leads} leads from ads, %{appointments} appointments, %{spend} spent and %{cost_per_appointment} per appointment.'
       seasonal_pack: 'The %{name} decoration pack is here! Until %{until}, you can decorate the clinic: in the editor (the pencil in the panel), use the suggested decoration or pick the pieces. %{extra}'
   super_admin:
     push_diagnostics:

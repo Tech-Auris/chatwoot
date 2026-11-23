@@ -31,7 +31,7 @@ describe('team behavior', () => {
     run(behavior, 8000, 8500);
     expect(clara).toMatchObject({ away: true, moving: true });
 
-    run(behavior, 8600, 30000);
+    run(behavior, 8600, 60000);
     expect([clara.x, clara.y]).toEqual([
       CHARACTERS.secretary.x,
       CHARACTERS.secretary.y,
@@ -56,7 +56,7 @@ describe('team behavior', () => {
       if (secretary.talking && manager.talking) {
         talked = true;
         expect(secretary.direction).toBe('up');
-        expect([secretary.x, secretary.y]).toEqual([708, 140]);
+        expect([secretary.x, secretary.y]).toEqual([1028, 140]);
       }
     }
     expect(talked).toBe(true);
@@ -120,6 +120,54 @@ describe('team behavior', () => {
       CHARACTERS.manager.y,
     ]);
     expect(helena.away).toBe(false);
+  });
+
+  it('walks Luciano to Helena through the corridor, and Helena to him', () => {
+    ['luciano_visits_helena', 'helena_visits_luciano'].forEach(key => {
+      const trip = TRIPS.find(t => t.key === key);
+      const path = plan(trip);
+      expect(path, key).not.toBeNull();
+      // Out of one room, along the corridor, into the other.
+      expect(path.some(([, y]) => y + 60 > 256)).toBe(true);
+    });
+  });
+
+  it('takes Luciano to the monitors, the campaigns board, Helena and the water, never to Clara', () => {
+    const luciano = TRIPS.filter(trip => trip.who === 'marketing').map(
+      trip => trip.key
+    );
+    expect(luciano.sort()).toEqual([
+      'luciano_campaign_board',
+      'luciano_monitors',
+      'luciano_visits_helena',
+      'luciano_water',
+    ]);
+    expect(
+      TRIPS.filter(
+        trip =>
+          (trip.who === 'marketing' && trip.visit === 'secretary') ||
+          (trip.who === 'secretary' && trip.visit === 'marketing')
+      )
+    ).toEqual([]);
+  });
+
+  it("walks Luciano to Helena's desk while he asks her, and back after", () => {
+    const behavior = createTeamBehavior({
+      personas: ['secretary', 'manager', 'marketing'],
+      random: () => 0,
+    });
+    const luciano = behavior.state.marketing;
+    behavior.consult('marketing', 'manager', 0);
+    run(behavior, 0, 60000);
+    expect(luciano).toMatchObject({ away: true, talking: true });
+    expect(behavior.state.manager.talking).toBe(true);
+
+    behavior.release(60000);
+    run(behavior, 60100, 120000);
+    expect([luciano.x, luciano.y]).toEqual([
+      CHARACTERS.marketing.x,
+      CHARACTERS.marketing.y,
+    ]);
   });
 
   it('finds a way for every walk, from the teammate seat', () => {

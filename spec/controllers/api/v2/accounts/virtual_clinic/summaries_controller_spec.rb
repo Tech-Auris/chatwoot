@@ -19,6 +19,21 @@ RSpec.describe "Virtual clinic Helena's summaries API", type: :request do
     expect(account.virtual_clinic_summaries.find_by(user: manager)).to have_attributes(daily: true, weekly: false, monthly: true, hour: 18)
   end
 
+  it "keeps Luciano's summaries apart from Helena's" do
+    put url, params: { daily: true, hour: 9 }, headers: manager.create_new_auth_token, as: :json
+    put url, params: { persona: 'marketing', weekly: true, hour: 7 }, headers: manager.create_new_auth_token, as: :json
+
+    get url, params: { persona: 'marketing' }, headers: manager.create_new_auth_token
+    expect(response.parsed_body).to eq('daily' => false, 'weekly' => true, 'monthly' => false, 'hour' => 7)
+    expect(account.virtual_clinic_summaries.find_by(user: manager, persona: :manager)).to have_attributes(daily: true, hour: 9)
+  end
+
+  it 'has no summaries from Clara' do
+    get url, params: { persona: 'secretary' }, headers: manager.create_new_auth_token
+
+    expect(response).to have_http_status(:not_found)
+  end
+
   it 'refuses an hour out of the day' do
     put url, params: { daily: true, hour: 30 }, headers: manager.create_new_auth_token, as: :json
 
