@@ -38,13 +38,28 @@ RSpec.describe VirtualClinic::StatusBuilder do
       expect(builder.build[:secretary]).to include(on_duty: true, off_duty_reason: nil)
     end
 
-    it 'is off duty while the secretary is not set up in Super Admin' do
-      expect(builder.build[:secretary]).to include(on_duty: false, off_duty_reason: 'not_set_up')
+    it 'is on duty when the AI answered a patient lately, even without Super Admin (old webhook, like the SDR)' do
+      conversation = create(:conversation, account: account, inbox: inbox)
+      create(:message, account: account, inbox: inbox, conversation: conversation, message_type: :outgoing,
+                       sender: ai_user, created_at: 6.days.ago)
+
+      expect(builder.build[:secretary]).to include(on_duty: true, off_duty_reason: nil)
+    end
+
+    it 'is off duty when neither Super Admin has the secretary nor the AI answered in the last 7 days' do
+      conversation = create(:conversation, account: account, inbox: inbox)
+      create(:message, account: account, inbox: inbox, conversation: conversation, message_type: :outgoing,
+                       sender: ai_user, created_at: 8.days.ago)
+      create(:message, account: account, inbox: inbox, conversation: conversation, message_type: :outgoing, sender: admin)
+
+      expect(builder.build[:secretary]).to include(on_duty: false, off_duty_reason: 'ai_not_found')
     end
 
     it 'says why when the account status turns the AI off' do
       create(:account_status, status: :payment_pending, label: 'Sem pagamento')
       account.update!(status: :payment_pending)
+      conversation = create(:conversation, account: account, inbox: inbox)
+      create(:message, account: account, inbox: inbox, conversation: conversation, message_type: :outgoing, sender: ai_user)
 
       expect(builder.build[:secretary]).to include(on_duty: false, off_duty_reason: 'Sem pagamento')
     end

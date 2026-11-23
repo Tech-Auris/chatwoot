@@ -2,9 +2,11 @@
 # and open to every role, since the internal chat lives in it. Everyone sees
 # the AI team on the map; the numbers of the restricted teammates (the
 # manager), their alerts, the editor and talking to the team are for
-# administrators and managers. Talking also needs the AI assistant (MCP) on
-# plus the clinic's own OpenAI key. Whether Clara is serving patients is a
-# different thing (the n8n secretary, our key).
+# administrators and managers. Talking (each teammate's "Assistente") also
+# needs the AI assistant (MCP) on plus the clinic's own OpenAI key: one key
+# for the whole AI team, never one per persona. Whether Clara is serving
+# patients (her "Atendimento") is a different thing (the n8n secretary, our
+# key; see VirtualClinic::StatusBuilder).
 class VirtualClinicPolicy < ApplicationPolicy
   def show?
     account.virtual_clinic_enabled?

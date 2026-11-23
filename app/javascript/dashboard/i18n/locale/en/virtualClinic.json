@@ -6,12 +6,11 @@
     },
     "AI_TEAM": {
       "TITLE": "AI team ({count})",
-      "MISSING_MCP": "To talk to the AI team, turn on the AI assistant.",
+      "MISSING_MCP": "Turn on the AI assistant to talk to the whole AI team.",
       "ENABLE_MCP": "Turn on AI team",
-      "MISSING_OPENAI": "To talk to the AI team, add the clinic's OpenAI key.",
+      "MISSING_OPENAI": "Add an OpenAI key to talk to the whole AI team.",
       "CONFIGURE_OPENAI": "Set up OpenAI key",
-      "CHAT_SECTION": "AI team",
-      "CHAT_OFF": "Chat off"
+      "CHAT_SECTION": "AI team"
     },
     "RAIL": {
       "MAP": "Clinic",
@@ -88,17 +87,23 @@
       "RENDER_CHART": "chart"
     },
     "STATUS": {
-      "IDLE": "No patients right now",
-      "SECRETARY": "Serving {active} · {followUps} in follow-up",
       "MANAGER": "{leads} leads this month · {rate}% conversion",
-      "MANAGER_LEADS": "{leads} leads this month",
-      "OFF_DUTY": "Not serving patients · {reason}",
-      "NOT_SET_UP": "secretary not set up"
+      "MANAGER_LEADS": "{leads} leads this month"
+    },
+    "FACES": {
+      "ATTENDANCE": "Patient care",
+      "ASSISTANT": "Assistant",
+      "ON": "on",
+      "SERVING": "serving {active} · {followUps} in follow-up",
+      "IDLE": "no patients right now",
+      "REASONS": {
+        "AI_NOT_FOUND": "patient care AI not found",
+        "MISSING_OPENAI": "missing the OpenAI key",
+        "MISSING_MCP": "turn on the AI assistant"
+      }
     },
     "MAP": {
       "THINKING": "💭 Checking the data…",
-      "SECRETARY": "💬 Serving {active} patients · 🔁 {followUps} in follow-up",
-      "IDLE": "☕ No patients right now",
       "LEADS": "📊 {leads} leads this month",
       "APPOINTMENTS": "📅 {appointments} appointments this month",
       "CONVERSION": "📈 {rate}% conversion this month",
@@ -112,7 +117,6 @@
       "ZOOM_IN": "Zoom in",
       "ZOOM_OUT": "Zoom out",
       "ZOOM_FIT": "Fit to screen",
-      "OFF_DUTY": "⏸ Not serving patients · {reason}",
       "TALK_TO": "Talk to {name} (E)",
       "MOVE_HINT": "Walk with the arrow keys or WASD, or click the floor",
       "ASKING": "💬 Asking {name}…",

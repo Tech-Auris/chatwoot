@@ -52,63 +52,68 @@ describe('TeamPanel', () => {
     expect(wrapper.emitted('selectMember')).toEqual([['manager']]);
   });
 
-  it('shows what each teammate is doing from the live status', () => {
-    const wrapper = mountPanel(
-      { visible: true, chat_enabled: true, members },
-      {
-        secretary: { on_duty: true, active_conversations: 7, in_follow_up: 4 },
-        manager: {
-          month: { leads: 412, appointments: 131, conversion_rate: 31.8 },
-        },
-      }
-    );
+  describe("Clara's two faces (Atendimento and Assistente)", () => {
+    const managerTeam = chat => ({
+      visible: true,
+      manages_team: true,
+      members,
+      chat_enabled: chat,
+      chat_missing: chat ? null : 'openai_key',
+    });
+    const liveStatus = onDuty => ({
+      secretary: onDuty
+        ? { on_duty: true, active_conversations: 3, in_follow_up: 1 }
+        : {
+            on_duty: false,
+            off_duty_reason: 'Sem pagamento',
+            active_conversations: 0,
+            in_follow_up: 0,
+          },
+      manager: { month: { leads: 40, appointments: 12, conversion_rate: 30 } },
+    });
 
-    expect(wrapper.text()).toContain('VIRTUAL_CLINIC.STATUS.SECRETARY');
-    expect(wrapper.text()).toContain('VIRTUAL_CLINIC.STATUS.MANAGER');
-  });
+    it.each([
+      [true, true, false],
+      [true, false, false],
+      [false, true, false],
+      [false, false, true],
+    ])('serving %s, assistant %s: faded %s', (onDuty, chat, faded) => {
+      const clara = rows(mountPanel(managerTeam(chat), liveStatus(onDuty)))[0];
+      const text = clara.text();
 
-  it('keeps Clara serving patients without the OpenAI key, only the chat is off', () => {
-    const wrapper = mountPanel(
-      {
-        visible: true,
-        chat_enabled: false,
-        chat_missing: 'openai_key',
-        manages_team: true,
-        members,
-      },
-      {
-        secretary: { on_duty: true, active_conversations: 3, in_follow_up: 1 },
-        manager: {
-          month: { leads: 40, appointments: 12, conversion_rate: 30 },
-        },
-      }
-    );
-    const clara = rows(wrapper)[0];
+      expect(text).toContain('VIRTUAL_CLINIC.FACES.ATTENDANCE');
+      expect(text).toContain(
+        onDuty ? 'VIRTUAL_CLINIC.FACES.SERVING' : 'Sem pagamento'
+      );
+      expect(text).toContain('VIRTUAL_CLINIC.FACES.ASSISTANT');
+      expect(text).toContain(
+        chat
+          ? 'VIRTUAL_CLINIC.FACES.ON'
+          : 'VIRTUAL_CLINIC.FACES.REASONS.MISSING_OPENAI'
+      );
+      expect(clara.classes().includes('opacity-50')).toBe(faded);
+    });
 
-    expect(clara.text()).toContain('VIRTUAL_CLINIC.STATUS.SECRETARY');
-    expect(clara.text()).toContain('VIRTUAL_CLINIC.AI_TEAM.CHAT_OFF');
-    expect(clara.classes()).not.toContain('opacity-50');
-  });
+    it('shows Helena only the assistant, with her month numbers, faded when it is off', () => {
+      const helena = rows(mountPanel(managerTeam(false), liveStatus(true)))[1];
 
-  it('fades Clara only when she is not serving patients', () => {
-    const wrapper = mountPanel(
-      { visible: true, chat_enabled: true, members },
-      {
-        secretary: {
-          on_duty: false,
-          off_duty_reason: 'Sem pagamento',
-          active_conversations: 0,
-          in_follow_up: 0,
-        },
-        manager: {
-          month: { leads: 40, appointments: 12, conversion_rate: 30 },
-        },
-      }
-    );
+      expect(helena.text()).toContain('VIRTUAL_CLINIC.STATUS.MANAGER');
+      expect(helena.text()).toContain('VIRTUAL_CLINIC.FACES.ASSISTANT');
+      expect(helena.text()).not.toContain('VIRTUAL_CLINIC.FACES.ATTENDANCE');
+      expect(helena.classes()).toContain('opacity-50');
+    });
 
-    expect(rows(wrapper)[0].classes()).toContain('opacity-50');
-    expect(rows(wrapper)[0].text()).toContain('VIRTUAL_CLINIC.STATUS.OFF_DUTY');
-    expect(rows(wrapper)[1].classes()).not.toContain('opacity-50');
+    it('says when no AI is serving the patients', () => {
+      const clara = rows(
+        mountPanel(managerTeam(true), {
+          secretary: { on_duty: false, off_duty_reason: 'ai_not_found' },
+        })
+      )[0];
+
+      expect(clara.text()).toContain(
+        'VIRTUAL_CLINIC.FACES.REASONS.AI_NOT_FOUND'
+      );
+    });
   });
 
   it('points to the OpenAI key when it is missing and blocks selection', async () => {
@@ -158,15 +163,16 @@ describe('TeamPanel', () => {
     expect(wrapper.emitted('editAvatar')).toEqual([['manager']]);
   });
 
-  it('shows agents the team without the manager numbers or the chat-off hint', () => {
+  it("shows agents only Clara's attendance, without the manager numbers or the assistant", () => {
     const wrapper = mountPanel(
       { visible: true, chat_enabled: false, manages_team: false, members },
       { secretary: { on_duty: true, active_conversations: 3, in_follow_up: 1 } }
     );
 
-    expect(wrapper.text()).toContain('VIRTUAL_CLINIC.STATUS.SECRETARY');
+    expect(wrapper.text()).toContain('VIRTUAL_CLINIC.FACES.ATTENDANCE');
     expect(wrapper.text()).not.toContain('VIRTUAL_CLINIC.STATUS.MANAGER');
-    expect(wrapper.text()).not.toContain('VIRTUAL_CLINIC.AI_TEAM.CHAT_OFF');
+    expect(wrapper.text()).not.toContain('VIRTUAL_CLINIC.FACES.ASSISTANT');
+    expect(rows(wrapper)[1].classes()).not.toContain('opacity-50');
   });
 
   it('opens the manager without the chat, for her news', async () => {
