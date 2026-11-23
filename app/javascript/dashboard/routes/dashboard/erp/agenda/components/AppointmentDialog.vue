@@ -58,9 +58,10 @@ defineExpose({ open });
   <Dialog
     ref="dialogRef"
     :title="t('AGENDA.APPOINTMENT.TITLE')"
-    :cancel-button-label="t('AGENDA.APPOINTMENT.CLOSE')"
-    :show-confirm-button="false"
+    :confirm-button-label="t('AGENDA.APPOINTMENT.CLOSE')"
+    :show-cancel-button="false"
     width="md"
+    @confirm="dialogRef.close()"
   >
     <dl class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 m-0 text-sm">
       <template v-for="row in rows" :key="row.key">
