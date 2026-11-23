@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe 'Agenda API', type: :request do
   let(:erp) { create(:erp_source) }
-  let(:account) { create(:account, erp_source: erp) }
+  let(:account) { create(:account, erp_source: erp, erp_menu_enabled: true) }
   let(:agent) { create(:user, account: account, role: :agent) }
   let(:url) { "/api/v1/accounts/#{account.id}/agenda" }
   let(:appointment) do
@@ -75,6 +75,16 @@ RSpec.describe 'Agenda API', type: :request do
 
       expect(response.parsed_body['agenda_enabled']).to be(true)
     end
+  end
+
+  it 'answers 404 and hides the menu while the ERP menu is not released for the account' do
+    create(:account_integration, account: account, erp_source: erp)
+    account.update!(erp_menu_enabled: false)
+
+    get url, params: { from: '2026-11-24', to: '2026-11-24' }, headers: agent.create_new_auth_token, as: :json
+
+    expect(response).to have_http_status(:not_found)
+    expect(Agenda::Source.available?(account)).to be(false)
   end
 
   it 'answers 404 when the ERP has no integration in the account' do

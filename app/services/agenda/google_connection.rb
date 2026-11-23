@@ -29,6 +29,11 @@ class Agenda::GoogleConnection
       refresh_token.present?
     end
 
+    # The installation's Google OAuth app is filled in (Super Admin → Settings → Google).
+    def configured?
+      client_id.present? && client_secret.present?
+    end
+
     def authorize_url(redirect_uri:, state:)
       query = { client_id: client_id, redirect_uri: redirect_uri, response_type: 'code', scope: SCOPE, state: state,
                 access_type: 'offline', prompt: 'consent', include_granted_scopes: 'true' }

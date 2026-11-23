@@ -259,6 +259,13 @@ RSpec.describe 'Super Admin accounts API', type: :request do
       expect(response).to have_http_status(:redirect)
       expect(account.reload.virtual_clinic_enabled).to be(true)
     end
+
+    it 'releases the ERP menu for the account' do
+      put "/super_admin/accounts/#{account.id}",
+          params: { account: { name: account.name }, auris_menus: { erp_menu_enabled: '1' } }
+
+      expect(account.reload.erp_menu_enabled).to be(true)
+    end
   end
 
   describe 'PUT /super_admin/accounts/{account_id} (Auris settings section)' do

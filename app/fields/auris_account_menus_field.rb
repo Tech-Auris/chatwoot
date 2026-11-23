@@ -15,7 +15,8 @@ class AurisAccountMenusField < Administrate::Field::Base
     campaigns_live_chat_menu_enabled: 'Campanhas / Chat ao vivo',
     campaigns_sms_menu_enabled: 'Campanhas / SMS',
     settings_macros_menu_enabled: 'Configurações / Macros',
-    virtual_clinic_enabled: 'Clínica virtual'
+    virtual_clinic_enabled: 'Clínica virtual',
+    erp_menu_enabled: 'ERP (Agenda)'
   }.freeze
 
   def options
