@@ -22,7 +22,7 @@ const emit = defineEmits([
   'edit',
   'editAvatar',
   'editProfile',
-  'summarySettings',
+  'memberSettings',
 ]);
 const { t } = useI18n();
 const members = computed(() => props.aiTeam?.members || []);
@@ -158,13 +158,15 @@ const select = member => {
         </button>
         <span class="absolute flex gap-0.5 top-2 right-1">
           <Button
-            v-if="member.persona === 'manager' && aiTeam.manages_team"
+            v-if="aiTeam.manages_team"
             icon="i-lucide-settings"
             variant="ghost"
             color="slate"
             size="xs"
-            :title="t('VIRTUAL_CLINIC.SUMMARY.OPEN', { name: member.name })"
-            @click="emit('summarySettings')"
+            :title="
+              t('VIRTUAL_CLINIC.MEMBER_SETTINGS.OPEN', { name: member.name })
+            "
+            @click="emit('memberSettings', member.persona)"
           />
           <Button
             v-if="aiTeam?.can_edit_layout"
