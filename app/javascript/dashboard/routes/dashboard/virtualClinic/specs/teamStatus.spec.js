@@ -77,6 +77,12 @@ describe('teamStatus', () => {
     ]);
   });
 
+  it('shows only the name of the assistant when it is on (the green dot says it)', () => {
+    expect(faceLines('manager', onDuty, team(true), t)).toEqual([
+      { key: 'assistant', on: true, text: 'VIRTUAL_CLINIC.FACES.ASSISTANT' },
+    ]);
+  });
+
   it('waits for the live status before the attendance line', () => {
     expect(
       faceLines('secretary', null, team(true), t).map(line => line.key)

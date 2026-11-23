@@ -40,7 +40,8 @@ const detail = (face, status, t) => {
       ? t(`VIRTUAL_CLINIC.FACES.REASONS.${REASONS[face.reason]}`)
       : face.reason;
   }
-  if (face.key === 'assistant') return t('VIRTUAL_CLINIC.FACES.ON');
+  // The green dot already says the assistant is on.
+  if (face.key === 'assistant') return '';
   const { active_conversations: active, in_follow_up: followUps } =
     status?.secretary || {};
   return active || followUps
@@ -48,13 +49,17 @@ const detail = (face, status, t) => {
     : t('VIRTUAL_CLINIC.FACES.IDLE');
 };
 
-// "Atendimento · atendendo 3 · 1 em follow-up", "Assistente · ligado"…
+// "Atendimento · atendendo 3 · 1 em follow-up", "Assistente"…
 // The attendance line waits for the live status.
 export const faceLines = (persona, status, aiTeam, t) =>
   faces(persona, status, aiTeam)
     .filter(face => face.key !== 'attendance' || status?.secretary)
-    .map(face => ({
-      key: face.key,
-      on: face.on,
-      text: `${t(`VIRTUAL_CLINIC.FACES.${face.key.toUpperCase()}`)} · ${detail(face, status, t)}`,
-    }));
+    .map(face => {
+      const label = t(`VIRTUAL_CLINIC.FACES.${face.key.toUpperCase()}`);
+      const text = detail(face, status, t);
+      return {
+        key: face.key,
+        on: face.on,
+        text: text ? `${label} · ${text}` : label,
+      };
+    });

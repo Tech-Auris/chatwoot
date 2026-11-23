@@ -93,7 +93,6 @@
     "FACES": {
       "ATTENDANCE": "Atendimento",
       "ASSISTANT": "Assistente",
-      "ON": "ligado",
       "SERVING": "atendendo {active} · {followUps} em follow-up",
       "IDLE": "sem atendimentos agora",
       "REASONS": {

@@ -86,10 +86,8 @@ describe('TeamPanel', () => {
         onDuty ? 'VIRTUAL_CLINIC.FACES.SERVING' : 'Sem pagamento'
       );
       expect(text).toContain('VIRTUAL_CLINIC.FACES.ASSISTANT');
-      expect(text).toContain(
-        chat
-          ? 'VIRTUAL_CLINIC.FACES.ON'
-          : 'VIRTUAL_CLINIC.FACES.REASONS.MISSING_OPENAI'
+      expect(text.includes('VIRTUAL_CLINIC.FACES.REASONS.MISSING_OPENAI')).toBe(
+        !chat
       );
       expect(clara.classes().includes('opacity-50')).toBe(faded);
     });
