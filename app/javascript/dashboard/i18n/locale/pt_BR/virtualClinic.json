@@ -7,12 +7,11 @@
     },
     "AI_TEAM": {
       "TITLE": "Equipe de IA ({count})",
-      "MISSING_MCP": "Para conversar com a equipe de IA, ative o assistente de IA.",
+      "MISSING_MCP": "Ative o Assistente IA para conversar com toda a equipe de IA.",
       "ENABLE_MCP": "Ativar equipe de IA",
-      "MISSING_OPENAI": "Para conversar com a equipe de IA, cadastre a chave da OpenAI da clínica.",
+      "MISSING_OPENAI": "Cadastre uma chave da OpenAI para conversar com toda a equipe de IA.",
       "CONFIGURE_OPENAI": "Configurar chave OpenAI",
-      "CHAT_SECTION": "Equipe de IA",
-      "CHAT_OFF": "Conversa desligada"
+      "CHAT_SECTION": "Equipe de IA"
     },
     "RAIL": {
       "MAP": "Clínica",
@@ -97,19 +96,24 @@
       "RENDER_CHART": "gráfico"
     },
     "STATUS": {
-      "IDLE": "Sem atendimentos agora",
-      "SECRETARY": "Atendendo {active} · {followUps} em follow-up",
       "MANAGER": "{leads} leads no mês · {rate}% de conversão",
       "MANAGER_LEADS": "{leads} leads no mês",
       "MARKETING": "{campaigns} campanhas ativas · {cost} por agendamento",
-      "MARKETING_CAMPAIGNS": "{campaigns} campanhas ativas no mês",
-      "OFF_DUTY": "Atendimento desligado · {reason}",
-      "NOT_SET_UP": "secretária não configurada"
+      "MARKETING_CAMPAIGNS": "{campaigns} campanhas ativas no mês"
+    },
+    "FACES": {
+      "ATTENDANCE": "Atendimento",
+      "ASSISTANT": "Assistente",
+      "SERVING": "atendendo {active} · {followUps} em follow-up",
+      "IDLE": "sem atendimentos agora",
+      "REASONS": {
+        "AI_NOT_FOUND": "IA de atendimento não encontrada",
+        "MISSING_OPENAI": "falta a chave da OpenAI",
+        "MISSING_MCP": "ative o Assistente IA"
+      }
     },
     "MAP": {
       "THINKING": "💭 Consultando os dados…",
-      "SECRETARY": "💬 Atendendo {active} pacientes · 🔁 {followUps} em follow-up",
-      "IDLE": "☕ Sem atendimentos agora",
       "LEADS": "📊 {leads} leads este mês",
       "APPOINTMENTS": "📅 {appointments} agendamentos no mês",
       "CONVERSION": "📈 {rate}% de conversão no mês",
@@ -127,7 +131,6 @@
       "ZOOM_IN": "Aproximar",
       "ZOOM_OUT": "Afastar",
       "ZOOM_FIT": "Ajustar à tela",
-      "OFF_DUTY": "⏸ Atendimento desligado · {reason}",
       "TALK_TO": "Conversar com {name} (E)",
       "MOVE_HINT": "Ande com as setas ou WASD, ou clique no chão",
       "ASKING": "💬 Perguntando para {name}…",

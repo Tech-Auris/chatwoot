@@ -36,7 +36,7 @@ import { createAvatar } from '../engine/movement';
 import { seatAt, seatsOf, withoutSeats } from '../engine/seats';
 import { inSeason } from '../engine/seasons';
 import { useClinicPresence } from '../composables/useClinicPresence';
-import { formatReais, isOffDuty, offDutyReason } from '../teamStatus';
+import { faceLines, formatReais, isFaded } from '../teamStatus';
 
 const props = defineProps({
   aiTeam: { type: Object, default: null },
@@ -102,8 +102,8 @@ const hasWalked = ref(false);
 const members = computed(() =>
   props.aiTeam?.visible ? props.aiTeam.members : []
 );
-// Talking to them needs the clinic's OpenAI key; Clara is only faded when
-// she is not serving patients (the n8n secretary), which is another switch.
+// Talking to them needs the clinic's OpenAI key (their "Assistente"); they
+// are only faded when every face is off (see teamStatus.js).
 const chatEnabled = computed(() => props.aiTeam?.chat_enabled === true);
 const secretaryBusy = computed(
   () => (props.status?.secretary?.active_conversations || 0) > 0
@@ -133,7 +133,7 @@ const team = computed(() =>
       sitting: place.sitting,
       phone:
         member.persona === 'secretary' && secretaryBusy.value && !place.away,
-      faded: isOffDuty(member.persona, props.status),
+      faded: isFaded(member.persona, props.status, props.aiTeam),
     };
   })
 );
@@ -181,11 +181,11 @@ const overHead = persona => {
   return { x: place.x + 16, y: place.y + 18 };
 };
 
-// Nobody leaves while the user talks to them or when off duty.
+// Nobody leaves while the user talks to them or when faded.
 const canLeave = persona =>
   persona !== props.focused &&
   persona !== props.thinking &&
-  !isOffDuty(persona, props.status);
+  !isFaded(persona, props.status, props.aiTeam);
 
 // The team walks around unless the clinic is being edited.
 const restartBehavior = () => {
@@ -207,34 +207,10 @@ watch(
   restartBehavior
 );
 
-// What each teammate is doing, over their head (hidden while away).
-const bubble = persona => {
-  if (editing.value) return '';
-  if (props.consulting?.persona === persona) {
-    const teammate = members.value.find(
-      m => m.persona === props.consulting.target
-    );
-    return t('VIRTUAL_CLINIC.MAP.ASKING', {
-      name: teammate ? nameOf(teammate) : '',
-    });
-  }
-  if (props.thinking === persona) return t('VIRTUAL_CLINIC.MAP.THINKING');
-  if (placeOf(persona).away) return '';
-  // Agents don't get the numbers of the restricted teammates (the manager).
-  if (!props.status?.[persona]) return '';
-  if (isOffDuty(persona, props.status)) {
-    return t('VIRTUAL_CLINIC.MAP.OFF_DUTY', {
-      reason: offDutyReason(props.status, t),
-    });
-  }
-  if (persona === 'secretary') {
-    const { active_conversations: active, in_follow_up: followUps } =
-      props.status.secretary;
-    return active || followUps
-      ? t('VIRTUAL_CLINIC.MAP.SECRETARY', { active, followUps })
-      : t('VIRTUAL_CLINIC.MAP.IDLE');
-  }
-  if (persona === 'marketing') {
+// The month numbers over the teammate's head, one at a time (agents don't
+// get the manager's).
+const monthLine = persona => {
+  if (persona === 'marketing' && props.status?.marketing) {
     const { active_campaigns: campaigns, cost_per_appointment: cost } =
       props.status.marketing;
     const ads = [t('VIRTUAL_CLINIC.MAP.CAMPAIGNS', { campaigns })];
@@ -245,8 +221,9 @@ const bubble = persona => {
         })
       );
     }
-    return ads[rotation.value % ads.length];
+    return [{ key: 'month', text: ads[rotation.value % ads.length] }];
   }
+  if (persona !== 'manager' || !props.status?.manager) return [];
   const {
     leads,
     appointments,
@@ -257,7 +234,28 @@ const bubble = persona => {
     t('VIRTUAL_CLINIC.MAP.APPOINTMENTS', { appointments }),
     ...(rate === null ? [] : [t('VIRTUAL_CLINIC.MAP.CONVERSION', { rate })]),
   ];
-  return lines[rotation.value % lines.length];
+  return [{ key: 'month', text: lines[rotation.value % lines.length] }];
+};
+
+// What each teammate is doing, over their head (hidden while away): the
+// month numbers and one line per face, with its on/off dot.
+const bubble = persona => {
+  if (editing.value) return [];
+  if (props.consulting?.persona === persona) {
+    const teammate = members.value.find(
+      m => m.persona === props.consulting.target
+    );
+    const name = teammate ? nameOf(teammate) : '';
+    return [{ key: 'asking', text: t('VIRTUAL_CLINIC.MAP.ASKING', { name }) }];
+  }
+  if (props.thinking === persona) {
+    return [{ key: 'thinking', text: t('VIRTUAL_CLINIC.MAP.THINKING') }];
+  }
+  if (placeOf(persona).away) return [];
+  return [
+    ...monthLine(persona),
+    ...faceLines(persona, props.status, props.aiTeam, t),
+  ];
 };
 
 // World coordinates (the clinic's) to pixels on the scene, garden included.
@@ -796,17 +794,28 @@ onBeforeUnmount(() => {
             :style="at(overHead(member.persona))"
           >
             <span
-              v-if="bubble(member.persona) && !overview"
-              class="px-2 py-1 text-xs font-medium bg-white rounded-lg shadow-md whitespace-nowrap text-n-slate-12"
+              v-if="bubble(member.persona).length && !overview"
+              class="flex flex-col gap-0.5 px-2 py-1 text-xs font-medium bg-white rounded-lg shadow-md whitespace-nowrap text-n-slate-12"
             >
-              {{ bubble(member.persona) }}
+              <span
+                v-for="line in bubble(member.persona)"
+                :key="line.key"
+                class="flex items-center gap-1.5"
+              >
+                <span
+                  v-if="line.on !== undefined"
+                  class="rounded-full size-1.5 shrink-0"
+                  :class="line.on ? 'bg-n-teal-9' : 'bg-n-slate-8'"
+                />
+                {{ line.text }}
+              </span>
             </span>
             <button
               type="button"
               class="px-2 py-0.5 text-xs font-semibold text-white rounded-full shadow whitespace-nowrap pointer-events-auto bg-n-iris-9"
               :class="[
                 chatEnabled ? '' : 'cursor-default',
-                isOffDuty(member.persona, status) ? 'opacity-50' : '',
+                isFaded(member.persona, status, aiTeam) ? 'opacity-50' : '',
               ]"
               @click="
                 chatEnabled && !editing && emit('selectMember', member.persona)

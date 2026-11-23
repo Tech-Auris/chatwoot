@@ -48,4 +48,10 @@ RSpec.describe VirtualClinicPolicy, type: :policy do
     expect(policy_for(admin).ai_chat?).to be(false)
     expect(policy_for(admin).missing_requirement).to eq('openai_key')
   end
+
+  it 'uses one OpenAI key, the clinic integration, for every AI teammate' do
+    key = account.hooks.find_by(app_id: 'openai').settings['api_key']
+
+    expect(described_class.openai_api_key(account)).to eq(key)
+  end
 end

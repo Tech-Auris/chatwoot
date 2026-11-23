@@ -2,9 +2,8 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Button from 'dashboard/components-next/button/Button.vue';
-import Icon from 'dashboard/components-next/icon/Icon.vue';
 import PeopleList from './PeopleList.vue';
-import { formatReais, isOffDuty, offDutyReason } from '../teamStatus';
+import { faceLines, formatReais, isFaded } from '../teamStatus';
 
 const props = defineProps({
   clinicName: { type: String, default: '' },
@@ -50,23 +49,11 @@ const missingAction = computed(() => {
   return null;
 });
 
-// One line of what each teammate is doing, from the live status. It does not
-// depend on the OpenAI key: Clara serves patients through the n8n anyway.
-const statusLine = persona => {
-  // Agents don't get the numbers of the restricted teammates.
-  if (!props.status?.[persona]) return '';
-  if (isOffDuty(persona, props.status)) {
-    return t('VIRTUAL_CLINIC.STATUS.OFF_DUTY', {
-      reason: offDutyReason(props.status, t),
-    });
-  }
-  if (persona === 'secretary') {
-    const { active_conversations: active, in_follow_up: followUps } =
-      props.status.secretary;
-    if (!active && !followUps) return t('VIRTUAL_CLINIC.STATUS.IDLE');
-    return t('VIRTUAL_CLINIC.STATUS.SECRETARY', { active, followUps });
-  }
-  if (persona === 'marketing') {
+// The month numbers of the manager and the marketing teammate, from the live
+// status (agents don't get the manager's). What Clara does is in her
+// attendance line.
+const monthLine = persona => {
+  if (persona === 'marketing' && props.status?.marketing) {
     const { active_campaigns: campaigns, cost_per_appointment: cost } =
       props.status.marketing;
     return cost === null
@@ -76,6 +63,7 @@ const statusLine = persona => {
           cost: formatReais(cost),
         });
   }
+  if (persona !== 'manager' || !props.status?.manager) return '';
   const { leads, conversion_rate: rate } = props.status.manager.month;
   return rate === null
     ? t('VIRTUAL_CLINIC.STATUS.MANAGER_LEADS', { leads })
@@ -129,7 +117,7 @@ const select = member => {
             chatEnabled || member.persona === 'manager'
               ? 'hover:bg-n-alpha-2'
               : 'cursor-default',
-            isOffDuty(member.persona, status) ? 'opacity-50' : '',
+            isFaded(member.persona, status, aiTeam) ? 'opacity-50' : '',
             selected === member.persona ? 'bg-n-alpha-2' : '',
           ]"
           @click="select(member)"
@@ -154,15 +142,22 @@ const select = member => {
                 }}
               </span>
             </span>
-            <span class="text-xs truncate text-n-slate-11">
-              {{ statusLine(member.persona) }}
+            <span
+              v-if="monthLine(member.persona)"
+              class="text-xs truncate text-n-slate-11"
+            >
+              {{ monthLine(member.persona) }}
             </span>
             <span
-              v-if="!chatEnabled && aiTeam.manages_team"
-              class="flex items-center gap-1 text-xs text-n-slate-10"
+              v-for="line in faceLines(member.persona, status, aiTeam, t)"
+              :key="line.key"
+              class="flex items-center gap-1.5 text-xs text-n-slate-11"
             >
-              <Icon icon="i-lucide-message-circle-off" class="size-3" />
-              {{ t('VIRTUAL_CLINIC.AI_TEAM.CHAT_OFF') }}
+              <span
+                class="rounded-full size-1.5 shrink-0"
+                :class="line.on ? 'bg-n-teal-9' : 'bg-n-slate-8'"
+              />
+              <span class="truncate">{{ line.text }}</span>
             </span>
           </span>
         </button>

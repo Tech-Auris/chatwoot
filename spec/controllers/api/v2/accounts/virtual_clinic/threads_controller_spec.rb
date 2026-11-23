@@ -65,7 +65,7 @@ RSpec.describe 'Virtual clinic threads API', type: :request do
     get "/api/v2/accounts/#{account.id}/virtual_clinic/status", headers: admin.create_new_auth_token, as: :json
 
     expect(response).to have_http_status(:ok)
-    expect(response.parsed_body['secretary']).to include('on_duty' => false, 'off_duty_reason' => 'not_set_up')
+    expect(response.parsed_body['secretary']).to include('on_duty' => false, 'off_duty_reason' => 'ai_not_found')
   end
 
   it 'is refused to agents' do
