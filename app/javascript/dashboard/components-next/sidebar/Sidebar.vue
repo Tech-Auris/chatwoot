@@ -102,6 +102,11 @@ const isCampaignsSmsMenuEnabled = computed(
 const isVirtualClinicEnabled = computed(
   () => accountGetter.value(accountId.value)?.virtual_clinic_enabled === true
 );
+// The ERP menu shows while its only item, the Agenda, is available: the
+// account's ERP or calendar has an agenda source and an integration.
+const isAgendaEnabled = computed(
+  () => accountGetter.value(accountId.value)?.agenda_enabled === true
+);
 const isSettingsMacrosMenuEnabled = computed(
   () =>
     accountGetter.value(accountId.value)?.settings_macros_menu_enabled === true
@@ -598,6 +603,24 @@ const menuItems = computed(() => {
             getterKeys: {
               count: 'tickets/getUnreadCount',
             },
+          },
+        ]
+      : []),
+    ...(isAgendaEnabled.value
+      ? [
+          {
+            name: 'Erp',
+            label: t('SIDEBAR.ERP'),
+            icon: 'i-lucide-briefcase-medical',
+            children: [
+              {
+                name: 'Erp Agenda',
+                label: t('SIDEBAR.ERP_AGENDA'),
+                icon: 'i-lucide-calendar-days',
+                to: accountScopedRoute('erp_agenda'),
+                activeOn: ['erp_agenda'],
+              },
+            ],
           },
         ]
       : []),

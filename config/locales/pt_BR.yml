@@ -376,6 +376,11 @@ pt_BR:
         origin_date: 'Data de origem'
         assignee: 'Agente atribuído'
         conversation_id: 'Número da conversa'
+  agenda:
+    errors:
+      not_configured: "Esta conta não tem um ERP ou agenda configurado"
+      invalid_period: "Escolha um período de até %{days} dias"
+      source_failed: "Não foi possível ler a agenda do ERP: %{error}"
   funnel:
     appointments:
       external_id_required: "Este lead tem mais de um agendamento aberto: envie o external_id do agendamento"

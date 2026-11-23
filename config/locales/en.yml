@@ -401,6 +401,11 @@ en:
         origin_date: 'Origin date'
         assignee: 'Assigned agent'
         conversation_id: 'Conversation number'
+  agenda:
+    errors:
+      not_configured: "This account has no ERP or calendar with an agenda configured"
+      invalid_period: "Choose a period of up to %{days} days"
+      source_failed: "Could not read the agenda from the ERP: %{error}"
   funnel:
     appointments:
       external_id_required: "This lead has more than one open appointment: send the appointment's external_id"

@@ -94,6 +94,8 @@ Rails.application.routes.draw do
           get 'scheduled_messages', to: 'scheduled_messages#index', defaults: { format: :json }
           post 'scheduled_messages/conversation', to: 'scheduled_messages#conversation', defaults: { format: :json }
           delete 'scheduled_messages/:id', to: 'scheduled_messages#destroy', defaults: { format: :json }
+          # ERP → Agenda: the clinic's agenda read live from its ERP or calendar.
+          get 'agenda', to: 'agenda#show', defaults: { format: :json }
           namespace :captain do
             resource :preferences, only: [:show, :update]
             resources :assistants do

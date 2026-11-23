@@ -31,6 +31,7 @@ import funnel from './funnel.json';
 import pipelines from './pipelines.json';
 import home from './home.json';
 import internalChat from './internalChat.json';
+import agenda from './agenda.json';
 import virtualClinic from './virtualClinic.json';
 import kanban from './kanban.json';
 import labelsMgmt from './labelsMgmt.json';
@@ -93,6 +94,7 @@ export default {
   ...pipelines,
   ...home,
   ...internalChat,
+  ...agenda,
   ...virtualClinic,
   ...kanban,
   ...labelsMgmt,
