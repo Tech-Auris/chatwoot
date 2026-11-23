@@ -25,6 +25,12 @@ RSpec.describe 'Super Admin ERP sources dashboard', type: :request do
     expect(erp_source.reload).to have_attributes(id: 2, name: 'Feegow v2', active: false)
   end
 
+  it 'saves the address of the ERP API' do
+    patch "/super_admin/erp_sources/#{erp_source.id}", params: { erp_source: { api_url: 'https://erp.example.com/v1/api' } }
+
+    expect(erp_source.reload.api_url).to eq('https://erp.example.com/v1/api')
+  end
+
   it 'keeps an ERP an account uses' do
     create(:account, erp_source: erp_source)
 
