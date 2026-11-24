@@ -17,6 +17,14 @@ RSpec.describe 'Virtual clinic config API', type: :request do
     expect(response.parsed_body['ai_team']).to include('daily_question_limit' => 60, 'can_manage_settings' => true)
   end
 
+  it 'sends the art version the page puts in the art URLs' do
+    allow(VirtualClinic::AssetStore).to receive(:version).and_return('1764000000')
+
+    get url, headers: agent.create_new_auth_token, as: :json
+
+    expect(response.parsed_body['assets_version']).to eq('1764000000')
+  end
+
   it 'enables the AI team once the clinic has its OpenAI key' do
     allow(Integrations::Openai::KeyValidator).to receive(:valid?).and_return(true)
     create(:integrations_hook, :openai, account: account)

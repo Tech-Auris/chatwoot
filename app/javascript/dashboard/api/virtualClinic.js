@@ -8,14 +8,21 @@ class VirtualClinicAPI extends ApiClient {
 
   // `{ ai_team: { visible, enabled, missing, members } }`
   getConfig() {
-    return axios.get(`${this.url}/config`);
+    const request = axios.get(`${this.url}/config`);
+    this.assetsVersion = request.then(({ data }) => data.assets_version);
+    return request;
   }
 
-  // One PNG of the clinic art (served only to logged-in users).
-  getAsset(path) {
-    return axios
-      .get(`${this.url}/assets/${path}`, { responseType: 'blob' })
-      .then(({ data }) => data);
+  // One PNG of the clinic art (served only to logged-in users). The art
+  // version goes in the URL: browsers keep the art cached until new art is
+  // uploaded.
+  async getAsset(path) {
+    if (!this.assetsVersion) this.getConfig();
+    const { data } = await axios.get(`${this.url}/assets/${path}`, {
+      params: { v: await this.assetsVersion },
+      responseType: 'blob',
+    });
+    return data;
   }
 
   // `{ secretary: { active_conversations, in_follow_up },

@@ -15,7 +15,8 @@ class Api::V2::Accounts::VirtualClinic::ConfigsController < Api::V1::Accounts::B
         can_manage_settings: policy.update_settings?,
         can_edit_layout: policy.update_layout?,
         seasons: seasons
-      }
+      },
+      assets_version: ::VirtualClinic::AssetStore.version
     }
   end
 
