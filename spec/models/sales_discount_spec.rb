@@ -27,5 +27,11 @@ RSpec.describe SalesDiscount do
     it 'keeps the decimals of a broken percentage' do
       expect(build(:sales_discount, name: 'Parceiro', percent: 7.5).label).to eq('7.5% parceiro')
     end
+
+    it 'keeps the casing of a code or acronym' do
+      expect(build(:sales_discount, name: 'ANUAL597', percent: 33.44).label).to eq('33.44% ANUAL597')
+      expect(build(:sales_discount, name: 'API', percent: 100).label).to eq('API')
+      expect(build(:sales_discount, name: '100CONFIGAPI', percent: 100).label).to eq('100CONFIGAPI')
+    end
   end
 end
