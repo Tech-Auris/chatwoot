@@ -57,6 +57,25 @@ describe('saved layout', () => {
       y: CHARACTERS.secretary.y,
     });
   });
+
+  it('swaps the five reception desk pieces of an old layout for the whole desk', () => {
+    const piece = (name, x, y) => ({ sprite: `1_recepcao/${name}.png`, x, y });
+    const layout = applySaved({
+      items: [
+        piece('lixeira', 500, 210),
+        piece('balcao_canto_esq', 230, 140),
+        piece('balcao_meio', 262, 172),
+        piece('balcao_com_computador', 294, 168),
+        piece('balcao_meio_2', 358, 172),
+        piece('balcao_canto_dir', 390, 140),
+      ],
+    });
+
+    expect(layout.items).toEqual([
+      piece('lixeira', 500, 210),
+      piece('balcao_recepcao', 230, 124),
+    ]);
+  });
 });
 
 describe('checkLayout', () => {

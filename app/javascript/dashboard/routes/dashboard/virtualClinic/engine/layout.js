@@ -185,11 +185,7 @@ export const ITEMS = [
   { sprite: `${R}flores_gaveteiro.png`, x: 175, y: 45 },
   { sprite: `${R}planta_grande.png`, x: 560, y: 45 },
   { sprite: `${R}cadeira_secretaria.png`, x: 304, y: 104 },
-  { sprite: `${R}balcao_canto_esq.png`, x: 224, y: 133 },
-  { sprite: `${R}balcao_meio.png`, x: 256, y: 165 },
-  { sprite: `${R}balcao_com_computador.png`, x: 288, y: 161 },
-  { sprite: `${R}balcao_meio_2.png`, x: 352, y: 165 },
-  { sprite: `${R}balcao_canto_dir.png`, x: 384, y: 133 },
+  { sprite: `${R}balcao_recepcao.png`, x: 224, y: 117 },
   { sprite: `${R}lixeira.png`, x: 500, y: 210 },
   { sprite: `${R}planta_media.png`, x: 12, y: 237 },
   { sprite: `${R}planta_media.png`, x: 596, y: 237 },
@@ -396,6 +392,24 @@ export const DEFAULT_LAYOUT = {
   team: CHARACTERS,
 };
 
+// The reception desk used to be drawn in five pieces. Layouts saved then get
+// the whole desk instead, where its left corner was (16 px taller).
+const DESK_PIECES = [
+  'balcao_canto_esq',
+  'balcao_meio',
+  'balcao_com_computador',
+  'balcao_meio_2',
+  'balcao_canto_dir',
+].map(name => `${R}${name}.png`);
+const wholeDesk = items => {
+  const corner = items.find(({ sprite }) => sprite === DESK_PIECES[0]);
+  if (!corner) return items;
+  return [
+    ...items.filter(({ sprite }) => !DESK_PIECES.includes(sprite)),
+    { sprite: `${R}balcao_recepcao.png`, x: corner.x, y: corner.y - 16 },
+  ];
+};
+
 // The saved layout of a clinic (only what the editor changes) on top of the
 // default one. `saved` is null when the clinic never edited it.
 export function applySaved(saved) {
@@ -405,7 +419,7 @@ export function applySaved(saved) {
   return {
     floors: pick(FLOORS, saved.floors),
     walls: pick(WALLS, saved.walls),
-    items: saved.items || ITEMS,
+    items: saved.items ? wholeDesk(saved.items) : ITEMS,
     rooms: ROOMS.map(room => ({ ...room, name: saved.rooms?.[room.key] })),
     team: Object.fromEntries(
       Object.entries(CHARACTERS).map(([persona, spot]) => [
