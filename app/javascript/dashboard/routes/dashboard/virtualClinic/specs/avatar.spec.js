@@ -54,6 +54,16 @@ describe('collision', () => {
     expect(isFree(withPlant, { x: 110, y: 210 })).toBe(true);
   });
 
+  it('blocks all of a flat piece, so nobody walks on the pond', () => {
+    const pond = { sprite: 'x.png', x: 100, y: 200, flat: true };
+    expect(footprint(pond, { width: 96, height: 80 })).toEqual({
+      left: 100,
+      top: 200,
+      right: 196,
+      bottom: 280,
+    });
+  });
+
   it('ignores things on a desk and on the wall', () => {
     expect(
       footprint({ x: 0, y: 150, sortY: 197 }, { width: 20, height: 20 })

@@ -134,7 +134,11 @@ function drawBackground(sprites, layout) {
 }
 
 // `scale` draws a garden piece bigger or smaller; `flip` mirrors it.
-function drawItem(context, image, item) {
+// An animated piece shows one of its frames each two ticks.
+function drawItem(context, sprite, item, tick) {
+  const image = sprite.frames
+    ? sprite.frames[Math.floor(tick / 2) % sprite.frames.length]
+    : sprite;
   const width = Math.round(image.width * (item.scale || 1));
   const height = Math.round(image.height * (item.scale || 1));
   if (!item.flip) {
@@ -270,8 +274,11 @@ export function createRenderer(canvas, sprites, layout = DEFAULT_LAYOUT) {
     .map(item => ({
       ...item,
       image: sprites[item.sprite],
-      depth:
-        item.sortY ?? item.y + sprites[item.sprite].height * (item.scale || 1),
+      // Flat pieces (a pond) lie under everyone.
+      depth: item.flat
+        ? item.y
+        : (item.sortY ??
+          item.y + sprites[item.sprite].height * (item.scale || 1)),
     }));
 
   // `selected` (editor): the box of the piece or teammate being moved;
@@ -303,7 +310,7 @@ export function createRenderer(canvas, sprites, layout = DEFAULT_LAYOUT) {
       .sort((a, b) => a.depth - b.depth)
       .forEach(entry => {
         if (!entry.sheet) {
-          drawItem(context, entry.image, entry);
+          drawItem(context, entry.image, entry, tick);
           return;
         }
         const { row, column } = frameOf(entry, tick);

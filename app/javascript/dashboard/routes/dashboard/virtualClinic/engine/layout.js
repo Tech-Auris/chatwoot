@@ -12,7 +12,7 @@ export const WORLD = { width: 40 * TILE, height: 20 * TILE };
 // are (the garden is at negative coordinates and beyond the clinic size);
 // the glass door of the recepção is the way in and out.
 export const GARDEN = 8 * TILE;
-// Below the clinic there's room for the garden square (fountain, benches).
+// Below the clinic there's room for the garden square (koi pond, benches).
 const GARDEN_BOTTOM = 16 * TILE;
 export const SCENE = {
   x: -GARDEN,
@@ -295,8 +295,8 @@ export const GARDEN_ITEMS = [
   { sprite: `${J}arbusto_pequeno.png`, x: 736, y: 712 },
   { sprite: `${J}arbusto_pequeno.png`, x: 832, y: 712 },
   { sprite: `${J}arbusto_pequeno.png`, x: 864, y: 708 },
-  // The garden square: the fountain, benches and lounge chairs around it.
-  { sprite: `${J}fonte.png`, x: 608, y: 842 },
+  // The garden square: the koi pond, benches and lounge chairs around it.
+  { sprite: `${J}lago_carpas_anim16.png`, x: 581, y: 832, flat: true },
   { sprite: `${J}banco_frente.png`, x: 598, y: 764 },
   { sprite: `${J}espreguicadeira.png`, x: 524, y: 758 },
   { sprite: `${J}espreguicadeira.png`, x: 720, y: 758 },
