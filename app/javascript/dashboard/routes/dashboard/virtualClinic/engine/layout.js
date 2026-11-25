@@ -186,9 +186,9 @@ export const ITEMS = [
   { sprite: `${R}planta_grande.png`, x: 560, y: 45 },
   { sprite: `${R}cadeira_secretaria.png`, x: 304, y: 104 },
   { sprite: `${R}balcao_recepcao.png`, x: 224, y: 117 },
-  { sprite: `${R}lixeira.png`, x: 500, y: 210 },
+  { sprite: `${R}lixeira.png`, x: 432, y: 168 },
   { sprite: `${R}planta_media.png`, x: 12, y: 237 },
-  { sprite: `${R}planta_media.png`, x: 596, y: 237 },
+  { sprite: `${R}planta_media.png`, x: 596, y: 200 },
   // Sala de espera
   { sprite: `${E}poltronas_beges_dupla.png`, x: 28, y: 352 },
   { sprite: `${E}mesinha_revistas.png`, x: 130, y: 367 },
