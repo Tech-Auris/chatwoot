@@ -12,7 +12,7 @@ export const WORLD = { width: 40 * TILE, height: 20 * TILE };
 // are (the garden is at negative coordinates and beyond the clinic size);
 // the glass door of the recepção is the way in and out.
 export const GARDEN = 8 * TILE;
-// Below the clinic there's room for the garden square (fountain, benches).
+// Below the clinic there's room for the garden square (koi pond, benches).
 const GARDEN_BOTTOM = 16 * TILE;
 export const SCENE = {
   x: -GARDEN,
@@ -80,7 +80,7 @@ export const FLOORS = [
     room: 'KITCHEN',
   },
   {
-    block: '5_pisos/carpete_vinho.png',
+    block: '5_pisos/carpete_cinza.png',
     x: WING,
     y: 64,
     w: 320,
@@ -184,25 +184,21 @@ export const ITEMS = [
   { sprite: `${R}quadro_avisos.png`, x: 450, y: 15 },
   { sprite: `${R}flores_gaveteiro.png`, x: 175, y: 45 },
   { sprite: `${R}planta_grande.png`, x: 560, y: 45 },
-  { sprite: `${R}cadeira_secretaria.png`, x: 304, y: 104 },
-  { sprite: `${R}balcao_canto_esq.png`, x: 224, y: 133 },
-  { sprite: `${R}balcao_meio.png`, x: 256, y: 165 },
-  { sprite: `${R}balcao_com_computador.png`, x: 288, y: 161 },
-  { sprite: `${R}balcao_meio_2.png`, x: 352, y: 165 },
-  { sprite: `${R}balcao_canto_dir.png`, x: 384, y: 133 },
-  { sprite: `${R}lixeira.png`, x: 500, y: 210 },
+  { sprite: `${R}cadeira_secretaria.png`, x: 304, y: 114 },
+  { sprite: `${R}balcao_recepcao.png`, x: 224, y: 117 },
+  { sprite: `${R}lixeira.png`, x: 432, y: 168 },
   { sprite: `${R}planta_media.png`, x: 12, y: 237 },
-  { sprite: `${R}planta_media.png`, x: 596, y: 237 },
-  // Sala de espera
-  { sprite: `${E}poltronas_beges_dupla.png`, x: 28, y: 352 },
-  { sprite: `${E}mesinha_revistas.png`, x: 130, y: 367 },
-  { sprite: `${E}poltronas_verdes_dupla.png`, x: 236, y: 352 },
-  { sprite: `${E}mesinha_revistas_2.png`, x: 342, y: 367 },
-  { sprite: `${E}poltronas_beges_dupla.png`, x: 440, y: 352 },
+  { sprite: `${R}planta_media.png`, x: 596, y: 200 },
+  // Sala de espera: the rows centered in the room, evenly spaced.
+  { sprite: `${E}poltronas_beges_dupla.png`, x: 85, y: 352 },
+  { sprite: `${E}mesinha_revistas.png`, x: 193, y: 367 },
+  { sprite: `${E}poltronas_verdes_dupla.png`, x: 292, y: 352 },
+  { sprite: `${E}mesinha_revistas_2.png`, x: 400, y: 379 },
+  { sprite: `${E}poltronas_beges_dupla.png`, x: 494, y: 352 },
   { sprite: `${E}bebedouro.png`, x: 600, y: 427 },
-  ...chairsRow([48, 81, 114, 147, 180, 213]),
-  ...chairsRow([380, 413, 446, 479, 512, 545]),
-  { sprite: `${E}flores_gaveteiro.png`, x: 300, y: 555 },
+  ...chairsRow([58, 91, 124, 157, 190, 223]),
+  ...chairsRow([390, 423, 456, 489, 522, 555]),
+  { sprite: `${E}flores_gaveteiro.png`, x: 305, y: 555 },
   { sprite: `${E}planta.png`, x: 8, y: 580 },
   { sprite: `${E}planta.png`, x: 596, y: 580 },
   // Sala de marketing: the wall of monitors and the campaigns board.
@@ -210,12 +206,14 @@ export const ITEMS = [
   { sprite: `${M}quadro_campanhas.png`, x: 792, y: 8 },
   { sprite: `${M}quadro_criativos.png`, x: 868, y: 12 },
   { sprite: `${M}planta.png`, x: 916, y: 52 },
-  { sprite: `${M}cadeira_executiva.png`, x: 760, y: 108 },
-  { sprite: `${M}mesa.png`, x: 744, y: 158 },
+  { sprite: `${M}cadeira_executiva.png`, x: 760, y: 118 },
+  // Shaped like Helena's desk (straight piece and an L), in his gray.
+  { sprite: `${M}mesa_reta.png`, x: 728, y: 158 },
+  { sprite: `${M}mesa_em_l.png`, x: 792, y: 132 },
   // Two monitors seen from behind, facing Luciano.
   { sprite: `${M}monitor_costas.png`, x: 758, y: 150, sortY: 197 },
   { sprite: `${M}monitor_costas.png`, x: 787, y: 150, sortY: 197 },
-  { sprite: `${M}poltrona_lateral.png`, x: 652, y: 186, flip: true },
+  { sprite: `${G}sofa_lateral.png`, x: 648, y: 172, flip: true },
   { sprite: `${M}planta_2.png`, x: 930, y: 196 },
   // Gerência
   { sprite: `${G}quadro_graficos.png`, x: 972, y: 8 },
@@ -225,7 +223,7 @@ export const ITEMS = [
   { sprite: `${G}arquivo.png`, x: 1168, y: 35 },
   { sprite: `${G}arquivo_2.png`, x: 1202, y: 35 },
   { sprite: `${G}planta.png`, x: 1240, y: 52 },
-  { sprite: `${G}cadeira_executiva_frente.png`, x: 1028, y: 108 },
+  { sprite: `${G}cadeira_executiva_frente.png`, x: 1028, y: 118 },
   { sprite: `${G}mesa_reta.png`, x: 996, y: 158 },
   { sprite: `${G}mesa_em_l.png`, x: 1060, y: 132 },
   // Two monitors seen from behind, facing Helena.
@@ -240,20 +238,22 @@ export const ITEMS = [
   { sprite: `${C}cafeteira_bancada.png`, x: 760, y: 360 },
   { sprite: `${C}maquina_cafe.png`, x: 816, y: 340 },
   { sprite: `${C}bebedouro.png`, x: 870, y: 355 },
-  { sprite: `${C}cadeira_frente.png`, x: 788, y: 437 },
+  { sprite: `${C}cadeira_frente.png`, x: 788, y: 445 },
   { sprite: `${C}mesa_redonda.png`, x: 772, y: 470 },
   // Side chairs face the table: the left one is mirrored.
-  { sprite: `${C}cadeira_lado.png`, x: 748, y: 492, flip: true },
-  { sprite: `${C}cadeira_lado.png`, x: 828, y: 492 },
+  { sprite: `${C}cadeira_lado.png`, x: 748, y: 484, flip: true },
+  { sprite: `${C}cadeira_lado.png`, x: 828, y: 484 },
+  { sprite: `${C}cadeira_costas.png`, x: 788, y: 512 },
   { sprite: `${C}planta.png`, x: 648, y: 590 },
   { sprite: `${C}lixeira.png`, x: 920, y: 592 },
   // The other half of the copa, past its door.
   { sprite: `${C}maquina_lanches.png`, x: 1010, y: 340 },
   { sprite: `${C}cafeteira.png`, x: 1072, y: 352 },
-  { sprite: `${C}cadeira_frente.png`, x: 1108, y: 437 },
+  { sprite: `${C}cadeira_frente.png`, x: 1108, y: 445 },
   { sprite: `${C}mesa_redonda.png`, x: 1092, y: 470 },
-  { sprite: `${C}cadeira_lado.png`, x: 1068, y: 492, flip: true },
-  { sprite: `${C}cadeira_lado.png`, x: 1148, y: 492 },
+  { sprite: `${C}cadeira_lado.png`, x: 1068, y: 484, flip: true },
+  { sprite: `${C}cadeira_lado.png`, x: 1148, y: 484 },
+  { sprite: `${C}cadeira_costas.png`, x: 1108, y: 512 },
   { sprite: `${C}planta.png`, x: 1240, y: 590 },
 ];
 
@@ -299,11 +299,11 @@ export const GARDEN_ITEMS = [
   { sprite: `${J}arbusto_pequeno.png`, x: 736, y: 712 },
   { sprite: `${J}arbusto_pequeno.png`, x: 832, y: 712 },
   { sprite: `${J}arbusto_pequeno.png`, x: 864, y: 708 },
-  // The garden square: the fountain, benches and lounge chairs around it.
-  { sprite: `${J}fonte.png`, x: 608, y: 842 },
+  // The garden square: the koi pond, benches and lounge chairs around it.
+  { sprite: `${J}lago_carpas_anim16.png`, x: 581, y: 832, flat: true },
   { sprite: `${J}banco_frente.png`, x: 598, y: 764 },
   { sprite: `${J}espreguicadeira.png`, x: 524, y: 758 },
-  { sprite: `${J}espreguicadeira.png`, x: 720, y: 758 },
+  { sprite: `${J}espreguicadeira.png`, x: 709, y: 758 },
   { sprite: `${J}banco_lado.png`, x: 500, y: 826, flip: true },
   { sprite: `${J}banco_lado.png`, x: 748, y: 826 },
   { sprite: `${J}banco_sem_encosto.png`, x: 542, y: 950 },
@@ -333,24 +333,39 @@ export const GARDEN_ITEMS = [
 // Where each AI teammate sits (top-left of the 32×64 frame) and their
 // spritesheet. Name and status are drawn over the head, wherever they are.
 // A clinic can give them a look of its own in the avatar editor (`avatar`,
-// which then wins over `sheet`).
+// which then wins over `sheet`). `seated`: how many px lower they are drawn
+// at their desk, so they sit in the chair pulled up to it and the desk hides
+// their legs (the art has no frames of sitting facing front).
 export const CHARACTERS = {
   secretary: {
     sheet: '7_personagens/clara_secretaria_spritesheet.png',
     x: 304,
     y: 87,
+    seated: 18,
   },
   manager: {
     sheet: '7_personagens/helena_opcao_A_spritesheet.png',
     x: 1028,
     y: 90,
+    seated: 16,
   },
   marketing: {
     sheet: '7_personagens/luciano_marketing_spritesheet.png',
     x: 760,
     y: 90,
+    seated: 16,
   },
 };
+
+// How many px lower a teammate is drawn where they are now (`place`): their
+// `seated` while at the desk of the default clinic, nothing when they walk
+// around or the clinic moved them elsewhere.
+export function seatedDrop(persona, place) {
+  const desk = CHARACTERS[persona];
+  const atDesk =
+    !place.moving && !place.away && place.x === desk.x && place.y === desk.y;
+  return atDesk ? desk.seated || 0 : 0;
+}
 
 // Where people arrive: in front of the glass door of the recepção.
 export const ENTRANCE = { x: 52, y: 44 };
@@ -361,6 +376,15 @@ export const PEOPLE_SHEETS = Array.from(
   (_, i) => `8_pessoas/pessoa_${String(i + 1).padStart(2, '0')}.png`
 );
 export const sheetForUser = id => PEOPLE_SHEETS[id % PEOPLE_SHEETS.length];
+
+// The premade characters the avatar editor offers ("Avatar" tab): the AI
+// teammates and the people, those the art pack has. Other sheets of the pack
+// (the hair options drawn for Helena) are left out.
+export const premadeSheets = paths =>
+  [
+    ...Object.values(CHARACTERS).map(({ sheet }) => sheet),
+    ...PEOPLE_SHEETS,
+  ].filter(sheet => paths.includes(sheet));
 
 // The sheet a teammate or person is drawn with: their own look when they
 // made one in the avatar editor.
@@ -387,6 +411,76 @@ export const DEFAULT_LAYOUT = {
   team: CHARACTERS,
 };
 
+// The reception desk used to be drawn in five pieces. Layouts saved then get
+// the whole desk instead, where its left corner was (16 px taller).
+const DESK_PIECES = [
+  'balcao_canto_esq',
+  'balcao_meio',
+  'balcao_com_computador',
+  'balcao_meio_2',
+  'balcao_canto_dir',
+].map(name => `${R}${name}.png`);
+const wholeDesk = items => {
+  const corner = items.find(({ sprite }) => sprite === DESK_PIECES[0]);
+  if (!corner) return items;
+  return [
+    ...items.filter(({ sprite }) => !DESK_PIECES.includes(sprite)),
+    { sprite: `${R}balcao_recepcao.png`, x: corner.x, y: corner.y - 16 },
+  ];
+};
+
+// Pieces whose default changed. Layouts saved before still have the old
+// one; where the clinic never moved it, it becomes the new one (another spot
+// or other pieces).
+const UPGRADES = [
+  [`${R}lixeira.png`, [500, 210], [{ x: 432, y: 168 }]],
+  [`${R}planta_media.png`, [596, 237], [{ x: 596, y: 200 }]],
+  [`${R}cadeira_secretaria.png`, [304, 104], [{ x: 304, y: 114 }]],
+  [`${M}cadeira_executiva.png`, [760, 108], [{ x: 760, y: 118 }]],
+  [`${G}cadeira_executiva_frente.png`, [1028, 108], [{ x: 1028, y: 118 }]],
+  [`${E}poltronas_beges_dupla.png`, [28, 352], [{ x: 85, y: 352 }]],
+  [`${E}mesinha_revistas.png`, [130, 367], [{ x: 193, y: 367 }]],
+  [`${E}poltronas_verdes_dupla.png`, [236, 352], [{ x: 292, y: 352 }]],
+  [`${E}mesinha_revistas_2.png`, [342, 367], [{ x: 400, y: 379 }]],
+  [`${E}poltronas_beges_dupla.png`, [440, 352], [{ x: 494, y: 352 }]],
+  [`${E}flores_gaveteiro.png`, [300, 555], [{ x: 305, y: 555 }]],
+  ...[48, 81, 114, 147, 180, 213, 380, 413, 446, 479, 512, 545].map(x => [
+    `${E}cadeira_azul_costas.png`,
+    [x, 530],
+    [{ x: x + 10, y: 530 }],
+  ]),
+  // The copa chairs: the top one up against the table, the side ones beside it.
+  ...[788, 1108].map(x => [
+    `${C}cadeira_frente.png`,
+    [x, 437],
+    [{ x, y: 445 }],
+  ]),
+  ...[748, 828, 1068, 1148].map(x => [
+    `${C}cadeira_lado.png`,
+    [x, 492],
+    [{ x, y: 484 }],
+  ]),
+  [
+    `${M}mesa.png`,
+    [744, 158],
+    [
+      { sprite: `${M}mesa_reta.png`, x: 728, y: 158 },
+      { sprite: `${M}mesa_em_l.png`, x: 792, y: 132 },
+    ],
+  ],
+  [
+    `${M}poltrona_lateral.png`,
+    [652, 186],
+    [{ sprite: `${G}sofa_lateral.png`, x: 648, y: 172, flip: true }],
+  ],
+];
+const upgrade = item => {
+  const found = UPGRADES.find(
+    ([sprite, [x, y]]) => item.sprite === sprite && item.x === x && item.y === y
+  );
+  return found ? found[2].map(piece => ({ ...item, ...piece })) : [item];
+};
+
 // The saved layout of a clinic (only what the editor changes) on top of the
 // default one. `saved` is null when the clinic never edited it.
 export function applySaved(saved) {
@@ -396,7 +490,7 @@ export function applySaved(saved) {
   return {
     floors: pick(FLOORS, saved.floors),
     walls: pick(WALLS, saved.walls),
-    items: saved.items || ITEMS,
+    items: saved.items ? wholeDesk(saved.items).flatMap(upgrade) : ITEMS,
     rooms: ROOMS.map(room => ({ ...room, name: saved.rooms?.[room.key] })),
     team: Object.fromEntries(
       Object.entries(CHARACTERS).map(([persona, spot]) => [

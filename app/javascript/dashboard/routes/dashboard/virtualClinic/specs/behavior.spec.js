@@ -74,6 +74,30 @@ describe('team behavior', () => {
     expect(behavior.state.manager.away).toBe(true);
   });
 
+  it('takes Clara away from her desk to look at the phone, and back to work', () => {
+    const index = TRIPS.findIndex(trip => trip.key === 'clara_phone');
+    const behavior = createTeamBehavior({
+      personas: ['secretary', 'manager', 'marketing'],
+      random: () => (index + 0.5) / TRIPS.length,
+    });
+    const clara = behavior.state.secretary;
+    let onPhone = false;
+    for (let now = 0; now <= 120000 && !(onPhone && !clara.away); now += 100) {
+      behavior.update(now);
+      if (clara.phone) {
+        onPhone = true;
+        expect(clara).toMatchObject({ away: true, moving: false });
+      }
+    }
+
+    expect(onPhone).toBe(true);
+    expect([clara.x, clara.y]).toEqual([
+      CHARACTERS.secretary.x,
+      CHARACTERS.secretary.y,
+    ]);
+    expect(clara.phone).toBe(false);
+  });
+
   it('sits Clara at the copa table, then brings her back to her desk', () => {
     const index = TRIPS.findIndex(trip => trip.key === 'clara_sits_copa');
     const behavior = createTeamBehavior({
@@ -132,13 +156,14 @@ describe('team behavior', () => {
     });
   });
 
-  it('takes Luciano to the monitors, the campaigns board, Helena and the water, never to Clara', () => {
+  it('takes Luciano to the monitors, the campaigns board, his phone, Helena and the water, never to Clara', () => {
     const luciano = TRIPS.filter(trip => trip.who === 'marketing').map(
       trip => trip.key
     );
     expect(luciano.sort()).toEqual([
       'luciano_campaign_board',
       'luciano_monitors',
+      'luciano_phone',
       'luciano_visits_helena',
       'luciano_water',
     ]);

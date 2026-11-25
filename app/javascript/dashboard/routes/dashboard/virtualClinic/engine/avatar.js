@@ -9,7 +9,9 @@ export const PARTS = [
   { key: 'body', prefix: 'Body_' },
   { key: 'eyes', prefix: 'Eyes_' },
   { key: 'outfit', prefix: 'Outfit_' },
-  { key: 'hair', prefix: 'Hairstyle_', optional: true },
+  // Every hairstyle comes in the same colors, so a color dot recolors them
+  // all; other parts have colors of their own per style.
+  { key: 'hair', prefix: 'Hairstyle_', optional: true, sharedColors: true },
   { key: 'accessory', prefix: 'Accessory_', optional: true },
 ];
 // Drawn on top of every look: the phone of the "on a call" frames.
@@ -26,11 +28,6 @@ export const isAvatarKey = key => key.startsWith(KEY_PREFIX);
 // The sheet any look is drawn with.
 export const lookSheet = look => look.sheet || avatarKey(look);
 
-// The premade characters the editor offers ("Avatar" tab).
-export const premadeSheets = paths =>
-  paths.filter(path =>
-    /^(7_personagens\/.+_spritesheet|8_pessoas\/.+)\.png$/.test(path)
-  );
 export const layersOf = key => [
   ...key.slice(KEY_PREFIX.length).split(',').filter(Boolean),
   PHONE,
@@ -67,185 +64,194 @@ export function avatarCatalog(paths) {
   );
 }
 
+// The color picked for a part ("03"): the one it is worn in or, when the
+// part is left out, `tint` (the color picked last).
+export const colorOf = (avatar, part, tint) =>
+  avatar[part] ? splitLayer(avatar[part]).color : tint;
+
+const sharesColors = part =>
+  PARTS.some(({ key, sharedColors }) => key === part && sharedColors);
+
 // The choices shown in the grid of a part: every color when the part has a
-// single style (skin, eyes), otherwise one per style, in the color picked
-// now when that style has it.
-export function optionsOf(catalog, part, avatar) {
+// single style (skin, eyes), otherwise one per style: in the color picked
+// now when the styles share their colors (hair), else the style worn in its
+// color and the others in their first one.
+export function optionsOf(catalog, part, avatar, tint) {
   const styles = catalog[part] || [];
   if (styles.length === 1) return styles[0].colors;
-  const color = avatar[part] && splitLayer(avatar[part]).color;
-  return styles.map(
-    ({ colors }) =>
-      colors.find(name => splitLayer(name).color === color) || colors[0]
-  );
+  const color = colorOf(avatar, part, tint);
+  return styles.map(({ colors }) => {
+    if (!sharesColors(part) && !colors.includes(avatar[part])) return colors[0];
+    return colors.find(name => splitLayer(name).color === color) || colors[0];
+  });
 }
 
-// The colors of the style picked now (the dots under the grid); none for a
-// part whose grid already lists the colors.
+// The colors of the style picked now (the dots under the grid); when the part
+// is left out, those of the first style if the styles share their colors
+// (hair), else none. None either for a part whose grid already lists the
+// colors.
 export function colorsOf(catalog, part, avatar) {
   const styles = catalog[part] || [];
-  if (styles.length < 2 || !avatar[part]) return [];
+  if (styles.length < 2) return [];
+  if (!avatar[part]) return sharesColors(part) ? styles[0].colors : [];
   const { style } = splitLayer(avatar[part]);
   return styles.find(entry => entry.style === style)?.colors || [];
 }
 
-// What each premade character of the pack is made of (worked out by matching
-// its pixels with the generator layers), so the editor changes one part of
-// the character you are wearing. A few premades carry a second accessory
-// (a mustache, glasses) that one accessory slot can't keep.
+// What each premade character of the pack is made of, so the editor changes
+// one part of the character you are wearing. The pack generates every
+// premade sheet from exactly these layers (plus the phone), pixel for pixel.
 export const PREMADE_LOOKS = {
   '7_personagens/clara_secretaria_spritesheet.png': {
-    body: 'Body_32x32_03',
-    eyes: 'Eyes_32x32_05',
-    outfit: 'Outfit_33_32x32_03',
-    hair: 'Hairstyle_25_32x32_02',
+    body: 'Body_32x32_01',
+    eyes: 'Eyes_32x32_01',
+    outfit: 'Outfit_18_32x32_01',
+    hair: 'Hairstyle_07_32x32_08',
   },
   '7_personagens/helena_gerente_spritesheet.png': {
-    body: 'Body_32x32_07',
-    eyes: 'Eyes_32x32_02',
-    outfit: 'Outfit_05_32x32_02',
-    hair: 'Hairstyle_24_32x32_03',
+    body: 'Body_32x32_02',
+    eyes: 'Eyes_32x32_04',
+    outfit: 'Outfit_04_32x32_03',
+    hair: 'Hairstyle_08_32x32_03',
   },
   '7_personagens/helena_opcao_A_spritesheet.png': {
-    body: 'Body_32x32_07',
-    eyes: 'Eyes_32x32_02',
-    outfit: 'Outfit_05_32x32_02',
-    hair: 'Hairstyle_04_32x32_03',
+    body: 'Body_32x32_02',
+    eyes: 'Eyes_32x32_04',
+    outfit: 'Outfit_04_32x32_03',
+    hair: 'Hairstyle_07_32x32_03',
   },
   '7_personagens/helena_opcao_B_spritesheet.png': {
-    body: 'Body_32x32_07',
-    eyes: 'Eyes_32x32_02',
-    outfit: 'Outfit_05_32x32_02',
-    hair: 'Hairstyle_09_32x32_03',
+    body: 'Body_32x32_02',
+    eyes: 'Eyes_32x32_04',
+    outfit: 'Outfit_04_32x32_03',
+    hair: 'Hairstyle_11_32x32_03',
   },
   '7_personagens/helena_opcao_C_spritesheet.png': {
-    body: 'Body_32x32_07',
-    eyes: 'Eyes_32x32_02',
-    outfit: 'Outfit_05_32x32_02',
-    hair: 'Hairstyle_15_32x32_03',
+    body: 'Body_32x32_02',
+    eyes: 'Eyes_32x32_04',
+    outfit: 'Outfit_04_32x32_03',
+    hair: 'Hairstyle_09_32x32_03',
   },
   '7_personagens/luciano_marketing_spritesheet.png': {
     body: 'Body_32x32_04',
     eyes: 'Eyes_32x32_01',
-    outfit: 'Outfit_06_32x32_03',
-    hair: 'Hairstyle_18_32x32_03',
+    outfit: 'Outfit_04_32x32_01',
+    hair: 'Hairstyle_05_32x32_02',
   },
   '8_pessoas/pessoa_01.png': {
-    body: 'Body_32x32_01',
-    eyes: 'Eyes_32x32_01',
-    outfit: 'Outfit_01_32x32_02',
-    hair: 'Hairstyle_04_32x32_03',
+    body: 'Body_32x32_08',
+    eyes: 'Eyes_32x32_05',
+    outfit: 'Outfit_05_32x32_04',
+    hair: 'Hairstyle_17_32x32_08',
   },
   '8_pessoas/pessoa_02.png': {
-    body: 'Body_32x32_01',
-    eyes: 'Eyes_32x32_01',
-    outfit: 'Outfit_05_32x32_01',
-    hair: 'Hairstyle_09_32x32_03',
+    body: 'Body_32x32_03',
+    eyes: 'Eyes_32x32_05',
+    outfit: 'Outfit_06_32x32_02',
+    hair: 'Hairstyle_04_32x32_04',
+    accessory: 'Accessory_11_Beanie_32x32_03',
   },
   '8_pessoas/pessoa_03.png': {
     body: 'Body_32x32_01',
-    eyes: 'Eyes_32x32_01',
-    outfit: 'Outfit_01_32x32_05',
-    hair: 'Hairstyle_08_32x32_03',
+    eyes: 'Eyes_32x32_05',
+    outfit: 'Outfit_19_32x32_04',
+    hair: 'Hairstyle_21_32x32_06',
   },
   '8_pessoas/pessoa_04.png': {
-    body: 'Body_32x32_01',
-    eyes: 'Eyes_32x32_01',
-    outfit: 'Outfit_07_32x32_03',
-    hair: 'Hairstyle_14_32x32_06',
-    accessory: 'Accessory_11_Beanie_32x32_05',
+    body: 'Body_32x32_03',
+    eyes: 'Eyes_32x32_05',
+    outfit: 'Outfit_05_32x32_05',
+    hair: 'Hairstyle_03_32x32_01',
+    accessory: 'Accessory_17_Medical_Mask_32x32_05',
   },
   '8_pessoas/pessoa_05.png': {
-    body: 'Body_32x32_02',
-    eyes: 'Eyes_32x32_02',
-    outfit: 'Outfit_01_32x32_01',
-    hair: 'Hairstyle_01_32x32_07',
+    body: 'Body_32x32_04',
+    eyes: 'Eyes_32x32_05',
+    outfit: 'Outfit_06_32x32_04',
+    hair: 'Hairstyle_11_32x32_04',
   },
   '8_pessoas/pessoa_06.png': {
-    body: 'Body_32x32_02',
-    eyes: 'Eyes_32x32_02',
-    outfit: 'Outfit_02_32x32_03',
-    hair: 'Hairstyle_07_32x32_03',
+    body: 'Body_32x32_04',
+    eyes: 'Eyes_32x32_05',
+    outfit: 'Outfit_03_32x32_03',
+    hair: 'Hairstyle_20_32x32_06',
   },
   '8_pessoas/pessoa_07.png': {
     body: 'Body_32x32_02',
-    eyes: 'Eyes_32x32_03',
-    outfit: 'Outfit_10_32x32_02',
-    hair: 'Hairstyle_10_32x32_06',
-    accessory: 'Accessory_11_Beanie_32x32_04',
+    eyes: 'Eyes_32x32_04',
+    outfit: 'Outfit_16_32x32_02',
+    hair: 'Hairstyle_18_32x32_08',
+    accessory: 'Accessory_12_Mustache_32x32_04',
   },
   '8_pessoas/pessoa_08.png': {
-    body: 'Body_32x32_02',
-    eyes: 'Eyes_32x32_03',
-    outfit: 'Outfit_18_32x32_02',
-    hair: 'Hairstyle_21_32x32_02',
-    accessory: 'Accessory_16_Monocle_32x32_01',
+    body: 'Body_32x32_06',
+    eyes: 'Eyes_32x32_02',
+    outfit: 'Outfit_17_32x32_01',
+    hair: 'Hairstyle_03_32x32_05',
   },
   '8_pessoas/pessoa_09.png': {
-    body: 'Body_32x32_03',
+    body: 'Body_32x32_07',
     eyes: 'Eyes_32x32_01',
-    outfit: 'Outfit_19_32x32_02',
-    hair: 'Hairstyle_26_32x32_06',
+    outfit: 'Outfit_17_32x32_02',
+    hair: 'Hairstyle_03_32x32_01',
   },
   '8_pessoas/pessoa_10.png': {
-    body: 'Body_32x32_03',
-    eyes: 'Eyes_32x32_05',
-    outfit: 'Outfit_11_32x32_04',
-    hair: 'Hairstyle_16_32x32_03',
-    accessory: 'Accessory_03_Backpack_32x32_01',
+    body: 'Body_32x32_01',
+    eyes: 'Eyes_32x32_02',
+    outfit: 'Outfit_13_32x32_01',
+    hair: 'Hairstyle_16_32x32_04',
   },
   '8_pessoas/pessoa_11.png': {
-    body: 'Body_32x32_03',
-    eyes: 'Eyes_32x32_01',
-    outfit: 'Outfit_01_32x32_10',
-    hair: 'Hairstyle_01_32x32_06',
-    accessory: 'Accessory_04_Snapback_32x32_06',
+    body: 'Body_32x32_07',
+    eyes: 'Eyes_32x32_04',
+    outfit: 'Outfit_07_32x32_02',
+    hair: 'Hairstyle_25_32x32_06',
+    accessory: 'Accessory_11_Beanie_32x32_03',
   },
   '8_pessoas/pessoa_12.png': {
-    body: 'Body_32x32_04',
-    eyes: 'Eyes_32x32_01',
-    outfit: 'Outfit_01_32x32_09',
-    hair: 'Hairstyle_03_32x32_03',
+    body: 'Body_32x32_05',
+    eyes: 'Eyes_32x32_03',
+    outfit: 'Outfit_01_32x32_07',
+    hair: 'Hairstyle_20_32x32_06',
   },
   '8_pessoas/pessoa_13.png': {
-    body: 'Body_32x32_04',
-    eyes: 'Eyes_32x32_01',
-    outfit: 'Outfit_17_32x32_01',
-    hair: 'Hairstyle_12_32x32_05',
-    accessory: 'Accessory_15_Glasses_32x32_06',
+    body: 'Body_32x32_02',
+    eyes: 'Eyes_32x32_02',
+    outfit: 'Outfit_14_32x32_01',
+    hair: 'Hairstyle_01_32x32_01',
   },
   '8_pessoas/pessoa_14.png': {
-    body: 'Body_32x32_04',
-    eyes: 'Eyes_32x32_01',
-    outfit: 'Outfit_06_32x32_03',
-    hair: 'Hairstyle_18_32x32_03',
+    body: 'Body_32x32_08',
+    eyes: 'Eyes_32x32_02',
+    outfit: 'Outfit_13_32x32_04',
+    hair: 'Hairstyle_17_32x32_02',
   },
   '8_pessoas/pessoa_15.png': {
-    body: 'Body_32x32_04',
-    eyes: 'Eyes_32x32_01',
-    outfit: 'Outfit_09_32x32_03',
-    accessory: 'Accessory_09_Zombie_Brain_32x32_01',
+    body: 'Body_32x32_03',
+    eyes: 'Eyes_32x32_04',
+    outfit: 'Outfit_23_32x32_01',
+    hair: 'Hairstyle_13_32x32_04',
   },
   '8_pessoas/pessoa_16.png': {
-    body: 'Body_32x32_07',
-    eyes: 'Eyes_32x32_06',
-    outfit: 'Outfit_10_32x32_04',
-    hair: 'Hairstyle_23_32x32_07',
-    accessory: 'Accessory_04_Snapback_32x32_05',
+    body: 'Body_32x32_01',
+    eyes: 'Eyes_32x32_03',
+    outfit: 'Outfit_17_32x32_01',
+    hair: 'Hairstyle_07_32x32_02',
+    accessory: 'Accessory_17_Medical_Mask_32x32_04',
   },
   '8_pessoas/pessoa_17.png': {
-    body: 'Body_32x32_07',
-    eyes: 'Eyes_32x32_06',
-    outfit: 'Outfit_29_32x32_03',
-    hair: 'Hairstyle_22_32x32_03',
-    accessory: 'Accessory_06_Policeman_Hat_32x32_01',
+    body: 'Body_32x32_02',
+    eyes: 'Eyes_32x32_01',
+    outfit: 'Outfit_10_32x32_02',
+    hair: 'Hairstyle_15_32x32_03',
+    accessory: 'Accessory_15_Glasses_32x32_05',
   },
   '8_pessoas/pessoa_18.png': {
-    body: 'Body_32x32_07',
-    eyes: 'Eyes_32x32_01',
-    outfit: 'Outfit_14_32x32_03',
+    body: 'Body_32x32_06',
+    eyes: 'Eyes_32x32_03',
+    outfit: 'Outfit_23_32x32_01',
     hair: 'Hairstyle_20_32x32_06',
-    accessory: 'Accessory_03_Backpack_32x32_10',
+    accessory: 'Accessory_12_Mustache_32x32_02',
   },
 };
 

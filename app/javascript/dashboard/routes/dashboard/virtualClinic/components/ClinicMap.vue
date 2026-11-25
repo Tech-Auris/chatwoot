@@ -14,6 +14,7 @@ import {
   SCENE,
   TILE,
   WORLD,
+  seatedDrop,
   sheetForUser,
   spritePaths,
 } from '../engine/layout';
@@ -105,9 +106,6 @@ const members = computed(() =>
 // Talking to them needs the clinic's OpenAI key (their "Assistente"); they
 // are only faded when every face is off (see teamStatus.js).
 const chatEnabled = computed(() => props.aiTeam?.chat_enabled === true);
-const secretaryBusy = computed(
-  () => (props.status?.secretary?.active_conversations || 0) > 0
-);
 
 const editing = computed(() => props.editor?.editing === true);
 
@@ -126,13 +124,12 @@ const team = computed(() =>
     return {
       persona: member.persona,
       x: place.x,
-      y: place.y,
+      y: place.y + seatedDrop(member.persona, place),
       direction: place.direction || 'down',
       moving: place.moving,
       talking: place.talking,
       sitting: place.sitting,
-      phone:
-        member.persona === 'secretary' && secretaryBusy.value && !place.away,
+      phone: place.phone,
       faded: isFaded(member.persona, props.status, props.aiTeam),
     };
   })

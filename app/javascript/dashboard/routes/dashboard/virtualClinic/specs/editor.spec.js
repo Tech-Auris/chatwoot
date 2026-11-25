@@ -4,6 +4,7 @@ import {
   DEFAULT_LAYOUT,
   ITEMS,
   applySaved,
+  seatedDrop,
   toSaved,
 } from '../engine/layout';
 import { checkLayout } from '../engine/layoutCheck';
@@ -21,6 +22,17 @@ vi.mock('dashboard/api/virtualClinic', () => ({
 const sizes = Object.fromEntries(
   ITEMS.map(({ sprite }) => [sprite, { width: 32, height: 32 }])
 );
+
+describe('seated at the desk', () => {
+  it('sits a teammate in their chair only while at their desk', () => {
+    const desk = { x: CHARACTERS.secretary.x, y: CHARACTERS.secretary.y };
+    expect(seatedDrop('secretary', desk)).toBe(18);
+    expect(seatedDrop('manager', CHARACTERS.manager)).toBe(16);
+    expect(seatedDrop('secretary', { ...desk, moving: true })).toBe(0);
+    // Moved elsewhere in the editor: she stands there.
+    expect(seatedDrop('secretary', { x: 280, y: 212 })).toBe(0);
+  });
+});
 
 describe('saved layout', () => {
   it('keeps the default clinic when nothing was saved', () => {
@@ -56,6 +68,37 @@ describe('saved layout', () => {
       x: CHARACTERS.secretary.x,
       y: CHARACTERS.secretary.y,
     });
+  });
+
+  it('moves the pieces an old layout left at their old default spot', () => {
+    const chair = {
+      sprite: '1_recepcao/cadeira_secretaria.png',
+      x: 304,
+      y: 104,
+    };
+    const moved = { ...chair, x: 200 };
+    const layout = applySaved({ items: [chair, moved] });
+
+    expect(layout.items).toEqual([{ ...chair, y: 114 }, moved]);
+  });
+
+  it('swaps the five reception desk pieces of an old layout for the whole desk', () => {
+    const piece = (name, x, y) => ({ sprite: `1_recepcao/${name}.png`, x, y });
+    const layout = applySaved({
+      items: [
+        piece('lixeira', 510, 220),
+        piece('balcao_canto_esq', 230, 140),
+        piece('balcao_meio', 262, 172),
+        piece('balcao_com_computador', 294, 168),
+        piece('balcao_meio_2', 358, 172),
+        piece('balcao_canto_dir', 390, 140),
+      ],
+    });
+
+    expect(layout.items).toEqual([
+      piece('lixeira', 510, 220),
+      piece('balcao_recepcao', 230, 124),
+    ]);
   });
 });
 

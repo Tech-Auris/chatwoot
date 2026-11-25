@@ -8,7 +8,7 @@ import { corners, findPath } from './pathfinding';
 // teammate's seat and they always come back to it to work.
 //
 // At the end they `look` (stand facing `face`), `talk` with `talkWith`, or
-// `sit` (on a chair, facing `face`). `offset` is from the top-left of the
+// `sit` (on a chair, facing `face`) or look at their `phone`. `offset` is from the top-left of the
 // piece (or of the teammate's frame, or of the room label) to where the
 // walker's frame stops.
 const both = (key, target) => [
@@ -129,6 +129,32 @@ export const TRIPS = [
     offset: [14, 48],
     face: 'up',
   },
+  // A moment on the phone, standing in a free spot of their own room: at
+  // the desk they work on the computer.
+  {
+    key: 'clara_phone',
+    who: 'secretary',
+    room: 'RECEPTION',
+    offset: [122, 30],
+    face: 'down',
+    phone: true,
+  },
+  {
+    key: 'helena_phone',
+    who: 'manager',
+    room: 'MANAGEMENT',
+    offset: [-80, 56],
+    face: 'down',
+    phone: true,
+  },
+  {
+    key: 'luciano_phone',
+    who: 'marketing',
+    room: 'MARKETING',
+    offset: [212, 112],
+    face: 'down',
+    phone: true,
+  },
 ];
 
 // Where the walker's frame stops, or null when the thing is not on the map.
@@ -191,13 +217,15 @@ export function nearestFree(grid, cell, radius = 6) {
 const LAST_STEP = 40;
 
 // The frame positions of the walk, from the seat to the target, or null
-// when there is no way there.
+// when there is no way there. The seat may be on the desk chair, so the way
+// starts at the free spot right next to it (they stand up first).
 export function planTrip(trip, { layout, grid }) {
   const target = grid && tripTarget(trip, layout);
   const seat = layout.team[trip.who];
   if (!target || !seat) return null;
   const goal = nearestFree(grid, cellOf(feetOf(target)));
-  const path = goal && findPath(grid, cellOf(feetOf(seat)), goal);
+  const start = nearestFree(grid, cellOf(feetOf(seat)), 2);
+  const path = goal && start && findPath(grid, start, goal);
   if (!path) return null;
   const points = [
     { x: seat.x, y: seat.y },

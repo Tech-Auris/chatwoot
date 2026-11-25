@@ -9,11 +9,13 @@ import {
   PARTS,
   PREMADE_LOOKS,
   avatarCatalog,
+  colorOf,
   colorsOf,
   optionsOf,
-  premadeSheets,
   randomAvatar,
+  splitLayer,
 } from '../engine/avatar';
+import { premadeSheets } from '../engine/layout';
 import { hiddenAccessories } from '../engine/seasons';
 import {
   IDLE_FRONT,
@@ -62,9 +64,15 @@ const ICONS = {
   accessory: 'i-lucide-glasses',
 };
 const currentPart = computed(() => PARTS.find(({ key }) => key === part.value));
+// The color picked last for each part, kept when the part is left out ("none")
+// so the grid and the dots stay in it.
+const tints = ref({});
+const tint = computed(() =>
+  colorOf(parts.value || {}, part.value, tints.value[part.value])
+);
 const options = computed(() =>
   catalog.value && parts.value
-    ? optionsOf(catalog.value, part.value, parts.value)
+    ? optionsOf(catalog.value, part.value, parts.value, tint.value)
     : []
 );
 const colors = computed(() =>
@@ -84,10 +92,16 @@ const wear = next => {
   look.value = next;
 };
 const choose = layer => {
+  tints.value = { ...tints.value, [part.value]: tint.value };
   const next = { ...parts.value };
   if (layer) next[part.value] = layer;
   else delete next[part.value];
   wear(next);
+};
+// A dot: the color of the part worn now, or of the grid when it is left out.
+const pickColor = layer => {
+  if (parts.value[part.value]) choose(layer);
+  else tints.value = { ...tints.value, [part.value]: splitLayer(layer).color };
 };
 const choosePremade = sheet => {
   look.value = { sheet };
@@ -265,15 +279,15 @@ onBeforeUnmount(() => clearInterval(timer));
             type="button"
             class="w-7 h-7 p-0 overflow-hidden rounded-full shrink-0 ring-offset-2 ring-offset-n-solid-1"
             :class="
-              parts[part] === color
+              splitLayer(color).color === tint
                 ? 'ring-2 ring-n-brand'
                 : 'ring-1 ring-n-weak'
             "
-            @click="choose(color)"
+            @click="pickColor(color)"
           >
             <img
-              v-if="swatch(color)"
-              :src="swatch(color)"
+              v-if="swatch(color, colors)"
+              :src="swatch(color, colors)"
               alt=""
               class="w-full h-full"
             />

@@ -45,13 +45,16 @@ const fillRect = (grid, left, top, right, bottom, value) => {
 const blockRect = (grid, left, top, right, bottom) =>
   fillRect(grid, left, top, right, bottom, 1);
 
-// The base of a piece: its bottom half, between 16 and 32 px high. Things
-// standing on a desk (`sortY`) and wall decoration take no floor.
+// The base of a piece: its bottom half, between 16 and 32 px high, or all of
+// it for a flat piece (a pond). Things standing on a desk (`sortY`) and wall
+// decoration take no floor.
 export function footprint(item, size) {
   if (item.sortY !== undefined) return null;
   const bottom = item.y + size.height;
   if (bottom <= WALL_HEIGHT) return null;
-  const height = Math.min(FOOT_MAX, Math.max(FOOT_MIN, size.height / 2));
+  const height = item.flat
+    ? size.height
+    : Math.min(FOOT_MAX, Math.max(FOOT_MIN, size.height / 2));
   return {
     left: item.x,
     top: Math.max(item.y, bottom - height, WALL_HEIGHT),
