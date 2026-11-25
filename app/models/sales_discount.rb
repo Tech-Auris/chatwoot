@@ -21,9 +21,10 @@ class SalesDiscount < ApplicationRecord
 
   # How the discount reads in the proposal's summary: "10% reunião",
   # "isenção implantação". A full waiver is named on its own; a partial one
-  # leads with the percent.
+  # leads with the percent. Codes and acronyms ("ANUAL597", "API") keep their
+  # casing: only a first word with a lowercase letter is lowered.
   def label
-    name_part = name.sub(/\A./, &:downcase)
+    name_part = name[/\A\S+/].match?(/\p{Ll}/) ? name.sub(/\A./, &:downcase) : name
     percent.to_d == 100 ? name_part : "#{format_percent}% #{name_part}"
   end
 
