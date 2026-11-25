@@ -11,7 +11,8 @@ class Api::V2::Accounts::VirtualClinic::AssetsController < Api::V1::Accounts::Ba
     data = ::VirtualClinic::AssetStore.read(params[:path])
     return head :not_found if data.nil?
 
-    expires_in 1.week, public: false
+    # The page asks with ?v=<AssetStore.version>, so new art comes with a new URL.
+    expires_in 1.year, public: false
     send_data data, type: 'image/png', disposition: 'inline'
   end
 end
