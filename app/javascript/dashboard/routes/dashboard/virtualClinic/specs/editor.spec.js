@@ -26,7 +26,7 @@ const sizes = Object.fromEntries(
 describe('seated at the desk', () => {
   it('draws Clara lower only while at the reception desk', () => {
     const desk = { x: CHARACTERS.secretary.x, y: CHARACTERS.secretary.y };
-    expect(seatedDrop('secretary', desk)).toBe(12);
+    expect(seatedDrop('secretary', desk)).toBe(20);
     expect(seatedDrop('secretary', { ...desk, moving: true })).toBe(0);
     // Moved elsewhere in the editor: she stands there.
     expect(seatedDrop('secretary', { x: 280, y: 212 })).toBe(0);

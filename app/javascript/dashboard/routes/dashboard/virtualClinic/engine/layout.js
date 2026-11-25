@@ -337,7 +337,7 @@ export const CHARACTERS = {
     sheet: '7_personagens/clara_secretaria_spritesheet.png',
     x: 304,
     y: 87,
-    seated: 12,
+    seated: 20,
   },
   manager: {
     sheet: '7_personagens/helena_opcao_A_spritesheet.png',
