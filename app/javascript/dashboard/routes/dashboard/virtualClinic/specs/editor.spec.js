@@ -4,6 +4,7 @@ import {
   DEFAULT_LAYOUT,
   ITEMS,
   applySaved,
+  seatedDrop,
   toSaved,
 } from '../engine/layout';
 import { checkLayout } from '../engine/layoutCheck';
@@ -21,6 +22,17 @@ vi.mock('dashboard/api/virtualClinic', () => ({
 const sizes = Object.fromEntries(
   ITEMS.map(({ sprite }) => [sprite, { width: 32, height: 32 }])
 );
+
+describe('seated at the desk', () => {
+  it('draws Clara lower only while at the reception desk', () => {
+    const desk = { x: CHARACTERS.secretary.x, y: CHARACTERS.secretary.y };
+    expect(seatedDrop('secretary', desk)).toBe(12);
+    expect(seatedDrop('secretary', { ...desk, moving: true })).toBe(0);
+    // Moved elsewhere in the editor: she stands there.
+    expect(seatedDrop('secretary', { x: 280, y: 212 })).toBe(0);
+    expect(seatedDrop('manager', CHARACTERS.manager)).toBe(0);
+  });
+});
 
 describe('saved layout', () => {
   it('keeps the default clinic when nothing was saved', () => {

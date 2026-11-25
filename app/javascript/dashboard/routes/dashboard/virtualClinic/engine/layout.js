@@ -330,8 +330,8 @@ export const GARDEN_ITEMS = [
 // spritesheet. Name and status are drawn over the head, wherever they are.
 // A clinic can give them a look of its own in the avatar editor (`avatar`,
 // which then wins over `sheet`). `seated`: how many px lower they are drawn
-// while at their spot, so the desk in front hides their legs and they sit in
-// the chair behind it.
+// at that spot, so the desk in front hides their legs and they sit in the
+// chair behind it.
 export const CHARACTERS = {
   secretary: {
     sheet: '7_personagens/clara_secretaria_spritesheet.png',
@@ -350,6 +350,16 @@ export const CHARACTERS = {
     y: 90,
   },
 };
+
+// How many px lower a teammate is drawn where they are now (`place`): their
+// `seated` while still at the desk of the default clinic, nothing when they
+// walk around or the clinic moved them elsewhere.
+export function seatedDrop(persona, place) {
+  const desk = CHARACTERS[persona];
+  const atDesk =
+    !place.moving && !place.away && place.x === desk.x && place.y === desk.y;
+  return atDesk ? desk.seated || 0 : 0;
+}
 
 // Where people arrive: in front of the glass door of the recepção.
 export const ENTRANCE = { x: 52, y: 44 };
