@@ -80,7 +80,7 @@ export const FLOORS = [
     room: 'KITCHEN',
   },
   {
-    block: '5_pisos/carpete_vinho.png',
+    block: '5_pisos/carpete_cinza.png',
     x: WING,
     y: 64,
     w: 320,
