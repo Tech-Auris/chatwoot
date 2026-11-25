@@ -329,12 +329,15 @@ export const GARDEN_ITEMS = [
 // Where each AI teammate sits (top-left of the 32×64 frame) and their
 // spritesheet. Name and status are drawn over the head, wherever they are.
 // A clinic can give them a look of its own in the avatar editor (`avatar`,
-// which then wins over `sheet`).
+// which then wins over `sheet`). `seated`: how many px lower they are drawn
+// while at their spot, so the desk in front hides their legs and they sit in
+// the chair behind it.
 export const CHARACTERS = {
   secretary: {
     sheet: '7_personagens/clara_secretaria_spritesheet.png',
     x: 304,
     y: 87,
+    seated: 12,
   },
   manager: {
     sheet: '7_personagens/helena_opcao_A_spritesheet.png',

@@ -123,10 +123,13 @@ const nameOf = member => props.layout.team[member.persona]?.name || member.name;
 const team = computed(() =>
   members.value.map(member => {
     const place = placeOf(member.persona);
+    const spot = props.layout.team[member.persona];
+    const atSpot =
+      !place.moving && !place.away && place.x === spot.x && place.y === spot.y;
     return {
       persona: member.persona,
       x: place.x,
-      y: place.y,
+      y: place.y + (atSpot ? spot.seated || 0 : 0),
       direction: place.direction || 'down',
       moving: place.moving,
       talking: place.talking,
