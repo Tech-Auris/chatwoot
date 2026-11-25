@@ -243,6 +243,7 @@ export const ITEMS = [
   // Side chairs face the table: the left one is mirrored.
   { sprite: `${C}cadeira_lado.png`, x: 748, y: 484, flip: true },
   { sprite: `${C}cadeira_lado.png`, x: 828, y: 484 },
+  { sprite: `${C}cadeira_costas.png`, x: 788, y: 512 },
   { sprite: `${C}planta.png`, x: 648, y: 590 },
   { sprite: `${C}lixeira.png`, x: 920, y: 592 },
   // The other half of the copa, past its door.
@@ -252,6 +253,7 @@ export const ITEMS = [
   { sprite: `${C}mesa_redonda.png`, x: 1092, y: 470 },
   { sprite: `${C}cadeira_lado.png`, x: 1068, y: 484, flip: true },
   { sprite: `${C}cadeira_lado.png`, x: 1148, y: 484 },
+  { sprite: `${C}cadeira_costas.png`, x: 1108, y: 512 },
   { sprite: `${C}planta.png`, x: 1240, y: 590 },
 ];
 
