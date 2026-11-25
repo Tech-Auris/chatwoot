@@ -193,7 +193,7 @@ export const ITEMS = [
   { sprite: `${E}poltronas_beges_dupla.png`, x: 85, y: 352 },
   { sprite: `${E}mesinha_revistas.png`, x: 193, y: 367 },
   { sprite: `${E}poltronas_verdes_dupla.png`, x: 292, y: 352 },
-  { sprite: `${E}mesinha_revistas_2.png`, x: 400, y: 367 },
+  { sprite: `${E}mesinha_revistas_2.png`, x: 400, y: 379 },
   { sprite: `${E}poltronas_beges_dupla.png`, x: 494, y: 352 },
   { sprite: `${E}bebedouro.png`, x: 600, y: 427 },
   ...chairsRow([58, 91, 124, 157, 190, 223]),
