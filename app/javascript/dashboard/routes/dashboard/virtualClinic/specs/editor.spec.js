@@ -4,7 +4,7 @@ import {
   DEFAULT_LAYOUT,
   ITEMS,
   applySaved,
-  seatedDrop,
+  seatedPose,
   toSaved,
 } from '../engine/layout';
 import { checkLayout } from '../engine/layoutCheck';
@@ -24,13 +24,13 @@ const sizes = Object.fromEntries(
 );
 
 describe('seated at the desk', () => {
-  it('draws Clara lower only while at the reception desk', () => {
+  it('sits Clara in her chair only while at the reception desk', () => {
     const desk = { x: CHARACTERS.secretary.x, y: CHARACTERS.secretary.y };
-    expect(seatedDrop('secretary', desk)).toBe(20);
-    expect(seatedDrop('secretary', { ...desk, moving: true })).toBe(0);
+    expect(seatedPose('secretary', desk)).toEqual({ drop: 4, height: 52 });
+    expect(seatedPose('secretary', { ...desk, moving: true })).toBeNull();
     // Moved elsewhere in the editor: she stands there.
-    expect(seatedDrop('secretary', { x: 280, y: 212 })).toBe(0);
-    expect(seatedDrop('manager', CHARACTERS.manager)).toBe(0);
+    expect(seatedPose('secretary', { x: 280, y: 212 })).toBeNull();
+    expect(seatedPose('manager', CHARACTERS.manager)).toBeNull();
   });
 });
 

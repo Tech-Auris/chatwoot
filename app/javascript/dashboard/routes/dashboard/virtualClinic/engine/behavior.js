@@ -40,6 +40,7 @@ export function createTeamBehavior({
           moving: false,
           talking: false,
           sitting: false,
+          phone: false,
           away: false,
         },
       ];
@@ -116,6 +117,7 @@ export function createTeamBehavior({
         direction: trip.face,
         talking: Boolean(trip.talkWith),
         sitting: Boolean(trip.sit),
+        phone: Boolean(trip.phone),
       });
       if (trip.talkWith) state[trip.talkWith].talking = true;
       trip.phase = 'staying';
@@ -129,7 +131,7 @@ export function createTeamBehavior({
   const cancelTrip = now => {
     if (!trip) return;
     const [x, y] = home(trip.who);
-    Object.assign(state[trip.who], { x, y, sitting: false });
+    Object.assign(state[trip.who], { x, y, sitting: false, phone: false });
     finishTrip(now);
   };
 
@@ -177,6 +179,7 @@ export function createTeamBehavior({
         if (now < trip.stayUntil) return;
         walker.talking = false;
         walker.sitting = false;
+        walker.phone = false;
         if (trip.talkWith) state[trip.talkWith].talking = false;
         trip.points = [...trip.path].reverse();
         trip.index = 1;

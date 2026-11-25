@@ -8,7 +8,7 @@ import { corners, findPath } from './pathfinding';
 // teammate's seat and they always come back to it to work.
 //
 // At the end they `look` (stand facing `face`), `talk` with `talkWith`, or
-// `sit` (on a chair, facing `face`). `offset` is from the top-left of the
+// `sit` (on a chair, facing `face`) or look at their `phone`. `offset` is from the top-left of the
 // piece (or of the teammate's frame, or of the room label) to where the
 // walker's frame stops.
 const both = (key, target) => [
@@ -128,6 +128,32 @@ export const TRIPS = [
     near: '14_marketing/quadro_campanhas.png',
     offset: [14, 48],
     face: 'up',
+  },
+  // A moment on the phone, standing in a free spot of their own room: at
+  // the desk they work on the computer.
+  {
+    key: 'clara_phone',
+    who: 'secretary',
+    room: 'RECEPTION',
+    offset: [122, 30],
+    face: 'down',
+    phone: true,
+  },
+  {
+    key: 'helena_phone',
+    who: 'manager',
+    room: 'MANAGEMENT',
+    offset: [-80, 56],
+    face: 'down',
+    phone: true,
+  },
+  {
+    key: 'luciano_phone',
+    who: 'marketing',
+    room: 'MARKETING',
+    offset: [212, 112],
+    face: 'down',
+    phone: true,
   },
 ];
 

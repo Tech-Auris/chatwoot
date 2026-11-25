@@ -329,15 +329,16 @@ export const GARDEN_ITEMS = [
 // Where each AI teammate sits (top-left of the 32×64 frame) and their
 // spritesheet. Name and status are drawn over the head, wherever they are.
 // A clinic can give them a look of its own in the avatar editor (`avatar`,
-// which then wins over `sheet`). `seated`: how many px lower they are drawn
-// at that spot, so the desk in front hides their legs and they sit in the
-// chair behind it.
+// which then wins over `sheet`). `seated`: how they sit facing front in
+// the chair behind their desk (the art has no such frames): drawn `drop` px
+// lower and cut at the hips (`height` px of the frame), so the seat of the
+// chair shows under them.
 export const CHARACTERS = {
   secretary: {
     sheet: '7_personagens/clara_secretaria_spritesheet.png',
     x: 304,
     y: 87,
-    seated: 20,
+    seated: { drop: 4, height: 52 },
   },
   manager: {
     sheet: '7_personagens/helena_opcao_A_spritesheet.png',
@@ -351,14 +352,14 @@ export const CHARACTERS = {
   },
 };
 
-// How many px lower a teammate is drawn where they are now (`place`): their
-// `seated` while still at the desk of the default clinic, nothing when they
-// walk around or the clinic moved them elsewhere.
-export function seatedDrop(persona, place) {
+// How a teammate sits where they are now (`place`): their `seated` while
+// at the desk of the default clinic, null when they walk around or the
+// clinic moved them elsewhere.
+export function seatedPose(persona, place) {
   const desk = CHARACTERS[persona];
   const atDesk =
     !place.moving && !place.away && place.x === desk.x && place.y === desk.y;
-  return atDesk ? desk.seated || 0 : 0;
+  return (atDesk && desk.seated) || null;
 }
 
 // Where people arrive: in front of the glass door of the recepção.

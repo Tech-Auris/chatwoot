@@ -17,7 +17,7 @@ const OUTLINE = '#2b2d42';
 // The garden ground around the clinic (Gather-like light grass).
 const GRASS = '#d9ecd2';
 // Rows of the LimeZu character sheet: 6 frames per direction, in the order
-// right, up (back), left, down (front). The phone call only faces front.
+// right, up (back), left, down (front). The phone only faces front.
 const DIRECTIONS = ['right', 'up', 'left', 'down'];
 const ROWS = { idle: 1, walk: 2, sit: 4, sitCompact: 5 };
 const PHONE = { row: 6, columns: [3, 4, 5, 6, 7, 8] };
@@ -314,17 +314,19 @@ export function createRenderer(canvas, sprites, layout = DEFAULT_LAYOUT) {
           return;
         }
         const { row, column } = frameOf(entry, tick);
+        // Seated behind a desk, the frame is cut at the hips (`height`).
+        const height = entry.height || FRAME.height;
         context.globalAlpha = entry.faded ? 0.45 : 1;
         context.drawImage(
           entry.sheet,
           column * FRAME.width,
           row * FRAME.height,
           FRAME.width,
-          FRAME.height,
+          height,
           Math.round(entry.x),
           Math.round(entry.y),
           FRAME.width,
-          FRAME.height
+          height
         );
         context.globalAlpha = 1;
       });
