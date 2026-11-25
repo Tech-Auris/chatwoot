@@ -207,11 +207,13 @@ export const ITEMS = [
   { sprite: `${M}quadro_criativos.png`, x: 868, y: 12 },
   { sprite: `${M}planta.png`, x: 916, y: 52 },
   { sprite: `${M}cadeira_executiva.png`, x: 760, y: 118 },
-  { sprite: `${M}mesa.png`, x: 744, y: 158 },
+  // Shaped like Helena's desk (straight piece and an L), in his gray.
+  { sprite: `${M}mesa_reta.png`, x: 728, y: 158 },
+  { sprite: `${M}mesa_em_l.png`, x: 792, y: 132 },
   // Two monitors seen from behind, facing Luciano.
   { sprite: `${M}monitor_costas.png`, x: 758, y: 150, sortY: 197 },
   { sprite: `${M}monitor_costas.png`, x: 787, y: 150, sortY: 197 },
-  { sprite: `${M}poltrona_lateral.png`, x: 652, y: 186, flip: true },
+  { sprite: `${G}sofa_lateral.png`, x: 648, y: 172, flip: true },
   { sprite: `${M}planta_2.png`, x: 930, y: 196 },
   // Gerência
   { sprite: `${G}quadro_graficos.png`, x: 972, y: 8 },
@@ -425,31 +427,45 @@ const wholeDesk = items => {
   ];
 };
 
-// Pieces whose default spot changed. Layouts saved before still have them
-// at the old spot; those the clinic never moved go to the new one.
-const MOVED = [
-  [`${R}lixeira.png`, [500, 210], [432, 168]],
-  [`${R}planta_media.png`, [596, 237], [596, 200]],
-  [`${R}cadeira_secretaria.png`, [304, 104], [304, 114]],
-  [`${M}cadeira_executiva.png`, [760, 108], [760, 118]],
-  [`${G}cadeira_executiva_frente.png`, [1028, 108], [1028, 118]],
-  [`${E}poltronas_beges_dupla.png`, [28, 352], [85, 352]],
-  [`${E}mesinha_revistas.png`, [130, 367], [193, 367]],
-  [`${E}poltronas_verdes_dupla.png`, [236, 352], [292, 352]],
-  [`${E}mesinha_revistas_2.png`, [342, 367], [400, 379]],
-  [`${E}poltronas_beges_dupla.png`, [440, 352], [494, 352]],
-  [`${E}flores_gaveteiro.png`, [300, 555], [305, 555]],
+// Pieces whose default changed. Layouts saved before still have the old
+// one; where the clinic never moved it, it becomes the new one (another spot
+// or other pieces).
+const UPGRADES = [
+  [`${R}lixeira.png`, [500, 210], [{ x: 432, y: 168 }]],
+  [`${R}planta_media.png`, [596, 237], [{ x: 596, y: 200 }]],
+  [`${R}cadeira_secretaria.png`, [304, 104], [{ x: 304, y: 114 }]],
+  [`${M}cadeira_executiva.png`, [760, 108], [{ x: 760, y: 118 }]],
+  [`${G}cadeira_executiva_frente.png`, [1028, 108], [{ x: 1028, y: 118 }]],
+  [`${E}poltronas_beges_dupla.png`, [28, 352], [{ x: 85, y: 352 }]],
+  [`${E}mesinha_revistas.png`, [130, 367], [{ x: 193, y: 367 }]],
+  [`${E}poltronas_verdes_dupla.png`, [236, 352], [{ x: 292, y: 352 }]],
+  [`${E}mesinha_revistas_2.png`, [342, 367], [{ x: 400, y: 379 }]],
+  [`${E}poltronas_beges_dupla.png`, [440, 352], [{ x: 494, y: 352 }]],
+  [`${E}flores_gaveteiro.png`, [300, 555], [{ x: 305, y: 555 }]],
   ...[48, 81, 114, 147, 180, 213, 380, 413, 446, 479, 512, 545].map(x => [
     `${E}cadeira_azul_costas.png`,
     [x, 530],
-    [x + 10, 530],
+    [{ x: x + 10, y: 530 }],
   ]),
+  [
+    `${M}mesa.png`,
+    [744, 158],
+    [
+      { sprite: `${M}mesa_reta.png`, x: 728, y: 158 },
+      { sprite: `${M}mesa_em_l.png`, x: 792, y: 132 },
+    ],
+  ],
+  [
+    `${M}poltrona_lateral.png`,
+    [652, 186],
+    [{ sprite: `${G}sofa_lateral.png`, x: 648, y: 172, flip: true }],
+  ],
 ];
-const toNewSpot = item => {
-  const move = MOVED.find(
+const upgrade = item => {
+  const found = UPGRADES.find(
     ([sprite, [x, y]]) => item.sprite === sprite && item.x === x && item.y === y
   );
-  return move ? { ...item, x: move[2][0], y: move[2][1] } : item;
+  return found ? found[2].map(piece => ({ ...item, ...piece })) : [item];
 };
 
 // The saved layout of a clinic (only what the editor changes) on top of the
@@ -461,7 +477,7 @@ export function applySaved(saved) {
   return {
     floors: pick(FLOORS, saved.floors),
     walls: pick(WALLS, saved.walls),
-    items: saved.items ? wholeDesk(saved.items).map(toNewSpot) : ITEMS,
+    items: saved.items ? wholeDesk(saved.items).flatMap(upgrade) : ITEMS,
     rooms: ROOMS.map(room => ({ ...room, name: saved.rooms?.[room.key] })),
     team: Object.fromEntries(
       Object.entries(CHARACTERS).map(([persona, spot]) => [
