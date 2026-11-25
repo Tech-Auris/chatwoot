@@ -67,24 +67,31 @@ export function avatarCatalog(paths) {
   );
 }
 
+// The color picked for a part ("03"): the one it is worn in or, when the
+// part is left out, `tint` (the color picked last).
+export const colorOf = (avatar, part, tint) =>
+  avatar[part] ? splitLayer(avatar[part]).color : tint;
+
 // The choices shown in the grid of a part: every color when the part has a
 // single style (skin, eyes), otherwise one per style, in the color picked
 // now when that style has it.
-export function optionsOf(catalog, part, avatar) {
+export function optionsOf(catalog, part, avatar, tint) {
   const styles = catalog[part] || [];
   if (styles.length === 1) return styles[0].colors;
-  const color = avatar[part] && splitLayer(avatar[part]).color;
+  const color = colorOf(avatar, part, tint);
   return styles.map(
     ({ colors }) =>
       colors.find(name => splitLayer(name).color === color) || colors[0]
   );
 }
 
-// The colors of the style picked now (the dots under the grid); none for a
-// part whose grid already lists the colors.
+// The colors of the style picked now (the dots under the grid), those of the
+// first style when the part is left out; none for a part whose grid already
+// lists the colors.
 export function colorsOf(catalog, part, avatar) {
   const styles = catalog[part] || [];
-  if (styles.length < 2 || !avatar[part]) return [];
+  if (styles.length < 2) return [];
+  if (!avatar[part]) return styles[0].colors;
   const { style } = splitLayer(avatar[part]);
   return styles.find(entry => entry.style === style)?.colors || [];
 }

@@ -75,6 +75,18 @@ describe('avatar looks', () => {
     ]);
   });
 
+  it('keeps the color picked last when the hair is left out', () => {
+    const bald = { ...look, hair: undefined };
+    expect(optionsOf(catalog, 'hair', bald, '03')).toEqual([
+      'Hairstyle_01_32x32_03',
+      'Hairstyle_02_32x32_03',
+    ]);
+    expect(colorsOf(catalog, 'hair', bald)).toEqual([
+      'Hairstyle_01_32x32_01',
+      'Hairstyle_01_32x32_03',
+    ]);
+  });
+
   it('turns a look into a sheet key with its layers, phone on top', () => {
     const key = avatarKey(look);
     expect(isAvatarKey(key)).toBe(true);

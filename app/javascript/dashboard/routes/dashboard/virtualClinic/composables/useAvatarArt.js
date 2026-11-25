@@ -43,30 +43,46 @@ export async function drawLook(look, region) {
 
 export const loadArt = async path => createImageBitmap(await blobOf(path));
 
-// The color a layer is known by (the dots under the grid): the most common
-// one of its front frame, outlines and shadows left out, as a one-pixel
-// picture.
-const swatchOf = async name => {
+const frontPixels = async name => {
   const canvas = document.createElement('canvas');
   canvas.width = FRONT.width;
   canvas.height = FRONT.height;
   const context = canvas.getContext('2d');
   context.drawImage(await cut(layerPath(name), FRONT), 0, 0);
-  const { data } = context.getImageData(0, 0, FRONT.width, FRONT.height);
+  return context.getImageData(0, 0, FRONT.width, FRONT.height).data;
+};
+
+const differs = (data, other, i) =>
+  [0, 1, 2, 3].some(c => data[i + c] !== other[i + c]);
+
+const mostCommon = (data, counted) => {
   const counts = {};
   for (let i = 0; i < data.length; i += 4) {
     const [r, g, b, a] = [data[i], data[i + 1], data[i + 2], data[i + 3]];
-    if (a > 0 && r + g + b > 120) {
+    if (a > 0 && counted(i)) {
       const color = `rgb(${r}, ${g}, ${b})`;
       counts[color] = (counts[color] || 0) + 1;
     }
   }
-  const [top] = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0];
+};
+
+// The color a layer is known by (the dots under the grid), as a one-pixel
+// picture: the most common one of its front frame among the pixels that
+// change in `other` (another color of the same style), so outlines and
+// details drawn the same in every color are left out. When none change, any
+// pixel but the darkest counts.
+const swatchOf = async (name, other) => {
+  const data = await frontPixels(name);
+  const otherData = other && (await frontPixels(other));
+  const top =
+    (otherData && mostCommon(data, i => differs(data, otherData, i))) ||
+    mostCommon(data, i => data[i] + data[i + 1] + data[i + 2] > 120);
   const dot = document.createElement('canvas');
   dot.width = 1;
   dot.height = 1;
   const paint = dot.getContext('2d');
-  paint.fillStyle = top ? top[0] : 'transparent';
+  paint.fillStyle = top || 'transparent';
   paint.fillRect(0, 0, 1, 1);
   return dot.toDataURL();
 };
@@ -91,6 +107,13 @@ export function useAvatarArt() {
     remember(thumbnails, lookSheet(look), async () =>
       (await drawLook(look, FRONT)).toDataURL()
     );
-  const swatch = name => remember(swatches, name, () => swatchOf(name));
+  // `colors`: every color of the style of `name`.
+  const swatch = (name, colors = []) =>
+    remember(swatches, name, () =>
+      swatchOf(
+        name,
+        colors.find(color => color !== name)
+      )
+    );
   return { thumbnail, swatch };
 }
