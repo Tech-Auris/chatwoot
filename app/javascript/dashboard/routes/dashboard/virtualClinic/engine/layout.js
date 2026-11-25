@@ -238,20 +238,20 @@ export const ITEMS = [
   { sprite: `${C}cafeteira_bancada.png`, x: 760, y: 360 },
   { sprite: `${C}maquina_cafe.png`, x: 816, y: 340 },
   { sprite: `${C}bebedouro.png`, x: 870, y: 355 },
-  { sprite: `${C}cadeira_frente.png`, x: 788, y: 437 },
+  { sprite: `${C}cadeira_frente.png`, x: 788, y: 445 },
   { sprite: `${C}mesa_redonda.png`, x: 772, y: 470 },
   // Side chairs face the table: the left one is mirrored.
-  { sprite: `${C}cadeira_lado.png`, x: 748, y: 492, flip: true },
-  { sprite: `${C}cadeira_lado.png`, x: 828, y: 492 },
+  { sprite: `${C}cadeira_lado.png`, x: 748, y: 484, flip: true },
+  { sprite: `${C}cadeira_lado.png`, x: 828, y: 484 },
   { sprite: `${C}planta.png`, x: 648, y: 590 },
   { sprite: `${C}lixeira.png`, x: 920, y: 592 },
   // The other half of the copa, past its door.
   { sprite: `${C}maquina_lanches.png`, x: 1010, y: 340 },
   { sprite: `${C}cafeteira.png`, x: 1072, y: 352 },
-  { sprite: `${C}cadeira_frente.png`, x: 1108, y: 437 },
+  { sprite: `${C}cadeira_frente.png`, x: 1108, y: 445 },
   { sprite: `${C}mesa_redonda.png`, x: 1092, y: 470 },
-  { sprite: `${C}cadeira_lado.png`, x: 1068, y: 492, flip: true },
-  { sprite: `${C}cadeira_lado.png`, x: 1148, y: 492 },
+  { sprite: `${C}cadeira_lado.png`, x: 1068, y: 484, flip: true },
+  { sprite: `${C}cadeira_lado.png`, x: 1148, y: 484 },
   { sprite: `${C}planta.png`, x: 1240, y: 590 },
 ];
 
@@ -446,6 +446,17 @@ const UPGRADES = [
     `${E}cadeira_azul_costas.png`,
     [x, 530],
     [{ x: x + 10, y: 530 }],
+  ]),
+  // The copa chairs: the top one up against the table, the side ones beside it.
+  ...[788, 1108].map(x => [
+    `${C}cadeira_frente.png`,
+    [x, 437],
+    [{ x, y: 445 }],
+  ]),
+  ...[748, 828, 1068, 1148].map(x => [
+    `${C}cadeira_lado.png`,
+    [x, 492],
+    [{ x, y: 484 }],
   ]),
   [
     `${M}mesa.png`,
