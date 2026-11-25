@@ -14,7 +14,7 @@ import {
   SCENE,
   TILE,
   WORLD,
-  seatedPose,
+  seatedDrop,
   sheetForUser,
   spritePaths,
 } from '../engine/layout';
@@ -121,12 +121,10 @@ const nameOf = member => props.layout.team[member.persona]?.name || member.name;
 const team = computed(() =>
   members.value.map(member => {
     const place = placeOf(member.persona);
-    const seated = seatedPose(member.persona, place);
     return {
       persona: member.persona,
       x: place.x,
-      y: place.y + (seated?.drop || 0),
-      height: seated?.height,
+      y: place.y + seatedDrop(member.persona, place),
       direction: place.direction || 'down',
       moving: place.moving,
       talking: place.talking,

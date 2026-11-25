@@ -314,19 +314,17 @@ export function createRenderer(canvas, sprites, layout = DEFAULT_LAYOUT) {
           return;
         }
         const { row, column } = frameOf(entry, tick);
-        // Seated behind a desk, the frame is cut at the hips (`height`).
-        const height = entry.height || FRAME.height;
         context.globalAlpha = entry.faded ? 0.45 : 1;
         context.drawImage(
           entry.sheet,
           column * FRAME.width,
           row * FRAME.height,
           FRAME.width,
-          height,
+          FRAME.height,
           Math.round(entry.x),
           Math.round(entry.y),
           FRAME.width,
-          height
+          FRAME.height
         );
         context.globalAlpha = 1;
       });

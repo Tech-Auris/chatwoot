@@ -184,7 +184,7 @@ export const ITEMS = [
   { sprite: `${R}quadro_avisos.png`, x: 450, y: 15 },
   { sprite: `${R}flores_gaveteiro.png`, x: 175, y: 45 },
   { sprite: `${R}planta_grande.png`, x: 560, y: 45 },
-  { sprite: `${R}cadeira_secretaria.png`, x: 304, y: 104 },
+  { sprite: `${R}cadeira_secretaria.png`, x: 304, y: 114 },
   { sprite: `${R}balcao_recepcao.png`, x: 224, y: 117 },
   { sprite: `${R}lixeira.png`, x: 432, y: 168 },
   { sprite: `${R}planta_media.png`, x: 12, y: 237 },
@@ -206,7 +206,7 @@ export const ITEMS = [
   { sprite: `${M}quadro_campanhas.png`, x: 792, y: 8 },
   { sprite: `${M}quadro_criativos.png`, x: 868, y: 12 },
   { sprite: `${M}planta.png`, x: 916, y: 52 },
-  { sprite: `${M}cadeira_executiva.png`, x: 760, y: 108 },
+  { sprite: `${M}cadeira_executiva.png`, x: 760, y: 118 },
   { sprite: `${M}mesa.png`, x: 744, y: 158 },
   // Two monitors seen from behind, facing Luciano.
   { sprite: `${M}monitor_costas.png`, x: 758, y: 150, sortY: 197 },
@@ -221,7 +221,7 @@ export const ITEMS = [
   { sprite: `${G}arquivo.png`, x: 1168, y: 35 },
   { sprite: `${G}arquivo_2.png`, x: 1202, y: 35 },
   { sprite: `${G}planta.png`, x: 1240, y: 52 },
-  { sprite: `${G}cadeira_executiva_frente.png`, x: 1028, y: 108 },
+  { sprite: `${G}cadeira_executiva_frente.png`, x: 1028, y: 118 },
   { sprite: `${G}mesa_reta.png`, x: 996, y: 158 },
   { sprite: `${G}mesa_em_l.png`, x: 1060, y: 132 },
   // Two monitors seen from behind, facing Helena.
@@ -329,37 +329,38 @@ export const GARDEN_ITEMS = [
 // Where each AI teammate sits (top-left of the 32×64 frame) and their
 // spritesheet. Name and status are drawn over the head, wherever they are.
 // A clinic can give them a look of its own in the avatar editor (`avatar`,
-// which then wins over `sheet`). `seated`: how they sit facing front in
-// the chair behind their desk (the art has no such frames): drawn `drop` px
-// lower and cut at the hips (`height` px of the frame), so the seat of the
-// chair shows under them.
+// which then wins over `sheet`). `seated`: how many px lower they are drawn
+// at their desk, so they sit in the chair pulled up to it and the desk hides
+// their legs (the art has no frames of sitting facing front).
 export const CHARACTERS = {
   secretary: {
     sheet: '7_personagens/clara_secretaria_spritesheet.png',
     x: 304,
     y: 87,
-    seated: { drop: 4, height: 52 },
+    seated: 18,
   },
   manager: {
     sheet: '7_personagens/helena_opcao_A_spritesheet.png',
     x: 1028,
     y: 90,
+    seated: 16,
   },
   marketing: {
     sheet: '7_personagens/luciano_marketing_spritesheet.png',
     x: 760,
     y: 90,
+    seated: 16,
   },
 };
 
-// How a teammate sits where they are now (`place`): their `seated` while
-// at the desk of the default clinic, null when they walk around or the
-// clinic moved them elsewhere.
-export function seatedPose(persona, place) {
+// How many px lower a teammate is drawn where they are now (`place`): their
+// `seated` while at the desk of the default clinic, nothing when they walk
+// around or the clinic moved them elsewhere.
+export function seatedDrop(persona, place) {
   const desk = CHARACTERS[persona];
   const atDesk =
     !place.moving && !place.away && place.x === desk.x && place.y === desk.y;
-  return (atDesk && desk.seated) || null;
+  return atDesk ? desk.seated || 0 : 0;
 }
 
 // Where people arrive: in front of the glass door of the recepção.
@@ -424,6 +425,33 @@ const wholeDesk = items => {
   ];
 };
 
+// Pieces whose default spot changed. Layouts saved before still have them
+// at the old spot; those the clinic never moved go to the new one.
+const MOVED = [
+  [`${R}lixeira.png`, [500, 210], [432, 168]],
+  [`${R}planta_media.png`, [596, 237], [596, 200]],
+  [`${R}cadeira_secretaria.png`, [304, 104], [304, 114]],
+  [`${M}cadeira_executiva.png`, [760, 108], [760, 118]],
+  [`${G}cadeira_executiva_frente.png`, [1028, 108], [1028, 118]],
+  [`${E}poltronas_beges_dupla.png`, [28, 352], [85, 352]],
+  [`${E}mesinha_revistas.png`, [130, 367], [193, 367]],
+  [`${E}poltronas_verdes_dupla.png`, [236, 352], [292, 352]],
+  [`${E}mesinha_revistas_2.png`, [342, 367], [400, 379]],
+  [`${E}poltronas_beges_dupla.png`, [440, 352], [494, 352]],
+  [`${E}flores_gaveteiro.png`, [300, 555], [305, 555]],
+  ...[48, 81, 114, 147, 180, 213, 380, 413, 446, 479, 512, 545].map(x => [
+    `${E}cadeira_azul_costas.png`,
+    [x, 530],
+    [x + 10, 530],
+  ]),
+];
+const toNewSpot = item => {
+  const move = MOVED.find(
+    ([sprite, [x, y]]) => item.sprite === sprite && item.x === x && item.y === y
+  );
+  return move ? { ...item, x: move[2][0], y: move[2][1] } : item;
+};
+
 // The saved layout of a clinic (only what the editor changes) on top of the
 // default one. `saved` is null when the clinic never edited it.
 export function applySaved(saved) {
@@ -433,7 +461,7 @@ export function applySaved(saved) {
   return {
     floors: pick(FLOORS, saved.floors),
     walls: pick(WALLS, saved.walls),
-    items: saved.items ? wholeDesk(saved.items) : ITEMS,
+    items: saved.items ? wholeDesk(saved.items).map(toNewSpot) : ITEMS,
     rooms: ROOMS.map(room => ({ ...room, name: saved.rooms?.[room.key] })),
     team: Object.fromEntries(
       Object.entries(CHARACTERS).map(([persona, spot]) => [

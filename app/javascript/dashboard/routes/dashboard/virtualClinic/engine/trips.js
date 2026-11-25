@@ -217,13 +217,15 @@ export function nearestFree(grid, cell, radius = 6) {
 const LAST_STEP = 40;
 
 // The frame positions of the walk, from the seat to the target, or null
-// when there is no way there.
+// when there is no way there. The seat may be on the desk chair, so the way
+// starts at the free spot right next to it (they stand up first).
 export function planTrip(trip, { layout, grid }) {
   const target = grid && tripTarget(trip, layout);
   const seat = layout.team[trip.who];
   if (!target || !seat) return null;
   const goal = nearestFree(grid, cellOf(feetOf(target)));
-  const path = goal && findPath(grid, cellOf(feetOf(seat)), goal);
+  const start = nearestFree(grid, cellOf(feetOf(seat)), 2);
+  const path = goal && start && findPath(grid, start, goal);
   if (!path) return null;
   const points = [
     { x: seat.x, y: seat.y },
