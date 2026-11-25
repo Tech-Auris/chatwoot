@@ -8,13 +8,13 @@ import {
   layersOf,
   lookSheet,
   optionsOf,
-  premadeSheets,
   randomAvatar,
 } from '../engine/avatar';
 import {
   CHARACTERS,
   DEFAULT_LAYOUT,
   PEOPLE_SHEETS,
+  premadeSheets,
   sheetOf,
   toSaved,
 } from '../engine/layout';
@@ -25,6 +25,7 @@ const paths = [
   '9_avatar/Body_32x32_02.png',
   '9_avatar/Eyes_32x32_01.png',
   '9_avatar/Outfit_01_32x32_01.png',
+  '9_avatar/Outfit_01_32x32_02.png',
   '9_avatar/Outfit_02_32x32_01.png',
   '9_avatar/Outfit_02_32x32_02.png',
   '9_avatar/Hairstyle_01_32x32_01.png',
@@ -75,6 +76,16 @@ describe('avatar looks', () => {
     ]);
   });
 
+  it('recolors only the outfit worn, its colors being its own', () => {
+    // Outfit_01 also has a color 02, but it is not the one worn.
+    expect(optionsOf(catalog, 'outfit', look)).toEqual([
+      'Outfit_01_32x32_01',
+      'Outfit_02_32x32_02',
+    ]);
+    const plain = { ...look, accessory: undefined };
+    expect(colorsOf(catalog, 'accessory', plain)).toEqual([]);
+  });
+
   it('keeps the color picked last when the hair is left out', () => {
     const bald = { ...look, hair: undefined };
     expect(optionsOf(catalog, 'hair', bald, '03')).toEqual([
@@ -109,6 +120,7 @@ describe('avatar looks', () => {
       premadeSheets([
         '7_personagens/clara_secretaria.png',
         '7_personagens/clara_secretaria_spritesheet.png',
+        '7_personagens/helena_gerente_spritesheet.png',
         '8_pessoas/pessoa_03.png',
         '9_avatar/Body_32x32_01.png',
       ])

@@ -9,7 +9,9 @@ export const PARTS = [
   { key: 'body', prefix: 'Body_' },
   { key: 'eyes', prefix: 'Eyes_' },
   { key: 'outfit', prefix: 'Outfit_' },
-  { key: 'hair', prefix: 'Hairstyle_', optional: true },
+  // Every hairstyle comes in the same colors, so a color dot recolors them
+  // all; other parts have colors of their own per style.
+  { key: 'hair', prefix: 'Hairstyle_', optional: true, sharedColors: true },
   { key: 'accessory', prefix: 'Accessory_', optional: true },
 ];
 // Drawn on top of every look: the phone of the "on a call" frames.
@@ -26,11 +28,6 @@ export const isAvatarKey = key => key.startsWith(KEY_PREFIX);
 // The sheet any look is drawn with.
 export const lookSheet = look => look.sheet || avatarKey(look);
 
-// The premade characters the editor offers ("Avatar" tab).
-export const premadeSheets = paths =>
-  paths.filter(path =>
-    /^(7_personagens\/.+_spritesheet|8_pessoas\/.+)\.png$/.test(path)
-  );
 export const layersOf = key => [
   ...key.slice(KEY_PREFIX.length).split(',').filter(Boolean),
   PHONE,
@@ -72,26 +69,31 @@ export function avatarCatalog(paths) {
 export const colorOf = (avatar, part, tint) =>
   avatar[part] ? splitLayer(avatar[part]).color : tint;
 
+const sharesColors = part =>
+  PARTS.some(({ key, sharedColors }) => key === part && sharedColors);
+
 // The choices shown in the grid of a part: every color when the part has a
-// single style (skin, eyes), otherwise one per style, in the color picked
-// now when that style has it.
+// single style (skin, eyes), otherwise one per style: in the color picked
+// now when the styles share their colors (hair), else the style worn in its
+// color and the others in their first one.
 export function optionsOf(catalog, part, avatar, tint) {
   const styles = catalog[part] || [];
   if (styles.length === 1) return styles[0].colors;
   const color = colorOf(avatar, part, tint);
-  return styles.map(
-    ({ colors }) =>
-      colors.find(name => splitLayer(name).color === color) || colors[0]
-  );
+  return styles.map(({ colors }) => {
+    if (!sharesColors(part) && !colors.includes(avatar[part])) return colors[0];
+    return colors.find(name => splitLayer(name).color === color) || colors[0];
+  });
 }
 
-// The colors of the style picked now (the dots under the grid), those of the
-// first style when the part is left out; none for a part whose grid already
-// lists the colors.
+// The colors of the style picked now (the dots under the grid); when the part
+// is left out, those of the first style if the styles share their colors
+// (hair), else none. None either for a part whose grid already lists the
+// colors.
 export function colorsOf(catalog, part, avatar) {
   const styles = catalog[part] || [];
   if (styles.length < 2) return [];
-  if (!avatar[part]) return styles[0].colors;
+  if (!avatar[part]) return sharesColors(part) ? styles[0].colors : [];
   const { style } = splitLayer(avatar[part]);
   return styles.find(entry => entry.style === style)?.colors || [];
 }

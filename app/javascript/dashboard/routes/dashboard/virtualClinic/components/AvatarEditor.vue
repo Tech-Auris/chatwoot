@@ -12,10 +12,10 @@ import {
   colorOf,
   colorsOf,
   optionsOf,
-  premadeSheets,
   randomAvatar,
   splitLayer,
 } from '../engine/avatar';
+import { premadeSheets } from '../engine/layout';
 import { hiddenAccessories } from '../engine/seasons';
 import {
   IDLE_FRONT,

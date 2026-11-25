@@ -362,6 +362,15 @@ export const PEOPLE_SHEETS = Array.from(
 );
 export const sheetForUser = id => PEOPLE_SHEETS[id % PEOPLE_SHEETS.length];
 
+// The premade characters the avatar editor offers ("Avatar" tab): the AI
+// teammates and the people, those the art pack has. Other sheets of the pack
+// (the hair options drawn for Helena) are left out.
+export const premadeSheets = paths =>
+  [
+    ...Object.values(CHARACTERS).map(({ sheet }) => sheet),
+    ...PEOPLE_SHEETS,
+  ].filter(sheet => paths.includes(sheet));
+
 // The sheet a teammate or person is drawn with: their own look when they
 // made one in the avatar editor.
 export const sheetOf = ({ avatar, sheet }) =>
