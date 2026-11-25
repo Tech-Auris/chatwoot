@@ -299,7 +299,7 @@ export const GARDEN_ITEMS = [
   { sprite: `${J}lago_carpas_anim16.png`, x: 581, y: 832, flat: true },
   { sprite: `${J}banco_frente.png`, x: 598, y: 764 },
   { sprite: `${J}espreguicadeira.png`, x: 524, y: 758 },
-  { sprite: `${J}espreguicadeira.png`, x: 720, y: 758 },
+  { sprite: `${J}espreguicadeira.png`, x: 709, y: 758 },
   { sprite: `${J}banco_lado.png`, x: 500, y: 826, flip: true },
   { sprite: `${J}banco_lado.png`, x: 748, y: 826 },
   { sprite: `${J}banco_sem_encosto.png`, x: 542, y: 950 },
