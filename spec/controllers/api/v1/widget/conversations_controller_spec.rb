@@ -111,7 +111,7 @@ RSpec.describe '/api/v1/widget/conversations/toggle_typing', type: :request do
       expect(json_response['messages'][0]['content']).to eq 'This is a test message'
     end
 
-    it 'does not update the name if the contact already exist' do
+    it 'keeps the session on its own contact when the email belongs to an existing contact' do
       existing_contact = create(:contact, account: account, email: 'contact-email@chatwoot.com')
 
       post '/api/v1/widget/conversations',
@@ -133,9 +133,9 @@ RSpec.describe '/api/v1/widget/conversations/toggle_typing', type: :request do
       expect(response).to have_http_status(:success)
       json_response = response.parsed_body
       expect(json_response['id']).not_to be_nil
-      expect(json_response['contact']['email']).to eq existing_contact.email
-      expect(json_response['contact']['name']).not_to eq 'contact-name'
+      expect(json_response['contact']['id']).to eq contact.id
       expect(json_response['contact']['phone_number']).to eq '+919745313456'
+      expect(contact.reload.additional_attributes['claimed_email']).to eq existing_contact.email
       expect(json_response['custom_attributes']['order_id']).to eq '12345'
       expect(json_response['messages'][0]['content']).to eq 'This is a test message'
     end

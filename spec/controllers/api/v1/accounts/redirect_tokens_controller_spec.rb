@@ -5,6 +5,7 @@ RSpec.describe 'Api::V1::Accounts::RedirectTokensController', type: :request do
   let(:admin) { create(:user, account: account, role: :administrator) }
   let(:agent) { create(:user, account: account, role: :agent) }
   let(:web_widget) { create(:channel_widget, account: account) }
+  let!(:lead) { create(:contact, account: account, identifier: 'user-1') }
 
   describe 'POST /api/v1/accounts/{account.id}/redirect_tokens' do
     context 'when it is an unauthenticated user' do
@@ -29,7 +30,61 @@ RSpec.describe 'Api::V1::Accounts::RedirectTokensController', type: :request do
         expect(body['expires_in']).to eq(Widget::RedirectToken::DEFAULT_TTL)
         expect(body['website_url']).to eq(web_widget.website_url)
         expect(Widget::RedirectToken.consume(body['token']))
-          .to eq('inbox_id' => web_widget.inbox.id, 'identifier' => 'user-1', 'message' => 'Hi')
+          .to eq('inbox_id' => web_widget.inbox.id, 'contact_id' => lead.id, 'message' => 'Hi')
+      end
+
+      it 'mints a token for a contact named by contact_id' do
+        post "/api/v1/accounts/#{account.id}/redirect_tokens",
+             headers: admin.create_new_auth_token,
+             params: { inbox_id: web_widget.inbox.id, contact_id: lead.id },
+             as: :json
+
+        expect(response).to have_http_status(:success)
+        expect(Widget::RedirectToken.consume(response.parsed_body['token'])).to eq('inbox_id' => web_widget.inbox.id, 'contact_id' => lead.id)
+      end
+
+      it 'mints an anonymous token when no identity is given' do
+        post "/api/v1/accounts/#{account.id}/redirect_tokens",
+             headers: admin.create_new_auth_token,
+             params: { inbox_id: web_widget.inbox.id, message: 'Hi' },
+             as: :json
+
+        expect(response).to have_http_status(:success)
+        expect(Widget::RedirectToken.consume(response.parsed_body['token'])).to eq('inbox_id' => web_widget.inbox.id, 'message' => 'Hi')
+      end
+
+      it 'rejects an identifier no contact of the account holds' do
+        post "/api/v1/accounts/#{account.id}/redirect_tokens",
+             headers: admin.create_new_auth_token,
+             params: { inbox_id: web_widget.inbox.id, identifier: 'unknown' },
+             as: :json
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response.parsed_body['error']).to eq('contact_not_found')
+      end
+
+      it 'rejects a contact from another account' do
+        foreign = create(:contact, identifier: 'user-1')
+
+        post "/api/v1/accounts/#{account.id}/redirect_tokens",
+             headers: admin.create_new_auth_token,
+             params: { inbox_id: web_widget.inbox.id, contact_id: foreign.id },
+             as: :json
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response.parsed_body['error']).to eq('contact_not_found')
+      end
+
+      it 'rejects an identifier that does not match the named contact' do
+        other = create(:contact, account: account, identifier: 'user-2')
+
+        post "/api/v1/accounts/#{account.id}/redirect_tokens",
+             headers: admin.create_new_auth_token,
+             params: { inbox_id: web_widget.inbox.id, contact_id: other.id, identifier: 'user-1' },
+             as: :json
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response.parsed_body['error']).to eq('contact_not_found')
       end
 
       it 'honours a custom ttl_seconds' do
@@ -67,7 +122,7 @@ RSpec.describe 'Api::V1::Accounts::RedirectTokensController', type: :request do
              as: :json
 
         token = response.parsed_body['token']
-        expect(Widget::RedirectToken.consume(token)).to eq('inbox_id' => web_widget.inbox.id, 'identifier' => 'user-1')
+        expect(Widget::RedirectToken.consume(token)).to eq('inbox_id' => web_widget.inbox.id, 'contact_id' => lead.id)
       end
 
       it 'rejects a non web widget inbox' do
