@@ -76,6 +76,15 @@ RSpec.describe 'Follow-up reports API', type: :request do
     expect(lines.size).to eq(4)
   end
 
+  it 'defuses formulas in the exported cells but keeps the phone number' do
+    contact.update!(name: '=HYPERLINK("http://x","y")')
+
+    get "#{url}.csv", params: range, headers: admin.create_new_auth_token
+
+    row = CSV.parse(response.body).find { |line| line[4] == contact.phone_number }
+    expect(row[3]).to eq(%('=HYPERLINK("http://x","y")))
+  end
+
   describe 'GET in_progress' do
     let(:waiting_contact) { create(:contact, account: account, name: 'Paulo Lima') }
     let(:waiting_conversation) { create(:conversation, account: account, inbox: inbox, contact: waiting_contact) }

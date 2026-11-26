@@ -138,7 +138,7 @@ class Api::V2::Accounts::FollowUpReportsController < Api::V1::Accounts::BaseCont
   end
 
   def csv(scope)
-    CSV.generate do |rows|
+    SafeCsv.generate do |rows|
       rows << ['Data/hora', 'FUP', 'Espera (min)', 'Contato', 'Telefone', 'Conversa', 'Caixa de entrada', 'Envio', 'Erro', 'Resultado']
       ordered(scope).limit(CSV_LIMIT).each do |follow_up|
         row = build_row(follow_up)

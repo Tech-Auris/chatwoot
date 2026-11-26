@@ -22,7 +22,7 @@ class Contacts::ExportService
   def perform
     headers = valid_headers
 
-    csv = CSV.generate do |output|
+    csv = SafeCsv.generate do |output|
       output << headers
       each_batch do |batch|
         labels = headers.include?(LABELS_COLUMN) ? labels_for(batch) : {}

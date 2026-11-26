@@ -167,7 +167,7 @@ class DataImportJob < ApplicationJob
     headers << 'errors'
     return if rejected_contacts.blank?
 
-    CSV.generate do |csv|
+    SafeCsv.generate do |csv|
       csv << headers
       rejected_contacts.each do |record|
         csv << record

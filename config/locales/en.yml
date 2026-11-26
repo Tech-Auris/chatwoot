@@ -165,6 +165,8 @@ en:
         loss_reason_required: Moving to this funnel stage needs a loss reason
     scheduled_messages:
       cannot_delete_processed: Cannot delete a scheduled message that has already been sent or failed
+    database:
+      query_canceled: 'The request took too long to complete. Please try again.'
     saml:
       feature_not_enabled: SAML feature not enabled for this account
       sso_not_enabled: SAML SSO is not enabled for this installation

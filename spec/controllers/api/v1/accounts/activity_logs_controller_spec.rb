@@ -15,6 +15,15 @@ RSpec.describe 'Activity Logs API', type: :request do
   before { ActivityLog.delete_all }
 
   describe 'GET /activity_logs' do
+    it 'defuses formulas in the exported cells' do
+      create_log(auditable_label: '=HYPERLINK("http://x","y")')
+
+      get "#{base_url}/export", headers: admin.create_new_auth_token
+
+      csv = CSV.parse(response.body.delete_prefix(ActivityLogs::ExportService::BOM), headers: true)
+      expect(csv.first[6]).to eq(%('=HYPERLINK("http://x","y")))
+    end
+
     it 'refuses agents' do
       get base_url, headers: agent.create_new_auth_token, as: :json
 
