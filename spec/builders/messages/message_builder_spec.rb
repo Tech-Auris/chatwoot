@@ -273,6 +273,24 @@ describe Messages::MessageBuilder do
                                                      })
       end
 
+      context 'when the recorded audio is a private note' do
+        let(:params) do
+          ActionController::Parameters.new({
+                                             attachments: [Rack::Test::UploadedFile.new('spec/assets/sample.mp3', 'audio/mpeg')],
+                                             is_recorded_audio: ['sample.mp3'],
+                                             private: true
+                                           })
+        end
+
+        it 'attaches the recording to the note like any other message' do
+          message = message_builder
+
+          expect(message).to be_private
+          expect(message.attachments.first.file_type).to eq 'audio'
+          expect(message.attachments.first.meta).to include('is_recorded_audio' => true)
+        end
+      end
+
       context 'when transcode_audio is set' do
         let(:params) do
           ActionController::Parameters.new({

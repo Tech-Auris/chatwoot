@@ -72,6 +72,23 @@ describe Whatsapp::SendOnWhatsappService do
         expect(message.reload.source_id).to eq('123456789')
       end
 
+      it 'keeps a private voice note off the channel' do
+        create(:message, message_type: :incoming, content: 'test',
+                         conversation: conversation, account: conversation.account)
+        message = create(:message, message_type: :outgoing, private: true, content: nil,
+                                   conversation: conversation, account: conversation.account)
+        message.attachments.create!(
+          account_id: message.account_id,
+          file_type: :audio,
+          file: fixture_file_upload('public/audio/widget/ding.mp3'),
+          meta: { is_recorded_audio: true }
+        )
+
+        described_class.new(message: message).perform
+
+        expect(a_request(:post, 'https://waba.360dialog.io/v1/messages')).not_to have_been_made
+      end
+
       it 'marks message as failed when template name is blank' do
         processor = instance_double(Whatsapp::TemplateProcessorService)
         allow(Whatsapp::TemplateProcessorService).to receive(:new).and_return(processor)

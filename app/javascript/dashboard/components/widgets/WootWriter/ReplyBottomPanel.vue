@@ -205,7 +205,12 @@ export default {
     },
     showAudioRecorderButton() {
       if (this.isEditorDisabled) return false;
-      if (this.isALineChannel || this.isATiktokChannel) {
+      // These channels can't carry a voice message, but a private note never
+      // reaches them.
+      if (
+        (this.isALineChannel || this.isATiktokChannel) &&
+        !this.isOnPrivateNote
+      ) {
         return false;
       }
       // Disable audio recorder for safari browser as recording is not supported

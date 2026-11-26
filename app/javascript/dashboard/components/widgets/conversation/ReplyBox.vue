@@ -131,6 +131,12 @@ export default {
       isFocused: false,
       showEmojiPicker: false,
       attachedFiles: [],
+      // Bumped whenever the composer's privacy or conversation changes, or a
+      // message is sent. A capture is stamped with it on the way in, so an
+      // upload that lands afterwards can tell it outlived its context.
+      composerGeneration: 0,
+      // A recording starts when the mic is armed, not when the MP3 is ready.
+      recordingGeneration: 0,
       isRecordingAudio: false,
       recordingAudioState: '',
       recordingAudioDurationText: '',
@@ -403,7 +409,9 @@ export default {
       return this.attachedFiles.some(file => file.isRecordedAudio);
     },
     showAudioRecorder() {
-      return !this.isOnPrivateNote && this.showFileUpload;
+      // A private note never reaches the channel, so the channel's upload
+      // support doesn't gate it (same rule as the attach button).
+      return this.showFileUpload || this.isOnPrivateNote;
     },
     showAudioRecorderEditor() {
       return this.showAudioRecorder && this.isRecordingAudio;
@@ -459,6 +467,10 @@ export default {
       return `draft-${this.conversationIdByRoute}-${this.replyType}`;
     },
     audioRecordFormat() {
+      // Notes stay inside AurisChat: MP3 plays everywhere and stays small.
+      if (this.isOnPrivateNote) {
+        return AUDIO_FORMATS.MP3;
+      }
       if (this.isAWhatsAppCloudChannel) {
         return AUDIO_FORMATS.OGG;
       }
@@ -595,6 +607,7 @@ export default {
     },
     conversationIdByRoute(conversationId, oldConversationId) {
       if (conversationId !== oldConversationId) {
+        this.composerGeneration += 1;
         this.setToDraft(oldConversationId, this.replyType);
         this.getFromDraft();
         this.resetRecorderAndClearAttachments();
@@ -622,6 +635,15 @@ export default {
     replyType(updatedReplyType, oldReplyType) {
       this.setToDraft(this.conversationIdByRoute, oldReplyType);
       this.getFromDraft();
+      // Whatever is staged (or still uploading) was produced under the old
+      // privacy but would be sent under the new one, so a voice note recorded
+      // for the team could reach the contact. Drop it, and a cited private note.
+      this.composerGeneration += 1;
+      if (this.isRecordingAudio) this.onTypingOff();
+      this.resetRecorderAndClearAttachments();
+      if (this.inReplyTo?.private && !this.isOnPrivateNote) {
+        this.resetReplyToMessage();
+      }
     },
   },
 
@@ -859,7 +881,7 @@ export default {
         })
         .forEach(file => {
           const { name, type, size } = file;
-          this.onFileUpload({ name, type, size, file });
+          this.stageFile({ name, type, size, file });
         });
     },
     toggleUserMention(currentMentionState) {
@@ -1071,6 +1093,9 @@ export default {
       this.copilot.execute(action, data);
     },
     clearMessage() {
+      // Sending consumes the composer: a capture still uploading belongs to the
+      // message that just left and must not ride along with the next one.
+      this.composerGeneration += 1;
       this.message = '';
       this.clearCopilotAcceptedMessage();
       this.attachedFiles = [];
@@ -1093,6 +1118,7 @@ export default {
         this.resetAudioRecorderInput();
         this.onTypingOff();
       } else {
+        this.recordingGeneration = this.composerGeneration;
         this.onRecording();
       }
     },
@@ -1136,11 +1162,13 @@ export default {
 
       // Added a new key isRecordedAudio to the file to find it's and recorded audio
       // Because to filter and show only non recorded audio and other attachments
+      // Stamped with the composer generation from when the mic was armed.
       const autoRecordedFile = {
         ...file,
         isRecordedAudio: true,
+        composerGeneration: this.recordingGeneration,
       };
-      return file && this.onFileUpload(autoRecordedFile);
+      return file && this.stageFile(autoRecordedFile);
     },
     onRecordError() {
       this.toggleAudioRecorder();
@@ -1160,7 +1188,21 @@ export default {
         isPrivate,
       });
     },
+    // Every capture (recorder, attach button, drag and drop, paste) goes through
+    // here. Upload and MP3 conversion are async, so the composer can move to a
+    // reply or another conversation before the file arrives. No second
+    // parameter: the uploader's input-file emits (newFile, oldFile).
+    stageFile(file) {
+      if (!file) return;
+      if (file.composerGeneration === undefined) {
+        file.composerGeneration = this.composerGeneration;
+      }
+      this.onFileUpload(file);
+    },
     attachFile({ blob, file }) {
+      const generation = file?.composerGeneration;
+      if (generation !== this.composerGeneration) return;
+
       if (file?.isRecordedAudio) {
         this.removeRecordedAudio();
       }
@@ -1170,6 +1212,9 @@ export default {
       const reader = new FileReader();
       reader.readAsDataURL(file.file);
       reader.onloadend = () => {
+        // Reading the file is async too, so check again right before staging.
+        if (generation !== this.composerGeneration) return;
+
         this.attachedFiles.push({
           currentChatId: this.currentChat.id,
           resource: blob || file,
@@ -1562,7 +1607,7 @@ export default {
         :is-send-disabled="isReplyButtonDisabled"
         :is-note="isPrivate"
         :is-editor-disabled="isEditorDisabled"
-        :on-file-upload="onFileUpload"
+        :on-file-upload="stageFile"
         :on-send="onSendReply"
         :conversation-type="conversationType"
         :recording-audio-duration-text="recordingAudioDurationText"
