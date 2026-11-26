@@ -1041,7 +1041,14 @@
       "WHATSAPP_CLIENT_TOKEN_TITLE": "Token de Segurança",
       "WHATSAPP_CLIENT_TOKEN_SUBHEADER": "Seu Token de Segurança Z-API (veja a aba Segurança no painel do Z-API).",
       "WHATSAPP_CLIENT_TOKEN_UPDATE_TITLE": "Atualizar Token de Segurança",
-      "WHATSAPP_CLIENT_TOKEN_UPDATE_SUBHEADER": "Digite o novo Token de Segurança aqui"
+      "WHATSAPP_CLIENT_TOKEN_UPDATE_SUBHEADER": "Digite o novo Token de Segurança aqui",
+      "ZAPI_WEBHOOK_TOKEN": {
+        "TITLE": "Endereço de recebimento",
+        "HELP": "A Z-API entrega as mensagens desta caixa num endereço com uma chave própria. Se esse endereço vazar (um log, um chamado de suporte), gere um novo: a Z-API passa a usá-lo e o antigo deixa de funcionar logo em seguida.",
+        "BUTTON": "Gerar novo endereço",
+        "SUCCESS": "Novo endereço registrado na Z-API.",
+        "ERROR": "A Z-API não aceitou o novo endereço. A caixa continua recebendo pelo atual; tente de novo."
+      }
     },
     "TIMEZONE": {
       "LABEL": "Fuso horário",

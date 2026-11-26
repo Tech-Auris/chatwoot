@@ -83,6 +83,15 @@ RSpec.describe Channel::Whatsapp do
 
       expect(channel.provider_config['webhook_verify_token']).to eq '123'
     end
+
+    it 'keeps the stored Z-API token when a provider_config update sends another one' do
+      channel = create(:channel_whatsapp, provider: 'zapi', validate_provider_config: false, sync_templates: false)
+      stored = channel.provider_config['webhook_verify_token']
+
+      channel.update!(provider_config: channel.provider_config.merge('webhook_verify_token' => 'stale', 'instance_id' => 'new_instance'))
+
+      expect(channel.reload.provider_config).to include('webhook_verify_token' => stored, 'instance_id' => 'new_instance')
+    end
   end
 
   describe 'webhook setup after creation' do

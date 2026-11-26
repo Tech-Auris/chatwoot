@@ -145,9 +145,7 @@ class Webhooks::WhatsappController < ActionController::API
   # appended to the URL registered on Z-API. Fail closed when it is missing.
   def verify_zapi_token!
     return unless whatsapp_channel&.provider == 'zapi'
-
-    expected = whatsapp_channel.provider_config['webhook_verify_token'].to_s
-    return if expected.present? && ActiveSupport::SecurityUtils.secure_compare(params[:token].to_s, expected)
+    return if Whatsapp::Providers::WhatsappZapiService.new(whatsapp_channel: whatsapp_channel).valid_webhook_token?(params[:token])
 
     head :unauthorized
   end

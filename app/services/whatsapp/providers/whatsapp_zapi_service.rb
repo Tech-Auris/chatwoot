@@ -2,6 +2,7 @@ class Whatsapp::Providers::WhatsappZapiService < Whatsapp::Providers::BaseServic
   class ProviderUnavailableError < StandardError; end
 
   API_BASE_PATH = 'https://api.z-api.io'.freeze
+  PREVIOUS_WEBHOOK_TOKEN_TTL = 1.hour
 
   def send_template(phone_number, template_info); end
 
@@ -41,21 +42,35 @@ class Whatsapp::Providers::WhatsappZapiService < Whatsapp::Providers::BaseServic
   end
 
   def setup_channel_provider
-    response = HTTParty.put(
-      "#{api_instance_path_with_token}/update-every-webhooks",
-      headers: api_headers,
-      body: {
-        value: webhook_url,
-        notifySentByMe: true
-      }.to_json
-    )
-
-    raise ProviderUnavailableError unless process_response(response)
+    register_webhooks
 
     if whatsapp_channel.provider_connection.blank? || whatsapp_channel.provider_connection['connection'] == 'close'
       Channels::Whatsapp::ZapiQrCodeJob.perform_later(whatsapp_channel)
     end
 
+    true
+  end
+
+  # Replaces a leaked webhook URL. The replaced token is still accepted for PREVIOUS_WEBHOOK_TOKEN_TTL,
+  # or until Z-API delivers with the new one, so deliveries already on their way are not refused.
+  def rotate_webhook_token!
+    previous = whatsapp_channel.provider_config['webhook_verify_token']
+    ::Redis::Alfred.setex(previous_webhook_token_key, previous, PREVIOUS_WEBHOOK_TOKEN_TTL)
+    store_webhook_verify_token(SecureRandom.hex(16))
+    register_webhooks
+  rescue ProviderUnavailableError
+    store_webhook_verify_token(previous)
+    ::Redis::Alfred.delete(previous_webhook_token_key)
+    raise
+  end
+
+  def valid_webhook_token?(token)
+    token = token.to_s
+    previous = ::Redis::Alfred.get(previous_webhook_token_key)
+    return webhook_token_matches?(token, previous) unless webhook_token_matches?(token, whatsapp_channel.provider_config['webhook_verify_token'])
+
+    # A delivery with the new token proves Z-API moved, so the replaced one stops working.
+    ::Redis::Alfred.delete(previous_webhook_token_key) if previous.present? && previous != token
     true
   end
 
@@ -148,6 +163,31 @@ class Whatsapp::Providers::WhatsappZapiService < Whatsapp::Providers::BaseServic
   # URL we register; Webhooks::WhatsappController rejects calls without it.
   def webhook_url
     "#{whatsapp_channel.inbox.callback_webhook_url}?token=#{whatsapp_channel.provider_config['webhook_verify_token']}"
+  end
+
+  def register_webhooks
+    response = HTTParty.put(
+      "#{api_instance_path_with_token}/update-every-webhooks",
+      headers: api_headers,
+      body: {
+        value: webhook_url,
+        notifySentByMe: true
+      }.to_json
+    )
+
+    raise ProviderUnavailableError unless process_response(response)
+  end
+
+  def store_webhook_verify_token(token)
+    whatsapp_channel.update_columns(provider_config: whatsapp_channel.provider_config.merge('webhook_verify_token' => token)) # rubocop:disable Rails/SkipsModelValidations
+  end
+
+  def webhook_token_matches?(token, expected)
+    expected.present? && ActiveSupport::SecurityUtils.secure_compare(token, expected)
+  end
+
+  def previous_webhook_token_key
+    format(::Redis::RedisKeys::ZAPI_PREVIOUS_WEBHOOK_TOKEN, channel_id: whatsapp_channel.id)
   end
 
   def api_instance_path

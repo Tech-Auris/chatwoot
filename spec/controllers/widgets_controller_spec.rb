@@ -21,6 +21,17 @@ describe '/widget', type: :request do
       expect(response.body).to include(token)
     end
 
+    it 'does not set the session cookie' do
+      previous = ActionController::Base.allow_forgery_protection
+      ActionController::Base.allow_forgery_protection = true
+
+      get widget_url(website_token: web_widget.website_token)
+
+      expect(response.headers['Set-Cookie'].to_s).not_to include('_chatwoot_session')
+    ensure
+      ActionController::Base.allow_forgery_protection = previous
+    end
+
     it 'returns 404 when called with out website_token' do
       get widget_url
       expect(response).to have_http_status(:not_found)

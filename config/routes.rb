@@ -557,6 +557,7 @@ Rails.application.routes.draw do
 
           namespace :whatsapp do
             resource :authorization, only: [:create]
+            post 'zapi/:inbox_id/rotate_webhook_token', to: 'zapi_webhook_tokens#create'
           end
 
           resources :webhooks, only: [:index, :create, :update, :destroy]
@@ -1162,6 +1163,7 @@ Rails.application.routes.draw do
       end
       resources :users, only: [:index, :new, :create, :show, :edit, :update, :destroy] do
         delete :avatar, on: :member, action: :destroy_avatar
+        post :impersonate, on: :member
       end
 
       resources :access_tokens, only: [:index, :show]

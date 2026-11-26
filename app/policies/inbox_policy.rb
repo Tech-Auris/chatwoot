@@ -74,6 +74,10 @@ class InboxPolicy < ApplicationPolicy
     @account_user.administrator? || @account_user.manager?
   end
 
+  def rotate_zapi_webhook_token?
+    @account_user.administrator?
+  end
+
   def import_whatsapp_session?
     @account_user.administrator? || @account_user.manager?
   end

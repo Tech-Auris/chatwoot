@@ -1,6 +1,4 @@
 class DeviseOverrides::SessionsController < DeviseTokenAuth::SessionsController # rubocop:disable Metrics/ClassLength
-  MAX_SESSIONS = ENV.fetch('MAX_USER_SESSIONS', 25).to_i
-
   # Prevent session parameter from being passed
   # Unpermitted parameter: session
   wrap_parameters format: []
@@ -65,6 +63,7 @@ class DeviseOverrides::SessionsController < DeviseTokenAuth::SessionsController 
 
   def handle_sso_authentication
     return if !@impersonation && enforce_session_limit_for_password_login(@resource)
+    return render_create_error_bad_credentials if @impersonation && !@resource.consume_sso_auth_token(params[:sso_auth_token])
 
     authenticate_resource_with_sso_token
     yield @resource if block_given?
@@ -143,7 +142,7 @@ class DeviseOverrides::SessionsController < DeviseTokenAuth::SessionsController 
   end
 
   def sessions_limit_reached?(user)
-    active_token_count(user) >= MAX_SESSIONS
+    active_token_count(user) >= ENV.fetch('MAX_USER_SESSIONS', 25).to_i
   end
 
   def active_token_count(user)

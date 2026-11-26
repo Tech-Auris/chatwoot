@@ -122,6 +122,70 @@ describe Whatsapp::Providers::WhatsappZapiService do
     end
   end
 
+  describe '#rotate_webhook_token!' do
+    let!(:old_token) { whatsapp_channel.provider_config['webhook_verify_token'] }
+
+    it 'registers a webhook URL with a new token and keeps the old one accepted' do
+      request = stub_request(:put, "#{api_instance_path_with_token}/update-every-webhooks").with(headers: stub_headers).to_return(status: 200)
+
+      service.rotate_webhook_token!
+
+      new_token = whatsapp_channel.reload.provider_config['webhook_verify_token']
+      expect(new_token).to be_present
+      expect(new_token).not_to eq(old_token)
+      expect(request.with(body: { value: "#{whatsapp_channel.inbox.callback_webhook_url}?token=#{new_token}", notifySentByMe: true }.to_json))
+        .to have_been_made
+      expect(service.valid_webhook_token?(old_token)).to be(true)
+      expect(service.valid_webhook_token?(new_token)).to be(true)
+    end
+
+    it 'keeps the old token when Z-API refuses the new URL' do
+      stub_request(:put, "#{api_instance_path_with_token}/update-every-webhooks").to_return(status: 400, body: 'error')
+
+      expect { service.rotate_webhook_token! }.to raise_error(described_class::ProviderUnavailableError)
+
+      expect(whatsapp_channel.reload.provider_config['webhook_verify_token']).to eq(old_token)
+      expect(Redis::Alfred.get(format(Redis::RedisKeys::ZAPI_PREVIOUS_WEBHOOK_TOKEN, channel_id: whatsapp_channel.id))).to be_nil
+    end
+  end
+
+  describe '#valid_webhook_token?' do
+    let(:old_token) { whatsapp_channel.provider_config['webhook_verify_token'] }
+
+    before { stub_request(:put, "#{api_instance_path_with_token}/update-every-webhooks").to_return(status: 200) }
+
+    it 'stops accepting the replaced token once a delivery uses the new one' do
+      replaced = old_token
+      service.rotate_webhook_token!
+      new_token = whatsapp_channel.reload.provider_config['webhook_verify_token']
+
+      expect(service.valid_webhook_token?(replaced)).to be(true)
+      expect(service.valid_webhook_token?(new_token)).to be(true)
+      expect(service.valid_webhook_token?(replaced)).to be(false)
+    end
+
+    it 'stops accepting the replaced token after the grace window' do
+      replaced = old_token
+      service.rotate_webhook_token!
+
+      Redis::Alfred.delete(format(Redis::RedisKeys::ZAPI_PREVIOUS_WEBHOOK_TOKEN, channel_id: whatsapp_channel.id))
+
+      expect(service.valid_webhook_token?(replaced)).to be(false)
+    end
+
+    it 'sets the grace window on the replaced token' do
+      service.rotate_webhook_token!
+
+      expect(Redis::Alfred.ttl(format(Redis::RedisKeys::ZAPI_PREVIOUS_WEBHOOK_TOKEN, channel_id: whatsapp_channel.id)))
+        .to be_between(1, described_class::PREVIOUS_WEBHOOK_TOKEN_TTL.to_i)
+    end
+
+    it 'rejects a blank or unknown token' do
+      expect(service.valid_webhook_token?('')).to be(false)
+      expect(service.valid_webhook_token?('wrong')).to be(false)
+    end
+  end
+
   describe '#disconnect_channel_provider' do
     context 'when response is successful' do
       it 'disconnects the whatsapp connection' do

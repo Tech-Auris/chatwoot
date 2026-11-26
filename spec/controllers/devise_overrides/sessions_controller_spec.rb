@@ -165,7 +165,7 @@ RSpec.describe DeviseOverrides::SessionsController, type: :controller do
   end
 
   describe 'session limit enforcement' do
-    before { stub_const('DeviseOverrides::SessionsController::MAX_SESSIONS', 5) }
+    around { |example| with_modified_env('MAX_USER_SESSIONS' => '5') { example.run } }
 
     let(:user) { create(:user, password: 'Test@123456') }
     let(:browser_ua) { 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2.1 Safari/605.1.15' }
@@ -401,6 +401,26 @@ RSpec.describe DeviseOverrides::SessionsController, type: :controller do
       end.not_to change(user.user_sessions, :count)
 
       expect(response).to have_http_status(:success)
+    end
+
+    it 'accepts an impersonation link only once' do
+      sso_token = user.generate_sso_auth_token(impersonation: true)
+
+      post :create, params: { email: user.email, sso_auth_token: sso_token }
+      expect(response).to have_http_status(:success)
+
+      post :create, params: { email: user.email, sso_auth_token: sso_token }
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it 'rejects an impersonation link already redeemed by a concurrent request' do
+      sso_token = user.generate_sso_auth_token(impersonation: true)
+      allow(Redis::Alfred).to receive(:delete).and_return(0)
+
+      post :create, params: { email: user.email, sso_auth_token: sso_token }
+
+      expect(response).to have_http_status(:unauthorized)
+      expect(user.reload.tokens).to be_blank
     end
 
     it 'creates a short-lived token for impersonation login' do

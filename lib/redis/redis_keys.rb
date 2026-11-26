@@ -38,6 +38,9 @@ module Redis::RedisKeys
   # SSO Auth Tokens
   USER_SSO_AUTH_TOKEN = 'USER_SSO_AUTH_TOKEN::%<user_id>d::%<token>s'.freeze
 
+  # Z-API webhook token replaced by a rotation, still accepted for a short grace window
+  ZAPI_PREVIOUS_WEBHOOK_TOKEN = 'ZAPI_PREVIOUS_WEBHOOK_TOKEN::%<channel_id>d'.freeze
+
   ## Online Status Keys
   # hash containing user_id key and status as value
   ONLINE_STATUS = 'ONLINE_STATUS::%<account_id>d'.freeze

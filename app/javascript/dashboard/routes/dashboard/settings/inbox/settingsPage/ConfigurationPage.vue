@@ -15,6 +15,7 @@ import { sanitizeAllowedDomains, isValidURL } from 'dashboard/helper/URLHelper';
 import { requiredIf } from '@vuelidate/validators';
 import WhatsappLinkDeviceModal from '../components/WhatsappLinkDeviceModal.vue';
 import BaileysHistoryImportStatus from '../components/BaileysHistoryImportStatus.vue';
+import ZapiWebhookToken from './components/ZapiWebhookToken.vue';
 import InboxName from 'dashboard/components/widgets/InboxName.vue';
 import Switch from 'dashboard/components-next/switch/Switch.vue';
 import { FEATURE_FLAGS } from 'dashboard/featureFlags';
@@ -32,6 +33,7 @@ export default {
     TextArea,
     WhatsappReauthorize,
     WhatsappLinkDeviceModal,
+    ZapiWebhookToken,
     BaileysHistoryImportStatus,
     InboxName,
     // eslint-disable-next-line vue/no-reserved-component-names
@@ -1053,6 +1055,7 @@ export default {
             </NextButton>
           </div>
         </SettingsSection>
+        <ZapiWebhookToken :inbox="inbox" />
       </template>
     </div>
   </div>
