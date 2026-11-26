@@ -301,6 +301,14 @@ RSpec.describe 'Super Admin accounts API', type: :request do
       expect(account.webhook_data.dig(:settings, :allow_dynamic_special_scenario)).to be(true)
     end
 
+    it 'turns delayed automations on and off as an account feature flag' do
+      put "/super_admin/accounts/#{account.id}", params: params.deep_merge(auris_settings: { delayed_automations: '1' })
+      expect(account.reload).to be_feature_enabled('delayed_automations')
+
+      put "/super_admin/accounts/#{account.id}", params: params.deep_merge(auris_settings: { delayed_automations: '0' })
+      expect(account.reload).not_to be_feature_enabled('delayed_automations')
+    end
+
     it 'flips the multi_language_ai column' do
       expect(account.multi_language_ai).to be(false)
 

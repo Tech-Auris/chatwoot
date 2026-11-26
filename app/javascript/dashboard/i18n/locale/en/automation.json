@@ -63,7 +63,8 @@
             "CUSTOMER_UNRESPONSIVE": "The clock starts when a teammate replies. If the customer hasn't written back {duration} later, the actions below run. If they do reply, nothing happens, and the next teammate reply starts the clock again.",
             "AGENT_UNRESPONSIVE": "The clock starts when a customer sends a message. If no teammate has replied {duration} later, the actions below run. If someone replies before then, nothing happens."
           },
-          "FOOTNOTE": "Only new activity starts a clock. Conversations already sitting in this state are picked up the next time something happens on them."
+          "FOOTNOTE": "Only new activity starts a clock. Conversations already sitting in this state are picked up the next time something happens on them.",
+          "FOLLOW_UP_HINT": "In inboxes with the AI Secretary, the follow-up (FUP) already re-engages the customer. Don't use \"Send a Message\" there."
         },
         "CONDITIONS": {
           "LABEL": "Conditions"

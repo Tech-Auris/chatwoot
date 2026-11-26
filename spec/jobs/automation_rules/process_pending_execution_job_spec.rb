@@ -46,6 +46,19 @@ RSpec.describe AutomationRules::ProcessPendingExecutionJob do
     expect(conversation.reload.label_list).to include('stale')
   end
 
+  # Our own actions (funnel move, AI toggle) must work when a delayed rule fires, not only instantly.
+  it 'runs the Auris funnel and AI actions of a delayed rule' do
+    stage = create(:funnel_stage, name: "scheduled_#{SecureRandom.hex(4)}")
+    conversation.update!(ai_enabled: true)
+    rule.update!(actions: [{ 'action_name' => 'move_to_funnel_stage', 'action_params' => [stage.id] },
+                           { 'action_name' => 'disable_ai', 'action_params' => [] }])
+
+    job.perform(pending_execution.reload)
+
+    expect(pending_execution.reload).to be_executed
+    expect(conversation.reload).to have_attributes(funnel_stage_id: stage.id, ai_enabled: false)
+  end
+
   it 'skips with rule_inactive when the rule was disabled' do
     rule.update!(active: false)
     job.perform(pending_execution.reload)

@@ -430,6 +430,12 @@ defineExpose({ validate, resetValidation });
             <p class="mb-0 text-xs text-n-slate-11">
               {{ $t('AUTOMATION.ADD.FORM.WAIT.FOOTNOTE') }}
             </p>
+            <p
+              v-if="selectedTrigger === 'customer_unresponsive'"
+              class="mb-0 text-xs text-n-amber-11"
+            >
+              {{ $t('AUTOMATION.ADD.FORM.WAIT.FOLLOW_UP_HINT') }}
+            </p>
           </div>
         </aside>
       </div>
