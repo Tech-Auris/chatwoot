@@ -1,12 +1,14 @@
 # Autocomplete of prospects for the sales screen, reading the ClickUp pipeline.
 #
-# The list is fetched whole and filtered here rather than queried per keystroke:
-# ClickUp cannot search across a name, an e-mail custom field and a phone custom
-# field in one call, and the open pipeline is a few hundred tasks — the lost
-# column, which holds thousands, is excluded by the API itself.
+# The open pipeline is fetched whole and filtered here rather than queried per
+# keystroke: ClickUp cannot search across a name, an e-mail custom field and a
+# phone custom field in one call. Won and lost are open columns in ClickUp, so
+# the walk asks only for the other statuses — the lost column alone holds
+# thousands of tasks and used to push live deals past the page limit.
 class Sales::ClickupProspectSearchService
-  # ClickUp pages at 100; the open pipeline fits in a handful of pages.
-  MAX_PAGES = 10
+  # ClickUp pages at 100; the open pipeline fits in a handful of pages. The cap
+  # only guards against a runaway walk.
+  MAX_PAGES = 20
   CACHE_TTL = 5.minutes
   MAX_RESULTS = 20
 
@@ -27,8 +29,7 @@ class Sales::ClickupProspectSearchService
   # regardless of where the Rails server is.
   SALES_TIMEZONE = 'America/Sao_Paulo'.freeze
 
-  # A deal that was won or lost is not somebody to build a plan for. ClickUp
-  # only hides what it considers closed, and these two are open columns there.
+  # A deal that was won or lost is not somebody to build a plan for.
   CLOSED_DEAL_STATUSES = %w[ganho perdido].freeze
 
   class NotConfigured < StandardError; end
@@ -42,13 +43,14 @@ class Sales::ClickupProspectSearchService
     normalized = normalize(term)
     return [] if normalized.blank?
 
-    prospects.select { |prospect| open_deal?(prospect) && matches?(prospect, normalized) }.first(MAX_RESULTS)
+    prospects.select { |prospect| matches?(prospect, normalized) }.first(MAX_RESULTS)
   end
 
   # Not filtered by status: the reservations report mirrors what happened to a
-  # deal, and being won or lost is exactly what it has to see.
+  # deal, and being won or lost is exactly what it has to see. Those are not in
+  # the cached walk, so they are read one by one.
   def find(task_id)
-    prospects.find { |prospect| prospect[:task_id] == task_id }
+    prospects.find { |prospect| prospect[:task_id] == task_id } || find_task(task_id)
   end
 
   private
@@ -73,12 +75,28 @@ class Sales::ClickupProspectSearchService
   end
 
   def fetch_all_tasks
-    (0...MAX_PAGES).each_with_object([]) do |page, tasks|
-      response = client.list_tasks(list_id: list_id, page: page)
+    statuses = open_deal_statuses
+    tasks = []
+    MAX_PAGES.times do |page|
+      response = client.list_tasks(list_id: list_id, page: page, statuses: statuses)
       batch = response['tasks'] || []
       tasks.concat(batch)
-      break tasks if response['last_page'] || batch.empty?
+      return tasks if response['last_page'] || batch.empty?
     end
+
+    Rails.logger.warn("[sales] ClickUp pipeline #{list_id} has more than #{MAX_PAGES} pages of open deals; the rest is not searchable")
+    tasks
+  end
+
+  def open_deal_statuses
+    client.get_list(list_id)['statuses']
+          .pluck('status')
+          .reject { |status| CLOSED_DEAL_STATUSES.include?(normalize(status)) }
+  end
+
+  def find_task(task_id)
+    task = Rails.cache.fetch("sales/clickup_prospect/#{task_id}", expires_in: CACHE_TTL) { client.get_task(task_id) }
+    serialize(task) if task.dig('list', 'id') == list_id
   end
 
   def serialize(task)
@@ -106,16 +124,14 @@ class Sales::ClickupProspectSearchService
     field&.dig('value').presence
   end
 
-  def open_deal?(prospect)
-    CLOSED_DEAL_STATUSES.exclude?(normalize(prospect[:status]))
-  end
-
-  # The operator types a name, an e-mail or a phone — one or the other, never a
-  # combination — so every field is matched against the same term.
+  # Every word typed has to show up somewhere, in any order, so "farly gold"
+  # finds "Farly Goldincision Leads". Spaces are also ignored as a whole, since
+  # a brand typed as "gold incision" is stored as "Goldincision".
   def matches?(prospect, term)
-    [prospect[:name], prospect[:clinic_name], prospect[:email], normalize_digits(prospect[:phone])]
-      .compact
-      .any? { |value| normalize(value).include?(term) }
+    haystack = [prospect[:name], prospect[:clinic_name], prospect[:email], normalize_digits(prospect[:phone])]
+               .compact.map { |value| normalize(value) }.join(' ')
+
+    term.split.all? { |word| haystack.include?(word) } || haystack.delete(' ').include?(term.delete(' '))
   end
 
   def normalize(value)

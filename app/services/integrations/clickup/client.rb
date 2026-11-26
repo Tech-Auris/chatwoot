@@ -29,11 +29,22 @@ class Integrations::Clickup::Client
     )
   end
 
-  # Tasks of a list, one page at a time. `include_closed: false` already drops
-  # the won/lost ones, which is exactly the slice the sales autocomplete wants —
-  # the lost column alone holds thousands of tasks nobody searches for.
-  def list_tasks(list_id:, page: 0, include_closed: false)
-    get_json("/list/#{list_id}/task", page: page, include_closed: include_closed, subtasks: false)
+  # Tasks of a list, one page at a time. `include_closed: false` only drops the
+  # statuses ClickUp itself types as closed; won and lost are open columns of
+  # the pipeline, so callers narrow the walk with `statuses` instead.
+  def list_tasks(list_id:, page: 0, include_closed: false, statuses: nil)
+    query = { page: page, include_closed: include_closed, subtasks: false }
+    query[:statuses] = statuses if statuses.present?
+    get_json("/list/#{list_id}/task", query)
+  end
+
+  # The list itself, including the statuses its columns are made of.
+  def get_list(list_id)
+    get_json("/list/#{list_id}")
+  end
+
+  def get_task(task_id)
+    get_json("/task/#{task_id}")
   end
 
   # ClickUp takes dates as epoch milliseconds.

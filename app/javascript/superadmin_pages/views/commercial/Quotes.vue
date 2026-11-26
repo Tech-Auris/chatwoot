@@ -16,6 +16,9 @@ const prospectTerm = ref('');
 const prospectResults = ref([]);
 const selectedProspect = ref(null);
 const searching = ref(false);
+// The term of the last search that came back empty, so "not found" reads
+// differently from "not searched yet".
+const emptySearchTerm = ref('');
 
 const prices = ref([]);
 const coupons = ref([]);
@@ -110,18 +113,21 @@ onMounted(() => {
 let searchTimer = null;
 const searchProspects = () => {
   clearTimeout(searchTimer);
+  emptySearchTerm.value = '';
   if (prospectTerm.value.trim().length < 2) {
     prospectResults.value = [];
     return;
   }
 
   searchTimer = setTimeout(async () => {
+    const term = prospectTerm.value;
     searching.value = true;
     try {
       const body = await request(
-        `${props.componentData.prospects_url}?q=${encodeURIComponent(prospectTerm.value)}`
+        `${props.componentData.prospects_url}?q=${encodeURIComponent(term)}`
       );
       prospectResults.value = body.prospects || [];
+      if (!prospectResults.value.length) emptySearchTerm.value = term;
     } catch (e) {
       error.value = e.message;
     } finally {
@@ -592,6 +598,7 @@ const startOver = () => {
   couponId.value = '';
   selectedProspect.value = null;
   prospectTerm.value = '';
+  emptySearchTerm.value = '';
 };
 </script>
 
@@ -806,6 +813,9 @@ const startOver = () => {
 
             <p v-if="searching" class="text-xs text-slate-500 mt-2">
               Buscando…
+            </p>
+            <p v-else-if="emptySearchTerm" class="text-xs text-slate-500 mt-2">
+              Nenhum lead em aberto encontrado para “{{ emptySearchTerm }}”.
             </p>
 
             <div v-if="selectedProspect" class="text-sm text-slate-700 mt-3">
