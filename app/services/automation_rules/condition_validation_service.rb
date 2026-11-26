@@ -34,16 +34,15 @@ class AutomationRules::ConditionValidationService
 
   def valid_condition?(condition)
     key = condition['attribute_key']
+    attribute_model = condition['custom_attribute_type']
+    # Same precedence as ConditionsFilterService#apply_filter: a declared custom_attribute_type means an
+    # account attribute, even when it shares its name with a standard key.
+    return custom_attribute_present?(key, attribute_model) if attribute_model.present?
 
-    conversation_filter = @conversation_filters[key]
-    contact_filter = @contact_filters[key]
-    message_filter = @message_filters[key]
+    standard_filter = @conversation_filters[key] || @contact_filters[key] || @message_filters[key]
+    return operation_valid?(condition, standard_filter) if standard_filter
 
-    if conversation_filter || contact_filter || message_filter
-      operation_valid?(condition, conversation_filter || contact_filter || message_filter)
-    else
-      custom_attribute_present?(key, condition['custom_attribute_type'])
-    end
+    custom_attribute_present?(key, attribute_model)
   end
 
   def operation_valid?(condition, filter)

@@ -12,6 +12,7 @@ import {
 import {
   MESSAGE_CONDITION_VALUES,
   PRIORITY_CONDITION_VALUES,
+  SENDER_TYPE_CONDITION_VALUES,
 } from 'dashboard/constants/automation';
 import { ORIGEM_OPTIONS } from 'dashboard/helper/origemOptions';
 
@@ -91,6 +92,13 @@ export default function useAutomationValues() {
     }))
   );
 
+  const senderTypeOptions = computed(() =>
+    SENDER_TYPE_CONDITION_VALUES.map(item => ({
+      id: item.id,
+      name: t(`AUTOMATION.SENDER_TYPES.${item.i18nKey}`),
+    }))
+  );
+
   const aiStatusOptions = computed(() => [
     { id: true, name: t('AUTOMATION.AI_STATUS_TYPES.ENABLED') },
     { id: false, name: t('AUTOMATION.AI_STATUS_TYPES.DISABLED') },
@@ -164,6 +172,7 @@ export default function useAutomationValues() {
       statusFilterOptions: statusFilterOptions.value,
       priorityOptions: priorityOptions.value,
       messageTypeOptions: messageTypeOptions.value,
+      senderTypeOptions: senderTypeOptions.value,
       teams: teams.value,
       funnelStages: funnelStages.value,
       pipelineStages: pipelineStageOptions.value,
@@ -215,6 +224,7 @@ export default function useAutomationValues() {
     statusFilterOptions,
     priorityOptions,
     messageTypeOptions,
+    senderTypeOptions,
     getConditionDropdownValues,
     getActionDropdownValues,
     agents,
