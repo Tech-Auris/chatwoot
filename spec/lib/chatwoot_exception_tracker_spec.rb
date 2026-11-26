@@ -22,5 +22,17 @@ describe ChatwootExceptionTracker do
         described_class.new('random').capture_exception
       end
     end
+
+    it 'attaches the given tags to the sentry scope' do
+      with_modified_env SENTRY_DSN: 'random dsn' do
+        scope = Sentry::Scope.new
+        allow(Sentry).to receive(:with_scope).and_yield(scope)
+        allow(Sentry).to receive(:capture_exception)
+
+        described_class.new('random', tags: { inbox_id: 7 }).capture_exception
+
+        expect(scope.tags).to include(inbox_id: 7)
+      end
+    end
   end
 end

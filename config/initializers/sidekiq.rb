@@ -20,6 +20,7 @@ Sidekiq::Web.use Sidekiq::PriorityColumnInjector
 Sidekiq::Web.use Sidekiq::AurisKpisInjector
 
 require Rails.root.join('lib/sidekiq/auris_metrics_recorder')
+require Rails.root.join('lib/sidekiq_death_handler')
 
 Sidekiq.configure_client do |config|
   config.redis = Redis::Config.app
@@ -36,6 +37,10 @@ end
 
 Sidekiq.configure_server do |config|
   config.redis = Redis::Config.app
+
+  # A job that exhausts its retries is otherwise silent: it lands in the dead set and nobody
+  # is told. For a reply that means the agent keeps seeing "sent" on a message that never went out.
+  config.death_handlers << SidekiqDeathHandler.method(:call)
 
   config.server_middleware do |chain|
     chain.add Sidekiq::AurisMetricsRecorder
