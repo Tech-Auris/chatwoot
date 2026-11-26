@@ -5,7 +5,8 @@ import { useRoute } from 'vue-router';
 import { layoutColumn, hourRange } from '../agendaLayout';
 
 // A time grid with one column per professional (day view) or per day (week
-// view). Each column brings its own appointments, already filtered.
+// view). Each column brings its own appointments, already filtered, and
+// whether it is today (highlighted) or in the past (dimmed).
 const props = defineProps({
   columns: { type: Array, required: true },
   showProfessional: { type: Boolean, default: false },
@@ -19,7 +20,10 @@ const route = useRoute();
 // The badge of the appointments the AI booked opens the patient conversation.
 const conversationRoute = conversationId => ({
   name: 'inbox_conversation',
-  params: { accountId: route.params.accountId, conversation_id: conversationId },
+  params: {
+    accountId: route.params.accountId,
+    conversation_id: conversationId,
+  },
 });
 
 // Tall enough for a 30-minute appointment to show its two lines.
@@ -105,10 +109,20 @@ const cardTitle = appointment =>
       <div
         class="sticky top-0 z-10 flex flex-col justify-center h-12 px-3 border-b border-n-weak bg-n-solid-1"
       >
-        <span class="text-sm font-medium truncate text-n-slate-12">
+        <span
+          class="text-sm font-medium truncate"
+          :class="{
+            'self-start px-2 rounded-full bg-n-brand text-white': column.today,
+            'text-n-slate-10': column.past,
+            'text-n-slate-12': !column.today && !column.past,
+          }"
+        >
           {{ column.label }}
         </span>
-        <span class="text-xs text-n-slate-11">
+        <span
+          class="text-xs"
+          :class="column.past ? 'text-n-slate-10' : 'text-n-slate-11'"
+        >
           {{
             $t('AGENDA.APPOINTMENTS_COUNT', {
               count: column.appointments.length,
@@ -116,7 +130,11 @@ const cardTitle = appointment =>
           }}
         </span>
       </div>
-      <div class="relative" :style="{ height: `${gridHeight}px` }">
+      <div
+        class="relative"
+        :class="{ 'bg-n-slate-2': column.past }"
+        :style="{ height: `${gridHeight}px` }"
+      >
         <div
           v-for="label in hourLabels"
           :key="label"
@@ -129,7 +147,10 @@ const cardTitle = appointment =>
           tabindex="0"
           :title="cardTitle(item.appointment)"
           class="absolute flex flex-col px-2 py-0.5 mx-0.5 overflow-hidden text-xs text-left border-l-4 rounded-md cursor-pointer hover:brightness-95"
-          :class="STATUS_CLASS[item.appointment.status]"
+          :class="[
+            STATUS_CLASS[item.appointment.status],
+            { 'opacity-60': column.past },
+          ]"
           :style="cardStyle(item)"
           @click="emit('select', item.appointment)"
           @keydown.enter="emit('select', item.appointment)"

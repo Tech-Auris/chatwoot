@@ -31,9 +31,11 @@ const conversation42 = {
   params: { accountId: '1', conversation_id: 42 },
 };
 
-const mountGrid = appointments =>
+const mountGrid = (appointments, column = {}) =>
   mount(AgendaGrid, {
-    props: { columns: [{ key: '25', label: 'Dra. Ana', appointments }] },
+    props: {
+      columns: [{ key: '25', label: 'Dra. Ana', appointments, ...column }],
+    },
     global: { mocks: { $t: key => key }, stubs: { RouterLink } },
   });
 
@@ -56,6 +58,17 @@ describe('AgendaGrid', () => {
 
     await links[0].trigger('click');
     expect(wrapper.emitted('select')).toBeUndefined();
+  });
+
+  it('highlights today and dims the past', () => {
+    const today = mountGrid([appointment], { today: true });
+    expect(today.find('span.bg-n-brand').text()).toBe('Dra. Ana');
+    expect(today.find('.bg-n-slate-2').exists()).toBe(false);
+
+    const past = mountGrid([appointment], { past: true });
+    expect(past.find('span.bg-n-brand').exists()).toBe(false);
+    expect(past.find('.bg-n-slate-2').exists()).toBe(true);
+    expect(past.find('[role="button"]').classes()).toContain('opacity-60');
   });
 });
 
