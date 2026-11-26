@@ -83,7 +83,7 @@ gem 'faraday_middleware-aws-sigv4'
 ##--- gems for server & infra configuration ---##
 gem 'dotenv-rails', '>= 3.0.0'
 gem 'foreman'
-gem 'puma'
+gem 'puma', '~> 7.2', '>= 7.2.3'
 gem 'vite_rails'
 # metrics on heroku
 gem 'barnes'
@@ -100,7 +100,7 @@ gem 'devise-two-factor', '>= 5.0.0'
 # QR code rendering (server-side, used by the super_admin MFA setup wizard)
 gem 'rqrcode', '~> 2.2'
 # authorization
-gem 'jwt'
+gem 'jwt', '~> 2.10', '>= 2.10.3'
 gem 'pundit'
 
 # super admin
@@ -146,7 +146,7 @@ gem 'sentry-sidekiq', '>= 5.19.0', require: false
 ##-- background job processing --##
 gem 'sidekiq', '>= 7.3.1'
 # We want cron jobs
-gem 'sidekiq-cron', '>= 1.12.0'
+gem 'sidekiq-cron', '>= 2.4.0'
 # for sidekiq healthcheck
 gem 'sidekiq_alive'
 

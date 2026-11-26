@@ -28,6 +28,10 @@ RSpec.describe 'config/initializers/sidekiq.rb' do # rubocop:disable RSpec/Descr
                              'containers restart (see incident with super_admin_health_score_daily_snapshot_job).')
   end
 
+  it 'polls cron jobs every 10 seconds through the sidekiq-cron 2.x configuration' do
+    expect(Sidekiq::Cron.configuration.cron_poll_interval).to eq(10)
+  end
+
   it 'tolerates Redis being unreachable so `rake assets:precompile` in the Docker build does not crash' do
     # Regression: v4.15.1-auris.1.41.22 (2026-08-11) failed to build the
     # Docker image because the reloader-scoped cron loader hit Redis during
