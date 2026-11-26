@@ -1,0 +1,57 @@
+#!/usr/bin/env ruby
+# Lists what fazer-ai/chatwoot main has that we have not decided on yet.
+#
+#   bin/fazer-ai-pending                  # pending entries + summary
+#   bin/fazer-ai-pending --all            # every entry with its status
+#   bin/fazer-ai-pending --remote upstream --base origin/develop
+#
+# Decisions live in .github/fazer-ai-sync.yml. Fetch the remote first
+# (git fetch fazer-ai) so the list is current.
+require 'optparse'
+require 'yaml'
+require 'open3'
+require_relative '../lib/fazer_ai_sync'
+
+options = { remote: 'fazer-ai', base: 'origin/develop', all: false }
+OptionParser.new do |opts|
+  opts.on('--remote NAME', 'git remote of fazer-ai/chatwoot (default: fazer-ai)') { |v| options[:remote] = v }
+  opts.on('--base REF', 'our branch (default: origin/develop)') { |v| options[:base] = v }
+  opts.on('--all', 'show every entry, not only the pending ones') { options[:all] = true }
+end.parse!
+
+def git(*args)
+  out, status = Open3.capture2('git', *args)
+  abort("git #{args.join(' ')} failed") unless status.success?
+  out
+end
+
+root = File.expand_path('..', __dir__)
+registry = YAML.safe_load_file(File.join(root, '.github/fazer-ai-sync.yml')) || {}
+target = "#{options[:remote]}/main"
+merge_base = git('merge-base', options[:base], target).strip
+raw = git('log', '--first-parent', "--format=#{FazerAiSync::LOG_FORMAT}", "#{merge_base}..#{target}")
+entries = FazerAiSync.parse_log(raw).reverse
+sync = FazerAiSync.new(registry)
+
+def label(entry)
+  case entry.kind
+  when :pr then "##{entry.key}"
+  when :upstream then "upstream #{entry.key}"
+  else entry.sha
+  end
+end
+
+entries.each do |entry|
+  status = sync.status_for(entry)
+  next unless options[:all] || status == 'pendente'
+
+  decision = sync.decision_for(entry) || {}
+  extra = [decision['auris_pr'] && "Auris ##{decision['auris_pr']}", decision['motivo'], decision['nota']].compact.join(' · ')
+  line = format('%<status>-11s %<label>-16s %<date>s  %<title>s', status: status, label: label(entry), date: entry.date, title: entry.title)
+  puts extra.empty? ? line : "#{line}  [#{extra}]"
+end
+
+counts = sync.summary(entries)
+puts
+puts "#{target}: #{entries.size} entradas desde #{merge_base[0, 9]} (base #{options[:base]})"
+puts (%w[trazido trazer nao_trazer pendente].map { |s| "#{s}: #{counts[s]}" }).join(' | ')
