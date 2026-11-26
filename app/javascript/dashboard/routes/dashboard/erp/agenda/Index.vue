@@ -1,7 +1,16 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { addDays, format, isSameDay, parseISO, startOfWeek } from 'date-fns';
+import {
+  addDays,
+  format,
+  isBefore,
+  isSameDay,
+  isToday,
+  parseISO,
+  startOfToday,
+  startOfWeek,
+} from 'date-fns';
 import { useAccount } from 'dashboard/composables/useAccount';
 import AgendaAPI from 'dashboard/api/agenda';
 import Button from 'dashboard/components-next/button/Button.vue';
@@ -109,6 +118,8 @@ const filteredAppointments = computed(() =>
 const nameOf = id =>
   professionalOptions.value.find(p => p.id === id)?.name || id;
 
+const isPast = day => isBefore(day, startOfToday());
+
 const dayColumns = computed(() => {
   const ids = professionalId.value
     ? [professionalId.value]
@@ -117,6 +128,7 @@ const dayColumns = computed(() => {
     .map(id => ({
       key: id,
       label: nameOf(id),
+      past: isPast(selectedDate.value),
       appointments: filteredAppointments.value.filter(a => keyOf(a) === id),
     }))
     .sort((a, b) => a.label.localeCompare(b.label, locale.value));
@@ -133,6 +145,8 @@ const weekColumns = computed(() =>
   weekDays.value.map(day => ({
     key: toInputDate(day),
     label: dayLabel(day),
+    today: isToday(day),
+    past: isPast(day),
     appointments: filteredAppointments.value.filter(a =>
       isSameDay(parseISO(a.starts_at), day)
     ),
