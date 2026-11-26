@@ -147,6 +147,7 @@
       "CONVERSATION_CREATED": "Conversation Created",
       "CONVERSATION_UPDATED": "Conversation Updated",
       "MESSAGE_CREATED": "Message Created",
+      "MESSAGE_EDITED": "Message Edited",
       "CONVERSATION_RESOLVED": "Conversation Resolved",
       "CONVERSATION_OPENED": "Conversation Opened",
       "FUNNEL_UPDATED": "Funnel Updated"

@@ -17,6 +17,7 @@ import {
   AUTOMATIONS,
   DEFAULT_SCHEDULED_MESSAGE_DELAY_MINUTES,
 } from 'dashboard/routes/dashboard/settings/automation/constants.js';
+import { CUSTOM_ATTRIBUTE_EVENTS } from 'dashboard/constants/automation';
 
 /**
  * Composable for handling automation-related functionality.
@@ -198,12 +199,7 @@ export function useAutomation(startValue = null) {
       'contact_custom_attribute',
     ]);
 
-    [
-      'message_created',
-      'conversation_created',
-      'conversation_updated',
-      'conversation_opened',
-    ].forEach(eventToUpdate => {
+    CUSTOM_ATTRIBUTE_EVENTS.forEach(eventToUpdate => {
       const standardConditions = automationTypes[
         eventToUpdate
       ].conditions.filter(

@@ -45,6 +45,8 @@ module Events::Types
   FIRST_REPLY_CREATED = 'first.reply.created'
   REPLY_CREATED = 'reply.created'
   MESSAGE_UPDATED = 'message.updated'
+  # The body of a stored message replaced by a new one its sender wrote. Only the automation listener answers it.
+  MESSAGE_EDITED = 'message.edited'
   MESSAGES_READ = 'messages.read'
 
   # scheduled message events

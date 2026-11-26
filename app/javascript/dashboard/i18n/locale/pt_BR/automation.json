@@ -147,6 +147,7 @@
       "CONVERSATION_CREATED": "Conversa Criada",
       "CONVERSATION_UPDATED": "Conversa Atualizada",
       "MESSAGE_CREATED": "Mensagem Criada",
+      "MESSAGE_EDITED": "Mensagem Editada",
       "CONVERSATION_RESOLVED": "Conversa Resolvida",
       "CONVERSATION_OPENED": "Conversa Aberta",
       "FUNNEL_UPDATED": "Funil Atualizado"

@@ -267,4 +267,43 @@ describe AutomationRuleListener do
       end
     end
   end
+
+  describe 'message_edited' do
+    let!(:edited_rule) { create(:automation_rule, event_name: 'message_edited', account: account) }
+    let!(:created_rule) { create(:automation_rule, event_name: 'message_created', account: account) }
+    let!(:message) { create(:message, account: account, conversation: conversation) }
+    let(:event) { Events::Base.new('message_edited', Time.zone.now, { message: message }) }
+
+    before { allow(condition_match).to receive(:present?).and_return(true) }
+
+    it 'runs only the rules whose trigger is message_edited' do
+      listener.message_edited(event)
+
+      expect(AutomationRules::ActionService).to have_received(:new).with(edited_rule, account, conversation).once
+      expect(AutomationRules::ActionService).not_to have_received(:new).with(created_rule, account, conversation)
+    end
+
+    it 'evaluates the conditions against the edited message' do
+      listener.message_edited(event)
+
+      expect(AutomationRules::ConditionsFilterService).to have_received(:new).with(edited_rule, conversation,
+                                                                                   { message: message, changed_attributes: nil })
+    end
+
+    it 'does not run the rule when the conditions do not match' do
+      allow(condition_match).to receive(:present?).and_return(false)
+
+      listener.message_edited(event)
+
+      expect(AutomationRules::ActionService).not_to have_received(:new)
+    end
+
+    it 'does not run the rule when the edit was performed by an automation' do
+      event.data[:performed_by] = edited_rule
+
+      listener.message_edited(event)
+
+      expect(AutomationRules::ActionService).not_to have_received(:new)
+    end
+  end
 end
