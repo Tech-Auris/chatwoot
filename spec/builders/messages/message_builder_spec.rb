@@ -294,6 +294,19 @@ describe Messages::MessageBuilder do
           expect(message.attachments.first.meta).to include('is_recorded_audio' => true)
         end
 
+        it 'saves the transcoded file when the message is created' do
+          movie = instance_double(FFMPEG::Movie, valid?: true)
+          allow(FFMPEG::Movie).to receive(:new).and_return(movie)
+          allow(movie).to receive(:transcode) { |output_path, _options| File.binwrite(output_path, 'fake_opus_data') }
+
+          attachment = message_builder.reload.attachments.first
+
+          expect(attachment.file.filename.to_s).to eq('sample.ogg')
+          expect(attachment.file.content_type).to eq('audio/ogg')
+          expect(attachment.file.download).to eq('fake_opus_data')
+          expect(attachment.meta).to include('is_recorded_audio' => true)
+        end
+
         it 'does not transcode non-audio attachments' do
           allow(Audio::TranscodeService).to receive(:new)
           params[:attachments] = [Rack::Test::UploadedFile.new('spec/assets/avatar.png', 'image/png')]
