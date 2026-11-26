@@ -1,11 +1,11 @@
 # Prepended on DeviseOverrides::PasswordsController, which finds the user by the token digest
 # and resets the password without asking Devise whether the link is still inside
 # `reset_password_within`. Devise's own `reset_password_by_token` does ask, and an expired
-# link answers exactly like an unknown one (#762).
+# link answers exactly like an unknown one.
 #
 # An agent invitation reaches the same flow: its email links here with a token minted when it
 # was sent, and the reset is what confirms the invitee. So an unconfirmed account is holding
-# an invitation, which gets days rather than the hours a reset gets (#769).
+# an invitation, which gets days rather than the hours a reset gets.
 #
 # A module of the fork's rather than an edit to the upstream controller, so an upstream sync
 # never conflicts on it; `prepend_mod_with` in that file only reaches `enterprise/`, which
