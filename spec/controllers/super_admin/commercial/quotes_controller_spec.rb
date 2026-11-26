@@ -387,6 +387,22 @@ RSpec.describe 'Super Admin Commercial Quotes', type: :request do
         .to eq([['Isenção config. integração API', 50_000], ['Reunião', 8970], ['Indicação', 4485]])
     end
 
+    it 'keeps a discount on the recurring plan out of the implementation waivers' do
+      plan_cut = create(:sales_discount, name: 'Plano', percent: 20, stripe_product_ids: ['prod_1'])
+      discounted = payload.merge(
+        discount_ids: [plan_cut.id],
+        items: [
+          payload[:items].first,
+          { stripe_price_id: 'price_setup', stripe_product_id: 'prod_setup', name: 'Implantação',
+            unit_amount: 150_000, quantity: 1, billing_period: 'one_off', kind: 'addon' }
+        ]
+      )
+
+      post '/super_admin/commercial/quotes', params: discounted, as: :json
+
+      expect(SalesQuote.last).to have_attributes(subtotal_amount: 239_700, discount_amount: 17_940, waivers_amount: 0)
+    end
+
     it 'does not move a proposal when its discount is edited later' do
       post '/super_admin/commercial/quotes', params: payload, as: :json
       meeting.update!(percent: 50)

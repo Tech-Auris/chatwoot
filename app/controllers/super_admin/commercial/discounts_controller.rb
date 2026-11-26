@@ -15,7 +15,7 @@ class SuperAdmin::Commercial::DiscountsController < SuperAdmin::ApplicationContr
   def index; end
 
   def data
-    render json: { discounts: SalesDiscount.ordered.map { |discount| serialize(discount) }, products: one_off_products }
+    render json: { discounts: SalesDiscount.ordered.map { |discount| serialize(discount) }, products: products }
   end
 
   def create
@@ -48,17 +48,17 @@ class SuperAdmin::Commercial::DiscountsController < SuperAdmin::ApplicationContr
     discount.snapshot.merge(id: discount.id, active: discount.active)
   end
 
-  # A discount on products only reaches one-off lines (implantação,
-  # integrações): the CRM reads the implementation value as the one-off lines
-  # minus the waivers, so a cut on the subscription would land there.
-  def one_off_products
+  # Every sellable product, one-off and recurring. A cut on a recurring line is
+  # not an implementation waiver, so the calculator keeps it out of
+  # `waivers_amount` and the CRM's implementation value stays whole.
+  def products
     client = Integrations::Stripe::Client.new
     return [] unless client.configured?
 
     client.list_products(active: true).data.filter_map do |product|
-      next if product.default_price.blank? || product.default_price.recurring.present?
+      next if product.default_price.blank?
 
-      { id: product.id, name: product.name }
+      { id: product.id, name: product.name, recurring: product.default_price.recurring.present? }
     end
   end
 end

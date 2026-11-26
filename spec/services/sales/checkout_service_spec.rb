@@ -154,6 +154,27 @@ RSpec.describe Sales::CheckoutService do
       end
     end
 
+    context 'with a discount on the recurring plan' do
+      before do
+        quote.items.destroy_all
+        create(:sales_quote_item, sales_quote: quote, name: 'Plataforma Auris', stripe_product_id: 'prod_platform',
+                                  unit_amount: 89_700, recurring_interval: 'month')
+        create(:sales_quote_item, sales_quote: quote, name: 'Implantação', stripe_product_id: 'prod_setup', unit_amount: 300_000)
+        plan_cut = { 'label' => '20% plano', 'percent' => 20.0, 'stripe_product_ids' => ['prod_platform'], 'amount' => 17_940 }
+        quote.update!(subtotal_amount: 389_700, discount_amount: 17_940, total_amount: 371_760, applied_discounts: [plan_cut])
+        quote.items.reset
+      end
+
+      it 'charges the discounted plan every month and the setup fee in full' do
+        expect(described_class.monthly_charge_for(quote.reload)).to eq(71_760)
+
+        checkout
+
+        amounts = received_session[:line_items].to_h { |line| [line[:price_data][:product_data][:name], line[:price_data][:unit_amount]] }
+        expect(amounts).to eq('Plataforma Auris' => 71_760, 'Implantação' => 300_000)
+      end
+    end
+
     # A monthly subscription is charged month by month; there is nothing to
     # split.
     it 'offers no instalments' do

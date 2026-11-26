@@ -147,6 +147,40 @@ RSpec.describe Sales::QuoteCalculatorService do
       expect(result.discount).to eq(75_000)
       expect(result.summary).to eq('50% implantação')
     end
+
+    # A cut on the plan is not an implementation waiver: the CRM subtracts
+    # `waivers_amount` from the one-off lines, so only those may count there.
+    context 'when the product is recurring' do
+      let(:plan_cut) { discount('Plano', 20, products: ['prod_platform']) }
+      let(:cart_with_plan) do
+        [{ unit_amount: 89_700, quantity: 1, stripe_product_id: 'prod_platform', recurring: true },
+         { unit_amount: 150_000, quantity: 1, stripe_product_id: 'prod_setup' }]
+      end
+
+      it 'cuts the plan line and leaves the implementation waivers alone' do
+        result = calculate(cart_with_plan, discounts: [plan_cut])
+
+        expect(result.discount).to eq(17_940)
+        expect(result.total).to eq(239_700 - 17_940)
+        expect(result.waivers_amount).to eq(0)
+        expect(result.summary).to eq('20% plano')
+      end
+
+      it 'runs the order-wide discounts on what the plan cut left' do
+        result = calculate(cart_with_plan, discounts: [plan_cut, meeting])
+
+        # 239_700 − 17_940 = 221_760 → 10% = 22_176.
+        expect(result.discount).to eq(17_940 + 22_176)
+        expect(result.waivers_amount).to eq(0)
+      end
+
+      it 'counts only the one-off share as a waiver when it spans both kinds' do
+        result = calculate(cart_with_plan, discounts: [discount('Tudo', 10, products: %w[prod_platform prod_setup])])
+
+        expect(result.discount).to eq(23_970)
+        expect(result.waivers_amount).to eq(15_000)
+      end
+    end
   end
 
   # Stripe coupons scoped to specific products (`applies_to.products`) are

@@ -113,7 +113,8 @@ class SuperAdmin::Commercial::QuotesController < SuperAdmin::ApplicationControll
         name: item[:name],
         # Carried through so the calculator can honour a Stripe coupon
         # scoped to specific products (`applies_to.products`).
-        stripe_product_id: item[:stripe_product_id] }
+        stripe_product_id: item[:stripe_product_id],
+        recurring: item[:recurring_interval].present? }
     end
   end
 
