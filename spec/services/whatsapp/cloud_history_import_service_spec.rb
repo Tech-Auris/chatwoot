@@ -90,6 +90,25 @@ describe Whatsapp::CloudHistoryImportService do
     expect(existing.messages.where(source_id: %w[wamid.in1 wamid.out1]).count).to eq(2)
   end
 
+  context 'when the contact is blocked' do
+    before { create(:contact, account: inbox.account, phone_number: "+#{patient_phone}", blocked: true) }
+
+    it 'imports only the replies typed on the business phone' do
+      import
+
+      expect(inbox.messages.pluck(:source_id)).to contain_exactly('wamid.out1')
+      expect(inbox.conversations.sole.created_at).to eq(two_days_ago)
+    end
+
+    it 'leaves no conversation behind when the thread is all theirs' do
+      messages.pop
+
+      import
+
+      expect(inbox.conversations).to be_empty
+    end
+  end
+
   it 'drops messages older than 90 days before the history request' do
     channel.update_history_import_state!('requested_at' => 1.day.ago.iso8601)
     messages << { from: patient_phone, id: 'wamid.old', timestamp: 95.days.ago.to_i.to_s, type: 'text', text: { body: 'antiga' } }

@@ -24,6 +24,28 @@ describe Whatsapp::IncomingMessageService do
       }.with_indifferent_access
     end
 
+    context 'when the contact is blocked' do
+      let(:contact) { create(:contact, account: whatsapp_channel.account, phone_number: "+#{wa_id}", blocked: true) }
+
+      before { create(:contact_inbox, inbox: whatsapp_channel.inbox, contact: contact, source_id: wa_id) }
+
+      it 'files neither the message nor a conversation' do
+        expect { described_class.new(inbox: whatsapp_channel.inbox, params: params).perform }.not_to change(Message, :count)
+        expect(whatsapp_channel.inbox.conversations).to be_empty
+      end
+
+      it 'still files the echo of a reply typed on the phone' do
+        echo_params = {
+          'messages' => [{ 'from' => '1234567890', 'to' => wa_id, 'id' => 'echo_1', 'text' => { 'body' => 'Reply' },
+                           'timestamp' => '1633034394', 'type' => 'text' }]
+        }.with_indifferent_access
+
+        described_class.new(inbox: whatsapp_channel.inbox, params: echo_params, outgoing_echo: true).perform
+
+        expect(whatsapp_channel.inbox.messages.find_by(source_id: 'echo_1')).to be_outgoing
+      end
+    end
+
     context 'when valid text message params' do
       it 'creates appropriate conversations, message and contacts' do
         described_class.new(inbox: whatsapp_channel.inbox, params: params).perform

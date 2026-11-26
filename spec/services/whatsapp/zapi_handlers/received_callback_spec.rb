@@ -1197,6 +1197,32 @@ describe Whatsapp::ZapiHandlers::ReceivedCallback do
       end
     end
 
+    # A blocked contact opens no conversation and reaches nothing fed by message_created,
+    # while the echo of a reply typed on the clinic's phone is kept.
+    context 'when the contact is blocked' do
+      before do
+        create(:account_user, account: inbox.account)
+        contact.update!(blocked: true)
+        create(:contact_inbox, inbox: inbox, contact: contact, source_id: '5511987654321')
+        allow(Rails.configuration.dispatcher).to receive(:dispatch).and_call_original
+      end
+
+      it 'files neither the message nor a conversation and dispatches no message_created' do
+        expect { service.perform }.not_to change(Message, :count)
+
+        expect(inbox.conversations).to be_empty
+        expect(Rails.configuration.dispatcher).not_to have_received(:dispatch).with(Events::Types::MESSAGE_CREATED, any_args)
+      end
+
+      it 'still files the echo of a reply typed on the phone' do
+        params[:fromMe] = true
+
+        service.perform
+
+        expect(inbox.messages.find_by(source_id: message_id)).to be_outgoing
+      end
+    end
+
     context 'when handling duplicated events' do
       let(:params) do
         {

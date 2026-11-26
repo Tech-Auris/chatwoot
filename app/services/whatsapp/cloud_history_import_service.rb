@@ -60,10 +60,11 @@ class Whatsapp::CloudHistoryImportService
     messages = Array(thread[:messages]).select { |message| importable?(message) }
     return 0 if phone.blank? || messages.empty?
 
-    times = messages.map { |message| message_time(message) }
-    conversation = find_or_create_conversation(phone, times.min)
+    conversation, messages = find_or_create_conversation(phone, messages)
+    return 0 if conversation.nil?
+
     imported = messages.count { |message| create_message(conversation, message) }
-    bump_last_activity(conversation, times.max)
+    bump_last_activity(conversation, messages.map { |message| message_time(message) }.max)
     imported
   end
 
@@ -83,8 +84,9 @@ class Whatsapp::CloudHistoryImportService
   end
 
   # Locked like a live message, so a patient writing in during the import
-  # doesn't end up with two conversations.
-  def find_or_create_conversation(phone, oldest_time)
+  # doesn't end up with two conversations. A blocked contact's own messages are
+  # dropped here, so a thread that is all theirs leaves no conversation behind.
+  def find_or_create_conversation(phone, messages)
     with_contact_lock(phone) do
       contact_inbox = ::ContactInboxWithContactBuilder.new(
         source_id: processed_waid(phone),
@@ -92,8 +94,12 @@ class Whatsapp::CloudHistoryImportService
         contact_attributes: { name: "+#{phone}", phone_number: "+#{phone}" }
       ).perform
 
-      inbox.conversations.where(contact_id: contact_inbox.contact_id).last ||
-        create_conversation(contact_inbox, oldest_time)
+      fileable = messages.reject { |message| Whatsapp::BlockedSender.silenced?(contact_inbox.contact, from_me: outgoing?(message)) }
+      next [nil, []] if fileable.empty?
+
+      conversation = inbox.conversations.where(contact_id: contact_inbox.contact_id).last ||
+                     create_conversation(contact_inbox, fileable.map { |message| message_time(message) }.min)
+      [conversation, fileable]
     end
   end
 
@@ -114,7 +120,7 @@ class Whatsapp::CloudHistoryImportService
   def create_message(conversation, message)
     return false if inbox.messages.exists?(source_id: message[:id])
 
-    outgoing = message[:from].to_s == business_number
+    outgoing = outgoing?(message)
     time = message_time(message)
     conversation.messages.create!(
       account_id: inbox.account_id,
@@ -148,6 +154,10 @@ class Whatsapp::CloudHistoryImportService
   def bump_last_activity(conversation, newest_time)
     last_activity_at = [conversation.last_activity_at, newest_time].compact.max
     conversation.update_columns(last_activity_at: last_activity_at) # rubocop:disable Rails/SkipsModelValidations
+  end
+
+  def outgoing?(message)
+    message[:from].to_s == business_number
   end
 
   def business_number
