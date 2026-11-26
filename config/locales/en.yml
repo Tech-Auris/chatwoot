@@ -200,6 +200,15 @@ en:
     slack:
       invalid_channel_id: 'Invalid slack channel. Please try again'
     whatsapp:
+      outgoing:
+        provider_error: 'WhatsApp could not send this message right now.'
+        provider_unreachable: 'Could not reach the WhatsApp provider.'
+        send_timed_out: 'The send timed out and may have reached WhatsApp. Check the conversation on WhatsApp before sending it again.'
+        send_outcome_unknown: 'The send timed out and may have gone through. Check the conversation on WhatsApp before sending it again.'
+        send_stalled: 'The WhatsApp connection is not accepting sends right now.'
+        media_too_large: 'The attachment is too large to send.'
+        invalid_payload: 'WhatsApp rejected the message content.'
+        still_processing: 'The message was still being sent and could not be confirmed. Check the conversation on WhatsApp before sending it again.'
       token_exchange_failed: 'Failed to exchange code for access token. Please try again.'
       invalid_token_permissions: 'The access token does not have the required permissions for WhatsApp.'
       phone_info_fetch_failed: 'Failed to fetch phone number information. Please try again.'

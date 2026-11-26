@@ -175,6 +175,15 @@ pt_BR:
     slack:
       invalid_channel_id: 'Canal de slack inválido. Por favor, tente novamente'
     whatsapp:
+      outgoing:
+        provider_error: 'O WhatsApp não conseguiu enviar esta mensagem no momento.'
+        provider_unreachable: 'Não foi possível falar com o servidor do WhatsApp.'
+        send_timed_out: 'O envio demorou demais e pode ter chegado ao WhatsApp. Confira a conversa no WhatsApp antes de reenviar.'
+        send_outcome_unknown: 'O envio demorou demais e pode ter sido concluído. Confira a conversa no WhatsApp antes de reenviar.'
+        send_stalled: 'A conexão do WhatsApp não está conseguindo enviar mensagens no momento.'
+        media_too_large: 'O anexo é grande demais para ser enviado.'
+        invalid_payload: 'O WhatsApp recusou o conteúdo da mensagem.'
+        still_processing: 'A mensagem ainda estava sendo enviada e não foi possível confirmar. Confira a conversa no WhatsApp antes de reenviar.'
       token_exchange_failed: 'Falha ao trocar o código por um token de acesso. Por favor, tente novamente.'
       invalid_token_permissions: 'O token de acesso não tem as permissões necessárias para o WhatsApp.'
       phone_info_fetch_failed: 'Falha ao obter a informação do número de telefone. Por favor, tente novamente.'

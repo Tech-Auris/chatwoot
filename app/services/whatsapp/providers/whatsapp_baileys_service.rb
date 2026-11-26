@@ -1,10 +1,9 @@
 class Whatsapp::Providers::WhatsappBaileysService < Whatsapp::Providers::BaseService # rubocop:disable Metrics/ClassLength
   include BaileysHelper
 
-  class MessageContentTypeNotSupported < StandardError; end
-  class ProviderUnavailableError < StandardError; end
+  class ProviderUnavailableError < Whatsapp::Providers::Errors::ProviderUnavailable; end
   class GroupParticipantNotAllowedError < StandardError; end
-  class MessageAlreadyProcessingError < StandardError; end
+  class MessageAlreadyProcessingError < Whatsapp::Providers::Errors::MessageAlreadyProcessing; end
 
   DEFAULT_CLIENT_NAME = ENV.fetch('BAILEYS_PROVIDER_DEFAULT_CLIENT_NAME', nil)
   DEFAULT_URL = ENV.fetch('BAILEYS_PROVIDER_DEFAULT_URL', nil)
@@ -14,6 +13,25 @@ class Whatsapp::Providers::WhatsappBaileysService < Whatsapp::Providers::BaseSer
   # first. 3 full cycles span several minutes of backoff — a rejected
   # session, not a transient blip.
   RECONNECT_LOOP_RESET_STRIKES = 3
+  # Agent-facing reasons, stored as the message's external_error. Resolved at raise time:
+  # I18n.locale is per-request.
+  OUTGOING_ERRORS_SCOPE = 'errors.whatsapp.outgoing'.freeze
+  # Failures that cannot have put a byte of the request on the wire. Any other transport
+  # failure may have reached the provider, so it is treated as a timeout.
+  NEVER_TRANSMITTED_ERRORS = [
+    Net::OpenTimeout, SocketError, Errno::ECONNREFUSED, Errno::EHOSTUNREACH, Errno::ENETUNREACH
+  ].freeze
+  # Errors that say something about this message, or that only sending is wedged, not that
+  # the connection is down. Marking the connection 'close' for them would drop the inbox out
+  # of BaileysConnectionCheckSchedulerJob, which only checks 'open' channels.
+  NON_CHANNEL_DOWN_CODES = [
+    Whatsapp::Providers::Errors::MessageAlreadyProcessing::CODE,
+    Whatsapp::Providers::Errors::SendOutcomeUnknown::CODE,
+    Whatsapp::Providers::Errors::SendStalled::CODE,
+    Whatsapp::Providers::Errors::SendTimeout::CODE,
+    Whatsapp::Providers::Errors::MediaTooLarge::CODE,
+    Whatsapp::Providers::Errors::InvalidPayload::CODE
+  ].freeze
 
   def self.status
     if DEFAULT_URL.blank? || DEFAULT_API_KEY.blank?
@@ -700,7 +718,7 @@ class Whatsapp::Providers::WhatsappBaileysService < Whatsapp::Providers::BaseSer
   end
 
   def send_message_request
-    response = HTTParty.post(
+    response = post_send_message(
       "#{provider_url}/connections/#{whatsapp_channel.phone_number}/send-message",
       headers: api_headers,
       body: {
@@ -713,14 +731,63 @@ class Whatsapp::Providers::WhatsappBaileysService < Whatsapp::Providers::BaseSer
         # key while still letting Sidekiq retries of the same attempt dedupe.
         chatwootMessageId: "#{@message.id}:#{@message.updated_at.to_f}"
       }.to_json,
-      timeout: 120
+      # Above baileys-api's 45s send deadline (and a proxy's 75s cut), so we get its structured
+      # 504/503 instead of a bare read timeout; below the 130s per-channel outgoing lock this
+      # request holds while every other send on the inbox waits.
+      timeout: 90
     )
 
-    raise MessageAlreadyProcessingError if response.code == 409
-    raise ProviderUnavailableError unless process_response(response)
+    raise_send_error(response) unless response.success?
 
     update_external_created_at(response)
     response.parsed_response.dig('data', 'key', 'id')
+  end
+
+  # Only the HTTP call lives here, so anything it raises is a transport failure.
+  def post_send_message(url, **)
+    HTTParty.post(url, **)
+  rescue StandardError => e
+    Rails.logger.error "[WHATSAPP][BAILEYS] transport failure on send: #{e.class}: #{e.message}"
+    raise ProviderUnavailableError, outgoing_error(:provider_unreachable) if NEVER_TRANSMITTED_ERRORS.any? { |klass| e.is_a?(klass) }
+
+    raise Whatsapp::Providers::Errors::SendTimeout, outgoing_error(:send_timed_out)
+  end
+
+  # Only the statuses whose meaning is unambiguous are classified; anything else stays a
+  # (retryable) provider error rather than failing the message for good on a guess.
+  def raise_send_error(response)
+    Rails.logger.error response.body
+
+    case response.code
+    when 409 then raise_conflict_send_error(response)
+    when 503 then raise_unavailable_send_error(response)
+    when 504 then raise Whatsapp::Providers::Errors::SendTimeout, outgoing_error(:send_timed_out)
+    when 413 then raise Whatsapp::Providers::Errors::MediaTooLarge, outgoing_error(:media_too_large)
+    when 422 then raise Whatsapp::Providers::Errors::InvalidPayload, outgoing_error(:invalid_payload)
+    else raise ProviderUnavailableError, outgoing_error(:provider_error)
+    end
+  end
+
+  # 409 is either a send still in flight elsewhere (`processing`) or a previous send that timed
+  # out and may still be delivered (`indeterminate`).
+  def raise_conflict_send_error(response)
+    if response.headers['x-baileys-idempotency-state'] == 'indeterminate'
+      raise Whatsapp::Providers::Errors::SendOutcomeUnknown, outgoing_error(:send_outcome_unknown)
+    end
+
+    raise MessageAlreadyProcessingError, outgoing_error(:still_processing)
+  end
+
+  # An outage or a draining proxy also answer 503; only the header means "connected, but not
+  # sending", which must not mark the connection down.
+  def raise_unavailable_send_error(response)
+    raise Whatsapp::Providers::Errors::SendStalled, outgoing_error(:send_stalled) if response.headers['x-baileys-send-state'] == 'stalled'
+
+    raise ProviderUnavailableError, outgoing_error(:provider_error)
+  end
+
+  def outgoing_error(key)
+    I18n.t("#{OUTGOING_ERRORS_SCOPE}.#{key}", locale: whatsapp_channel.account.locale)
   end
 
   def process_response(response)
@@ -971,13 +1038,15 @@ class Whatsapp::Providers::WhatsappBaileysService < Whatsapp::Providers::BaseSer
 
       define_method(method_name) do |*args, **kwargs, &block|
         original_method.bind_call(self, *args, **kwargs, &block)
-      rescue MessageAlreadyProcessingError
-        raise
       rescue StandardError => e
-        handle_channel_error
+        handle_channel_error unless channel_error_exempt?(e)
         raise e
       end
     end
+  end
+
+  def channel_error_exempt?(error)
+    error.is_a?(Whatsapp::Providers::Errors::Error) && NON_CHANNEL_DOWN_CODES.include?(error.code)
   end
 
   def handle_channel_error

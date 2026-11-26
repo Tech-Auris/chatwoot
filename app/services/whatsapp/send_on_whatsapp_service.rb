@@ -87,6 +87,13 @@ class Whatsapp::SendOnWhatsappService < Base::SendOnChannelService
 
       send_session_message
     end
+  rescue Whatsapp::Providers::Errors::Error => e
+    # Retryable errors go back to SendReplyJob, which retries and marks the message failed when
+    # the attempts run out. A send still processing elsewhere is on its way out, so it gets the
+    # job's own backoff. Anything else will not answer differently: fail it now, with the reason.
+    raise if e.retryable? || e.is_a?(Whatsapp::Providers::Errors::MessageAlreadyProcessing)
+
+    message.update_under_lock!(status: :failed, external_error: e.message)
   end
 
   def validate_announcement_mode!

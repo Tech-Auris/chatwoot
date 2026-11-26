@@ -650,6 +650,51 @@ describe Whatsapp::SendOnWhatsappService do
         end
       end
 
+      # The bubble used to sit on "sent" while Sidekiq retried a send that could never work.
+      describe 'a send the provider will refuse again' do
+        let(:message) { create(:message, message_type: :outgoing, content: 'test', conversation: conversation) }
+
+        before { conversation.contact.update!(phone_number: '+123456789') }
+
+        it 'fails the message with the reason instead of raising' do
+          allow(whatsapp_channel).to receive(:send_message)
+            .and_raise(Whatsapp::Providers::Errors::MediaTooLarge, 'The attachment is too large to send.')
+
+          expect { described_class.new(message: message).perform }.not_to raise_error
+
+          expect(message.reload.status).to eq('failed')
+          expect(message.external_error).to eq('The attachment is too large to send.')
+        end
+
+        it 'fails the message when the send outcome cannot be determined' do
+          allow(whatsapp_channel).to receive(:send_message)
+            .and_raise(Whatsapp::Providers::Errors::SendOutcomeUnknown, 'Check before resending')
+
+          expect { described_class.new(message: message).perform }.not_to raise_error
+
+          expect(message.reload.status).to eq('failed')
+          expect(message.external_error).to eq('Check before resending')
+        end
+
+        # Another worker holds the idempotency lock and is sending it right now: the job has its
+        # own backoff for that.
+        it 'lets a processing conflict reach the job instead of failing the message' do
+          allow(whatsapp_channel).to receive(:send_message)
+            .and_raise(Whatsapp::Providers::WhatsappBaileysService::MessageAlreadyProcessingError)
+
+          expect { described_class.new(message: message).perform }
+            .to raise_error(Whatsapp::Providers::Errors::MessageAlreadyProcessing)
+          expect(message.reload.status).not_to eq('failed')
+        end
+
+        it 'lets a retryable error reach the job without failing the message' do
+          allow(whatsapp_channel).to receive(:send_message).and_raise(Whatsapp::Providers::Errors::SendStalled)
+
+          expect { described_class.new(message: message).perform }.to raise_error(Whatsapp::Providers::Errors::SendStalled)
+          expect(message.reload.status).not_to eq('failed')
+        end
+      end
+
       describe 'duplicate send on Net::ReadTimeout retry' do
         let(:send_message_url) do
           "#{whatsapp_channel.provider_config['provider_url']}/connections/#{whatsapp_channel.phone_number}/send-message"
@@ -665,7 +710,7 @@ describe Whatsapp::SendOnWhatsappService do
           stub_request(:post, setup_url).to_return(status: 200, body: '', headers: {})
         end
 
-        it 'sends the message twice when first attempt times out and job is retried' do
+        it 'retries a send that timed out and stores the id the retry returns' do
           message = create(:message, message_type: :outgoing, content: 'test', conversation: conversation, source_id: nil)
 
           stub = stub_request(:post, send_message_url)
@@ -674,8 +719,10 @@ describe Whatsapp::SendOnWhatsappService do
                  .then
                  .to_return(status: 200, body: success_body, headers: { 'Content-Type' => 'application/json' })
 
-          expect { SendReplyJob.perform_now(message.id) }.to(raise_error { |e| expect(e.class.name).to eq('Net::ReadTimeout') })
+          expect { SendReplyJob.perform_now(message.id) }.to have_enqueued_job(SendReplyJob).with(message.id)
           expect(message.reload.source_id).to be_nil
+          expect(message.status).not_to eq('failed')
+          expect(whatsapp_channel.reload.provider_connection['connection']).not_to eq('close')
 
           SendReplyJob.perform_now(message.id)
           expect(message.reload.source_id).to eq('wa_msg_123')
