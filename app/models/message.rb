@@ -270,6 +270,30 @@ class Message < ApplicationRecord
     ActiveModel::Type::Boolean.new.cast(content_attributes['is_reaction']) == true
   end
 
+  def deleted?
+    ActiveModel::Type::Boolean.new.cast(content_attributes['deleted']) == true
+  end
+
+  # A removed reaction is a deleted row on purpose: the reactions controller reuses the
+  # row and marks it deleted, and its empty content is the payload that clears the
+  # reaction on the contact's phone. Guards that keep deleted messages off the channel
+  # have to let it through.
+  def removed_reaction?
+    deleted? && content_attributes['is_reaction'].present?
+  end
+
+  # `content_attributes` is a single JSON column, so writing any of its accessors from a stale
+  # object rewrites the whole hash and drops flags another request set meanwhile (e.g. `deleted`,
+  # written by the DELETE endpoint while the send was in flight). Reloads the row under
+  # FOR UPDATE before writing, which also serializes with those concurrent writers.
+  def update_under_lock!(attributes)
+    # `lock!` refuses a record with unsaved changes: flush what the caller left dirty, as a plain
+    # `update!` would, but never the stale `content_attributes` hash.
+    restore_attributes(['content_attributes']) if content_attributes_changed?
+    save! if changed?
+    with_lock { update!(attributes) }
+  end
+
   def valid_first_reply?
     return false unless human_response? && !private?
     return false if reaction?

@@ -41,7 +41,7 @@ class Whatsapp::SendOnWhatsappService < Base::SendOnChannelService
 
     # Attached before the update so the update event already carries the image.
     attach_template_header_media
-    message.update!(source_id: message_id)
+    persist_source_id(message_id)
   end
 
   def attach_template_header_media
@@ -53,7 +53,7 @@ class Whatsapp::SendOnWhatsappService < Base::SendOnChannelService
   end
 
   def fail_template_send(error)
-    message.update!(status: :failed, external_error: error)
+    message.update_under_lock!(status: :failed, external_error: error)
   end
 
   # Pre-flight check: confirm the template named in the payload exists in
@@ -81,7 +81,12 @@ class Whatsapp::SendOnWhatsappService < Base::SendOnChannelService
 
   def send_baileys_session_message
     validate_announcement_mode!
-    with_baileys_channel_lock_on_outgoing_message(channel.id) { send_session_message }
+    with_baileys_channel_lock_on_outgoing_message(channel.id) do
+      # The wait on the channel lock can be long: the agent may have deleted the message meanwhile.
+      next if deleted_in_database?
+
+      send_session_message
+    end
   end
 
   def validate_announcement_mode!
@@ -89,7 +94,7 @@ class Whatsapp::SendOnWhatsappService < Base::SendOnChannelService
     return unless conversation.contact.additional_attributes&.dig('announce') == true
     return if inbox_admin_in_group?
 
-    message.update!(status: :failed, external_error: 'Only administrators are allowed to send messages in this group')
+    message.update_under_lock!(status: :failed, external_error: 'Only administrators are allowed to send messages in this group')
     raise StandardError, 'Only admins can send messages in this group'
   end
 
@@ -112,10 +117,14 @@ class Whatsapp::SendOnWhatsappService < Base::SendOnChannelService
   def send_session_message
     message_id = channel.send_message(recipient_id, message)
 
-    message_id = retry_send_after_warmup if message_id.blank? && channel.provider == 'baileys'
+    if message_id.blank? && channel.provider == 'baileys'
+      return if deleted_in_database?
+
+      message_id = retry_send_after_warmup
+    end
 
     if message_id.present?
-      message.update!(source_id: message_id)
+      persist_source_id(message_id)
     elsif message.reload.external_error.blank?
       # Baileys' Signal session can fail to re-establish silently for cold
       # conversations (e.g., gap > 24h since the last message), in which case
@@ -126,8 +135,26 @@ class Whatsapp::SendOnWhatsappService < Base::SendOnChannelService
       # Only kick in when no provider-specific error message has been saved
       # yet — Cloud / Z-API / 360Dialog already write a detailed error via
       # `handle_error` and we'd be overwriting it with a generic message.
-      message.update!(status: :failed, external_error: 'Provider did not return a message id')
+      message.update_under_lock!(status: :failed, external_error: 'Provider did not return a message id')
     end
+  end
+
+  # The message may have been deleted while the send was in flight: the DELETE endpoint found no
+  # `source_id` to revoke, so it is on us now. Both sides read under the same row lock, so the
+  # revocation is enqueued exactly once. A removed reaction is deleted on purpose and its empty
+  # emoji already cleared it, so there is nothing to revoke.
+  def persist_source_id(message_id)
+    message.update_under_lock!(source_id: message_id)
+    return unless message.deleted? && !message.removed_reaction?
+
+    ::Messages::DeleteOnChannelJob.perform_later(message.id)
+  end
+
+  # Reads the flag straight from the database: a full `message.reload` would drop the cached
+  # conversation/inbox/channel chain this service leans on.
+  def deleted_in_database?
+    stored = Message.select(:id, :content_attributes).find_by(id: message.id)
+    stored.present? && stored.deleted? && !stored.removed_reaction?
   end
 
   # When Baileys returns no id, the most common cause is a cold Signal session

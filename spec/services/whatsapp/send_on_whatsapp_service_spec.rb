@@ -564,6 +564,24 @@ describe Whatsapp::SendOnWhatsappService do
         expect(message.reload.status).not_to eq('failed')
       end
 
+      it 'skips the warm-up retry when the agent deleted the message during the first attempt' do
+        conversation.contact.update!(phone_number: '+123456789')
+        message = create(:message, message_type: :outgoing, content: 'test', conversation: conversation)
+        service = described_class.new(message: message)
+
+        allow(whatsapp_channel).to receive(:send_message) do
+          Message.find(message.id).update!(content_attributes: { deleted: true })
+          nil
+        end
+        allow(service).to receive(:sleep)
+
+        service.perform
+
+        expect(whatsapp_channel).to have_received(:send_message).once
+        expect(message.reload).to be_deleted
+        expect(message.status).not_to eq('failed')
+      end
+
       it 'passes the LID directly when warming the session for a contact with @lid identifier' do
         conversation.contact.update!(phone_number: '+5553999023881', identifier: '265214297669734@lid')
         message = create(:message, message_type: :outgoing, content: 'test', conversation: conversation)
