@@ -74,6 +74,7 @@ class Conversation < ApplicationRecord
   include Labelable
   include LlmFormattable
   include ReopenTeamAssigneeHandler
+  include ReopenAiHandoffHandler
   include AssignmentHandler
   include AiAssigneeSync
   include AutoAssignmentHandler

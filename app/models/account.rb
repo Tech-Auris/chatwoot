@@ -26,6 +26,7 @@
 #  name                             :string           not null
 #  name_owner                       :string
 #  phone_contact                    :string
+#  reopen_hands_to_ai               :boolean          default(FALSE), not null
 #  settings                         :jsonb
 #  settings_macros_menu_enabled     :boolean          default(FALSE), not null
 #  status                           :integer          default("active")
@@ -265,7 +266,8 @@ class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
       ai_status_uses_attribute: ai_status_uses_attribute,
       multi_language_ai: multi_language_ai,
       whatsapp_groups_enabled: whatsapp_groups_enabled,
-      allow_dynamic_special_scenario: allow_dynamic_special_scenario || false
+      allow_dynamic_special_scenario: allow_dynamic_special_scenario || false,
+      reopen_hands_to_ai: reopen_hands_to_ai
     }
   end
 

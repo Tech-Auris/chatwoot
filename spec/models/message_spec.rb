@@ -600,6 +600,198 @@ RSpec.describe Message do
     end
   end
 
+  describe 'handing a reopened conversation back to the AI' do
+    let(:account) { create(:account, locale: 'en', reopen_hands_to_ai: true, ai_status_uses_attribute: true) }
+    let(:inbox) { create(:inbox, account: account, enable_auto_assignment: false, secretary_enabled: true) }
+    let(:ai_user) { create(:user, account: account, role: :agent, name: 'IA | Auris') }
+    let(:agent) { create(:user, account: account, role: :agent, name: 'Ana') }
+    let(:team) { create(:team, account: account) }
+    let(:conversation) { create(:conversation, account: account, inbox: inbox, team: team) }
+    let(:message) { build(:message, message_type: :incoming, conversation: conversation, account: account, inbox: inbox) }
+    let(:handoff_line) { 'Conversation handed back to the AI because the patient wrote again (previously with Ana)' }
+    let(:handoff_activity) { hash_including(content: a_string_matching(/handed back to the AI/)) }
+
+    before do
+      InstallationConfig.where(name: 'SECRETARY_AI_USER_ID').first_or_create!(value: ai_user.id.to_s, locked: false)
+      GlobalConfig.clear_cache
+      create(:account_secretary, account: account, secretary_version: create(:secretary_version))
+      # A human took the conversation over (the AI turned off) and resolved it.
+      conversation.update!(assignee: agent, ai_enabled: false)
+    end
+
+    after { Current.reset }
+
+    it 'reopens a resolved conversation assigned to the AI with the AI on, keeping the team' do
+      conversation.resolved!
+      message.save!
+
+      conversation.reload
+      expect(conversation).to be_open
+      expect(conversation.assignee).to eq(ai_user)
+      expect(conversation.ai_enabled).to be(true)
+      expect(conversation.team).to eq(team)
+    end
+
+    it 'explains the handoff in a single activity message naming the previous assignee' do
+      conversation.resolved!
+
+      expect { message.save! }
+        .to have_enqueued_job(Conversations::ActivityMessageJob).with(conversation, hash_including(content: handoff_line)).exactly(:once)
+        .and have_enqueued_job(Conversations::ActivityMessageJob).with(conversation, handoff_activity).exactly(:once)
+    end
+
+    it 'writes the activity message in the account locale' do
+      account.update!(locale: 'pt_BR')
+      conversation.resolved!
+
+      expect { message.save! }.to have_enqueued_job(Conversations::ActivityMessageJob)
+        .with(conversation, hash_including(content: 'Conversa devolvida à IA porque o paciente voltou a escrever (antes com Ana)'))
+    end
+
+    it 'leaves out the previous assignee when there was none' do
+      conversation.update!(assignee: nil)
+      conversation.resolved!
+
+      expect { message.save! }.to have_enqueued_job(Conversations::ActivityMessageJob)
+        .with(conversation, hash_including(content: 'Conversation handed back to the AI because the patient wrote again'))
+      expect(conversation.reload.assignee).to eq(ai_user)
+    end
+
+    # The inbox was paused while the AI held the conversation: the AI went off but stayed its assignee.
+    it 'turns the AI back on for a conversation the AI already holds' do
+      conversation.update!(assignee: ai_user)
+      conversation.update!(ai_enabled: false)
+      conversation.resolved!
+      message.save!
+
+      conversation.reload
+      expect(conversation.assignee).to eq(ai_user)
+      expect(conversation.ai_enabled).to be(true)
+    end
+
+    it 'removes the agente-off label in legacy mode' do
+      account.update!(ai_status_uses_attribute: false)
+      conversation.update!(label_list: %w[vip agente-off])
+      conversation.resolved!
+      message.save!
+
+      conversation.reload
+      expect(conversation.assignee).to eq(ai_user)
+      expect(conversation.label_list).to eq(['vip'])
+    end
+
+    it 'keeps the assignee when the account option is off' do
+      account.update!(reopen_hands_to_ai: false)
+      conversation.resolved!
+      message.save!
+
+      expect(conversation.reload).to be_open
+      expect(conversation.assignee).to eq(agent)
+      expect(conversation.ai_enabled).to be(false)
+    end
+
+    it 'keeps the assignee of a snoozed or pending conversation' do
+      %i[snoozed pending].each do |status|
+        conversation.update!(status: status)
+        build(:message, message_type: :incoming, conversation: conversation, account: account, inbox: inbox).save!
+
+        expect(conversation.reload).to be_open
+        expect(conversation.assignee).to eq(agent)
+      end
+    end
+
+    it 'keeps the assignee when the inbox has no Secretária' do
+      inbox.update!(secretary_enabled: false)
+      conversation.resolved!
+      message.save!
+
+      expect(conversation.reload.assignee).to eq(agent)
+    end
+
+    it 'keeps the assignee of a group conversation' do
+      conversation.update!(group_type: :group)
+      conversation.resolved!
+      message.save!
+
+      expect(conversation.reload.assignee).to eq(agent)
+    end
+
+    context 'when the AI must stay off' do
+      it 'keeps the assignee when the contact has the AI off' do
+        conversation.contact.update!(ai_disabled: true)
+        conversation.resolved!
+        message.save!
+
+        expect(conversation.reload.assignee).to eq(agent)
+        expect(conversation.ai_enabled).to be(false)
+      end
+
+      it 'keeps the assignee when the inbox has the AI paused' do
+        inbox.update!(ai_paused: true)
+        conversation.resolved!
+        message.save!
+
+        expect(conversation.reload.assignee).to eq(agent)
+      end
+
+      it 'keeps the assignee during the inbox AI-off hours' do
+        inbox.update!(ai_schedule_enabled: true)
+        inbox.ai_off_hours.create!(day_of_week: Time.current.in_time_zone(inbox.effective_timezone).wday, from_minutes: 0, to_minutes: 1440)
+        conversation.resolved!
+        message.save!
+
+        expect(conversation.reload.assignee).to eq(agent)
+      end
+    end
+
+    context 'when something changes the conversation while the reopen is in flight' do
+      let(:other_agent) { create(:user, account: account, role: :agent) }
+
+      it 'keeps the assignee an agent set in the meantime' do
+        conversation.resolved!
+        Conversation.find(conversation.id).update!(assignee: other_agent)
+
+        message.save!
+
+        expect(conversation.reload).to be_open
+        expect(conversation.assignee).to eq(other_agent)
+      end
+
+      it 'keeps the assignee when an agent reopened the conversation in the meantime' do
+        conversation.resolved!
+        Conversation.find(conversation.id).open!
+
+        message.save!
+
+        expect(conversation.reload.assignee).to eq(agent)
+      end
+
+      it 'hands it to the AI once when two patient messages reopen it at the same time' do
+        conversation.resolved!
+        stale_copy = Conversation.find(conversation.id)
+        second = build(:message, message_type: :incoming, conversation: stale_copy, account: account, inbox: inbox)
+
+        expect do
+          message.save!
+          second.save!
+        end.to have_enqueued_job(Conversations::ActivityMessageJob).with(conversation, handoff_activity).exactly(:once)
+        expect(conversation.reload.assignee).to eq(ai_user)
+      end
+    end
+
+    # The inbox also drops an assignee who left the team: the AI takes the conversation instead.
+    it 'takes precedence over dropping an assignee outside the team' do
+      inbox.update!(drop_assignee_outside_team_on_reopen: true)
+      conversation.resolved!
+      unassignment = hash_including(content: a_string_matching(/unassigned/i))
+
+      expect { message.save! }
+        .to have_enqueued_job(Conversations::ActivityMessageJob).with(conversation, hash_including(content: handoff_line)).exactly(:once)
+      expect(Conversations::ActivityMessageJob).not_to have_been_enqueued.with(conversation, unassignment)
+      expect(conversation.reload.assignee).to eq(ai_user)
+    end
+  end
+
   describe '#mark_pending_conversation_as_open_for_human_response' do
     let(:conversation) { create(:conversation, status: :pending) }
 

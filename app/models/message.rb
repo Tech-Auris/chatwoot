@@ -522,14 +522,11 @@ class Message < ApplicationRecord
 
   def reopen_resolved_conversation
     # mark resolved bot conversation as pending to be reopened by bot processor service
-    if conversation.inbox.active_bot?
-      conversation.pending!
-    elsif conversation.inbox.api?
-      Current.executed_by = sender if reopened_by_contact?
-      conversation.open!
-    else
-      conversation.open!
-    end
+    return conversation.pending! if conversation.inbox.active_bot?
+
+    Current.executed_by = sender if conversation.inbox.api? && reopened_by_contact?
+    conversation.hand_reopen_to_ai unless private?
+    conversation.open!
   end
 
   def reopened_by_contact?

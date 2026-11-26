@@ -301,6 +301,14 @@ RSpec.describe 'Super Admin accounts API', type: :request do
       expect(account.webhook_data.dig(:settings, :allow_dynamic_special_scenario)).to be(true)
     end
 
+    it 'turns the reopen handoff to the AI on and off' do
+      put "/super_admin/accounts/#{account.id}", params: params.deep_merge(auris_settings: { reopen_hands_to_ai: '1' })
+      expect(account.reload.reopen_hands_to_ai).to be(true)
+
+      put "/super_admin/accounts/#{account.id}", params: params.deep_merge(auris_settings: { reopen_hands_to_ai: '0' })
+      expect(account.reload.reopen_hands_to_ai).to be(false)
+    end
+
     it 'flips the multi_language_ai column' do
       expect(account.multi_language_ai).to be(false)
 

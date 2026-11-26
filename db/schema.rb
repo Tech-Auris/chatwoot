@@ -174,6 +174,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_27_190000) do
     t.string "name_owner"
     t.string "phone_contact"
     t.string "email_contact"
+    t.boolean "reopen_hands_to_ai", default: false, null: false
     t.index ["erp_source_id"], name: "index_accounts_on_erp_source_id"
     t.index ["status"], name: "index_accounts_on_status"
     t.index ["stripe_customer_id"], name: "index_accounts_on_stripe_customer_id", unique: true, where: "(stripe_customer_id IS NOT NULL)"

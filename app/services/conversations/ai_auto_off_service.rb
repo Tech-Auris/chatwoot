@@ -9,6 +9,17 @@
 class Conversations::AiAutoOffService
   pattr_initialize [:message!]
 
+  # Why the AI must stay off on this conversation right now, or nil. Also read
+  # when a patient reopens a conversation, so it is not handed back to the AI
+  # only to be turned off again by this service.
+  def self.reason_for(conversation)
+    inbox = conversation.inbox
+    if conversation.contact&.ai_disabled? then :contact
+    elsif inbox.ai_paused? then :inbox
+    elsif inbox.ai_off_now? then :schedule
+    end
+  end
+
   def perform
     return unless applies?
 
@@ -31,10 +42,7 @@ class Conversations::AiAutoOffService
   end
 
   def reason
-    @reason ||= if conversation.contact&.ai_disabled? then :contact
-                elsif inbox.ai_paused? then :inbox
-                elsif inbox.ai_off_now? then :schedule
-                end
+    @reason ||= self.class.reason_for(conversation)
   end
 
   def team
