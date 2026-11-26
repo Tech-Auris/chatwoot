@@ -679,12 +679,13 @@ RSpec.describe Channel::Whatsapp do
                                 provider_connection: {
                                   'connection' => 'open',
                                   'qr_data_url' => 'data:image/png;base64,test',
+                                  'pairing_code' => 'ABCD1234',
                                   'error' => 'some_error'
                                 })
     end
 
     context 'when user is an administrator' do
-      it 'includes qr_data_url and error in the response' do
+      it 'includes qr_data_url, pairing_code and error in the response' do
         account_user = create(:account_user, account: channel.account, role: :administrator)
         allow(Current).to receive(:account_user).and_return(account_user)
 
@@ -693,13 +694,23 @@ RSpec.describe Channel::Whatsapp do
         expect(data).to eq({
                              connection: 'open',
                              qr_data_url: 'data:image/png;base64,test',
+                             pairing_code: 'ABCD1234',
                              error: 'some_error'
                            })
       end
     end
 
+    context 'when user is a manager' do
+      it 'includes the pairing code too' do
+        account_user = create(:account_user, account: channel.account, role: :manager)
+        allow(Current).to receive(:account_user).and_return(account_user)
+
+        expect(channel.provider_connection_data[:pairing_code]).to eq('ABCD1234')
+      end
+    end
+
     context 'when user is not an administrator' do
-      it 'excludes qr_data_url and error from the response' do
+      it 'excludes qr_data_url, pairing_code and error from the response' do
         account_user = create(:account_user, account: channel.account, role: :agent)
         allow(Current).to receive(:account_user).and_return(account_user)
 

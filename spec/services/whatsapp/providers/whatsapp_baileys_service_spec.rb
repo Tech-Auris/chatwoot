@@ -97,6 +97,17 @@ describe Whatsapp::Providers::WhatsappBaileysService do
     end
   end
 
+  describe '#request_pairing_code' do
+    it 'sets the connection up in code mode for the inbox number' do
+      request = stub_request(:post, "#{whatsapp_channel.provider_config['provider_url']}/connections/#{whatsapp_channel.phone_number}")
+                .with(headers: stub_headers(whatsapp_channel)) { |req| JSON.parse(req.body)['pairingMode'] == 'code' }
+                .to_return(status: 200)
+
+      expect(service.request_pairing_code).to be(true)
+      expect(request).to have_been_made
+    end
+  end
+
   describe '#setup_channel_provider' do
     context 'when response is successful' do
       it 'calls the connection endpoint' do
@@ -158,6 +169,16 @@ describe Whatsapp::Providers::WhatsappBaileysService do
 
         expect(Rails.logger).to have_received(:error).with('error message').twice
       end
+    end
+
+    it 'asks for a QR by default, without a pairing mode' do
+      request = stub_request(:post, "#{whatsapp_channel.provider_config['provider_url']}/connections/#{whatsapp_channel.phone_number}")
+                .with { |req| !JSON.parse(req.body).key?('pairingMode') }
+                .to_return(status: 200)
+
+      service.setup_channel_provider
+
+      expect(request).to have_been_made
     end
 
     context 'with a confirmed reconnect loop (quarantine strikes at the reset threshold)' do

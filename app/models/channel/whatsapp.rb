@@ -221,6 +221,7 @@ class Channel::Whatsapp < ApplicationRecord # rubocop:disable Metrics/ClassLengt
     # Auris: managers also need the QR/error to manage Baileys pairings, not just administrators.
     if Current.account_user&.administrator? || Current.account_user&.manager?
       data[:qr_data_url] = provider_connection['qr_data_url']
+      data[:pairing_code] = provider_connection['pairing_code']
       data[:error] = provider_connection['error']
       data[:history_import] = history_import_state if history_import_state.present?
     end
@@ -431,6 +432,7 @@ class Channel::Whatsapp < ApplicationRecord # rubocop:disable Metrics/ClassLengt
 
   delegate :setup_channel_provider, to: :provider_service
   delegate :import_session, to: :provider_service
+  delegate :request_pairing_code, to: :provider_service
   delegate :presence_subscribe, to: :provider_service
   delegate :send_message, to: :provider_service
   delegate :send_template, to: :provider_service

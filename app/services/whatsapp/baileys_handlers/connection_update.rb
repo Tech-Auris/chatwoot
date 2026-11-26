@@ -36,6 +36,7 @@ module Whatsapp::BaileysHandlers::ConnectionUpdate
     {
       connection: next_connection,
       qr_data_url: resolve_qr_data_url(data, current, next_connection),
+      pairing_code: resolve_pairing_code(data, current, next_connection),
       error: data[:error] ? I18n.t("errors.inboxes.channel.provider_connection.#{data[:error]}", default: data[:error].to_s.humanize) : nil,
       quarantine: quarantine_payload(data),
       reachout_time_lock: reachout_time_lock_payload(data),
@@ -119,7 +120,17 @@ module Whatsapp::BaileysHandlers::ConnectionUpdate
   # flicker between QR and spinner; clear it whenever the connection leaves the connecting state.
   def resolve_qr_data_url(data, current, next_connection)
     return data[:qrDataUrl] if data[:qrDataUrl].present?
-    return current['qr_data_url'] if next_connection == 'connecting'
+    return current['qr_data_url'] if next_connection == 'connecting' && data[:pairingCode].blank?
+
+    nil
+  end
+
+  # Pairing by code is the same pairing typed on the phone instead of scanned, so the code
+  # follows the QR's lifecycle, and only one of the two is ever on screen: a new QR replaces
+  # the code and a new code replaces the QR.
+  def resolve_pairing_code(data, current, next_connection)
+    return data[:pairingCode] if data[:pairingCode].present?
+    return current['pairing_code'] if next_connection == 'connecting' && data[:qrDataUrl].blank?
 
     nil
   end

@@ -179,6 +179,46 @@ describe Whatsapp::IncomingMessageBaileysService do
         expect(inbox.channel.provider_connection['qr_data_url']).to be_nil
       end
 
+      context 'with a pairing code' do
+        it 'stores the code and drops the QR it replaces' do
+          inbox.channel.update_provider_connection!(connection: 'connecting', qr_data_url: 'data:image/jpeg;base64,')
+          params = base_params.merge(data: { connection: 'connecting', pairingCode: 'ABCD1234' })
+
+          described_class.new(inbox: inbox, params: params).perform
+
+          expect(inbox.channel.provider_connection['pairing_code']).to eq('ABCD1234')
+          expect(inbox.channel.provider_connection['qr_data_url']).to be_nil
+        end
+
+        it 'keeps the code while still connecting' do
+          inbox.channel.update_provider_connection!(connection: 'connecting', pairing_code: 'ABCD1234')
+          params = base_params.merge(data: { connection: 'connecting' })
+
+          described_class.new(inbox: inbox, params: params).perform
+
+          expect(inbox.channel.provider_connection['pairing_code']).to eq('ABCD1234')
+        end
+
+        it 'drops the code when a QR replaces it' do
+          inbox.channel.update_provider_connection!(connection: 'connecting', pairing_code: 'ABCD1234')
+          params = base_params.merge(data: { connection: 'connecting', qrDataUrl: 'data:image/jpeg;base64,' })
+
+          described_class.new(inbox: inbox, params: params).perform
+
+          expect(inbox.channel.provider_connection['pairing_code']).to be_nil
+          expect(inbox.channel.provider_connection['qr_data_url']).to eq('data:image/jpeg;base64,')
+        end
+
+        it 'clears the code once the connection opens' do
+          inbox.channel.update_provider_connection!(connection: 'connecting', pairing_code: 'ABCD1234')
+          params = base_params.merge(data: { connection: 'open' })
+
+          described_class.new(inbox: inbox, params: params).perform
+
+          expect(inbox.channel.provider_connection['pairing_code']).to be_nil
+        end
+      end
+
       it "removes error value if it's not present in the data" do
         inbox.channel.update_provider_connection!(error: 'wrong_phone_number')
         params = base_params.merge(
