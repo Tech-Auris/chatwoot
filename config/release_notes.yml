@@ -1,4 +1,34 @@
 ---
+- tag: v4.15.1-auris.1.86
+  published_at: '2026-11-26T20:00:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.86
+  notes:
+    en: |-
+      ### ✨ What's new
+
+      - **Voice notes on private notes.** You can now record audio straight into a Private note. It stays with the team and is never sent to the patient.
+
+      ### ⚡ Improvements
+
+      - **The assistant's audio arrives as a voice message.** When the assistant replies with audio, the patient gets it as a voice message, just like one recorded on the phone.
+
+      ### 🐛 Fixes
+
+      - **Blocked contacts stay out.** On WhatsApp connected by QR Code, messages from a blocked contact no longer show up in conversations or reach the assistant. Unblock them and everything goes back to normal.
+      - **Photo albums and animated stickers.** When the patient sends several photos at once or an animated sticker, they now show up normally in the conversation instead of "unsupported message".
+    pt_BR: |-
+      ### ✨ Novidades
+
+      - **Áudio na nota privada.** Agora você pode gravar um áudio direto na Nota privada. Ele fica só para a equipe e nunca é enviado ao paciente.
+
+      ### ⚡ Melhorias
+
+      - **Áudio da assistente chega como mensagem de voz.** Quando a assistente responde em áudio, o paciente recebe como mensagem de voz, igual a um áudio gravado no celular.
+
+      ### 🐛 Correções
+
+      - **Contato bloqueado não aparece mais.** No WhatsApp conectado por QR Code, as mensagens de um contato bloqueado não entram mais nas conversas nem chegam à assistente. Ao desbloquear, tudo volta ao normal.
+      - **Álbuns de fotos e figurinhas animadas.** Quando o paciente manda várias fotos de uma vez ou uma figurinha animada, elas aparecem normalmente na conversa, em vez de "mensagem não suportada".
 - tag: v4.15.1-auris.1.85
   published_at: '2026-11-25T20:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.85
@@ -411,25 +441,3 @@
 
       - **Pacientes de anúncio podem receber resposta por 72 horas.** Nos números oficiais, quem começou a conversa por um anúncio do WhatsApp pode receber mensagens normais por até 72 horas, como mostra o selo da conversa.
       - **Números que funcionam não aparecem mais como bloqueados.** Alguns números oficiais apareciam bloqueados mesmo enviando normalmente; eles voltam a poder ser escolhidos.
-- tag: v4.15.1-auris.1.66
-  published_at: '2026-10-06T12:00:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.66
-  notes:
-    en: |-
-      ### ✨ What's new
-
-      - **See if a number is working before you send.** When starting a conversation from the pencil, each number in "Via:" shows whether it is connected or, for official numbers, its quality (High, Medium, Low or Banned).
-      - **Numbers with a problem are unavailable.** When starting a conversation, a disconnected or blocked number shows as unavailable with the reason, instead of letting the message get lost.
-
-      ### ⚡ Improvements
-
-      - **Messages and scheduled messages.** Each person edits their own messages and changes the scheduled messages they created. Admins and managers can still change all of them.
-    pt_BR: |-
-      ### ✨ Novidades
-
-      - **Veja se o número está funcionando antes de enviar.** Ao começar uma conversa pelo lápis, cada número do campo "Via:" mostra se está conectado ou, nos números oficiais, a qualidade (Alta, Média, Baixa ou Banido).
-      - **Números com problema ficam indisponíveis.** Ao começar uma conversa, um número desconectado ou bloqueado aparece apagado e mostra o motivo, em vez de deixar a mensagem se perder.
-
-      ### ⚡ Melhorias
-
-      - **Mensagens e agendamentos.** Cada pessoa edita as próprias mensagens e altera os agendamentos que criou. Administradores e gerentes continuam podendo mexer em todos.
