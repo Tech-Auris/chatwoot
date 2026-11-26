@@ -164,7 +164,7 @@ class AutomationRules::ConditionsFilterService < FilterService
     attribute_key = query_hash['attribute_key']
     query_operator = query_hash['query_operator']
     return assignee_presence_filter(table_name, query_hash) if assignee_presence_condition?(query_hash)
-    return tag_filter_query(query_hash, current_index) if attribute_key == 'labels'
+    return " #{tag_filter_query(query_hash, current_index)} " if attribute_key == 'labels'
 
     filter_operator_value = filter_operation(query_hash, current_index)
 

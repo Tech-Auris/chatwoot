@@ -81,6 +81,17 @@ RSpec.describe AutomationRules::ConditionsFilterService do
 
         expect(described_class.new(rule, conversation, { changed_attributes: {} }).perform).to be(false)
       end
+
+      it 'keeps a label condition that follows another condition valid' do
+        conversation.update_labels(%w[bug])
+        rule.update!(conditions: [
+                       { 'values': [], 'attribute_key': 'assignee_id', 'query_operator': 'and', 'filter_operator': 'is_present' },
+                       { 'values': ['bug'], 'attribute_key': 'labels', 'query_operator': 'and', 'filter_operator': 'equal_to' },
+                       { 'values': ['feature'], 'attribute_key': 'labels', 'query_operator': nil, 'filter_operator': 'not_equal_to' }
+                     ])
+
+        expect(described_class.new(rule, conversation, { changed_attributes: {} }).perform).to be(true)
+      end
     end
 
     context 'when conditions based on messages attributes' do
