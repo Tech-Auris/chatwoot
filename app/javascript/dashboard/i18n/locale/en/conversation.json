@@ -430,7 +430,9 @@
         "NOT_CONNECTED": "WhatsApp is not connected. Please link your device again.",
         "NOT_CONNECTED_CONTACT_ADMIN": "WhatsApp is not connected. Click this button to try to reconnect, or please contact your administrator to link your device again.",
         "LINK_DEVICE": "Link device",
-        "RECONNECT_FAILED": "Failed to reconnect. Please contact your administrator to link your device again."
+        "RECONNECT_FAILED": "Failed to reconnect. Please contact your administrator to link your device again.",
+        "SEND_STALL": "WhatsApp is connected but cannot send messages. If it does not recover on its own in a few minutes, disconnect and link the device again.",
+        "SEND_STALL_CONTACT_ADMIN": "WhatsApp is connected but cannot send messages. Your replies will not be delivered: contact your administrator to link the device again."
       },
       "WHATSAPP_REACHOUT_RESTRICTION": {
         "RESTRICTED": "WhatsApp has temporarily restricted starting new conversations from this number.",

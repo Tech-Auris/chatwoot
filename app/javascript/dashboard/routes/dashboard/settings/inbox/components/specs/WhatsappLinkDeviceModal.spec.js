@@ -6,6 +6,8 @@ const USE_PAIRING_CODE_KEY = `${KEY}.USE_PAIRING_CODE`;
 const USE_QRCODE_KEY = `${KEY}.USE_QRCODE`;
 const LOADING_PAIRING_CODE_KEY = `${KEY}.LOADING_PAIRING_CODE`;
 const PAIRING_CODE_HELP_KEY = `${KEY}.PAIRING_CODE_HELP`;
+const DISCONNECT_KEY = `${KEY}.DISCONNECT`;
+const LINK_DEVICE_KEY = `${KEY}.LINK_DEVICE`;
 
 const dispatch = vi.fn(() => Promise.resolve());
 const role = { isAdmin: true, isManager: false };
@@ -50,8 +52,9 @@ const mountModal = ({
         'woot-modal': { template: '<div><slot /></div>' },
         'router-link': true,
         Button: {
-          props: ['label'],
-          template: '<button>{{ label }}<slot /></button>',
+          props: ['label', 'variant', 'color'],
+          template:
+            '<button :data-variant="variant" :data-color="color">{{ label }}<slot /></button>',
         },
       },
     },
@@ -136,5 +139,34 @@ describe('WhatsappLinkDeviceModal pairing by code', () => {
 
     expect(dispatch).toHaveBeenCalledWith('inboxes/setupChannelProvider', 1);
     expect(wrapper.html()).toContain('data:image/png;base64,x');
+  });
+});
+
+describe('WhatsappLinkDeviceModal send stall', () => {
+  // A send stall leaves the connection 'open'. Setup would only refresh presence on a socket
+  // the provider already considers live, so the way out is disconnecting and re-pairing.
+  it('offers a highlighted disconnect, not setup, when an open connection is stalled', () => {
+    const wrapper = mountModal({
+      providerConnection: {
+        connection: 'open',
+        error: 'This connection cannot send messages.',
+        send_stall: { consecutive_timeouts: 3, action: 'suppressed' },
+      },
+    });
+
+    const html = wrapper.html();
+    expect(html).toContain(DISCONNECT_KEY);
+    expect(html).not.toContain(LINK_DEVICE_KEY);
+    expect(html).toContain('This connection cannot send messages.');
+    expect(wrapper.find('button').attributes('data-color')).toBe('ruby');
+  });
+
+  it('keeps offering setup when the connection is closed with an error', () => {
+    const html = mountModal({
+      providerConnection: { connection: 'close', error: 'Wrong phone number.' },
+    }).html();
+
+    expect(html).toContain(LINK_DEVICE_KEY);
+    expect(html).not.toContain(DISCONNECT_KEY);
   });
 });

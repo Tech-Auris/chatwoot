@@ -592,6 +592,30 @@ class Whatsapp::Providers::WhatsappBaileysService < Whatsapp::Providers::BaseSer
     }.compact
   end
 
+  # Send-side health for this connection. setup_channel_provider is no proof that sending works:
+  # on a registered connection it only sends a presence update, which succeeds against a socket
+  # whose sends are wedged. Same 404/nil contract as fetch_reachout_timelock, and likewise NOT
+  # wrapped in with_error_handling.
+  def fetch_send_health
+    response = HTTParty.get(
+      "#{provider_url}/connections/#{whatsapp_channel.phone_number}/health",
+      headers: api_headers,
+      format: :json,
+      timeout: 10
+    )
+
+    return nil if response.code == 404
+    return nil unless process_response(response)
+
+    data = response.parsed_response&.deep_symbolize_keys&.dig(:data) || {}
+    {
+      send_state: data[:sendState],
+      consecutive_send_timeouts: data[:consecutiveSendTimeouts],
+      last_send_completed_ago_ms: data[:lastSendCompletedAgoMs],
+      last_outgoing_ack_ago_ms: data[:lastOutgoingAckAgoMs]
+    }.compact
+  end
+
   # New-chat message cap (quota) for this connection. Read-only MEX query with the same 404
   # semantics as fetch_reachout_timelock (404 = not connected = unknown -> nil, don't clear the
   # banner). Returns the raw NewChatMessageCapInfo (already snake_case from the provider); the

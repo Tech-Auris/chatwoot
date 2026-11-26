@@ -25,6 +25,9 @@ const connection = computed(() => providerConnection.value?.connection);
 const qrDataUrl = computed(() => providerConnection.value?.qr_data_url);
 const pairingCode = computed(() => providerConnection.value?.pairing_code);
 const error = computed(() => providerConnection.value?.error);
+// A send stall leaves `connection` reading 'open': setup() would only refresh presence on a
+// socket the provider already considers live, so the way out is disconnecting and re-pairing.
+const sendStall = computed(() => providerConnection.value?.send_stall);
 
 // Which pairing the operator asked for, not which one the provider has answered with
 // yet: the code takes a moment to arrive, and the screen has to say what it is waiting
@@ -128,7 +131,13 @@ watchEffect(() => {
             with-provider-connection-status
           />
 
-          <template v-if="!connection || connection === 'close' || error">
+          <template
+            v-if="
+              !connection ||
+              connection === 'close' ||
+              (error && connection !== 'open')
+            "
+          >
             <p v-if="error" class="text-red-500 text-center">
               {{ error }}
             </p>
@@ -228,7 +237,10 @@ watchEffect(() => {
           </template>
 
           <template v-else-if="connection === 'open'">
-            <p v-if="isSetup" class="text-center">
+            <p v-if="error" class="text-center text-red-500">
+              {{ error }}
+            </p>
+            <p v-else-if="isSetup" class="text-center">
               {{
                 $t(
                   'INBOX_MGMT.ADD.WHATSAPP.EXTERNAL_PROVIDER.LINK_DEVICE_MODAL.CONNECTED'
@@ -236,7 +248,12 @@ watchEffect(() => {
               }}
             </p>
             <div class="flex gap-2">
-              <Button ghost :is-loading="loading" @click="disconnect">
+              <Button
+                :variant="sendStall ? 'solid' : 'ghost'"
+                :color="sendStall ? 'ruby' : 'blue'"
+                :is-loading="loading"
+                @click="disconnect"
+              >
                 {{
                   $t(
                     'INBOX_MGMT.ADD.WHATSAPP.EXTERNAL_PROVIDER.LINK_DEVICE_MODAL.DISCONNECT'

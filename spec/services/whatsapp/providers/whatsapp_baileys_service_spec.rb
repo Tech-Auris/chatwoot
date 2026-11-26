@@ -1027,6 +1027,35 @@ describe Whatsapp::Providers::WhatsappBaileysService do
     end
   end
 
+  describe '#fetch_send_health' do
+    let(:url) { "#{whatsapp_channel.provider_config['provider_url']}/connections/#{whatsapp_channel.phone_number}/health" }
+
+    it 'returns the send-side health on success' do
+      stub_request(:get, url).to_return(
+        status: 200,
+        headers: { 'Content-Type' => 'application/json' },
+        body: { data: { connected: true, sendState: 'stalled', consecutiveSendTimeouts: 3, lastSendCompletedAgoMs: nil,
+                        lastOutgoingAckAgoMs: 219_000 } }.to_json
+      )
+
+      expect(service.fetch_send_health).to eq(send_state: 'stalled', consecutive_send_timeouts: 3, last_outgoing_ack_ago_ms: 219_000)
+    end
+
+    it 'returns nil on 404 (number not connected)' do
+      stub_request(:get, url).to_return(status: 404, body: 'Phone number not connected')
+
+      expect(service.fetch_send_health).to be_nil
+    end
+
+    it 'returns nil on a server error without marking the connection closed' do
+      stub_request(:get, url).to_return(status: 500, body: 'Internal Server Error')
+      allow(Rails.logger).to receive(:error)
+
+      expect(service.fetch_send_health).to be_nil
+      expect(whatsapp_channel.reload.provider_connection['connection']).not_to eq('close')
+    end
+  end
+
   describe '#read_messages' do
     it 'send read messages request' do
       stub_request(:post, "#{whatsapp_channel.provider_config['provider_url']}/connections/#{whatsapp_channel.phone_number}/read-messages")
