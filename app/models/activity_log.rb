@@ -34,6 +34,9 @@ class ActivityLog < ApplicationRecord
   ACTIONS = %w[create update destroy merge sign_in sign_out].freeze
   SOURCES = %w[dashboard api job super_admin login].freeze
   SENSITIVE_KEY = /(\A|_)(password|secret|token|api_key|private_key|key|credentials?)\z/i
+  # Auris-only setup nested in jsonb columns that the clinic must not read
+  # (the AI setup in `accounts.settings`, see AccountAiConfig).
+  INTERNAL_KEYS = %w[ai_config].freeze
 
   validates :action, inclusion: { in: ACTIONS }
   validates :source, inclusion: { in: SOURCES }
@@ -79,9 +82,13 @@ class ActivityLog < ApplicationRecord
   # Secrets nested in jsonb columns (integration settings, bot config).
   def self.scrub(value)
     case value
-    when Hash then value.to_h { |key, nested| [key, key.to_s.match?(SENSITIVE_KEY) ? FILTERED : scrub(nested)] }
+    when Hash then value.to_h { |key, nested| [key, hidden_key?(key) ? FILTERED : scrub(nested)] }
     when Array then value.map { |nested| scrub(nested) }
     else value
     end
+  end
+
+  def self.hidden_key?(key)
+    key.to_s.match?(SENSITIVE_KEY) || INTERNAL_KEYS.include?(key.to_s)
   end
 end

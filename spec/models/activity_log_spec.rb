@@ -60,6 +60,14 @@ RSpec.describe ActivityLog do
       expect(changes['settings']).to eq([{}, { 'api_key' => described_class::FILTERED, 'region' => 'us' }])
     end
 
+    it 'hides the account AI setup, which the clinic must not read' do
+      account.update!(ai_config: { prompt_identity: 'Você é Lia' })
+
+      log = described_class.where(auditable_type: 'Account', auditable_id: account.id, action: 'update').last
+      expect(log.audited_changes['settings'].last['ai_config']).to eq(described_class::FILTERED)
+      expect(log.audited_changes.to_json).not_to include('Você é Lia')
+    end
+
     it 'logs only the AI switch and the assignee on conversations' do
       conversation = create(:conversation, account: account)
 

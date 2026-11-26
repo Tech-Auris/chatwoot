@@ -37,6 +37,9 @@ if @sections.include?('follow_up')
   end
 end
 
+# "Configuração da IA": nil while the account still reads it from Supabase.
+json.ai_config @account.ai_config if @sections.include?('ai_config')
+
 if @sections.include?('prompts')
   json.prompts @account.account_prompts.order(:id) do |prompt|
     json.name prompt.name

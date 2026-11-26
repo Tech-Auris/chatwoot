@@ -62,6 +62,8 @@ class AccountDashboard < Administrate::BaseDashboard
     account_secretary: SecretaryField,
     # Lives in `settings.follow_up`, not a column: kept out of the search SQL.
     follow_up: AccountFollowUpField.with_options(searchable: false),
+    # Lives in `settings.ai_config`, not a column: kept out of the search SQL.
+    ai_config: AccountAiConfigField.with_options(searchable: false),
     funnel_enabled: Field::Boolean,
     ai_status_uses_attribute: Field::Boolean,
     # Read through `account_secretary`, not a column: `searchable: false`
@@ -122,6 +124,7 @@ class AccountDashboard < Administrate::BaseDashboard
     auris_settings
     auris_menus
     follow_up
+    ai_config
     account_prompts
     account_integrations
     conversations
@@ -151,6 +154,7 @@ class AccountDashboard < Administrate::BaseDashboard
     auris_menus
     account_secretary
     follow_up
+    ai_config
   ] + enterprise_form_attributes).freeze
 
   # COLLECTION_FILTERS
