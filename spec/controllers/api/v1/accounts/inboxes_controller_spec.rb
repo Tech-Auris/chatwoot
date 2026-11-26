@@ -1057,6 +1057,40 @@ RSpec.describe 'Inboxes API', type: :request do
         expect(response).to have_http_status(:success)
         inbox_data = JSON.parse(response.body, symbolize_names: true)
         expect(inbox_data[:agent_bot][:name]).to eq agent_bot.name
+        expect(inbox_data[:agent_bot]).not_to have_key(:access_token)
+      end
+
+      it 'returns the access token of an account agent bot to administrators' do
+        agent_bot = create(:agent_bot, account: account)
+        create(:agent_bot_inbox, agent_bot: agent_bot, inbox: inbox)
+        get "/api/v1/accounts/#{account.id}/inboxes/#{inbox.id}/agent_bot",
+            headers: admin.create_new_auth_token,
+            as: :json
+
+        expect(response).to have_http_status(:success)
+        expect(response.parsed_body.dig('agent_bot', 'access_token')).to eq(agent_bot.access_token.token)
+      end
+
+      it 'does not return the access token of an account agent bot to agents' do
+        agent_bot = create(:agent_bot, account: account)
+        create(:agent_bot_inbox, agent_bot: agent_bot, inbox: inbox)
+        get "/api/v1/accounts/#{account.id}/inboxes/#{inbox.id}/agent_bot",
+            headers: agent.create_new_auth_token,
+            as: :json
+
+        expect(response).to have_http_status(:success)
+        expect(response.parsed_body['agent_bot']).not_to have_key('access_token')
+      end
+
+      it 'does not return the access token of a global agent bot even to administrators' do
+        agent_bot = create(:agent_bot)
+        create(:agent_bot_inbox, agent_bot: agent_bot, inbox: inbox)
+        get "/api/v1/accounts/#{account.id}/inboxes/#{inbox.id}/agent_bot",
+            headers: admin.create_new_auth_token,
+            as: :json
+
+        expect(response).to have_http_status(:success)
+        expect(response.parsed_body['agent_bot']).not_to have_key('access_token')
       end
     end
   end
