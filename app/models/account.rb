@@ -62,6 +62,7 @@ class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
   include AccountEmailRateLimitable
   include AccountSettingsSchema
   include AccountFollowUp
+  include AccountAiConfig
 
   DEFAULT_QUERY_SETTING = {
     flag_query_mode: :bit_operator,

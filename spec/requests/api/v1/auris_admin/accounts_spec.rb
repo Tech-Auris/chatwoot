@@ -68,6 +68,15 @@ RSpec.describe 'Super admin account setup API', type: :request do
                                               'escalation_message' => 'Vou te passar para a equipe.')
     end
 
+    it 'returns the AI setup, nil while the account has not been migrated' do
+      expect(context_body['ai_config']).to be_nil
+
+      account.update!(ai_config: { 'prompt_identity' => 'Você é Lia', 'bounce_seconds' => 35, 'flag_audio_on_off' => true })
+
+      expect(context_body['ai_config']).to include('prompt_identity' => 'Você é Lia', 'bounce_seconds' => 35, 'flag_audio_on_off' => true,
+                                                   'time_padrao_de_escala' => nil)
+    end
+
     it 'returns the prompts with their inboxes, the scenarios and the resources' do
       body = context_body
 

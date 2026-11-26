@@ -1,0 +1,39 @@
+<div class="field-unit__label">
+  <%= f.label :ai_config, 'Configuração da IA' %>
+</div>
+<div class="field-unit__field flex flex-col gap-4 p-4 bg-white rounded-lg shadow-sm outline outline-1 outline-n-container">
+  <label class="flex flex-col gap-1 text-sm text-slate-700">
+    Identidade (prompt_identity)
+    <%= text_area_tag 'ai_config[prompt_identity]', field.value('prompt_identity'), rows: 4 %>
+  </label>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+    <label class="flex flex-col gap-1 text-sm text-slate-700">
+      Bounce em segundos (bounce_seconds)
+      <%= number_field_tag 'ai_config[bounce_seconds]', field.value('bounce_seconds'), min: 0, step: 1 %>
+    </label>
+    <label class="flex flex-col gap-1 text-sm text-slate-700">
+      Responde áudio com áudio (flag_audio_on_off)
+      <%= select_tag 'ai_config[flag_audio_on_off]',
+                     options_for_select([['Sim', 'true'], ['Não', 'false']], field.value('flag_audio_on_off')&.to_s),
+                     include_blank: '(vazio)' %>
+    </label>
+  </div>
+  <div class="flex flex-col gap-3 pt-4 border-t border-slate-200">
+    <span class="text-sm font-medium text-slate-700">Escala para humano</span>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <label class="flex flex-col gap-1 text-sm text-slate-700">
+        Conversa do alerta (chatwoot_id_conversa_alerta)
+        <%= number_field_tag 'ai_config[chatwoot_id_conversa_alerta]', field.value('chatwoot_id_conversa_alerta'), min: 1, step: 1 %>
+      </label>
+      <label class="flex flex-col gap-1 text-sm text-slate-700">
+        Time padrão de escala (time_padrao_de_escala)
+        <%= number_field_tag 'ai_config[time_padrao_de_escala]', field.value('time_padrao_de_escala'), min: 0, step: 1, placeholder: 'id do time' %>
+        <span class="text-xs text-slate-500"><%= field.resource.teams.order(:id).map { |team| "#{team.id} #{team.name}" }.join(' · ').presence || 'Conta sem times' %></span>
+      </label>
+    </div>
+    <label class="flex flex-col gap-1 text-sm text-slate-700">
+      Mensagem ao paciente na escala (mensagem_de_escala_para_o_usuario)
+      <%= text_area_tag 'ai_config[mensagem_de_escala_para_o_usuario]', field.value('mensagem_de_escala_para_o_usuario'), rows: 3 %>
+    </label>
+  </div>
+</div>

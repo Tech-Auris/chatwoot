@@ -60,6 +60,7 @@ class SuperAdmin::AccountsController < SuperAdmin::ApplicationController
     merge_auris_settings(permitted_params)
     merge_auris_menus(permitted_params)
     merge_follow_up(permitted_params)
+    merge_ai_config(permitted_params)
     permitted_params
   end
 
@@ -116,6 +117,19 @@ class SuperAdmin::AccountsController < SuperAdmin::ApplicationController
     permitted_params[:multi_language_ai] = auris[:multi_language_ai] == '1'
     permitted_params[:whatsapp_groups_enabled] = auris[:whatsapp_groups_enabled] == '1'
     permitted_params[:allow_dynamic_special_scenario] = auris[:allow_dynamic_special_scenario] == '1'
+  end
+
+  # Saves the "Configuração da IA" block into `settings.ai_config`. An account
+  # without it saved with every input blank stays without it, so n8n keeps
+  # reading Supabase for it.
+  def merge_ai_config(permitted_params)
+    return if params[:ai_config].blank?
+
+    ai_config = params.require(:ai_config).permit(*Account::AI_CONFIG_FIELDS.keys)
+    stored = params[:id] && requested_resource.ai_config
+    return if stored.nil? && ai_config.values.all?(&:blank?)
+
+    permitted_params[:ai_config] = ai_config.to_h
   end
 
   # Maps the "Auris menus" grid checkboxes (rendered by AurisAccountMenusField)

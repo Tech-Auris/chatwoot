@@ -3,7 +3,7 @@
 # operator can tune a prompt or diagnose a ticket from the MCP. Secrets only
 # say whether they are filled in, never their value.
 class Api::V1::AurisAdmin::AccountsController < Api::V1::AurisAdmin::BaseController
-  SECTIONS = %w[account secretary follow_up prompts special_scenarios resources confirmations].freeze
+  SECTIONS = %w[account secretary follow_up ai_config prompts special_scenarios resources confirmations].freeze
   SEARCH_LIMIT = 20
 
   def index

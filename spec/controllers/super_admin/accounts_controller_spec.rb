@@ -379,6 +379,49 @@ RSpec.describe 'Super Admin accounts API', type: :request do
     end
   end
 
+  describe 'PUT /super_admin/accounts/{account_id} (AI setup section)' do
+    let(:blank_ai_config) { Account::AI_CONFIG_FIELDS.keys.index_with { '' } }
+
+    before { sign_in(super_admin, scope: :super_admin) }
+
+    it 'saves the AI setup with its types, blank inputs as nil' do
+      ai_config = blank_ai_config.merge('prompt_identity' => 'Você é Lia', 'bounce_seconds' => '0', 'flag_audio_on_off' => 'false',
+                                        'time_padrao_de_escala' => '29')
+      put "/super_admin/accounts/#{account.id}", params: { account: { name: account.name }, ai_config: ai_config }
+
+      expect(response).to have_http_status(:redirect)
+      expect(account.reload.ai_config).to eq(
+        'prompt_identity' => 'Você é Lia', 'bounce_seconds' => 0, 'flag_audio_on_off' => false,
+        'chatwoot_id_conversa_alerta' => nil, 'mensagem_de_escala_para_o_usuario' => nil, 'time_padrao_de_escala' => 29
+      )
+    end
+
+    it 'renders the AI setup on the edit and show pages' do
+      account.update!(ai_config: { prompt_identity: 'Você é Lia', flag_audio_on_off: false })
+
+      get "/super_admin/accounts/#{account.id}/edit"
+      expect(response.body).to include('ai_config[mensagem_de_escala_para_o_usuario]', 'Você é Lia')
+
+      get "/super_admin/accounts/#{account.id}"
+      expect(response.body).to include('AI setup', 'time_padrao_de_escala', 'Você é Lia')
+    end
+
+    it 'keeps an account without the AI setup without it when every input is blank' do
+      put "/super_admin/accounts/#{account.id}", params: { account: { name: account.name }, ai_config: blank_ai_config }
+
+      expect(response).to have_http_status(:redirect)
+      expect(account.reload.ai_config).to be_nil
+    end
+
+    it 'clears the values of an account that has the AI setup' do
+      account.update!(ai_config: { prompt_identity: 'Você é Lia' })
+
+      put "/super_admin/accounts/#{account.id}", params: { account: { name: account.name }, ai_config: blank_ai_config }
+
+      expect(account.reload.ai_config).to eq(Account::AI_CONFIG_FIELDS.keys.index_with { nil })
+    end
+  end
+
   describe 'PUT /super_admin/accounts/{account_id} (Follow-up section)' do
     let(:follow_up_params) do
       { steps: ['240', '480', '', '4320', ''],

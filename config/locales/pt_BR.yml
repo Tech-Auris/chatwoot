@@ -68,6 +68,7 @@ pt_BR:
         ai_model_label: 'Model AI'
         erp_source: 'ERP'
         erp_source_id: 'ERP'
+        ai_config: 'Configuração da IA'
   internal_chat:
     default_category_name: 'Canais'
     default_channel_name: 'Geral'
