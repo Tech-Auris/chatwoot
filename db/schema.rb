@@ -499,6 +499,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_27_190000) do
     t.string "skip_reason"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "activity_seen_at"
     t.index ["account_id"], name: "index_automation_rule_pending_executions_on_account_id"
     t.index ["automation_rule_id", "conversation_id", "episode_key"], name: "uniq_automation_pending_execution_episode", unique: true
     t.index ["automation_rule_id"], name: "index_automation_rule_pending_executions_on_automation_rule_id"
@@ -518,6 +519,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_27_190000) do
     t.datetime "updated_at", null: false
     t.boolean "active", default: true, null: false
     t.integer "execution_delay"
+    t.string "execution_delay_trigger"
     t.index ["account_id"], name: "index_automation_rules_on_account_id"
   end
 

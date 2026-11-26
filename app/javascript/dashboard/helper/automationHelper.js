@@ -104,11 +104,19 @@ export const funnelStageDot = color =>
     style: { backgroundColor: color, height: '6px', width: '6px' },
   });
 
+// The action names the attribute by its key, which is what the conversation stores it under.
+const generateCustomAttributeOptions = (attributes = []) =>
+  attributes.map(attribute => ({
+    id: attribute.attribute_key,
+    name: attribute.attribute_display_name,
+  }));
+
 export const getActionOptions = ({
   agents,
   teams,
   labels,
   slaPolicies,
+  conversationCustomAttributes,
   type,
   addNoneToListFn,
   priorityOptions,
@@ -131,6 +139,9 @@ export const getActionOptions = ({
     trigger_conversion_event: conversionEventOptions,
     move_to_funnel_stage: funnelStageOptions,
     move_to_pipeline_stage: pipelineStageOptions,
+    remove_custom_attribute: generateCustomAttributeOptions(
+      conversationCustomAttributes
+    ),
   };
   return actionsMap[type];
 };

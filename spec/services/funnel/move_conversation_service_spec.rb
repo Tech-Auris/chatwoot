@@ -89,4 +89,19 @@ RSpec.describe Funnel::MoveConversationService do
     )
     expect(trigger).to have_received(:perform)
   end
+
+  # A wait on silence must not read its own move as the conversation coming alive, so the event
+  # names the rule that made the move.
+  it 'tells the listeners which automation made the move' do
+    rule = create(:automation_rule, account: account)
+    allow(Rails.configuration.dispatcher).to receive(:dispatch)
+    Current.executed_by = rule
+
+    move(target_stage_id: stage.id)
+
+    expect(Rails.configuration.dispatcher).to have_received(:dispatch)
+      .with(Events::Types::FUNNEL_UPDATED, anything, hash_including(performed_by: rule))
+  ensure
+    Current.reset
+  end
 end

@@ -48,6 +48,12 @@ export default function useAutomationValues() {
   );
   const lossReasons = useMapGetter('lossReasons/getLossReasons');
   const slaPolicies = useMapGetter('sla/getSLA');
+  // Only the conversation's own attributes: the action clears keys on the conversation.
+  const conversationCustomAttributes = computed(() =>
+    (getters['attributes/getAttributes'].value || []).filter(
+      attribute => attribute.attribute_model === 'conversation_attribute'
+    )
+  );
 
   const booleanFilterOptions = computed(() => [
     { id: true, name: t('FILTER.ATTRIBUTE_LABELS.TRUE') },
@@ -203,6 +209,7 @@ export default function useAutomationValues() {
       labels: labels.value,
       teams: teams.value,
       slaPolicies: slaPolicies.value,
+      conversationCustomAttributes: conversationCustomAttributes.value,
       languages,
       type,
       addNoneToListFn: addNoneToList,

@@ -1117,6 +1117,11 @@ export const AUTOMATION_ACTION_TYPES = [
     inputType: 'funnel_stage',
     hidden: true,
   },
+  {
+    key: 'remove_custom_attribute',
+    label: 'REMOVE_CUSTOM_ATTRIBUTE',
+    inputType: 'multi_select',
+  },
 ];
 
 // Default delay for scheduled messages (24 hours in minutes)
@@ -1132,6 +1137,14 @@ export const DEFAULT_TRIGGER_STATUS = 'pending';
 // unresponsive cases (reply-chase / awaiting-agent), or a chosen status for conversation_updated.
 export const DELAYED_TRIGGERS = [
   { key: 'conversation_status', eventName: 'conversation_updated' },
+  // The only trigger whose wait is not about one state or one message: it measures the time since
+  // anything at all happened on the conversation, so the rule carries `execution_delay_trigger`
+  // for the backend to anchor its episode on activity instead of on the status clock.
+  {
+    key: 'conversation_inactive',
+    eventName: 'conversation_updated',
+    delayTrigger: 'inactivity',
+  },
   {
     key: 'customer_unresponsive',
     eventName: 'message_created',

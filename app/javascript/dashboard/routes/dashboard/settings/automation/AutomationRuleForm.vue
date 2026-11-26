@@ -131,6 +131,7 @@ const captureTriggerDraft = () => {
 
   return {
     eventName: automation.value.event_name,
+    delayTrigger: automation.value.execution_delay_trigger,
     conditions: cloneConditions(automation.value.conditions),
   };
 };
@@ -139,6 +140,7 @@ const restoreTriggerDraft = draft => {
   if (!automation.value || !draft) return;
 
   automation.value.event_name = draft.eventName;
+  automation.value.execution_delay_trigger = draft.delayTrigger;
   automation.value.conditions = cloneConditions(draft.conditions);
 };
 
@@ -186,6 +188,8 @@ watch([isDelayed, delayMinutes], () => {
   automation.value.execution_delay = isDelayed.value
     ? delayMinutes.value
     : null;
+  // The trigger describes how a wait is anchored, so an instant rule carries none.
+  if (!isDelayed.value) automation.value.execution_delay_trigger = null;
 });
 
 const titleKey = computed(() =>
@@ -350,7 +354,10 @@ const emitSaveAutomation = () => {
   if (Object.keys(errors.value).length === 0 && conditionsValid) {
     const payload = generateAutomationPayload(automation.value);
     // The API rejects the param when the feature is off; existing values are kept server-side.
-    if (!allowsDelayedExecution.value) delete payload.execution_delay;
+    if (!allowsDelayedExecution.value) {
+      delete payload.execution_delay;
+      delete payload.execution_delay_trigger;
+    }
     emit('save', payload, props.mode);
   }
 };
@@ -391,6 +398,7 @@ defineExpose({ open, close });
         ref="waitConditionRef"
         v-model:event-name="automation.event_name"
         v-model:conditions="automation.conditions"
+        v-model:delay-trigger="automation.execution_delay_trigger"
         v-model:delay="delayMinutes"
         v-model:unit="delayUnit"
         :status-options="statusOptions"
