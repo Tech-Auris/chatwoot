@@ -1,0 +1,60 @@
+# Controle por fora do que a fazer-ai/chatwoot (main) tem e o nosso develop ainda não.
+#
+# O "commits behind fazer-ai/chatwoot:main" do GitHub conta ancestralidade no git:
+# um PR portado à mão (ou cherry-pick) nunca sai dessa conta. Esta lista é a fonte
+# de verdade. Rode `bin/fazer-ai-pending` para ver o que ainda falta decidir.
+#
+# status:
+#   trazido     coberto pelo nosso PR auris_pr (aberto ou já mergeado). parcial: true quando só parte veio.
+#   trazer      decidido trazer, ainda não feito (story = id da estória no ClickUp).
+#   nao_trazer  decidido não trazer. motivo é obrigatório.
+# Qualquer PR, sync ou commit fora desta lista conta como "pendente" (sem decisão).
+#
+# Ao portar um PR: acrescente a linha aqui no mesmo PR do port.
+
+prs:
+  # Trazidos antes deste controle
+  343: { status: trazido, nota: "já no develop antes deste controle" }
+  346: { status: trazido, nota: "já no develop antes deste controle" }
+
+  # Fase 1, épico atendimento (ClickUp 17th71zb4g5)
+  352: { status: trazido, auris_pr: 978 }
+  780: { status: trazido, auris_pr: 979 }
+  446: { status: trazido, auris_pr: 980 }
+  828: { status: trazido, auris_pr: 982 }
+  849: { status: trazido, auris_pr: 983, nota: "reimplementado sobre o status IA, sem agent bot" }
+
+  # Fase 1, épico automações (ClickUp 17th71zb4g6)
+  472: { status: trazido, auris_pr: 984 }
+  658: { status: trazido, auris_pr: 985, parcial: true, nota: "sem os claims Redis por corpo" }
+  668: { status: trazido, auris_pr: 985 }
+  725: { status: trazido, auris_pr: 986 }
+  693: { status: trazido, auris_pr: 987 }
+
+  # Fase 1, épico WhatsApp (ClickUp 17th71zb4g7)
+  796: { status: trazido, auris_pr: 989, nota: "Baileys, Z-API e Coexistence; sem os importadores da fazer.ai" }
+  798: { status: trazido, auris_pr: 989, parcial: true, nota: "só o módulo Whatsapp::BlockedSender" }
+  345: { status: trazido, auris_pr: 990 }
+  912: { status: trazido, auris_pr: 991 }
+  528: { status: trazido, auris_pr: 992 }
+  353: { status: trazido, auris_pr: 993 }
+  400: { status: trazido, auris_pr: 993 }
+  391: { status: trazido, auris_pr: 994, parcial: true, nota: "sem a camada de sessão" }
+  878: { status: trazido, auris_pr: 995, parcial: true, nota: "MVP sem a reverificação automática" }
+  591: { status: trazido, auris_pr: 996 }
+  602: { status: trazido, auris_pr: 996, parcial: true, nota: "só ApiError e credentials_refused?" }
+  394: { status: trazido, auris_pr: 997, nota: "adaptado para Baileys; baileys-api PR 11 + release v3.8.1-auris.1.10" }
+
+# Syncs do Chatwoot oficial que a fazer.ai mergeou. Ficam pendentes até a decisão
+# de mergear a versão inteira; os PRs do oficial já portados ficam anotados.
+upstream:
+  "4.16.0": { status: trazer, nota: "portado: #14947 (flags extras) no Auris #986" }
+  "4.16.2": { status: trazer }
+  "4.17.0": { status: trazer, nota: "portado: #15022 (automações com espera) e #15503 no Auris #986" }
+  "4.18.0": { status: trazer, nota: "portado: #15472, #15343 (só assignee_presence_filter), #15661, #15662 e #15674 no Auris #986" }
+  "4.19.0": { status: trazer, nota: "portado: #16014 no Auris #986" }
+  "4.20.0": { status: trazer }
+  "4.20.1": { status: trazer }
+
+# Commits sem PR na linha principal da fazer.ai (chave = hash curto)
+commits: {}
