@@ -11,6 +11,7 @@
       ### ⚡ Improvements
 
       - **The assistant's audio arrives as a voice message.** When the assistant replies with audio, the patient gets it as a voice message, just like one recorded on the phone.
+      - **Today stands out in the Agenda.** In the Agenda's week view, today is highlighted and the days that have passed show in gray, so you can see at a glance where you are in the week. Only for clinics with their scheduling system connected.
 
       ### 🐛 Fixes
 
@@ -24,6 +25,7 @@
       ### ⚡ Melhorias
 
       - **Áudio da assistente chega como mensagem de voz.** Quando a assistente responde em áudio, o paciente recebe como mensagem de voz, igual a um áudio gravado no celular.
+      - **Dia de hoje em destaque na Agenda.** Na visão da semana da Agenda, o dia de hoje fica destacado e os dias que já passaram aparecem em cinza, para você ver de relance em que ponto da semana está. Só para clínicas com o sistema de agenda integrado.
 
       ### 🐛 Correções
 
