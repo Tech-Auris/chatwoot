@@ -66,13 +66,13 @@ class Audio::TranscodeService
 
   def replace_attachment_file(output_file, format_config)
     filename = "#{File.basename(@attachment.file.filename.to_s, '.*')}.#{format_config[:extension]}"
-    File.open(output_file.path, 'rb') do |file|
-      @attachment.file.attach(
-        io: file,
-        filename: filename,
-        content_type: format_config[:content_type]
-      )
-    end
+    # An unsaved attachment uploads its io only when the message is saved, after this
+    # method returns, so hand it an in-memory copy instead of a file that gets closed here.
+    @attachment.file.attach(
+      io: StringIO.new(File.binread(output_file.path)),
+      filename: filename,
+      content_type: format_config[:content_type]
+    )
     @attachment.file_type = :audio
   end
 end
