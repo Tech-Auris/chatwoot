@@ -36,6 +36,7 @@ class Whatsapp::HealthService
 
     response = HTTParty.get(
       "#{BASE_URI}/#{@api_version}/#{phone_number_id}",
+      **Whatsapp::GraphRequestOptions::GRAPH_REQUEST_OPTIONS,
       query: {
         fields: health_fields,
         access_token: @access_token
@@ -54,6 +55,7 @@ class Whatsapp::HealthService
 
     response = HTTParty.get(
       "#{BASE_URI}/#{@api_version}/#{waba_id}",
+      **Whatsapp::GraphRequestOptions::GRAPH_REQUEST_OPTIONS,
       query: { fields: 'account_review_status,business_verification_status', access_token: @access_token }
     )
     return log_and_return_empty("WABA fetch failed: #{response.code} - #{response.body}") unless response.success?

@@ -461,10 +461,21 @@ class Channel::Whatsapp < ApplicationRecord # rubocop:disable Metrics/ClassLengt
     perform_webhook_setup
   rescue StandardError => e
     Rails.logger.error "[WHATSAPP] Webhook setup failed: #{e.message}"
-    prompt_reauthorization!
+    prompt_reauthorization! if credentials_refused?(e)
   end
 
   private
+
+  # Reauthorization makes Webhooks::WhatsappEventsJob drop every inbound webhook until someone
+  # reconnects, so only a missing credential (the ArgumentError from WebhookSetupService) or Meta
+  # refusing it asks for it; a timeout or a 5xx does not. Meta's error sits under the `cause` of the
+  # "Webhook setup failed" re-raise.
+  def credentials_refused?(error)
+    return true if error.is_a?(ArgumentError)
+
+    error = error.cause until error.nil? || error.is_a?(Whatsapp::ApiError)
+    error.present? && error.credentials_refused?
+  end
 
   # The realtime event above only reaches clients connected at that instant, while the
   # inbox payload lives in the browser's IndexedDB behind an account-level cache key

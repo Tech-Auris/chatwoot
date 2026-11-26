@@ -149,6 +149,75 @@ RSpec.describe Channel::Whatsapp do
     end
   end
 
+  describe '#setup_webhooks reauthorization' do
+    let(:channel) do
+      create(:channel_whatsapp, provider: 'whatsapp_cloud', validate_provider_config: false, sync_templates: false,
+                                provider_config: { 'source' => 'embedded_signup', 'api_key' => 'token',
+                                                   'business_account_id' => 'waba', 'phone_number_id' => 'phone' })
+    end
+    let(:subscribe_request) { stub_request(:post, %r{graph\.facebook\.com/.*/subscribed_apps}) }
+
+    def meta_error(code, subcode = nil)
+      { status: 400, headers: { 'Content-Type' => 'application/json' },
+        body: { error: { message: 'refused', code: code, error_subcode: subcode }.compact }.to_json }
+    end
+
+    before do
+      stub_request(:get, /graph\.facebook\.com/).to_return(
+        status: 200, headers: { 'Content-Type' => 'application/json' },
+        body: { code_verification_status: 'VERIFIED', platform_type: 'CLOUD_API', throughput: { level: 'STANDARD' } }.to_json
+      )
+    end
+
+    it 'does not prompt reauthorization when Meta times out' do
+      subscribe_request.to_timeout
+
+      channel.setup_webhooks
+
+      expect(channel.reauthorization_required?).to be(false)
+    end
+
+    it 'does not prompt reauthorization on a Meta 5xx' do
+      subscribe_request.to_return(status: 503, body: 'Service Unavailable')
+
+      channel.setup_webhooks
+
+      expect(channel.reauthorization_required?).to be(false)
+    end
+
+    it 'does not prompt reauthorization on an error that is not about the credentials' do
+      subscribe_request.to_return(meta_error(200))
+
+      channel.setup_webhooks
+
+      expect(channel.reauthorization_required?).to be(false)
+    end
+
+    it 'prompts reauthorization when the token was revoked (190)' do
+      subscribe_request.to_return(meta_error(190))
+
+      channel.setup_webhooks
+
+      expect(channel.reauthorization_required?).to be(true)
+    end
+
+    it 'prompts reauthorization when the WABA was dropped from the token (100/33)' do
+      subscribe_request.to_return(meta_error(100, 33))
+
+      channel.setup_webhooks
+
+      expect(channel.reauthorization_required?).to be(true)
+    end
+
+    it 'prompts reauthorization when a credential is missing' do
+      channel.provider_config['api_key'] = ''
+
+      channel.setup_webhooks
+
+      expect(channel.reauthorization_required?).to be(true)
+    end
+  end
+
   describe '#teardown_webhooks' do
     let(:account) { create(:account) }
 
