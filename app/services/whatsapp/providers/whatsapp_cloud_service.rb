@@ -3,6 +3,9 @@ class Whatsapp::Providers::WhatsappCloudService < Whatsapp::Providers::BaseServi
   # (`quality_score`: score + date), which Meta leaves out by default.
   TEMPLATE_FIELDS = %w[id name language status category sub_category previous_category components parameter_format
                        rejected_reason quality_score].join(',').freeze
+  # Types Meta accepts for a voice message (from its own rejection message). Only opus shows a waveform.
+  # Baileys sends `ptt` without looking at the type, so keep this list local to Cloud.
+  VOICE_MESSAGE_CONTENT_TYPES = %w[audio/ogg audio/mpeg audio/amr audio/mp4 audio/aac].freeze
 
   def send_message(phone_number, message)
     @message = message
@@ -393,7 +396,13 @@ class Whatsapp::Providers::WhatsappCloudService < Whatsapp::Providers::BaseServi
   end
 
   def voice_message?(type, attachment)
-    type == 'audio' && attachment.meta&.dig('is_recorded_audio') && attachment.file.content_type == 'audio/ogg'
+    type == 'audio' && attachment.meta&.dig('is_recorded_audio').present? &&
+      VOICE_MESSAGE_CONTENT_TYPES.include?(voice_content_type(attachment))
+  end
+
+  # The blob may keep parameters from the browser (`audio/ogg; codecs=opus`), so compare the media type alone.
+  def voice_content_type(attachment)
+    attachment.file.content_type.to_s.split(';').first.to_s.strip.downcase
   end
 
   def error_message(response)
