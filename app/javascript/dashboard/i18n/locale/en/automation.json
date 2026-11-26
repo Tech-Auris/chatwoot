@@ -243,7 +243,7 @@
       "PRIVATE_NOTE": "Private Note",
       "SENDER": "Sender",
       "SENDER_TYPE": "Sender Type",
-      "MESSAGE_CONTAINS": "Message Contains",
+      "MESSAGE_CONTAINS": "Message Content",
       "EMAIL": "Email",
       "INBOX": "Inbox",
       "CONVERSATION_LANGUAGE": "Conversation Language",
