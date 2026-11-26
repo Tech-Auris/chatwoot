@@ -3,8 +3,21 @@ module Whatsapp::BaileysHandlers::Helpers # rubocop:disable Metrics/ModuleLength
 
   private
 
-  def unwrap_ephemeral_message(msg)
-    msg.key?(:ephemeralMessage) ? msg.dig(:ephemeralMessage, :message) : msg
+  # WhatsApp nests the real payload inside wrapper nodes: ephemeralMessage
+  # (disappearing chats), associatedChildMessage (album items) and
+  # lottieStickerMessage (animated stickers). Wrappers can nest, so unwrap
+  # until the content surfaces (iteration bound mirrors Baileys'
+  # normalizeMessageContent).
+  MESSAGE_WRAPPER_KEYS = %i[ephemeralMessage associatedChildMessage lottieStickerMessage].freeze
+
+  def unwrap_message_content(msg)
+    5.times do
+      wrapper_key = MESSAGE_WRAPPER_KEYS.find { |key| msg.key?(key) }
+      break unless wrapper_key
+
+      msg = msg.dig(wrapper_key, :message) || {}
+    end
+    msg
   end
 
   def raw_message_id
@@ -40,7 +53,7 @@ module Whatsapp::BaileysHandlers::Helpers # rubocop:disable Metrics/ModuleLength
   end
 
   def message_type # rubocop:disable Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity,Metrics/MethodLength,Metrics/AbcSize
-    msg = unwrap_ephemeral_message(@raw_message[:message])
+    msg = unwrap_message_content(@raw_message[:message])
     if msg.key?(:conversation) || msg.dig(:extendedTextMessage, :text).present?
       'text'
     elsif msg.key?(:imageMessage)
@@ -62,6 +75,8 @@ module Whatsapp::BaileysHandlers::Helpers # rubocop:disable Metrics/ModuleLength
       match_phone_number ? 'contact' : 'unsupported'
     elsif msg.key?(:protocolMessage)
       'protocol'
+    elsif msg.key?(:albumMessage)
+      'album'
     elsif msg.key?(:messageContextInfo) && msg.keys.count == 1
       'context'
     else
@@ -70,7 +85,7 @@ module Whatsapp::BaileysHandlers::Helpers # rubocop:disable Metrics/ModuleLength
   end
 
   def message_content # rubocop:disable Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity,Metrics/MethodLength
-    msg = unwrap_ephemeral_message(@raw_message[:message])
+    msg = unwrap_message_content(@raw_message[:message])
     case message_type
     when 'text'
       text = msg[:conversation] || msg.dig(:extendedTextMessage, :text)
@@ -99,7 +114,7 @@ module Whatsapp::BaileysHandlers::Helpers # rubocop:disable Metrics/ModuleLength
   end
 
   def reply_to_message_id # rubocop:disable Metrics/CyclomaticComplexity
-    msg = unwrap_ephemeral_message(@raw_message[:message])
+    msg = unwrap_message_content(@raw_message[:message])
     message_key = case message_type
                   when 'text' then :extendedTextMessage
                   when 'image' then :imageMessage
@@ -125,7 +140,7 @@ module Whatsapp::BaileysHandlers::Helpers # rubocop:disable Metrics/ModuleLength
   end
 
   def message_mimetype
-    msg = unwrap_ephemeral_message(@raw_message[:message])
+    msg = unwrap_message_content(@raw_message[:message])
     case message_type
     when 'image'
       msg.dig(:imageMessage, :mimetype)
@@ -183,8 +198,11 @@ module Whatsapp::BaileysHandlers::Helpers # rubocop:disable Metrics/ModuleLength
     Whatsapp::PhoneNormalizers::BrazilPhoneNormalizer.new.normalize(phone_number)
   end
 
+  # An albumMessage is only the marker announcing a media group; each item
+  # arrives as its own associatedChildMessage upsert, so the marker itself
+  # renders nothing.
   def ignore_message?
-    message_type.in?(%w[protocol context edited])
+    message_type.in?(%w[protocol context edited album])
   end
 
   def reaction_removal?
@@ -247,7 +265,7 @@ module Whatsapp::BaileysHandlers::Helpers # rubocop:disable Metrics/ModuleLength
   ].freeze
 
   def baileys_referral
-    msg = unwrap_ephemeral_message(@raw_message[:message])
+    msg = unwrap_message_content(@raw_message[:message])
     context_info = BAILEYS_CONTEXT_INFO_PATHS.each do |path|
       value = msg.dig(*path)
       break value if value.present?
