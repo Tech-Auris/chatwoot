@@ -431,6 +431,9 @@ RSpec.describe 'Super Admin Commercial Reservations', type: :request do
 
       expect(response.parsed_body['reservation']['payment_label']).to eq('Cartão recorrente 12x')
       expect(response.parsed_body['reservation']['awaiting_manual_payment_confirmation']).to be(false)
+    end
+  end
+
   describe 'POST /super_admin/commercial/reservations/:id/cancel' do
     it 'cancels an open proposal and records who did it' do
       quote = create(:sales_quote, status: :details_confirmed, reserved_until: 3.days.from_now)
