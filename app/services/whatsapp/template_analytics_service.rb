@@ -16,7 +16,9 @@ class Whatsapp::TemplateAnalyticsService
   # - read               → subset of delivered where read receipt arrived
   # - failed_after_accept → Meta accepted but a later status webhook flipped
   #                        it to failed (undeliverable, number invalid, etc.)
+  # `failure_reasons` lists the most frequent errors among the failed ones.
   ALLOWED_PERIODS = { '7d' => 7, '30d' => 30, '90d' => 90 }.freeze
+  FAILURE_REASONS_LIMIT = 3
 
   def initialize(inbox:, template_name:, template_language:, period: '30d')
     @inbox = inbox
@@ -45,7 +47,8 @@ class Whatsapp::TemplateAnalyticsService
         delivered: counts.fetch('delivered', 0) + counts.fetch('read', 0),
         read: counts.fetch('read', 0),
         failed_after_accept: base_scope.where(status: :failed).where.not(source_id: nil).count
-      }
+      },
+      failure_reasons: Messages::FailureReasons.call(base_scope).first(FAILURE_REASONS_LIMIT)
     }
   end
 

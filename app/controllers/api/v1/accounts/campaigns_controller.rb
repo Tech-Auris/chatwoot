@@ -46,7 +46,7 @@ class Api::V1::Accounts::CampaignsController < Api::V1::Accounts::BaseController
     render json: {
       campaign: serialized_campaign,
       summary: report_summary(messages),
-      failure_reasons: failure_reasons(messages),
+      failure_reasons: Messages::FailureReasons.call(messages),
       messages: page.map { |message| serialize_report_message(message) },
       meta: {
         current_page: page.current_page,
@@ -102,17 +102,6 @@ class Api::V1::Accounts::CampaignsController < Api::V1::Accounts::BaseController
     sql = 'contacts.name ILIKE :term OR contacts.phone_number ILIKE :term'
     sql += " OR regexp_replace(contacts.phone_number, '\\D', '', 'g') LIKE :digits" if digits.length >= 3
     [sql, { term: "%#{ActiveRecord::Base.sanitize_sql_like(query)}%", digits: "%#{digits}%" }]
-  end
-
-  # How many messages failed with each error, most frequent first. The error
-  # sits in `content_attributes`, whose legacy rows are double-encoded JSON —
-  # `#>>'{}'` unwraps both shapes (same as Conversation#last_ctwa_referral_at).
-  FAILURE_ERROR_SQL = Arel.sql("((messages.content_attributes#>>'{}')::jsonb ->> 'external_error')")
-
-  def failure_reasons(messages)
-    messages.reorder(nil).where(status: :failed).group(FAILURE_ERROR_SQL).count
-            .map { |error, count| { error: error, count: count } }
-            .sort_by { |reason| -reason[:count] }
   end
 
   def report_summary(messages)
