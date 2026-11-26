@@ -18,6 +18,7 @@
 #  priority               :integer
 #  snoozed_until          :datetime
 #  status                 :integer          default("open"), not null
+#  status_changed_at      :datetime
 #  summary                :text
 #  uuid                   :uuid             not null
 #  waiting_since          :datetime
@@ -149,8 +150,10 @@ class Conversation < ApplicationRecord
   # The most recent FUP, behind the badge on the funnel card and the header.
   has_one :latest_follow_up, -> { order(created_at: :desc, id: :desc) }, class_name: 'FollowUp', inverse_of: :conversation # rubocop:disable Rails/HasManyOrHasOneDependent
   has_many :recurring_scheduled_messages, dependent: :destroy
+  has_many :automation_rule_pending_executions, dependent: :delete_all
 
   before_save :ensure_snooze_until_reset
+  before_save :set_status_changed_at
   before_create :determine_conversation_status
   before_create :ensure_waiting_since
 
@@ -472,6 +475,10 @@ class Conversation < ApplicationRecord
 
   def ensure_snooze_until_reset
     self.snoozed_until = nil unless snoozed?
+  end
+
+  def set_status_changed_at
+    self.status_changed_at = Time.current if new_record? || status_changed?
   end
 
   def ensure_waiting_since

@@ -103,6 +103,7 @@ class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
   has_many :articles, dependent: :destroy_async, class_name: '::Article'
   has_many :assignment_policies, dependent: :destroy_async
   has_many :automation_rules, dependent: :destroy_async
+  has_many :automation_rule_pending_executions, dependent: :delete_all
   has_many :macros, dependent: :destroy_async
   has_many :campaigns, dependent: :destroy_async
   has_many :audiences, dependent: :destroy_async
@@ -190,6 +191,7 @@ class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
   before_validation :validate_limit_keys
   after_create_commit :notify_creation
   after_create_commit :setup_internal_chat
+  after_update :resume_delayed_automations, if: -> { saved_change_to_feature_delayed_automations? && feature_delayed_automations? }
   after_destroy :remove_account_sequences
   after_update_commit :clear_unread_conversation_counts_cache, if: :saved_change_to_feature_conversation_unread_counts?
   after_update_commit :push_whatsapp_groups_to_baileys, if: :saved_change_to_whatsapp_groups_enabled?
@@ -371,6 +373,10 @@ class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
     whatsapp_channels.where(provider: 'baileys').where("provider_connection->>'connection' = ?", 'open').find_each do |channel|
       Channels::Whatsapp::BaileysConnectionCheckJob.perform_later(channel)
     end
+  end
+
+  def resume_delayed_automations
+    AutomationRulePendingExecution.reschedule_paused(self)
   end
 
   trigger.after(:insert).for_each(:row) do
