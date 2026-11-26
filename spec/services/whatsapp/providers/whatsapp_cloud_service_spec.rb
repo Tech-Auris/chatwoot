@@ -487,6 +487,28 @@ describe Whatsapp::Providers::WhatsappCloudService do
         expect(subject.validate_provider_config?).to be(false)
       end
     end
+
+    context 'when the channel carries a new app secret' do
+      let(:me_url) { %r{graph\.facebook\.com/v22\.0/me\?} }
+
+      before do
+        stub_request(:get, 'https://graph.facebook.com/v22.0/123456789/message_templates?access_token=test_key')
+        whatsapp_channel.provider_config = whatsapp_channel.provider_config.merge('app_secret' => 'new_secret')
+      end
+
+      it 'returns true when Meta accepts the appsecret_proof' do
+        proof = OpenSSL::HMAC.hexdigest('SHA256', 'new_secret', 'test_key')
+        stub_request(:get, me_url).with(query: hash_including('appsecret_proof' => proof)).to_return(status: 200, body: { id: '1' }.to_json)
+
+        expect(subject.validate_provider_config?).to be(true)
+      end
+
+      it 'returns false when the secret belongs to another app' do
+        stub_request(:get, me_url).to_return(status: 400, body: { error: { message: 'Invalid appsecret_proof provided' } }.to_json)
+
+        expect(subject.validate_provider_config?).to be(false)
+      end
+    end
   end
 
   describe 'Ability to configure Base URL' do

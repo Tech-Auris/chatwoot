@@ -254,7 +254,7 @@ RSpec.describe 'Webhooks::WhatsappController', type: :request do
       expect(response).to have_http_status(:success)
     end
 
-    it 'skips signature validation for 360dialog channels' do
+    it 'skips signature validation for 360dialog channels during the unsigned grace period' do
       allow_any_instance_of(Webhooks::WhatsappController).to receive(:verify_meta_signature!).and_call_original
       dialog_channel = create(:channel_whatsapp, provider: 'default', sync_templates: false, validate_provider_config: false)
       expect(configured_job).to receive(:perform_later)
@@ -264,9 +264,9 @@ RSpec.describe 'Webhooks::WhatsappController', type: :request do
       expect(response).to have_http_status(:success)
     end
 
-    it 'skips signature validation for manual whatsapp cloud channels without an app secret' do
+    it 'skips signature validation for manual whatsapp cloud channels without an app secret during the grace period' do
       allow_any_instance_of(Webhooks::WhatsappController).to receive(:verify_meta_signature!).and_call_original
-      channel.update!(
+      channel.update_columns( # rubocop:disable Rails/SkipsModelValidations
         provider_config: channel.provider_config.except('app_secret', 'app_secret_key', 'api_secret', 'client_secret', 'source')
       )
       expect(configured_job).to receive(:perform_later)
@@ -288,6 +288,89 @@ RSpec.describe 'Webhooks::WhatsappController', type: :request do
       post_unsigned_whatsapp_webhook("/webhooks/whatsapp/#{channel.phone_number}", channel_body)
 
       expect(response).to have_http_status(:success)
+    end
+
+    context 'when unsigned webhooks are no longer accepted' do
+      let(:strict_env) { { WHATSAPP_APP_SECRET: client_secret, WHATSAPP_ACCEPT_UNSIGNED_WEBHOOKS: 'false' } }
+      let(:manual_channel) do
+        create(:channel_whatsapp, provider: 'whatsapp_cloud', provider_config: { 'source' => 'manual' },
+                                  sync_templates: false, validate_provider_config: false)
+      end
+      let(:manual_body) do
+        {
+          object: 'whatsapp_business_account',
+          entry: [{ changes: [{ value: { metadata: { display_phone_number: manual_channel.phone_number.delete_prefix('+'),
+                                                     phone_number_id: manual_channel.provider_config['phone_number_id'] } } }] }]
+        }.to_json
+      end
+
+      before do
+        allow_any_instance_of(Webhooks::WhatsappController).to receive(:verify_meta_signature!).and_call_original
+        allow(Whatsapp::WebhookSetupService).to receive(:new).and_return(instance_double(Whatsapp::WebhookSetupService, perform: true))
+      end
+
+      it 'rejects an unsigned webhook for a manual whatsapp cloud channel without an app secret' do
+        manual_channel.update_columns(provider_config: manual_channel.provider_config.except('app_secret')) # rubocop:disable Rails/SkipsModelValidations
+
+        post_unsigned_whatsapp_webhook("/webhooks/whatsapp/#{manual_channel.phone_number}", manual_body, env: strict_env)
+
+        expect(response).to have_http_status(:unauthorized)
+        expect(configured_job).not_to have_received(:perform_later)
+      end
+
+      it 'rejects an unsigned webhook for a 360dialog channel' do
+        dialog_channel = create(:channel_whatsapp, provider: 'default', sync_templates: false, validate_provider_config: false)
+
+        post_unsigned_whatsapp_webhook("/webhooks/whatsapp/#{dialog_channel.phone_number}", body, env: strict_env)
+
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+
+    it 'rejects a forged webhook for a manual whatsapp cloud channel with an app secret' do
+      allow_any_instance_of(Webhooks::WhatsappController).to receive(:verify_meta_signature!).and_call_original
+      allow(Whatsapp::WebhookSetupService).to receive(:new).and_return(instance_double(Whatsapp::WebhookSetupService, perform: true))
+      manual_channel = create(:channel_whatsapp, provider: 'whatsapp_cloud', provider_config: { 'source' => 'manual' },
+                                                 sync_templates: false, validate_provider_config: false)
+      manual_body = {
+        object: 'whatsapp_business_account',
+        entry: [{ changes: [{ value: { metadata: { display_phone_number: manual_channel.phone_number.delete_prefix('+'),
+                                                   phone_number_id: manual_channel.provider_config['phone_number_id'] } } }] }]
+      }.to_json
+
+      post_unsigned_whatsapp_webhook("/webhooks/whatsapp/#{manual_channel.phone_number}", manual_body, env: {})
+      expect(response).to have_http_status(:unauthorized)
+
+      post_whatsapp_webhook("/webhooks/whatsapp/#{manual_channel.phone_number}", manual_body,
+                            signature: signature_for(manual_body, 'test_app_secret'), env: {})
+      expect(response).to have_http_status(:success)
+    end
+
+    context 'when the number belongs to a Baileys channel' do
+      let!(:baileys_channel) { create(:channel_whatsapp, provider: 'baileys', sync_templates: false, validate_provider_config: false) }
+      let(:baileys_path) { "/webhooks/whatsapp/#{baileys_channel.phone_number}" }
+
+      it 'enqueues the event when the token matches' do
+        post baileys_path, params: { event: 'messages.upsert', data: { messages: [] },
+                                     webhookVerifyToken: baileys_channel.provider_config['webhook_verify_token'] }
+
+        expect(response).to have_http_status(:ok)
+        expect(configured_job).to have_received(:perform_later)
+      end
+
+      it 'rejects the event without enqueuing when the token is missing' do
+        post baileys_path, params: { event: 'messages.upsert', data: { messages: [] } }
+
+        expect(response).to have_http_status(:unauthorized)
+        expect(configured_job).not_to have_received(:perform_later)
+      end
+
+      it 'rejects the event without enqueuing when the token is wrong' do
+        post baileys_path, params: { event: 'messages.upsert', data: { messages: [] }, webhookVerifyToken: 'wrong' }
+
+        expect(response).to have_http_status(:unauthorized)
+        expect(configured_job).not_to have_received(:perform_later)
+      end
     end
 
     it 'returns unauthorized when signature is missing' do
@@ -397,11 +480,13 @@ RSpec.describe 'Webhooks::WhatsappController', type: :request do
       # baileys channels skip signature verification (meta_signature_verification_required? short-circuits
       # for non whatsapp_cloud providers), so an unsigned POST is valid here.
       let(:baileys_channel) { create(:channel_whatsapp, provider: 'baileys', sync_templates: false, validate_provider_config: false) }
+      let(:baileys_token) { baileys_channel.provider_config['webhook_verify_token'] }
 
       it 'calls the whatsapp events job synchronously' do
         allow(Webhooks::WhatsappEventsJob).to receive(:perform_now)
 
-        post "/webhooks/whatsapp/#{baileys_channel.phone_number}", params: { content: 'hello', awaitResponse: true }
+        post "/webhooks/whatsapp/#{baileys_channel.phone_number}",
+             params: { content: 'hello', awaitResponse: true, webhookVerifyToken: baileys_token }
 
         expect(Webhooks::WhatsappEventsJob).to have_received(:perform_now)
         expect(response).to have_http_status(:ok)
@@ -410,7 +495,8 @@ RSpec.describe 'Webhooks::WhatsappController', type: :request do
       it 'returns 401 when InvalidWebhookVerifyToken is raised' do
         allow(Webhooks::WhatsappEventsJob).to receive(:perform_now).and_raise(Whatsapp::IncomingMessageBaileysService::InvalidWebhookVerifyToken)
 
-        post "/webhooks/whatsapp/#{baileys_channel.phone_number}", params: { content: 'hello', awaitResponse: true }
+        post "/webhooks/whatsapp/#{baileys_channel.phone_number}",
+             params: { content: 'hello', awaitResponse: true, webhookVerifyToken: baileys_token }
 
         expect(response).to have_http_status(:unauthorized)
       end
@@ -422,13 +508,14 @@ RSpec.describe 'Webhooks::WhatsappController', type: :request do
         end
 
         it 'responds 200 so Baileys stops retrying the webhook' do
-          post "/webhooks/whatsapp/#{baileys_channel.phone_number}", params: { content: 'hello', awaitResponse: true }
+          post "/webhooks/whatsapp/#{baileys_channel.phone_number}",
+               params: { content: 'hello', awaitResponse: true, webhookVerifyToken: baileys_token }
 
           expect(response).to have_http_status(:ok)
         end
 
         it 're-enqueues the job with a delay to give SendReplyJob time to persist source_id' do
-          post '/webhooks/whatsapp/123221321', params: { content: 'hello', awaitResponse: true }
+          post '/webhooks/whatsapp/123221321', params: { content: 'hello', awaitResponse: true, webhookVerifyToken: baileys_token }
 
           expect(Webhooks::WhatsappEventsJob).to have_received(:set).with(wait: Webhooks::WhatsappController::MESSAGE_NOT_FOUND_RETRY_DELAY)
           expect(configured_job).to have_received(:perform_later)

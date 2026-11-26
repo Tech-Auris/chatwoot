@@ -1611,7 +1611,7 @@ RSpec.describe 'Inboxes API', type: :request do
     let(:channel) { create(:channel_whatsapp, account: account, provider: 'baileys', validate_provider_config: false, sync_templates: false) }
     let(:inbox) { channel.inbox }
     let(:new_cloud_config) do
-      { api_key: 'new_cloud_key', phone_number_id: 'new_phone_id', business_account_id: 'new_waba_id' }
+      { api_key: 'new_cloud_key', phone_number_id: 'new_phone_id', business_account_id: 'new_waba_id', app_secret: 'new_secret' }
     end
 
     before do
@@ -1619,6 +1619,7 @@ RSpec.describe 'Inboxes API', type: :request do
         .to_return(status: 200)
       stub_request(:get, %r{graph\.facebook\.com/v\d+\.\d+/.*/message_templates.*})
         .to_return(status: 200, body: { data: [] }.to_json, headers: { 'Content-Type' => 'application/json' })
+      stub_request(:get, %r{graph\.facebook\.com/v\d+\.\d+/me\?}).to_return(status: 200, body: { id: '1' }.to_json)
       webhook_setup_service = instance_double(Whatsapp::WebhookSetupService, perform: nil)
       allow(Whatsapp::WebhookSetupService).to receive(:new).and_return(webhook_setup_service)
     end

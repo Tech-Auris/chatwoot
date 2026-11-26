@@ -226,7 +226,7 @@ class Whatsapp::Providers::WhatsappCloudService < Whatsapp::Providers::BaseServi
 
   def validate_provider_config?
     response = HTTParty.get("#{business_account_path}/message_templates?access_token=#{whatsapp_channel.provider_config['api_key']}")
-    response.success?
+    response.success? && app_secret_matches_token?
   end
 
   def api_headers
@@ -332,6 +332,17 @@ class Whatsapp::Providers::WhatsappCloudService < Whatsapp::Providers::BaseServi
   end
 
   private
+
+  # Checked when either half changes: a secret from another Meta app than the token's would make
+  # every webhook fail verification, with nothing on screen to say why.
+  def app_secret_matches_token?
+    config = whatsapp_channel.provider_config
+    stored = whatsapp_channel.provider_config_was.to_h
+    return true if config['app_secret'].blank?
+    return true if config['app_secret'] == stored['app_secret'] && config['api_key'] == stored['api_key']
+
+    Whatsapp::FacebookApiClient.new(config['api_key']).app_secret_matches?(config['app_secret'])
+  end
 
   def csat_template_service
     @csat_template_service ||= Whatsapp::CsatTemplateService.new(whatsapp_channel)

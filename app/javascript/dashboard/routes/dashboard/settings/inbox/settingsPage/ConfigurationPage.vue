@@ -15,6 +15,7 @@ import { sanitizeAllowedDomains, isValidURL } from 'dashboard/helper/URLHelper';
 import { requiredIf } from '@vuelidate/validators';
 import WhatsappLinkDeviceModal from '../components/WhatsappLinkDeviceModal.vue';
 import BaileysHistoryImportStatus from '../components/BaileysHistoryImportStatus.vue';
+import WhatsappAppSecret from './WhatsappAppSecret.vue';
 import InboxName from 'dashboard/components/widgets/InboxName.vue';
 import Switch from 'dashboard/components-next/switch/Switch.vue';
 import { FEATURE_FLAGS } from 'dashboard/featureFlags';
@@ -33,6 +34,7 @@ export default {
     WhatsappReauthorize,
     WhatsappLinkDeviceModal,
     BaileysHistoryImportStatus,
+    WhatsappAppSecret,
     InboxName,
     // eslint-disable-next-line vue/no-reserved-component-names
     Switch,
@@ -628,6 +630,7 @@ export default {
         >
           <woot-code :script="inbox.provider_config.webhook_verify_token" />
         </SettingsFieldSection>
+        <WhatsappAppSecret :inbox="inbox" />
         <SettingsFieldSection
           :label="$t('INBOX_MGMT.SETTINGS_POPUP.WHATSAPP_SECTION_TITLE')"
           :help-text="

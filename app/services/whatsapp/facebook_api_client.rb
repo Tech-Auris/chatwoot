@@ -40,6 +40,18 @@ class Whatsapp::FacebookApiClient
     handle_response(response, 'Token validation failed')
   end
 
+  # Meta checks an appsecret_proof whenever a request carries one, so a proof made with a secret
+  # from another app (or a mistyped one) is refused. That is the only way to know, before the
+  # first webhook, that the secret will verify them.
+  def app_secret_matches?(app_secret)
+    response = HTTParty.get(
+      "#{BASE_URI}/#{@api_version}/me",
+      headers: request_headers,
+      query: { fields: 'id', appsecret_proof: OpenSSL::HMAC.hexdigest('SHA256', app_secret.to_s, @access_token.to_s) }
+    )
+    response.success?
+  end
+
   def register_phone_number(phone_number_id, pin)
     response = HTTParty.post(
       "#{BASE_URI}/#{@api_version}/#{phone_number_id}/register",

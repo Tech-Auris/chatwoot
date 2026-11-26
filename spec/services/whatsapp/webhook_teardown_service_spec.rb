@@ -55,7 +55,7 @@ RSpec.describe Whatsapp::WebhookTeardownService do
       before do
         channel.update!(
           provider: 'whatsapp_cloud',
-          provider_config: { 'source' => 'manual' }
+          provider_config: { 'source' => 'manual', 'app_secret' => 'manual_app_secret' }
         )
       end
 
