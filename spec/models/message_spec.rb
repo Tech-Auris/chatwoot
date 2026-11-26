@@ -1130,4 +1130,116 @@ RSpec.describe Message do
       expect(conversation.reload.first_reply_created_at).to be_nil
     end
   end
+
+  # A "no WhatsApp" flag is only a lookup's answer; the contact replying, or their phone
+  # acknowledging a message, proves the number exists.
+  describe 'clearing the no-WhatsApp flag' do
+    let(:channel) do
+      create(:channel_whatsapp, provider: 'baileys', validate_provider_config: false, sync_templates: false)
+    end
+    let(:contact_inbox) do
+      create(:contact_inbox, inbox: channel.inbox, source_id: '558588246590', whatsapp_missing_checked_at: 1.hour.ago)
+    end
+    let(:conversation) do
+      create(:conversation, account: channel.account, inbox: channel.inbox, contact: contact_inbox.contact, contact_inbox: contact_inbox)
+    end
+
+    def create_message(**attrs)
+      create(:message, conversation: conversation, inbox: channel.inbox, account: channel.account, **attrs)
+    end
+
+    it 'clears it when the contact sends something' do
+      create_message(message_type: :incoming)
+
+      expect(contact_inbox.reload.whatsapp_missing_checked_at).to be_nil
+    end
+
+    # The payload is what moves the banner, so it has to carry the cleared value, not the one
+    # still held by the loaded association.
+    it 'tells the dashboard when a reply clears it, with the cleared value' do
+      conversation.update!(status: :resolved) # the reply reopens it, which broadcasts again
+      conversation.contact_inbox # loaded with the old date, as a request would hold it
+      payloads = []
+      allow(Rails.configuration.dispatcher).to receive(:dispatch) do |event, _time, data|
+        payloads << data[:conversation].push_event_data if event == Events::Types::CONVERSATION_UPDATED
+      end
+
+      create_message(message_type: :incoming)
+
+      expect(payloads).not_to be_empty
+      expect(payloads).to all(include(id: conversation.display_id, whatsapp_missing_checked_at: nil))
+    end
+
+    it 'clears it when an outgoing message is delivered' do
+      message = create_message(message_type: :outgoing, status: :sent)
+
+      message.update!(status: :delivered)
+
+      expect(contact_inbox.reload.whatsapp_missing_checked_at).to be_nil
+    end
+
+    it 'clears it when an outgoing message is read' do
+      message = create_message(message_type: :outgoing, status: :sent)
+
+      message.update!(status: :read)
+
+      expect(contact_inbox.reload.whatsapp_missing_checked_at).to be_nil
+    end
+
+    # It may have gone to the phone the contact had before the lookup.
+    it 'keeps it when the receipt answers a message sent before the check' do
+      message = create_message(message_type: :outgoing, status: :sent, created_at: 2.hours.ago)
+
+      message.update!(status: :delivered)
+
+      expect(contact_inbox.reload.whatsapp_missing_checked_at).to be_present
+    end
+
+    # The flag is about the phone; the contact's other thread here (a LID one) warns about it too.
+    it "clears it on the contact's other threads in the inbox" do
+      sibling = create(:contact_inbox, contact: contact_inbox.contact, inbox: channel.inbox, source_id: '123456789012345',
+                                       whatsapp_missing_checked_at: 1.hour.ago)
+
+      create_message(message_type: :incoming)
+
+      expect(sibling.reload.whatsapp_missing_checked_at).to be_nil
+    end
+
+    # A history import replays old traffic: it predates the lookup and proves nothing now.
+    context 'with a history import' do
+      after { Current.history_import = nil }
+
+      it 'keeps it when the incoming message comes from the import' do
+        Current.history_import = true
+        create_message(message_type: :incoming)
+
+        expect(contact_inbox.reload.whatsapp_missing_checked_at).to be_present
+      end
+
+      it 'keeps it when the import replays a receipt' do
+        message = create_message(message_type: :outgoing, status: :sent)
+
+        Current.history_import = true
+        message.update!(status: :delivered)
+
+        expect(contact_inbox.reload.whatsapp_missing_checked_at).to be_present
+      end
+    end
+
+    # A send from the paired phone comes back as an echo born delivered, with no receipt.
+    it 'keeps it when an echo of a send from the phone is born delivered' do
+      create_message(message_type: :outgoing, status: :delivered)
+
+      expect(contact_inbox.reload.whatsapp_missing_checked_at).to be_present
+    end
+
+    # The server's acknowledgement is exactly what a number with no account still gets.
+    it 'keeps it while outgoing messages are only sent' do
+      message = create_message(message_type: :outgoing, status: :sent)
+
+      message.update!(content: 'edited')
+
+      expect(contact_inbox.reload.whatsapp_missing_checked_at).to be_present
+    end
+  end
 end

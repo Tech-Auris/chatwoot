@@ -162,6 +162,9 @@ class Message < ApplicationRecord
 
   after_update_commit :dispatch_update_event
   after_commit :reindex_for_search, if: :should_index?, on: [:create, :update]
+  # Declared last so it runs before the other commit callbacks (reverse order under the 7.0
+  # defaults): the conversation they broadcast then already carries the cleared flag.
+  after_commit :clear_whatsapp_missing_flag, on: [:create, :update], if: :proves_whatsapp_presence?
 
   def channel_token
     @token ||= inbox.channel.try(:page_access_token)
@@ -414,6 +417,27 @@ class Message < ApplicationRecord
     send_reply
     execute_message_template_hooks
     update_contact_activity
+  end
+
+  # A message from the contact, or a live delivery/read receipt, proves the number has
+  # WhatsApp, so a "no WhatsApp" flag left by an earlier lookup stops warning. An echo of a
+  # send from the paired phone is born delivered (no status change), and a history import
+  # replays old traffic, so neither counts.
+  def proves_whatsapp_presence?
+    return false if Current.history_import || inbox.channel_type != 'Channel::Whatsapp'
+    return incoming? if previously_new_record?
+
+    outgoing? && saved_change_to_status? && (delivered? || read?)
+  end
+
+  # Only flags set before this message existed: a receipt for a message sent before the
+  # lookup says nothing about the number now.
+  def clear_whatsapp_missing_flag
+    flagged = ContactInbox.where(inbox_id: inbox_id, contact_id: conversation.contact_id, whatsapp_missing_checked_at: ..created_at).to_a
+    return if flagged.empty?
+
+    flagged.each { |contact_inbox| contact_inbox.update!(whatsapp_missing_checked_at: nil) }
+    conversation.reload_contact_inbox
   end
 
   def update_contact_activity

@@ -47,6 +47,13 @@ RSpec.describe Conversations::EventDataPresenter do
     it 'includes the effective ai_enabled flag' do
       expect(presenter.push_data[:ai_enabled]).to eq(conversation.ai_status_enabled?)
     end
+
+    it 'carries when the number was found to have no WhatsApp, as unix seconds' do
+      checked_at = 1.hour.ago
+      conversation.contact_inbox.update!(whatsapp_missing_checked_at: checked_at)
+
+      expect(presenter.push_data[:whatsapp_missing_checked_at]).to eq(checked_at.to_i)
+    end
   end
 
   describe '#webhook_data' do

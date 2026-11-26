@@ -104,4 +104,39 @@ RSpec.describe ContactInbox do
       end
     end
   end
+
+  describe 'no-WhatsApp flag' do
+    let(:channel) { create(:channel_whatsapp, provider: 'baileys', validate_provider_config: false, sync_templates: false) }
+    let(:contact) { create(:contact, account: channel.account, phone_number: '+558588246590') }
+    let(:contact_inbox) do
+      create(:contact_inbox, contact: contact, inbox: channel.inbox, source_id: '558588246590', whatsapp_missing_checked_at: 1.hour.ago)
+    end
+    let!(:conversation) do
+      create(:conversation, account: channel.account, inbox: channel.inbox, contact: contact, contact_inbox: contact_inbox)
+    end
+
+    it 'tells the dashboard about the conversations when it changes, tagged so the thread does not scroll' do
+      allow(Rails.configuration.dispatcher).to receive(:dispatch)
+
+      contact_inbox.update!(whatsapp_missing_checked_at: nil)
+
+      expect(Rails.configuration.dispatcher).to have_received(:dispatch)
+        .with(Events::Types::CONVERSATION_UPDATED, anything,
+              hash_including(conversation: conversation, broadcast_metadata: { source: 'whatsapp_missing' }))
+    end
+
+    it 'forgets it when the contact phone is corrected' do
+      contact.update!(phone_number: '+558588246591')
+
+      expect(contact_inbox.reload.whatsapp_missing_checked_at).to be_nil
+    end
+
+    it 'forgets it when a merge moves the contact inbox to another contact' do
+      other = create(:contact, account: channel.account)
+
+      contact_inbox.update!(contact: other)
+
+      expect(contact_inbox.reload.whatsapp_missing_checked_at).to be_nil
+    end
+  end
 end

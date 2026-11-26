@@ -120,4 +120,47 @@ describe Whatsapp::CanonicalPhoneResolverService do
       expect(result).to eq('5531998010696')
     end
   end
+
+  describe '#lookup' do
+    let(:phone_13d) { '5531998010696' }
+    let(:phone_12d) { '553198010696' }
+
+    def lookup(phone = phone_13d)
+      described_class.new(channel: whatsapp_channel, phone: phone).lookup
+    end
+
+    it 'answers exists with the canonical phone when one form is registered' do
+      allow(whatsapp_channel).to receive(:on_whatsapp).with("#{phone_13d}@s.whatsapp.net").and_return({ 'exists' => false })
+      allow(whatsapp_channel).to receive(:on_whatsapp).with("#{phone_12d}@s.whatsapp.net")
+                                                      .and_return({ 'exists' => true, 'jid' => "#{phone_12d}@s.whatsapp.net" })
+
+      expect(lookup.to_h).to eq(exists: true, phone: phone_12d)
+    end
+
+    it 'answers missing only when both the 13d and the 12d forms say no' do
+      expect(whatsapp_channel).to receive(:on_whatsapp).with("#{phone_13d}@s.whatsapp.net").and_return({ 'exists' => false })
+      expect(whatsapp_channel).to receive(:on_whatsapp).with("#{phone_12d}@s.whatsapp.net").and_return({ 'exists' => false })
+
+      expect(lookup(phone_12d).to_h).to eq(exists: false, phone: nil)
+    end
+
+    it 'has no answer when one probe fails, even if the other said no' do
+      allow(whatsapp_channel).to receive(:on_whatsapp).with("#{phone_13d}@s.whatsapp.net").and_return({ 'exists' => false })
+      allow(whatsapp_channel).to receive(:on_whatsapp).with("#{phone_12d}@s.whatsapp.net").and_raise(Net::ReadTimeout)
+
+      expect(lookup).to be_nil
+    end
+
+    it 'has no answer when the provider does not return a hash' do
+      allow(whatsapp_channel).to receive(:on_whatsapp).and_return(nil)
+
+      expect(lookup).to be_nil
+    end
+
+    it 'has no answer for a phone it does not check' do
+      expect(whatsapp_channel).not_to receive(:on_whatsapp)
+
+      expect(lookup('14155551234')).to be_nil
+    end
+  end
 end

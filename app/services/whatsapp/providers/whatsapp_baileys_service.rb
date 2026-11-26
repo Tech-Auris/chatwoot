@@ -515,6 +515,10 @@ class Whatsapp::Providers::WhatsappBaileysService < Whatsapp::Providers::BaseSer
     response.parsed_response&.deep_symbolize_keys
   end
 
+  # A read whose callers treat any failure as "unknown" (the canonical phone resolver, the
+  # compose form's no-WhatsApp warning, the send warm-up). Short timeout so a wedged socket
+  # does not hold a web request, and left out of with_error_handling: a failed lookup must
+  # not mark a working inbox 'close' and trigger a reconnect.
   def on_whatsapp(recipient_id)
     @recipient_id = recipient_id
 
@@ -523,7 +527,8 @@ class Whatsapp::Providers::WhatsappBaileysService < Whatsapp::Providers::BaseSer
       headers: api_headers,
       body: {
         jids: [remote_jid]
-      }.to_json
+      }.to_json,
+      timeout: 10
     )
 
     raise ProviderUnavailableError unless process_response(response)
@@ -1099,7 +1104,6 @@ class Whatsapp::Providers::WhatsappBaileysService < Whatsapp::Providers::BaseSer
                       :received_messages,
                       :group_metadata,
                       :sync_group,
-                      :on_whatsapp,
                       :delete_message,
                       :edit_message,
                       :group_leave,

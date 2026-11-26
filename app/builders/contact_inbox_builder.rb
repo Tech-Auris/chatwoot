@@ -14,7 +14,11 @@ class ContactInboxBuilder
     # pre-2012 accounts silently stopped at "sent".
     force_baileys_canonical_source_id if baileys_wa_channel?
     @source_id ||= generate_source_id
-    create_contact_inbox if source_id.present?
+    return if source_id.blank?
+
+    contact_inbox = create_contact_inbox
+    record_whatsapp_presence(contact_inbox)
+    contact_inbox
   end
 
   private
@@ -65,11 +69,13 @@ class ContactInboxBuilder
   def resolve_canonical_phone_for_baileys
     return unless baileys_wa_channel?
 
-    canonical = Whatsapp::CanonicalPhoneResolverService.new(
+    @whatsapp_checked_at = Time.current
+    @whatsapp_answer = Whatsapp::CanonicalPhoneResolverService.new(
       channel: @inbox.channel,
       phone: @contact.phone_number
-    ).resolve
+    ).lookup
 
+    canonical = @whatsapp_answer&.phone
     return if canonical.blank? || canonical == @contact.phone_number.delete('+')
 
     @contact.update!(phone_number: "+#{canonical}")
@@ -87,6 +93,15 @@ class ContactInboxBuilder
   def force_baileys_canonical_source_id
     resolve_canonical_phone_for_baileys
     @source_id = @contact.phone_number.delete('+').to_s
+  end
+
+  # Keeps the lookup's answer on the contact inbox: a "no" (every BR form said no) flags it,
+  # so the conversation warns that messages will not be delivered; a "yes" clears an older
+  # flag. No answer (lookup failed, inbox down) leaves it as it was.
+  def record_whatsapp_presence(contact_inbox)
+    return if @whatsapp_answer.nil?
+
+    contact_inbox.update!(whatsapp_missing_checked_at: @whatsapp_answer.exists ? nil : @whatsapp_checked_at)
   end
 
   def twilio_source_id

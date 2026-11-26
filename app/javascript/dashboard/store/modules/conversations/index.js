@@ -297,7 +297,10 @@ export const mutations = {
       // `event_metadata.source = 'reaction_toggle'` so we can skip scroll
       // unconditionally — heuristics on `last_non_activity_message` miss the
       // case where newer non-reaction messages exist after the reacted target.
-      const isReactionUpdate = eventMetadata?.source === 'reaction_toggle';
+      // `whatsapp_missing` only moves the no-WhatsApp banner.
+      const isReactionUpdate = ['reaction_toggle', 'whatsapp_missing'].includes(
+        eventMetadata?.source
+      );
       if (_state.selectedChatId === conversation.id && !isReactionUpdate) {
         emitter.emit(BUS_EVENTS.SCROLL_TO_MESSAGE);
       }

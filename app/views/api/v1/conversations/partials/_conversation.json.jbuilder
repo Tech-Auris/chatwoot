@@ -82,6 +82,8 @@ end
 json.last_activity_at conversation.last_activity_at.to_i
 json.group_type conversation.group_type
 json.origem conversation.origem
+# When a lookup found this number has no WhatsApp; nil once the number is known to exist.
+json.whatsapp_missing_checked_at conversation.contact_inbox&.whatsapp_missing_checked_at&.to_i
 json.priority conversation.priority
 json.summary conversation.summary
 json.ai_enabled conversation.ai_status_enabled?

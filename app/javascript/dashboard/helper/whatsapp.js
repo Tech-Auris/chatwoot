@@ -92,3 +92,14 @@ export const messageCapQuota = cap => {
   const used = Number(cap?.used_quota) || 0;
   return { used, total };
 };
+
+/**
+ * Whether the compose form can ask this inbox if a number has WhatsApp. Only Baileys
+ * inboxes look numbers up; on the official API, Meta reports the failure after the send.
+ * The server answers "unknown" when the connection cannot answer.
+ *
+ * @param {{channelType?: string, provider?: string}|null|undefined} inbox - camelCased compose-form inbox
+ * @returns {boolean}
+ */
+export const canCheckWhatsappNumber = inbox =>
+  inbox?.channelType === 'Channel::Whatsapp' && inbox?.provider === 'baileys';

@@ -1166,6 +1166,39 @@ RSpec.describe 'Inboxes API', type: :request do
     end
   end
 
+  describe 'POST /api/v1/accounts/{account.id}/inboxes/:id/on_whatsapp' do
+    let(:channel) { create(:channel_whatsapp, account: account, provider: 'baileys', sync_templates: false, validate_provider_config: false) }
+    let(:path) { "/api/v1/accounts/#{account.id}/inboxes/#{channel.inbox.id}/on_whatsapp" }
+
+    before do
+      allow_any_instance_of(Channel::Whatsapp).to receive(:on_whatsapp) do |_channel, jid| # rubocop:disable RSpec/AnyInstance
+        responses.fetch(jid)
+      end
+    end
+
+    context 'when advisory and both the 13d and the 12d forms have no WhatsApp' do
+      let(:responses) { { '5531998010696@s.whatsapp.net' => { 'exists' => false }, '553198010696@s.whatsapp.net' => { 'exists' => false } } }
+
+      it 'answers exists false' do
+        post path, params: { phone_number: '+5531998010696', advisory: true }, headers: admin.create_new_auth_token, as: :json
+
+        expect(response).to have_http_status(:ok)
+        expect(response.parsed_body).to eq('exists' => false)
+      end
+    end
+
+    context 'when advisory and the lookup fails' do
+      let(:responses) { {} }
+
+      it 'leaves exists out, so the form reads it as unknown' do
+        post path, params: { phone_number: '+5531998010696', advisory: true }, headers: admin.create_new_auth_token, as: :json
+
+        expect(response).to have_http_status(:ok)
+        expect(response.parsed_body).to eq({})
+      end
+    end
+  end
+
   describe 'POST /api/v1/accounts/{account.id}/inboxes/:id/sync_templates' do
     let(:whatsapp_channel) do
       create(:channel_whatsapp, account: account, provider: 'whatsapp_cloud', sync_templates: false, validate_provider_config: false)

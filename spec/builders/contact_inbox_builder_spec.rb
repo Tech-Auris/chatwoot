@@ -178,6 +178,7 @@ describe ContactInboxBuilder do
       end
 
       describe 'Baileys canonical phone resolution' do
+        let(:answer) { Whatsapp::CanonicalPhoneResolverService::Answer }
         let(:baileys_inbox) do
           create(:channel_whatsapp, account: account, provider: 'baileys',
                                     sync_templates: false, validate_provider_config: false).inbox
@@ -185,7 +186,7 @@ describe ContactInboxBuilder do
 
         it 'rewrites the contact phone and source_id to whatever the resolver returns' do
           contact.update!(phone_number: '+5531998010696')
-          resolver = instance_double(Whatsapp::CanonicalPhoneResolverService, resolve: '553198010696')
+          resolver = instance_double(Whatsapp::CanonicalPhoneResolverService, lookup: answer.new(exists: true, phone: '553198010696'))
           allow(Whatsapp::CanonicalPhoneResolverService).to receive(:new).and_return(resolver)
 
           contact_inbox = described_class.new(contact: contact, inbox: baileys_inbox).perform
@@ -196,7 +197,7 @@ describe ContactInboxBuilder do
 
         it 'leaves the contact alone when the resolver returns the same phone' do
           contact.update!(phone_number: '+5531998010696')
-          resolver = instance_double(Whatsapp::CanonicalPhoneResolverService, resolve: '5531998010696')
+          resolver = instance_double(Whatsapp::CanonicalPhoneResolverService, lookup: answer.new(exists: true, phone: '5531998010696'))
           allow(Whatsapp::CanonicalPhoneResolverService).to receive(:new).and_return(resolver)
 
           contact_inbox = described_class.new(contact: contact, inbox: baileys_inbox).perform
@@ -222,7 +223,7 @@ describe ContactInboxBuilder do
         # accounts stayed on the 13d form — outbound stopped at "sent".
         it 'runs the resolver and rewrites source_id even when the caller pre-computes it' do
           contact.update!(phone_number: '+5591984122323')
-          resolver = instance_double(Whatsapp::CanonicalPhoneResolverService, resolve: '559184122323')
+          resolver = instance_double(Whatsapp::CanonicalPhoneResolverService, lookup: answer.new(exists: true, phone: '559184122323'))
           allow(Whatsapp::CanonicalPhoneResolverService).to receive(:new).and_return(resolver)
 
           contact_inbox = described_class.new(
@@ -233,6 +234,74 @@ describe ContactInboxBuilder do
 
           expect(contact.reload.phone_number).to eq('+559184122323')
           expect(contact_inbox.source_id).to eq('559184122323')
+        end
+      end
+
+      describe 'no-WhatsApp flag' do
+        let(:baileys_inbox) do
+          create(:channel_whatsapp, account: account, provider: 'baileys',
+                                    sync_templates: false, validate_provider_config: false).inbox
+        end
+        let(:phone_13d) { '5531998010696' }
+        let(:phone_12d) { '553198010696' }
+
+        before { contact.update!(phone_number: "+#{phone_13d}") }
+
+        def stub_lookup(jid, response)
+          allow(baileys_inbox.channel).to receive(:on_whatsapp).with("#{jid}@s.whatsapp.net").and_return(response)
+        end
+
+        it 'flags the contact inbox when both the 13d and the 12d forms have no WhatsApp' do
+          stub_lookup(phone_13d, { 'exists' => false })
+          stub_lookup(phone_12d, { 'exists' => false })
+
+          freeze_time do
+            contact_inbox = described_class.new(contact: contact, inbox: baileys_inbox).perform
+
+            expect(contact_inbox.reload.whatsapp_missing_checked_at).to eq(Time.current)
+            expect(contact.reload.phone_number).to eq("+#{phone_13d}")
+          end
+        end
+
+        it 'does not flag when the 12d form has WhatsApp' do
+          stub_lookup(phone_13d, { 'exists' => false })
+          stub_lookup(phone_12d, { 'exists' => true, 'jid' => "#{phone_12d}@s.whatsapp.net" })
+
+          contact_inbox = described_class.new(contact: contact, inbox: baileys_inbox).perform
+
+          expect(contact_inbox.reload.whatsapp_missing_checked_at).to be_nil
+          expect(contact_inbox.source_id).to eq(phone_12d)
+        end
+
+        it 'does not flag when the lookup fails' do
+          stub_lookup(phone_13d, { 'exists' => false })
+          allow(baileys_inbox.channel).to receive(:on_whatsapp).with("#{phone_12d}@s.whatsapp.net")
+                                                               .and_raise(Whatsapp::Providers::WhatsappBaileysService::ProviderUnavailableError)
+
+          contact_inbox = described_class.new(contact: contact, inbox: baileys_inbox).perform
+
+          expect(contact_inbox.reload.whatsapp_missing_checked_at).to be_nil
+        end
+
+        it 'clears an older flag when a new lookup finds the number' do
+          existing = create(:contact_inbox, contact: contact, inbox: baileys_inbox, source_id: phone_13d,
+                                            whatsapp_missing_checked_at: 1.day.ago)
+          stub_lookup(phone_13d, { 'exists' => true, 'jid' => "#{phone_13d}@s.whatsapp.net" })
+
+          described_class.new(contact: contact, inbox: baileys_inbox).perform
+
+          expect(existing.reload.whatsapp_missing_checked_at).to be_nil
+        end
+
+        it 'keeps an older flag when the new lookup gets no answer' do
+          checked_at = 1.day.ago.change(usec: 0)
+          existing = create(:contact_inbox, contact: contact, inbox: baileys_inbox, source_id: phone_13d,
+                                            whatsapp_missing_checked_at: checked_at)
+          allow(baileys_inbox.channel).to receive(:on_whatsapp).and_raise(Net::ReadTimeout)
+
+          described_class.new(contact: contact, inbox: baileys_inbox).perform
+
+          expect(existing.reload.whatsapp_missing_checked_at).to eq(checked_at)
         end
       end
     end

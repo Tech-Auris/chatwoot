@@ -1,5 +1,5 @@
 class Conversations::EventDataPresenter < SimpleDelegator
-  def push_data # rubocop:disable Metrics/MethodLength
+  def push_data # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
     {
       additional_attributes: additional_attributes,
       can_reply: can_reply?,
@@ -23,6 +23,7 @@ class Conversations::EventDataPresenter < SimpleDelegator
       follow_up: follow_up_badge,
       waiting_since: waiting_since.to_i,
       messaging_window: messaging_window,
+      whatsapp_missing_checked_at: whatsapp_missing_at,
       **push_timestamps
     }
   end
@@ -39,6 +40,11 @@ class Conversations::EventDataPresenter < SimpleDelegator
   end
 
   private
+
+  # Same field as the conversation partial: when a lookup found the number has no WhatsApp.
+  def whatsapp_missing_at
+    contact_inbox&.whatsapp_missing_checked_at&.to_i
+  end
 
   def push_messages
     [messages.where(account_id: account_id).chat.last&.push_event_data].compact

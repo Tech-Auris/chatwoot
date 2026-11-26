@@ -127,6 +127,7 @@
     "GROUPS_DISABLED_BANNER": "As mensagens de grupo estão desativadas. Ative o suporte completo a grupos (gratuito) para ver e enviar mensagens.",
     "GROUPS_DISABLED_BANNER_NON_ADMIN": "As mensagens de grupo estão desativadas. Entre em contato com o administrador para ativar o suporte completo a grupos.",
     "CONTACT_AI_DISABLED_BANNER": "IA desligada para este contato: ela não responde em nenhuma conversa. Altere no painel do contato.",
+    "WHATSAPP_NUMBER_MISSING_BANNER": "Este número não tinha WhatsApp na verificação de {date}. Mensagens enviadas para ele não são entregues.",
     "GROUPS_DISABLED_CTA": "Saiba como ativar (gratuito)",
     "OLD_INSTAGRAM_INBOX_REPLY_BANNER": "Esta conta do Instagram foi migrada para a nova caixa de entrada do canal do Instagram. Todas as novas mensagens serão mostradas lá. Você não poderá mais enviar mensagens desta conversa.",
     "REPLYING_TO": "Você está respondendo a:",

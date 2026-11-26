@@ -90,6 +90,7 @@ class Contact < ApplicationRecord # rubocop:disable Metrics/ClassLength
   before_validation :prepare_contact_attributes
   after_create_commit :dispatch_create_event, :ip_lookup
   after_update_commit :dispatch_update_event
+  after_update_commit :forget_whatsapp_missing_answers, if: :saved_change_to_phone_number?
   after_destroy_commit :dispatch_destroy_event
   before_save :sync_contact_attributes
 
@@ -278,6 +279,11 @@ class Contact < ApplicationRecord # rubocop:disable Metrics/ClassLength
 
   def dispatch_update_event
     Rails.configuration.dispatcher.dispatch(CONTACT_UPDATED, Time.zone.now, contact: self, changed_attributes: previous_changes)
+  end
+
+  # A "no WhatsApp" answer is about the number that was looked up, not the corrected one.
+  def forget_whatsapp_missing_answers
+    contact_inboxes.where.not(whatsapp_missing_checked_at: nil).find_each { |contact_inbox| contact_inbox.update!(whatsapp_missing_checked_at: nil) }
   end
 
   def dispatch_destroy_event

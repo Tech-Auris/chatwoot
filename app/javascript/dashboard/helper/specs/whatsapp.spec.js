@@ -5,6 +5,7 @@ import {
   isMessageCapped,
   isMessageCapReached,
   messageCapQuota,
+  canCheckWhatsappNumber,
 } from '../whatsapp';
 
 describe('#isReachoutRestricted', () => {
@@ -142,5 +143,29 @@ describe('#messageCapQuota', () => {
       used: 0,
       total: 100,
     });
+  });
+});
+
+describe('#canCheckWhatsappNumber', () => {
+  it('is true for a Baileys WhatsApp inbox', () => {
+    expect(
+      canCheckWhatsappNumber({
+        channelType: 'Channel::Whatsapp',
+        provider: 'baileys',
+      })
+    ).toBe(true);
+  });
+
+  it('is false for the official API and for other channels', () => {
+    expect(
+      canCheckWhatsappNumber({
+        channelType: 'Channel::Whatsapp',
+        provider: 'whatsapp_cloud',
+      })
+    ).toBe(false);
+    expect(canCheckWhatsappNumber({ channelType: 'Channel::Email' })).toBe(
+      false
+    );
+    expect(canCheckWhatsappNumber(null)).toBe(false);
   });
 });
