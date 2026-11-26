@@ -109,7 +109,7 @@ module Whatsapp::BaileysHandlers::Concerns::MessageCreationHandler # rubocop:dis
   # flow could have picked (or created) a different one. Find the row first,
   # then operate on its real `existing.conversation`.
   def mark_existing_reaction_as_removed(sender:)
-    target_external_id = unwrap_ephemeral_message(@raw_message[:message]).dig(:reactionMessage, :key, :id)
+    target_external_id = unwrap_message_content(@raw_message[:message]).dig(:reactionMessage, :key, :id)
     return if target_external_id.blank?
 
     existing = find_existing_reaction(sender, target_external_id)
@@ -154,7 +154,7 @@ module Whatsapp::BaileysHandlers::Concerns::MessageCreationHandler # rubocop:dis
 
   def build_message_content_attributes
     type = message_type
-    msg = unwrap_ephemeral_message(@raw_message[:message])
+    msg = unwrap_message_content(@raw_message[:message])
     content_attributes = { external_created_at: baileys_extract_message_timestamp(@raw_message[:messageTimestamp]) }
     content_attributes[:external_sender_name] = 'WhatsApp' unless incoming?
 
@@ -175,7 +175,7 @@ module Whatsapp::BaileysHandlers::Concerns::MessageCreationHandler # rubocop:dis
 
   def attach_media_to_message
     attachment_file = download_attachment_file
-    msg = unwrap_ephemeral_message(@raw_message[:message])
+    msg = unwrap_message_content(@raw_message[:message])
 
     attachment = @message.attachments.build(
       account_id: @message.account_id,
@@ -196,7 +196,7 @@ module Whatsapp::BaileysHandlers::Concerns::MessageCreationHandler # rubocop:dis
   end
 
   def build_attachment_filename
-    msg = unwrap_ephemeral_message(@raw_message[:message])
+    msg = unwrap_message_content(@raw_message[:message])
     filename = msg.dig(:documentMessage, :fileName) || msg.dig(:documentWithCaptionMessage, :message, :documentMessage, :fileName)
     return filename if filename.present?
 

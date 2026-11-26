@@ -464,6 +464,92 @@ describe Whatsapp::BaileysHandlers::MessagesUpsert do
     end
   end
 
+  describe 'album and wrapped media handling' do
+    let(:phone) { '5511912345678' }
+    let(:lid) { '12345678' }
+    let(:album_marker) { raw_upsert('msg_album_marker', albumMessage: { expectedImageCount: 3, expectedVideoCount: 0 }) }
+
+    def raw_upsert(id, message)
+      {
+        key: { id: id, remoteJid: "#{phone}@s.whatsapp.net", remoteJidAlt: "#{lid}@lid", fromMe: false, addressingMode: 'pn' },
+        pushName: 'Gabriel',
+        messageTimestamp: timestamp,
+        message: { messageContextInfo: { deviceListMetadata: {}, deviceListMetadataVersion: 2 } }.merge(message)
+      }
+    end
+
+    def album_child(id, image_message)
+      stub_request(:get, whatsapp_channel.media_url(id)).to_return(status: 200, body: 'fake image data')
+      raw_upsert(id, associatedChildMessage: { message: { imageMessage: { mimetype: 'image/jpeg' }.merge(image_message) } })
+    end
+
+    def perform_upsert(*raw_messages)
+      params = { webhookVerifyToken: webhook_verify_token, event: 'messages.upsert', data: { type: 'notify', messages: raw_messages } }
+      Whatsapp::IncomingMessageBaileysService.new(inbox: inbox, params: params).perform
+    end
+
+    it 'ignores the album marker and creates no message' do
+      expect { perform_upsert(album_marker) }.not_to change(Message, :count)
+    end
+
+    it 'creates one image message per album item, keeping the caption, and no unsupported message' do
+      children = [
+        album_child('msg_album_child_1', caption: 'Album photo'),
+        album_child('msg_album_child_2', {}),
+        album_child('msg_album_child_3', {})
+      ]
+
+      expect { perform_upsert(album_marker, *children) }.to change(inbox.messages, :count).by(3)
+
+      messages = inbox.messages.order(:id)
+      expect(messages.map(&:is_unsupported)).to all(be_falsey)
+      expect(messages.map { |message| message.attachments.map(&:file_type) }).to all(eq(['image']))
+      expect(messages.first.content).to eq('Album photo')
+    end
+
+    it 'unwraps an album item nested inside an ephemeral message' do
+      stub_request(:get, whatsapp_channel.media_url('msg_nested_wrappers_1')).to_return(status: 200, body: 'fake image data')
+      raw_message = raw_upsert('msg_nested_wrappers_1', ephemeralMessage: {
+                                 message: { associatedChildMessage: { message: { imageMessage: { caption: 'Nested album photo',
+                                                                                                 mimetype: 'image/jpeg' } } } }
+                               })
+
+      expect { perform_upsert(raw_message) }.to change(inbox.messages, :count).by(1)
+
+      message = inbox.messages.last
+      expect(message.content).to eq('Nested album photo')
+      expect(message.is_unsupported).to be_falsey
+      expect(message.attachments.first.file_type).to eq('image')
+    end
+
+    it 'captures the Click-to-WhatsApp ad referral carried by an album item' do
+      ad_reply = { title: 'Agende ja sua Avaliacao', sourceType: 'ad', sourceId: '1120214541917380261',
+                   sourceUrl: 'https://fb.me/criativox', ctwaClid: 'AaRDg86i-z5_xrIOfs9Adr1example' }
+      raw_message = album_child('msg_album_ctwa', caption: 'Album photo', contextInfo: { externalAdReply: ad_reply })
+
+      perform_upsert(raw_message)
+
+      message = inbox.messages.last
+      expect(message.content_attributes['referral']).to include(
+        'source_id' => '1120214541917380261', 'ctwa_clid' => 'AaRDg86i-z5_xrIOfs9Adr1example'
+      )
+      expect(message.conversation.additional_attributes['campaign_referral']).to include('source_id' => '1120214541917380261')
+    end
+
+    it 'unwraps a lottie sticker into a sticker message with media' do
+      stub_request(:get, whatsapp_channel.media_url('msg_lottie_1')).to_return(status: 200, body: 'fake sticker data')
+      raw_message = raw_upsert('msg_lottie_1', lottieStickerMessage: {
+                                 message: { stickerMessage: { mimetype: 'application/was', isLottie: true } }
+                               })
+
+      expect { perform_upsert(raw_message) }.to change(inbox.messages, :count).by(1)
+
+      message = inbox.messages.last
+      expect(message.is_unsupported).to be_falsey
+      expect(message.attachments.first.file_type).to eq('image')
+    end
+  end
+
   describe 'filename extraction' do
     let(:phone) { '5511912345678' }
 
