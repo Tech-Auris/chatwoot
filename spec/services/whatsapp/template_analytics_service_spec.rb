@@ -36,6 +36,18 @@ RSpec.describe Whatsapp::TemplateAnalyticsService do
   end
 
   describe '#call' do
+    it 'lists the most frequent errors among the failed sends' do
+      create_template_message(status: :failed).update!(external_error: '131042: Business eligibility payment issue')
+      create_template_message(status: :failed, source_id: 'wamid.1').update!(external_error: '131042: Business eligibility payment issue')
+      create_template_message(status: :failed).update!(external_error: '(#132001) Template name does not exist in the translation')
+      create_template_message(status: :read, source_id: 'wamid.2')
+
+      result = described_class.new(inbox: inbox, template_name: template_name, template_language: template_language).call
+
+      expect(result[:failure_reasons]).to eq([{ error: '131042: Business eligibility payment issue', count: 2 },
+                                              { error: '(#132001) Template name does not exist in the translation', count: 1 }])
+    end
+
     it 'returns a full funnel breakdown over the requested window' do
       # 5 attempts total in the 30d window:
       # 3 accepted (source_id set) → 1 read, 1 delivered, 1 failed after accept

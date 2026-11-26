@@ -768,6 +768,7 @@ Rails.application.routes.draw do
             end
           end
           resources :ia_human_distribution_reports, only: [:index]
+          resources :message_failure_reports, only: [:index]
           resources :follow_up_reports, only: [:index] do
             collection { get :in_progress }
           end
