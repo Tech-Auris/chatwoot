@@ -399,6 +399,43 @@ describe Whatsapp::IncomingMessageBaileysService do
         expect(message.content_attributes[:external_created_at]).to eq(timestamp)
       end
 
+      # A blocked contact opens no conversation and reaches neither the AI secretary nor
+      # webhooks/automations (all fed by message_created), while the echo of a reply typed
+      # on the clinic's phone is kept so the agent's own answer does not go missing.
+      context 'when the contact is blocked' do
+        let!(:contact) { create(:contact, account: inbox.account, name: 'John Doe', phone_number: '+5511912345678', blocked: true) }
+
+        before do
+          stub_request(:post, %r{/on-whatsapp}).to_return(status: 200, body: { data: [] }.to_json, headers: { 'Content-Type' => 'application/json' })
+          create(:contact_inbox, inbox: inbox, contact: contact, source_id: '12345678')
+          allow(Rails.configuration.dispatcher).to receive(:dispatch).and_call_original
+        end
+
+        it 'files neither the message nor a conversation and dispatches no message_created' do
+          expect { described_class.new(inbox: inbox, params: params).perform }
+            .not_to change(Message, :count)
+
+          expect(inbox.conversations).to be_empty
+          expect(Rails.configuration.dispatcher).not_to have_received(:dispatch).with(Events::Types::MESSAGE_CREATED, any_args)
+        end
+
+        it 'still files the echo of a reply typed on the phone' do
+          raw_message[:key][:fromMe] = true
+
+          described_class.new(inbox: inbox, params: params).perform
+
+          expect(inbox.messages.find_by(source_id: 'msg_123')).to be_outgoing
+        end
+
+        it 'files the message again once the contact is unblocked' do
+          contact.update!(blocked: false)
+
+          described_class.new(inbox: inbox, params: params).perform
+
+          expect(inbox.messages.find_by(source_id: 'msg_123')).to be_incoming
+        end
+      end
+
       context 'when updating contact avatar' do
         it 'enqueues the contact avatar update job for new contacts' do
           described_class.new(inbox: inbox, params: params).perform

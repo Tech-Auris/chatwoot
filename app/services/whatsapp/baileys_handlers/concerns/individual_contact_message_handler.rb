@@ -5,7 +5,7 @@ module Whatsapp::BaileysHandlers::Concerns::IndividualContactMessageHandler
 
   private
 
-  def handle_individual_contact_message # rubocop:disable Metrics/CyclomaticComplexity
+  def handle_individual_contact_message # rubocop:disable Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
     return unless extract_from_jid(type: 'lid')
 
     @lock_acquired = acquire_message_processing_lock
@@ -34,6 +34,7 @@ module Whatsapp::BaileysHandlers::Concerns::IndividualContactMessageHandler
       # Reaction removals don't produce a new Message row; handle them before
       # set_conversation so a blank webhook can't open/create a stray thread.
       next mark_existing_reaction_as_removed(sender: @contact) if reaction_removal?
+      next if Whatsapp::BlockedSender.silenced?(@contact, from_me: !incoming?)
 
       set_conversation
       handle_create_message
