@@ -103,6 +103,29 @@ RSpec.describe Attachment do
     end
   end
 
+  describe 'file analysis' do
+    it 'reads image dimensions with the libvips analyzer' do
+      vips_analyzer = instance_double(ActiveStorage::Analyzer::ImageAnalyzer::Vips, metadata: { width: 10, height: 20 })
+      allow(ActiveStorage::Analyzer::ImageAnalyzer::Vips).to receive(:new).and_return(vips_analyzer)
+      attachment = message.attachments.create!(account_id: message.account_id, file_type: :image)
+      attachment.file.attach(io: Rails.root.join('spec/assets/avatar.png').open, filename: 'avatar.png', content_type: 'image/png')
+      attachment.file.analyze
+
+      expect(attachment.push_event_data).to include(width: 10, height: 20)
+    end
+
+    it 'does not run ffprobe on videos' do
+      allow(ActiveStorage::Analyzer::VideoAnalyzer).to receive(:new).and_call_original
+      attachment = message.attachments.create!(account_id: message.account_id, file_type: :video)
+      attachment.file.attach(io: Rails.root.join('spec/assets/sample.mp4').open, filename: 'sample.mp4', content_type: 'video/mp4')
+      attachment.file.analyze
+
+      expect(ActiveStorage::Analyzer::VideoAnalyzer).not_to have_received(:new)
+      expect(attachment.file.metadata).not_to include(:duration, :width)
+      expect(attachment.push_event_data[:data_url]).to be_present
+    end
+  end
+
   describe 'meta data handling' do
     let(:message) { create(:message) }
 
