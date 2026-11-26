@@ -25,13 +25,14 @@ RSpec.describe 'Super Admin commercial discounts', type: :request do
     expect(response.body).to include('CommercialDiscounts')
   end
 
-  it 'lists every discount and only the one-off products' do
+  it 'lists every discount and the products, flagging the recurring ones' do
     create(:sales_discount, name: 'Antigo', active: false)
 
     get "#{base}/data", as: :json
 
     expect(response.parsed_body['discounts'].pluck('name', 'active')).to eq([['Antigo', false]])
-    expect(response.parsed_body['products']).to eq([{ 'id' => 'prod_setup', 'name' => 'Implantação' }])
+    expect(response.parsed_body['products']).to eq([{ 'id' => 'prod_setup', 'name' => 'Implantação', 'recurring' => false },
+                                                    { 'id' => 'prod_plan', 'name' => 'Plataforma Auris', 'recurring' => true }])
   end
 
   it 'creates a discount on specific products' do

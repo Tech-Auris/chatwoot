@@ -9,7 +9,10 @@
 # Order matters:
 #   1. Waivers (isenções) run first — cuts on specific items: the product-scoped
 #      discounts from Commercial → Descontos, and a coupon scoped to a Stripe
-#      product like "Isenção da Implantação — 100%".
+#      product like "Isenção da Implantação — 100%". Only the part that lands
+#      on one-off lines counts in `waivers_amount`, which the CRM subtracts
+#      from the implementation value; a cut on a recurring line is absorbed by
+#      the subscription.
 #   2. Order-wide discounts (reunião, indicação…) run on what is left and add
 #      up — 10% + 5% is 15% of the same base, not one on top of the other — so
 #      the seller does not double-discount a line a waiver already zeroed.
@@ -42,7 +45,7 @@ class Sales::QuoteCalculatorService
       total: subtotal - discount,
       summary: parts.pluck(:label).join(' + ').presence,
       meeting_discount_amount: expiring_amount(applied),
-      waivers_amount: parts.select { |part| part[:key] == :waiver }.sum { |part| part[:amount] },
+      waivers_amount: parts.sum { |part| part[:waiver].to_i },
       applied_discounts: applied
     )
   end
@@ -57,6 +60,10 @@ class Sales::QuoteCalculatorService
 
   def line_total(item)
     item[:unit_amount].to_i * (item[:quantity].presence || 1).to_i
+  end
+
+  def lines_total(lines)
+    lines.sum { |item| line_total(item) }
   end
 
   def discount_parts(subtotal)
@@ -78,14 +85,17 @@ class Sales::QuoteCalculatorService
   end
 
   # A discount tied to products only touches the lines sold from them; one
-  # whose products are not in the cart does not apply at all.
+  # whose products are not in the cart does not apply at all. `waiver` is the
+  # share that fell on one-off lines.
   def product_discount_parts
     discounts.select { |discount| discount[:stripe_product_ids].present? }.filter_map do |discount|
-      scoped = items.select { |item| discount[:stripe_product_ids].include?(item[:stripe_product_id].to_s) }
-                    .sum { |item| line_total(item) }
+      lines = items.select { |item| discount[:stripe_product_ids].include?(item[:stripe_product_id].to_s) }
+      scoped = lines_total(lines)
       next if scoped.zero?
 
-      { key: :waiver, amount: percent_of(scoped, discount[:percent]), label: discount[:label], discount: discount }
+      one_off = lines_total(lines.reject { |item| item[:recurring] })
+      { amount: percent_of(scoped, discount[:percent]), waiver: percent_of(one_off, discount[:percent]),
+        label: discount[:label], discount: discount }
     end
   end
 
@@ -123,12 +133,12 @@ class Sales::QuoteCalculatorService
 
   def scoped_coupon_part(scoped_subtotal)
     if coupon[:percent_off].to_f.positive?
-      amount = percent_of(scoped_subtotal, coupon[:percent_off])
-      { key: :waiver, amount: [amount, scoped_subtotal].min,
+      amount = [percent_of(scoped_subtotal, coupon[:percent_off]), scoped_subtotal].min
+      { amount: amount, waiver: amount,
         label: "cupom #{coupon_name} (#{format_percent(coupon[:percent_off])}%)" }
     elsif coupon[:amount_off].to_i.positive?
-      { key: :waiver, amount: [coupon[:amount_off].to_i, scoped_subtotal].min,
-        label: "cupom #{coupon_name}" }
+      amount = [coupon[:amount_off].to_i, scoped_subtotal].min
+      { amount: amount, waiver: amount, label: "cupom #{coupon_name}" }
     end
   end
 

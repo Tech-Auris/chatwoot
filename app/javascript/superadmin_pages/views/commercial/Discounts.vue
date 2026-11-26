@@ -62,9 +62,13 @@ const fetchData = async () => {
 onMounted(fetchData);
 
 // A product the discount points at may have been archived in Stripe since;
-// it still shows by id so the scope never silently looks empty.
-const productName = id =>
-  products.value.find(product => product.id === id)?.name || id;
+// it still shows by id so the scope never silently looks empty. A recurring
+// one (the plan) says so, since the cut then repeats on every charge.
+const productName = id => {
+  const product = products.value.find(item => item.id === id);
+  if (!product) return id;
+  return product.recurring ? `${product.name} (recorrente)` : product.name;
+};
 
 const formatPercent = percent => `${Number(percent)}%`;
 
@@ -199,7 +203,7 @@ const save = async () => {
             </label>
             <label class="flex items-center gap-2">
               <input v-model="form.scope" type="radio" value="products" />
-              Produtos específicos (avulsos)
+              Produtos específicos
             </label>
           </div>
 
@@ -236,14 +240,14 @@ const save = async () => {
                   class="w-full text-left px-3 py-1.5 text-sm !text-slate-700 !bg-transparent hover:!bg-slate-100"
                   @click="addProduct(product)"
                 >
-                  {{ product.name }}
+                  {{ productName(product.id) }}
                 </button>
               </li>
               <li
                 v-if="!availableProducts.length"
                 class="px-3 py-1.5 text-sm text-slate-500"
               >
-                Nenhum produto avulso para "{{ productSearch }}".
+                Nenhum produto para "{{ productSearch }}".
               </li>
             </ul>
           </div>
