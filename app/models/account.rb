@@ -14,6 +14,7 @@
 #  environment                      :integer          default("test"), not null
 #  erp_menu_enabled                 :boolean          default(FALSE), not null
 #  feature_flags                    :bigint           default(0), not null
+#  feature_flags_ext_1              :bigint           default(0), not null
 #  funnel_enabled                   :boolean          default(FALSE), not null
 #  help_center_menu_enabled         :boolean          default(FALSE), not null
 #  inbox_view_menu_enabled          :boolean          default(FALSE), not null
@@ -56,7 +57,7 @@ class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
   include Auditable
   auditable account: :id
 
-  # used for single column multi flags
+  # used for multi-flag bitset columns
   include FlagShihTzu
   include Reportable
   include Featurable
