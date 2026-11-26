@@ -68,8 +68,13 @@ const loading = ref(true);
 const failed = ref(false);
 const scale = ref(1);
 const fitScale = ref(1);
-const userZoomed = ref(false);
+// What the view frames while the user hasn't zoomed: `me` (opening the
+// clinic: close on the user's own avatar), `clinic` (the fit button) or
+// `null` once the user zoomed or scrolled the wheel.
+const framing = ref('me');
 const MAX_SCALE = 4;
+// How much closer than "fit" the view opens on the user's avatar.
+const ME_ZOOM = 2;
 // "Fit" frames the clinic only; zooming out shows the garden around it
 // (all of it at `sceneScale`) and then the plan view.
 const sceneScale = ref(1);
@@ -545,8 +550,8 @@ const onKeyDown = event => {
 const onKeyUp = event => avatar?.release(event.key);
 const onBlur = () => avatar?.releaseAll();
 
-// The map fills the area by default; the user can zoom in and out from
-// there (wheel or the +/- control), like in Gather.
+// The map opens close on the user's avatar; the user can zoom in and out
+// from there (wheel or the +/- control), like in Gather, or fit the clinic.
 // Scrolls so the clinic sits in the middle of the view.
 const centerClinic = () =>
   requestAnimationFrame(() => {
@@ -558,15 +563,31 @@ const centerClinic = () =>
       GARDEN * scale.value -
       (box.clientHeight - WORLD.height * scale.value) / 2;
   });
+// Scrolls so the user's avatar sits in the middle of the view.
+const centerMe = () =>
+  requestAnimationFrame(() => {
+    const box = viewport.value;
+    if (!box || !mine.value) return;
+    box.scrollLeft =
+      (mine.value.x + 16 - SCENE.x) * scale.value - box.clientWidth / 2;
+    box.scrollTop =
+      (mine.value.y + 32 - SCENE.y) * scale.value - box.clientHeight / 2;
+  });
+const frame = () => {
+  if (framing.value === 'me' && mine.value) {
+    scale.value = Math.min(MAX_SCALE, fitScale.value * ME_ZOOM);
+    centerMe();
+  } else if (framing.value) {
+    scale.value = fitScale.value;
+    centerClinic();
+  }
+};
 const fit = () => {
   const width = viewport.value?.clientWidth || WORLD.width;
   const height = viewport.value?.clientHeight || WORLD.height;
   fitScale.value = Math.min(width / WORLD.width, height / WORLD.height);
   sceneScale.value = Math.min(width / SCENE.width, height / SCENE.height);
-  if (!userZoomed.value) {
-    scale.value = fitScale.value;
-    centerClinic();
-  }
+  frame();
 };
 
 // Keeps the point under the cursor (or the center) in place while zooming.
@@ -580,7 +601,7 @@ const zoomTo = (next, anchor) => {
   };
   const worldX = (box.scrollLeft + point.x - rect.left) / scale.value;
   const worldY = (box.scrollTop + point.y - rect.top) / scale.value;
-  userZoomed.value = true;
+  framing.value = null;
   scale.value = target;
   requestAnimationFrame(() => {
     box.scrollLeft = worldX * target - (point.x - rect.left);
@@ -595,9 +616,8 @@ const onWheel = event => {
   });
 };
 const resetZoom = () => {
-  userZoomed.value = false;
-  scale.value = fitScale.value;
-  centerClinic();
+  framing.value = 'clinic';
+  frame();
 };
 
 const toWorld = event => {
@@ -698,6 +718,7 @@ onMounted(async () => {
     sprites = {};
     await rebuild();
     await startAvatar();
+    frame();
     animationFrame = requestAnimationFrame(animate);
     rotateTimer = setInterval(() => {
       rotation.value += 1;
