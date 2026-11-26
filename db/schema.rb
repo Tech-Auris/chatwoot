@@ -1354,6 +1354,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_27_190000) do
     t.boolean "ai_schedule_enabled", default: false, null: false
     t.bigint "ai_schedule_team_id"
     t.boolean "ai_paused", default: false, null: false
+    t.boolean "drop_assignee_outside_team_on_reopen", default: false, null: false
     t.index ["account_id"], name: "index_inboxes_on_account_id"
     t.index ["ai_schedule_team_id"], name: "index_inboxes_on_ai_schedule_team_id"
     t.index ["channel_id", "channel_type"], name: "index_inboxes_on_channel_id_and_channel_type"

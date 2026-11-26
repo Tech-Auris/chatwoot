@@ -461,6 +461,7 @@ pt_BR:
         self_assigned: '%{user_name} atribuiu a si mesmo essa conversa'
         assigned: 'Atribuído a %{assignee_name} por %{user_name}'
         removed: 'Conversa desatribuída por %{user_name}'
+        removed_not_in_conversation_team: 'Conversa desatribuída de %{assignee_name} porque não é membro do time da conversa, %{team_name}'
       team:
         assigned: 'Atribuído a %{team_name} por %{user_name}'
         assigned_with_assignee: 'Atribuído a %{assignee_name} via %{team_name} por %{user_name}'

@@ -501,6 +501,7 @@ class Message < ApplicationRecord
     return unless incoming?
     return if reaction?
 
+    conversation.check_assignee_team_on_reopen
     conversation.open! if conversation.snoozed? || conversation.pending?
 
     reopen_resolved_conversation if conversation.resolved?
