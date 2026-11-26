@@ -11,6 +11,7 @@ RSpec.describe Sales::ClickupProspectSearchService do
       task(id: '86a2', name: 'João Pereira', email: 'joao@exemplo.com', phone: '+5511987654321')
     ]
   end
+  let(:list_statuses) { ['novo lead', 'negociação', 'GANHO', 'perdido'].map { |status| { 'status' => status } } }
 
   def task(overrides = {})
     defaults = { email: nil, phone: nil, clinic: nil, status: 'negociação', reservation_due: nil, fbclid: nil }
@@ -20,7 +21,7 @@ RSpec.describe Sales::ClickupProspectSearchService do
 
     {
       'id' => id, 'name' => name, 'url' => "https://app.clickup.com/t/#{id}", 'date_created' => '1791419344534',
-      'status' => { 'status' => status, 'color' => '#fff' },
+      'status' => { 'status' => status, 'color' => '#fff' }, 'list' => { 'id' => '901317316771' },
       'custom_fields' => [
         { 'id' => described_class::EMAIL_FIELD_ID, 'value' => email },
         { 'id' => described_class::PHONE_FIELD_ID, 'value' => phone },
@@ -33,30 +34,18 @@ RSpec.describe Sales::ClickupProspectSearchService do
 
   before do
     Rails.cache.clear
+    allow(client).to receive(:get_list).and_return({ 'statuses' => list_statuses })
     allow(client).to receive(:list_tasks).and_return({ 'tasks' => tasks, 'last_page' => true })
   end
 
   describe '#search' do
-    # ClickUp keeps won and lost as open columns of the pipeline, so the API
-    # still hands them over — building a plan for either makes no sense.
-    context 'when the deal is already closed' do
-      let(:tasks) do
-        [
-          task(id: '86a1', name: 'Fabio Rocha', email: 'fabio@exemplo.com', status: 'negociação'),
-          task(id: '86a2', name: 'Fabio Rocha', email: 'fabio@exemplo.com', status: 'perdido'),
-          task(id: '86a3', name: 'Fabio Rocha', email: 'fabio@exemplo.com', status: 'GANHO')
-        ]
-      end
+    # ClickUp keeps won and lost as open columns of the pipeline. The lost one
+    # alone holds thousands of tasks, so asking for it would push live deals
+    # past the page limit — the walk asks only for the deals still in play.
+    it 'walks only the statuses of deals still in play' do
+      service.search('felicia')
 
-      it 'offers only the deals still in play' do
-        expect(service.search('fabio').pluck(:task_id)).to eq(['86a1'])
-      end
-
-      # The reservations report mirrors what happened to a deal, so it has to
-      # keep seeing the won and the lost ones.
-      it 'still finds a closed deal by its task id' do
-        expect(service.find('86a3')).to include(status: 'GANHO')
-      end
+      expect(client).to have_received(:list_tasks).with(list_id: '901317316771', page: 0, statuses: ['novo lead', 'negociação'])
     end
 
     it 'finds by the task name' do
@@ -78,6 +67,18 @@ RSpec.describe Sales::ClickupProspectSearchService do
 
     it 'ignores accents and case' do
       expect(service.search('CLINICA').pluck(:task_id)).to eq(['86a1'])
+    end
+
+    context 'when the lead name carries a partner brand' do
+      let(:tasks) { [task(id: '86ahrvwuz', name: 'Farly Goldincision Leads'), task(id: '86a2', name: 'Farly Souza')] }
+
+      it 'finds by every word typed, in any order' do
+        expect(service.search('goldincision farly').pluck(:task_id)).to eq(['86ahrvwuz'])
+      end
+
+      it 'finds the brand typed with a space the name does not have' do
+        expect(service.search('Gold Incision').pluck(:task_id)).to eq(['86ahrvwuz'])
+      end
     end
 
     it 'answers nothing to an empty term instead of the whole pipeline' do
@@ -105,8 +106,18 @@ RSpec.describe Sales::ClickupProspectSearchService do
       expect(service.find('86a5')).to include(fbclid: 'IwAR9', created_at: 1_791_419_344_534)
     end
 
+    # The reservations report mirrors what happened to a deal, so it has to
+    # keep seeing the won and the lost ones the cached walk leaves out.
+    it 'reads a closed deal straight from ClickUp' do
+      allow(client).to receive(:get_task).with('86a3').and_return(task(id: '86a3', name: 'Fabio Rocha', status: 'GANHO'))
+
+      expect(service.find('86a3')).to include(task_id: '86a3', status: 'GANHO')
+    end
+
     it 'returns nothing for a task outside the pipeline' do
-      expect(service.find('desconhecida')).to be_nil
+      allow(client).to receive(:get_task).with('86z9').and_return(task(id: '86z9', name: 'Outra').merge('list' => { 'id' => '999' }))
+
+      expect(service.find('86z9')).to be_nil
     end
 
     it 'reads the reservation deadline from the "Vencimento da Reserva" custom field' do
@@ -122,12 +133,24 @@ RSpec.describe Sales::ClickupProspectSearchService do
 
   describe 'pagination' do
     it 'keeps asking for pages until ClickUp says it is the last' do
-      allow(client).to receive(:list_tasks).with(list_id: anything, page: 0)
+      allow(client).to receive(:list_tasks).with(hash_including(page: 0))
                                            .and_return({ 'tasks' => [tasks.first], 'last_page' => false })
-      allow(client).to receive(:list_tasks).with(list_id: anything, page: 1)
+      allow(client).to receive(:list_tasks).with(hash_including(page: 1))
                                            .and_return({ 'tasks' => [tasks.second], 'last_page' => true })
 
       expect(service.search('a').length).to eq(2)
+    end
+
+    # The walk used to stop at ten pages, and every deal past the thousandth
+    # task was silently missing from the picker.
+    it 'reaches a deal past the tenth page' do
+      allow(client).to receive(:list_tasks) do |page:, **|
+        next { 'tasks' => [task(id: '86last', name: 'Farly')], 'last_page' => true } if page == 11
+
+        { 'tasks' => [task(id: "86p#{page}", name: 'Outro')], 'last_page' => false }
+      end
+
+      expect(service.search('farly').pluck(:task_id)).to eq(['86last'])
     end
   end
 
