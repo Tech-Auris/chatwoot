@@ -280,29 +280,37 @@ const blinking = now => {
 // The screen, inside the frame of the sprite (64 × 58, with its stand).
 const TV = { left: 2, top: 2, width: 60, height: 39 };
 const TV_RIGHT = TV.left + TV.width - 2;
-const FOOTER = 31;
+// Rows: the header, the ticket called now right under it, a separator and
+// the tickets called before, one per line.
+const HEADER = 5;
+const NOW = { top: TV.top + HEADER, height: 11 };
+const SEPARATOR = NOW.top + NOW.height + 1;
+const EARLIER = 3;
+
+// A ticket and its room on one line: the ticket on the left, the room on
+// the right, under the SENHA and SALA labels.
+const writeCall = (paint, call, y, color, font = SMALL) => {
+  write(paint, call.ticket, 4, y, color, font);
+  const room = String(call.room);
+  write(paint, room, TV_RIGHT - textWidth(room, font), y, color, font);
+};
 
 function drawCallScreen(paint, { now }) {
-  const [call, ...before] = callsAt(now, 3);
+  const [call, ...before] = callsAt(now, 1 + EARLIER);
   const blink = blinking(now);
+  paint(PALE, TV.left, TV.top, TV.width, TV.height);
   // Header: what each column is.
-  paint(TEAL, TV.left, TV.top, TV.width, 5);
+  paint(TEAL, TV.left, TV.top, TV.width, HEADER);
   write(paint, 'SENHA', 4, TV.top, WHITE);
   write(paint, 'SALA', TV_RIGHT - textWidth('SALA'), TV.top, WHITE);
-  // The ticket and the room, in the middle of their block.
-  const middle = TV.top + 5;
-  paint(blink ? TEAL : PALE, TV.left, middle, TV.width, FOOTER - 1 - middle);
-  const y = middle + Math.floor((FOOTER - 1 - middle - 7) / 2);
-  write(paint, call.ticket, 4, y, blink ? WHITE : INK, BIG);
-  const room = String(call.room);
-  const roomColor = blink ? WHITE : DARK_TEAL;
-  write(paint, room, TV_RIGHT - textWidth(room, BIG), y, roomColor, BIG);
-  // Footer, under a line: the two tickets called before.
-  paint(TEAL, TV.left, FOOTER - 1, TV.width, 1);
-  paint(PALE, TV.left, FOOTER, TV.width, TV.top + TV.height - FOOTER);
-  before.forEach((previous, i) => {
-    write(paint, `${previous.ticket} ${previous.room}`, 4 + i * 30, 33, GRAY);
-  });
+  // The ticket called now.
+  if (blink) paint(TEAL, TV.left, NOW.top, TV.width, NOW.height);
+  writeCall(paint, call, NOW.top + 2, blink ? WHITE : INK, BIG);
+  // The separator and the tickets called before.
+  paint(DARK_TEAL, 4, SEPARATOR, TV.width - 4, 1);
+  before.forEach((previous, i) =>
+    writeCall(paint, previous, SEPARATOR + 3 + i * 6, GRAY)
+  );
 }
 
 const LIVE = {
