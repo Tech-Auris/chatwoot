@@ -5,6 +5,7 @@ secretary = @account.account_secretary
 if @sections.include?('account')
   json.account do
     json.status @account.status
+    json.extract! @account, :name_owner, :phone_contact, :email_contact
     json.flags @account.auris_settings
     json.erp_source @account.erp_source && { id: @account.erp_source.id, name: @account.erp_source.name }
   end

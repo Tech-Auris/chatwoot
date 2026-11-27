@@ -53,7 +53,10 @@ RSpec.describe 'Super admin account setup API', type: :request do
     end
 
     it 'returns the account flags and the secretary setup to a super admin who is not a member' do
+      account.update!(name_owner: 'Dra. Ana', phone_contact: '+5511988887777')
       body = context_body
+
+      expect(body['account']).to include('name_owner' => 'Dra. Ana', 'phone_contact' => '+5511988887777', 'email_contact' => nil)
 
       expect(body['account']['flags']).to include('multi_language_ai' => true, 'ai_status_uses_attribute' => true)
       expect(body['secretary']).to include('version' => 'v3.5', 'simulator_version' => nil, 'ai_provider' => 'OpenAI',
