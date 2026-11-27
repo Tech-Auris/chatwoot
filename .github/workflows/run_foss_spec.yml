@@ -19,6 +19,21 @@ jobs:
       - name: Run Rubocop
         run: bundle exec rubocop --parallel
 
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      - name: Run Brakeman
+        # Non-blocking until the existing findings are triaged
+        continue-on-error: true
+        run: bundle exec brakeman -q --no-pager
+      - name: Run bundle-audit
+        # Accepted advisories are listed in .bundler-audit.yml
+        run: bundle exec bundle-audit check --update
+
   lint-frontend:
     runs-on: blacksmith-4vcpu-ubuntu-2404
     steps:
@@ -26,7 +41,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: useblacksmith/setup-node@v5
         with:
-          node-version: 24
+          node-version-file: .nvmrc
           cache: 'pnpm'
       - name: Install pnpm dependencies
         run: pnpm i
@@ -41,7 +56,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: useblacksmith/setup-node@v5
         with:
-          node-version: 24
+          node-version-file: .nvmrc
           cache: 'pnpm'
       - name: Install pnpm dependencies
         run: pnpm i
@@ -92,7 +107,7 @@ jobs:
 
       - uses: useblacksmith/setup-node@v5
         with:
-          node-version: 24
+          node-version-file: .nvmrc
           cache: 'pnpm'
 
       - name: Install pnpm dependencies

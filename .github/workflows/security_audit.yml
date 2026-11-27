@@ -1,0 +1,40 @@
+name: Security Audit
+permissions:
+  contents: read
+on:
+  schedule:
+    - cron: '0 9 * * *' # daily at 06:00 BRT
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - develop
+    paths:
+      - Gemfile.lock
+      - .bundler-audit.yml
+      - package.json
+      - pnpm-lock.yaml
+      - .github/workflows/security_audit.yml
+
+jobs:
+  bundle-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+      - name: Install bundler-audit
+        run: gem install bundler-audit -v 0.9.1
+      - name: Run bundle-audit
+        # Accepted advisories are listed in .bundler-audit.yml
+        run: bundle-audit check --update
+
+  pnpm-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Run pnpm audit
+        # Accepted advisories are listed in package.json (pnpm.auditConfig.ignoreGhsas)
+        run: pnpm audit --prod --audit-level high
