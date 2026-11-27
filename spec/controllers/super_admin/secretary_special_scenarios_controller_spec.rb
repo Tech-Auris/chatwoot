@@ -16,6 +16,35 @@ RSpec.describe 'Super Admin secretary special scenarios', type: :request do
     expect(response.body).not_to include('de_outra_conta')
   end
 
+  it "shows the account's scenarios on the account page, with a link to add one" do
+    create(:secretary_special_scenario, account: account, name: 'convenio')
+    create(:secretary_special_scenario, name: 'de_outra_conta')
+
+    get "/super_admin/accounts/#{account.id}"
+
+    expect(response.body).to include("/super_admin/secretary_special_scenarios/#{scenario.id}/edit")
+    expect(response.body.index('convenio')).to be < response.body.index('reembolso')
+    expect(response.body).not_to include('de_outra_conta')
+    expect(response.body).to include("/super_admin/secretary_special_scenarios/new?account_id=#{account.id}")
+  end
+
+  it 'starts the form opened from the account page on that account' do
+    get '/super_admin/secretary_special_scenarios/new', params: { account_id: account.id }
+
+    option = Nokogiri::HTML(response.body).at_css("select#secretary_special_scenario_account_id option[value='#{account.id}']")
+    expect(option['selected']).to be_present
+  end
+
+  it 'refuses a name the account already has' do
+    expect do
+      post '/super_admin/secretary_special_scenarios', params: {
+        secretary_special_scenario: { account_id: account.id, name: 'Reembolso', instrucao: 'Duplicado' }
+      }
+    end.not_to change(SecretarySpecialScenario, :count)
+
+    expect(response.body).to include('already exists in this account')
+  end
+
   it 'creates a scenario and refreshes the account cache' do
     expect do
       post '/super_admin/secretary_special_scenarios', params: {
@@ -24,6 +53,7 @@ RSpec.describe 'Super Admin secretary special scenarios', type: :request do
       }
     end.to have_enqueued_job(SecretarySpecialScenarios::RefreshCacheJob).with(account.id)
 
+    expect(response).to redirect_to("/super_admin/accounts/#{account.id}")
     expect(account.secretary_special_scenarios.find_by(name: 'gestante')).to have_attributes(instrucao: 'Encaminhe para a obstetra.')
   end
 
@@ -40,6 +70,7 @@ RSpec.describe 'Super Admin secretary special scenarios', type: :request do
   it 'edits a scenario' do
     patch "/super_admin/secretary_special_scenarios/#{scenario.id}", params: { secretary_special_scenario: { instrucao: 'Nova instrução' } }
 
+    expect(response).to redirect_to("/super_admin/accounts/#{account.id}")
     expect(scenario.reload.instrucao).to eq('Nova instrução')
   end
 

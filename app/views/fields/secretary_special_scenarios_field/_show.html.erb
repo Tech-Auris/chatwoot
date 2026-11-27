@@ -1,0 +1,9 @@
+<div class="space-y-3">
+  <% field.scenarios.each do |scenario| %>
+    <div>
+      <%= link_to scenario.name, edit_super_admin_secretary_special_scenario_path(scenario) %>
+      <div class="text-sm text-n-slate-11"><%= scenario.situacao.to_s.truncate(160) %></div>
+    </div>
+  <% end %>
+  <%= link_to 'Add scenario', new_super_admin_secretary_special_scenario_path(account_id: field.resource.id), class: 'button' %>
+</div>

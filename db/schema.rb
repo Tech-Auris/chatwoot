@@ -2291,7 +2291,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_27_190500) do
     t.text "instrucao"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["account_id", "name"], name: "index_secretary_special_scenarios_on_account_id_and_name"
+    t.index "account_id, lower((name)::text)", name: "index_secretary_special_scenarios_on_account_id_and_lower_name", unique: true
   end
 
   create_table "secretary_versions", force: :cascade do |t|

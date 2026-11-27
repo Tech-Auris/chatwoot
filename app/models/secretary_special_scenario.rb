@@ -20,7 +20,7 @@
 #
 # Indexes
 #
-#  index_secretary_special_scenarios_on_account_id_and_name  (account_id,name)
+#  index_secretary_special_scenarios_on_account_id_and_lower_name  (account_id, lower((name)::text)) UNIQUE
 #
 # Foreign Keys
 #
@@ -29,7 +29,12 @@
 class SecretarySpecialScenario < ApplicationRecord
   belongs_to :account
 
+  # The Retriever matches the name exactly and takes the oldest row, so a
+  # repeated name would keep serving the old instruction.
+  normalizes :name, with: ->(name) { name.strip }
+
   validates :name, presence: true
+  validates :name, uniqueness: { scope: :account_id, case_sensitive: false }
 
   after_commit :refresh_cache
 
