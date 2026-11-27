@@ -147,6 +147,7 @@
       "CONVERSATION_CREATED": "Conversa Criada",
       "CONVERSATION_UPDATED": "Conversa Atualizada",
       "MESSAGE_CREATED": "Mensagem Criada",
+      "MESSAGE_EDITED": "Mensagem Editada",
       "CONVERSATION_RESOLVED": "Conversa Resolvida",
       "CONVERSATION_OPENED": "Conversa Aberta",
       "FUNNEL_UPDATED": "Funil Atualizado"
@@ -182,6 +183,11 @@
       "INCOMING": "Mensagem Recebida",
       "OUTGOING": "Mensagem de Saída"
     },
+    "SENDER_TYPES": {
+      "CONTACT": "Contato",
+      "USER": "Atendente",
+      "AGENT_BOT": "Bot"
+    },
     "PRIORITY_TYPES": {
       "NONE": "Nenhuma",
       "LOW": "Baixa",
@@ -192,6 +198,8 @@
     "ATTRIBUTES": {
       "MESSAGE_TYPE": "Tipo da Mensagem",
       "PRIVATE_NOTE": "Mensagem Privada",
+      "SENDER": "Remetente",
+      "SENDER_TYPE": "Tipo de remetente",
       "MESSAGE_CONTAINS": "A mensagem contém",
       "EMAIL": "E-mail",
       "INBOX": "Caixa de Entrada",

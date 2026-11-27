@@ -89,6 +89,10 @@ class Message < ApplicationRecord
   # NOTE: Allow skipping message flooding validation for bulk operations like imports/cloning
   attr_accessor :skip_message_flooding_validation
 
+  # Set by a caller that writes an edit before the channel has taken it, so the edit is announced
+  # only once the channel accepts it. See `#announce_edit`.
+  attr_accessor :defer_edit_announcement
+
   enum message_type: { incoming: 0, outgoing: 1, activity: 2, template: 3 }
   enum content_type: {
     text: 0,
@@ -293,6 +297,12 @@ class Message < ApplicationRecord
     save!
   end
 
+  # An agent's edit is written before the channel takes it and written back when the channel refuses.
+  # The caller sets `defer_edit_announcement` and announces here once the channel has accepted.
+  def announce_edit
+    send_edited_event if edited_in_place?
+  end
+
   def send_update_event
     Rails.configuration.dispatcher.dispatch(MESSAGE_UPDATED, Time.zone.now, message: self, performed_by: Current.executed_by,
                                                                             previous_changes: previous_changes)
@@ -484,6 +494,18 @@ class Message < ApplicationRecord
     return if previous_changes.blank?
 
     send_update_event
+    send_edited_event if edited_in_place? && !defer_edit_announcement
+  end
+
+  # The body changed and the row is marked as edited. Undoing a failed edit writes the body back with
+  # the marker off, and a redelivered edit writes the same body (no change), so neither announces.
+  def edited_in_place?
+    previous_changes.key?('content') && is_edited
+  end
+
+  def send_edited_event
+    Rails.configuration.dispatcher.dispatch(MESSAGE_EDITED, Time.zone.now, message: self, performed_by: Current.executed_by,
+                                                                           previous_changes: previous_changes)
   end
 
   def send_reply

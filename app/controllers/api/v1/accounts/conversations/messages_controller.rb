@@ -68,11 +68,10 @@ class Api::V1::Accounts::Conversations::MessagesController < Api::V1::Accounts::
     return render json: { error: 'You can only edit your own messages' }, status: :forbidden unless editable_by_current_user?
 
     original_content = message.content
-    # Only save previous_content on first edit to preserve the original message
-    previous_content_to_save = message.is_edited ? message.previous_content : original_content
-    message.update!(content: new_content, is_edited: true, previous_content: previous_content_to_save)
+    write_edit(new_content)
 
     edit_message_on_channel(new_content, original_content)
+    message.announce_edit
 
     @message = message.reload
   end
@@ -110,6 +109,15 @@ class Api::V1::Accounts::Conversations::MessagesController < Api::V1::Accounts::
     @conversation.inbox.channel.delete_message(message, conversation: @conversation)
   rescue StandardError => e
     Rails.logger.error "Failed to delete message on channel: #{e.message}"
+  end
+
+  # The write is optimistic: the rescue in `edit_message_on_channel` writes the body back when the channel
+  # refuses. Automations only hear about the edit once the channel has accepted it.
+  def write_edit(new_content)
+    # Only save previous_content on first edit to preserve the original message
+    previous_content_to_save = message.is_edited ? message.previous_content : message.content
+    message.defer_edit_announcement = true
+    message.update!(content: new_content, is_edited: true, previous_content: previous_content_to_save)
   end
 
   def edit_message_on_channel(new_content, original_content)

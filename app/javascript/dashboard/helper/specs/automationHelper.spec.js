@@ -179,6 +179,35 @@ describe('getConditionOptions', () => {
     ).toEqual(testOptions);
   });
 
+  it('returns sender type options for sender_type', () => {
+    const senderTypeOptions = [
+      { id: 'Contact', name: 'Contact' },
+      { id: 'User', name: 'Agent' },
+      { id: 'AgentBot', name: 'Bot' },
+    ];
+    expect(
+      helpers.getConditionOptions({
+        senderTypeOptions,
+        customAttributes,
+        type: 'sender_type',
+      })
+    ).toEqual(senderTypeOptions);
+  });
+
+  it('returns the agents, AI user included, for sender_id', () => {
+    const agents = [
+      { id: 1, name: 'IA | Auris' },
+      { id: 2, name: 'Maria' },
+    ];
+    expect(
+      helpers.getConditionOptions({
+        agents,
+        customAttributes,
+        type: 'sender_id',
+      })
+    ).toEqual(agents);
+  });
+
   // Stages carry `name` where the shared mapper reads `title`; going through it
   // would list every stage with an empty label.
   it('returns the funnel stages with their names', () => {
@@ -260,6 +289,9 @@ describe('getDefaultConditions', () => {
       },
     ];
     expect(helpers.getDefaultConditions('message_created')).toEqual(
+      messageCreatedModel
+    );
+    expect(helpers.getDefaultConditions('message_edited')).toEqual(
       messageCreatedModel
     );
     expect(helpers.getDefaultConditions()).toEqual(genericConditionModel);

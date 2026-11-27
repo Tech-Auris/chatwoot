@@ -156,6 +156,101 @@ RSpec.describe AutomationRules::ConditionsFilterService do
       end
     end
 
+    context 'when filtering by the message sender' do
+      let(:agent) { create(:user, account: account, role: :agent) }
+      let(:ai_user) { create(:user, account: account, role: :agent, name: 'IA | Auris') }
+      let(:options) { { message: message, changed_attributes: {} } }
+
+      # "Sender type is Agent AND Sender is not IA | Auris": a human took over the conversation.
+      before do
+        allow(Conversation).to receive(:ai_user_id).and_return(ai_user.id)
+        rule.update!(conditions: [
+                       { 'values': ['User'], 'attribute_key': 'sender_type', 'query_operator': 'AND', 'filter_operator': 'equal_to' },
+                       { 'values': [Conversation.ai_user_id], 'attribute_key': 'sender_id', 'query_operator': nil,
+                         'filter_operator': 'not_equal_to' }
+                     ])
+      end
+
+      it 'matches a human agent reply' do
+        message.update!(sender: agent, message_type: :outgoing)
+
+        expect(described_class.new(rule, conversation, options).perform).to be(true)
+      end
+
+      it 'does not match the AI user reply' do
+        message.update!(sender: ai_user, message_type: :outgoing)
+
+        expect(described_class.new(rule, conversation, options).perform).to be(false)
+      end
+
+      it 'does not match a contact message' do
+        message.update!(sender: conversation.contact)
+
+        expect(described_class.new(rule, conversation, options).perform).to be(false)
+      end
+
+      it 'does not match a message without a sender' do
+        message.update!(sender: nil, message_type: :outgoing)
+
+        expect(described_class.new(rule, conversation, options).perform).to be(false)
+      end
+
+      it 'matches contact messages on sender type Contact' do
+        rule.update!(conditions: [{ 'values': ['Contact'], 'attribute_key': 'sender_type', 'query_operator': nil, 'filter_operator': 'equal_to' }])
+        message.update!(sender: conversation.contact)
+
+        expect(described_class.new(rule, conversation, options).perform).to be(true)
+      end
+
+      it 'matches bot messages on sender type AgentBot' do
+        rule.update!(conditions: [{ 'values': ['AgentBot'], 'attribute_key': 'sender_type', 'query_operator': nil, 'filter_operator': 'equal_to' }])
+        message.update!(sender: create(:agent_bot, account: account), message_type: :outgoing)
+
+        expect(described_class.new(rule, conversation, options).perform).to be(true)
+      end
+
+      # sender_id is polymorphic: a contact holding the agent's id must not match a rule about that agent.
+      it 'does not match a contact holding the agent id' do
+        rule.update!(conditions: [{ 'values': [agent.id], 'attribute_key': 'sender_id', 'query_operator': nil, 'filter_operator': 'equal_to' }])
+        message.update!(sender_type: 'Contact', sender_id: agent.id)
+
+        expect(described_class.new(rule, conversation, options).perform).to be(false)
+      end
+
+      it 'matches the agent on sender_id alone' do
+        rule.update!(conditions: [{ 'values': [agent.id], 'attribute_key': 'sender_id', 'query_operator': nil, 'filter_operator': 'equal_to' }])
+        message.update!(sender: agent, message_type: :outgoing)
+
+        expect(described_class.new(rule, conversation, options).perform).to be(true)
+      end
+    end
+
+    context 'when an account attribute shares its name with a message attribute' do
+      let(:options) { { message: message, changed_attributes: {} } }
+
+      before do
+        create(:custom_attribute_definition, attribute_key: 'sender_id', account: account,
+                                             attribute_model: 'conversation_attribute', attribute_display_type: 'text')
+        conversation.update!(custom_attributes: { sender_id: 'crm-42' })
+        rule.update!(conditions: [{ 'values': ['crm-42'], 'attribute_key': 'sender_id', 'query_operator': nil,
+                                    'filter_operator': 'equal_to', 'custom_attribute_type': 'conversation_attribute' }])
+      end
+
+      it 'resolves the account attribute instead of the message column' do
+        expect(described_class.new(rule, conversation, options).perform).to be(true)
+      end
+
+      it 'keeps a checkbox account attribute boolean instead of downcasing it' do
+        create(:custom_attribute_definition, attribute_key: 'sender_type', account: account,
+                                             attribute_model: 'conversation_attribute', attribute_display_type: 'checkbox')
+        conversation.update!(custom_attributes: { sender_type: true })
+        rule.update!(conditions: [{ 'values': [true], 'attribute_key': 'sender_type', 'query_operator': nil,
+                                    'filter_operator': 'equal_to', 'custom_attribute_type': 'conversation_attribute' }])
+
+        expect(described_class.new(rule, conversation, options).perform).to be(true)
+      end
+    end
+
     context 'when conditions based on labels' do
       before do
         conversation.add_labels(['bug'])

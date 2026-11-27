@@ -906,6 +906,22 @@ describe Whatsapp::ZapiHandlers::ReceivedCallback do
       expect(original_message.content_attributes['previous_content']).to eq('Hello World')
     end
 
+    it 'runs the "Message Edited" rules on the edited text and not the "Message Created" ones' do
+      service.perform
+      conditions = [{ 'attribute_key' => 'content', 'filter_operator' => 'contains', 'values' => ['Edited'], 'query_operator' => nil }]
+      create(:automation_rule, account: inbox.account, event_name: 'message_edited', conditions: conditions,
+                               actions: [{ 'action_name' => 'add_label', 'action_params' => ['editada'] }])
+      create(:automation_rule, account: inbox.account, event_name: 'message_created', conditions: conditions,
+                               actions: [{ 'action_name' => 'add_label', 'action_params' => ['criada'] }])
+      edited_params = params.merge(isEdit: true, text: { message: 'Hello World - Edited' })
+
+      perform_enqueued_jobs(only: EventDispatcherJob) do
+        Whatsapp::IncomingMessageZapiService.new(inbox: inbox, params: edited_params).perform
+      end
+
+      expect(Message.last.conversation.reload.label_list).to eq(['editada'])
+    end
+
     it 'calls channel received_messages method for incoming messages' do
       allow(inbox.channel).to receive(:received_messages)
       service.perform

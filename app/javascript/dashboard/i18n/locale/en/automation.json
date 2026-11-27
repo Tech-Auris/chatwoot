@@ -147,6 +147,7 @@
       "CONVERSATION_CREATED": "Conversation Created",
       "CONVERSATION_UPDATED": "Conversation Updated",
       "MESSAGE_CREATED": "Message Created",
+      "MESSAGE_EDITED": "Message Edited",
       "CONVERSATION_RESOLVED": "Conversation Resolved",
       "CONVERSATION_OPENED": "Conversation Opened",
       "FUNNEL_UPDATED": "Funnel Updated"
@@ -182,6 +183,11 @@
       "INCOMING": "Incoming Message",
       "OUTGOING": "Outgoing Message"
     },
+    "SENDER_TYPES": {
+      "CONTACT": "Contact",
+      "USER": "Agent",
+      "AGENT_BOT": "Bot"
+    },
     "PRIORITY_TYPES": {
       "NONE": "None",
       "LOW": "Low",
@@ -192,6 +198,8 @@
     "ATTRIBUTES": {
       "MESSAGE_TYPE": "Message Type",
       "PRIVATE_NOTE": "Private Note",
+      "SENDER": "Sender",
+      "SENDER_TYPE": "Sender Type",
       "MESSAGE_CONTAINS": "Message Contains",
       "EMAIL": "Email",
       "INBOX": "Inbox",

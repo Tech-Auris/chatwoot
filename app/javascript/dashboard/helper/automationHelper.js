@@ -6,6 +6,7 @@ import {
 } from 'dashboard/routes/dashboard/settings/automation/operators';
 import {
   DEFAULT_MESSAGE_CREATED_CONDITION,
+  MESSAGE_LEVEL_EVENTS,
   DEFAULT_CONVERSATION_CONDITION,
   DEFAULT_OTHER_CONDITION,
   DEFAULT_ACTIONS,
@@ -153,6 +154,7 @@ export const getConditionOptions = ({
   type,
   priorityOptions,
   messageTypeOptions,
+  senderTypeOptions,
   origemOptions,
 }) => {
   if (isCustomAttributeCheckbox(customAttributes, type)) {
@@ -175,6 +177,9 @@ export const getConditionOptions = ({
     country_code: countries,
     message_type: messageTypeOptions,
     private_note: booleanFilterOptions,
+    // The AI user ("IA | Auris") is an agent too, so "Sender is not IA" tells a human reply apart.
+    sender_id: agents,
+    sender_type: senderTypeOptions,
     priority: priorityOptions,
     group_type: [
       { id: 'individual', name: 'Individual' },
@@ -223,7 +228,7 @@ export const getFileName = (action, files = []) => {
 };
 
 export const getDefaultConditions = eventName => {
-  if (eventName === 'message_created') {
+  if (MESSAGE_LEVEL_EVENTS.includes(eventName)) {
     return structuredClone(DEFAULT_MESSAGE_CREATED_CONDITION);
   }
   if (
