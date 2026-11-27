@@ -81,6 +81,7 @@ class AccountDashboard < Administrate::BaseDashboard
     settings_macros_menu_enabled: Field::Boolean,
     account_users: Field::HasMany,
     account_prompts: AccountPromptsField,
+    secretary_special_scenarios: SecretarySpecialScenariosField,
     account_integrations: AccountIntegrationsField,
     account_auris_configs: AccountAurisConfigsField,
     custom_attributes: Field::String
@@ -134,6 +135,7 @@ class AccountDashboard < Administrate::BaseDashboard
     follow_up
     ai_config
     account_prompts
+    secretary_special_scenarios
     account_integrations
     account_auris_configs
     conversations
