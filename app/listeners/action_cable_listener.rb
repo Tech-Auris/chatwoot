@@ -73,14 +73,15 @@ class ActionCableListener < BaseListener # rubocop:disable Metrics/ClassLength
     push_provider_connection(account, account.managers, inbox, privileged)
   end
 
-  # reach-out lock and new-chat cap are not credential-sensitive (unlike qr_data_url), so they
-  # ride the base hash shared by all role broadcasts. Without this, a connection.update push
-  # would drop the restriction/cap banners after the frontend wholesale-replaces the object.
+  # reach-out lock, new-chat cap and send stall are not credential-sensitive (unlike qr_data_url), so
+  # they ride the base hash shared by all role broadcasts. Without this, a connection.update push
+  # would drop the restriction/cap/stall banners after the frontend wholesale-replaces the object.
   def base_provider_connection(provider_connection)
     {
       connection: provider_connection['connection'],
       reachout_time_lock: provider_connection['reachout_time_lock'].presence,
-      new_chat_cap: provider_connection['new_chat_cap'].presence
+      new_chat_cap: provider_connection['new_chat_cap'].presence,
+      send_stall: provider_connection['send_stall'].presence
     }.compact
   end
 

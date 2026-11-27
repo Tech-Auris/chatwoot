@@ -32,13 +32,15 @@ module Whatsapp::BaileysHandlers::ConnectionUpdate
   def provider_connection_payload(data)
     current = inbox.channel.provider_connection || {}
     next_connection = data[:connection] || current['connection']
+    stall = send_stall_payload(data, current)
 
     {
       connection: next_connection,
       qr_data_url: resolve_qr_data_url(data, current, next_connection),
       pairing_code: resolve_pairing_code(data, current, next_connection),
-      error: data[:error] ? I18n.t("errors.inboxes.channel.provider_connection.#{data[:error]}", default: data[:error].to_s.humanize) : nil,
+      error: connection_error(data, stall),
       quarantine: quarantine_payload(data),
+      send_stall: stall,
       reachout_time_lock: reachout_time_lock_payload(data),
       # new_chat_cap never rides a connection.update (it arrives via message-capping.update / the
       # poll). update_provider_connection! replaces provider_connection wholesale, so without
@@ -65,6 +67,33 @@ module Whatsapp::BaileysHandlers::ConnectionUpdate
     return current['coverage_until'] if next_connection != 'open' || current['connection'] == 'open'
 
     inbox.messages.where.not(source_id: nil).maximum(:created_at)&.iso8601
+  end
+
+  # A preserved stall keeps its sentence too: re-derived from the stall rather than copied from
+  # the stored error, which could be an unrelated one.
+  def connection_error(data, stall)
+    return I18n.t("errors.inboxes.channel.provider_connection.#{data[:error]}", default: data[:error].to_s.humanize) if data[:error]
+
+    I18n.t('errors.inboxes.channel.provider_connection.send_stall_detected') if stall.present?
+  end
+
+  # Rides only the send_stall_detected webhook: the connection is receiving but every send times
+  # out. The provider reports it once per episode, so unrelated updates preserve it; only the
+  # connection reaching `open` again (a new socket) clears it.
+  def send_stall_payload(data, current)
+    raw = data[:sendStall]
+    if raw.blank?
+      return nil if data[:connection] == 'open' && data[:error].blank?
+
+      return current['send_stall']
+    end
+
+    {
+      consecutive_timeouts: raw[:consecutiveTimeouts],
+      stalled_for_ms: raw[:stalledForMs],
+      action: raw[:action],
+      until: raw[:until]
+    }.compact
   end
 
   # Rides only the reconnect_loop_detected webhook (baileys-api quarantines a phone after a

@@ -10,10 +10,30 @@ class SendReplyJob < ApplicationJob
   retry_on ::Whatsapp::Providers::TransientError,
            attempts: 3,
            wait: ->(executions) { [5, 15].fetch(executions - 1, 15).seconds } do |job, error|
-    Message.find_by(id: job.arguments.first)&.update!(
-      status: :failed,
-      external_error: error.meta_message
-    )
+    fail_message(job.arguments.first, error.meta_message)
+  end
+
+  # Retryable WhatsApp (Baileys) send errors: timeouts, a stalled connection, the provider being
+  # unavailable. When the attempts run out the message must not be left on "sent", so it is
+  # marked failed with the reason. Disjoint from TransientError (Cloud) above.
+  #
+  # Declared BEFORE the MessageAlreadyProcessing handler: retry_on is built on rescue_from,
+  # which tries the LAST matching declaration first, so a broad class declared after a
+  # specific one would shadow it.
+  retry_on ::Whatsapp::Providers::Errors::Error, wait: :polynomially_longer, attempts: 4 do |job, error|
+    Rails.logger.error "SendReplyJob exhausted retries for message #{job.arguments.first}: #{error.message}"
+    fail_message(job.arguments.first, error.message)
+  end
+
+  # baileys-api answers 409 while another worker holds the idempotency lock for this message.
+  # A longer, fixed wait keeps the conflict from burning the retries before the lock clears.
+  retry_on ::Whatsapp::Providers::Errors::MessageAlreadyProcessing, wait: 60.seconds, attempts: 3 do |job, error|
+    Rails.logger.error "SendReplyJob gave up on message #{job.arguments.first}: still processing elsewhere"
+    fail_message(job.arguments.first, error.message)
+  end
+
+  def self.fail_message(message_id, reason)
+    Message.find_by(id: message_id)&.update_under_lock!(status: :failed, external_error: reason)
   end
 
   CHANNEL_SERVICES = {

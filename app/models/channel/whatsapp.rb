@@ -218,6 +218,9 @@ class Channel::Whatsapp < ApplicationRecord # rubocop:disable Metrics/ClassLengt
     data[:health] = provider_connection['health'] if provider_connection['health'].present?
     data[:reachout_time_lock] = provider_connection['reachout_time_lock'] if provider_connection['reachout_time_lock'].present?
     data[:new_chat_cap] = provider_connection['new_chat_cap'] if provider_connection['new_chat_cap'].present?
+    # Agent-visible: a stall carries no credential, and `connection` still reads 'open' throughout,
+    # so without it the conversation has nothing to warn the agent with.
+    data[:send_stall] = provider_connection['send_stall'] if provider_connection['send_stall'].present?
     # Auris: managers also need the QR/error to manage Baileys pairings, not just administrators.
     if Current.account_user&.administrator? || Current.account_user&.manager?
       data[:qr_data_url] = provider_connection['qr_data_url']

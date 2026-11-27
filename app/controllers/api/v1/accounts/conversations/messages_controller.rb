@@ -23,20 +23,22 @@ class Api::V1::Accounts::Conversations::MessagesController < Api::V1::Accounts::
   end
 
   def destroy
-    ActiveRecord::Base.transaction do
+    # The row lock serializes this with a send still in flight, and the `source_id` is read inside it:
+    # either we get there first and the send revokes the message when it persists the `source_id`, or
+    # the send got there first and we see the real `source_id` here. Exactly one side revokes.
+    reached_provider = false
+    message.with_lock do
       message.update!(content: I18n.t('conversations.messages.deleted'), content_type: :text, content_attributes: { deleted: true })
       message.attachments.destroy_all
+      reached_provider = message.source_id.present?
     end
-    delete_message_on_channel
+    delete_message_on_channel if reached_provider
   end
 
   def retry
     return if message.blank?
-    return head :unprocessable_entity unless message.failed? && (message.outgoing? || message.template?)
+    return head :unprocessable_entity unless reset_message_for_retry
 
-    service = Messages::StatusUpdateService.new(message, 'sent')
-    service.perform
-    message.update!(content_attributes: {}, source_id: nil)
     ::SendReplyJob.perform_later(message.id)
   rescue StandardError => e
     render_could_not_create_error(e.message)
@@ -105,11 +107,23 @@ class Api::V1::Accounts::Conversations::MessagesController < Api::V1::Accounts::
 
   def delete_message_on_channel
     return unless @conversation.inbox.channel.respond_to?(:delete_message)
-    return if message.source_id.blank?
 
-    @conversation.inbox.channel.delete_message(message, conversation: @conversation)
-  rescue StandardError => e
-    Rails.logger.error "Failed to delete message on channel: #{e.message}"
+    ::Messages::DeleteOnChannelJob.perform_later(message.id)
+  end
+
+  # Shares the lock the DELETE endpoint takes: a delete landing between the `deleted?` check and the
+  # `content_attributes` reset would have its flag wiped, and the retry would push the placeholder.
+  def reset_message_for_retry
+    retryable = false
+    message.with_lock do
+      next if message.deleted?
+      next unless message.failed? && (message.outgoing? || message.template?)
+
+      retryable = true
+      Messages::StatusUpdateService.new(message, 'sent').perform
+      message.update!(content_attributes: {}, source_id: nil)
+    end
+    retryable
   end
 
   def edit_message_on_channel(new_content, original_content)
