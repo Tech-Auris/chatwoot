@@ -14,6 +14,13 @@ RSpec.describe VirtualClinic::AnswerService do
       { 'name' => name, 'description' => name, 'inputSchema' => { 'type' => 'object', 'properties' => { 'account_id' => {} } } }
     end
   end
+  let(:end_message_callbacks) { [] }
+
+  # One OpenAI call ending, as RubyLLM reports it to on_end_message.
+  def openai_call(input:, output:, cached: nil)
+    end_message_callbacks.last.call(RubyLLM::Message.new(role: :assistant, content: 'x', input_tokens: input, output_tokens: output,
+                                                         cached_tokens: cached))
+  end
 
   before do
     allow(Integrations::Openai::KeyValidator).to receive(:valid?).and_return(true)
@@ -24,13 +31,18 @@ RSpec.describe VirtualClinic::AnswerService do
     allow(Llm::Config).to receive(:with_api_key).with('clinic-key').and_yield(context)
     allow(chat).to receive_messages(with_instructions: chat, with_tools: chat, add_message: chat)
     allow(chat).to receive(:on_tool_call).and_yield(double(name: 'atendimento_agora', arguments: { 'account_id' => 1 })) # rubocop:disable RSpec/VerifiedDoubles
-    allow(chat).to receive(:ask).with(question.content) { double(content: reply, input_tokens: 900, output_tokens: 120) } # rubocop:disable RSpec/VerifiedDoubles
+    allow(chat).to receive(:on_end_message) { |&block| (end_message_callbacks << block) && chat }
+    allow(chat).to receive(:ask).with(question.content) do
+      openai_call(input: 900, output: 120)
+      double(content: reply) # rubocop:disable RSpec/VerifiedDoubles
+    end
   end
 
   it 'answers with the clinic key and the persona tools only, and pushes the answer to the user' do
     described_class.new(answer).perform
 
-    expect(answer.reload).to have_attributes(status: 'done', content: reply, input_tokens: 900, output_tokens: 120, model: 'gpt-4.1-mini')
+    expect(answer.reload).to have_attributes(status: 'done', content: reply, input_tokens: 900, output_tokens: 120, model: 'gpt-4.1-mini',
+                                             llm_calls: 1)
     expect(answer.tool_calls).to eq([{ 'name' => 'atendimento_agora', 'arguments' => {} }])
     expect(chat).to have_received(:with_tools) { |*tools| expect(tools.map(&:name)).to eq(%w[atendimento_agora buscar_conversas]) }
     expect(ActionCableBroadcastJob).to have_been_enqueued.with([user.pubsub_token], 'virtual_clinic.message.updated',
@@ -112,13 +124,43 @@ RSpec.describe VirtualClinic::AnswerService do
     expect(chat).to have_received(:add_message).with(role: :assistant, content: 'Olá!')
   end
 
-  it 'retries once on an empty answer, then gives up with a friendly message' do
-    allow(chat).to receive(:ask) { double(content: '', input_tokens: 1, output_tokens: 0) } # rubocop:disable RSpec/VerifiedDoubles
+  it 'adds up every OpenAI call of the answer and prices the cached input apart' do
+    allow(chat).to receive(:ask).with(question.content) do
+      openai_call(input: 3000, output: 50)
+      end_message_callbacks.last.call(RubyLLM::Message.new(role: :tool, content: '{"total":7}', tool_call_id: 'call_1'))
+      openai_call(input: 1000, cached: 2000, output: 120)
+      double(content: reply) # rubocop:disable RSpec/VerifiedDoubles
+    end
+
+    described_class.new(answer).perform
+
+    # gpt-4.1-mini: 4000 × US$0.40 + 2000 cached × US$0.10 + 170 out × US$1.60, per million tokens
+    expect(answer.reload).to have_attributes(llm_calls: 2, input_tokens: 4000, cached_tokens: 2000, output_tokens: 170,
+                                             cost_usd: BigDecimal('0.002072'))
+  end
+
+  it 'retries once on an empty answer, then gives up with a friendly message, keeping what both tries spent' do
+    allow(chat).to receive(:ask) do
+      openai_call(input: 500, output: 0)
+      double(content: '') # rubocop:disable RSpec/VerifiedDoubles
+    end
 
     described_class.new(answer).perform
 
     expect(chat).to have_received(:ask).twice
-    expect(answer.reload).to have_attributes(status: 'failed', content: described_class::EMPTY_ANSWER)
+    expect(answer.reload).to have_attributes(status: 'failed', content: described_class::EMPTY_ANSWER, llm_calls: 2, input_tokens: 1000)
+  end
+
+  it 'keeps what an answer spent before it failed' do
+    allow(chat).to receive(:ask) do
+      openai_call(input: 700, output: 10)
+      raise RubyLLM::Error.new(nil, 'timeout')
+    end
+
+    described_class.new(answer).perform
+
+    expect(answer.reload).to have_attributes(status: 'failed', content: described_class::DATA_UNAVAILABLE, llm_calls: 1, input_tokens: 700,
+                                             output_tokens: 10)
   end
 
   it 'tells the clinic to check its key when OpenAI refuses it' do
@@ -126,7 +168,7 @@ RSpec.describe VirtualClinic::AnswerService do
 
     described_class.new(answer).perform
 
-    expect(answer.reload).to have_attributes(status: 'failed', content: described_class::KEY_REFUSED)
+    expect(answer.reload).to have_attributes(status: 'failed', content: described_class::KEY_REFUSED, llm_calls: 0, cost_usd: 0)
   end
 
   it 'fails softly when the MCP is down' do

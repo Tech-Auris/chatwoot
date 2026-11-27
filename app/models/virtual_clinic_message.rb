@@ -4,8 +4,11 @@
 #
 #  id            :bigint           not null, primary key
 #  attachments   :jsonb            not null
+#  cached_tokens :integer
 #  content       :text
+#  cost_usd      :decimal(12, 6)
 #  input_tokens  :integer
+#  llm_calls     :integer
 #  model         :string
 #  output_tokens :integer
 #  role          :integer          not null
