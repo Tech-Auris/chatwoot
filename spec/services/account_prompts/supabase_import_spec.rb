@@ -6,14 +6,13 @@ RSpec.describe AccountPrompts::SupabaseImport do
   let!(:other_inbox) { create(:inbox, account: account) }
   let!(:third_inbox) { create(:inbox, account: account) }
   let(:general_account) { create(:account) }
-  let!(:internal_account) { create(:account) }
+  let!(:internal_account) { Account.find_by(id: 150) || create(:account, id: 150) }
   let!(:internal_inbox) { create(:inbox, account: internal_account) }
   let(:foreign_inbox) { create(:inbox) }
   let(:cliente_csv) { Rails.root.join('tmp', "account_prompts_cliente_#{SecureRandom.hex(4)}.csv") }
   let(:inbox_csv) { Rails.root.join('tmp', "account_prompts_inbox_#{SecureRandom.hex(4)}.csv") }
 
   before do
-    stub_const("#{described_class}::INTERNAL_ACCOUNTS", { 150 => internal_account.id })
     CSV.open(cliente_csv, 'w') do |csv|
       csv << %w[id ai_prompt_system_message]
       csv << [account.id, nil]
@@ -60,7 +59,7 @@ RSpec.describe AccountPrompts::SupabaseImport do
     )
   end
 
-  it 'keeps the cliente prompt as the general one, remapping the internal clients' do
+  it 'keeps the cliente prompt as the general one, with the cliente id as the account id' do
     run(apply: true)
 
     expect(general_account.account_prompts.sole).to have_attributes(name: 'Geral', ai_prompt_system_message: 'Só o geral', inbox_ids: [])

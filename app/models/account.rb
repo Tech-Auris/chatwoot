@@ -10,6 +10,7 @@
 #  campaigns_sms_menu_enabled       :boolean          default(FALSE), not null
 #  custom_attributes                :jsonb
 #  domain                           :string(100)
+#  email_contact                    :string
 #  environment                      :integer          default("test"), not null
 #  erp_menu_enabled                 :boolean          default(FALSE), not null
 #  feature_flags                    :bigint           default(0), not null
@@ -23,6 +24,8 @@
 #  mcp_enabled_at                   :datetime
 #  multi_language_ai                :boolean          default(FALSE), not null
 #  name                             :string           not null
+#  name_owner                       :string
+#  phone_contact                    :string
 #  settings                         :jsonb
 #  settings_macros_menu_enabled     :boolean          default(FALSE), not null
 #  status                           :integer          default("active")
@@ -123,6 +126,7 @@ class Account < ApplicationRecord # rubocop:disable Metrics/ClassLength
   has_many :secretary_confirmation_send_logs, dependent: :delete_all
   has_many :account_prompts, dependent: :delete_all
   has_many :account_integrations, dependent: :delete_all
+  has_many :account_auris_configs, dependent: :delete_all
   has_many :internal_chat_categories, class_name: 'InternalChat::Category', dependent: :destroy_async
   has_many :internal_chat_channels, class_name: 'InternalChat::Channel', dependent: :destroy_async
   has_many :funnel_stage_changes, dependent: :destroy_async

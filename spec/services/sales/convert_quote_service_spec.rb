@@ -30,6 +30,14 @@ RSpec.describe Sales::ConvertQuoteService do
     expect(account.reload.stripe_customer_id).to eq('cus_1')
   end
 
+  it 'records the customer as who answers for the clinic' do
+    quote.update!(prospect_phone: '+5511988887777')
+    account = described_class.new(quote: quote).perform.account.reload
+
+    expect(account).to have_attributes(name_owner: 'Felicia Macedo', phone_contact: '+5511988887777',
+                                       email_contact: 'contato@clinicacinco.com.br')
+  end
+
   it 'gives the payer a login on the new account' do
     account = described_class.new(quote: quote).perform.account
 

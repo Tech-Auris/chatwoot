@@ -125,7 +125,7 @@ class SuperAdmin::AccountsController < SuperAdmin::ApplicationController
   def merge_ai_config(permitted_params)
     return if params[:ai_config].blank?
 
-    ai_config = params.require(:ai_config).permit(*Account::AI_CONFIG_FIELDS.keys)
+    ai_config = params.require(:ai_config).permit(*Account::AI_CONFIG_FIELDS.keys, mensagens_fixas: [])
     stored = params[:id] && requested_resource.ai_config
     return if stored.nil? && Account.cast_ai_config(ai_config) == Account.cast_ai_config({})
 

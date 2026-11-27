@@ -42,13 +42,16 @@ class Sales::ConvertQuoteService
   #
   # The customer is the account's manager; Auris's own user (Super Admin →
   # Settings → Commercial) is its administrator. Auris sets the account up,
-  # so the sign-up questionnaire (`onboarding_step`) is skipped. The AI setup
-  # starts at its defaults (AccountAiConfig), so n8n reads it from here and not
-  # from the `cliente` row it creates.
+  # so the sign-up questionnaire (`onboarding_step`) is skipped. The customer
+  # also answers for the clinic (owner and contact), as the `account.created`
+  # webhook tells n8n. The AI setup starts at its defaults (AccountAiConfig), so
+  # n8n reads it from here and not from the `cliente` row it creates.
   def build_account
     customer, account = AccountBuilder.new(**builder_attributes).perform
     account.update!(locale: ACCOUNT_LOCALE, reporting_timezone: REPORTING_TIMEZONE, funnel_enabled: true,
-                    custom_attributes: account.custom_attributes.except('onboarding_step'), ai_config: {})
+                    custom_attributes: account.custom_attributes.except('onboarding_step'),
+                    name_owner: quote.prospect_name.presence || customer.name, phone_contact: quote.prospect_phone,
+                    email_contact: quote.prospect_email, ai_config: {})
     account.update!(stripe_customer_id: quote.stripe_customer_id) if quote.stripe_customer_id.present?
     account.account_users.find_by!(user: customer).update!(role: :manager)
     add_auris_admin(account)

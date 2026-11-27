@@ -53,7 +53,10 @@ RSpec.describe 'Super admin account setup API', type: :request do
     end
 
     it 'returns the account flags and the secretary setup to a super admin who is not a member' do
+      account.update!(name_owner: 'Dra. Ana', phone_contact: '+5511988887777')
       body = context_body
+
+      expect(body['account']).to include('name_owner' => 'Dra. Ana', 'phone_contact' => '+5511988887777', 'email_contact' => nil)
 
       expect(body['account']['flags']).to include('multi_language_ai' => true, 'ai_status_uses_attribute' => true)
       expect(body['secretary']).to include('version' => 'v3.5', 'simulator_version' => nil, 'ai_provider' => 'OpenAI',
@@ -75,6 +78,15 @@ RSpec.describe 'Super admin account setup API', type: :request do
 
       expect(context_body['ai_config']).to include('prompt_identity' => 'Você é Lia', 'bounce_seconds' => 35, 'flag_audio_on_off' => true,
                                                    'time_padrao_de_escala' => nil)
+    end
+
+    it 'returns the n8n configs with the value the account gets' do
+      folder = create(:auris_config, config_key: 'GDrive.RootFolderId', default_value: '1')
+      create(:auris_config, config_key: 'Secretaria.BounceSeconds', default_value: '40')
+      create(:account_auris_config, account: account, auris_config: folder, value: 'pasta-da-clinica')
+
+      expect(context_body['n8n_configs']).to eq([{ 'key' => 'GDrive.RootFolderId', 'value' => 'pasta-da-clinica', 'own' => true },
+                                                 { 'key' => 'Secretaria.BounceSeconds', 'value' => '40', 'own' => false }])
     end
 
     it 'returns the prompts with their inboxes, the scenarios and the resources' do

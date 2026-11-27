@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe SecretarySpecialScenarios::SupabaseImport do
   let(:account) { create(:account) }
-  let!(:internal_account) { Account.find_by(id: 19) || create(:account, id: 19) }
+  let!(:internal_account) { Account.find_by(id: 150) || create(:account, id: 150) }
   let(:csv_path) { Rails.root.join('tmp', "secretary_special_scenarios_import_#{SecureRandom.hex(4)}.csv") }
 
   before do
@@ -25,7 +25,7 @@ RSpec.describe SecretarySpecialScenarios::SupabaseImport do
     expect(SecretarySpecialScenario.count).to eq(0)
   end
 
-  it "replaces each account's scenarios in CSV order, remapping the internal clients" do
+  it "replaces each account's scenarios in CSV order, with the cliente id as the account id" do
     create(:secretary_special_scenario, account: account, name: 'antigo')
 
     results = described_class.new(csv_path: csv_path, apply: true).perform

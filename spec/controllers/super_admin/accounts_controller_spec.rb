@@ -392,7 +392,8 @@ RSpec.describe 'Super Admin accounts API', type: :request do
       expect(response).to have_http_status(:redirect)
       expect(account.reload.ai_config).to eq(
         'prompt_identity' => 'Você é Lia', 'bounce_seconds' => 0, 'flag_audio_on_off' => false,
-        'chatwoot_id_conversa_alerta' => nil, 'mensagem_de_escala_para_o_usuario' => nil, 'time_padrao_de_escala' => 29
+        'chatwoot_id_conversa_alerta' => nil, 'mensagem_de_escala_para_o_usuario' => nil, 'time_padrao_de_escala' => 29,
+        'calendar_instructions' => nil, 'mensagens_fixas' => nil
       )
     end
 
@@ -411,11 +412,33 @@ RSpec.describe 'Super Admin accounts API', type: :request do
       expect(account.reload.ai_config).to be_nil
     end
 
+    it 'saves the fixed messages as a list, dropping blank inputs' do
+      put "/super_admin/accounts/#{account.id}",
+          params: { account: { name: account.name },
+                    ai_config: blank_ai_config.merge('mensagens_fixas' => ['Vim pelo anúncio', '', "Oi!\nQuero o cupom"]) }
+
+      expect(account.reload.ai_config['mensagens_fixas']).to eq(['Vim pelo anúncio', "Oi!\nQuero o cupom"])
+    end
+
+    it 'keeps an account without the AI setup without it when the fixed messages are blank too' do
+      put "/super_admin/accounts/#{account.id}",
+          params: { account: { name: account.name }, ai_config: blank_ai_config.merge('mensagens_fixas' => ['', '']) }
+
+      expect(account.reload.ai_config).to be_nil
+    end
+
     it 'selects Sim on the audio flag of an account without the AI setup' do
       get "/super_admin/accounts/#{account.id}/edit"
 
       expect(response.body).to match(%r{<option selected="selected" value="true">Sim</option>})
       expect(response.body).not_to include('(vazio)')
+    end
+
+    it 'saves who answers for the clinic' do
+      put "/super_admin/accounts/#{account.id}",
+          params: { account: { name: account.name, name_owner: 'Dra. Ana', phone_contact: '+5511988887777', email_contact: 'ana@clinica.com' } }
+
+      expect(account.reload).to have_attributes(name_owner: 'Dra. Ana', phone_contact: '+5511988887777', email_contact: 'ana@clinica.com')
     end
 
     it 'renders the AI setup on the edit and show pages' do

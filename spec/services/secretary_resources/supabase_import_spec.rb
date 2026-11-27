@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe SecretaryResources::SupabaseImport do
   let(:account) { create(:account) }
-  let!(:internal_account) { Account.find_by(id: 19) || create(:account, id: 19) }
+  let!(:internal_account) { Account.find_by(id: 150) || create(:account, id: 150) }
   let(:csv_path) { Rails.root.join('tmp', "secretary_resources_import_#{SecureRandom.hex(4)}.csv") }
 
   before do
@@ -26,7 +26,7 @@ RSpec.describe SecretaryResources::SupabaseImport do
     expect(SecretaryResource.count).to eq(0)
   end
 
-  it "replaces each account's resources, remapping the internal clients" do
+  it "replaces each account's resources, with the cliente id as the account id" do
     create(:secretary_resource, account: account, key: 'antigo')
 
     results = described_class.new(csv_path: csv_path, apply: true).perform

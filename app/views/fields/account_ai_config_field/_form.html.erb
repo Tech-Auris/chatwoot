@@ -6,6 +6,17 @@
     Identidade (prompt_identity)
     <%= text_area_tag 'ai_config[prompt_identity]', field.value('prompt_identity'), rows: 4 %>
   </label>
+  <label class="flex flex-col gap-1 text-sm text-slate-700">
+    Instruções de agenda (calendar_instructions)
+    <%= text_area_tag 'ai_config[calendar_instructions]', field.value('calendar_instructions'), rows: 4 %>
+  </label>
+  <div class="flex flex-col gap-1 text-sm text-slate-700">
+    Mensagens fixas (mensagens_fixas)
+    <span class="text-xs text-slate-500">Se a primeira mensagem da conversa contiver um destes textos, a secretária não responde. Deixe em branco os que não serão usados.</span>
+    <% (Array(field.value('mensagens_fixas')) + Array.new(2, '')).each do |message| %>
+      <%= text_area_tag 'ai_config[mensagens_fixas][]', message, rows: 2, id: nil %>
+    <% end %>
+  </div>
   <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
     <label class="flex flex-col gap-1 text-sm text-slate-700">
       Bounce em segundos (bounce_seconds)

@@ -48,6 +48,10 @@ class AccountDashboard < Administrate::BaseDashboard
     }),
     environment: EnvironmentField.with_options(collection: [%w[Test test], %w[Production production]]),
     average_ticket: Field::Number.with_options(decimals: 2, step: 0.01),
+    # Who answers for the clinic, from the Supabase `cliente` table.
+    name_owner: Field::String,
+    phone_contact: Field::String,
+    email_contact: Field::Email,
     # The ERP the clinic schedules in, with a shortcut to its integration.
     erp_source_id: ErpSourceField,
     # `searchable: false` is required: `reporting_timezone` is a
@@ -78,6 +82,7 @@ class AccountDashboard < Administrate::BaseDashboard
     account_users: Field::HasMany,
     account_prompts: AccountPromptsField,
     account_integrations: AccountIntegrationsField,
+    account_auris_configs: AccountAurisConfigsField,
     custom_attributes: Field::String
   }.merge(enterprise_attribute_types).freeze
 
@@ -118,6 +123,9 @@ class AccountDashboard < Administrate::BaseDashboard
     locale
     status
     environment
+    name_owner
+    phone_contact
+    email_contact
     average_ticket
     erp_source_id
     reporting_timezone
@@ -127,6 +135,7 @@ class AccountDashboard < Administrate::BaseDashboard
     ai_config
     account_prompts
     account_integrations
+    account_auris_configs
     conversations
     account_users
   ] + enterprise_show_page_attributes).freeze
@@ -147,6 +156,9 @@ class AccountDashboard < Administrate::BaseDashboard
     locale
     status
     environment
+    name_owner
+    phone_contact
+    email_contact
     average_ticket
     erp_source_id
     reporting_timezone
