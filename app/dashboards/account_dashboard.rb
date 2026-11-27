@@ -78,6 +78,7 @@ class AccountDashboard < Administrate::BaseDashboard
     account_users: Field::HasMany,
     account_prompts: AccountPromptsField,
     account_integrations: AccountIntegrationsField,
+    account_auris_configs: AccountAurisConfigsField,
     custom_attributes: Field::String
   }.merge(enterprise_attribute_types).freeze
 
@@ -127,6 +128,7 @@ class AccountDashboard < Administrate::BaseDashboard
     ai_config
     account_prompts
     account_integrations
+    account_auris_configs
     conversations
     account_users
   ] + enterprise_show_page_attributes).freeze

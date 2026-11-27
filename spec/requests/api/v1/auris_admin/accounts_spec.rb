@@ -77,6 +77,15 @@ RSpec.describe 'Super admin account setup API', type: :request do
                                                    'time_padrao_de_escala' => nil)
     end
 
+    it 'returns the n8n configs with the value the account gets' do
+      folder = create(:auris_config, config_key: 'GDrive.RootFolderId', default_value: '1')
+      create(:auris_config, config_key: 'Secretaria.BounceSeconds', default_value: '40')
+      create(:account_auris_config, account: account, auris_config: folder, value: 'pasta-da-clinica')
+
+      expect(context_body['n8n_configs']).to eq([{ 'key' => 'GDrive.RootFolderId', 'value' => 'pasta-da-clinica', 'own' => true },
+                                                 { 'key' => 'Secretaria.BounceSeconds', 'value' => '40', 'own' => false }])
+    end
+
     it 'returns the prompts with their inboxes, the scenarios and the resources' do
       body = context_body
 
