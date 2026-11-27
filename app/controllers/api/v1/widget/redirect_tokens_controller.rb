@@ -17,19 +17,27 @@ class Api::V1::Widget::RedirectTokensController < Api::V1::Widget::BaseControlle
 
   private
 
+  # The token names a contact the account confirmed when minting it, and the session joins that
+  # contact. A browser that is already somebody else starts a fresh session first, so it is never
+  # merged away.
   def identify_from_token(payload)
-    if payload['identifier'].present? && @contact.identifier.present? && @contact.identifier != payload['identifier']
+    target = account.contacts.find_by(id: payload['contact_id']) if payload['contact_id'].present?
+    if target.present? && target.id != @contact.id && established_identity?
       @contact_inbox, @widget_auth_token = build_contact_inbox_with_token(@web_widget)
       @contact = @contact_inbox.contact
     end
     @contact_inbox.update!(hmac_verified: true)
-    return if payload['identifier'].blank?
+    return if target.blank?
 
-    @contact = ContactIdentifyAction.new(
-      contact: @contact,
-      params: { identifier: payload['identifier'] },
-      discard_invalid_attrs: true
-    ).perform
+    @contact = ContactMergeAction.new(account: account, base_contact: target, mergee_contact: @contact).perform
+  end
+
+  def established_identity?
+    @contact.identifier.present? || @contact.email.present? || @contact.phone_number.present?
+  end
+
+  def account
+    @web_widget.inbox.account
   end
 
   def resume_or_start_conversation(payload)
