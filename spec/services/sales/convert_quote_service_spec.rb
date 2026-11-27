@@ -53,6 +53,12 @@ RSpec.describe Sales::ConvertQuoteService do
     expect(account.custom_attributes).not_to have_key('onboarding_step')
   end
 
+  it 'starts the AI setup at its defaults, answering audio with audio' do
+    account = described_class.new(quote: quote).perform.account.reload
+
+    expect(account.ai_config).to eq(Account::AI_CONFIG_FIELDS.keys.index_with { nil }.merge('flag_audio_on_off' => true))
+  end
+
   it 'makes the customer a manager and the Auris user the administrator' do
     tech = create(:user)
     InstallationConfig.where(name: 'COMMERCIAL_ACCOUNT_ADMIN_USER_ID').first_or_create!(value: tech.id.to_s, locked: false)

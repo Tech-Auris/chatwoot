@@ -25,8 +25,7 @@
     <label class="flex flex-col gap-1 text-sm text-slate-700">
       Responde áudio com áudio (flag_audio_on_off)
       <%= select_tag 'ai_config[flag_audio_on_off]',
-                     options_for_select([['Sim', 'true'], ['Não', 'false']], field.value('flag_audio_on_off')&.to_s),
-                     include_blank: '(vazio)' %>
+                     options_for_select([['Sim', 'true'], ['Não', 'false']], (field.value('flag_audio_on_off') != false).to_s) %>
     </label>
   </div>
   <div class="flex flex-col gap-3 pt-4 border-t border-slate-200">

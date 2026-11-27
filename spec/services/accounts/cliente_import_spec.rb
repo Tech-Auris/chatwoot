@@ -20,11 +20,11 @@ RSpec.describe Accounts::ClienteImport do
                    mensagem_de_escala_para_o_usuario time_padrao_de_escala calendar_instructions mensagens_fixas],
                 [account.id, 'Você é Lia', '0', 'true', '5511999999999', '1234', 'Já te passo para a equipe.', '29',
                  'Agende só de manhã', '{"Vim pelo anúncio","Quero o cupom, por favor"}'],
-                [151, '', nil, 'false', nil, nil, nil, nil, nil, nil],
+                [151, '', nil, nil, nil, nil, nil, nil, nil, nil],
                 [999_999, 'Você é Iris', '40', 'true', nil, nil, nil, '11', nil, nil])
     end
 
-    it 'imports them with their types, blank cells as nil, with the cliente id as the account id' do
+    it 'imports them with their types, blank cells as nil (the audio flag as true), with the cliente id as the account id' do
       results = described_class.new(csv_path: csv_path, apply: true).perform
 
       expect(account.reload.ai_config).to eq(
@@ -32,13 +32,13 @@ RSpec.describe Accounts::ClienteImport do
         'mensagem_de_escala_para_o_usuario' => 'Já te passo para a equipe.', 'time_padrao_de_escala' => 29,
         'calendar_instructions' => 'Agende só de manhã', 'mensagens_fixas' => ['Vim pelo anúncio', 'Quero o cupom, por favor']
       )
-      expect(internal_account.reload.ai_config).to include('prompt_identity' => nil, 'flag_audio_on_off' => false)
+      expect(internal_account.reload.ai_config).to include('prompt_identity' => nil, 'flag_audio_on_off' => true)
       expect(results.map { |result| [result.account_id, result.differences, result.error] })
         .to eq([[account.id, [], nil], [151, [], nil], [999_999, nil, 'conta não encontrada']])
     end
 
     it 'only compares on a dry run, reporting the columns that differ' do
-      account.update!(ai_config: { prompt_identity: 'Você é Lia', bounce_seconds: 35 })
+      account.update!(ai_config: { prompt_identity: 'Você é Lia', bounce_seconds: 35, flag_audio_on_off: false })
 
       results = described_class.new(csv_path: csv_path).perform
 
