@@ -11,6 +11,14 @@ import {
   WORLD,
   sheetOf,
 } from './layout';
+import {
+  createDoor,
+  drawDoorway,
+  drawGlassDoor,
+  GLASS_DOOR,
+  openingOf,
+} from './door';
+import { feetOf } from './collision';
 import { drawLive } from './livePieces';
 
 const FRAME = { width: 32, height: 64 };
@@ -153,6 +161,19 @@ function drawItem(context, sprite, item, tick) {
   context.restore();
 }
 
+// Whoever is outside or in a doorway of the top wall goes behind it: they
+// only show above the wall and through the open doors.
+function clipBehindTopWall(context, doors) {
+  context.beginPath();
+  context.rect(SCENE.x, SCENE.y, SCENE.width, SCENE.height);
+  context.rect(0, 0, WORLD.width, 2 * TILE);
+  doors.forEach(door => {
+    const { x, y, w, h } = openingOf(door);
+    context.rect(x, y, w, h);
+  });
+  context.clip('evenodd');
+}
+
 // The outside wall under the clinic, as seen from the garden: gray, with a
 // row of windows (Gather-style).
 const WALL_OUTSIDE = {
@@ -280,6 +301,7 @@ export function createRenderer(canvas, sprites, layout = DEFAULT_LAYOUT) {
         ? item.y
         : (item.sortY ??
           item.y + sprites[item.sprite].height * (item.scale || 1)),
+      door: item.sprite === GLASS_DOOR ? createDoor() : null,
     }));
 
   // `selected` (editor): the box of the piece or teammate being moved;
@@ -303,6 +325,12 @@ export function createRenderer(canvas, sprites, layout = DEFAULT_LAYOUT) {
     }
     context.drawImage(background, 0, 0);
     drawFacade(context);
+    const now = Date.now();
+    const doors = items.filter(item => item.door);
+    doors.forEach(door => {
+      door.openness = door.door(door, characters, now);
+      drawDoorway(context, door, door.openness);
+    });
     const people = characters
       .map(character => ({
         ...character,
@@ -317,12 +345,18 @@ export function createRenderer(canvas, sprites, layout = DEFAULT_LAYOUT) {
     [...items, ...people]
       .sort((a, b) => a.depth - b.depth)
       .forEach(entry => {
+        if (entry.door) {
+          drawGlassDoor(context, entry.image, entry, entry.openness);
+          return;
+        }
         if (!entry.sheet) {
           drawItem(context, entry.image, entry, tick);
-          drawLive(context, entry, { ...clinic, tick, now: Date.now() });
+          drawLive(context, entry, { ...clinic, tick, now });
           return;
         }
         const { row, column } = frameOf(entry, tick);
+        context.save();
+        if (feetOf(entry).y < 2 * TILE) clipBehindTopWall(context, doors);
         context.globalAlpha = entry.faded ? 0.45 : 1;
         context.drawImage(
           entry.sheet,
@@ -335,7 +369,7 @@ export function createRenderer(canvas, sprites, layout = DEFAULT_LAYOUT) {
           FRAME.width,
           FRAME.height
         );
-        context.globalAlpha = 1;
+        context.restore();
       });
     people
       .filter(person => person.talking)
