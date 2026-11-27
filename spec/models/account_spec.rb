@@ -525,7 +525,8 @@ RSpec.describe Account do
           ai_status_uses_attribute: true,
           multi_language_ai: false,
           whatsapp_groups_enabled: true,
-          allow_dynamic_special_scenario: false
+          allow_dynamic_special_scenario: false,
+          reopen_hands_to_ai: false
         },
         follow_up: { 'end_flow' => { 'wait_minutes' => 60 } },
         status: nil,

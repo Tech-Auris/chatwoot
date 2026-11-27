@@ -486,6 +486,9 @@ en:
         self_assigned: '%{user_name} self-assigned this conversation'
         assigned: 'Assigned to %{assignee_name} by %{user_name}'
         removed: 'Conversation unassigned by %{user_name}'
+        removed_not_in_conversation_team: "Conversation unassigned from %{assignee_name} because they are not a member of the conversation's team %{team_name}"
+        handed_to_ai_on_reopen: 'Conversation handed back to the AI because the patient wrote again'
+        handed_to_ai_on_reopen_from: 'Conversation handed back to the AI because the patient wrote again (previously with %{assignee_name})'
       team:
         assigned: 'Assigned to %{team_name} by %{user_name}'
         assigned_with_assignee: 'Assigned to %{assignee_name} via %{team_name} by %{user_name}'

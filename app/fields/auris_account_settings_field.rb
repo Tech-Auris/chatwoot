@@ -12,21 +12,12 @@ class AurisAccountSettingsField < Administrate::Field::Base
 
   def options
     [
-      { key: :funnel_enabled,
-        label: 'Funnel',
-        checked: resource.funnel_enabled },
-      { key: :ai_status_uses_attribute,
-        label: 'AI status from attribute',
-        checked: resource.ai_status_uses_attribute },
-      { key: :multi_language_ai,
-        label: 'Multi-language AI',
-        checked: resource.multi_language_ai },
-      { key: :whatsapp_groups_enabled,
-        label: 'WhatsApp groups (QR Code)',
-        checked: resource.whatsapp_groups_enabled },
-      { key: :allow_dynamic_special_scenario,
-        label: 'Dynamic special scenarios',
-        checked: resource.allow_dynamic_special_scenario }
+      { key: :funnel_enabled, label: 'Funnel', checked: resource.funnel_enabled },
+      { key: :ai_status_uses_attribute, label: 'AI status from attribute', checked: resource.ai_status_uses_attribute },
+      { key: :reopen_hands_to_ai, label: 'Reopen hands back to the AI', checked: resource.reopen_hands_to_ai },
+      { key: :multi_language_ai, label: 'Multi-language AI', checked: resource.multi_language_ai },
+      { key: :whatsapp_groups_enabled, label: 'WhatsApp groups (QR Code)', checked: resource.whatsapp_groups_enabled },
+      { key: :allow_dynamic_special_scenario, label: 'Dynamic special scenarios', checked: resource.allow_dynamic_special_scenario }
     ]
   end
 end

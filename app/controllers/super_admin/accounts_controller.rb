@@ -110,10 +110,11 @@ class SuperAdmin::AccountsController < SuperAdmin::ApplicationController
   def merge_auris_settings(permitted_params)
     return if params[:auris_settings].blank?
 
-    auris = params.require(:auris_settings).permit(:funnel_enabled, :ai_status_uses_attribute, :multi_language_ai, :whatsapp_groups_enabled,
-                                                   :allow_dynamic_special_scenario)
+    auris = params.require(:auris_settings).permit(:funnel_enabled, :ai_status_uses_attribute, :reopen_hands_to_ai, :multi_language_ai,
+                                                   :whatsapp_groups_enabled, :allow_dynamic_special_scenario)
     permitted_params[:funnel_enabled] = auris[:funnel_enabled] == '1'
     permitted_params[:ai_status_uses_attribute] = auris[:ai_status_uses_attribute] == '1'
+    permitted_params[:reopen_hands_to_ai] = auris[:reopen_hands_to_ai] == '1'
     permitted_params[:multi_language_ai] = auris[:multi_language_ai] == '1'
     permitted_params[:whatsapp_groups_enabled] = auris[:whatsapp_groups_enabled] == '1'
     permitted_params[:allow_dynamic_special_scenario] = auris[:allow_dynamic_special_scenario] == '1'

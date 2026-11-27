@@ -1068,6 +1068,10 @@
       "MAX_ASSIGNMENT_LIMIT_SUB_TEXT": "Limitar o número máximo de conversas desta caixa de entrada que pode ser atribuído automaticamente a um agente"
     },
     "ASSIGNMENT": {
+      "REOPEN_TEAM": {
+        "TITLE": "Na reabertura, manter o responsável só se ele estiver no time da conversa",
+        "DESCRIPTION": "Quando a mensagem de um cliente reabre uma conversa resolvida ou adiada que tem time, o responsável continua com ela só se for membro desse time. Se não for, a conversa vai para Não atribuídas, com o time e as etiquetas de antes. Conversas atribuídas à IA não são afetadas."
+      },
       "TITLE": "Atribuição de conversa",
       "DESCRIPTION": "Atribua automaticamente as conversas recebidas aos agentes disponíveis com base nas políticas de atribuição",
       "ENABLE_AUTO_ASSIGNMENT": "Ativar atribuição automática de conversas",
