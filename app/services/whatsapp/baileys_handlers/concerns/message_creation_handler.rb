@@ -163,8 +163,9 @@ module Whatsapp::BaileysHandlers::Concerns::MessageCreationHandler # rubocop:dis
       content_attributes[:is_reaction] = true
     elsif reply_to_message_id
       content_attributes[:in_reply_to_external_id] = reply_to_message_id
-    elsif type == 'unsupported'
+    elsif type.in?(%w[unsupported view_once])
       content_attributes[:is_unsupported] = true
+      content_attributes[:is_view_once] = true if type == 'view_once'
     end
 
     referral = baileys_referral

@@ -529,6 +529,23 @@ RSpec.describe Message do
         expect(payload[:processed_message_content]).to eq('Olá')
       end
     end
+
+    # A view-once message has nothing the AI could answer, so it must not become "Olá":
+    # the secretary flow drops a message with no text and no attachment.
+    context 'when the message is a view-once placeholder' do
+      let(:message) { create(:message, content: nil, content_attributes: { is_unsupported: true, is_view_once: true }) }
+
+      it 'sends a blank content on webhook_data' do
+        expect(message.webhook_data[:content]).to eq('')
+        expect(message.webhook_data[:content_attributes]).to include('is_unsupported' => true, 'is_view_once' => true)
+      end
+
+      it 'sends a blank content on webhook_push_event_data' do
+        payload = message.webhook_push_event_data
+        expect(payload[:content]).to eq('')
+        expect(payload[:processed_message_content]).to eq('')
+      end
+    end
   end
 
   context 'when message is created' do

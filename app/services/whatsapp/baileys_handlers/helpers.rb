@@ -10,7 +10,10 @@ module Whatsapp::BaileysHandlers::Helpers # rubocop:disable Metrics/ModuleLength
   # normalizeMessageContent).
   MESSAGE_WRAPPER_KEYS = %i[ephemeralMessage associatedChildMessage lottieStickerMessage].freeze
 
+  # An upsert entry can carry no message at all (a view-once message, which WhatsApp does
+  # not deliver to linked devices), so a missing one reads as empty rather than raising.
   def unwrap_message_content(msg)
+    msg ||= {}
     5.times do
       wrapper_key = MESSAGE_WRAPPER_KEYS.find { |key| msg.key?(key) }
       break unless wrapper_key
@@ -54,6 +57,10 @@ module Whatsapp::BaileysHandlers::Helpers # rubocop:disable Metrics/ModuleLength
 
   def message_type # rubocop:disable Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity,Metrics/MethodLength,Metrics/AbcSize
     msg = unwrap_message_content(@raw_message[:message])
+    # Nothing but the key arrived. For view-once that is WhatsApp withholding the content
+    # from linked devices, and the agent still has to learn something was sent.
+    return @raw_message.dig(:key, :isViewOnce) ? 'view_once' : 'empty' if msg.blank?
+
     if msg.key?(:conversation) || msg.dig(:extendedTextMessage, :text).present?
       'text'
     elsif msg.key?(:imageMessage)
@@ -200,9 +207,9 @@ module Whatsapp::BaileysHandlers::Helpers # rubocop:disable Metrics/ModuleLength
 
   # An albumMessage is only the marker announcing a media group; each item
   # arrives as its own associatedChildMessage upsert, so the marker itself
-  # renders nothing.
+  # renders nothing. An entry with no message that is not view-once has nothing to show either.
   def ignore_message?
-    message_type.in?(%w[protocol context edited album])
+    message_type.in?(%w[protocol context edited album empty])
   end
 
   def reaction_removal?

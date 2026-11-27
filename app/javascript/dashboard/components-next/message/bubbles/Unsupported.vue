@@ -4,7 +4,7 @@ import { useMessageContext } from '../provider.js';
 import { useInbox } from 'dashboard/composables/useInbox';
 import BaseBubble from './Base.vue';
 
-const { inboxId } = useMessageContext();
+const { inboxId, contentAttributes } = useMessageContext();
 
 const {
   isAFacebookInbox,
@@ -14,6 +14,8 @@ const {
 } = useInbox(inboxId.value);
 
 const unsupportedMessageKey = computed(() => {
+  if (contentAttributes.value?.isViewOnce)
+    return 'CONVERSATION.VIEW_ONCE_MESSAGE_WHATSAPP';
   if (isAFacebookInbox.value)
     return 'CONVERSATION.UNSUPPORTED_MESSAGE_FACEBOOK';
   if (isAnInstagramChannel.value)

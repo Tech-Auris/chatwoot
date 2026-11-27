@@ -116,11 +116,12 @@ class Message < ApplicationRecord
   # [:is_reaction] : Used to denote if the message is a reaction and differentiate it from a simple reply message
   # [:is_edited, :previous_content] : Used to indicated edited message and previous content (before edit)
   # [:zapi_args] : Used to pass additional arguments specific to Z-API WhatsApp provider
+  # [:is_view_once] : A view-once message, which WhatsApp does not deliver to linked devices; set alongside :is_unsupported
 
   store :content_attributes, accessors: [:submitted_email, :items, :submitted_values, :email, :in_reply_to, :deleted,
                                          :external_created_at, :story_sender, :story_id, :external_error,
                                          :translations, :in_reply_to_external_id, :is_unsupported, :data,
-                                         :is_reaction, :is_edited, :previous_content, :zapi_args], coder: JSON
+                                         :is_reaction, :is_edited, :previous_content, :zapi_args, :is_view_once], coder: JSON
 
   store :external_source_ids, accessors: [:slack], coder: JSON, prefix: :external_source_id
 
@@ -217,9 +218,15 @@ class Message < ApplicationRecord
   UNSUPPORTED_WEBHOOK_CONTENT = 'Olá'.freeze
 
   def webhook_safe_content(source)
-    return UNSUPPORTED_WEBHOOK_CONTENT if content_attributes.is_a?(Hash) && content_attributes['is_unsupported']
+    return unsupported_webhook_content if content_attributes.is_a?(Hash) && content_attributes['is_unsupported']
 
     Messages::WebhookContentNormalizer.normalize(source)
+  end
+
+  # A view-once message goes out blank instead: there is nothing the AI could answer,
+  # and the secretary flow drops a message with no text and no attachment.
+  def unsupported_webhook_content
+    content_attributes['is_view_once'] ? '' : UNSUPPORTED_WEBHOOK_CONTENT
   end
 
   def webhook_data
