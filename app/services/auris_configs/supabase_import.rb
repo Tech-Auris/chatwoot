@@ -1,6 +1,7 @@
 # Copies the Supabase `configuration` and `configuration_client` tables into
-# `auris_configs` (same ids) and `account_auris_configs`, from CSV exports of
-# both (all columns). The account values are replaced by the CSV rows, so it
+# `auris_configs` and `account_auris_configs`, keeping the ids (n8n caches
+# them and writes the checkpoint by id), from CSV exports of both (all
+# columns). The account values are replaced by the CSV rows, so it
 # can be rerun until the cut-over. A key repeated for the same client in
 # Supabase keeps the row with the highest id, the one written last.
 #
@@ -34,7 +35,7 @@ class AurisConfigs::SupabaseImport
     end
   end
 
-  # { [account_id, config_id] => value }, skipping rows Rails can't hold.
+  # { [account_id, config_id] => [id, value] }, skipping rows Rails can't hold.
   def read_values(configs)
     rows = CSV.read(@configuration_client_csv, headers: true).sort_by { |line| line['id'].to_i }
     account_ids = Account.where(id: rows.map { |line| line['client_id'].to_i }).pluck(:id).to_set
@@ -44,7 +45,7 @@ class AurisConfigs::SupabaseImport
       next @problems << problem if problem
 
       warn_repeated(key, line, configs) if values.key?(key)
-      values[key] = line['value']
+      values[key] = [line['id'].to_i, line['value']]
     end
   end
 
@@ -63,9 +64,10 @@ class AurisConfigs::SupabaseImport
       configs.each { |id, attributes| AurisConfig.find_or_initialize_by(id: id).update!(attributes) }
       AurisConfig.connection.reset_pk_sequence!(AurisConfig.table_name)
       AccountAurisConfig.delete_all
-      values.each do |(account_id, config_id), value|
-        AccountAurisConfig.create!(account_id: account_id, auris_config_id: config_id, value: value)
+      values.each do |(account_id, config_id), (id, value)|
+        AccountAurisConfig.create!(id: id, account_id: account_id, auris_config_id: config_id, value: value)
       end
+      AccountAurisConfig.connection.reset_pk_sequence!(AccountAurisConfig.table_name)
     end
   end
 
@@ -81,12 +83,14 @@ class AurisConfigs::SupabaseImport
   end
 
   def compare_values(values)
-    stored = AccountAurisConfig.pluck(:account_id, :auris_config_id, :value).to_h { |account_id, config_id, value| [[account_id, config_id], value] }
+    stored = AccountAurisConfig.pluck(:account_id, :auris_config_id, :id, :value).to_h do |account_id, config_id, id, value|
+      [[account_id, config_id], [id, value]]
+    end
     (values.keys | stored.keys).sort.each do |key|
       label = "conta #{key.first}, configuração #{key.last}"
       if !stored.key?(key) then @problems << "#{label}: falta no Rails"
       elsif !values.key?(key) then @problems << "#{label}: só no Rails"
-      elsif stored[key] != values[key] then @problems << "#{label}: valor diferente"
+      elsif stored[key] != values[key] then @problems << "#{label}: valor ou id diferente"
       end
     end
   end

@@ -11,9 +11,9 @@
 #
 # n8n reads it live from Postgres (same output as the Supabase version):
 #
-#   select c.id as "ConfigId", c.config_key as "ConfigKey", c.value_type as "ValueType",
+#   select c.id::text as "ConfigId", c.config_key as "ConfigKey", c.value_type as "ValueType",
 #          c.default_value as "DefaultValue", c.description as "Description",
-#          a.value is not null as "HasClientValue", a.value as client_value, a.id as client_config_id
+#          a.value is not null as "HasClientValue", a.value as client_value, a.id::int as client_config_id
 #   from auris_configs c
 #   left join account_auris_configs a on a.auris_config_id = c.id and a.account_id = $1
 #   where coalesce($2, '') = '' or c.config_key = $2

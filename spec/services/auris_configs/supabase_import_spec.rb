@@ -42,16 +42,17 @@ RSpec.describe AurisConfigs::SupabaseImport do
 
     expect(AurisConfig.order(:id).pluck(:id, :config_key, :default_value))
       .to eq([[1, 'GDrive.RootFolderId', '1'], [5, 'Secretaria.BounceSeconds', '40'], [6, 'Billing.MaxId', nil]])
-    expect(AccountAurisConfig.pluck(:account_id, :auris_config_id, :value))
-      .to contain_exactly([account.id, 1, 'pasta-nova'], [other_account.id, 1, 'pasta-outra'])
+    expect(AccountAurisConfig.pluck(:id, :account_id, :auris_config_id, :value))
+      .to contain_exactly([288, account.id, 1, 'pasta-nova'], [11, other_account.id, 1, 'pasta-outra'])
     expect(problems).to eq(['linha 12: conta 999999 não encontrada',
                             "conta #{account.id}, GDrive.RootFolderId repetida no Supabase: fica a linha 288"])
   end
 
-  it 'continues the config ids after the imported ones' do
+  it 'continues the ids after the imported ones' do
     import(apply: true)
 
     expect(create(:auris_config).id).to eq(7)
+    expect(create(:account_auris_config).id).to eq(289)
   end
 
   it 'replaces the account values on a rerun and then compares clean' do
@@ -59,7 +60,7 @@ RSpec.describe AurisConfigs::SupabaseImport do
     AccountAurisConfig.find_by(account: other_account).update!(value: 'mudou')
     AurisConfig.find(5).update!(default_value: '30')
 
-    expect(import).to include("conta #{other_account.id}, configuração 1: valor diferente",
+    expect(import).to include("conta #{other_account.id}, configuração 1: valor ou id diferente",
                               'configuração 5 (Secretaria.BounceSeconds) diferente: default_value')
 
     import(apply: true)
