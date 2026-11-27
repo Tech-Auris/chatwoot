@@ -32,7 +32,8 @@ class VirtualClinic::LayoutValidator
   private
 
   def validate
-    return invalid! unless @layout.is_a?(Hash) && (@layout.keys - %w[floors walls items rooms team]).empty?
+    return invalid! unless @layout.is_a?(Hash) && (@layout.keys - %w[version floors walls items rooms team]).empty?
+    return invalid! unless @layout['version'].nil? || integer?(@layout['version'])
 
     check_blocks('floors', FLOORS)
     check_blocks('walls', WALLS)

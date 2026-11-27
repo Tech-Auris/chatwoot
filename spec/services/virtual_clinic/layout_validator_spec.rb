@@ -23,6 +23,11 @@ RSpec.describe VirtualClinic::LayoutValidator do
     expect(errors_for({})).to be_empty
   end
 
+  it 'accepts the layout version the editor saves, as a number' do
+    expect(errors_for(layout.merge('version' => 1))).to be_empty
+    expect(errors_for(layout.merge('version' => '1'))).to eq(['O layout da clínica não está no formato esperado.'])
+  end
+
   it 'refuses art that is not in the pack' do
     layout['items'] << { 'sprite' => '4_copa/sofa_dourado.png', 'x' => 1, 'y' => 1 }
     expect(errors_for(layout)).to eq(['Esta arte não está disponível: 4_copa/sofa_dourado.png.'])

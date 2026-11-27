@@ -236,6 +236,16 @@
       "CHRISTMAS": "Christmas",
       "HALLOWEEN": "Halloween",
       "PARTY": "Party"
+    },
+    "CALL_SCREEN": {
+      "TITLE": "Ticket call screen",
+      "CLOSE": "Close",
+      "TICKET": "Ticket",
+      "ROOM": "Room",
+      "TIME": "Time",
+      "WAIT": "Please wait to be called by your ticket number",
+      "HISTORY": "Previous calls",
+      "TICKER": "Welcome to {clinic} · Please wait to be called by your ticket number · Keep your phone on silent · Arrive 15 minutes before your appointment"
     }
   }
 }

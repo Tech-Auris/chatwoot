@@ -236,6 +236,16 @@
       "CHRISTMAS": "Natal",
       "HALLOWEEN": "Halloween",
       "PARTY": "Festa"
+    },
+    "CALL_SCREEN": {
+      "TITLE": "Painel de chamada",
+      "CLOSE": "Fechar",
+      "TICKET": "Senha",
+      "ROOM": "Sala",
+      "TIME": "Hora",
+      "WAIT": "Aguarde ser chamado pela sua senha",
+      "HISTORY": "Histórico de chamadas",
+      "TICKER": "Bem-vindo(a) à {clinic} · Aguarde ser chamado pela sua senha · Mantenha o celular no silencioso · Chegue 15 minutos antes da consulta"
     }
   }
 }

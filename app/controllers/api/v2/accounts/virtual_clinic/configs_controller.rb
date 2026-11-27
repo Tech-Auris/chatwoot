@@ -14,7 +14,8 @@ class Api::V2::Accounts::VirtualClinic::ConfigsController < Api::V1::Accounts::B
         daily_question_limit: ::VirtualClinic::QuestionLimit.for(Current.account),
         can_manage_settings: policy.update_settings?,
         can_edit_layout: policy.update_layout?,
-        seasons: seasons
+        seasons: seasons,
+        timezone: time_zone.tzinfo.name
       },
       assets_version: ::VirtualClinic::AssetStore.version
     }
@@ -22,10 +23,16 @@ class Api::V2::Accounts::VirtualClinic::ConfigsController < Api::V1::Accounts::B
 
   private
 
+  # The clinic's time zone (the reporting one), as the browser names it:
+  # the account may store a Rails name such as "Brasilia".
+  def time_zone
+    @time_zone ||= ActiveSupport::TimeZone[Current.account.reporting_timezone.presence || 'America/Sao_Paulo']
+  end
+
   # The decoration packs in season now, and every seasonal folder/accessory
   # (hidden out of season).
   def seasons
-    today = Time.current.in_time_zone(Current.account.reporting_timezone.presence || 'America/Sao_Paulo').to_date
+    today = Time.current.in_time_zone(time_zone).to_date
     active = ::VirtualClinic::Season.active(today).map do |season|
       season.slice(:key, :folder, :accessory).merge(until: season[:to] && Date.new(today.year, *season[:to]).strftime('%d/%m'))
     end

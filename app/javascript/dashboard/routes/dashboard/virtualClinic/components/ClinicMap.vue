@@ -36,6 +36,8 @@ import { corners, findPath } from '../engine/pathfinding';
 import { createAvatar } from '../engine/movement';
 import { seatAt, seatsOf, withoutSeats } from '../engine/seats';
 import { inSeason } from '../engine/seasons';
+import { CALL_SCREEN, CLOCK, clockTime } from '../engine/livePieces';
+import CallScreenPanel from './CallScreenPanel.vue';
 import { useClinicPresence } from '../composables/useClinicPresence';
 import { faceLines, formatReais, isFaded } from '../teamStatus';
 
@@ -293,8 +295,13 @@ const agents = useMapGetter('agents/getAgents');
 const photoOf = userId =>
   (agents.value || []).find(agent => agent.id === userId)?.thumbnail || '';
 
+// The clinic's time zone: the recepção clock and the call screen follow it.
+const timeZone = computed(() => props.aiTeam?.timezone || 'America/Sao_Paulo');
+
 const render = () =>
-  draw?.(characters.value, tick.value, selectedBox.value, overview.value);
+  draw?.(characters.value, tick.value, selectedBox.value, overview.value, {
+    timeZone: timeZone.value,
+  });
 watch([characters, tick, selectedBox, overview], render);
 
 const sizesOf = items =>
@@ -691,7 +698,26 @@ const moveDrag = event => {
   viewport.value.scrollTop = drag.top - dy;
 };
 
-// Clicking a teammate opens the chat; clicking the floor walks there.
+// The piece of furniture under the pointer (its art), if any.
+const pieceAt = event => {
+  const point = toWorld(event);
+  const index = itemAt(point.x, point.y, props.layout.items, sprites);
+  return index === -1 ? null : props.layout.items[index].sprite;
+};
+
+// Pointing at the clock tells the time; the call screen can be opened.
+const hovered = ref(null);
+const clockLabel = ref('');
+const onHover = event => {
+  hovered.value = sprites && !editing.value ? pieceAt(event) : null;
+  if (hovered.value !== CLOCK) return;
+  const { hours, minutes } = clockTime(new Date(), timeZone.value);
+  clockLabel.value = `${hours}:${String(minutes).padStart(2, '0')}`;
+};
+const callScreenOpen = ref(false);
+
+// Clicking a teammate opens the chat, the call screen opens big; clicking
+// the floor walks there.
 const onClick = event => {
   if (dragged || editing.value) return;
   const point = toWorld(event);
@@ -701,6 +727,10 @@ const onClick = event => {
     if (chatEnabled.value || persona === 'manager') {
       emit('selectMember', persona);
     }
+    return;
+  }
+  if (pieceAt(event) === CALL_SCREEN) {
+    callScreenOpen.value = true;
     return;
   }
   walkTowards(point);
@@ -793,7 +823,10 @@ onBeforeUnmount(() => {
           :width="SCENE.width"
           :height="SCENE.height"
           class="block w-full h-full [image-rendering:pixelated]"
+          :class="{ 'cursor-pointer': hovered === CALL_SCREEN }"
+          :title="hovered === CLOCK ? clockLabel : undefined"
           @click="onClick"
+          @mousemove="onHover"
         />
         <template v-if="!loading && !failed">
           <span
@@ -947,5 +980,10 @@ onBeforeUnmount(() => {
       <Spinner v-if="loading" />
       <span v-else>{{ t('VIRTUAL_CLINIC.MAP.LOAD_ERROR') }}</span>
     </div>
+    <CallScreenPanel
+      v-if="callScreenOpen"
+      :time-zone="timeZone"
+      @close="callScreenOpen = false"
+    />
   </div>
 </template>

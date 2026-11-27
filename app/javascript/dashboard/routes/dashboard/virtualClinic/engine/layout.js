@@ -171,6 +171,10 @@ export const partitionRects = () =>
     return rects;
   });
 
+// The ticket call screen over the green armchairs, facing the chairs (see
+// livePieces.js).
+const CALL_SCREEN_ITEM = { sprite: `${E}tv_parede.png`, x: 295, y: 318 };
+
 const chairsRow = xs =>
   xs.map(x => ({ sprite: `${E}cadeira_azul_costas.png`, x, y: 530 }));
 
@@ -198,6 +202,7 @@ export const ITEMS = [
   { sprite: `${E}bebedouro.png`, x: 600, y: 427 },
   ...chairsRow([58, 91, 124, 157, 190, 223]),
   ...chairsRow([390, 423, 456, 489, 522, 555]),
+  CALL_SCREEN_ITEM,
   { sprite: `${E}flores_gaveteiro.png`, x: 305, y: 555 },
   { sprite: `${E}planta.png`, x: 8, y: 580 },
   { sprite: `${E}planta.png`, x: 596, y: 580 },
@@ -486,11 +491,30 @@ const UPGRADES = [
     [{ sprite: `${G}sofa_lateral.png`, x: 648, y: 172, flip: true }],
   ],
 ];
+
+// Pieces added to the default clinic after clinics started saving theirs,
+// with the layout version that brought them. A clinic saved before that
+// version gets them too (unless it already placed one); once it saves again,
+// what it has is what it chose.
+export const LAYOUT_VERSION = 1;
+const ADDED = [{ version: 1, item: CALL_SCREEN_ITEM }];
+const added = (items, version = 0) =>
+  ADDED.filter(
+    piece =>
+      piece.version > version &&
+      !items.some(({ sprite }) => sprite === piece.item.sprite)
+  ).map(piece => piece.item);
+
 const upgrade = item => {
   const found = UPGRADES.find(
     ([sprite, [x, y]]) => item.sprite === sprite && item.x === x && item.y === y
   );
   return found ? found[2].map(piece => ({ ...item, ...piece })) : [item];
+};
+
+const savedItems = saved => {
+  const items = wholeDesk(saved.items).flatMap(upgrade);
+  return [...items, ...added(items, saved.version)];
 };
 
 // The saved layout of a clinic (only what the editor changes) on top of the
@@ -502,7 +526,7 @@ export function applySaved(saved) {
   return {
     floors: pick(FLOORS, saved.floors),
     walls: pick(WALLS, saved.walls),
-    items: saved.items ? wholeDesk(saved.items).flatMap(upgrade) : ITEMS,
+    items: saved.items ? savedItems(saved) : ITEMS,
     rooms: ROOMS.map(room => ({ ...room, name: saved.rooms?.[room.key] })),
     team: Object.fromEntries(
       Object.entries(CHARACTERS).map(([persona, spot]) => [
@@ -516,6 +540,7 @@ export function applySaved(saved) {
 // What goes to the API: the editable part only.
 export function toSaved(layout) {
   return {
+    version: LAYOUT_VERSION,
     floors: layout.floors.map(floor => floor.block),
     walls: layout.walls.map(wall => wall.block),
     items: layout.items.map(({ sprite, x, y, flip, sortY }) => ({

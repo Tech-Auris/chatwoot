@@ -11,6 +11,9 @@ import { checkLayout } from '../engine/layoutCheck';
 import { useClinicLayout } from '../composables/useClinicLayout';
 import VirtualClinicAPI from 'dashboard/api/virtualClinic';
 
+// Layouts saved before the call screen existed get it at the end.
+const TV = ITEMS.find(item => item.sprite === '2_sala_de_espera/tv_parede.png');
+
 vi.mock('dashboard/api/virtualClinic', () => ({
   default: {
     getLayout: vi.fn(),
@@ -50,7 +53,7 @@ describe('saved layout', () => {
 
     expect(layout.floors[0].block).toBe('5_pisos/alternativa_menta.png');
     expect(layout.floors[1].block).toBe(DEFAULT_LAYOUT.floors[1].block);
-    expect(layout.items).toHaveLength(1);
+    expect(layout.items).toHaveLength(2);
     expect(layout.rooms[0].name).toBe('Recepção Centro');
     expect(layout.team.manager).toMatchObject({
       name: 'Marta',
@@ -62,6 +65,7 @@ describe('saved layout', () => {
     expect(back.rooms).toEqual({ RECEPTION: 'Recepção Centro' });
     expect(back.items).toEqual([
       { sprite: '4_copa/geladeira.png', x: 10, y: 400, flip: true },
+      TV,
     ]);
     expect(back.team.secretary).toEqual({
       sheet: CHARACTERS.secretary.sheet,
@@ -79,7 +83,7 @@ describe('saved layout', () => {
     const moved = { ...chair, x: 200 };
     const layout = applySaved({ items: [chair, moved] });
 
-    expect(layout.items).toEqual([{ ...chair, y: 114 }, moved]);
+    expect(layout.items).toEqual([{ ...chair, y: 114 }, moved, TV]);
   });
 
   it('swaps the five reception desk pieces of an old layout for the whole desk', () => {
@@ -98,6 +102,7 @@ describe('saved layout', () => {
     expect(layout.items).toEqual([
       piece('lixeira', 510, 220),
       piece('balcao_recepcao', 230, 124),
+      TV,
     ]);
   });
 
@@ -114,6 +119,7 @@ describe('saved layout', () => {
     expect(layout.items).toEqual([
       piece('3_gerencia/mesa_l_inteira.png', 996, 132),
       piece('14_marketing/mesa_l_inteira.png', 728, 132),
+      TV,
     ]);
   });
 
@@ -122,7 +128,7 @@ describe('saved layout', () => {
     const moved = { ...cooler, x: 900 };
     const layout = applySaved({ items: [cooler, moved] });
 
-    expect(layout.items).toEqual([{ ...cooler, x: 871, y: 351 }, moved]);
+    expect(layout.items).toEqual([{ ...cooler, x: 871, y: 351 }, moved, TV]);
   });
 });
 
