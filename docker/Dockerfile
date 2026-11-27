@@ -143,7 +143,6 @@ RUN apk update && apk add --no-cache \
   openssl \
   tzdata \
   postgresql-client \
-  imagemagick \
   git \
   vips \
   ffmpeg \
@@ -155,6 +154,10 @@ RUN apk update && apk add --no-cache \
   ttf-freefont \
   font-noto-emoji \
   && gem install bundler -v "$BUNDLER_VERSION"
+
+# Restrict libvips to its trusted image loaders when generating variants
+# (requires libvips >= 8.13; Alpine 3.21 ships 8.15)
+ENV VIPS_BLOCK_UNTRUSTED=1
 
 # Point Grover (via Puppeteer) at the Alpine-packaged Chromium and skip the
 # built-in Chromium download that Puppeteer would attempt at install time —

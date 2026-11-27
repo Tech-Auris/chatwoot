@@ -72,6 +72,9 @@ module Chatwoot
 
     # Disable PDF/video preview generation as we don't use them
     config.active_storage.previewers = []
+    # Only image width/height is read from blob metadata, so skip the ffprobe (video/audio)
+    # and ImageMagick analyzers on uploads.
+    config.active_storage.analyzers = [ActiveStorage::Analyzer::ImageAnalyzer::Vips]
 
     # Active Record Encryption configuration
     # Required for MFA/2FA features - skip if not using encryption
