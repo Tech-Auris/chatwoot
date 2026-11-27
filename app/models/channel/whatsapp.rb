@@ -38,6 +38,7 @@ class Channel::Whatsapp < ApplicationRecord # rubocop:disable Metrics/ClassLengt
   # snapshot, so keeping it would make the 5-min poll re-broadcast every cycle for no reason).
   NEW_CHAT_CAP_KEYS = %w[capping_status ote_status mv_status total_quota used_quota cycle_start_timestamp cycle_end_timestamp].freeze
   before_validation :ensure_webhook_verify_token
+  before_save :keep_zapi_webhook_verify_token, if: -> { provider == 'zapi' && persisted? && !provider_changed? }
 
   validates :provider, inclusion: { in: PROVIDERS }
   validates :phone_number, presence: true, uniqueness: true
@@ -488,6 +489,13 @@ class Channel::Whatsapp < ApplicationRecord # rubocop:disable Metrics/ClassLengt
 
   def ensure_webhook_verify_token
     provider_config['webhook_verify_token'] ||= SecureRandom.hex(16) if provider.in?(%w[whatsapp_cloud baileys zapi])
+  end
+
+  # Only a rotation (WhatsappZapiService#rotate_webhook_token!) replaces a Z-API webhook token, never a
+  # provider_config sent back by a client that still holds the replaced one.
+  def keep_zapi_webhook_verify_token
+    stored = provider_config_in_database.to_h['webhook_verify_token']
+    provider_config['webhook_verify_token'] = stored if stored.present?
   end
 
   def validate_provider_config

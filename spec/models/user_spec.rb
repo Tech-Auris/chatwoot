@@ -87,6 +87,13 @@ RSpec.describe User do
       user.invalidate_sso_auth_token(sso_auth_token)
       expect(user.valid_sso_auth_token?(sso_auth_token)).to be false
     end
+
+    it 'consumes a token only once' do
+      sso_auth_token = user.generate_sso_auth_token
+
+      expect(user.consume_sso_auth_token(sso_auth_token)).to be true
+      expect(user.consume_sso_auth_token(sso_auth_token)).to be false
+    end
   end
 
   describe 'access token' do

@@ -2,7 +2,11 @@
  <hr/>
   <div class="form-actions">
   <p class="text-color-red">Caution: Any actions executed after impersonate will appear as if performed by the impersonated user - [<%= page.resource.name %> ]</p>
-    <a class='button' target='_blank' href='<%= page.resource.generate_sso_link_with_impersonation %>'>Impersonate user </a>
+    <%= button_to 'Impersonate user',
+                  impersonate_super_admin_user_path(page.resource),
+                  method: :post,
+                  class: 'button',
+                  form: { target: '_blank', rel: 'noopener' } %>
   </div>
 </section>
 

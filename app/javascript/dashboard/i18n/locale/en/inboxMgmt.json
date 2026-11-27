@@ -1045,7 +1045,14 @@
       "WHATSAPP_CLIENT_TOKEN_TITLE": "Security Token",
       "WHATSAPP_CLIENT_TOKEN_SUBHEADER": "Your Z-API Client Token (see Security tab on Z-API dashboard).",
       "WHATSAPP_CLIENT_TOKEN_UPDATE_TITLE": "Update Security Token",
-      "WHATSAPP_CLIENT_TOKEN_UPDATE_SUBHEADER": "Enter the new Security Token here"
+      "WHATSAPP_CLIENT_TOKEN_UPDATE_SUBHEADER": "Enter the new Security Token here",
+      "ZAPI_WEBHOOK_TOKEN": {
+        "TITLE": "Receiving address",
+        "HELP": "Z-API delivers this inbox's messages to an address with a key of its own. If that address leaks (a log, a support ticket), generate a new one: Z-API switches to it and the old one stops working shortly after.",
+        "BUTTON": "Generate new address",
+        "SUCCESS": "New address registered with Z-API.",
+        "ERROR": "Z-API did not accept the new address. The inbox keeps receiving on the current one; try again."
+      }
     },
     "TIMEZONE": {
       "LABEL": "Timezone",
