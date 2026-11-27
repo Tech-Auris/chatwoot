@@ -100,6 +100,30 @@ describe('saved layout', () => {
       piece('balcao_recepcao', 230, 124),
     ]);
   });
+
+  it('swaps the two desk pieces of an old layout for the whole L desk', () => {
+    const piece = (sprite, x, y) => ({ sprite, x, y });
+    const layout = applySaved({
+      items: [
+        piece('3_gerencia/mesa_reta.png', 996, 158),
+        piece('3_gerencia/mesa_em_l.png', 1060, 132),
+        piece('14_marketing/mesa.png', 744, 158),
+      ],
+    });
+
+    expect(layout.items).toEqual([
+      piece('3_gerencia/mesa_l_inteira.png', 996, 132),
+      piece('14_marketing/mesa_l_inteira.png', 728, 132),
+    ]);
+  });
+
+  it('keeps the copa water cooler of an old layout standing where it stood', () => {
+    const cooler = { sprite: '4_copa/bebedouro.png', x: 870, y: 355 };
+    const moved = { ...cooler, x: 900 };
+    const layout = applySaved({ items: [cooler, moved] });
+
+    expect(layout.items).toEqual([{ ...cooler, x: 871, y: 351 }, moved]);
+  });
 });
 
 describe('checkLayout', () => {
