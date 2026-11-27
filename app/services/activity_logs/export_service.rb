@@ -22,7 +22,7 @@ class ActivityLogs::ExportService
   private
 
   def csv
-    CSV.generate do |output|
+    SafeCsv.generate do |output|
       output << COLUMNS.map { |column| I18n.t("activity_logs.export.columns.#{column}") }
       scope.recent_first.limit(LIMIT).each { |log| output << row_for(log) }
     end

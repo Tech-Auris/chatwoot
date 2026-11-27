@@ -87,6 +87,16 @@ RSpec.describe Contacts::ExportService do
     expect(export.b).to start_with("\xEF\xBB\xBF".b)
   end
 
+  it 'defuses formulas but keeps phone numbers and ampersands as they are' do
+    create(:contact, account: account, name: '=HYPERLINK("http://x","y")', email: 'formula@exemplo.com', phone_number: '+5511900000008')
+    create(:contact, account: account, name: 'Ana & Bia', phone_number: '+5511900000009')
+
+    rows = export_rows(column_names: %w[name phone_number])
+
+    expect(rows.pluck('name')).to contain_exactly(%('=HYPERLINK("http://x","y")), 'Ana & Bia')
+    expect(rows.pluck('phone_number')).to contain_exactly('+5511900000008', '+5511900000009')
+  end
+
   it 'names the file after the account' do
     service = described_class.new(account: account, user: user, column_names: nil, params: {})
 

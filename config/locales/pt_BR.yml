@@ -144,6 +144,8 @@ pt_BR:
         content_or_attachment_required: A mensagem agendada deve ter conteúdo ou anexo
       funnel_move:
         loss_reason_required: Mover para esta etapa do funil exige um motivo da perda
+    database:
+      query_canceled: 'A solicitação demorou demais para ser concluída. Tente novamente.'
     saml:
       feature_not_enabled: SAML não está habilitado para esta conta
       sso_not_enabled: O SSO via SAML não está habilitado para esta instalação

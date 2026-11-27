@@ -282,6 +282,17 @@ RSpec.describe DataImportJob do
         expect(unknown_label_import.reload.failed_records).to be_attached
         expect(unknown_label_import.failed_records.download).to include('Unknown labels: unknown_label')
       end
+
+      it 'defuses formulas in the failed rows file' do
+        rows = [%w[id name email phone_number labels], ['1', '=HYPERLINK("http://x","y")', 'x@example.com', '+918080808087', 'unknown_label']]
+        formula_import = create(:data_import, account: labels_data_import.account, import_file: generate_csv_file(rows))
+
+        described_class.perform_now(formula_import)
+
+        row = CSV.parse(formula_import.reload.failed_records.download, headers: true).first
+        expect(row['name']).to eq(%('=HYPERLINK("http://x","y")))
+        expect(row['phone_number']).to eq('+918080808087')
+      end
     end
   end
 end

@@ -195,6 +195,15 @@ RSpec.describe 'Audiences API', type: :request do
       expect(audience.events.last).to have_attributes(kind: 'download', user_id: administrator.id, contacts_count: 1, format: 'csv')
     end
 
+    it 'defuses formulas in the downloaded cells' do
+      contact_with_label('abc', name: '=HYPERLINK("http://x","y")')
+
+      post "#{base}/#{audience.id}/export", params: { columns: %w[name] }, headers: administrator.create_new_auth_token, as: :json
+
+      rows = CSV.parse(response.body.delete_prefix(Audiences::ExportService::BOM))
+      expect(rows.second).to eq([%('=HYPERLINK("http://x","y"))])
+    end
+
     it 'refuses an audience over the limit' do
       stub_const('Audience::MAX_CONTACTS', 0)
       contact_with_label('abc')

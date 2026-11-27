@@ -27,7 +27,7 @@ class Audiences::ExportService
   private
 
   def csv
-    CSV.generate do |output|
+    SafeCsv.generate do |output|
       output << selected_columns.map { |column| I18n.t("audiences.export.columns.#{column}") }
       audience.contacts.find_in_batches(batch_size: BATCH_SIZE) do |batch|
         conversations = latest_conversations(batch.map(&:id))

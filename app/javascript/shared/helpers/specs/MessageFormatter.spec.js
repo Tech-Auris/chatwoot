@@ -163,4 +163,35 @@ describe('#MessageFormatter', () => {
       expect(result).toContain('prosemirror-mention-conversation');
     });
   });
+
+  describe('mention label escaping', () => {
+    const payload = '<img src=x onerror="alert(1)">';
+    const escaped = '&lt;img src=x onerror=&quot;alert(1)&quot;&gt;';
+
+    it('escapes HTML in user mention labels', () => {
+      const html = new MessageFormatter(`[${payload}](mention://user/1/x)`)
+        .formattedMessage;
+      expect(html).not.toContain('<img');
+      expect(html).toContain(
+        `<span class="prosemirror-mention-node">${escaped}</span>`
+      );
+    });
+
+    it('escapes HTML in contact mention labels', () => {
+      const html = new MessageFormatter(`[${payload}](mention://contact/1/x)`)
+        .formattedMessage;
+      expect(html).not.toContain('<img');
+      expect(html).toContain(
+        `<span class="prosemirror-mention-node prosemirror-mention-contact">${escaped}</span>`
+      );
+    });
+
+    it('escapes HTML in conversation mention labels', () => {
+      const html = new MessageFormatter(
+        '[@1" onclick="x](mention://conversation/1/1)'
+      ).formattedMessage;
+      expect(html).not.toContain('onclick="x"');
+      expect(html).toContain('data-conversation-id="1&quot; onclick=&quot;x"');
+    });
+  });
 });
