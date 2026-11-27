@@ -93,9 +93,9 @@ describe('sala de espera call screen', () => {
     );
     painted.forEach(([x, y]) => {
       expect(x).toBeGreaterThanOrEqual(2);
-      expect(x).toBeLessThanOrEqual(53);
+      expect(x).toBeLessThanOrEqual(61);
       expect(y).toBeGreaterThanOrEqual(2);
-      expect(y).toBeLessThanOrEqual(32);
+      expect(y).toBeLessThanOrEqual(40);
     });
   });
 

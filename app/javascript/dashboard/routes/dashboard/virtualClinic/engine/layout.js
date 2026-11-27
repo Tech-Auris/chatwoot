@@ -173,7 +173,7 @@ export const partitionRects = () =>
 
 // The ticket call TV on its stand, where the green armchairs were, facing
 // the rows of chairs (see livePieces.js).
-const CALL_SCREEN_ITEM = { sprite: `${E}tv_pedestal.png`, x: 295, y: 339 };
+const CALL_SCREEN_ITEM = { sprite: `${E}tv_pedestal.png`, x: 291, y: 331 };
 const GREEN_ARMCHAIRS = {
   sprite: `${E}poltronas_verdes_dupla.png`,
   x: 292,

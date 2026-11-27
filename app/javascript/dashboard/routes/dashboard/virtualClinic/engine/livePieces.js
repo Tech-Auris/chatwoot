@@ -277,31 +277,31 @@ const blinking = now => {
   return since < 1500 && Math.floor(since / 250) % 2 === 0;
 };
 
-// The screen (inside the frame) spans x 2–53 and y 2–32 of the sprite.
+// The screen, inside the frame of the sprite (64 × 58, with its stand).
+const TV = { left: 2, top: 2, width: 60, height: 39 };
+const TV_RIGHT = TV.left + TV.width - 2;
+const FOOTER = 31;
+
 function drawCallScreen(paint, { now }) {
   const [call, ...before] = callsAt(now, 3);
   const blink = blinking(now);
   // Header: what each column is.
-  paint(TEAL, 2, 2, 52, 5);
-  write(paint, 'SENHA', 4, 2, WHITE);
-  write(paint, 'SALA', 51 - textWidth('SALA'), 2, WHITE);
-  // The ticket and the room.
-  paint(blink ? TEAL : PALE, 2, 7, 52, 15);
-  write(paint, call.ticket, 4, 11, blink ? WHITE : INK, BIG);
+  paint(TEAL, TV.left, TV.top, TV.width, 5);
+  write(paint, 'SENHA', 4, TV.top, WHITE);
+  write(paint, 'SALA', TV_RIGHT - textWidth('SALA'), TV.top, WHITE);
+  // The ticket and the room, in the middle of their block.
+  const middle = TV.top + 5;
+  paint(blink ? TEAL : PALE, TV.left, middle, TV.width, FOOTER - 1 - middle);
+  const y = middle + Math.floor((FOOTER - 1 - middle - 7) / 2);
+  write(paint, call.ticket, 4, y, blink ? WHITE : INK, BIG);
   const room = String(call.room);
-  write(
-    paint,
-    room,
-    52 - textWidth(room, BIG),
-    11,
-    blink ? WHITE : DARK_TEAL,
-    BIG
-  );
+  const roomColor = blink ? WHITE : DARK_TEAL;
+  write(paint, room, TV_RIGHT - textWidth(room, BIG), y, roomColor, BIG);
   // Footer, under a line: the two tickets called before.
-  paint(TEAL, 2, 22, 52, 1);
-  paint(PALE, 2, 23, 52, 10);
+  paint(TEAL, TV.left, FOOTER - 1, TV.width, 1);
+  paint(PALE, TV.left, FOOTER, TV.width, TV.top + TV.height - FOOTER);
   before.forEach((previous, i) => {
-    write(paint, `${previous.ticket} ${previous.room}`, 4 + i * 26, 25, GRAY);
+    write(paint, `${previous.ticket} ${previous.room}`, 4 + i * 30, 33, GRAY);
   });
 }
 
