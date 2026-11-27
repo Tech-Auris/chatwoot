@@ -116,6 +116,14 @@ describe('saved layout', () => {
       piece('14_marketing/mesa_l_inteira.png', 728, 132),
     ]);
   });
+
+  it('keeps the copa water cooler of an old layout standing where it stood', () => {
+    const cooler = { sprite: '4_copa/bebedouro.png', x: 870, y: 355 };
+    const moved = { ...cooler, x: 900 };
+    const layout = applySaved({ items: [cooler, moved] });
+
+    expect(layout.items).toEqual([{ ...cooler, x: 871, y: 351 }, moved]);
+  });
 });
 
 describe('checkLayout', () => {

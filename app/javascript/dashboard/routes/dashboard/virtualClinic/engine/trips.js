@@ -61,7 +61,7 @@ export const TRIPS = [
   }),
   ...all('water', {
     near: '4_copa/bebedouro.png',
-    offset: [-4, 21],
+    offset: [-5, 25],
     face: 'up',
   }),
   ...both('fridge', {

@@ -235,7 +235,7 @@ export const ITEMS = [
   { sprite: `${C}maquina_bebidas.png`, x: 706, y: 340 },
   { sprite: `${C}cafeteira_bancada.png`, x: 760, y: 360 },
   { sprite: `${C}maquina_cafe.png`, x: 816, y: 340 },
-  { sprite: `${C}bebedouro.png`, x: 870, y: 355 },
+  { sprite: `${C}bebedouro.png`, x: 871, y: 351 },
   { sprite: `${C}cadeira_frente.png`, x: 788, y: 445 },
   { sprite: `${C}mesa_redonda.png`, x: 772, y: 470 },
   // Side chairs face the table: the left one is mirrored.
@@ -458,6 +458,9 @@ const UPGRADES = [
     [x, 492],
     [{ x, y: 484 }],
   ]),
+  // The copa water cooler is now the one of the sala de espera (narrower and
+  // taller), standing where the old one stood.
+  [`${C}bebedouro.png`, [870, 355], [{ x: 871, y: 351 }]],
   // Helena's and Luciano's desks: the straight piece and the L are now one
   // L desk, where the two were.
   [
