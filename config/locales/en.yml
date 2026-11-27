@@ -68,6 +68,12 @@ en:
       operations_notification:
         one: 'notification'
         other: 'Notification Center'
+    errors:
+      models:
+        secretary_special_scenario:
+          attributes:
+            name:
+              taken: 'already exists in this account: edit the existing scenario instead of creating another'
   # `helpers.label.<resource>.<attribute>` is what Administrate reads to
   # render the column header on the index table and the row label on the
   # show page. Without these, it falls back to the auto-humanized

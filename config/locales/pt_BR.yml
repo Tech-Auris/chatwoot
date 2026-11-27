@@ -55,6 +55,12 @@ pt_BR:
       operations_notification:
         one: 'notificação'
         other: 'Central de Notificações'
+    errors:
+      models:
+        secretary_special_scenario:
+          attributes:
+            name:
+              taken: 'já existe nesta conta: edite o cenário existente em vez de criar outro'
   # Administrate column/row labels on the super-admin index/show pages.
   helpers:
     label:
