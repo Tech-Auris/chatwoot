@@ -12,7 +12,9 @@ import { useClinicLayout } from '../composables/useClinicLayout';
 import VirtualClinicAPI from 'dashboard/api/virtualClinic';
 
 // Layouts saved before the call screen existed get it at the end.
-const TV = ITEMS.find(item => item.sprite === '2_sala_de_espera/tv_parede.png');
+const TV = ITEMS.find(
+  item => item.sprite === '2_sala_de_espera/tv_pedestal.png'
+);
 
 vi.mock('dashboard/api/virtualClinic', () => ({
   default: {

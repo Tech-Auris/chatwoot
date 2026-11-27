@@ -128,22 +128,39 @@ describe('marketing monitor wall', () => {
 });
 
 describe('call screen in saved layouts', () => {
-  const TV = '2_sala_de_espera/tv_parede.png';
-  const tvs = layout => layout.items.filter(({ sprite }) => sprite === TV);
-  const savedBefore = { items: ITEMS.filter(({ sprite }) => sprite !== TV) };
+  const TV = '2_sala_de_espera/tv_pedestal.png';
+  const ARMCHAIRS = '2_sala_de_espera/poltronas_verdes_dupla.png';
+  const count = (layout, sprite) =>
+    layout.items.filter(item => item.sprite === sprite).length;
+  // A clinic saved before the TV: the green armchairs where the TV is now.
+  const armchairs = { sprite: ARMCHAIRS, x: 292, y: 352 };
+  const savedBefore = {
+    items: [...ITEMS.filter(({ sprite }) => sprite !== TV), armchairs],
+  };
 
-  it('comes with the default clinic', () => {
-    expect(tvs(DEFAULT_LAYOUT)).toHaveLength(1);
+  it('stands where the green armchairs were in the default clinic', () => {
+    expect(count(DEFAULT_LAYOUT, TV)).toBe(1);
+    expect(count(DEFAULT_LAYOUT, ARMCHAIRS)).toBe(0);
   });
 
-  it('is added to clinics saved before it existed, once', () => {
-    expect(tvs(applySaved(savedBefore))).toHaveLength(1);
-    expect(tvs(applySaved({ items: ITEMS }))).toHaveLength(1);
+  it('takes the place of the armchairs in clinics saved before it, once', () => {
+    const layout = applySaved(savedBefore);
+    expect(count(layout, TV)).toBe(1);
+    expect(count(layout, ARMCHAIRS)).toBe(0);
+    expect(count(applySaved({ items: ITEMS }), TV)).toBe(1);
   });
 
-  it('stays out once the clinic saved without it', () => {
+  it('leaves armchairs the clinic moved elsewhere', () => {
+    const moved = { ...armchairs, x: 100 };
+    const layout = applySaved({ items: [moved] });
+    expect(layout.items).toContainEqual(moved);
+    expect(count(layout, TV)).toBe(1);
+  });
+
+  it('keeps what the clinic chose once it saved this version', () => {
     const saved = { ...savedBefore, version: LAYOUT_VERSION };
-    expect(tvs(applySaved(saved))).toHaveLength(0);
+    expect(count(applySaved(saved), TV)).toBe(0);
+    expect(count(applySaved(saved), ARMCHAIRS)).toBe(1);
     expect(toSaved(DEFAULT_LAYOUT).version).toBe(LAYOUT_VERSION);
   });
 });

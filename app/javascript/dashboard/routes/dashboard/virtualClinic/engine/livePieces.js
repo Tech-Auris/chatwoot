@@ -6,7 +6,7 @@
 
 const MONITORS = '14_marketing/painel_monitores.png';
 export const CLOCK = '1_recepcao/relogio.png';
-export const CALL_SCREEN = '2_sala_de_espera/tv_parede.png';
+export const CALL_SCREEN = '2_sala_de_espera/tv_pedestal.png';
 
 // The colors of the art.
 const INK = '#2e324e';
