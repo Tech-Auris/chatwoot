@@ -89,6 +89,7 @@ pt_BR:
     reset_password_saml_user: Esta conta usa autenticação SAML. A redefinição de senha não está disponível. Por favor, contate o administrador.
     login_saml_user: Esta conta usa autenticação SAML. Por favor, faça login através do provedor SAML da sua organização.
     saml_not_available: A autenticação SAML não está disponível nesta instalação.
+    mfa_sign_in_required: Sua conta exige autenticação em dois fatores. Entre para continuar.
     inbox_deletetion_response: Seu pedido de exclusão da caixa de entrada será processado dentro de algum tempo.
   errors:
     mcp:
