@@ -18,3 +18,51 @@ ignore:
   - CVE-2026-33176
   - CVE-2026-33195
   - CVE-2026-33202
+  # devise 5: devise-secure_password, devise-two-factor and devise_token_auth
+  # all require devise < 5. The open redirect is in the :timeoutable handler,
+  # which User does not enable.
+  - GHSA-jp94-3292-c3xv
+  # ruby_llm 2.x needs ai-agents 0.14 (we are on 0.10). The ReDoS only applies
+  # on Ruby 3.1; we run Ruby 3.4.
+  - GHSA-5m38-526f-3498
+  - GHSA-57hg-jgw4-wcqw
+  - GHSA-42r3-x6vx-x49x
+  # Rails 7.1 has no patched release for the advisories below (fixed only in
+  # 8.0.5.2+). Remove them when we move off Rails 7.1.
+  # Parameters#each_key: no code passes each_key's return value to mass assignment.
+  - GHSA-wm3x-v3qw-4jh3
+  # Session CacheStore restore and missing SameSite: we use :cookie_store with
+  # same_site: :lax (config/initializers/session_store.rb).
+  - GHSA-2586-8ghr-69fj
+  - GHSA-gmj8-hvj3-49mw
+  # Content negotiation cache poisoning: no Rack::Cache/Thruster; the only public
+  # cached action (manifest) always renders JSON.
+  - GHSA-r9jg-fmfx-2gv6
+  # ActionController::Live DoS: no streaming controllers.
+  - GHSA-rwvh-fw6r-pwvp
+  # Session leak via Active Storage proxy: needs cookie rotations or the :hybrid
+  # serializer; we use :json and no rotations.
+  - GHSA-x6mj-8jx9-qhqv
+  # Action View helpers: no highlight/simple_format calls; we load 7.0 defaults
+  # (HTML4 sanitizer) and nokogiri >= 1.19.5; strip_tags output is never rendered
+  # html_safe inside an attribute; no user-controlled tag attribute names.
+  - GHSA-2p2f-4rq4-gjwc
+  - GHSA-v6rj-xm57-3p59
+  - GHSA-rq8q-p985-fjq7
+  - GHSA-68p9-83h6-5wpj
+  # Active Storage filename NUL byte DoS: PostgreSQL rejects NUL bytes.
+  - GHSA-p2pm-g2h6-7j5j
+  # GCS direct uploads: ACTIVE_STORAGE_SERVICE is not GCS in our deployments.
+  - GHSA-3w93-6hmw-whh4
+  - GHSA-hfr4-8rjc-97m2
+  # Mailgun ingress replay: RAILS_INBOUND_EMAIL_SERVICE is not mailgun (relay).
+  - GHSA-5957-c7qm-m469
+  # Active Storage analysis/variants and safe_constantize (reachable through
+  # /cable): mitigated locally by fix/security-active-storage-mitigations
+  # (VIPS_BLOCK_UNTRUSTED, analyzers limited to Vips, safe_constantize patch).
+  # variant_processor is :vips, so ImageMagick is not used.
+  - GHSA-3f4q-8x5m-76v8
+  - GHSA-f3w6-w445-fwh9
+  - GHSA-v924-7rp8-4mxh
+  - GHSA-xr9x-r78c-5hrm
+  - GHSA-8474-xrp6-wh69
