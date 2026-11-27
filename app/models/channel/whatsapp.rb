@@ -38,10 +38,12 @@ class Channel::Whatsapp < ApplicationRecord # rubocop:disable Metrics/ClassLengt
   # snapshot, so keeping it would make the 5-min poll re-broadcast every cycle for no reason).
   NEW_CHAT_CAP_KEYS = %w[capping_status ote_status mv_status total_quota used_quota cycle_start_timestamp cycle_end_timestamp].freeze
   before_validation :ensure_webhook_verify_token
+  before_validation :keep_app_secret, if: -> { provider.in?(%w[whatsapp_cloud default]) }
 
   validates :provider, inclusion: { in: PROVIDERS }
   validates :phone_number, presence: true, uniqueness: true
   validate :validate_provider_config
+  validate :validate_app_secret, if: :app_secret_required?
 
   scope :with_reconnection_enabled, -> { where(reconnection_enabled: [nil, true]) }
   scope :cloud_on_waba, ->(waba_id) { where(provider: 'whatsapp_cloud').where("provider_config ->> 'business_account_id' = ?", waba_id) }
@@ -486,8 +488,42 @@ class Channel::Whatsapp < ApplicationRecord # rubocop:disable Metrics/ClassLengt
     )
   end
 
+  # The stored token wins over whatever came in, because provider_config is permitted wholesale
+  # by the inbox API and an update replaces the column: one that leaves the token out would
+  # otherwise mint a new one while the provider keeps posting the old one. A provider change
+  # (creation included) is the one write that starts over.
   def ensure_webhook_verify_token
-    provider_config['webhook_verify_token'] ||= SecureRandom.hex(16) if provider.in?(%w[whatsapp_cloud baileys zapi])
+    return unless provider.in?(%w[whatsapp_cloud baileys zapi])
+
+    stored = provider_config_was.to_h['webhook_verify_token'] unless provider_changed?
+    provider_config['webhook_verify_token'] = stored.presence || provider_config['webhook_verify_token'].presence || SecureRandom.hex(16)
+  end
+
+  # Kept like the token: an update that left the secret out would turn an inbox whose webhooks
+  # are verified back into one that takes them unsigned. A move to embedded signup drops it,
+  # since that inbox is verified with WHATSAPP_APP_SECRET and the old secret belongs to another app.
+  def keep_app_secret
+    return if provider_changed?
+
+    stored = provider_config_was.to_h
+    return provider_config.delete('app_secret') if provider_config['source'] == 'embedded_signup' && stored['source'] != 'embedded_signup'
+    return if provider_config['app_secret'].present? || stored['app_secret'].blank?
+
+    provider_config['app_secret'] = stored['app_secret']
+  end
+
+  # Meta signs every Cloud webhook with the secret of the app that issued the token. Embedded
+  # signup runs on the installation's app (WHATSAPP_APP_SECRET); a manual inbox brings its own.
+  # Asked for when an inbox becomes a manual Cloud inbox, so existing ones keep working until
+  # their operator adds it.
+  def app_secret_required?
+    return false unless provider == 'whatsapp_cloud' && provider_config['source'] != 'embedded_signup'
+
+    new_record? || provider_changed? || provider_config_was.to_h['source'] == 'embedded_signup'
+  end
+
+  def validate_app_secret
+    errors.add(:provider_config, 'App secret is required') if provider_config['app_secret'].blank?
   end
 
   def validate_provider_config

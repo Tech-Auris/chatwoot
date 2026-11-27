@@ -2,7 +2,7 @@ class Webhooks::WhatsappController < ActionController::API
   include MetaTokenVerifyConcern
 
   before_action :verify_meta_signature!, only: :process_payload
-  before_action :verify_zapi_token!, only: :process_payload
+  before_action :verify_provider_token!, only: :process_payload
 
   # Folga para o `SendReplyJob` (que persiste o `source_id` da mensagem
   # enviada) completar antes de o `messages.update` ser reprocessado. No
@@ -141,21 +141,31 @@ class Webhooks::WhatsappController < ActionController::API
     head :ok
   end
 
-  # Z-API webhooks carry no signature; the channel's webhook_verify_token is
-  # appended to the URL registered on Z-API. Fail closed when it is missing.
-  def verify_zapi_token!
-    return unless whatsapp_channel&.provider == 'zapi'
+  # Providers Meta does not sign carry the channel's webhook_verify_token, checked here before
+  # anything is queued so a forged payload never reaches the queues. Baileys echoes it in every
+  # body; Z-API cannot, so it is appended to the URL registered on Z-API. Fail closed when missing.
+  def verify_provider_token!
+    case whatsapp_channel&.provider
+    when 'baileys'
+      head :unauthorized unless matches_webhook_verify_token?(params[:webhookVerifyToken])
+    when 'zapi'
+      head :unauthorized unless matches_webhook_verify_token?(params[:token])
+    end
+  end
 
-    expected = whatsapp_channel.provider_config['webhook_verify_token'].to_s
-    return if expected.present? && ActiveSupport::SecurityUtils.secure_compare(params[:token].to_s, expected)
+  def matches_webhook_verify_token?(given)
+    expected = whatsapp_channel.provider_config['webhook_verify_token']
+    return false if given.blank? || expected.blank?
 
-    head :unauthorized
+    ActiveSupport::SecurityUtils.secure_compare(given.to_s, expected.to_s)
   end
 
   def valid_token?(token)
     channel = Channel::Whatsapp.find_by(phone_number: params[:phone_number])
-    whatsapp_webhook_verify_token = channel.provider_config['webhook_verify_token'] if channel.present?
-    token == whatsapp_webhook_verify_token if whatsapp_webhook_verify_token.present?
+    expected = channel&.provider_config&.dig('webhook_verify_token')
+    return false if token.blank? || expected.blank?
+
+    ActiveSupport::SecurityUtils.secure_compare(token.to_s, expected.to_s)
   end
 
   def meta_app_secrets
@@ -169,12 +179,16 @@ class Webhooks::WhatsappController < ActionController::API
     @whatsapp_channel ||= whatsapp_business_payload_channel || Channel::Whatsapp.find_by(phone_number: params[:phone_number])
   end
 
+  # A Cloud or 360dialog inbox without an app secret cannot have its webhooks verified, and is
+  # taken unsigned only while WHATSAPP_ACCEPT_UNSIGNED_WEBHOOKS allows it: a grace period for the
+  # inboxes set up before the secret was asked for, closed by setting it to false.
   def meta_signature_verification_required?
     return true if whatsapp_channel.blank?
-    return false unless whatsapp_channel.provider == 'whatsapp_cloud'
+    return false unless whatsapp_channel.provider.in?(%w[whatsapp_cloud default])
     return true if channel_meta_app_secrets(whatsapp_channel).present?
+    return true if whatsapp_channel.provider_config['source'] == 'embedded_signup'
 
-    whatsapp_channel.provider_config['source'] == 'embedded_signup'
+    !ActiveModel::Type::Boolean.new.cast(ENV.fetch('WHATSAPP_ACCEPT_UNSIGNED_WEBHOOKS', 'true'))
   end
 
   def whatsapp_business_payload_channel

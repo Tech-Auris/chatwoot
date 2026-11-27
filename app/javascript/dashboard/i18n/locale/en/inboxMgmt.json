@@ -300,6 +300,12 @@
           "PLACEHOLDER": "Please enter the Business Account ID obtained from Facebook developer dashboard.",
           "ERROR": "Please enter a valid value."
         },
+        "APP_SECRET": {
+          "LABEL": "App Secret",
+          "PLACEHOLDER": "Paste your Meta app's App Secret",
+          "HELP": "In your app on developers.facebook.com, open App settings > Basic and copy the App secret. It confirms that each webhook really comes from Meta.",
+          "ERROR": "This field is required"
+        },
         "WEBHOOK_VERIFY_TOKEN": {
           "LABEL": "Webhook Verify Token",
           "PLACEHOLDER": "Enter a verify token which you want to configure for Facebook webhooks.",
@@ -977,6 +983,17 @@
       "WHATSAPP_SECTION_TITLE": "API Key",
       "WHATSAPP_SECTION_UPDATE_TITLE": "Update API Key",
       "WHATSAPP_SECTION_UPDATE_PLACEHOLDER": "Enter the new API Key here",
+      "WHATSAPP_APP_SECRET": {
+        "TITLE": "App Secret",
+        "HELP": "The secret of the Meta app that issued this inbox's access token. It confirms that each webhook really comes from Meta.",
+        "MISSING": "This inbox has no App Secret, so its webhooks are accepted without checking that they come from Meta. They will soon be refused: add the App Secret to keep receiving messages.",
+        "CONFIGURED": "App Secret configured",
+        "PLACEHOLDER": "Paste the App Secret",
+        "ADD": "Add",
+        "REPLACE": "Replace",
+        "SUCCESS": "App Secret saved",
+        "ERROR": "Could not save the App Secret. Check that it belongs to the same Meta app that issued this inbox's access token."
+      },
       "WHATSAPP_SECTION_UPDATE_BUTTON": "Update",
       "WHATSAPP_EMBEDDED_SIGNUP_TITLE": "WhatsApp Embedded Signup",
       "WHATSAPP_EMBEDDED_SIGNUP_SUBHEADER": "This inbox is connected through WhatsApp embedded signup.",

@@ -29,7 +29,10 @@ RSpec.describe Channel::Whatsapp do
   end
 
   describe 'validate_provider_config' do
-    let(:channel) { build(:channel_whatsapp, provider: 'whatsapp_cloud', account: create(:account)) }
+    let(:channel) do
+      build(:channel_whatsapp, provider: 'whatsapp_cloud', account: create(:account),
+                               provider_config: { 'api_key' => 'test_key', 'phone_number_id' => 'random_id', 'app_secret' => 'test_app_secret' })
+    end
 
     it 'validates false when provider config is wrong' do
       stub_request(:get, 'https://graph.facebook.com/v22.0//message_templates?access_token=test_key').to_return(status: 401)
@@ -37,6 +40,9 @@ RSpec.describe Channel::Whatsapp do
     end
 
     it 'validates true when provider config is right' do
+      stub_request(:get, %r{graph\.facebook\.com/v22\.0/me\?}).to_return(status: 200, body: { id: '1' }.to_json)
+      stub_request(:get, %r{graph\.facebook\.com/v22\.0//message_templates\?access_token=test_key&fields=})
+        .to_return(status: 200, body: { data: [] }.to_json, headers: { 'Content-Type' => 'application/json' })
       stub_request(:get, 'https://graph.facebook.com/v22.0//message_templates?access_token=test_key')
         .to_return(status: 200,
                    body: { data: [{
@@ -82,6 +88,74 @@ RSpec.describe Channel::Whatsapp do
                        sync_templates: false)
 
       expect(channel.provider_config['webhook_verify_token']).to eq '123'
+    end
+
+    %w[baileys zapi whatsapp_cloud].each do |provider|
+      it "keeps the stored token when a #{provider} update leaves it out of provider_config" do
+        channel = create(:channel_whatsapp, provider: provider, validate_provider_config: false, sync_templates: false)
+        token = channel.provider_config['webhook_verify_token']
+
+        channel.update!(provider_config: channel.provider_config.except('webhook_verify_token'))
+
+        expect(channel.reload.provider_config['webhook_verify_token']).to eq(token)
+      end
+    end
+
+    it 'keeps the stored token even when an update sends a different one' do
+      channel = create(:channel_whatsapp, provider: 'baileys', validate_provider_config: false, sync_templates: false)
+      token = channel.provider_config['webhook_verify_token']
+
+      channel.update!(provider_config: channel.provider_config.merge('webhook_verify_token' => 'other'))
+
+      expect(channel.reload.provider_config['webhook_verify_token']).to eq(token)
+    end
+  end
+
+  describe 'app_secret' do
+    let(:account) { create(:account) }
+    let(:manual_config) { { 'api_key' => 'test_key', 'phone_number_id' => '123', 'business_account_id' => '456', 'source' => 'manual' } }
+
+    before do
+      allow(Whatsapp::WebhookSetupService).to receive(:new).and_return(instance_double(Whatsapp::WebhookSetupService, perform: nil))
+    end
+
+    it 'is required to create a manual whatsapp cloud channel' do
+      channel = build(:channel_whatsapp, account: account, provider: 'whatsapp_cloud', provider_config: manual_config)
+      channel.define_singleton_method(:validate_provider_config) { nil }
+
+      expect(channel.save).to be(false)
+      expect(channel.errors[:provider_config]).to include('App secret is required')
+    end
+
+    it 'is not required to update an existing manual channel that has none' do
+      channel = create(:channel_whatsapp, account: account, provider: 'whatsapp_cloud', provider_config: manual_config,
+                                          validate_provider_config: false, sync_templates: false)
+      channel.update_columns(provider_config: channel.provider_config.except('app_secret')) # rubocop:disable Rails/SkipsModelValidations
+
+      channel.reload.provider_config = channel.provider_config.merge('api_key' => 'new_key')
+      channel.define_singleton_method(:validate_provider_config) { nil }
+
+      expect(channel.save).to be(true)
+    end
+
+    it 'keeps the stored secret when an update leaves it out' do
+      channel = create(:channel_whatsapp, account: account, provider: 'whatsapp_cloud',
+                                          provider_config: manual_config.merge('app_secret' => 'secret'),
+                                          validate_provider_config: false, sync_templates: false)
+
+      channel.update!(provider_config: channel.provider_config.except('app_secret'))
+
+      expect(channel.reload.provider_config['app_secret']).to eq('secret')
+    end
+
+    it 'drops the secret when the channel moves to embedded signup' do
+      channel = create(:channel_whatsapp, account: account, provider: 'whatsapp_cloud',
+                                          provider_config: manual_config.merge('app_secret' => 'secret'),
+                                          validate_provider_config: false, sync_templates: false)
+
+      channel.update!(provider_config: channel.provider_config.merge('source' => 'embedded_signup'))
+
+      expect(channel.reload.provider_config).not_to have_key('app_secret')
     end
   end
 
@@ -375,7 +449,7 @@ RSpec.describe Channel::Whatsapp do
     end
 
     it 'does not call method if provider service does not implement it' do
-      channel.update!(provider: 'whatsapp_cloud')
+      channel.update!(provider: 'whatsapp_cloud', provider_config: channel.provider_config.merge('app_secret' => 'test_app_secret'))
 
       expect do
         channel.received_messages(messages, conversation)
@@ -401,7 +475,7 @@ RSpec.describe Channel::Whatsapp do
     end
 
     it 'does not call method if provider service does not implement it' do
-      channel.update!(provider: 'whatsapp_cloud')
+      channel.update!(provider: 'whatsapp_cloud', provider_config: channel.provider_config.merge('app_secret' => 'test_app_secret'))
 
       expect do
         channel.on_whatsapp(phone_number)
@@ -453,7 +527,7 @@ RSpec.describe Channel::Whatsapp do
     end
 
     it 'does not call method if provider service does not implement it' do
-      channel.update!(provider: 'whatsapp_cloud')
+      channel.update!(provider: 'whatsapp_cloud', provider_config: channel.provider_config.merge('app_secret' => 'test_app_secret'))
 
       expect do
         channel.delete_message(message, conversation: conversation)
@@ -774,7 +848,7 @@ RSpec.describe Channel::Whatsapp do
     end
 
     let(:new_cloud_config) do
-      { 'api_key' => 'new_cloud_key', 'phone_number_id' => 'new_phone_id', 'business_account_id' => 'new_waba_id' }
+      { 'api_key' => 'new_cloud_key', 'phone_number_id' => 'new_phone_id', 'business_account_id' => 'new_waba_id', 'app_secret' => 'new_secret' }
     end
 
     before do
@@ -782,6 +856,8 @@ RSpec.describe Channel::Whatsapp do
         .to_return(status: 200)
       stub_request(:get, %r{graph\.facebook\.com/v\d+\.\d+/.*message_templates})
         .to_return(status: 200, body: { data: [] }.to_json, headers: { 'Content-Type' => 'application/json' })
+      stub_request(:get, %r{graph\.facebook\.com/v\d+\.\d+/me\?})
+        .to_return(status: 200, body: { id: '1' }.to_json, headers: { 'Content-Type' => 'application/json' })
       stub_request(:delete, %r{graph\.facebook\.com/v\d+\.\d+/.*/subscribed_apps})
         .to_return(status: 200, body: { success: true }.to_json, headers: { 'Content-Type' => 'application/json' })
       webhook_setup_service = instance_double(Whatsapp::WebhookSetupService, perform: nil)
@@ -1106,7 +1182,7 @@ RSpec.describe Channel::Whatsapp do
     it 'returns false for whatsapp_cloud channels without embedded_signup source' do
       channel = create(:channel_whatsapp, account: account, provider: 'whatsapp_cloud',
                                           validate_provider_config: false, sync_templates: false)
-      channel.update!(provider_config: channel.provider_config.merge('source' => 'manual', 'calling_enabled' => true))
+      channel.update!(provider_config: channel.provider_config.merge('source' => 'manual', 'app_secret' => 'secret', 'calling_enabled' => true))
 
       expect(channel.voice_enabled?).to be false
     end

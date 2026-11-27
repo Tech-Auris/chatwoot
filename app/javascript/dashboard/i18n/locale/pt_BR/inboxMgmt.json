@@ -300,6 +300,12 @@
           "PLACEHOLDER": "Por favor, insira o ID da conta do WhatsApp Business obtido do painel do desenvolvedor do Facebook.",
           "ERROR": "Por favor, insira um valor válido."
         },
+        "APP_SECRET": {
+          "LABEL": "Chave secreta do aplicativo",
+          "PLACEHOLDER": "Cole a chave secreta do seu aplicativo da Meta",
+          "HELP": "No seu aplicativo em developers.facebook.com, abra Configurações do app > Básico e copie a Chave secreta do aplicativo. Ela confirma que cada webhook veio mesmo da Meta.",
+          "ERROR": "Este campo é obrigatório"
+        },
         "WEBHOOK_VERIFY_TOKEN": {
           "LABEL": "Token de verificação do Webhook",
           "PLACEHOLDER": "Insira um token de verificação que você deseja configurar para webhooks do Facebook.",
@@ -973,6 +979,17 @@
       "WHATSAPP_SECTION_TITLE": "Chave API",
       "WHATSAPP_SECTION_UPDATE_TITLE": "Atualizar Chave de API",
       "WHATSAPP_SECTION_UPDATE_PLACEHOLDER": "Digite a nova chave de API aqui",
+      "WHATSAPP_APP_SECRET": {
+        "TITLE": "Chave secreta do aplicativo",
+        "HELP": "A chave secreta do aplicativo da Meta que gerou o token de acesso desta caixa. Ela confirma que cada webhook veio mesmo da Meta.",
+        "MISSING": "Esta caixa não tem a chave secreta do aplicativo, então os webhooks dela são aceitos sem conferir se vieram da Meta. Em breve eles serão recusados: adicione a chave para continuar recebendo mensagens.",
+        "CONFIGURED": "Chave secreta configurada",
+        "PLACEHOLDER": "Cole a chave secreta",
+        "ADD": "Adicionar",
+        "REPLACE": "Substituir",
+        "SUCCESS": "Chave secreta salva",
+        "ERROR": "Não foi possível salvar a chave secreta. Confira se ela é do mesmo aplicativo da Meta que gerou o token de acesso desta caixa."
+      },
       "WHATSAPP_SECTION_UPDATE_BUTTON": "Atualizar",
       "WHATSAPP_EMBEDDED_SIGNUP_TITLE": "Inscrição incorporada do WhatsApp",
       "WHATSAPP_EMBEDDED_SIGNUP_SUBHEADER": "Esta caixa de entrada está conectada através da inscrição incorporada do WhatsApp.",
