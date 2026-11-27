@@ -271,4 +271,37 @@ describe Whatsapp::FacebookApiClient do
       end
     end
   end
+
+  # Webmock answers instantly, so the ceiling is asserted on the calls themselves.
+  describe 'the ceiling on every Graph call' do
+    let(:ok) { instance_double(HTTParty::Response, success?: true, parsed_response: {}) }
+
+    it 'passes the wait ceiling and turns off the retry on a read' do
+      allow(HTTParty).to receive(:get).and_return(ok)
+
+      api_client.fetch_phone_numbers('test_waba_id')
+
+      expect(HTTParty).to have_received(:get).with(anything, hash_including(timeout: 10, max_retries: 0))
+    end
+
+    it 'passes the same ceiling on the Coexistence data request' do
+      allow(HTTParty).to receive(:post).and_return(ok)
+
+      api_client.request_smb_app_data('phone_id', 'history')
+
+      expect(HTTParty).to have_received(:post).with(anything, hash_including(timeout: 10, max_retries: 0))
+    end
+  end
+
+  describe 'a failed Graph call' do
+    it "raises Whatsapp::ApiError carrying Meta's code under the same message" do
+      stub_request(:post, "https://graph.facebook.com/#{api_version}/test_waba_id/subscribed_apps")
+        .to_return(status: 400, headers: { 'Content-Type' => 'application/json' },
+                   body: { error: { message: 'Object does not exist', code: 100, error_subcode: 33 } }.to_json)
+
+      expect { api_client.subscribe_app_to_waba('test_waba_id') }.to raise_error(Whatsapp::ApiError, /App subscription to WABA failed/) do |error|
+        expect(error).to be_credentials_refused
+      end
+    end
+  end
 end

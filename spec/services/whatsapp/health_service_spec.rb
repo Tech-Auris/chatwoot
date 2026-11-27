@@ -172,4 +172,17 @@ RSpec.describe Whatsapp::HealthService do
       end
     end
   end
+
+  # Webmock answers instantly, so the ceiling is asserted on the calls themselves.
+  describe 'the ceiling on the health reads' do
+    it 'passes the wait ceiling and turns off the retry on both Graph calls' do
+      allow(HTTParty).to receive(:get).and_return(
+        instance_double(HTTParty::Response, success?: true, parsed_response: { 'id' => phone_number_id })
+      )
+
+      service.fetch_health_status
+
+      expect(HTTParty).to have_received(:get).with(anything, hash_including(timeout: 10, max_retries: 0)).twice
+    end
+  end
 end

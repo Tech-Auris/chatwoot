@@ -1,4 +1,6 @@
 class Whatsapp::FacebookApiClient
+  include Whatsapp::GraphRequestOptions
+
   BASE_URI = 'https://graph.facebook.com'.freeze
 
   def initialize(access_token = nil)
@@ -9,6 +11,7 @@ class Whatsapp::FacebookApiClient
   def exchange_code_for_token(code)
     response = HTTParty.get(
       "#{BASE_URI}/#{@api_version}/oauth/access_token",
+      **GRAPH_REQUEST_OPTIONS,
       query: {
         client_id: GlobalConfigService.load('WHATSAPP_APP_ID', ''),
         client_secret: GlobalConfigService.load('WHATSAPP_APP_SECRET', ''),
@@ -22,6 +25,7 @@ class Whatsapp::FacebookApiClient
   def fetch_phone_numbers(waba_id)
     response = HTTParty.get(
       "#{BASE_URI}/#{@api_version}/#{waba_id}/phone_numbers",
+      **GRAPH_REQUEST_OPTIONS,
       query: { access_token: @access_token }
     )
 
@@ -31,6 +35,7 @@ class Whatsapp::FacebookApiClient
   def debug_token(input_token)
     response = HTTParty.get(
       "#{BASE_URI}/#{@api_version}/debug_token",
+      **GRAPH_REQUEST_OPTIONS,
       query: {
         input_token: input_token,
         access_token: build_app_access_token
@@ -43,6 +48,7 @@ class Whatsapp::FacebookApiClient
   def register_phone_number(phone_number_id, pin)
     response = HTTParty.post(
       "#{BASE_URI}/#{@api_version}/#{phone_number_id}/register",
+      **GRAPH_REQUEST_OPTIONS,
       headers: request_headers,
       body: { messaging_product: 'whatsapp', pin: pin.to_s }.to_json
     )
@@ -53,6 +59,7 @@ class Whatsapp::FacebookApiClient
   def phone_number_verified?(phone_number_id)
     response = HTTParty.get(
       "#{BASE_URI}/#{@api_version}/#{phone_number_id}",
+      **GRAPH_REQUEST_OPTIONS,
       headers: request_headers
     )
 
@@ -75,6 +82,7 @@ class Whatsapp::FacebookApiClient
   def subscribe_app_to_waba(waba_id)
     response = HTTParty.post(
       "#{BASE_URI}/#{@api_version}/#{waba_id}/subscribed_apps",
+      **GRAPH_REQUEST_OPTIONS,
       headers: request_headers
     )
 
@@ -84,6 +92,7 @@ class Whatsapp::FacebookApiClient
   def override_waba_callback(waba_id, callback_url, verify_token, subscribed_fields: WEBHOOK_DEFAULT_FIELDS)
     response = HTTParty.post(
       "#{BASE_URI}/#{@api_version}/#{waba_id}/subscribed_apps",
+      **GRAPH_REQUEST_OPTIONS,
       headers: request_headers,
       body: {
         override_callback_uri: callback_url,
@@ -101,6 +110,7 @@ class Whatsapp::FacebookApiClient
   def request_smb_app_data(phone_number_id, sync_type)
     response = HTTParty.post(
       "#{BASE_URI}/#{@api_version}/#{phone_number_id}/smb_app_data",
+      **GRAPH_REQUEST_OPTIONS,
       headers: request_headers,
       body: { messaging_product: 'whatsapp', sync_type: sync_type }.to_json
     )
@@ -111,6 +121,7 @@ class Whatsapp::FacebookApiClient
   def unsubscribe_waba_webhook(waba_id)
     response = HTTParty.delete(
       "#{BASE_URI}/#{@api_version}/#{waba_id}/subscribed_apps",
+      **GRAPH_REQUEST_OPTIONS,
       headers: request_headers
     )
 
@@ -133,7 +144,7 @@ class Whatsapp::FacebookApiClient
   end
 
   def handle_response(response, error_message)
-    raise "#{error_message}: #{response.body}" unless response.success?
+    raise Whatsapp::ApiError.from_response(response, message: "#{error_message}: #{response.body}") unless response.success?
 
     response.parsed_response
   end

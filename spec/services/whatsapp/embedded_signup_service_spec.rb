@@ -147,28 +147,31 @@ describe Whatsapp::EmbeddedSignupService do
         expect { service.perform }.to raise_error('Token error')
       end
 
-      it 'prompts reauthorization when webhook setup fails' do
-        # Create a real channel to test the actual webhook failure behavior
+      # The service completes either way (the error is rescued in setup_webhooks); only a refused
+      # credential sends the operator to reconnect.
+      def channel_whose_setup_raises(error)
         real_channel = create(:channel_whatsapp, account: account, phone_number: '+1234567890',
                                                  validate_provider_config: false, sync_templates: false)
-
-        # Mock the channel creation to return our real channel
         channel_creation = instance_double(Whatsapp::ChannelCreationService)
         allow(Whatsapp::ChannelCreationService).to receive(:new).and_return(channel_creation)
         allow(channel_creation).to receive(:perform).and_return(real_channel)
+        allow(real_channel).to receive(:perform_webhook_setup).and_raise(error)
+        real_channel
+      end
 
-        # Mock webhook setup to fail
-        allow(real_channel).to receive(:perform_webhook_setup).and_raise('Webhook setup error')
+      it 'prompts reauthorization when Meta refuses the token' do
+        real_channel = channel_whose_setup_raises(Whatsapp::ApiError.new(message: 'refused', http_status: 401, code: 190))
 
-        # Verify channel is not marked for reauthorization initially
         expect(real_channel.reauthorization_required?).to be false
-
-        # The service completes successfully even if webhook fails (webhook error is rescued in setup_webhooks)
-        result = service.perform
-        expect(result).to eq(real_channel)
-
-        # Verify the channel is now marked for reauthorization
+        expect(service.perform).to eq(real_channel)
         expect(real_channel.reauthorization_required?).to be true
+      end
+
+      it 'does not prompt reauthorization when the webhook setup times out' do
+        real_channel = channel_whose_setup_raises(Net::ReadTimeout.new)
+
+        expect(service.perform).to eq(real_channel)
+        expect(real_channel.reauthorization_required?).to be false
       end
     end
 
