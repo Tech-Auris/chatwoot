@@ -11,6 +11,7 @@ import {
   WORLD,
   sheetOf,
 } from './layout';
+import { drawLive } from './livePieces';
 
 const FRAME = { width: 32, height: 64 };
 const OUTLINE = '#2b2d42';
@@ -282,8 +283,15 @@ export function createRenderer(canvas, sprites, layout = DEFAULT_LAYOUT) {
     }));
 
   // `selected` (editor): the box of the piece or teammate being moved;
-  // `plan`: the zoomed-out view.
-  return function draw(characters, tick, selected = null, plan = false) {
+  // `plan`: the zoomed-out view; `clinic`: what the live pieces show
+  // (`{ timeZone }`, see livePieces.js).
+  return function draw(
+    characters,
+    tick,
+    selected = null,
+    plan = false,
+    clinic = {}
+  ) {
     // World coordinates from here on (the garden is at negative ones).
     context.setTransform(1, 0, 0, 1, -SCENE.x, -SCENE.y);
     context.fillStyle = GRASS;
@@ -311,6 +319,7 @@ export function createRenderer(canvas, sprites, layout = DEFAULT_LAYOUT) {
       .forEach(entry => {
         if (!entry.sheet) {
           drawItem(context, entry.image, entry, tick);
+          drawLive(context, entry, { ...clinic, tick, now: Date.now() });
           return;
         }
         const { row, column } = frameOf(entry, tick);

@@ -52,6 +52,19 @@ RSpec.describe 'Virtual clinic config API', type: :request do
     expect(seasons['folders']).to eq(%w[11_natal 12_halloween 13_festa])
   end
 
+  it 'sends the clinic time zone as the browser names it' do
+    get url, headers: agent.create_new_auth_token, as: :json
+    expect(response.parsed_body.dig('ai_team', 'timezone')).to eq('America/Sao_Paulo')
+
+    account.update!(reporting_timezone: 'Brasilia')
+    get url, headers: agent.create_new_auth_token, as: :json
+    expect(response.parsed_body.dig('ai_team', 'timezone')).to eq('America/Sao_Paulo')
+
+    account.update!(reporting_timezone: 'America/Manaus')
+    get url, headers: agent.create_new_auth_token, as: :json
+    expect(response.parsed_body.dig('ai_team', 'timezone')).to eq('America/Manaus')
+  end
+
   it 'is refused when the account is not released' do
     account.update!(virtual_clinic_enabled: false)
 

@@ -211,6 +211,10 @@ const tailwindConfig = {
     },
     keyframes: {
       ...defaultTheme.keyframes,
+      marquee: {
+        '0%': { transform: 'translateX(0)' },
+        '100%': { transform: 'translateX(-100%)' },
+      },
       wiggle: {
         '0%': { transform: 'translateX(0)' },
         '15%': { transform: 'translateX(0.375rem)' },
@@ -251,6 +255,7 @@ const tailwindConfig = {
       'fade-in-up': 'fade-in-up 0.3s ease-out',
       'loader-pulse': 'loader-pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       'card-select': 'card-select 0.25s ease-in-out',
+      marquee: 'marquee 30s linear infinite',
       shake: 'shake 0.3s ease-in-out 0s 2',
     },
   },

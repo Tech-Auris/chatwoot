@@ -32,6 +32,7 @@ class Api::V2::Accounts::VirtualClinic::LayoutsController < Api::V1::Accounts::B
 
   def layout_params
     params.require(:layout).permit(
+      :version,
       floors: [], walls: [], items: %i[sprite x y flip sortY],
       rooms: ::VirtualClinic::LayoutValidator::ROOMS,
       team: ::VirtualClinic::Persona::KEYS.index_with { SEAT }

@@ -8,6 +8,7 @@ RSpec.describe 'Virtual clinic layout API', type: :request do
   let(:assets_dir) { Dir.mktmpdir }
   let(:layout) do
     {
+      version: 1,
       items: [{ sprite: '4_copa/geladeira.png', x: 648, y: 332 }],
       rooms: { RECEPTION: 'Recepção Centro' },
       team: { manager: { name: 'Marta', sheet: '8_pessoas/pessoa_01.png', x: 708, y: 90 } }
@@ -43,7 +44,7 @@ RSpec.describe 'Virtual clinic layout API', type: :request do
     expect(response).to have_http_status(:ok)
 
     get url, headers: agent.create_new_auth_token, as: :json
-    expect(response.parsed_body['layout']).to include('rooms' => { 'RECEPTION' => 'Recepção Centro' })
+    expect(response.parsed_body['layout']).to include('version' => 1, 'rooms' => { 'RECEPTION' => 'Recepção Centro' })
     expect(response.parsed_body['layout'].dig('team', 'manager')).to include('name' => 'Marta', 'x' => 708)
     expect(account.virtual_clinic_layout.updated_by).to eq(manager)
     expect(VirtualClinic::Persona.find!('manager', account: account.reload).name).to eq('Marta')

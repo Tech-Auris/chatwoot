@@ -171,6 +171,15 @@ export const partitionRects = () =>
     return rects;
   });
 
+// The ticket call TV on its stand, where the green armchairs were, facing
+// the rows of chairs (see livePieces.js).
+const CALL_SCREEN_ITEM = { sprite: `${E}tv_pedestal.png`, x: 291, y: 331 };
+const GREEN_ARMCHAIRS = {
+  sprite: `${E}poltronas_verdes_dupla.png`,
+  x: 292,
+  y: 352,
+};
+
 const chairsRow = xs =>
   xs.map(x => ({ sprite: `${E}cadeira_azul_costas.png`, x, y: 530 }));
 
@@ -192,7 +201,7 @@ export const ITEMS = [
   // Sala de espera: the rows centered in the room, evenly spaced.
   { sprite: `${E}poltronas_beges_dupla.png`, x: 85, y: 352 },
   { sprite: `${E}mesinha_revistas.png`, x: 193, y: 367 },
-  { sprite: `${E}poltronas_verdes_dupla.png`, x: 292, y: 352 },
+  CALL_SCREEN_ITEM,
   { sprite: `${E}mesinha_revistas_2.png`, x: 400, y: 379 },
   { sprite: `${E}poltronas_beges_dupla.png`, x: 494, y: 352 },
   { sprite: `${E}bebedouro.png`, x: 600, y: 427 },
@@ -486,12 +495,37 @@ const UPGRADES = [
     [{ sprite: `${G}sofa_lateral.png`, x: 648, y: 172, flip: true }],
   ],
 ];
+
+// Changes to the default clinic after clinics started saving theirs, with
+// the layout version that brought them: pieces added, and pieces taken out
+// where the clinic never moved them. A clinic saved before that version gets
+// them (a piece it already placed is not added twice); once it saves again,
+// what it has is what it chose.
+export const LAYOUT_VERSION = 1;
+const CHANGES = [
+  { version: 1, add: [CALL_SCREEN_ITEM], remove: [GREEN_ARMCHAIRS] },
+];
+const samePlace = (a, b) => a.sprite === b.sprite && a.x === b.x && a.y === b.y;
+const changed = (items, version = 0) =>
+  CHANGES.filter(change => change.version > version).reduce(
+    (list, change) => [
+      ...list.filter(item => !change.remove.some(old => samePlace(item, old))),
+      ...change.add.filter(
+        piece => !list.some(({ sprite }) => sprite === piece.sprite)
+      ),
+    ],
+    items
+  );
+
 const upgrade = item => {
   const found = UPGRADES.find(
     ([sprite, [x, y]]) => item.sprite === sprite && item.x === x && item.y === y
   );
   return found ? found[2].map(piece => ({ ...item, ...piece })) : [item];
 };
+
+const savedItems = saved =>
+  changed(wholeDesk(saved.items).flatMap(upgrade), saved.version);
 
 // The saved layout of a clinic (only what the editor changes) on top of the
 // default one. `saved` is null when the clinic never edited it.
@@ -502,7 +536,7 @@ export function applySaved(saved) {
   return {
     floors: pick(FLOORS, saved.floors),
     walls: pick(WALLS, saved.walls),
-    items: saved.items ? wholeDesk(saved.items).flatMap(upgrade) : ITEMS,
+    items: saved.items ? savedItems(saved) : ITEMS,
     rooms: ROOMS.map(room => ({ ...room, name: saved.rooms?.[room.key] })),
     team: Object.fromEntries(
       Object.entries(CHARACTERS).map(([persona, spot]) => [
@@ -516,6 +550,7 @@ export function applySaved(saved) {
 // What goes to the API: the editable part only.
 export function toSaved(layout) {
   return {
+    version: LAYOUT_VERSION,
     floors: layout.floors.map(floor => floor.block),
     walls: layout.walls.map(wall => wall.block),
     items: layout.items.map(({ sprite, x, y, flip, sortY }) => ({
