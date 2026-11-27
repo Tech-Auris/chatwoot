@@ -1,4 +1,26 @@
 ---
+- tag: v4.15.1-auris.1.87
+  published_at: '2026-11-27T21:00:00Z'
+  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.87
+  notes:
+    en: |-
+      ### ✨ What's new
+
+      - **Connect WhatsApp with a code.** When connecting WhatsApp by QR Code, you can now type an 8-character code on the phone, under Linked devices, instead of scanning. Great when the clinic's phone is not near the computer. For administrators and managers.
+      - **Filter by what is still missing.** In the conversation and contact filters, custom fields now have "Is present" and "Is not present", so you can quickly find, for example, the conversations that don't have the procedure noted yet.
+
+      ### 🐛 Fixes
+
+      - **Official WhatsApp no longer asks to reconnect for no reason.** When the official WhatsApp is slow, the inbox no longer shows as "needs reconnecting" and keeps receiving messages as usual.
+    pt_BR: |-
+      ### ✨ Novidades
+
+      - **Conectar o WhatsApp com um código.** Na hora de conectar o WhatsApp por QR Code, agora dá para usar um código de 8 letras e números em vez de escanear, digitando no celular em Dispositivos conectados. Ótimo quando o celular da clínica não está perto do computador. Para administradores e gerentes.
+      - **Filtre pelo que ainda falta preencher.** Nos filtros de conversas e contatos, os campos personalizados agora têm "Está presente" e "Não está presente", para achar rápido, por exemplo, as conversas que ainda não têm o procedimento anotado.
+
+      ### 🐛 Correções
+
+      - **WhatsApp oficial não pede reconexão à toa.** Quando o WhatsApp oficial está lento, a caixa não aparece mais como "precisa reconectar" e continua recebendo as mensagens normalmente.
 - tag: v4.15.1-auris.1.86
   published_at: '2026-11-26T20:00:00Z'
   url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.86
@@ -419,27 +441,3 @@
       ### 🐛 Correções
 
       - **Avisos legíveis no tema escuro.** O texto dos avisos que sumia no tema escuro agora aparece normalmente.
-- tag: v4.15.1-auris.1.67
-  published_at: '2026-10-07T18:00:00Z'
-  url: https://github.com/Tech-Auris/chatwoot/releases/tag/v4.15.1-auris.1.67
-  notes:
-    en: |-
-      ### ✨ What's new
-
-      - **One form to schedule messages.** Scheduling from the conversation or from the Scheduled messages screen opens the same complete form, with attachment, template, recurrence and variables (type `{{`). From the Scheduled messages screen, you pick the patient and the number right in the form.
-      - **Language in the quick contact edit.** The contact panel opened from the conversation now has the Language field.
-
-      ### ⚡ Improvements
-
-      - **Patients from ads can get a reply for 72 hours.** On official numbers, a patient who started the conversation from a WhatsApp ad can receive normal messages for up to 72 hours, as the conversation badge shows.
-      - **Numbers that work are no longer blocked.** Some official numbers were shown as blocked while still sending; they can be picked again.
-    pt_BR: |-
-      ### ✨ Novidades
-
-      - **Um só formulário para agendar mensagens.** Agendar pela conversa ou pela tela Mensagens agendadas abre o mesmo formulário completo, com anexo, modelo, recorrência e variáveis (digite `{{`). Pela tela de agendadas, você escolhe o paciente e o número no próprio formulário.
-      - **Idioma na edição rápida do contato.** O painel do contato aberto pela conversa ganhou o campo Idioma.
-
-      ### ⚡ Melhorias
-
-      - **Pacientes de anúncio podem receber resposta por 72 horas.** Nos números oficiais, quem começou a conversa por um anúncio do WhatsApp pode receber mensagens normais por até 72 horas, como mostra o selo da conversa.
-      - **Números que funcionam não aparecem mais como bloqueados.** Alguns números oficiais apareciam bloqueados mesmo enviando normalmente; eles voltam a poder ser escolhidos.
