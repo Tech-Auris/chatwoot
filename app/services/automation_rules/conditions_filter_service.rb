@@ -163,6 +163,9 @@ class AutomationRules::ConditionsFilterService < FilterService
   def conversation_query_string(table_name, current_filter, query_hash, current_index)
     attribute_key = query_hash['attribute_key']
     query_operator = query_hash['query_operator']
+    return assignee_presence_filter(table_name, query_hash) if assignee_presence_condition?(query_hash)
+    return " #{tag_filter_query(query_hash, current_index)} " if attribute_key == 'labels'
+
     filter_operator_value = filter_operation(query_hash, current_index)
 
     case current_filter['attribute_type']
@@ -176,38 +179,31 @@ class AutomationRules::ConditionsFilterService < FilterService
     when 'pipeline_entry'
       pipeline_stage_condition(query_hash, current_index)
     when 'standard'
-      if attribute_key == 'labels'
-        build_label_query_string(query_hash, current_index, query_operator)
-      else
-        " #{table_name}.#{attribute_key} #{filter_operator_value} #{query_operator} "
-      end
-    end
-  end
-
-  def build_label_query_string(query_hash, current_index, query_operator)
-    case query_hash['filter_operator']
-    when 'equal_to'
-      return " 1=0 #{query_operator} " if query_hash['values'].blank?
-
-      value_placeholder = "value_#{current_index}"
-      @filter_values[value_placeholder] = query_hash['values'].first
-      " tags.name = :#{value_placeholder} #{query_operator} "
-    when 'not_equal_to'
-      return " 1=0 #{query_operator} " if query_hash['values'].blank?
-
-      value_placeholder = "value_#{current_index}"
-      @filter_values[value_placeholder] = query_hash['values'].first
-      " tags.name != :#{value_placeholder} #{query_operator} "
-    when 'is_present'
-      " tags.id IS NOT NULL #{query_operator} "
-    when 'is_not_present'
-      " tags.id IS NULL #{query_operator} "
-    else
-      " tags.id #{filter_operation(query_hash, current_index)} #{query_operator} "
+      " #{table_name}.#{attribute_key} #{filter_operator_value} #{query_operator} "
     end
   end
 
   private
+
+  def assignee_presence_condition?(query_hash)
+    query_hash['attribute_key'] == 'assignee_id' && query_hash['filter_operator'].in?(%w[is_present is_not_present])
+  end
+
+  # Assignee ownership can live in either column until it is standardized as a polymorphic association.
+  def assignee_presence_filter(table_name, query_hash)
+    if query_hash[:filter_operator] == 'is_present'
+      return "(#{table_name}.assignee_id IS NOT NULL OR #{table_name}.assignee_agent_bot_id IS NOT NULL) #{query_hash[:query_operator]}"
+    end
+
+    "(#{table_name}.assignee_id IS NULL AND #{table_name}.assignee_agent_bot_id IS NULL) #{query_hash[:query_operator]}"
+  end
+
+  def filter_config
+    {
+      entity: 'Conversation',
+      table_name: 'conversations'
+    }
+  end
 
   def base_relation
     records = Conversation.where(id: @conversation.id).joins(
@@ -216,20 +212,7 @@ class AutomationRules::ConditionsFilterService < FilterService
       'LEFT OUTER JOIN messages on messages.conversation_id = conversations.id'
     )
 
-    # Only add label joins when label conditions exist
-    if label_conditions?
-      records = records.joins(
-        'LEFT OUTER JOIN taggings ON taggings.taggable_id = conversations.id AND taggings.taggable_type = \'Conversation\''
-      ).joins(
-        'LEFT OUTER JOIN tags ON taggings.tag_id = tags.id'
-      )
-    end
-
     records = records.where(messages: { id: @options[:message].id }) if @options[:message].present?
     records
-  end
-
-  def label_conditions?
-    @rule.conditions.any? { |condition| condition['attribute_key'] == 'labels' }
   end
 end

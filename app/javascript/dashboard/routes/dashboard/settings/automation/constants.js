@@ -947,6 +947,11 @@ AUTOMATIONS.funnel_updated = {
   actions: AUTOMATIONS.conversation_updated.actions,
 };
 
+// An edit asks the same question about the same message as a creation, so the trigger offers the same
+// conditions and actions. A copy, not the same object: the custom attributes reach it through
+// `CUSTOM_ATTRIBUTE_EVENTS`.
+AUTOMATIONS.message_edited = structuredClone(AUTOMATIONS.message_created);
+
 export const AUTOMATION_RULE_EVENTS = [
   {
     key: 'conversation_created',
@@ -963,6 +968,10 @@ export const AUTOMATION_RULE_EVENTS = [
   {
     key: 'message_created',
     value: 'MESSAGE_CREATED',
+  },
+  {
+    key: 'message_edited',
+    value: 'MESSAGE_EDITED',
   },
   {
     key: 'conversation_opened',
@@ -1108,7 +1117,44 @@ export const AUTOMATION_ACTION_TYPES = [
     inputType: 'funnel_stage',
     hidden: true,
   },
+  {
+    key: 'remove_custom_attribute',
+    label: 'REMOVE_CUSTOM_ATTRIBUTE',
+    inputType: 'multi_select',
+  },
 ];
 
 // Default delay for scheduled messages (24 hours in minutes)
 export const DEFAULT_SCHEDULED_MESSAGE_DELAY_MINUTES = 24 * 60;
+
+export const DEFAULT_DELAY_MINUTES = 240; // 4 hours
+export const MIN_DELAY_MINUTES = 10;
+export const MAX_DELAY_MINUTES = 43200; // 30 days
+export const DEFAULT_TRIGGER_STATUS = 'pending';
+
+// A delayed rule is expressed as one meaningful trigger instead of a raw event + conditions. Each
+// trigger maps to the automation's event_name plus a preset condition: message_type for the two
+// unresponsive cases (reply-chase / awaiting-agent), or a chosen status for conversation_updated.
+export const DELAYED_TRIGGERS = [
+  { key: 'conversation_status', eventName: 'conversation_updated' },
+  // The only trigger whose wait is not about one state or one message: it measures the time since
+  // anything at all happened on the conversation, so the rule carries `execution_delay_trigger`
+  // for the backend to anchor its episode on activity instead of on the status clock.
+  {
+    key: 'conversation_inactive',
+    eventName: 'conversation_updated',
+    delayTrigger: 'inactivity',
+  },
+  {
+    key: 'customer_unresponsive',
+    eventName: 'message_created',
+    messageType: 'outgoing',
+  },
+  {
+    key: 'agent_unresponsive',
+    eventName: 'message_created',
+    messageType: 'incoming',
+  },
+];
+
+export const DEFAULT_TRIGGER = DELAYED_TRIGGERS[0].key;

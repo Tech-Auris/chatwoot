@@ -4,7 +4,9 @@ require 'administrate/field/base'
 # in the Super Admin → Accounts edit page. The grid visual mirrors the
 # Enterprise "All features" widget so operators get the same look-and-feel
 # regardless of edition. They are boolean columns on `accounts`, except
-# `allow_dynamic_special_scenario`, which lives in `accounts.settings`.
+# `allow_dynamic_special_scenario`, which lives in `accounts.settings`, and
+# `delayed_automations`, an account feature flag (the Enterprise features
+# grid, where flags normally live, is not shipped in our build).
 class AurisAccountSettingsField < Administrate::Field::Base
   def to_s
     'Auris settings'
@@ -26,7 +28,8 @@ class AurisAccountSettingsField < Administrate::Field::Base
         checked: resource.whatsapp_groups_enabled },
       { key: :allow_dynamic_special_scenario,
         label: 'Dynamic special scenarios',
-        checked: resource.allow_dynamic_special_scenario }
+        checked: resource.allow_dynamic_special_scenario },
+      { key: :delayed_automations, label: 'Delayed automations', checked: resource.feature_delayed_automations? }
     ]
   end
 end

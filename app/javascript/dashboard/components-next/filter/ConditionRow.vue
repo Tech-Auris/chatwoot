@@ -181,7 +181,7 @@ defineExpose({ validate, resetValidation });
 <template>
   <li class="list-none">
     <div
-      class="flex items-center gap-2 rounded-md"
+      class="flex flex-wrap items-center gap-2 rounded-md"
       :class="{
         'animate-wiggle': showErrors && validationError,
       }"
@@ -191,61 +191,71 @@ defineExpose({ validate, resetValidation });
         v-model="queryOperator"
         variant="faded"
         hide-icon
-        class="text-sm"
+        class="text-sm shrink-0"
         :options="queryOperatorOptions"
       />
       <FilterSelect
         v-model="displayAttributeKey"
         variant="faded"
+        class="shrink-0"
         :options="filterTypes"
         @update:model-value="resetModelOnAttributeKeyChange"
       />
       <FilterSelect
         v-model="filterOperator"
         variant="ghost"
+        class="shrink-0"
         :options="currentFilter?.filterOperators"
       />
-      <template v-if="currentOperator?.hasInput">
-        <MultiSelect
-          v-if="inputType === 'multiSelect'"
-          v-model="values"
-          :options="currentFilter.options"
-          dropdown-max-height="max-h-72"
+      <div
+        :class="
+          currentOperator?.hasInput
+            ? 'flex items-start gap-2 min-w-0'
+            : 'contents'
+        "
+      >
+        <template v-if="currentOperator?.hasInput">
+          <MultiSelect
+            v-if="inputType === 'multiSelect'"
+            v-model="values"
+            :options="currentFilter.options"
+            dropdown-max-height="max-h-72"
+          />
+          <FunnelStagePicker
+            v-else-if="inputType === 'funnelStage'"
+            v-model:attribute-key="attributeKey"
+            v-model:values="values"
+            :multiple="currentFilter.multiple"
+          />
+          <SingleSelect
+            v-else-if="inputType === 'searchSelect'"
+            v-model="values"
+            :options="currentFilter.options"
+            dropdown-max-height="max-h-64"
+          />
+          <SingleSelect
+            v-else-if="inputType === 'booleanSelect'"
+            v-model="values"
+            disable-search
+            :options="booleanOptions"
+          />
+          <Input
+            v-else
+            v-model="values"
+            :type="inputFieldType"
+            class="[&>input]:h-8 [&>input]:py-1.5 [&>input]:outline-offset-0"
+            :placeholder="t('FILTER.INPUT_PLACEHOLDER')"
+          />
+        </template>
+        <Button
+          sm
+          solid
+          slate
+          icon="i-lucide-trash"
+          class="flex-shrink-0"
+          @click.stop="emit('remove')"
         />
-        <FunnelStagePicker
-          v-else-if="inputType === 'funnelStage'"
-          v-model:attribute-key="attributeKey"
-          v-model:values="values"
-          :multiple="currentFilter.multiple"
-        />
-        <SingleSelect
-          v-else-if="inputType === 'searchSelect'"
-          v-model="values"
-          :options="currentFilter.options"
-          dropdown-max-height="max-h-64"
-        />
-        <SingleSelect
-          v-else-if="inputType === 'booleanSelect'"
-          v-model="values"
-          disable-search
-          :options="booleanOptions"
-        />
-        <Input
-          v-else
-          v-model="values"
-          :type="inputFieldType"
-          class="[&>input]:h-8 [&>input]:py-1.5 [&>input]:outline-offset-0"
-          :placeholder="t('FILTER.INPUT_PLACEHOLDER')"
-        />
-      </template>
-      <Button
-        sm
-        solid
-        slate
-        icon="i-lucide-trash"
-        class="flex-shrink-0"
-        @click.stop="emit('remove')"
-      />
+      </div>
     </div>
     <span v-if="showErrors && validationError" class="text-sm text-n-ruby-11">
       {{ t(`FILTER.ERRORS.${validationError}`) }}

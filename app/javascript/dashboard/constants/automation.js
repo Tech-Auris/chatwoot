@@ -1,8 +1,21 @@
+// Events about one message rather than about the conversation. Anything keyed on the shape of a
+// message (the default condition the form starts with) asks this instead of naming one of them.
+export const MESSAGE_LEVEL_EVENTS = ['message_created', 'message_edited'];
+
+// Triggers whose conditions receive the account's custom attributes.
+export const CUSTOM_ATTRIBUTE_EVENTS = [
+  ...MESSAGE_LEVEL_EVENTS,
+  'conversation_created',
+  'conversation_updated',
+  'conversation_opened',
+  'conversation_resolved',
+];
+
 export const DEFAULT_MESSAGE_CREATED_CONDITION = [
   {
     attribute_key: 'message_type',
     filter_operator: 'equal_to',
-    values: '',
+    values: {},
     query_operator: 'and',
     custom_attribute_type: '',
   },
@@ -12,7 +25,7 @@ export const DEFAULT_CONVERSATION_CONDITION = [
   {
     attribute_key: 'browser_language',
     filter_operator: 'equal_to',
-    values: '',
+    values: {},
     query_operator: 'and',
     custom_attribute_type: '',
   },

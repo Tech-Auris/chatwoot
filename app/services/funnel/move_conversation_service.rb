@@ -140,7 +140,8 @@ class Funnel::MoveConversationService
       source: source,
       user: user,
       change: @change,
-      loss_reason: loss_reason
+      loss_reason: loss_reason,
+      performed_by: Current.executed_by
     )
   end
 end

@@ -274,7 +274,7 @@ describe('getDefaultConditions', () => {
       {
         attribute_key: 'message_type',
         filter_operator: 'equal_to',
-        values: '',
+        values: {},
         query_operator: 'and',
         custom_attribute_type: '',
       },
@@ -289,6 +289,9 @@ describe('getDefaultConditions', () => {
       },
     ];
     expect(helpers.getDefaultConditions('message_created')).toEqual(
+      messageCreatedModel
+    );
+    expect(helpers.getDefaultConditions('message_edited')).toEqual(
       messageCreatedModel
     );
     expect(helpers.getDefaultConditions()).toEqual(genericConditionModel);
@@ -393,6 +396,85 @@ describe('generateAutomationPayload', () => {
     expect(helpers.generateAutomationPayload(testPayload)).toEqual(
       expectedPayload
     );
+  });
+
+  it('serializes every AND condition in a delayed customer follow-up', () => {
+    const testPayload = {
+      name: 'Pending follow-up',
+      description: 'Follow up with pending conversations',
+      event_name: 'message_created',
+      execution_delay: 240,
+      conditions: [
+        {
+          attribute_key: 'message_type',
+          filter_operator: 'equal_to',
+          values: 'outgoing',
+          query_operator: 'and',
+        },
+        {
+          attribute_key: 'private_note',
+          filter_operator: 'equal_to',
+          values: [false],
+          query_operator: 'and',
+        },
+        {
+          attribute_key: 'inbox_id',
+          filter_operator: 'equal_to',
+          values: [{ id: 7, name: 'Support' }],
+          query_operator: 'and',
+        },
+        {
+          attribute_key: 'status',
+          filter_operator: 'equal_to',
+          values: [{ id: 'pending', name: 'Pending' }],
+          query_operator: 'and',
+        },
+      ],
+      actions: [
+        {
+          action_name: 'send_message',
+          action_params: ['Are you still there?'],
+        },
+      ],
+    };
+
+    expect(helpers.generateAutomationPayload(testPayload)).toEqual({
+      name: 'Pending follow-up',
+      description: 'Follow up with pending conversations',
+      event_name: 'message_created',
+      execution_delay: 240,
+      conditions: [
+        {
+          attribute_key: 'message_type',
+          filter_operator: 'equal_to',
+          values: ['outgoing'],
+          query_operator: 'and',
+        },
+        {
+          attribute_key: 'private_note',
+          filter_operator: 'equal_to',
+          values: [false],
+          query_operator: 'and',
+        },
+        {
+          attribute_key: 'inbox_id',
+          filter_operator: 'equal_to',
+          values: [7],
+          query_operator: 'and',
+        },
+        {
+          attribute_key: 'status',
+          filter_operator: 'equal_to',
+          values: ['pending'],
+        },
+      ],
+      actions: [
+        {
+          action_name: 'send_message',
+          action_params: ['Are you still there?'],
+        },
+      ],
+    });
   });
 });
 

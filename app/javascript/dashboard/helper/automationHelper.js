@@ -6,6 +6,7 @@ import {
 } from 'dashboard/routes/dashboard/settings/automation/operators';
 import {
   DEFAULT_MESSAGE_CREATED_CONDITION,
+  MESSAGE_LEVEL_EVENTS,
   DEFAULT_CONVERSATION_CONDITION,
   DEFAULT_OTHER_CONDITION,
   DEFAULT_ACTIONS,
@@ -103,11 +104,19 @@ export const funnelStageDot = color =>
     style: { backgroundColor: color, height: '6px', width: '6px' },
   });
 
+// The action names the attribute by its key, which is what the conversation stores it under.
+const generateCustomAttributeOptions = (attributes = []) =>
+  attributes.map(attribute => ({
+    id: attribute.attribute_key,
+    name: attribute.attribute_display_name,
+  }));
+
 export const getActionOptions = ({
   agents,
   teams,
   labels,
   slaPolicies,
+  conversationCustomAttributes,
   type,
   addNoneToListFn,
   priorityOptions,
@@ -130,6 +139,9 @@ export const getActionOptions = ({
     trigger_conversion_event: conversionEventOptions,
     move_to_funnel_stage: funnelStageOptions,
     move_to_pipeline_stage: pipelineStageOptions,
+    remove_custom_attribute: generateCustomAttributeOptions(
+      conversationCustomAttributes
+    ),
   };
   return actionsMap[type];
 };
@@ -227,7 +239,7 @@ export const getFileName = (action, files = []) => {
 };
 
 export const getDefaultConditions = eventName => {
-  if (eventName === 'message_created') {
+  if (MESSAGE_LEVEL_EVENTS.includes(eventName)) {
     return structuredClone(DEFAULT_MESSAGE_CREATED_CONDITION);
   }
   if (
@@ -269,6 +281,12 @@ export const generateAutomationPayload = payload => {
   automation.conditions = filterQueryGenerator(automation.conditions).payload;
   automation.actions = actionQueryGenerator(automation.actions);
   return automation;
+};
+
+export const formatDelay = minutes => {
+  if (minutes % 1440 === 0) return `${minutes / 1440}d`;
+  if (minutes % 60 === 0) return `${minutes / 60}h`;
+  return `${minutes}m`;
 };
 
 export const isCustomAttribute = (attrs, key) => {

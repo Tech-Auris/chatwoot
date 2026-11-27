@@ -199,6 +199,61 @@ RSpec.describe Account do
     end
   end
 
+  describe 'resuming delayed automations' do
+    let(:account) { create(:account) }
+
+    it 'reschedules the overdue backlog in the same transaction that re-enables the flag' do
+      row = create(:automation_rule_pending_execution, account: account, due_at: 5.days.ago)
+
+      ActiveRecord::Base.transaction(requires_new: true) do
+        account.enable_features!('delayed_automations')
+        # Still uncommitted: no sweep can see the flag yet, and the backlog is already re-clocked,
+        # so there is no window where the account is sweepable on a stale due_at.
+        expect(row.reload.due_at).to be_within(5.seconds).of(Time.current)
+        raise ActiveRecord::Rollback
+      end
+
+      expect(account.reload.feature_delayed_automations?).to be(false)
+      expect(row.reload.due_at).to be_within(5.seconds).of(5.days.ago)
+    end
+
+    it 'leaves the backlog alone when the flag is turned off' do
+      account.enable_features!('delayed_automations')
+      row = create(:automation_rule_pending_execution, account: account, due_at: 5.days.ago)
+
+      account.disable_features!('delayed_automations')
+
+      expect(row.reload.due_at).to be_within(5.seconds).of(5.days.ago)
+    end
+  end
+
+  describe 'feature flag columns' do
+    let(:account) { described_class.new(name: 'Test Account') }
+
+    it 'configures the account feature flag extension column' do
+      expect(described_class.flag_columns).to include('feature_flags', 'feature_flags_ext_1')
+      expect(described_class.flag_mapping['feature_flags_ext_1']).to eq(feature_delayed_automations: 1)
+    end
+
+    it 'keeps existing feature flags on the original column' do
+      expect(described_class.flag_mapping['feature_flags'][:feature_inbound_emails]).to eq(1)
+      expect(described_class.flag_mapping['feature_flags'][:feature_advanced_assignment]).to eq(1 << 62)
+    end
+
+    it 'keeps bulk selected feature assignment compatible with existing feature names' do
+      account.selected_feature_flags = [:feature_ip_lookup, :feature_assignment_v2, :feature_advanced_assignment]
+
+      expect(account).to be_feature_ip_lookup
+      expect(account).to be_feature_assignment_v2
+      expect(account).to be_feature_advanced_assignment
+      expect(account.selected_feature_flags).to contain_exactly(
+        :feature_ip_lookup,
+        :feature_assignment_v2,
+        :feature_advanced_assignment
+      )
+    end
+  end
+
   describe 'inbound_email_domain' do
     let(:account) { create(:account) }
 

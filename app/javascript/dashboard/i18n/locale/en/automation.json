@@ -28,6 +28,48 @@
           "PLACEHOLDER": "Please select one",
           "ERROR": "Event is required"
         },
+        "RUN_TYPE": {
+          "LABEL": "When should this rule run?",
+          "OPTIONS": {
+            "INSTANT": {
+              "LABEL": "Run instantly",
+              "DESCRIPTION": "Runs the moment an event happens, as long as the conditions match."
+            },
+            "WAIT": {
+              "LABEL": "Run after a wait",
+              "DESCRIPTION": "Waits for a set time and runs only if things are still the same. If they change, the rule is skipped."
+            }
+          }
+        },
+        "WAIT": {
+          "LABEL": "Wait condition",
+          "WHEN_LABEL": "When",
+          "STATUS_LABEL": "Status is",
+          "FOR_LABEL": "For",
+          "INBOX_LABEL": "Inbox",
+          "ERROR": "The wait must be between 10 minutes and 30 days",
+          "OPTIONS": {
+            "CONVERSATION_STATUS": "Conversation stays in a status",
+            "CUSTOMER_UNRESPONSIVE": "Customer hasn't replied",
+            "AGENT_UNRESPONSIVE": "No teammate has replied",
+            "CONVERSATION_INACTIVE": "Conversation goes quiet"
+          },
+          "DURATION": {
+            "MINUTES": "{count} minute | {count} minutes",
+            "HOURS": "{count} hour | {count} hours",
+            "DAYS": "{count} day | {count} days"
+          },
+          "EXPLANATION": {
+            "CONVERSATION_STATUS": "The clock starts when a conversation moves into this status. If it is still there {duration} later, the actions below run. If the status changes before then, nothing happens.",
+            "CUSTOMER_UNRESPONSIVE": "The clock starts when a teammate replies. If the customer hasn't written back {duration} later, the actions below run. If they do reply, nothing happens, and the next teammate reply starts the clock again.",
+            "AGENT_UNRESPONSIVE": "The clock starts when a customer sends a message. If no teammate has replied {duration} later, the actions below run. If someone replies before then, nothing happens.",
+            "CONVERSATION_INACTIVE": "The clock starts at the conversation’s last activity. If nothing happens on it for {duration}, the actions below run once. Any message (notes, AI and follow-up messages included) or change to the conversation restarts the clock."
+          },
+          "FOOTNOTE": "Only new activity starts a clock. Conversations already sitting in this state are picked up the next time something happens on them.",
+          "FOLLOW_UP_HINT": "In inboxes with the AI Secretary, the follow-up (FUP) already re-engages the customer. Don't use \"Send a Message\" there.",
+          "INACTIVITY_HINT": "Follow-up (FUP) messages also restart the clock: in inboxes with the AI Secretary, use a wait longer than the whole FUP. \"Remove Assigned Agent\" on a conversation owned by \"IA {'|'} Auris\" turns the AI off.",
+          "INBOX_ERROR": "Choose at least one inbox for this wait."
+        },
         "CONDITIONS": {
           "LABEL": "Conditions"
         },
@@ -49,7 +91,14 @@
         "CREATED_ON": "Created on",
         "ACTIONS": "Actions"
       },
-      "404": "No automation rules found"
+      "404": "No automation rules found",
+      "404_DELAYED": "No rules run after a wait yet",
+      "TABS": {
+        "INSTANT": "Runs instantly",
+        "DELAYED": "Runs after a wait"
+      },
+      "DELAY_BADGE": "Runs after {delay}",
+      "DELAY_DISABLED_BANNER": "Delayed execution is turned off for this account, so the rules below that run after a wait are paused until it is turned back on."
     },
     "DELETE": {
       "TITLE": "Delete Automation Rule",
@@ -147,6 +196,7 @@
       "CONVERSATION_CREATED": "Conversation Created",
       "CONVERSATION_UPDATED": "Conversation Updated",
       "MESSAGE_CREATED": "Message Created",
+      "MESSAGE_EDITED": "Message Edited",
       "CONVERSATION_RESOLVED": "Conversation Resolved",
       "CONVERSATION_OPENED": "Conversation Opened",
       "FUNNEL_UPDATED": "Funnel Updated"
@@ -176,7 +226,8 @@
       "DISABLE_AI": "Disable AI",
       "ASSIGN_ORIGEM": "Assign lead origin",
       "MOVE_TO_FUNNEL_STAGE": "Move in the funnel to",
-      "TRIGGER_CONVERSION_EVENT": "Trigger marketing conversion event"
+      "TRIGGER_CONVERSION_EVENT": "Trigger marketing conversion event",
+      "REMOVE_CUSTOM_ATTRIBUTE": "Remove Custom Attribute"
     },
     "MESSAGE_TYPES": {
       "INCOMING": "Incoming Message",
@@ -199,7 +250,7 @@
       "PRIVATE_NOTE": "Private Note",
       "SENDER": "Sender",
       "SENDER_TYPE": "Sender Type",
-      "MESSAGE_CONTAINS": "Message Contains",
+      "MESSAGE_CONTAINS": "Message Content",
       "EMAIL": "Email",
       "INBOX": "Inbox",
       "CONVERSATION_LANGUAGE": "Conversation Language",

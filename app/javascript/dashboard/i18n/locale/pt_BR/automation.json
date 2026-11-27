@@ -28,6 +28,48 @@
           "PLACEHOLDER": "Por favor, selecione um",
           "ERROR": "O campo evento é obrigatório"
         },
+        "RUN_TYPE": {
+          "LABEL": "Quando esta regra deve ser executada?",
+          "OPTIONS": {
+            "INSTANT": {
+              "LABEL": "Executar na hora",
+              "DESCRIPTION": "Executa assim que o evento acontece, desde que as condições sejam atendidas."
+            },
+            "WAIT": {
+              "LABEL": "Executar após um período de espera",
+              "DESCRIPTION": "Espera o tempo definido e só executa se tudo continuar igual. Se algo mudar, a regra é ignorada."
+            }
+          }
+        },
+        "WAIT": {
+          "LABEL": "Condição de espera",
+          "WHEN_LABEL": "Quando",
+          "STATUS_LABEL": "O status é",
+          "FOR_LABEL": "Por",
+          "INBOX_LABEL": "Caixa de entrada",
+          "ERROR": "A espera deve ficar entre 10 minutos e 30 dias",
+          "OPTIONS": {
+            "CONVERSATION_STATUS": "Conversa fica em um status",
+            "CUSTOMER_UNRESPONSIVE": "Cliente não respondeu",
+            "AGENT_UNRESPONSIVE": "Ninguém da equipe respondeu",
+            "CONVERSATION_INACTIVE": "Conversa parada"
+          },
+          "DURATION": {
+            "MINUTES": "{count} minuto | {count} minutos",
+            "HOURS": "{count} hora | {count} horas",
+            "DAYS": "{count} dia | {count} dias"
+          },
+          "EXPLANATION": {
+            "CONVERSATION_STATUS": "A contagem começa quando a conversa entra neste status. Se ela ainda estiver nele {duration} depois, as ações abaixo são executadas. Se o status mudar antes, nada acontece.",
+            "CUSTOMER_UNRESPONSIVE": "A contagem começa quando alguém da equipe responde. Se o cliente não escrever de volta em {duration}, as ações abaixo são executadas. Se ele responder, nada acontece, e a próxima resposta da equipe reinicia a contagem.",
+            "AGENT_UNRESPONSIVE": "A contagem começa quando o cliente envia uma mensagem. Se ninguém da equipe responder em {duration}, as ações abaixo são executadas. Se alguém responder antes, nada acontece.",
+            "CONVERSATION_INACTIVE": "A contagem começa na última atividade da conversa. Se nada acontecer nela por {duration}, as ações abaixo são executadas uma vez. Qualquer mensagem (inclusive notas e mensagens da IA e do FUP) ou mudança na conversa reinicia a contagem."
+          },
+          "FOOTNOTE": "Só uma nova atividade inicia a contagem. Conversas que já estão nessa situação entram na próxima vez que algo acontecer nelas.",
+          "FOLLOW_UP_HINT": "Em caixas com a Secretária, o reengajamento do cliente é feito pelo FUP. Não use \"Enviar Mensagem\" nelas.",
+          "INACTIVITY_HINT": "As mensagens do FUP também reiniciam a contagem: em caixas com a Secretária, use uma espera maior que o FUP inteiro. \"Remover Agente Atribuído\" numa conversa da \"IA {'|'} Auris\" desliga a IA.",
+          "INBOX_ERROR": "Escolha pelo menos uma caixa de entrada para essa espera."
+        },
         "CONDITIONS": {
           "LABEL": "Condições"
         },
@@ -49,7 +91,14 @@
         "CREATED_ON": "Criado em",
         "ACTIONS": "Ações"
       },
-      "404": "Nenhuma regra de automação encontrada"
+      "404": "Nenhuma regra de automação encontrada",
+      "404_DELAYED": "Nenhuma regra com espera ainda",
+      "TABS": {
+        "INSTANT": "Executam na hora",
+        "DELAYED": "Executam após espera"
+      },
+      "DELAY_BADGE": "Executa após {delay}",
+      "DELAY_DISABLED_BANNER": "As automações com espera estão desligadas nesta conta. As regras com espera abaixo ficam pausadas até que sejam religadas."
     },
     "DELETE": {
       "TITLE": "Excluir regra de automação",
@@ -147,6 +196,7 @@
       "CONVERSATION_CREATED": "Conversa Criada",
       "CONVERSATION_UPDATED": "Conversa Atualizada",
       "MESSAGE_CREATED": "Mensagem Criada",
+      "MESSAGE_EDITED": "Mensagem Editada",
       "CONVERSATION_RESOLVED": "Conversa Resolvida",
       "CONVERSATION_OPENED": "Conversa Aberta",
       "FUNNEL_UPDATED": "Funil Atualizado"
@@ -176,7 +226,8 @@
       "DISABLE_AI": "Desativar IA",
       "ASSIGN_ORIGEM": "Atribuir Origem do lead",
       "MOVE_TO_FUNNEL_STAGE": "Mover no funil para",
-      "TRIGGER_CONVERSION_EVENT": "Disparar evento de conversão"
+      "TRIGGER_CONVERSION_EVENT": "Disparar evento de conversão",
+      "REMOVE_CUSTOM_ATTRIBUTE": "Remover atributo personalizado"
     },
     "MESSAGE_TYPES": {
       "INCOMING": "Mensagem Recebida",
@@ -199,7 +250,7 @@
       "PRIVATE_NOTE": "Mensagem Privada",
       "SENDER": "Remetente",
       "SENDER_TYPE": "Tipo de remetente",
-      "MESSAGE_CONTAINS": "A mensagem contém",
+      "MESSAGE_CONTAINS": "Conteúdo da mensagem",
       "EMAIL": "E-mail",
       "INBOX": "Caixa de Entrada",
       "CONVERSATION_LANGUAGE": "Idioma da conversa",

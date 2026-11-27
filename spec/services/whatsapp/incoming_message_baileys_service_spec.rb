@@ -1529,6 +1529,29 @@ describe Whatsapp::IncomingMessageBaileysService do
           expect(message.is_edited).to be(true)
           expect(message.previous_content).to eq(original_content)
         end
+
+        it 'runs the "Message Edited" rules on the new text and not the "Message Created" ones' do
+          conditions = [{ 'attribute_key' => 'content', 'filter_operator' => 'contains', 'values' => ['orçamento'], 'query_operator' => nil }]
+          create(:automation_rule, account: message.account, event_name: 'message_edited', conditions: conditions,
+                                   actions: [{ 'action_name' => 'add_label', 'action_params' => ['orcamento'] }])
+          create(:automation_rule, account: message.account, event_name: 'message_created', conditions: conditions,
+                                   actions: [{ 'action_name' => 'add_label', 'action_params' => ['criada'] }])
+          update_payload[:update] = { message: { editedMessage: { message: { conversation: 'quero orçamento' } } } }
+
+          perform_enqueued_jobs(only: EventDispatcherJob) { described_class.new(inbox: inbox, params: params).perform }
+
+          expect(conversation.reload.label_list).to eq(['orcamento'])
+        end
+
+        it 'does not announce a redelivered edit with the same text' do
+          update_payload[:update] = { message: { editedMessage: { message: { conversation: 'quero orçamento' } } } }
+          described_class.new(inbox: inbox, params: params).perform
+          allow(Rails.configuration.dispatcher).to receive(:dispatch)
+
+          described_class.new(inbox: inbox, params: params).perform
+
+          expect(Rails.configuration.dispatcher).not_to have_received(:dispatch).with(Events::Types::MESSAGE_EDITED, anything, anything)
+        end
       end
     end
 

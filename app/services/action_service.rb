@@ -70,6 +70,17 @@ class ActionService
     @conversation.update!(label_list: labels)
   end
 
+  # Clears conversation custom attributes by key. Writing an empty value instead would leave the key
+  # in the JSON, and on a list attribute that reads as unset on screen while hiding the delete
+  # control, so an agent could no longer clear it by hand.
+  def remove_custom_attribute(attribute_keys = [])
+    keys = Array(attribute_keys).map(&:to_s)
+    remaining = @conversation.custom_attributes.except(*keys)
+    return if remaining.size == @conversation.custom_attributes.size
+
+    @conversation.update!(custom_attributes: remaining)
+  end
+
   # Fires marketing-conversion events (Meta CAPI / Google Ads) that the
   # operator wired to a specific `ConversionEvent` in Settings. `values` is
   # the array of conversion_event ids the automation rule picked; each id
