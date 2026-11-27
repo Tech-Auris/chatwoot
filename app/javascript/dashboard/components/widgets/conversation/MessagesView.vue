@@ -42,6 +42,7 @@ import wootConstants from 'dashboard/constants/globals';
 import { LOCAL_STORAGE_KEYS } from 'dashboard/constants/localStorage';
 import { INBOX_TYPES } from 'dashboard/helper/inbox';
 import WhatsappConnectionBanner from 'dashboard/components-next/Inbox/WhatsappConnectionBanner.vue';
+import WhatsappNumberMissingBanner from 'dashboard/components-next/Conversation/WhatsappNumberMissingBanner.vue';
 import { isInboxAdminInGroup } from 'dashboard/helper/phoneHelper';
 import {
   isReachoutRestricted,
@@ -62,6 +63,7 @@ export default {
     Spinner,
     ResizableEditorWrapper,
     WhatsappConnectionBanner,
+    WhatsappNumberMissingBanner,
   },
   mixins: [inboxMixin],
   setup() {
@@ -849,6 +851,9 @@ export default {
   >
     <div ref="topBannerRef">
       <WhatsappConnectionBanner :inbox="currentInbox" class="mt-2 mx-2" />
+      <WhatsappNumberMissingBanner
+        :checked-at="currentChat.whatsapp_missing_checked_at"
+      />
       <template v-if="isAWhatsAppBaileysChannel || isAWhatsAppZapiChannel">
         <Banner
           v-if="showReachoutRestriction"

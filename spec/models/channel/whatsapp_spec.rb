@@ -821,6 +821,27 @@ RSpec.describe Channel::Whatsapp do
       end
     end
 
+    context 'when a send stall is present' do
+      let(:channel) do
+        create(:channel_whatsapp, provider: 'baileys', validate_provider_config: false, sync_templates: false,
+                                  provider_connection: {
+                                    'connection' => 'open',
+                                    'send_stall' => { 'consecutive_timeouts' => 3, 'action' => 'suppressed' }
+                                  })
+      end
+
+      # The connection still reads 'open', so without it the agent's view has nothing to warn with.
+      it 'exposes the stall to non-administrators' do
+        account_user = create(:account_user, account: channel.account, role: :agent)
+        allow(Current).to receive(:account_user).and_return(account_user)
+
+        expect(channel.provider_connection_data).to eq({
+                                                         connection: 'open',
+                                                         send_stall: { 'consecutive_timeouts' => 3, 'action' => 'suppressed' }
+                                                       })
+      end
+    end
+
     context 'when a new-chat cap is present' do
       let(:channel) do
         create(:channel_whatsapp, provider: 'baileys', validate_provider_config: false, sync_templates: false,

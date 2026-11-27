@@ -127,6 +127,7 @@
     "GROUPS_DISABLED_BANNER": "Group messages are disabled. Enable full group support (free) to view and send messages.",
     "GROUPS_DISABLED_BANNER_NON_ADMIN": "Group messages are disabled. Contact your administrator to enable full group support.",
     "CONTACT_AI_DISABLED_BANNER": "The AI is off for this contact: it does not reply in any conversation. Change it in the contact panel.",
+    "WHATSAPP_NUMBER_MISSING_BANNER": "This number did not have WhatsApp when checked on {date}. Messages sent to it are not delivered.",
     "GROUPS_DISABLED_CTA": "Learn how to enable (free)",
     "OLD_INSTAGRAM_INBOX_REPLY_BANNER": "This Instagram account was migrated to the new Instagram channel inbox. All new messages will show up there. You won’t be able to send messages from this conversation anymore.",
     "REPLYING_TO": "You are replying to:",
@@ -430,7 +431,9 @@
         "NOT_CONNECTED": "WhatsApp is not connected. Please link your device again.",
         "NOT_CONNECTED_CONTACT_ADMIN": "WhatsApp is not connected. Click this button to try to reconnect, or please contact your administrator to link your device again.",
         "LINK_DEVICE": "Link device",
-        "RECONNECT_FAILED": "Failed to reconnect. Please contact your administrator to link your device again."
+        "RECONNECT_FAILED": "Failed to reconnect. Please contact your administrator to link your device again.",
+        "SEND_STALL": "WhatsApp is connected but cannot send messages. If it does not recover on its own in a few minutes, disconnect and link the device again.",
+        "SEND_STALL_CONTACT_ADMIN": "WhatsApp is connected but cannot send messages. Your replies will not be delivered: contact your administrator to link the device again."
       },
       "WHATSAPP_REACHOUT_RESTRICTION": {
         "RESTRICTED": "WhatsApp has temporarily restricted starting new conversations from this number.",

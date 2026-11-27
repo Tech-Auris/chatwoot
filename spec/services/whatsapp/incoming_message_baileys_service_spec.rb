@@ -255,6 +255,39 @@ describe Whatsapp::IncomingMessageBaileysService do
         expect(inbox.channel.reload.provider_connection['quarantine']).to be_nil
       end
 
+      it 'persists a reported send stall and clears it only when the connection reopens' do
+        params = base_params.merge(
+          {
+            data: {
+              error: 'send_stall_detected',
+              sendStall: { consecutiveTimeouts: 3, stalledForMs: 120_000, action: 'suppressed', until: '2026-08-21T12:00:00.000Z' }
+            }
+          }
+        )
+        stall_error = I18n.t('errors.inboxes.channel.provider_connection.send_stall_detected')
+
+        described_class.new(inbox: inbox, params: params).perform
+
+        expect(inbox.channel.provider_connection).to include(
+          'error' => stall_error,
+          'send_stall' => {
+            'consecutive_timeouts' => 3, 'stalled_for_ms' => 120_000, 'action' => 'suppressed', 'until' => '2026-08-21T12:00:00.000Z'
+          }
+        )
+
+        # Reported once per episode: an unrelated update must not clear the warning.
+        described_class.new(inbox: inbox, params: base_params.merge({ data: { reachoutTimeLock: { isActive: false } } })).perform
+
+        expect(inbox.channel.reload.provider_connection['send_stall']).to include('consecutive_timeouts' => 3)
+        expect(inbox.channel.provider_connection['error']).to eq(stall_error)
+
+        # `open` is a new socket: the one event that means recovery.
+        described_class.new(inbox: inbox, params: base_params.merge({ data: { connection: 'open' } })).perform
+
+        expect(inbox.channel.reload.provider_connection['send_stall']).to be_nil
+        expect(inbox.channel.provider_connection['error']).to be_nil
+      end
+
       context 'with reach-out time-lock (error 463 / account restriction)' do
         let(:reachout_data) do
           { isActive: true, timeEnforcementEnds: '2026-06-19T21:52:39.000Z', enforcementType: 'RESTRICT_ALL_COMPANIONS' }

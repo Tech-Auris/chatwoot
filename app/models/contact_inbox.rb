@@ -5,6 +5,7 @@
 #  id            :bigint           not null, primary key
 #  hmac_verified :boolean          default(FALSE)
 #  pubsub_token  :string
+#  whatsapp_missing_checked_at :datetime
 #  created_at    :datetime         not null
 #  updated_at    :datetime         not null
 #  contact_id    :bigint
@@ -33,6 +34,14 @@ class ContactInbox < ApplicationRecord
 
   has_many :conversations, dependent: :destroy_async
 
+  # `whatsapp_missing_checked_at`: when a lookup found that this number has no WhatsApp (every
+  # BR form said no). Messages to it get the server's single check and reach nobody, so the
+  # conversation warns. Cleared by a lookup that finds the number, a message from the contact
+  # or a live delivery/read receipt (see Message), and by a phone change or merge: the answer
+  # was about the old number.
+  before_update -> { self.whatsapp_missing_checked_at = nil }, if: :will_save_change_to_contact_id?
+  after_update_commit :broadcast_whatsapp_missing_change, if: :saved_change_to_whatsapp_missing_checked_at?
+
   # contact_inboxes that are not associated with any conversation
   scope :stale_without_conversations, lambda { |time_period|
     left_joins(:conversations)
@@ -56,6 +65,13 @@ class ContactInbox < ApplicationRecord
   end
 
   private
+
+  # Tagged so the open thread does not jump to the bottom: no message arrived.
+  def broadcast_whatsapp_missing_change
+    conversations.find_each do |conversation|
+      conversation.dispatch_conversation_updated_event(broadcast_metadata: { source: 'whatsapp_missing' })
+    end
+  end
 
   def validate_twilio_source_id
     # https://www.twilio.com/docs/glossary/what-e164#regex-matching-for-e164

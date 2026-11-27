@@ -166,4 +166,46 @@ RSpec.describe SendReplyJob do
       expect(whatsapp_message.reload.status).not_to eq('failed')
     end
   end
+
+  describe 'retry on classified WhatsApp send errors' do
+    let(:whatsapp_channel) { create(:channel_whatsapp, validate_provider_config: false, sync_templates: false) }
+    let!(:whatsapp_message) do
+      create(:message, message_type: :outgoing, conversation: create(:conversation, inbox: whatsapp_channel.inbox))
+    end
+    let(:service) { instance_double(Whatsapp::SendOnWhatsappService) }
+
+    before { allow(Whatsapp::SendOnWhatsappService).to receive(:new).and_return(service) }
+
+    it 'marks the message failed with the reason once the retries run out' do
+      allow(service).to receive(:perform).and_raise(Whatsapp::Providers::Errors::SendStalled, 'not accepting sends')
+
+      perform_enqueued_jobs(only: described_class) { described_class.perform_later(whatsapp_message.id) }
+
+      expect(whatsapp_message.reload.status).to eq('failed')
+      expect(whatsapp_message.external_error).to eq('not accepting sends')
+    end
+
+    it 'retries a retryable error with a short first backoff' do
+      allow(service).to receive(:perform).and_raise(Whatsapp::Providers::Errors::SendTimeout, 'timed out')
+
+      expect { described_class.perform_now(whatsapp_message.id) }.to have_enqueued_job(described_class)
+      expect(whatsapp_message.reload.status).not_to eq('failed')
+    end
+
+    # Asserted on the scheduled retry rather than on the handler list: retry_on is built on
+    # rescue_from, which tries the last declaration first, so the broad Errors::Error handler
+    # shadows this one unless it is declared before it.
+    it 'gives a processing conflict its own, longer backoff' do
+      allow(service).to receive(:perform).and_raise(Whatsapp::Providers::WhatsappBaileysService::MessageAlreadyProcessingError)
+
+      expect { described_class.perform_now(whatsapp_message.id) }.to have_enqueued_job(described_class)
+
+      retry_job = enqueued_jobs.reverse.find { |job| job[:job] == described_class }
+      expect(retry_job[:at] - Time.zone.now.to_f).to be > 30
+    end
+
+    it 'ignores a message that no longer exists' do
+      expect { described_class.fail_message(-1, 'gone') }.not_to raise_error
+    end
+  end
 end

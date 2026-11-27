@@ -11,6 +11,15 @@ class Inboxes extends CacheEnabledApiClient {
     return 'inbox';
   }
 
+  // Whether WhatsApp knows this phone, with the same 13d/12d check the conversation
+  // creation runs. Answers `{ exists }`, with no `exists` when nobody could answer.
+  checkWhatsappNumber(inboxId, phoneNumber) {
+    return axios.post(`${this.url}/${inboxId}/on_whatsapp`, {
+      phone_number: phoneNumber,
+      advisory: true,
+    });
+  }
+
   getCampaigns(inboxId) {
     return axios.get(`${this.url}/${inboxId}/campaigns`);
   }

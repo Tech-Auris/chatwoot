@@ -806,6 +806,109 @@ describe Whatsapp::Providers::WhatsappBaileysService do
         expect(WebMock).not_to have_requested(:post, setup_url)
       end
     end
+
+    describe 'classified send errors' do
+      let(:setup_url) { "#{whatsapp_channel.provider_config['provider_url']}/connections/#{whatsapp_channel.phone_number}" }
+
+      before { stub_request(:post, setup_url).to_return(status: 200) }
+
+      def send_error
+        service.send_message(test_send_phone_number, message)
+        nil
+      rescue StandardError => e
+        e
+      end
+
+      it 'raises a non-retryable outcome-unknown error on a 409 marked indeterminate and keeps the channel open' do
+        stub_request(:post, request_path)
+          .to_return(status: 409, headers: { 'x-baileys-idempotency-state' => 'indeterminate' }, body: 'outcome unknown')
+
+        error = send_error
+
+        expect(error.class.name).to eq('Whatsapp::Providers::Errors::SendOutcomeUnknown')
+        expect(error.retryable?).to be(false)
+        expect(error.message).to eq(I18n.t('errors.whatsapp.outgoing.send_outcome_unknown', locale: whatsapp_channel.account.locale))
+        expect(WebMock).not_to have_requested(:post, setup_url)
+      end
+
+      it 'raises a retryable timeout on a 504 and keeps the channel open' do
+        stub_request(:post, request_path).to_return(status: 504, body: 'Send timed out; outcome unknown')
+
+        error = send_error
+
+        expect(error.class.name).to eq('Whatsapp::Providers::Errors::SendTimeout')
+        expect(error.retryable?).to be(true)
+        expect(WebMock).not_to have_requested(:post, setup_url)
+        expect(whatsapp_channel.reload.provider_connection['connection']).not_to eq('close')
+      end
+
+      it 'raises a retryable stall error on a 503 marked stalled and keeps the channel open' do
+        stub_request(:post, request_path)
+          .to_return(status: 503, headers: { 'x-baileys-send-state' => 'stalled' }, body: 'Connection is not accepting sends')
+
+        error = send_error
+
+        expect(error.class.name).to eq('Whatsapp::Providers::Errors::SendStalled')
+        expect(error.retryable?).to be(true)
+        expect(WebMock).not_to have_requested(:post, setup_url)
+      end
+
+      it 'treats a 503 without the stall marker as an ordinary outage and reconnects' do
+        stub_request(:post, request_path).to_return(status: 503, body: 'Service Unavailable')
+
+        error = send_error
+
+        expect(error.class.name).to eq('Whatsapp::Providers::WhatsappBaileysService::ProviderUnavailableError')
+        expect(error.retryable?).to be(true)
+        expect(WebMock).to have_requested(:post, setup_url)
+      end
+
+      it 'raises a non-retryable error on a 413 without marking the channel closed' do
+        stub_request(:post, request_path).to_return(status: 413, body: 'Payload Too Large')
+
+        error = send_error
+
+        expect(error.class.name).to eq('Whatsapp::Providers::Errors::MediaTooLarge')
+        expect(error.retryable?).to be(false)
+        expect(WebMock).not_to have_requested(:post, setup_url)
+      end
+
+      it 'raises a non-retryable error on a 422' do
+        stub_request(:post, request_path).to_return(status: 422, body: 'Unprocessable')
+
+        error = send_error
+
+        expect(error.class.name).to eq('Whatsapp::Providers::Errors::InvalidPayload')
+        expect(error.retryable?).to be(false)
+      end
+
+      it 'gives a generic provider failure a reason in the account language' do
+        whatsapp_channel.account.update!(locale: 'en')
+        stub_request(:post, request_path).to_return(status: 500, body: 'Internal Server Error')
+
+        error = send_error
+
+        expect(error.message).to eq('WhatsApp could not send this message right now.')
+      end
+
+      it 'turns a read timeout into a retryable timeout without marking the channel closed' do
+        stub_request(:post, request_path).to_raise(Net::ReadTimeout)
+
+        error = send_error
+
+        expect(error.class.name).to eq('Whatsapp::Providers::Errors::SendTimeout')
+        expect(WebMock).not_to have_requested(:post, setup_url)
+      end
+
+      it 'turns a failure to connect into a provider-unavailable error' do
+        stub_request(:post, request_path).to_raise(Errno::ECONNREFUSED)
+
+        error = send_error
+
+        expect(error.class.name).to eq('Whatsapp::Providers::WhatsappBaileysService::ProviderUnavailableError')
+        expect(error.message).to eq(I18n.t('errors.whatsapp.outgoing.provider_unreachable', locale: whatsapp_channel.account.locale))
+      end
+    end
   end
 
   describe '#media_url' do
@@ -921,6 +1024,35 @@ describe Whatsapp::Providers::WhatsappBaileysService do
       allow(Rails.logger).to receive(:error)
 
       expect(service.fetch_new_chat_cap).to be_nil
+    end
+  end
+
+  describe '#fetch_send_health' do
+    let(:url) { "#{whatsapp_channel.provider_config['provider_url']}/connections/#{whatsapp_channel.phone_number}/health" }
+
+    it 'returns the send-side health on success' do
+      stub_request(:get, url).to_return(
+        status: 200,
+        headers: { 'Content-Type' => 'application/json' },
+        body: { data: { connected: true, sendState: 'stalled', consecutiveSendTimeouts: 3, lastSendCompletedAgoMs: nil,
+                        lastOutgoingAckAgoMs: 219_000 } }.to_json
+      )
+
+      expect(service.fetch_send_health).to eq(send_state: 'stalled', consecutive_send_timeouts: 3, last_outgoing_ack_ago_ms: 219_000)
+    end
+
+    it 'returns nil on 404 (number not connected)' do
+      stub_request(:get, url).to_return(status: 404, body: 'Phone number not connected')
+
+      expect(service.fetch_send_health).to be_nil
+    end
+
+    it 'returns nil on a server error without marking the connection closed' do
+      stub_request(:get, url).to_return(status: 500, body: 'Internal Server Error')
+      allow(Rails.logger).to receive(:error)
+
+      expect(service.fetch_send_health).to be_nil
+      expect(whatsapp_channel.reload.provider_connection['connection']).not_to eq('close')
     end
   end
 
@@ -1178,6 +1310,16 @@ describe Whatsapp::Providers::WhatsappBaileysService do
     let(:request_path) { "#{whatsapp_channel.provider_config['provider_url']}/connections/#{whatsapp_channel.phone_number}/on-whatsapp" }
     let(:phone_number) { '+123456789' }
 
+    it 'gives up after a short timeout' do
+      stub_request(:post, request_path).to_return(status: 200, headers: { 'Content-Type' => 'application/json' },
+                                                  body: { data: [] }.to_json)
+      allow(HTTParty).to receive(:post).and_call_original
+
+      service.on_whatsapp(phone_number)
+
+      expect(HTTParty).to have_received(:post).with(request_path, hash_including(timeout: 10))
+    end
+
     context 'when response is successful' do
       it 'requests whatsapp check' do
         stub_request(:post, request_path)
@@ -1248,8 +1390,9 @@ describe Whatsapp::Providers::WhatsappBaileysService do
             headers: {}
           )
 
-        stub_request(:post, "#{whatsapp_channel.provider_config['provider_url']}/connections/#{whatsapp_channel.phone_number}")
-          .to_return(status: 200)
+        reconnect = stub_request(:post, "#{whatsapp_channel.provider_config['provider_url']}/connections/#{whatsapp_channel.phone_number}")
+                    .to_return(status: 200)
+        whatsapp_channel.update_provider_connection!(connection: 'open')
 
         allow(Rails.logger).to receive(:error)
 
@@ -1258,6 +1401,9 @@ describe Whatsapp::Providers::WhatsappBaileysService do
         end.to raise_error(Whatsapp::Providers::WhatsappBaileysService::ProviderUnavailableError)
 
         expect(Rails.logger).to have_received(:error).with('error message')
+        # A failed number lookup is "unknown", not a dropped connection.
+        expect(whatsapp_channel.reload.provider_connection['connection']).to eq('open')
+        expect(reconnect).not_to have_been_requested
       end
     end
 

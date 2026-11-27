@@ -655,7 +655,8 @@ RSpec.describe Conversation do
         group_type: 'individual',
         # Auris additions to the conversation push payload.
         ai_enabled: conversation.ai_enabled,
-        summary: conversation.summary
+        summary: conversation.summary,
+        whatsapp_missing_checked_at: nil
       }
     end
 

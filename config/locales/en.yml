@@ -200,6 +200,15 @@ en:
     slack:
       invalid_channel_id: 'Invalid slack channel. Please try again'
     whatsapp:
+      outgoing:
+        provider_error: 'WhatsApp could not send this message right now.'
+        provider_unreachable: 'Could not reach the WhatsApp provider.'
+        send_timed_out: 'The send timed out and may have reached WhatsApp. Check the conversation on WhatsApp before sending it again.'
+        send_outcome_unknown: 'The send timed out and may have gone through. Check the conversation on WhatsApp before sending it again.'
+        send_stalled: 'The WhatsApp connection is not accepting sends right now.'
+        media_too_large: 'The attachment is too large to send.'
+        invalid_payload: 'WhatsApp rejected the message content.'
+        still_processing: 'The message was still being sent and could not be confirmed. Check the conversation on WhatsApp before sending it again.'
       token_exchange_failed: 'Failed to exchange code for access token. Please try again.'
       invalid_token_permissions: 'The access token does not have the required permissions for WhatsApp.'
       phone_info_fetch_failed: 'Failed to fetch phone number information. Please try again.'
@@ -234,6 +243,7 @@ en:
         provider_connection:
           wrong_phone_number: The phone number you are trying to link is not the same as the one you have configured. Please make sure the phone number is correct before scanning the QR code.
           reconnect_loop_detected: The connection could not be re-established after several attempts. Automatic retries continue at increasing intervals. If this persists, disconnect the inbox and pair it again by scanning a new QR code.
+          send_stall_detected: This connection is receiving messages but cannot send them. If it does not clear on its own within a few minutes, disconnect the inbox and connect again by scanning a new QR code.
     meta_templates:
       non_cloud_inbox: This endpoint is only available for inboxes using the WhatsApp Cloud provider.
       sync_failed: Could not refresh templates from Meta. Please try again in a few seconds.

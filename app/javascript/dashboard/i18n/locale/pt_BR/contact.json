@@ -677,6 +677,7 @@
         "CONTACT_CREATING": "Criando contato..."
       },
       "MARKETING_OPT_OUT_WARNING": "Este contato está com opt-out de marketing: ele pediu para não receber mensagens de marketing.",
+      "WHATSAPP_NUMBER_MISSING": "Este número não tem WhatsApp. As mensagens não serão entregues.",
       "INBOX_BLOCKED": {
         "DISCONNECTED": "Este número está desconectado. Reconecte o WhatsApp em Configurações → Caixas de Entrada para enviar por ele.",
         "CONNECTING": "Este número está reconectando. Aguarde a conexão terminar para enviar por ele."

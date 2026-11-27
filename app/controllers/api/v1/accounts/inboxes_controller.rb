@@ -218,12 +218,20 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController #
       render json: { error: 'Channel does not support whatsapp check' }, status: :unprocessable_entity and return
     end
 
-    response = channel.on_whatsapp(phone_number)
+    advisory = ActiveModel::Type::Boolean.new.cast(params[:advisory])
+    response = advisory ? whatsapp_number_answer(channel, phone_number) : channel.on_whatsapp(phone_number)
 
     render json: response, status: :ok
   end
 
   private
+
+  # The compose form's hint: the same 13d/12d check the conversation creation runs. `exists`
+  # is left out when nobody could answer, which the form reads as "unknown", never as "no".
+  def whatsapp_number_answer(channel, phone_number)
+    answer = Whatsapp::CanonicalPhoneResolverService.new(channel: channel, phone: phone_number).lookup
+    answer.to_h.compact
+  end
 
   def fetch_inbox
     @inbox = Current.account.inboxes.find(params[:id])

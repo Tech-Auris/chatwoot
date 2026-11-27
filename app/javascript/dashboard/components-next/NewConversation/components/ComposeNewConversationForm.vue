@@ -23,6 +23,7 @@ import MessageEditor from './MessageEditor.vue';
 import ActionButtons from './ActionButtons.vue';
 import InboxEmptyState from './InboxEmptyState.vue';
 import ContactOptOutWarning from './ContactOptOutWarning.vue';
+import WhatsappNumberWarning from './WhatsappNumberWarning.vue';
 import AttachmentPreviews from './AttachmentPreviews.vue';
 import CopilotReplyBottomPanel from 'dashboard/components/widgets/WootWriter/CopilotReplyBottomPanel.vue';
 
@@ -368,6 +369,11 @@ useKeyboardEvents({
         @update-inbox="removeTargetInbox"
         @toggle-dropdown="showInboxesDropdown = $event"
         @handle-inbox-action="handleInboxAction"
+      />
+      <WhatsappNumberWarning
+        v-if="!showNoInboxAlert"
+        :target-inbox="targetInbox"
+        :selected-contact="selectedContact"
       />
       <ContactOptOutWarning :contact="selectedContact" />
 

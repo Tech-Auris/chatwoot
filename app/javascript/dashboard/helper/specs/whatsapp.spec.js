@@ -1,9 +1,11 @@
 import {
   isReachoutRestricted,
+  isSendStalled,
   reachoutRestrictionDeadline,
   isMessageCapped,
   isMessageCapReached,
   messageCapQuota,
+  canCheckWhatsappNumber,
 } from '../whatsapp';
 
 describe('#isReachoutRestricted', () => {
@@ -47,6 +49,25 @@ describe('#isReachoutRestricted', () => {
   it('keeps the restriction visible when the deadline is malformed (fail safe)', () => {
     const lock = { is_active: true, time_enforcement_ends: 'not-a-date' };
     expect(isReachoutRestricted(lock, 'open', now)).toBe(true);
+  });
+});
+
+describe('#isSendStalled', () => {
+  const stall = { consecutive_timeouts: 3, action: 'suppressed' };
+
+  it('warns while the connection still reads open', () => {
+    expect(isSendStalled(stall, 'open')).toBe(true);
+  });
+
+  it('stays quiet with no stall recorded', () => {
+    expect(isSendStalled(undefined, 'open')).toBe(false);
+    expect(isSendStalled(null, 'open')).toBe(false);
+  });
+
+  it('yields to the offline banner once the connection is down', () => {
+    expect(isSendStalled(stall, 'close')).toBe(false);
+    expect(isSendStalled(stall, 'connecting')).toBe(false);
+    expect(isSendStalled(stall, undefined)).toBe(false);
   });
 });
 
@@ -122,5 +143,29 @@ describe('#messageCapQuota', () => {
       used: 0,
       total: 100,
     });
+  });
+});
+
+describe('#canCheckWhatsappNumber', () => {
+  it('is true for a Baileys WhatsApp inbox', () => {
+    expect(
+      canCheckWhatsappNumber({
+        channelType: 'Channel::Whatsapp',
+        provider: 'baileys',
+      })
+    ).toBe(true);
+  });
+
+  it('is false for the official API and for other channels', () => {
+    expect(
+      canCheckWhatsappNumber({
+        channelType: 'Channel::Whatsapp',
+        provider: 'whatsapp_cloud',
+      })
+    ).toBe(false);
+    expect(canCheckWhatsappNumber({ channelType: 'Channel::Email' })).toBe(
+      false
+    );
+    expect(canCheckWhatsappNumber(null)).toBe(false);
   });
 });

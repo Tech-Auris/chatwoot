@@ -24,6 +24,20 @@ export const isReachoutRestricted = (lock, connection, now = Date.now()) => {
 };
 
 /**
+ * Whether a baileys inbox should surface the send-stall banner ("connected, but cannot send").
+ *
+ * Gated on `open` because that pairing IS the fault: the connection receives and reports
+ * 'open' while no outgoing message leaves. Once the connection is down the offline banner
+ * is the accurate one, and the stored stall lingers until a new socket reaches 'open'.
+ *
+ * @param {{consecutive_timeouts?: number, action?: string, until?: string}|null|undefined} sendStall
+ * @param {string|undefined} connection - the provider_connection.connection value
+ * @returns {boolean}
+ */
+export const isSendStalled = (sendStall, connection) =>
+  connection === 'open' && Boolean(sendStall);
+
+/**
  * Local-timezone deadline label for the restriction banner, or '' when no deadline is set.
  * `new Date(isoUtc)` parses the UTC instant and `format` renders it in the browser's
  * timezone automatically.
@@ -78,3 +92,14 @@ export const messageCapQuota = cap => {
   const used = Number(cap?.used_quota) || 0;
   return { used, total };
 };
+
+/**
+ * Whether the compose form can ask this inbox if a number has WhatsApp. Only Baileys
+ * inboxes look numbers up; on the official API, Meta reports the failure after the send.
+ * The server answers "unknown" when the connection cannot answer.
+ *
+ * @param {{channelType?: string, provider?: string}|null|undefined} inbox - camelCased compose-form inbox
+ * @returns {boolean}
+ */
+export const canCheckWhatsappNumber = inbox =>
+  inbox?.channelType === 'Channel::Whatsapp' && inbox?.provider === 'baileys';

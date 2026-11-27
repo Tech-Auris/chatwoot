@@ -267,6 +267,23 @@ describe('#mutations', () => {
       expect(emitter.emit).not.toHaveBeenCalled();
     });
 
+    it('skips SCROLL_TO_MESSAGE when the broadcast only moves the no-WhatsApp flag', () => {
+      const state = {
+        allConversations: [
+          { id: 1, updated_at: 1, whatsapp_missing_checked_at: 1700000000 },
+        ],
+        selectedChatId: 1,
+      };
+      mutations[types.UPDATE_CONVERSATION](state, {
+        id: 1,
+        updated_at: 1,
+        whatsapp_missing_checked_at: null,
+        event_metadata: { source: 'whatsapp_missing' },
+      });
+      expect(emitter.emit).not.toHaveBeenCalled();
+      expect(state.allConversations[0].whatsapp_missing_checked_at).toBeNull();
+    });
+
     it('does not persist the event_metadata field onto the cached conversation', () => {
       const state = {
         allConversations: [

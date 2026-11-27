@@ -162,6 +162,9 @@ class Message < ApplicationRecord
 
   after_update_commit :dispatch_update_event
   after_commit :reindex_for_search, if: :should_index?, on: [:create, :update]
+  # Declared last so it runs before the other commit callbacks (reverse order under the 7.0
+  # defaults): the conversation they broadcast then already carries the cleared flag.
+  after_commit :clear_whatsapp_missing_flag, on: [:create, :update], if: :proves_whatsapp_presence?
 
   def channel_token
     @token ||= inbox.channel.try(:page_access_token)
@@ -268,6 +271,30 @@ class Message < ApplicationRecord
 
   def reaction?
     ActiveModel::Type::Boolean.new.cast(content_attributes['is_reaction']) == true
+  end
+
+  def deleted?
+    ActiveModel::Type::Boolean.new.cast(content_attributes['deleted']) == true
+  end
+
+  # A removed reaction is a deleted row on purpose: the reactions controller reuses the
+  # row and marks it deleted, and its empty content is the payload that clears the
+  # reaction on the contact's phone. Guards that keep deleted messages off the channel
+  # have to let it through.
+  def removed_reaction?
+    deleted? && content_attributes['is_reaction'].present?
+  end
+
+  # `content_attributes` is a single JSON column, so writing any of its accessors from a stale
+  # object rewrites the whole hash and drops flags another request set meanwhile (e.g. `deleted`,
+  # written by the DELETE endpoint while the send was in flight). Reloads the row under
+  # FOR UPDATE before writing, which also serializes with those concurrent writers.
+  def update_under_lock!(attributes)
+    # `lock!` refuses a record with unsaved changes: flush what the caller left dirty, as a plain
+    # `update!` would, but never the stale `content_attributes` hash.
+    restore_attributes(['content_attributes']) if content_attributes_changed?
+    save! if changed?
+    with_lock { update!(attributes) }
   end
 
   def valid_first_reply?
@@ -390,6 +417,27 @@ class Message < ApplicationRecord
     send_reply
     execute_message_template_hooks
     update_contact_activity
+  end
+
+  # A message from the contact, or a live delivery/read receipt, proves the number has
+  # WhatsApp, so a "no WhatsApp" flag left by an earlier lookup stops warning. An echo of a
+  # send from the paired phone is born delivered (no status change), and a history import
+  # replays old traffic, so neither counts.
+  def proves_whatsapp_presence?
+    return false if Current.history_import || inbox.channel_type != 'Channel::Whatsapp'
+    return incoming? if previously_new_record?
+
+    outgoing? && saved_change_to_status? && (delivered? || read?)
+  end
+
+  # Only flags set before this message existed: a receipt for a message sent before the
+  # lookup says nothing about the number now.
+  def clear_whatsapp_missing_flag
+    flagged = ContactInbox.where(inbox_id: inbox_id, contact_id: conversation.contact_id, whatsapp_missing_checked_at: ..created_at).to_a
+    return if flagged.empty?
+
+    flagged.each { |contact_inbox| contact_inbox.update!(whatsapp_missing_checked_at: nil) }
+    conversation.reload_contact_inbox
   end
 
   def update_contact_activity

@@ -32,6 +32,14 @@ describe('#InboxesAPI', () => {
       window.axios = originalAxios;
     });
 
+    it('#checkWhatsappNumber', () => {
+      inboxesAPI.checkWhatsappNumber(2, '+5531998010696');
+      expect(axiosMock.post).toHaveBeenCalledWith(
+        '/api/v1/inboxes/2/on_whatsapp',
+        { phone_number: '+5531998010696', advisory: true }
+      );
+    });
+
     it('#getCampaigns', () => {
       inboxesAPI.getCampaigns(2);
       expect(axiosMock.get).toHaveBeenCalledWith('/api/v1/inboxes/2/campaigns');
