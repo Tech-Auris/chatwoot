@@ -63,6 +63,37 @@ RSpec.describe AutomationRules::ConditionsFilterService do
       end
     end
 
+    context 'when conditions check assignee presence' do
+      let(:agent_bot) { create(:agent_bot, account: account) }
+
+      before do
+        conversation.update!(assignee_agent_bot: agent_bot)
+      end
+
+      it 'treats AgentBot ownership as present' do
+        rule.update!(conditions: [{ 'values': [], 'attribute_key': 'assignee_id', 'query_operator': nil, 'filter_operator': 'is_present' }])
+
+        expect(described_class.new(rule, conversation, { changed_attributes: {} }).perform).to be(true)
+      end
+
+      it 'does not treat AgentBot ownership as absent' do
+        rule.update!(conditions: [{ 'values': [], 'attribute_key': 'assignee_id', 'query_operator': nil, 'filter_operator': 'is_not_present' }])
+
+        expect(described_class.new(rule, conversation, { changed_attributes: {} }).perform).to be(false)
+      end
+
+      it 'keeps a label condition that follows another condition valid' do
+        conversation.update_labels(%w[bug])
+        rule.update!(conditions: [
+                       { 'values': [], 'attribute_key': 'assignee_id', 'query_operator': 'and', 'filter_operator': 'is_present' },
+                       { 'values': ['bug'], 'attribute_key': 'labels', 'query_operator': 'and', 'filter_operator': 'equal_to' },
+                       { 'values': ['feature'], 'attribute_key': 'labels', 'query_operator': nil, 'filter_operator': 'not_equal_to' }
+                     ])
+
+        expect(described_class.new(rule, conversation, { changed_attributes: {} }).perform).to be(true)
+      end
+    end
+
     context 'when conditions based on messages attributes' do
       context 'when filter_operator is equal_to' do
         before do
@@ -290,7 +321,18 @@ RSpec.describe AutomationRules::ConditionsFilterService do
         end
 
         it 'will return false when conversation has the label' do
-          conversation.add_labels(['feature'])
+          conversation.update_labels(%w[bug feature])
+          expect(conversation.reload.label_list).to match_array(%w[bug feature])
+          expect(described_class.new(rule, conversation, { changed_attributes: {} }).perform).to be(false)
+        end
+
+        it 'will return false when conversation has any excluded label' do
+          rule.update!(conditions: [
+                         { 'values': %w[feature enterprise], 'attribute_key': 'labels', 'query_operator': nil,
+                           'filter_operator': 'not_equal_to' }
+                       ])
+          conversation.update_labels(%w[bug enterprise])
+
           expect(described_class.new(rule, conversation, { changed_attributes: {} }).perform).to be(false)
         end
       end
