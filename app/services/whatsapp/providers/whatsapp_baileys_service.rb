@@ -38,7 +38,9 @@ class Whatsapp::Providers::WhatsappBaileysService < Whatsapp::Providers::BaseSer
     raise ProviderUnavailableError, 'Baileys API is unavailable'
   end
 
-  def setup_channel_provider
+  # `pairing_mode: 'code'` asks baileys-api for a pairing code for this number instead of
+  # the QR; it arrives on the connection.update webhook (ConnectionUpdate).
+  def setup_channel_provider(pairing_mode: nil)
     # A session the server keeps rejecting can only be recovered by pairing a
     # fresh QR, but the provider always resumes stored creds when they exist —
     # so an operator asking to reconnect such a channel would just restart the
@@ -61,13 +63,18 @@ class Whatsapp::Providers::WhatsappBaileysService < Whatsapp::Providers::BaseSer
         # Baileys node uses this to filter `messaging-history.set` events
         # before relaying them as a sequence of `importMode: true` webhooks.
         # 0 / nil disables the import; compact drops the key in that case.
-        historyImportDays: (whatsapp_channel.history_import_days if whatsapp_channel.history_import_days.positive?)
+        historyImportDays: (whatsapp_channel.history_import_days if whatsapp_channel.history_import_days.positive?),
+        pairingMode: pairing_mode
       }.compact.to_json
     )
 
     raise ProviderUnavailableError unless process_response(response)
 
     true
+  end
+
+  def request_pairing_code
+    setup_channel_provider(pairing_mode: 'code')
   end
 
   # Hot-loads an already-linked WhatsApp Web session extracted by the browser

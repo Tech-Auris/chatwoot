@@ -131,6 +131,23 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController #
     render json: { error: 'WhatsApp provider is currently unavailable. Please try again.' }, status: :service_unavailable
   end
 
+  # Pairs a disconnected Baileys inbox with a code typed on the phone instead of the QR.
+  # Admins and managers only, like import_whatsapp_session: the code links whatever phone
+  # types it. The number is the inbox's own, never one the request carries.
+  def request_pairing_code
+    channel = @inbox.channel
+
+    unless channel.is_a?(Channel::Whatsapp) && channel.provider == 'baileys'
+      render json: { error: 'Pairing by code is only supported for Baileys WhatsApp channels' },
+             status: :unprocessable_entity and return
+    end
+
+    channel.request_pairing_code
+    head :ok
+  rescue Whatsapp::Providers::WhatsappBaileysService::ProviderUnavailableError
+    render json: { error: 'WhatsApp provider is currently unavailable. Please try again.' }, status: :service_unavailable
+  end
+
   def disconnect_channel_provider
     channel = @inbox.channel
 

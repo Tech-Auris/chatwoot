@@ -2,6 +2,7 @@
 import { onMounted, computed, onUnmounted, ref, watchEffect } from 'vue';
 import { useStore } from 'vuex';
 import { useAlert } from 'dashboard/composables';
+import { useAdmin } from 'dashboard/composables/useAdmin';
 import InboxName from 'dashboard/components/widgets/InboxName.vue';
 import Spinner from 'shared/components/Spinner.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
@@ -17,11 +18,27 @@ const props = defineProps({
 });
 
 const store = useStore();
+const { isAdmin, isManager } = useAdmin();
 
 const providerConnection = computed(() => props.inbox.provider_connection);
 const connection = computed(() => providerConnection.value?.connection);
 const qrDataUrl = computed(() => providerConnection.value?.qr_data_url);
+const pairingCode = computed(() => providerConnection.value?.pairing_code);
 const error = computed(() => providerConnection.value?.error);
+
+// Which pairing the operator asked for, not which one the provider has answered with
+// yet: the code takes a moment to arrive, and the screen has to say what it is waiting
+// for. Reset whenever the pairing ends, so the next one starts on the QR again.
+const pairingMode = ref('qr');
+// Only QR Code (Baileys) inboxes pair by code, and only admins and managers see the
+// code, since it links the clinic's WhatsApp account just like the QR.
+const canPairWithCode = computed(
+  () => props.inbox.provider === 'baileys' && (isAdmin.value || isManager.value)
+);
+// WhatsApp shows the code as two groups of four.
+const formattedPairingCode = computed(() =>
+  pairingCode.value?.replace(/^(.{4})(.{4})$/, '$1-$2')
+);
 
 // Alternative onboarding when WhatsApp's extra device-linking verification blocks
 // the QR: install the browser extension and import an already-linked session.
@@ -37,8 +54,23 @@ const handleError = e => {
 };
 const setup = () => {
   loading.value = true;
+  pairingMode.value = 'qr';
   store
     .dispatch('inboxes/setupChannelProvider', props.inbox.id)
+    .catch(handleError);
+};
+// Asking again is how a code that expired is replaced, so this stays reachable while one
+// is already on screen.
+const pairWithCode = () => {
+  loading.value = true;
+  pairingMode.value = 'code';
+  store
+    .dispatch('inboxes/requestPairingCode', props.inbox.id)
+    .then(() => {
+      // Already `connecting` while the QR was up, so the watcher below never fires;
+      // the panel shows the wait for the code on its own.
+      loading.value = false;
+    })
     .catch(handleError);
 };
 const disconnect = () => {
@@ -64,6 +96,9 @@ onUnmounted(() => {
 watchEffect(() => {
   if (connection.value) {
     loading.value = false;
+  }
+  if (connection.value && connection.value !== 'connecting') {
+    pairingMode.value = 'qr';
   }
 });
 </script>
@@ -107,22 +142,78 @@ watchEffect(() => {
           </template>
 
           <template v-else-if="connection === 'connecting'">
-            <div v-if="!qrDataUrl" class="flex flex-col gap-4 items-center">
-              <p>
-                {{
+            <template v-if="pairingMode === 'code'">
+              <div v-if="!pairingCode" class="flex flex-col gap-4 items-center">
+                <p>
+                  {{
+                    $t(
+                      'INBOX_MGMT.ADD.WHATSAPP.EXTERNAL_PROVIDER.LINK_DEVICE_MODAL.LOADING_PAIRING_CODE'
+                    )
+                  }}
+                </p>
+                <Spinner />
+              </div>
+              <div v-else class="flex flex-col gap-2 items-center">
+                <p
+                  class="font-mono text-3xl font-semibold tracking-widest select-all text-n-slate-12"
+                >
+                  {{ formattedPairingCode }}
+                </p>
+                <p class="max-w-xs text-sm text-center text-n-slate-11">
+                  {{
+                    $t(
+                      'INBOX_MGMT.ADD.WHATSAPP.EXTERNAL_PROVIDER.LINK_DEVICE_MODAL.PAIRING_CODE_HELP'
+                    )
+                  }}
+                </p>
+              </div>
+            </template>
+
+            <template v-else>
+              <div v-if="!qrDataUrl" class="flex flex-col gap-4 items-center">
+                <p>
+                  {{
+                    $t(
+                      'INBOX_MGMT.ADD.WHATSAPP.EXTERNAL_PROVIDER.LINK_DEVICE_MODAL.LOADING_QRCODE'
+                    )
+                  }}
+                </p>
+                <Spinner />
+              </div>
+              <img
+                v-else
+                :src="qrDataUrl"
+                alt="QR Code"
+                class="w-[276px] h-[276px]"
+              />
+            </template>
+
+            <template v-if="canPairWithCode">
+              <Button
+                v-if="pairingMode === 'code'"
+                link
+                blue
+                :is-loading="loading"
+                :label="
                   $t(
-                    'INBOX_MGMT.ADD.WHATSAPP.EXTERNAL_PROVIDER.LINK_DEVICE_MODAL.LOADING_QRCODE'
+                    'INBOX_MGMT.ADD.WHATSAPP.EXTERNAL_PROVIDER.LINK_DEVICE_MODAL.USE_QRCODE'
                   )
-                }}
-              </p>
-              <Spinner />
-            </div>
-            <img
-              v-else
-              :src="qrDataUrl"
-              alt="QR Code"
-              class="w-[276px] h-[276px]"
-            />
+                "
+                @click="setup"
+              />
+              <Button
+                v-else
+                link
+                blue
+                :is-loading="loading"
+                :label="
+                  $t(
+                    'INBOX_MGMT.ADD.WHATSAPP.EXTERNAL_PROVIDER.LINK_DEVICE_MODAL.USE_PAIRING_CODE'
+                  )
+                "
+                @click="pairWithCode"
+              />
+            </template>
           </template>
 
           <template v-else-if="connection === 'reconnecting'">

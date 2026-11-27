@@ -48,5 +48,12 @@ describe('#InboxesAPI', () => {
         '/api/v1/inboxes/2/sync_templates'
       );
     });
+
+    it('#requestPairingCode', () => {
+      inboxesAPI.requestPairingCode(2);
+      expect(axiosMock.post).toHaveBeenCalledWith(
+        '/api/v1/inboxes/2/request_pairing_code'
+      );
+    });
   });
 });

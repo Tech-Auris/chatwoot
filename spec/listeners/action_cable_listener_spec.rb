@@ -275,7 +275,7 @@ describe ActionCableListener do
     let!(:manager) { create(:user, account: account, role: :manager) }
     let(:event_name) { :'inbox.provider_connection_updated' }
     let(:provider_connection) do
-      { 'connection' => 'connecting', 'qr_data_url' => 'data:image/png;base64,qr', 'error' => nil }
+      { 'connection' => 'connecting', 'qr_data_url' => 'data:image/png;base64,qr', 'pairing_code' => 'ABCD1234', 'error' => nil }
     end
     let(:event) { Events::Base.new(event_name, Time.zone.now, inbox: inbox, provider_connection: provider_connection) }
 
@@ -291,7 +291,7 @@ describe ActionCableListener do
       listener.inbox_provider_connection_updated(event)
     end
 
-    it 'sends the QR code and error to administrators' do
+    it 'sends the QR code, pairing code and error to administrators' do
       allow(ActionCableBroadcastJob).to receive(:perform_later).with([agent.pubsub_token], anything, anything)
       allow(ActionCableBroadcastJob).to receive(:perform_later).with([manager.pubsub_token], anything, anything)
       expect(ActionCableBroadcastJob).to receive(:perform_later).with(
@@ -299,7 +299,7 @@ describe ActionCableListener do
         'inbox.provider_connection_updated',
         {
           inbox_id: inbox.id,
-          provider_connection: { connection: 'connecting', qr_data_url: 'data:image/png;base64,qr', error: nil },
+          provider_connection: { connection: 'connecting', qr_data_url: 'data:image/png;base64,qr', pairing_code: 'ABCD1234', error: nil },
           account_id: account.id
         }
       )
@@ -310,7 +310,7 @@ describe ActionCableListener do
     # Managers manage Baileys pairings on their account too — a regression
     # here locks them out of the "Conectar dispositivo" modal because the
     # QR frame never lands on their WebSocket. Mirror the admin payload.
-    it 'sends the QR code and error to managers' do
+    it 'sends the QR code, pairing code and error to managers' do
       allow(ActionCableBroadcastJob).to receive(:perform_later).with([agent.pubsub_token], anything, anything)
       allow(ActionCableBroadcastJob).to receive(:perform_later).with([admin.pubsub_token], anything, anything)
       expect(ActionCableBroadcastJob).to receive(:perform_later).with(
@@ -318,7 +318,7 @@ describe ActionCableListener do
         'inbox.provider_connection_updated',
         {
           inbox_id: inbox.id,
-          provider_connection: { connection: 'connecting', qr_data_url: 'data:image/png;base64,qr', error: nil },
+          provider_connection: { connection: 'connecting', qr_data_url: 'data:image/png;base64,qr', pairing_code: 'ABCD1234', error: nil },
           account_id: account.id
         }
       )

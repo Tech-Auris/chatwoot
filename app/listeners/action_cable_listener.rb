@@ -62,11 +62,12 @@ class ActionCableListener < BaseListener # rubocop:disable Metrics/ClassLength
     connection = base_provider_connection(provider_connection)
     privileged = connection.merge(
       qr_data_url: provider_connection['qr_data_url'],
+      pairing_code: provider_connection['pairing_code'],
       error: provider_connection['error']
     )
 
-    # QR / error are admin+manager-only (matches Channel::Whatsapp#provider_connection_data)
-    # — agents get the sanitized payload since the QR grants full WhatsApp account access.
+    # QR / pairing code / error are admin+manager-only (matches Channel::Whatsapp#provider_connection_data)
+    # — agents get the sanitized payload since the QR or the code grants full WhatsApp account access.
     push_provider_connection(account, account.agents, inbox, connection)
     push_provider_connection(account, account.administrators, inbox, privileged)
     push_provider_connection(account, account.managers, inbox, privileged)

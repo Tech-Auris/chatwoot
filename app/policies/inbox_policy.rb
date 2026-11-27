@@ -78,6 +78,10 @@ class InboxPolicy < ApplicationPolicy
     @account_user.administrator? || @account_user.manager?
   end
 
+  def request_pairing_code?
+    @account_user.administrator? || @account_user.manager?
+  end
+
   def disconnect_channel_provider?
     @account_user.administrator? || @account_user.manager?
   end

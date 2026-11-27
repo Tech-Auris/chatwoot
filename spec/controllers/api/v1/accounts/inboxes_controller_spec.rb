@@ -1585,6 +1585,69 @@ RSpec.describe 'Inboxes API', type: :request do
     end
   end
 
+  describe 'POST /api/v1/accounts/:account_id/inboxes/:id/request_pairing_code' do
+    let(:channel) { create(:channel_whatsapp, account: account, provider: 'baileys', validate_provider_config: false) }
+    let(:inbox) { channel.inbox }
+    let(:service_double) { instance_double(Whatsapp::Providers::WhatsappBaileysService, request_pairing_code: true) }
+
+    before do
+      allow(Whatsapp::Providers::WhatsappBaileysService).to receive(:new).with(whatsapp_channel: channel).and_return(service_double)
+    end
+
+    it 'returns unauthorized when unauthenticated' do
+      post "/api/v1/accounts/#{account.id}/inboxes/#{inbox.id}/request_pairing_code"
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it 'does not let an agent assigned to the inbox ask for a code' do
+      create(:inbox_member, user: agent, inbox: inbox)
+
+      post "/api/v1/accounts/#{account.id}/inboxes/#{inbox.id}/request_pairing_code",
+           headers: agent.create_new_auth_token, as: :json
+
+      expect(response).to have_http_status(:unauthorized)
+      expect(service_double).not_to have_received(:request_pairing_code)
+    end
+
+    it 'asks the provider for a code for an administrator' do
+      post "/api/v1/accounts/#{account.id}/inboxes/#{inbox.id}/request_pairing_code",
+           headers: admin.create_new_auth_token, as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(service_double).to have_received(:request_pairing_code)
+    end
+
+    it 'asks the provider for a code for a manager' do
+      manager = create(:user, account: account, role: :manager)
+
+      post "/api/v1/accounts/#{account.id}/inboxes/#{inbox.id}/request_pairing_code",
+           headers: manager.create_new_auth_token, as: :json
+
+      expect(response).to have_http_status(:ok)
+    end
+
+    it 'returns unprocessable entity for a whatsapp channel using a non-baileys provider' do
+      cloud_channel = create(:channel_whatsapp, account: account, provider: 'whatsapp_cloud',
+                                                sync_templates: false, validate_provider_config: false)
+
+      post "/api/v1/accounts/#{account.id}/inboxes/#{cloud_channel.inbox.id}/request_pairing_code",
+           headers: admin.create_new_auth_token, as: :json
+
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
+    it 'returns service unavailable when the provider is unavailable' do
+      allow(service_double).to receive(:request_pairing_code)
+        .and_raise(Whatsapp::Providers::WhatsappBaileysService::ProviderUnavailableError)
+
+      post "/api/v1/accounts/#{account.id}/inboxes/#{inbox.id}/request_pairing_code",
+           headers: admin.create_new_auth_token, as: :json
+
+      expect(response).to have_http_status(:service_unavailable)
+    end
+  end
+
   describe 'POST /api/v1/accounts/:account_id/inboxes/:id/disconnect_channel_provider' do
     let(:channel) { create(:channel_whatsapp, account: account, provider: 'baileys', validate_provider_config: false) }
     let(:inbox) { channel.inbox }
