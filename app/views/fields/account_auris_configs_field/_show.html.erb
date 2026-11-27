@@ -1,0 +1,13 @@
+<dl class="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-sm text-n-slate-12">
+  <% field.rows.each do |config, value| %>
+    <dt class="text-slate-500"><%= config.config_key %></dt>
+    <dd class="break-all">
+      <% if value %>
+        <%= link_to value.value.presence || '(vazio)', edit_super_admin_account_auris_config_path(value) %>
+      <% else %>
+        <span class="text-slate-500"><%= config.default_value.presence || '—' %> (padrão)</span>
+        · <%= link_to 'definir para a conta', new_super_admin_account_auris_config_path(account_id: field.resource.id, auris_config_id: config.id) %>
+      <% end %>
+    </dd>
+  <% end %>
+</dl>

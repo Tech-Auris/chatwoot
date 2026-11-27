@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_11_23_190000) do
+ActiveRecord::Schema[7.1].define(version: 2026_11_27_180000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -34,6 +34,16 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_23_190000) do
     t.datetime "updated_at", null: false
     t.index ["owner_type", "owner_id"], name: "index_access_tokens_on_owner_type_and_owner_id"
     t.index ["token"], name: "index_access_tokens_on_token", unique: true
+  end
+
+  create_table "account_auris_configs", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "auris_config_id", null: false
+    t.text "value"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "auris_config_id"], name: "index_account_auris_configs_on_account_id_and_auris_config_id", unique: true
+    t.index ["auris_config_id"], name: "index_account_auris_configs_on_auris_config_id"
   end
 
   create_table "account_health_scores", force: :cascade do |t|
@@ -462,6 +472,16 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_23_190000) do
     t.index ["created_at"], name: "index_audits_on_created_at"
     t.index ["request_uuid"], name: "index_audits_on_request_uuid"
     t.index ["user_id", "user_type"], name: "user_index"
+  end
+
+  create_table "auris_configs", force: :cascade do |t|
+    t.string "config_key", null: false
+    t.string "value_type", null: false
+    t.text "default_value"
+    t.text "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["config_key"], name: "index_auris_configs_on_config_key", unique: true
   end
 
   create_table "automation_rules", force: :cascade do |t|
@@ -2616,6 +2636,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_23_190000) do
     t.index ["inbox_id"], name: "index_working_hours_on_inbox_id"
   end
 
+  add_foreign_key "account_auris_configs", "accounts"
+  add_foreign_key "account_auris_configs", "auris_configs"
   add_foreign_key "account_health_scores", "accounts", on_delete: :cascade
   add_foreign_key "account_integrations", "accounts"
   add_foreign_key "account_integrations", "erp_sources"

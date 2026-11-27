@@ -1181,6 +1181,8 @@ Rails.application.routes.draw do
       resources :account_integrations, only: [:index, :new, :create, :show, :edit, :update, :destroy] do
         get :configure, on: :collection
       end
+      resources :auris_configs, only: [:index, :new, :create, :show, :edit, :update]
+      resources :account_auris_configs, only: [:index, :new, :create, :show, :edit, :update, :destroy]
       resources :account_statuses, only: [:index, :show, :edit, :update]
       resources :ai_providers, only: [:index, :new, :create, :show, :edit, :update]
       resources :ai_models, only: [:index, :new, :create, :show, :edit, :update]

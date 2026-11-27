@@ -40,6 +40,17 @@ end
 # "Configuração da IA": nil while the account still reads it from Supabase.
 json.ai_config @account.ai_config if @sections.include?('ai_config')
 
+# The n8n settings (see AurisConfig): each key with the value the account
+# gets, `own` when it is the account's and not the default.
+if @sections.include?('n8n_configs')
+  own_values = @account.account_auris_configs.where.not(value: nil).to_h { |value| [value.auris_config_id, value.value] }
+  json.n8n_configs AurisConfig.order(:id) do |config|
+    json.key config.config_key
+    json.value own_values.fetch(config.id, config.default_value)
+    json.own own_values.key?(config.id)
+  end
+end
+
 if @sections.include?('prompts')
   json.prompts @account.account_prompts.order(:id) do |prompt|
     json.name prompt.name
