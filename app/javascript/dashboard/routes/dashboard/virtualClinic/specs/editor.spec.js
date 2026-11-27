@@ -100,6 +100,22 @@ describe('saved layout', () => {
       piece('balcao_recepcao', 230, 124),
     ]);
   });
+
+  it('swaps the two desk pieces of an old layout for the whole L desk', () => {
+    const piece = (sprite, x, y) => ({ sprite, x, y });
+    const layout = applySaved({
+      items: [
+        piece('3_gerencia/mesa_reta.png', 996, 158),
+        piece('3_gerencia/mesa_em_l.png', 1060, 132),
+        piece('14_marketing/mesa.png', 744, 158),
+      ],
+    });
+
+    expect(layout.items).toEqual([
+      piece('3_gerencia/mesa_l_inteira.png', 996, 132),
+      piece('14_marketing/mesa_l_inteira.png', 728, 132),
+    ]);
+  });
 });
 
 describe('checkLayout', () => {

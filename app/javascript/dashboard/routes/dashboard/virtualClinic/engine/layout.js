@@ -207,9 +207,8 @@ export const ITEMS = [
   { sprite: `${M}quadro_criativos.png`, x: 868, y: 12 },
   { sprite: `${M}planta.png`, x: 916, y: 52 },
   { sprite: `${M}cadeira_executiva.png`, x: 760, y: 118 },
-  // Shaped like Helena's desk (straight piece and an L), in his gray.
-  { sprite: `${M}mesa_reta.png`, x: 728, y: 158 },
-  { sprite: `${M}mesa_em_l.png`, x: 792, y: 132 },
+  // Helena's L desk, in his gray.
+  { sprite: `${M}mesa_l_inteira.png`, x: 728, y: 132 },
   // Two monitors seen from behind, facing Luciano.
   { sprite: `${M}monitor_costas.png`, x: 758, y: 150, sortY: 197 },
   { sprite: `${M}monitor_costas.png`, x: 787, y: 150, sortY: 197 },
@@ -224,8 +223,7 @@ export const ITEMS = [
   { sprite: `${G}arquivo_2.png`, x: 1202, y: 35 },
   { sprite: `${G}planta.png`, x: 1240, y: 52 },
   { sprite: `${G}cadeira_executiva_frente.png`, x: 1028, y: 118 },
-  { sprite: `${G}mesa_reta.png`, x: 996, y: 158 },
-  { sprite: `${G}mesa_em_l.png`, x: 1060, y: 132 },
+  { sprite: `${G}mesa_l_inteira.png`, x: 996, y: 132 },
   // Two monitors seen from behind, facing Helena.
   { sprite: `${G}monitor_costas.png`, x: 1010, y: 150, sortY: 197 },
   { sprite: `${G}monitor_costas.png`, x: 1039, y: 150, sortY: 197 },
@@ -460,13 +458,24 @@ const UPGRADES = [
     [x, 492],
     [{ x, y: 484 }],
   ]),
+  // Helena's and Luciano's desks: the straight piece and the L are now one
+  // L desk, where the two were.
   [
     `${M}mesa.png`,
     [744, 158],
-    [
-      { sprite: `${M}mesa_reta.png`, x: 728, y: 158 },
-      { sprite: `${M}mesa_em_l.png`, x: 792, y: 132 },
-    ],
+    [{ sprite: `${M}mesa_l_inteira.png`, x: 728, y: 132 }],
+  ],
+  [`${M}mesa_reta.png`, [728, 158], []],
+  [
+    `${M}mesa_em_l.png`,
+    [792, 132],
+    [{ sprite: `${M}mesa_l_inteira.png`, x: 728, y: 132 }],
+  ],
+  [`${G}mesa_reta.png`, [996, 158], []],
+  [
+    `${G}mesa_em_l.png`,
+    [1060, 132],
+    [{ sprite: `${G}mesa_l_inteira.png`, x: 996, y: 132 }],
   ],
   [
     `${M}poltrona_lateral.png`,
