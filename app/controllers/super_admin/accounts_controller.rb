@@ -120,14 +120,14 @@ class SuperAdmin::AccountsController < SuperAdmin::ApplicationController
   end
 
   # Saves the "Configuração da IA" block into `settings.ai_config`. An account
-  # without it saved with every input blank stays without it, so n8n keeps
-  # reading Supabase for it.
+  # without it saved with every input blank or at its default stays without it,
+  # so n8n keeps reading Supabase for it.
   def merge_ai_config(permitted_params)
     return if params[:ai_config].blank?
 
     ai_config = params.require(:ai_config).permit(*Account::AI_CONFIG_FIELDS.keys)
     stored = params[:id] && requested_resource.ai_config
-    return if stored.nil? && ai_config.values.all?(&:blank?)
+    return if stored.nil? && Account.cast_ai_config(ai_config) == Account.cast_ai_config({})
 
     permitted_params[:ai_config] = ai_config.to_h
   end

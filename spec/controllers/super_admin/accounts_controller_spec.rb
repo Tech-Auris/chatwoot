@@ -396,6 +396,28 @@ RSpec.describe 'Super Admin accounts API', type: :request do
       )
     end
 
+    it 'never stores the audio flag as nil, defaulting it to true' do
+      account.update!(ai_config: { prompt_identity: 'Você é Lia', flag_audio_on_off: false })
+
+      put "/super_admin/accounts/#{account.id}", params: { account: { name: account.name }, ai_config: blank_ai_config }
+
+      expect(account.reload.ai_config['flag_audio_on_off']).to be(true)
+    end
+
+    it 'keeps an account without the AI setup without it when only the audio flag is at its default' do
+      put "/super_admin/accounts/#{account.id}", params: { account: { name: account.name },
+                                                           ai_config: blank_ai_config.merge('flag_audio_on_off' => 'true') }
+
+      expect(account.reload.ai_config).to be_nil
+    end
+
+    it 'selects Sim on the audio flag of an account without the AI setup' do
+      get "/super_admin/accounts/#{account.id}/edit"
+
+      expect(response.body).to match(%r{<option selected="selected" value="true">Sim</option>})
+      expect(response.body).not_to include('(vazio)')
+    end
+
     it 'renders the AI setup on the edit and show pages' do
       account.update!(ai_config: { prompt_identity: 'Você é Lia', flag_audio_on_off: false })
 
@@ -418,7 +440,7 @@ RSpec.describe 'Super Admin accounts API', type: :request do
 
       put "/super_admin/accounts/#{account.id}", params: { account: { name: account.name }, ai_config: blank_ai_config }
 
-      expect(account.reload.ai_config).to eq(Account::AI_CONFIG_FIELDS.keys.index_with { nil })
+      expect(account.reload.ai_config).to eq(Account::AI_CONFIG_FIELDS.keys.index_with { nil }.merge('flag_audio_on_off' => true))
     end
   end
 

@@ -6,15 +6,17 @@
 #   bounce_seconds                     seconds the secretary waits for more messages
 #                                      (nil takes the n8n default, 0 doesn't wait)
 #   flag_audio_on_off                  the secretary answers an audio with an audio
+#                                      (never nil, true when blank)
 #   chatwoot_id_conversa_alerta        conversation that gets the escalation alert
 #   mensagem_de_escala_para_o_usuario  message to the patient on escalation
 #   time_padrao_de_escala              team the escalated conversation goes to (a "time")
 #
 # `phone_alert` is not migrated: no flow uses it.
 #
-# Every key is always present once the object exists, blank ones as nil.
-# An account without the object (no `cliente` row) keeps whatever n8n reads
-# from Supabase. Edited in Super Admin only, and hidden from the clinic's
+# Every key is always present once the object exists, blank ones as their
+# AI_CONFIG_DEFAULTS value or nil. An account created by a sale gets the object
+# with the defaults; an account without it (no `cliente` row) keeps whatever
+# n8n reads from Supabase. Edited in Super Admin only, and hidden from the clinic's
 # change history (ActivityLog::INTERNAL_KEYS).
 module AccountAiConfig
   extend ActiveSupport::Concern
@@ -28,6 +30,8 @@ module AccountAiConfig
     'time_padrao_de_escala' => :integer
   }.freeze
 
+  AI_CONFIG_DEFAULTS = { 'flag_audio_on_off' => true }.freeze
+
   def ai_config
     settings&.dig('ai_config')
   end
@@ -39,7 +43,10 @@ module AccountAiConfig
   class_methods do
     def cast_ai_config(value)
       value = value.to_h.stringify_keys
-      AI_CONFIG_FIELDS.to_h { |key, type| [key, cast_ai_config_value(type, value[key])] }
+      AI_CONFIG_FIELDS.to_h do |key, type|
+        cast = cast_ai_config_value(type, value[key])
+        [key, cast.nil? ? AI_CONFIG_DEFAULTS[key] : cast]
+      end
     end
 
     private
