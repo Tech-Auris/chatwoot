@@ -28,40 +28,57 @@ const painter =
     context.fillRect(item.x + x, item.y + y, w, h);
   };
 
-// A 3×5 pixel font, just the characters the call screen writes.
-const FONT = {
-  0: ['###', '#.#', '#.#', '#.#', '###'],
-  1: ['.#.', '##.', '.#.', '.#.', '###'],
-  2: ['###', '..#', '###', '#..', '###'],
-  3: ['###', '..#', '.##', '..#', '###'],
-  4: ['#.#', '#.#', '###', '..#', '..#'],
-  5: ['###', '#..', '###', '..#', '###'],
-  6: ['###', '#..', '###', '#.#', '###'],
-  7: ['###', '..#', '.#.', '.#.', '.#.'],
-  8: ['###', '#.#', '###', '#.#', '###'],
-  9: ['###', '#.#', '###', '..#', '###'],
-  A: ['.#.', '#.#', '###', '#.#', '#.#'],
-  E: ['###', '#..', '##.', '#..', '###'],
-  H: ['#.#', '#.#', '###', '#.#', '#.#'],
-  L: ['#..', '#..', '#..', '#..', '###'],
-  N: ['##.', '#.#', '#.#', '#.#', '#.#'],
-  P: ['##.', '#.#', '##.', '#..', '#..'],
-  S: ['.##', '#..', '.#.', '..#', '##.'],
+// Pixel fonts with just the characters the call screen writes: a 3×5 one
+// for labels and the footer, a 5×7 one for the ticket and the room.
+const SMALL = {
+  width: 3,
+  glyphs: {
+    0: ['###', '#.#', '#.#', '#.#', '###'],
+    1: ['.#.', '##.', '.#.', '.#.', '###'],
+    2: ['###', '..#', '###', '#..', '###'],
+    3: ['###', '..#', '.##', '..#', '###'],
+    4: ['#.#', '#.#', '###', '..#', '..#'],
+    5: ['###', '#..', '###', '..#', '###'],
+    6: ['###', '#..', '###', '#.#', '###'],
+    7: ['###', '..#', '.#.', '.#.', '.#.'],
+    8: ['###', '#.#', '###', '#.#', '###'],
+    9: ['###', '#.#', '###', '..#', '###'],
+    A: ['.#.', '#.#', '###', '#.#', '#.#'],
+    E: ['###', '#..', '##.', '#..', '###'],
+    H: ['#.#', '#.#', '###', '#.#', '#.#'],
+    L: ['#..', '#..', '#..', '#..', '###'],
+    N: ['##.', '#.#', '#.#', '#.#', '#.#'],
+    P: ['##.', '#.#', '##.', '#..', '#..'],
+    S: ['.##', '#..', '.#.', '..#', '##.'],
+  },
+};
+const BIG = {
+  width: 5,
+  glyphs: {
+    0: ['.###.', '#...#', '#...#', '#...#', '#...#', '#...#', '.###.'],
+    1: ['..#..', '.##..', '..#..', '..#..', '..#..', '..#..', '.###.'],
+    2: ['.###.', '#...#', '....#', '...#.', '..#..', '.#...', '#####'],
+    3: ['####.', '....#', '....#', '.###.', '....#', '....#', '####.'],
+    4: ['...#.', '..##.', '.#.#.', '#..#.', '#####', '...#.', '...#.'],
+    5: ['#####', '#....', '####.', '....#', '....#', '#...#', '.###.'],
+    6: ['..##.', '.#...', '#....', '####.', '#...#', '#...#', '.###.'],
+    7: ['#####', '....#', '...#.', '..#..', '.#...', '.#...', '.#...'],
+    8: ['.###.', '#...#', '#...#', '.###.', '#...#', '#...#', '.###.'],
+    9: ['.###.', '#...#', '#...#', '.####', '....#', '...#.', '.##..'],
+    A: ['.###.', '#...#', '#...#', '#####', '#...#', '#...#', '#...#'],
+    P: ['####.', '#...#', '#...#', '####.', '#....', '#....', '#....'],
+  },
 };
 
-// Width in pixels of `text` written `size` times bigger.
-export const textWidth = (text, size = 1) =>
-  text.length ? (text.length * 4 - 1) * size : 0;
+// Width in pixels of `text` in `font`.
+export const textWidth = (text, font = SMALL) =>
+  text.length ? text.length * (font.width + 1) - 1 : 0;
 
-function write(paint, text, x, y, color, size = 1) {
+function write(paint, text, x, y, color, font = SMALL) {
   [...text].forEach((char, i) => {
-    const glyph = FONT[char];
-    if (!glyph) return;
-    glyph.forEach((row, gy) =>
+    font.glyphs[char]?.forEach((row, gy) =>
       [...row].forEach((dot, gx) => {
-        if (dot === '#') {
-          paint(color, x + (i * 4 + gx) * size, y + gy * size, size, size);
-        }
+        if (dot === '#') paint(color, x + i * (font.width + 1) + gx, y + gy);
       })
     );
   });
@@ -84,63 +101,82 @@ function drawBars(paint, sx, sy, t) {
   paint(YELLOW, sx + 25, sy + 18 - h, 3, h);
 }
 
-// Two cards and two lines being typed, with a blinking cursor.
-function drawCards(paint, sx, sy, t) {
-  paint(WHITE, sx + 4, sy + 5, 9, 5);
-  paint(MINT, sx + 15, sy + 5, 9, 5);
-  // A tiny trend inside the white card.
-  [0, 1, 2, 3, 4, 5, 6].forEach(i => {
-    const y = 8 - Math.round(1.5 + 1.5 * Math.sin(t / 4 + i));
-    paint(SCREEN, sx + 5 + i, sy + y);
+// The same, lying down: bars growing to the right from an axis.
+function drawBarsAcross(paint, sx, sy, t) {
+  paint(SKY, sx + 4, sy + 5, 1, 13);
+  [6, 9, 12].forEach((y, i) => {
+    const w = 12 + Math.round(6 * Math.sin(t / 7 + i * 1.7));
+    paint(SKY, sx + 5, sy + y, w, 2);
   });
-  const step = t % 56;
-  const first = Math.min(23, step);
-  const second = Math.max(0, Math.min(19, step - 24));
-  paint(SKY, sx + 4, sy + 13, first, 1);
-  paint(SKY, sx + 4, sy + 16, second, 1);
-  if (Math.floor(t / 4) % 2 === 0) {
-    const typing = step < 24;
-    paint(
-      WHITE,
-      sx + 4 + (typing ? first : second),
-      sy + (typing ? 12 : 15),
-      1,
-      3
-    );
-  }
+  const w = 3 + (Math.floor(t / 3) % 20);
+  paint(YELLOW, sx + 5, sy + 15, w, 2);
 }
 
-// A lead falling through the funnel; each stage lights up as it goes by.
+// Funnels and the pie stand still: they show where the leads end up.
 const STAGES = [
   { x: 5, y: 5, w: 22, color: MINT },
   { x: 8, y: 8, w: 16, color: SKY },
   { x: 11, y: 11, w: 10, color: YELLOW },
   { x: 14, y: 14, w: 4, color: RED },
 ];
-function drawFunnel(paint, sx, sy, t) {
-  const fall = t % 26;
-  const y = 3 + Math.floor(fall / 2);
-  STAGES.forEach(stage => {
-    const passing = y === stage.y || y === stage.y + 1;
-    paint(
-      passing ? WHITE : stage.color,
-      sx + stage.x,
-      sy + stage.y,
-      stage.w,
-      2
-    );
-  });
-  if (y > 4 && y < 19) paint(WHITE, sx + 15, sy + y, 2, 1);
+function drawFunnel(paint, sx, sy) {
+  STAGES.forEach(stage =>
+    paint(stage.color, sx + stage.x, sy + stage.y, stage.w, 2)
+  );
 }
 
-const SCREENS = [drawBars, drawCards, drawFunnel];
+// The funnel lying down: stages narrowing from left to right.
+const COLUMN_STAGES = [
+  { x: 4, y: 6, h: 12, color: MINT },
+  { x: 10, y: 8, h: 8, color: SKY },
+  { x: 16, y: 10, h: 4, color: YELLOW },
+  { x: 22, y: 11, h: 2, color: RED },
+];
+function drawFunnelAcross(paint, sx, sy) {
+  COLUMN_STAGES.forEach(stage =>
+    paint(stage.color, sx + stage.x, sy + stage.y, 5, stage.h)
+  );
+}
+
+// A pie (45% / 30% / 15% / 10%, clockwise from the top) and its legend.
+const SLICES = [
+  { until: 0.45, color: MINT },
+  { until: 0.75, color: SKY },
+  { until: 0.9, color: YELLOW },
+  { until: 1, color: RED },
+];
+const PIE = { x: 10, y: 11, radius: 6 };
+export function pieColor(dx, dy) {
+  if (dx * dx + dy * dy > PIE.radius * (PIE.radius + 0.8)) return null;
+  const turn = (Math.atan2(dx, -dy) / (2 * Math.PI) + 1) % 1;
+  return SLICES.find(slice => turn < slice.until).color;
+}
+function drawPie(paint, sx, sy) {
+  for (let dy = -PIE.radius; dy <= PIE.radius; dy += 1) {
+    for (let dx = -PIE.radius; dx <= PIE.radius; dx += 1) {
+      const color = pieColor(dx, dy);
+      if (color) paint(color, sx + PIE.x + dx, sy + PIE.y + dy);
+    }
+  }
+  SLICES.slice(0, 3).forEach(({ color }, i) => {
+    paint(color, sx + 20, sy + 7 + i * 3, 2, 2);
+    paint(WHITE, sx + 23, sy + 7 + i * 3, 4, 1);
+  });
+}
+
+// Top row: bars lying down, bars standing up, the funnel; bottom row: the
+// funnel lying down, the pie, bars lying down again.
+const SCREENS = [
+  [drawBarsAcross, drawBars, drawFunnel],
+  [drawFunnelAcross, drawPie, drawBarsAcross],
+];
 
 function drawMonitors(paint, { tick }) {
   ROWS.forEach((sy, row) =>
     COLUMNS.forEach((sx, column) => {
       paint(SCREEN, sx + AREA.x, sy + AREA.y, AREA.w, AREA.h);
       // The bottom row runs out of step with the top one.
-      SCREENS[column](paint, sx, sy, tick + row * 13);
+      SCREENS[row][column](paint, sx, sy, tick + row * 13);
     })
   );
 }
@@ -241,6 +277,7 @@ const blinking = now => {
   return since < 1500 && Math.floor(since / 250) % 2 === 0;
 };
 
+// The screen (inside the frame) spans x 2–53 and y 2–32 of the sprite.
 function drawCallScreen(paint, { now }) {
   const [call, ...before] = callsAt(now, 3);
   const blink = blinking(now);
@@ -248,15 +285,23 @@ function drawCallScreen(paint, { now }) {
   paint(TEAL, 2, 2, 52, 5);
   write(paint, 'SENHA', 4, 2, WHITE);
   write(paint, 'SALA', 51 - textWidth('SALA'), 2, WHITE);
-  // The ticket and the room, big.
-  paint(blink ? TEAL : PALE, 2, 7, 52, 13);
-  write(paint, call.ticket, 4, 9, blink ? WHITE : INK, 2);
+  // The ticket and the room.
+  paint(blink ? TEAL : PALE, 2, 7, 52, 15);
+  write(paint, call.ticket, 4, 11, blink ? WHITE : INK, BIG);
   const room = String(call.room);
-  write(paint, room, 51 - textWidth(room, 2), 9, blink ? WHITE : DARK_TEAL, 2);
-  // The two tickets called before.
-  paint(PALE, 2, 20, 52, 5);
+  write(
+    paint,
+    room,
+    52 - textWidth(room, BIG),
+    11,
+    blink ? WHITE : DARK_TEAL,
+    BIG
+  );
+  // Footer, under a line: the two tickets called before.
+  paint(TEAL, 2, 22, 52, 1);
+  paint(PALE, 2, 23, 52, 10);
   before.forEach((previous, i) => {
-    write(paint, `${previous.ticket} ${previous.room}`, 4 + i * 26, 20, GRAY);
+    write(paint, `${previous.ticket} ${previous.room}`, 4 + i * 26, 25, GRAY);
   });
 }
 

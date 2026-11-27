@@ -9,6 +9,7 @@ import {
   drawLive,
   handEnd,
   linePixels,
+  pieColor,
   textWidth,
 } from '../engine/livePieces';
 import {
@@ -84,7 +85,7 @@ describe('sala de espera call screen', () => {
   });
 
   it('writes the ticket on the TV screen', () => {
-    expect(textWidth('A012', 2)).toBe(30);
+    expect(textWidth('SALA')).toBe(15);
     const context = fakeContext();
     drawLive(context, { sprite: CALL_SCREEN, x: 0, y: 0 }, { now: 3000 });
     const painted = Object.keys(context.pixels).map(key =>
@@ -94,7 +95,7 @@ describe('sala de espera call screen', () => {
       expect(x).toBeGreaterThanOrEqual(2);
       expect(x).toBeLessThanOrEqual(53);
       expect(y).toBeGreaterThanOrEqual(2);
-      expect(y).toBeLessThanOrEqual(24);
+      expect(y).toBeLessThanOrEqual(32);
     });
   });
 
@@ -106,17 +107,49 @@ describe('sala de espera call screen', () => {
 });
 
 describe('marketing monitor wall', () => {
-  it('moves the screens and keeps the frame', () => {
-    const at = tick => {
-      const context = fakeContext();
-      drawLive(
-        context,
-        { sprite: '14_marketing/painel_monitores.png', x: 0, y: 0 },
-        { tick }
-      );
-      return context.pixels;
-    };
-    expect(at(0)).not.toEqual(at(5));
+  const at = tick => {
+    const context = fakeContext();
+    drawLive(
+      context,
+      { sprite: '14_marketing/painel_monitores.png', x: 0, y: 0 },
+      { tick }
+    );
+    return context.pixels;
+  };
+  // The pixels of one screen (column, row) of the wall.
+  const screen = (pixels, column, row) =>
+    Object.fromEntries(
+      Object.entries(pixels).filter(([key]) => {
+        const [x, y] = key.split(',').map(Number);
+        return Math.floor(x / 34) === column && Math.floor(y / 23) === row;
+      })
+    );
+
+  it('moves the bars and keeps the funnels and the pie still', () => {
+    [
+      [0, 0],
+      [1, 0],
+      [2, 1],
+    ].forEach(([column, row]) =>
+      expect(screen(at(0), column, row)).not.toEqual(screen(at(5), column, row))
+    );
+    [
+      [2, 0],
+      [0, 1],
+      [1, 1],
+    ].forEach(([column, row]) =>
+      expect(screen(at(0), column, row)).toEqual(screen(at(5), column, row))
+    );
+  });
+
+  it('cuts the pie into its slices, clockwise from the top', () => {
+    expect(pieColor(1, -4)).toBe('#8fd6cd');
+    expect(pieColor(-4, 1)).toBe('#b9d4ff');
+    expect(pieColor(-2, -5)).toBe('#e5566a');
+    expect(pieColor(6, 6)).toBeNull();
+  });
+
+  it('keeps the frame', () => {
     Object.keys(at(0)).forEach(key => {
       const [x, y] = key.split(',').map(Number);
       expect(x % 34).toBeGreaterThanOrEqual(2);
