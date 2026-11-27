@@ -13,8 +13,7 @@ class SecretarySpecialScenarios::FlagImport
 
   def perform
     CSV.read(@csv_path, headers: true).filter_map do |line|
-      cliente_id = line['id'].to_i
-      account_id = SecretarySpecialScenarios::SupabaseImport::INTERNAL_ACCOUNTS.fetch(cliente_id, cliente_id)
+      account_id = line['id'].to_i
       value = ActiveModel::Type::Boolean.new.cast(line['allow_dynamic_special_scenario']) || false
       sync(account_id, value)
     end

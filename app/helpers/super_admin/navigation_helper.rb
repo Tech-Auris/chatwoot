@@ -18,7 +18,7 @@ module SuperAdmin::NavigationHelper
   def ai_open?
     params[:controller].in? %w[super_admin/secretary_versions super_admin/secretary_special_scenarios super_admin/secretary_resources
                                super_admin/secretary_confirmations super_admin/secretary_prompts super_admin/account_prompts
-                               super_admin/ai_providers super_admin/ai_models]
+                               super_admin/auris_configs super_admin/account_auris_configs super_admin/ai_providers super_admin/ai_models]
   end
 
   def ai_pages
@@ -29,6 +29,7 @@ module SuperAdmin::NavigationHelper
       { label: 'Confirmations', url: super_admin_secretary_confirmations_url },
       { label: 'Base Prompt', url: super_admin_secretary_prompts_url },
       { label: 'Prompts', url: super_admin_account_prompts_url },
+      { label: 'n8n Configs', url: super_admin_auris_configs_url },
       { label: 'Providers', url: super_admin_ai_providers_url },
       { label: 'LLMs', url: super_admin_ai_models_url }
     ]

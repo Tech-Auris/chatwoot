@@ -18,8 +18,6 @@
 # missing in Rails and the Rails prompts not in the CSVs: a run after the import
 # with no differences is the Supabase × Rails check.
 class AccountPrompts::SupabaseImport
-  INTERNAL_ACCOUNTS = SecretarySpecialScenarios::SupabaseImport::INTERNAL_ACCOUNTS
-
   Result = Struct.new(:account_id, :account, :expected_count, :conflicts, :missing, :extra, :error, keyword_init: true)
 
   def initialize(cliente_csv_path:, inbox_csv_path:, apply: false)
@@ -48,21 +46,17 @@ class AccountPrompts::SupabaseImport
     CSV.read(@cliente_csv_path, headers: true).each_with_object({}) do |line, prompts|
       next if line['ai_prompt_system_message'].blank?
 
-      prompts[account_id(line['id'])] = line['ai_prompt_system_message']
+      prompts[line['id'].to_i] = line['ai_prompt_system_message']
     end
   end
 
   def inbox_prompts
-    CSV.read(@inbox_csv_path, headers: true).group_by { |line| account_id(line['cliente_id']) }.transform_values do |lines|
+    CSV.read(@inbox_csv_path, headers: true).group_by { |line| line['cliente_id'].to_i }.transform_values do |lines|
       lines.map do |line|
         # Postgres array text ({1,2}) or JSON ([1, 2]), depending on the export.
         { 'ai_prompt_system_message' => line['ai_prompt_system_message'], 'inbox_ids' => line['inbox_id_arr'].to_s.scan(/\d+/).map(&:to_i).uniq.sort }
       end
     end
-  end
-
-  def account_id(cliente_id)
-    INTERNAL_ACCOUNTS.fetch(cliente_id.to_i, cliente_id.to_i)
   end
 
   # Returns [valid rows, conflict descriptions]; the first row to claim an inbox keeps it.

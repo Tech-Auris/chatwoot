@@ -16,8 +16,6 @@
 # Supabase × Rails check. The CSVs hold credentials: run on the server and
 # delete them afterwards.
 class AccountIntegrations::SupabaseImport
-  INTERNAL_ACCOUNTS = SecretarySpecialScenarios::SupabaseImport::INTERNAL_ACCOUNTS
-
   TABLES = {
     'googlecalendar' => 1, 'feegow' => 2, 'clinicaagil' => 3, 'saudeagora' => 4, 'medware' => 5, 'clinicorp' => 6,
     'visualasa' => 7, 'medx' => 8, 'amplimed' => 10, 'amigo' => 11, 'gester' => 12, 'klingo' => 13,
@@ -45,7 +43,7 @@ class AccountIntegrations::SupabaseImport
   private
 
   def import(table, erp_source_id, line)
-    account_id = INTERNAL_ACCOUNTS.fetch(line['cliente_id'].to_i, line['cliente_id'].to_i)
+    account_id = line['cliente_id'].to_i
     account = Account.find_by(id: account_id)
     result = Result.new(table: table, account_id: account_id, account: account)
     return result.tap { |row| row.error = 'conta não encontrada' } if account.nil?

@@ -9,7 +9,6 @@
 # that differ in Rails: a run after the import with no differences is the
 # Supabase × Rails check.
 class Accounts::ClienteImport
-  INTERNAL_ACCOUNTS = SecretarySpecialScenarios::SupabaseImport::INTERNAL_ACCOUNTS
   IDENTITY_COLUMNS = %w[name_owner phone_contact email_contact].freeze
 
   Result = Struct.new(:account_id, :account, :differences, :error, keyword_init: true)
@@ -23,10 +22,7 @@ class Accounts::ClienteImport
     csv = CSV.read(@csv_path, headers: true)
     @identity_columns = IDENTITY_COLUMNS & csv.headers
     @ai_config_keys = Account::AI_CONFIG_FIELDS.keys & csv.headers
-    csv.map do |line|
-      cliente_id = line['id'].to_i
-      import(INTERNAL_ACCOUNTS.fetch(cliente_id, cliente_id), line.to_h)
-    end
+    csv.map { |line| import(line['id'].to_i, line.to_h) }
   end
 
   private

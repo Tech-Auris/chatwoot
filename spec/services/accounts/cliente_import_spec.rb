@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe Accounts::ClienteImport do
   let(:account) { create(:account, name: 'Clínica no AurisChat') }
-  let!(:internal_account) { Account.find_by(id: 66) || create(:account, id: 66) }
+  let!(:internal_account) { Account.find_by(id: 151) || create(:account, id: 151) }
   let(:csv_path) { Rails.root.join('tmp', "cliente_import_#{SecureRandom.hex(4)}.csv") }
 
   def write_csv(headers, *rows)
@@ -24,7 +24,7 @@ RSpec.describe Accounts::ClienteImport do
                 [999_999, 'Você é Iris', '40', 'true', nil, nil, nil, '11', nil, nil])
     end
 
-    it 'imports them with their types, blank cells as nil, mapping the internal clients' do
+    it 'imports them with their types, blank cells as nil, with the cliente id as the account id' do
       results = described_class.new(csv_path: csv_path, apply: true).perform
 
       expect(account.reload.ai_config).to eq(
@@ -34,7 +34,7 @@ RSpec.describe Accounts::ClienteImport do
       )
       expect(internal_account.reload.ai_config).to include('prompt_identity' => nil, 'flag_audio_on_off' => false)
       expect(results.map { |result| [result.account_id, result.differences, result.error] })
-        .to eq([[account.id, [], nil], [66, [], nil], [999_999, nil, 'conta não encontrada']])
+        .to eq([[account.id, [], nil], [151, [], nil], [999_999, nil, 'conta não encontrada']])
     end
 
     it 'only compares on a dry run, reporting the columns that differ' do

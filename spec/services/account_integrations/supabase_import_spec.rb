@@ -59,8 +59,8 @@ RSpec.describe AccountIntegrations::SupabaseImport do
     expect(account.account_integrations.sole.config['app-token']).to eq('novo')
   end
 
-  it 'maps the internal clientes 150 and 151 to accounts 19 and 66' do
-    internal = Account.find_by(id: 19) || create(:account, id: 19)
+  it 'uses the cliente id as the account id, cliente 150 included' do
+    internal = Account.find_by(id: 150) || create(:account, id: 150)
     write_csv('klingo', 'cliente_id,app-token,link', '150,k,l')
 
     import
