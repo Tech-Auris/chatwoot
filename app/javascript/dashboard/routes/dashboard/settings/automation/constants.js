@@ -947,6 +947,11 @@ AUTOMATIONS.funnel_updated = {
   actions: AUTOMATIONS.conversation_updated.actions,
 };
 
+// An edit asks the same question about the same message as a creation, so the trigger offers the same
+// conditions and actions. A copy, not the same object: the custom attributes reach it through
+// `CUSTOM_ATTRIBUTE_EVENTS`.
+AUTOMATIONS.message_edited = structuredClone(AUTOMATIONS.message_created);
+
 export const AUTOMATION_RULE_EVENTS = [
   {
     key: 'conversation_created',
@@ -963,6 +968,10 @@ export const AUTOMATION_RULE_EVENTS = [
   {
     key: 'message_created',
     value: 'MESSAGE_CREATED',
+  },
+  {
+    key: 'message_edited',
+    value: 'MESSAGE_EDITED',
   },
   {
     key: 'conversation_opened',

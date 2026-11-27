@@ -24,6 +24,18 @@ class AutomationRuleListener < BaseListener
   end
 
   def message_created(event)
+    process_message_event(event, 'message_created')
+  end
+
+  # Only rules whose trigger is "Message Edited" answer an edit: re-running message_created rules would
+  # have an auto-reply answering a typo correction.
+  def message_edited(event)
+    process_message_event(event, 'message_edited')
+  end
+
+  private
+
+  def process_message_event(event, event_name)
     message = event.data[:message]
 
     return if ignore_message_created_event?(event)
@@ -31,9 +43,9 @@ class AutomationRuleListener < BaseListener
     account = message.try(:account)
     changed_attributes = event.data[:changed_attributes]
 
-    return unless rule_present?('message_created', account)
+    return unless rule_present?(event_name, account)
 
-    rules = current_account_rules('message_created', account)
+    rules = current_account_rules(event_name, account)
 
     rules.each do |rule|
       conditions_match = ::AutomationRules::ConditionsFilterService.new(rule, message.conversation,
@@ -41,8 +53,6 @@ class AutomationRuleListener < BaseListener
       execute_rule(rule, account, message.conversation, message: message) if conditions_match.present?
     end
   end
-
-  private
 
   def process_conversation_event(event, event_name)
     return if performed_by_automation?(event)

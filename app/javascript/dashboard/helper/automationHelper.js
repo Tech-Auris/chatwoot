@@ -6,6 +6,7 @@ import {
 } from 'dashboard/routes/dashboard/settings/automation/operators';
 import {
   DEFAULT_MESSAGE_CREATED_CONDITION,
+  MESSAGE_LEVEL_EVENTS,
   DEFAULT_CONVERSATION_CONDITION,
   DEFAULT_OTHER_CONDITION,
   DEFAULT_ACTIONS,
@@ -227,7 +228,7 @@ export const getFileName = (action, files = []) => {
 };
 
 export const getDefaultConditions = eventName => {
-  if (eventName === 'message_created') {
+  if (MESSAGE_LEVEL_EVENTS.includes(eventName)) {
     return structuredClone(DEFAULT_MESSAGE_CREATED_CONDITION);
   }
   if (

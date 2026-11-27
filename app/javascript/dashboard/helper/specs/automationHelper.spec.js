@@ -291,6 +291,9 @@ describe('getDefaultConditions', () => {
     expect(helpers.getDefaultConditions('message_created')).toEqual(
       messageCreatedModel
     );
+    expect(helpers.getDefaultConditions('message_edited')).toEqual(
+      messageCreatedModel
+    );
     expect(helpers.getDefaultConditions()).toEqual(genericConditionModel);
   });
 });

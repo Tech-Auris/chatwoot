@@ -300,6 +300,53 @@ RSpec.describe Message do
     end
   end
 
+  describe 'message edited event' do
+    let!(:message) { create(:message, content: 'quero preço') }
+
+    before { allow(Rails.configuration.dispatcher).to receive(:dispatch) }
+
+    def edited_dispatches
+      have_received(:dispatch).with(Events::Types::MESSAGE_EDITED, anything, hash_including(message: message))
+    end
+
+    it 'announces an edit when the body changes on a row marked as edited' do
+      message.update!(content: 'quero orçamento', is_edited: true, previous_content: 'quero preço')
+
+      expect(Rails.configuration.dispatcher).to edited_dispatches.once
+    end
+
+    it 'does not announce an update that leaves the body alone' do
+      message.update!(is_edited: true, previous_content: 'quero preço')
+      message.update!(status: :read)
+
+      expect(Rails.configuration.dispatcher).not_to edited_dispatches
+    end
+
+    it 'does not announce a body change without the edit marker' do
+      message.update!(content: 'quero orçamento')
+
+      expect(Rails.configuration.dispatcher).not_to edited_dispatches
+    end
+
+    it 'does not announce a redelivered edit that writes the same body' do
+      message.update!(content: 'quero orçamento', is_edited: true, previous_content: 'quero preço')
+      message.update!(content: 'quero orçamento', is_edited: true, previous_content: 'quero preço')
+
+      expect(Rails.configuration.dispatcher).to edited_dispatches.once
+    end
+
+    it 'waits for #announce_edit when the announcement is deferred' do
+      message.defer_edit_announcement = true
+      message.update!(content: 'quero orçamento', is_edited: true, previous_content: 'quero preço')
+
+      expect(Rails.configuration.dispatcher).not_to edited_dispatches
+
+      message.announce_edit
+
+      expect(Rails.configuration.dispatcher).to edited_dispatches.once
+    end
+  end
+
   describe '#reopen_conversation' do
     let(:conversation) { create(:conversation) }
     let(:message) { build(:message, message_type: :incoming, conversation: conversation) }

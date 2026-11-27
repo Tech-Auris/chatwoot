@@ -3,6 +3,7 @@ import { useStoreGetters, useMapGetter } from 'dashboard/composables/store';
 import { useAlert } from 'dashboard/composables';
 import { useI18n } from 'vue-i18n';
 import * as automationHelper from 'dashboard/helper/automationHelper';
+import { CUSTOM_ATTRIBUTE_EVENTS } from 'dashboard/constants/automation';
 import {
   customAttributes,
   agents,
@@ -220,17 +221,32 @@ describe('useAutomation', () => {
     ]);
   });
 
-  it('manifests custom attributes correctly', () => {
+  it('appends the account custom attributes to the triggers that offer them, and to no others', () => {
     const { manifestCustomAttributes, automationTypes } = useAutomation();
-    automationTypes.message_created = { conditions: [] };
-    automationTypes.conversation_created = { conditions: [] };
-    automationTypes.conversation_updated = { conditions: [] };
-    automationTypes.conversation_opened = { conditions: [] };
-    automationTypes.conversation_resolved = { conditions: [] };
-    automationTypes.funnel_updated = { conditions: [] };
 
+    const standard = { key: 'message_type', name: 'Message Type' };
+    const stale = {
+      key: 'stale_attribute',
+      name: 'Stale',
+      customAttributeType: 'conversation_attribute',
+    };
+    Object.keys(automationTypes).forEach(key => {
+      automationTypes[key] = { conditions: [standard, stale] };
+    });
+
+    const manifested = [
+      {
+        key: 'conversation_custom_attribute',
+        name: 'Conversation Custom Attributes',
+      },
+      {
+        key: 'fresh_attribute',
+        name: 'Fresh',
+        customAttributeType: 'conversation_attribute',
+      },
+    ];
     automationHelper.generateCustomAttributeTypes.mockReturnValue([]);
-    automationHelper.generateCustomAttributes.mockReturnValue([]);
+    automationHelper.generateCustomAttributes.mockReturnValue(manifested);
 
     manifestCustomAttributes();
 
@@ -238,9 +254,35 @@ describe('useAutomation', () => {
       2
     );
     expect(automationHelper.generateCustomAttributes).toHaveBeenCalledTimes(1);
-    Object.values(automationTypes).forEach(type => {
-      expect(type.conditions).toHaveLength(0);
+
+    Object.keys(automationTypes).forEach(key => {
+      const expected = CUSTOM_ATTRIBUTE_EVENTS.includes(key)
+        ? [standard, ...manifested]
+        : [standard, stale];
+
+      expect(automationTypes[key].conditions, key).toEqual(expected);
     });
+
+    // Named on its own terms: the loop above would keep agreeing with a list the edit trigger was dropped from.
+    expect(automationTypes.message_created.conditions).toEqual([
+      standard,
+      ...manifested,
+    ]);
+    expect(automationTypes.message_edited.conditions).toEqual([
+      standard,
+      ...manifested,
+    ]);
+  });
+
+  it('offers the edit trigger the same conditions as the creation trigger, without sharing an object', () => {
+    const { automationTypes } = useAutomation();
+
+    expect(automationTypes.message_edited).toEqual(
+      automationTypes.message_created
+    );
+    expect(automationTypes.message_edited).not.toBe(
+      automationTypes.message_created
+    );
   });
 
   it('gets condition dropdown values correctly', () => {
