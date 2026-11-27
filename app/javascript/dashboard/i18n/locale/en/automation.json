@@ -182,6 +182,11 @@
       "INCOMING": "Incoming Message",
       "OUTGOING": "Outgoing Message"
     },
+    "SENDER_TYPES": {
+      "CONTACT": "Contact",
+      "USER": "Agent",
+      "AGENT_BOT": "Bot"
+    },
     "PRIORITY_TYPES": {
       "NONE": "None",
       "LOW": "Low",
@@ -192,6 +197,8 @@
     "ATTRIBUTES": {
       "MESSAGE_TYPE": "Message Type",
       "PRIVATE_NOTE": "Private Note",
+      "SENDER": "Sender",
+      "SENDER_TYPE": "Sender Type",
       "MESSAGE_CONTAINS": "Message Contains",
       "EMAIL": "Email",
       "INBOX": "Inbox",

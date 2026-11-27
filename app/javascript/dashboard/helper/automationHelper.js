@@ -153,6 +153,7 @@ export const getConditionOptions = ({
   type,
   priorityOptions,
   messageTypeOptions,
+  senderTypeOptions,
   origemOptions,
 }) => {
   if (isCustomAttributeCheckbox(customAttributes, type)) {
@@ -175,6 +176,9 @@ export const getConditionOptions = ({
     country_code: countries,
     message_type: messageTypeOptions,
     private_note: booleanFilterOptions,
+    // The AI user ("IA | Auris") is an agent too, so "Sender is not IA" tells a human reply apart.
+    sender_id: agents,
+    sender_type: senderTypeOptions,
     priority: priorityOptions,
     group_type: [
       { id: 'individual', name: 'Individual' },

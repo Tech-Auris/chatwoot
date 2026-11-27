@@ -182,6 +182,11 @@
       "INCOMING": "Mensagem Recebida",
       "OUTGOING": "Mensagem de Saída"
     },
+    "SENDER_TYPES": {
+      "CONTACT": "Contato",
+      "USER": "Atendente",
+      "AGENT_BOT": "Bot"
+    },
     "PRIORITY_TYPES": {
       "NONE": "Nenhuma",
       "LOW": "Baixa",
@@ -192,6 +197,8 @@
     "ATTRIBUTES": {
       "MESSAGE_TYPE": "Tipo da Mensagem",
       "PRIVATE_NOTE": "Mensagem Privada",
+      "SENDER": "Remetente",
+      "SENDER_TYPE": "Tipo de remetente",
       "MESSAGE_CONTAINS": "A mensagem contém",
       "EMAIL": "E-mail",
       "INBOX": "Caixa de Entrada",
