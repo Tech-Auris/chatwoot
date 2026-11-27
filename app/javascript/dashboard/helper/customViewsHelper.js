@@ -138,6 +138,9 @@ export const generateValuesForEditCustomViews = (filter, params) => {
   const inputType = getInputType(lookupKey, filter_operator, filterTypes);
   if (inputType === 'funnelStage') return { id: Number(values[0]) };
 
+  // Presence operators have no input, so a saved folder holds no value to map back.
+  if (['is_present', 'is_not_present'].includes(filter_operator)) return [];
+
   if (inputType === undefined) {
     const filterInputTypes = getAttributeInputType(
       attribute_key,
