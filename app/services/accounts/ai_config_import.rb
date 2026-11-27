@@ -8,8 +8,6 @@
 # that differ in Rails: a run after the import with no differences is the
 # Supabase × Rails check.
 class Accounts::AiConfigImport
-  INTERNAL_ACCOUNTS = SecretarySpecialScenarios::SupabaseImport::INTERNAL_ACCOUNTS
-
   Result = Struct.new(:account_id, :account, :differences, :error, keyword_init: true)
 
   def initialize(csv_path:, apply: false)
@@ -19,8 +17,7 @@ class Accounts::AiConfigImport
 
   def perform
     CSV.read(@csv_path, headers: true).map do |line|
-      cliente_id = line['id'].to_i
-      import(INTERNAL_ACCOUNTS.fetch(cliente_id, cliente_id), Account.cast_ai_config(line.to_h))
+      import(line['id'].to_i, Account.cast_ai_config(line.to_h))
     end
   end
 

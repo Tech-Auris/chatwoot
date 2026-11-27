@@ -8,8 +8,6 @@
 # missing in Rails and the Rails rows not in the CSV: a run after the import
 # with no differences is the Supabase × Rails check.
 class SecretarySpecialScenarios::SupabaseImport
-  # The internal clients whose cliente.id differs from their account id.
-  INTERNAL_ACCOUNTS = { 150 => 19, 151 => 66 }.freeze
   COMPARED = %w[name situacao gatilho instrucao].freeze
 
   Result = Struct.new(:account_id, :account, :csv_count, :missing, :extra, :error, keyword_init: true)
@@ -36,9 +34,8 @@ class SecretarySpecialScenarios::SupabaseImport
   end
 
   def attributes_from(line)
-    cliente_id = line['cliente_id'].to_i
     {
-      'account_id' => INTERNAL_ACCOUNTS.fetch(cliente_id, cliente_id),
+      'account_id' => line['cliente_id'].to_i,
       'name' => line['name'],
       'situacao' => line['situacao'].presence,
       'gatilho' => line['gatilho'].presence,
