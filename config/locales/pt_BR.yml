@@ -69,6 +69,9 @@ pt_BR:
         erp_source: 'ERP'
         erp_source_id: 'ERP'
         ai_config: 'Configuração da IA'
+        name_owner: 'Responsável'
+        phone_contact: 'Telefone de contato'
+        email_contact: 'E-mail de contato'
   internal_chat:
     default_category_name: 'Canais'
     default_channel_name: 'Geral'

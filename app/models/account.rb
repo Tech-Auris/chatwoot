@@ -10,6 +10,7 @@
 #  campaigns_sms_menu_enabled       :boolean          default(FALSE), not null
 #  custom_attributes                :jsonb
 #  domain                           :string(100)
+#  email_contact                    :string
 #  environment                      :integer          default("test"), not null
 #  erp_menu_enabled                 :boolean          default(FALSE), not null
 #  feature_flags                    :bigint           default(0), not null
@@ -23,6 +24,8 @@
 #  mcp_enabled_at                   :datetime
 #  multi_language_ai                :boolean          default(FALSE), not null
 #  name                             :string           not null
+#  name_owner                       :string
+#  phone_contact                    :string
 #  settings                         :jsonb
 #  settings_macros_menu_enabled     :boolean          default(FALSE), not null
 #  status                           :integer          default("active")

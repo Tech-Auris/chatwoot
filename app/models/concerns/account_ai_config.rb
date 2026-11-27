@@ -9,6 +9,9 @@
 #   chatwoot_id_conversa_alerta        conversation that gets the escalation alert
 #   mensagem_de_escala_para_o_usuario  message to the patient on escalation
 #   time_padrao_de_escala              team the escalated conversation goes to (a "time")
+#   calendar_instructions              how the secretary handles the clinic's calendar
+#   mensagens_fixas                    list of texts: a conversation whose first message
+#                                      contains one of them is left to the team
 #
 # `phone_alert` is not migrated: no flow uses it.
 #
@@ -25,7 +28,9 @@ module AccountAiConfig
     'flag_audio_on_off' => :boolean,
     'chatwoot_id_conversa_alerta' => :integer,
     'mensagem_de_escala_para_o_usuario' => :text,
-    'time_padrao_de_escala' => :integer
+    'time_padrao_de_escala' => :integer,
+    'calendar_instructions' => :text,
+    'mensagens_fixas' => :list
   }.freeze
 
   def ai_config
@@ -45,6 +50,7 @@ module AccountAiConfig
     private
 
     def cast_ai_config_value(type, value)
+      return cast_ai_config_list(value) if type == :list
       return if value.is_a?(String) && value.blank?
 
       case type
@@ -52,6 +58,14 @@ module AccountAiConfig
       when :boolean then ActiveModel::Type::Boolean.new.cast(value)
       else value
       end
+    end
+
+    # An array, or the text of one from a CSV export: JSON (`["a","b"]`) or a
+    # Postgres array (`{"a","b"}`). Blank items are dropped; nil when empty.
+    def cast_ai_config_list(value)
+      value = JSON.parse(value) if value.is_a?(String) && value.start_with?('[')
+      value = PG::TextDecoder::Array.new.decode(value) if value.is_a?(String) && value.start_with?('{')
+      Array.wrap(value).compact_blank.presence
     end
   end
 end
